@@ -1,0 +1,7 @@
+<Project>
+  <ItemGroup>
+    <Reference Include="Gamesmiths.Forge">
+      <HintPath>./addons/forge/Gamesmiths.Forge.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
