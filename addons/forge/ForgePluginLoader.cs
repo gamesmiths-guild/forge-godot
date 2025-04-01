@@ -15,12 +15,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private GameplayTagsUI _dockedScene;
 
-	/// <summary>
-	/// Gets or sets private TagsInspectorPlugin _tagsInspectorPlugin.
-	/// </summary>
 	public PackedScene PluginScene { get; set; }
 
-	/// <inheritdoc/>
 	public override void _EnterTree()
 	{
 		RegisteredTags registeredTags =
@@ -43,7 +39,6 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddAutoload();
 	}
 
-	/// <inheritdoc/>
 	public override void _ExitTree()
 	{
 		RemoveControlFromDocks(_dockedScene);
