@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 #if TOOLS
+using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.Godot.GameplayTags;
 using Godot;
 
@@ -22,6 +23,10 @@ public partial class ForgePluginLoader : EditorPlugin
 	/// <inheritdoc/>
 	public override void _EnterTree()
 	{
+		RegisteredTags registeredTags =
+			ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
+		Forge.TagsManager = new GameplayTagsManager([.. registeredTags.Tags]);
+
 		PluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
 		_dockedScene = (GameplayTagsUI)PluginScene.Instantiate();
@@ -31,9 +36,10 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		// _tagsInspectorPlugin = new TagsInspectorPlugin();
 		// AddInspectorPlugin(_tagsInspectorPlugin);
-		// Script baseScript = GD.Load<Script>("res://addons/forge/ForgeEntity.cs");
-		// Texture2D checkedIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
-		// AddCustomType("Forge Entity", "Node", baseScript, checkedIcon);
+		Script baseScript = GD.Load<Script>("res://addons/forge/ForgeEntity.cs");
+		Texture2D checkedIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
+		AddCustomType("Forge Entity", "Node", baseScript, checkedIcon);
+
 		AddAutoload();
 	}
 
@@ -47,6 +53,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveCustomType("Forge Entity");
 
 		RemoveAutoload();
+
+		Forge.TagsManager?.DestroyTagTree();
 	}
 
 	private static void AddAutoload()

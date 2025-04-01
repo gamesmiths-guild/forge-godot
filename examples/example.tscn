@@ -1,3 +1,9 @@
-[gd_scene format=3 uid="uid://c8oc5rsdnu45v"]
+[gd_scene load_steps=2 format=3 uid="uid://c8oc5rsdnu45v"]
+
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/ForgeEntity.cs" id="1_y5408"]
 
 [node name="Example" type="Node2D"]
+
+[node name="Forge Entity" type="Node" parent="."]
+script = ExtResource("1_y5408")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"

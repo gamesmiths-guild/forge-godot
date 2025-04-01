@@ -34,9 +34,6 @@ public partial class GameplayTagsUI : VBoxContainer
 
 		_registeredTags = ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
 
-		GD.Print("Initialize Tag Tree");
-		Forge.TagsManager = new GameplayTagsManager([.. _registeredTags.Tags]);
-
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
 
@@ -50,18 +47,6 @@ public partial class GameplayTagsUI : VBoxContainer
 
 		_tree.ButtonClicked += TreeButtonClicked;
 		_addTagButton.Pressed += AddTagButton_Pressed;
-	}
-
-	public override void _ExitTree()
-	{
-		base._ExitTree();
-
-		if (!IsPluginInstance)
-		{
-			return;
-		}
-
-		Forge.TagsManager.DestroyTagTree();
 	}
 
 	private void AddTagButton_Pressed()

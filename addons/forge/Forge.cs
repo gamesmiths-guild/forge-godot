@@ -15,14 +15,6 @@ public partial class Forge : Node
 
 	public override void _Ready()
 	{
-		if (TagsManager is not null || CuesManager is not null)
-		{
-			GD.PrintErr("Multiple autoload instances detected!");
-			return;
-		}
-
-		GD.Print("Forge autoload initialized.");
-
 		RegisteredTags registeredTags =
 			ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
 
