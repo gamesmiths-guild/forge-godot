@@ -41,9 +41,7 @@ public partial class GameplayTagsUI : VBoxContainer
 		_tagNameTextField = GetNode<LineEdit>("%TagNameField");
 		_addTagButton = GetNode<Button>("%AddTagButton");
 
-		TreeItem rootTreeNode = _tree.CreateItem();
-		_tree.HideRoot = true;
-		ConstructTreeNode(_tree, rootTreeNode, Forge.TagsManager.RootNode);
+		ConstructTagTree();
 
 		_tree.ButtonClicked += TreeButtonClicked;
 		_addTagButton.Pressed += AddTagButton_Pressed;
@@ -56,23 +54,44 @@ public partial class GameplayTagsUI : VBoxContainer
 			_tagNameTextField.Text = fixedTag;
 		}
 
+		if (_registeredTags.Tags.Contains(_tagNameTextField.Text))
+		{
+			GD.PushWarning($"Tag [{_tagNameTextField.Text}] is already present in the manager.");
+			return;
+		}
+
 		_registeredTags.Tags.Add(_tagNameTextField.Text);
+		ResourceSaver.Save(_registeredTags);
 
 		ReconstructTreeNode();
 	}
 
 	private void ReconstructTreeNode()
 	{
-		Forge.TagsManager.DestroyTagTree();
+		Forge.TagsManager?.DestroyTagTree();
 		Forge.TagsManager = new GameplayTagsManager([.. _registeredTags.Tags]);
 
 		_tree.Clear();
-		TreeItem rootTreeNode = _tree.CreateItem();
-		_tree.HideRoot = true;
-		ConstructTreeNode(_tree, rootTreeNode, Forge.TagsManager.RootNode);
+		ConstructTagTree();
 	}
 
-	private void ConstructTreeNode(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)
+	private void ConstructTagTree()
+	{
+		TreeItem rootTreeNode = _tree.CreateItem();
+		_tree.HideRoot = true;
+
+		if (Forge.TagsManager.RootNode.ChildTags.Count == 0)
+		{
+			TreeItem childTreeNode = _tree.CreateItem(rootTreeNode);
+			childTreeNode.SetText(0, "No tag has been registered yet.");
+			childTreeNode.SetCustomColor(0, Color.FromHtml("EED202"));
+			return;
+		}
+
+		BuildTreeRecursively(_tree, rootTreeNode, Forge.TagsManager.RootNode);
+	}
+
+	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)
 	{
 		foreach (GameplayTagNode childTagNode in currentNode.ChildTags)
 		{
@@ -83,7 +102,7 @@ public partial class GameplayTagsUI : VBoxContainer
 
 			_treeItemToNode.Add(childTreeNode, childTagNode);
 
-			ConstructTreeNode(tree, childTreeNode, childTagNode);
+			BuildTreeRecursively(tree, childTreeNode, childTagNode);
 		}
 	}
 
@@ -112,11 +131,13 @@ public partial class GameplayTagsUI : VBoxContainer
 					}
 				}
 
-				if (selectedTag.ParentTagNode is not null)
+				if (selectedTag.ParentTagNode is not null
+					&& !_registeredTags.Tags.Contains(selectedTag.ParentTagNode.CompleteTagKey))
 				{
 					_registeredTags.Tags.Add(selectedTag.ParentTagNode.CompleteTagKey);
 				}
 
+				ResourceSaver.Save(_registeredTags);
 				ReconstructTreeNode();
 			}
 		}

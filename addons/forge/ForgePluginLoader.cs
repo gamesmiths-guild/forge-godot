@@ -14,6 +14,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string PluginScenePath = "res://addons/forge/gameplay_tags/GameplayTags.tscn";
 
 	private GameplayTagsUI _dockedScene;
+	private TagsInspectorPlugin _tagsInspectorPlugin;
 
 	public PackedScene PluginScene { get; set; }
 
@@ -22,6 +23,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		RegisteredTags registeredTags =
 			ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
 		Forge.TagsManager = new GameplayTagsManager([.. registeredTags.Tags]);
+		GD.Print("TagsManager Initialized");
 
 		PluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
@@ -30,13 +32,16 @@ public partial class ForgePluginLoader : EditorPlugin
 		_dockedScene.IsPluginInstance = true;
 		AddControlToDock(DockSlot.RightUl, _dockedScene);
 
-		// _tagsInspectorPlugin = new TagsInspectorPlugin();
-		// AddInspectorPlugin(_tagsInspectorPlugin);
+		_tagsInspectorPlugin = new TagsInspectorPlugin();
+		AddInspectorPlugin(_tagsInspectorPlugin);
+
 		Script baseScript = GD.Load<Script>("res://addons/forge/ForgeEntity.cs");
 		Texture2D checkedIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
 		AddCustomType("Forge Entity", "Node", baseScript, checkedIcon);
 
 		AddAutoload();
+
+		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
 
 	public override void _ExitTree()
@@ -44,10 +49,13 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveControlFromDocks(_dockedScene);
 		_dockedScene.Free();
 
-		// RemoveInspectorPlugin(_tagsInspectorPlugin);
+		RemoveInspectorPlugin(_tagsInspectorPlugin);
+
 		RemoveCustomType("Forge Entity");
 
 		RemoveAutoload();
+
+		RemoveToolMenuItem("Repair assets tags");
 
 		Forge.TagsManager?.DestroyTagTree();
 	}
@@ -76,6 +84,11 @@ public partial class ForgePluginLoader : EditorPlugin
 			ProjectSettings.Clear("autoload/Forge");
 			ProjectSettings.Save();
 		}
+	}
+
+	private static void CallAssetRepairTool()
+	{
+		AssetRepairTool.RepairAllAssetsTags();
 	}
 }
 #endif

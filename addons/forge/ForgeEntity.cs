@@ -29,7 +29,14 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 		foreach (var tag in ContainerTags)
 		{
-			tags.Add(GameplayTag.RequestTag(Forge.TagsManager, tag));
+			try
+			{
+				tags.Add(GameplayTag.RequestTag(Forge.TagsManager, tag));
+			}
+			catch (GameplayTagNotRegisteredException)
+			{
+				GD.PushWarning($"Tag [{tag}] is not registered.");
+			}
 		}
 
 		EffectsManager = new GameplayEffectsManager(this, Forge.CuesManager);
