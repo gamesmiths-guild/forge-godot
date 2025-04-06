@@ -178,7 +178,7 @@ csharp_prefer_braces = when_multiline:warning
 csharp_prefer_simple_using_statement = true:warning
 csharp_style_namespace_declarations = file_scoped:warning
 csharp_style_prefer_method_group_conversion = true:warning
-csharp_style_prefer_primary_constructors = true:warning
+csharp_style_prefer_primary_constructors = false:warning
 csharp_style_prefer_top_level_statements = true:suggestion
 
 # Expression-level preferences
