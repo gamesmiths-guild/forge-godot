@@ -2,7 +2,7 @@
 
 using Gamesmiths.Forge.GameplayCues;
 using Gamesmiths.Forge.GameplayTags;
-using Gamesmiths.Forge.Godot.GameplayTags;
+using Gamesmiths.Forge.GameplayTags.Godot;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot;

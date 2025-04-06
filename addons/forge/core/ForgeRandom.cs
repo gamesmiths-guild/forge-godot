@@ -1,10 +1,9 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using System;
-using Gamesmiths.Forge.Core;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Core;
+namespace Gamesmiths.Forge.Core.Godot;
 
 public class ForgeRandom : IRandom, IDisposable
 {

@@ -3,11 +3,13 @@
 #if TOOLS
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayTags;
 using Godot;
-using Array = Godot.Collections.Array<string>;
 
-namespace Gamesmiths.Forge.Godot.GameplayTags;
+using static Gamesmiths.Forge.Godot.Forge;
+
+using GodotStringArray = Godot.Collections.Array<string>;
+
+namespace Gamesmiths.Forge.GameplayTags.Godot;
 
 [Tool]
 public partial class TagContainerEditor : VBoxContainer
@@ -21,13 +23,13 @@ public partial class TagContainerEditor : VBoxContainer
 
 	public bool IsPluginInstance { get; set; }
 
-	public Array ContainerTags { get; set; }
+	public GodotStringArray ContainerTags { get; set; }
 
 	public override void _Ready()
 	{
 		base._Ready();
 
-		if (!IsPluginInstance || Forge.TagsManager is null)
+		if (!IsPluginInstance || TagsManager is null)
 		{
 			return;
 		}
@@ -48,7 +50,7 @@ public partial class TagContainerEditor : VBoxContainer
 		_tree.Visible = false;
 		_tree.CustomMinimumSize += new Vector2(0, 12);
 
-		if (Forge.TagsManager.RootNode.ChildTags.Count == 0)
+		if (TagsManager.RootNode.ChildTags.Count == 0)
 		{
 			AddEmptyTagsWarning(_tree, rootTreeNode);
 			return;
@@ -56,7 +58,7 @@ public partial class TagContainerEditor : VBoxContainer
 
 		ValidateTags();
 
-		BuildTreeRecursively(_tree, rootTreeNode, Forge.TagsManager.RootNode);
+		BuildTreeRecursively(_tree, rootTreeNode, TagsManager.RootNode);
 
 		_tree.ItemCollapsed += TreeItemCollapsed;
 		_tree.ButtonClicked += TreeButtonClicked;
@@ -155,7 +157,7 @@ public partial class TagContainerEditor : VBoxContainer
 
 			try
 			{
-				GameplayTag.RequestTag(Forge.TagsManager, tag);
+				GameplayTag.RequestTag(TagsManager, tag);
 			}
 			catch (GameplayTagNotRegisteredException)
 			{

@@ -1,9 +1,10 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 #if TOOLS
+using Gamesmiths.Forge.Core.Godot;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.GameplayTags;
+namespace Gamesmiths.Forge.GameplayTags.Godot;
 
 public partial class TagsInspectorPlugin : EditorInspectorPlugin
 {

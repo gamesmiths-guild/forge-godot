@@ -3,7 +3,7 @@
 using Godot;
 using Godot.Collections;
 
-namespace Gamesmiths.Forge.Godot.GameplayTags;
+namespace Gamesmiths.Forge.GameplayTags.Godot;
 
 [Tool]
 public partial class RegisteredTags : Resource

@@ -2,10 +2,11 @@
 
 #if TOOLS
 using System.Collections.Generic;
-using Gamesmiths.Forge.GameplayTags;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.GameplayTags;
+using static Gamesmiths.Forge.Godot.Forge;
+
+namespace Gamesmiths.Forge.GameplayTags.Godot;
 
 [Tool]
 public partial class GameplayTagsUI : VBoxContainer
@@ -68,8 +69,8 @@ public partial class GameplayTagsUI : VBoxContainer
 
 	private void ReconstructTreeNode()
 	{
-		Forge.TagsManager?.DestroyTagTree();
-		Forge.TagsManager = new GameplayTagsManager([.. _registeredTags.Tags]);
+		TagsManager?.DestroyTagTree();
+		TagsManager = new GameplayTagsManager([.. _registeredTags.Tags]);
 
 		_tree.Clear();
 		ConstructTagTree();
@@ -80,7 +81,7 @@ public partial class GameplayTagsUI : VBoxContainer
 		TreeItem rootTreeNode = _tree.CreateItem();
 		_tree.HideRoot = true;
 
-		if (Forge.TagsManager.RootNode.ChildTags.Count == 0)
+		if (TagsManager.RootNode.ChildTags.Count == 0)
 		{
 			TreeItem childTreeNode = _tree.CreateItem(rootTreeNode);
 			childTreeNode.SetText(0, "No tag has been registered yet.");
@@ -88,7 +89,7 @@ public partial class GameplayTagsUI : VBoxContainer
 			return;
 		}
 
-		BuildTreeRecursively(_tree, rootTreeNode, Forge.TagsManager.RootNode);
+		BuildTreeRecursively(_tree, rootTreeNode, TagsManager.RootNode);
 	}
 
 	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)

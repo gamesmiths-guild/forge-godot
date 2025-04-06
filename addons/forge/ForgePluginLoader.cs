@@ -2,8 +2,10 @@
 
 #if TOOLS
 using Gamesmiths.Forge.GameplayTags;
-using Gamesmiths.Forge.Godot.GameplayTags;
+using Gamesmiths.Forge.GameplayTags.Godot;
 using Godot;
+
+using static Gamesmiths.Forge.Godot.Forge;
 
 namespace Gamesmiths.Forge.Godot;
 
@@ -22,7 +24,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	{
 		RegisteredTags registeredTags =
 			ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
-		Forge.TagsManager = new GameplayTagsManager([.. registeredTags.Tags]);
+		TagsManager = new GameplayTagsManager([.. registeredTags.Tags]);
 		GD.Print("TagsManager Initialized");
 
 		PluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
@@ -57,7 +59,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		RemoveToolMenuItem("Repair assets tags");
 
-		Forge.TagsManager?.DestroyTagTree();
+		TagsManager?.DestroyTagTree();
 	}
 
 	private static void AddAutoload()

@@ -4,11 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Gamesmiths.Forge.GameplayTags;
+using Gamesmiths.Forge.Core.Godot;
 using Godot;
 using Godot.Collections;
 
-namespace Gamesmiths.Forge.Godot.GameplayTags;
+using static Gamesmiths.Forge.Godot.Forge;
+
+namespace Gamesmiths.Forge.GameplayTags.Godot;
 
 [Tool]
 public partial class AssetRepairTool : EditorPlugin
@@ -151,7 +153,7 @@ public partial class AssetRepairTool : EditorPlugin
 			try
 			{
 				// Try to resolve the tag.
-				GameplayTag.RequestTag(Forge.TagsManager, tag);
+				GameplayTag.RequestTag(TagsManager, tag);
 				newTags.Add(tag);
 			}
 			catch (GameplayTagNotRegisteredException)

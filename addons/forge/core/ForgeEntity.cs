@@ -1,20 +1,21 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayEffects;
 using Gamesmiths.Forge.GameplayTags;
 using Godot;
 using Godot.Collections;
 
-namespace Gamesmiths.Forge.Godot;
+using static Gamesmiths.Forge.Godot.Forge;
+
+namespace Gamesmiths.Forge.Core.Godot;
 
 [Tool]
 public partial class ForgeEntity : Node, IForgeEntity
 {
 	public Attributes Attributes { get; set; }
 
-	public Core.GameplayTags GameplayTags { get; set; }
+	public GameplayTags GameplayTags { get; set; }
 
 	public GameplayEffectsManager EffectsManager { get; set; }
 
@@ -31,7 +32,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 		{
 			try
 			{
-				tags.Add(GameplayTag.RequestTag(Forge.TagsManager, tag));
+				tags.Add(GameplayTag.RequestTag(TagsManager, tag));
 			}
 			catch (GameplayTagNotRegisteredException)
 			{
@@ -39,9 +40,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 			}
 		}
 
-		EffectsManager = new GameplayEffectsManager(this, Forge.CuesManager);
+		EffectsManager = new GameplayEffectsManager(this, CuesManager);
 
-		GameplayTags = new(new GameplayTagContainer(Forge.TagsManager, tags));
+		GameplayTags = new(new GameplayTagContainer(TagsManager, tags));
 	}
 
 	public override void _Process(double delta)
