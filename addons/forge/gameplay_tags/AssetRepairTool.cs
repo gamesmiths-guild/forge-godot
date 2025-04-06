@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Gamesmiths.Forge.Core.Godot;
 using Godot;
 using Godot.Collections;
 
@@ -119,53 +118,77 @@ public partial class AssetRepairTool : EditorPlugin
 	/// <returns><see langword="true"/> if any ForgeEntity was modified.</returns>
 	private static bool ProcessNode(Node node)
 	{
-		var modified = false;
+		var modified = ValidateNode(node);
 
-		// Call a method on ForgeEntity to validate its tags.
-		// For example, iterate over ContainerTags and remove invalid ones.
-		if (node is ForgeEntity forgeEntity && ValidateForgeEntity(forgeEntity))
+		foreach (Node child in node.GetChildren())
 		{
-			modified = true;
-		}
-
-		if (node.GetChildren().Any(ProcessNode))
-		{
-			modified = true;
+			modified |= ProcessNode(child);
 		}
 
 		return modified;
 	}
 
-	/// <summary>
-	/// Validate tags in a ForgeEntity.
-	/// </summary>
-	/// <param name="entity">Forge entity to be checked.</param>
-	/// <returns><see langword="true"/> if any changes were made to the entity.</returns>
-	private static bool ValidateForgeEntity(ForgeEntity entity)
+	private static bool ValidateNode(Node node)
 	{
 		var modified = false;
+		foreach (Dictionary propertyInfo in node.GetPropertyList())
+		{
+			if (!propertyInfo.TryGetValue("class_name", out Variant className))
+			{
+				continue;
+			}
 
-		// Create a new array excluding invalid tags.
-		Array<string> newTags = [];
+			if (className.AsString() != "TagContainer")
+			{
+				continue;
+			}
 
-		foreach (var tag in entity.ContainerTags)
+			if (!propertyInfo.TryGetValue("name", out Variant nameObj))
+			{
+				continue;
+			}
+
+			var propertyName = nameObj.AsString();
+			Variant value = node.Get(propertyName);
+
+			if (value.VariantType != Variant.Type.Object)
+			{
+				continue;
+			}
+
+			if (value.As<Resource>() is TagContainer tagContainer)
+			{
+				modified |= ValidateTagContainerProperty(tagContainer, node.Name);
+			}
+		}
+
+		return modified;
+	}
+
+	private static bool ValidateTagContainerProperty(TagContainer container, string nodeName)
+	{
+		Array<string> originalTags = container.ContainerTags;
+		var newTags = new Array<string>();
+		var modified = false;
+
+		foreach (var tag in originalTags)
 		{
 			try
 			{
-				// Try to resolve the tag.
 				GameplayTag.RequestTag(TagsManager, tag);
 				newTags.Add(tag);
 			}
 			catch (GameplayTagNotRegisteredException)
 			{
-				GD.PrintRich($"[RepairTool] Removing invalid tag [{tag}] from entity {entity.Name}.");
+				GD.PrintRich(
+					$"[color=LIGHT_STEEL_BLUE][RepairTool] Removing invalid tag [{tag}] from node {nodeName}.");
 				modified = true;
 			}
 		}
 
 		if (modified)
 		{
-			entity.ContainerTags = newTags;
+			container.ContainerTags = newTags;
 		}
 
 		return modified;

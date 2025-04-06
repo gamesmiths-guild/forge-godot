@@ -37,7 +37,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		_tagsInspectorPlugin = new TagsInspectorPlugin();
 		AddInspectorPlugin(_tagsInspectorPlugin);
 
-		Script baseScript = GD.Load<Script>("res://addons/forge/ForgeEntity.cs");
+		Script baseScript = GD.Load<Script>("res://addons/forge/core/ForgeEntity.cs");
 		Texture2D checkedIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
 		AddCustomType("Forge Entity", "Node", baseScript, checkedIcon);
 

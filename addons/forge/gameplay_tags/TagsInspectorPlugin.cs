@@ -1,7 +1,6 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 #if TOOLS
-using Gamesmiths.Forge.Core.Godot;
 using Godot;
 
 namespace Gamesmiths.Forge.GameplayTags.Godot;
@@ -12,7 +11,7 @@ public partial class TagsInspectorPlugin : EditorInspectorPlugin
 
 	public override bool _CanHandle(GodotObject @object)
 	{
-		return @object is ForgeEntity;
+		return @object is TagContainer;
 	}
 
 	public override bool _ParseProperty(
@@ -31,9 +30,9 @@ public partial class TagsInspectorPlugin : EditorInspectorPlugin
 			var containerScene = (TagContainerEditor)InspectorScene.Instantiate();
 			containerScene.IsPluginInstance = true;
 
-			if (@object is ForgeEntity forgeEntity)
+			if (@object is TagContainer tagContainer)
 			{
-				containerScene.ContainerTags = forgeEntity.ContainerTags;
+				containerScene.ContainerTags = tagContainer.ContainerTags;
 			}
 
 			AddCustomControl(containerScene);
