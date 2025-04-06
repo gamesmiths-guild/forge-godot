@@ -16,6 +16,11 @@ public partial class ScalableFloat : Resource
 	[Export]
 	public Curve ScalingCurve { get; set; }
 
+	public ScalableFloat()
+	{
+		// Constructor intentionally left blank.
+	}
+
 	public ScalableFloat(float baseValue)
 	{
 		BaseValue = baseValue;

@@ -16,6 +16,11 @@ public partial class ScalableInt : Resource
 	[Export]
 	public Curve ScalingCurve { get; set; }
 
+	public ScalableInt()
+	{
+		// Constructor intentionally left blank.
+	}
+
 	public ScalableInt(int baseValue)
 	{
 		BaseValue = baseValue;
