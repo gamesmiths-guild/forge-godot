@@ -1,7 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core.Godot;
-using Gamesmiths.Forge.GameplayEffects.Magnitudes;
+using Gamesmiths.Forge.GameplayEffects.Magnitudes.Godot;
 using Godot;
 
 namespace Gamesmiths.Forge.GameplayEffects.Components.Godot;
@@ -11,10 +11,10 @@ namespace Gamesmiths.Forge.GameplayEffects.Components.Godot;
 public partial class ChanceToApplyEffect : EffectComponent
 {
 	[Export]
-	public float Chance { get; set; }
+	public ScalableFloat Chance { get; set; } = new(0);
 
 	public override IGameplayEffectComponent GetComponent()
 	{
-		return new ChanceToApplyEffectComponent(new ForgeRandom(), new ScalableFloat(Chance));
+		return new ChanceToApplyEffectComponent(new ForgeRandom(), Chance.GetScalableFloat());
 	}
 }
