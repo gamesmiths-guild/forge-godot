@@ -202,41 +202,55 @@ public partial class Modifier : Resource
 
 	private ForgeScalableFloat? GetScalableFloatMagnitude()
 	{
-		return CalculationType == MagnitudeCalculationType.ScalableFloat ? ScalableFloat.GetScalableFloat() : null;
+		if (CalculationType != MagnitudeCalculationType.ScalableFloat)
+		{
+			return null;
+		}
+
+		return ScalableFloat.GetScalableFloat();
 	}
 
 	private AttributeBasedFloat? GetAttributeBasedFloat()
 	{
-		return CalculationType == MagnitudeCalculationType.AttributeBased ?
-			new AttributeBasedFloat(
-				new AttributeCaptureDefinition(
-						CapturedAttribute,
-						CaptureSource,
-						SnapshotAttribute),
-				AttributeCalculationType,
-				Coeficient.GetScalableFloat(),
-				PreMultiplyAdditiveValue.GetScalableFloat(),
-				PostMultiplyAdditiveValue.GetScalableFloat(),
-				FinalChannel)
-			: null;
+		if (CalculationType != MagnitudeCalculationType.AttributeBased)
+		{
+			return null;
+		}
+
+		return new AttributeBasedFloat(
+			new AttributeCaptureDefinition(
+				CapturedAttribute,
+				CaptureSource,
+				SnapshotAttribute),
+			AttributeCalculationType,
+			Coeficient.GetScalableFloat(),
+			PreMultiplyAdditiveValue.GetScalableFloat(),
+			PostMultiplyAdditiveValue.GetScalableFloat(),
+			FinalChannel);
 	}
 
 	private CustomCalculationBasedFloat? GetCustomCalculationBasedFloat()
 	{
-		return CalculationType == MagnitudeCalculationType.CustomCalculatorClass ?
-			new CustomCalculationBasedFloat(
+		if (CalculationType != MagnitudeCalculationType.CustomCalculatorClass)
+		{
+			return null;
+		}
+
+		return new CustomCalculationBasedFloat(
 				CustomCalculatorClass.GetCustomCalculatorClass(),
 				CalculatorCoeficient.GetScalableFloat(),
 				CalculatorPreMultiplyAdditiveValue.GetScalableFloat(),
 				CalculatorPostMultiplyAdditiveValue.GetScalableFloat(),
-				null)
-			: null;
+				null);
 	}
 
 	private SetByCallerFloat? GetSetByCallerFloat()
 	{
-		return CalculationType == MagnitudeCalculationType.SetByCaller ?
-			new SetByCallerFloat(GameplayTag.RequestTag(TagsManager, CallerTargetTag))
-			: null;
+		if (CalculationType == MagnitudeCalculationType.SetByCaller)
+		{
+			return null;
+		}
+
+		return new SetByCallerFloat(GameplayTag.RequestTag(TagsManager, CallerTargetTag));
 	}
 }
