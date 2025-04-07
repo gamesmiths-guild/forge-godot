@@ -4,4 +4,4 @@
 
 [resource]
 script = ExtResource("1_de1kt")
-Tags = []
+Tags = ["1.2.3"]
