@@ -48,8 +48,6 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddCustomType("Forge Entity", "Node", forgeEntityBaseScript, forgeIcon);
 		AddCustomType("Attribute Set", "Node", attributeSetBaseScript, attributeSetIcon);
 
-		AddAutoload();
-
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
 
@@ -64,15 +62,15 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveCustomType("Forge Entity");
 		RemoveCustomType("Attribute Set");
 
-		RemoveAutoload();
-
 		RemoveToolMenuItem("Repair assets tags");
 
 		TagsManager?.DestroyTagTree();
 	}
 
-	private static void AddAutoload()
+	public override void _EnablePlugin()
 	{
+		base._EnablePlugin();
+
 		var config = ProjectSettings.LoadResourcePack(AutoloadPath);
 
 		if (config)
@@ -88,7 +86,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 	}
 
-	private static void RemoveAutoload()
+	public override void _DisablePlugin()
 	{
 		if (ProjectSettings.HasSetting("autoload/Forge"))
 		{
