@@ -1,14 +1,16 @@
 // Copyright © 2025 Gamesmiths Guild.
 
+using System.Collections.Generic;
 using Gamesmiths.Forge.GameplayEffects;
 using Gamesmiths.Forge.GameplayTags.Godot;
 using Godot;
 
 using static Gamesmiths.Forge.Godot.Forge;
 
+using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
+
 namespace Gamesmiths.Forge.Core.Godot;
 
-[Tool]
 public partial class ForgeEntity : Node, IForgeEntity
 {
 	[Export]
@@ -28,15 +30,22 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 		Tags = new(BaseTags.GetTagContainer());
 		EffectsManager = new GameplayEffectsManager(this, CuesManager);
+
+		List<ForgeAttributeSet> attributeSetList = [];
+
+		foreach (Node node in GetChildren())
+		{
+			if (node is AttributeSet attributeSetNode)
+			{
+				attributeSetList.Add(attributeSetNode.GetAttributeSet());
+			}
+		}
+
+		Attributes = new Attributes([.. attributeSetList]);
 	}
 
 	public override void _Process(double delta)
 	{
-		if (Engine.IsEditorHint())
-		{
-			return;
-		}
-
 		base._Process(delta);
 
 		EffectsManager.UpdateEffects(delta);

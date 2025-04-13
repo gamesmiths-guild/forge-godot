@@ -15,10 +15,6 @@ run/main_scene="uid://c8oc5rsdnu45v"
 config/features=PackedStringArray("4.4", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
-[autoload]
-
-Forge="res://addons/forge/Forge.cs"
-
 [dotnet]
 
 project/assembly_name="Forge Godot"

@@ -105,7 +105,6 @@ public partial class Modifier : Resource
 	[Export]
 	public string CallerTargetTag { get; set; }
 
-	// Override to provide custom properties to the inspector
 	public override void _ValidateProperty(Dictionary property)
 	{
 		if (property["name"].AsStringName() == PropertyName.Attribute ||
@@ -184,12 +183,12 @@ public partial class Modifier : Resource
 		// Find all types that subclass AttributeSet
 		foreach (System.Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
 		{
-			// Get public instance fields of type Attribute
-			IEnumerable<FieldInfo> attributeFields =
-				attributeSetType.GetFields(BindingFlags.Public | BindingFlags.Instance)
-					.Where(x => x.FieldType == typeof(Attribute));
+			// Get public instance properties of type Attribute
+			IEnumerable<PropertyInfo> attributeProperties =
+				attributeSetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+					.Where(x => x.PropertyType == typeof(Attribute));
 
-			foreach (FieldInfo field in attributeFields)
+			foreach (PropertyInfo field in attributeProperties)
 			{
 				// Build the dropdown option string in the format ClassName.FieldName
 				var option = $"{attributeSetType.Name}.{field.Name}";

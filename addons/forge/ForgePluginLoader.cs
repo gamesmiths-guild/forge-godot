@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 #if TOOLS
+using Gamesmiths.Forge.Editor;
 using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.GameplayTags.Godot;
 using Godot;
@@ -17,6 +18,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private GameplayTagsUI _dockedScene;
 	private TagsInspectorPlugin _tagsInspectorPlugin;
+	private AttributeSetInspectorPlugin _inspector;
 
 	public PackedScene PluginScene { get; set; }
 
@@ -36,10 +38,15 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		_tagsInspectorPlugin = new TagsInspectorPlugin();
 		AddInspectorPlugin(_tagsInspectorPlugin);
+		_inspector = new AttributeSetInspectorPlugin();
+		AddInspectorPlugin(_inspector);
 
-		Script baseScript = GD.Load<Script>("res://addons/forge/core/ForgeEntity.cs");
-		Texture2D checkedIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
-		AddCustomType("Forge Entity", "Node", baseScript, checkedIcon);
+		Script forgeEntityBaseScript = GD.Load<Script>("res://addons/forge/core/ForgeEntity.cs");
+		Script attributeSetBaseScript = GD.Load<Script>("res://addons/forge/core/AttributeSet.cs");
+		Texture2D forgeIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
+		Texture2D attributeSetIcon = GD.Load<Texture2D>("res://addons/forge/attributes.svg");
+		AddCustomType("Forge Entity", "Node", forgeEntityBaseScript, forgeIcon);
+		AddCustomType("Attribute Set", "Node", attributeSetBaseScript, attributeSetIcon);
 
 		AddAutoload();
 
@@ -52,8 +59,10 @@ public partial class ForgePluginLoader : EditorPlugin
 		_dockedScene.Free();
 
 		RemoveInspectorPlugin(_tagsInspectorPlugin);
+		RemoveInspectorPlugin(_inspector);
 
 		RemoveCustomType("Forge Entity");
+		RemoveCustomType("Attribute Set");
 
 		RemoveAutoload();
 
