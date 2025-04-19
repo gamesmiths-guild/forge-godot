@@ -7,11 +7,11 @@ namespace Gamesmiths.Forge.Example;
 
 public class VitalAttributes : AttributeSet
 {
-	public Attribute Vitality { get; }
+	public Attribute Vitality { get; private set; }
 
-	public Attribute MaxHealth { get; }
+	public Attribute MaxHealth { get; private set; }
 
-	public Attribute CurrentHealth { get; }
+	public Attribute CurrentHealth { get; private set; }
 
 	public VitalAttributes()
 	{

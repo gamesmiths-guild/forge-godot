@@ -8,6 +8,8 @@ using Godot;
 using static Gamesmiths.Forge.Godot.Forge;
 
 using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
+using ForgeGameplayEffectData = Gamesmiths.Forge.GameplayEffects.GameplayEffectData;
+using GameplayEffect = Gamesmiths.Forge.GameplayEffects.Godot.GameplayEffect;
 
 namespace Gamesmiths.Forge.Core.Godot;
 
@@ -32,16 +34,31 @@ public partial class ForgeEntity : Node, IForgeEntity
 		EffectsManager = new GameplayEffectsManager(this, CuesManager);
 
 		List<ForgeAttributeSet> attributeSetList = [];
+		List<ForgeGameplayEffectData> effects = [];
 
 		foreach (Node node in GetChildren())
 		{
 			if (node is AttributeSet attributeSetNode)
 			{
 				attributeSetList.Add(attributeSetNode.GetAttributeSet());
+				continue;
+			}
+
+			if (node is GameplayEffect effectNode)
+			{
+				effects.Add(effectNode.GameplayEffectData.GetEffectData());
 			}
 		}
 
 		Attributes = new Attributes([.. attributeSetList]);
+
+		foreach (ForgeGameplayEffectData effectData in effects)
+		{
+			EffectsManager.ApplyEffect(
+				new GameplayEffects.GameplayEffect(
+					effectData,
+					new GameplayEffectOwnership(this, this)));
+		}
 	}
 
 	public override void _Process(double delta)

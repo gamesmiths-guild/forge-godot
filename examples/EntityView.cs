@@ -22,6 +22,11 @@ public partial class EntityView : VBoxContainer
 				Text = $"{attributeInfo.FullKey}: {attributeInfo.Value.CurrentValue}",
 			};
 
+			attributeInfo.Value.OnValueChanged += (_, _) =>
+			{
+				newLabel.Text = $"{attributeInfo.FullKey}: {attributeInfo.Value.CurrentValue}";
+			};
+
 			AddChild(newLabel);
 		}
 	}

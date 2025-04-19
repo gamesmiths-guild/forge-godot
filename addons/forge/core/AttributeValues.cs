@@ -8,7 +8,7 @@ namespace Gamesmiths.Forge.Core.Godot;
 public partial class AttributeValues : Resource
 {
 	[Export]
-	public int Current { get; set; }
+	public int Default { get; set; }
 
 	[Export]
 	public int Min { get; set; }
@@ -20,9 +20,9 @@ public partial class AttributeValues : Resource
 	{
 	}
 
-	public AttributeValues(int current, int min, int max)
+	public AttributeValues(int @default, int min, int max)
 	{
-		Current = current;
+		Default = @default;
 		Min = min;
 		Max = max;
 	}

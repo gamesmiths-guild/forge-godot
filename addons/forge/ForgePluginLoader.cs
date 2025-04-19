@@ -43,10 +43,16 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		Script forgeEntityBaseScript = GD.Load<Script>("res://addons/forge/core/ForgeEntity.cs");
 		Script attributeSetBaseScript = GD.Load<Script>("res://addons/forge/core/AttributeSet.cs");
+		Script effectBaseScript = GD.Load<Script>("res://addons/forge/gameplay_effects/GameplayEffect.cs");
+		Script effectDataBaseScript = GD.Load<Script>("res://addons/forge/gameplay_effects/GameplayEffectData.cs");
 		Texture2D forgeIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
 		Texture2D attributeSetIcon = GD.Load<Texture2D>("res://addons/forge/attributes.svg");
+		Texture2D effectIcon = GD.Load<Texture2D>("res://addons/forge/effect.svg");
+		Texture2D effectDataIcon = GD.Load<Texture2D>("res://addons/forge/effect_data.svg");
 		AddCustomType("Forge Entity", "Node", forgeEntityBaseScript, forgeIcon);
 		AddCustomType("Attribute Set", "Node", attributeSetBaseScript, attributeSetIcon);
+		AddCustomType("Effect", "Node", effectBaseScript, effectIcon);
+		AddCustomType("Effect Data", "Resource", effectDataBaseScript, effectDataIcon);
 
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
@@ -61,6 +67,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		RemoveCustomType("Forge Entity");
 		RemoveCustomType("Attribute Set");
+		RemoveCustomType("Effect");
+		RemoveCustomType("Effect Data");
 
 		RemoveToolMenuItem("Repair assets tags");
 

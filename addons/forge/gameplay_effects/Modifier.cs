@@ -245,7 +245,7 @@ public partial class Modifier : Resource
 
 	private SetByCallerFloat? GetSetByCallerFloat()
 	{
-		if (CalculationType == MagnitudeCalculationType.SetByCaller)
+		if (CalculationType != MagnitudeCalculationType.SetByCaller)
 		{
 			return null;
 		}

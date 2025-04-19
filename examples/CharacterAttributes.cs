@@ -6,15 +6,15 @@ namespace Gamesmiths.Forge.Example;
 
 public class CharacterAttributes : AttributeSet
 {
-	public Attribute Health { get; }
+	public Attribute Health { get; private set; }
 
-	public Attribute Mana { get; }
+	public Attribute Mana { get; private set; }
 
-	public Attribute Strength { get; }
+	public Attribute Strength { get; private set; }
 
-	public Attribute Agility { get; }
+	public Attribute Agility { get; private set; }
 
-	public Attribute Intelligence { get; }
+	public Attribute Intelligence { get; private set; }
 
 	public CharacterAttributes()
 	{

@@ -409,3 +409,6 @@ dotnet_diagnostic.S1075.severity = none
 
 # T0004: Internal Stylyng Rule (Use SafeRegex)
 dotnet_diagnostic.T0004.severity = none
+
+# RCS1170: Use read-only auto-implemented property
+dotnet_diagnostic.RCS1170.severity = none

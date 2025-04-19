@@ -6,11 +6,11 @@ namespace Gamesmiths.Forge.Example;
 
 public class ItemAttributes : AttributeSet
 {
-	public Attribute Price { get; }
+	public Attribute Price { get; private set; }
 
-	public Attribute Weight { get; }
+	public Attribute Weight { get; private set; }
 
-	public Attribute Rarity { get; }
+	public Attribute Rarity { get; private set; }
 
 	public ItemAttributes()
 	{

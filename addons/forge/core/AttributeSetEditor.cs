@@ -138,7 +138,7 @@ public partial class AttributeSetEditor : VBoxContainer
 
 				attributeScene.GetNode<Label>("%Attribute").Text = $" {attributeName}";
 
-				spinBoxCurrent.Value = value.Current;
+				spinBoxCurrent.Value = value.Default;
 				spinBoxMin.Value = value.Min;
 				spinBoxMax.Value = value.Max;
 
