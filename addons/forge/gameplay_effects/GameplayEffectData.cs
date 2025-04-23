@@ -206,7 +206,7 @@ public partial class GameplayEffectData : Resource
 	public bool ExecuteOnSuccessfulApplication { get; set; }
 
 	[ExportGroup("Gameplay Cues")]
-	[Export(PropertyHint.ResourceType, "GameplayCueDataWrapper")]
+	[Export(PropertyHint.ResourceType, "GameplayCue")]
 	public Array<GameplayCue> GameplayCues { get; set; } = [];
 
 	public override void _ValidateProperty(Dictionary property)

@@ -2,10 +2,10 @@
 
 #if TOOLS
 using Gamesmiths.Forge.Editor;
+using Gamesmiths.Forge.GameplayCues.Godot;
 using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.GameplayTags.Godot;
 using Godot;
-
 using static Gamesmiths.Forge.Godot.Forge;
 
 namespace Gamesmiths.Forge.Godot;
@@ -14,26 +14,24 @@ namespace Gamesmiths.Forge.Godot;
 public partial class ForgePluginLoader : EditorPlugin
 {
 	private const string AutoloadPath = "res://addons/forge/Forge.cs";
-	private const string PluginScenePath = "res://addons/forge/gameplay_tags/GameplayTags.tscn";
+	private const string PluginScenePath = "res://addons/forge/forge_ui.tscn";
 
-	private GameplayTagsUI _dockedScene;
-	private TagsInspectorPlugin _tagsInspectorPlugin;
-	private AttributeSetInspectorPlugin _inspector;
-
-	public PackedScene PluginScene { get; set; }
+	private TabContainer? _dockedScene;
+	private TagsInspectorPlugin? _tagsInspectorPlugin;
+	private AttributeSetInspectorPlugin? _inspector;
 
 	public override void _EnterTree()
 	{
-		RegisteredTags registeredTags =
-			ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
-		TagsManager = new GameplayTagsManager([.. registeredTags.Tags]);
+		ForgePluginData pluginData =
+			ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
+		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
 		GD.Print("TagsManager Initialized");
 
-		PluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
+		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
-		_dockedScene = (GameplayTagsUI)PluginScene.Instantiate();
-		_dockedScene.Name = "Gameplay Tags";
-		_dockedScene.IsPluginInstance = true;
+		_dockedScene = (TabContainer)pluginScene.Instantiate();
+		_dockedScene.GetNode<GameplayTagsUI>("%Tags").IsPluginInstance = true;
+		_dockedScene.GetNode<CueKeysUI>("%Cues").IsPluginInstance = true;
 		AddControlToDock(DockSlot.RightUl, _dockedScene);
 
 		_tagsInspectorPlugin = new TagsInspectorPlugin();

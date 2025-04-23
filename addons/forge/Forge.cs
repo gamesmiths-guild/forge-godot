@@ -9,16 +9,16 @@ namespace Gamesmiths.Forge.Godot;
 
 public partial class Forge : Node
 {
-	public static GameplayTagsManager TagsManager { get; set; }
+	public static GameplayTagsManager? TagsManager { get; set; }
 
-	public static GameplayCuesManager CuesManager { get; set; }
+	public static GameplayCuesManager? CuesManager { get; set; }
 
 	public override void _Ready()
 	{
-		RegisteredTags registeredTags =
-			ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
+		ForgePluginData pluginData =
+			ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
 
-		TagsManager = new GameplayTagsManager([.. registeredTags.Tags]);
+		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
 		CuesManager = new GameplayCuesManager();
 	}
 }

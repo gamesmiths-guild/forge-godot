@@ -1,4 +1,7 @@
 <Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Gamesmiths.Forge">
       <HintPath>./addons/forge/Gamesmiths.Forge.dll</HintPath>

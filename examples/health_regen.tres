@@ -1,16 +1,51 @@
-[gd_resource type="Resource" load_steps=14 format=3 uid="uid://d0ctw2d38gb15"]
+[gd_resource type="Resource" load_steps=22 format=3 uid="uid://d0ctw2d38gb15"]
 
-[ext_resource type="Script" uid="uid://cpcrmq51kgbpu" path="res://addons/forge/gameplay_effects/components/EffectComponent.cs" id="1_vmjmg"]
-[ext_resource type="Script" uid="uid://8vdy1awpc2a4" path="res://addons/forge/gameplay_effects/calculator/Execution.cs" id="2_m765o"]
+[ext_resource type="Script" uid="uid://cpcrmq51kgbpu" path="res://addons/forge/gameplay_effects/components/EffectComponent.cs" id="1_10q1i"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="3_10q1i"]
+[ext_resource type="Script" uid="uid://c10ov6sgvcunw" path="res://addons/forge/gameplay_effects/components/ChanceToApplyEffect.cs" id="3_aash6"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="4_aash6"]
+[ext_resource type="Script" uid="uid://8vdy1awpc2a4" path="res://addons/forge/gameplay_effects/calculator/Execution.cs" id="4_v1l1x"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="5_v1l1x"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="6_m765o"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="6_mjt31"]
 
+[sub_resource type="Resource" id="Resource_7yjjs"]
+script = ExtResource("6_m765o")
+BaseValue = 0.5
+
+[sub_resource type="Resource" id="Resource_0avqp"]
+script = ExtResource("3_aash6")
+Chance = SubResource("Resource_7yjjs")
+metadata/_custom_type_script = "uid://c10ov6sgvcunw"
+
+[sub_resource type="Resource" id="Resource_ny43b"]
+script = ExtResource("6_m765o")
+BaseValue = 0.0
+
+[sub_resource type="Resource" id="Resource_bbokj"]
+script = ExtResource("3_10q1i")
+CueKey = "floating.text"
+MinValue = 0
+MaxValue = 1000
+MagnitudeType = 0
+MagnitudeAttribute = ""
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
 [sub_resource type="Resource" id="Resource_vmjmg"]
 script = ExtResource("4_aash6")
 BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_pinn7"]
+script = ExtResource("6_m765o")
+BaseValue = 0.0
+
+[sub_resource type="Resource" id="Resource_5l3t8"]
+script = ExtResource("6_m765o")
+BaseValue = 0.0
+
+[sub_resource type="Resource" id="Resource_j2cm1"]
+script = ExtResource("6_m765o")
+BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_10q1i"]
 script = ExtResource("6_m765o")
@@ -34,6 +69,9 @@ SnapshotAttribute = false
 AttributeCalculationType = 0
 Coeficient = SubResource("Resource_10q1i")
 FinalChannel = 0
+CalculatorCoeficient = SubResource("Resource_pinn7")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_j2cm1")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_5l3t8")
 CallerTargetTag = ""
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
 
@@ -50,12 +88,13 @@ BaseValue = 1
 script = ExtResource("6_mjt31")
 Name = ""
 SnapshotLevel = true
-RequireModifierSuccessToTriggerCue = false
+RequireModifierSuccessToTriggerCue = true
 SuppressStackingCues = false
 Modifiers = Array[ExtResource("5_v1l1x")]([SubResource("Resource_v1l1x")])
-Components = Array[ExtResource("1_vmjmg")]([])
-Executions = Array[ExtResource("2_m765o")]([])
+Components = Array[ExtResource("1_10q1i")]([SubResource("Resource_0avqp")])
+Executions = Array[ExtResource("4_v1l1x")]([])
 DurationType = 1
+Duration = SubResource("Resource_ny43b")
 HasPeriodicApplication = true
 Period = SubResource("Resource_mjt31")
 ExecuteOnApplication = false
@@ -76,5 +115,5 @@ ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = Array[ExtResource("3_10q1i")]([])
+GameplayCues = Array[ExtResource("3_10q1i")]([SubResource("Resource_bbokj")])
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

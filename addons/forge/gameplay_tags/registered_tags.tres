@@ -1,7 +1,0 @@
-[gd_resource type="Resource" load_steps=2 format=3 uid="uid://bx878qdwt8yrg"]
-
-[ext_resource type="Script" uid="uid://bq4vlbfx00hea" path="res://addons/forge/gameplay_tags/RegisteredTags.cs" id="1_de1kt"]
-
-[resource]
-script = ExtResource("1_de1kt")
-Tags = ["1.2.3"]

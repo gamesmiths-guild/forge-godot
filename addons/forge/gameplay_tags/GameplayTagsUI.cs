@@ -13,14 +13,14 @@ public partial class GameplayTagsUI : VBoxContainer
 {
 	private readonly Dictionary<TreeItem, GameplayTagNode> _treeItemToNode = [];
 
-	private RegisteredTags _registeredTags;
+	private ForgePluginData? _forgePluginData;
 
-	private Tree _tree;
-	private LineEdit _tagNameTextField;
-	private Button _addTagButton;
+	private Tree? _tree;
+	private LineEdit? _tagNameTextField;
+	private Button? _addTagButton;
 
-	private Texture2D _addIcon;
-	private Texture2D _removeIcon;
+	private Texture2D? _addIcon;
+	private Texture2D? _removeIcon;
 
 	public bool IsPluginInstance { get; set; }
 
@@ -33,7 +33,7 @@ public partial class GameplayTagsUI : VBoxContainer
 			return;
 		}
 
-		_registeredTags = ResourceLoader.Load<RegisteredTags>("res://addons/forge/gameplay_tags/registered_tags.tres");
+		_forgePluginData = ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
@@ -55,14 +55,14 @@ public partial class GameplayTagsUI : VBoxContainer
 			_tagNameTextField.Text = fixedTag;
 		}
 
-		if (_registeredTags.Tags.Contains(_tagNameTextField.Text))
+		if (_forgePluginData.RegisteredTags.Contains(_tagNameTextField.Text))
 		{
 			GD.PushWarning($"Tag [{_tagNameTextField.Text}] is already present in the manager.");
 			return;
 		}
 
-		_registeredTags.Tags.Add(_tagNameTextField.Text);
-		ResourceSaver.Save(_registeredTags);
+		_forgePluginData.RegisteredTags.Add(_tagNameTextField.Text);
+		ResourceSaver.Save(_forgePluginData);
 
 		ReconstructTreeNode();
 	}
@@ -70,7 +70,7 @@ public partial class GameplayTagsUI : VBoxContainer
 	private void ReconstructTreeNode()
 	{
 		TagsManager?.DestroyTagTree();
-		TagsManager = new GameplayTagsManager([.. _registeredTags.Tags]);
+		TagsManager = new GameplayTagsManager([.. _forgePluginData.RegisteredTags]);
 
 		_tree.Clear();
 		ConstructTagTree();
@@ -122,23 +122,23 @@ public partial class GameplayTagsUI : VBoxContainer
 			{
 				GameplayTagNode selectedTag = _treeItemToNode[item];
 
-				for (var i = _registeredTags.Tags.Count - 1; i >= 0; i--)
+				for (var i = _forgePluginData.RegisteredTags.Count - 1; i >= 0; i--)
 				{
-					var tag = _registeredTags.Tags[i];
+					var tag = _forgePluginData.RegisteredTags[i];
 
 					if (tag.StartsWith(selectedTag.CompleteTagKey, System.StringComparison.InvariantCultureIgnoreCase))
 					{
-						_registeredTags.Tags.Remove(tag);
+						_forgePluginData.RegisteredTags.Remove(tag);
 					}
 				}
 
 				if (selectedTag.ParentTagNode is not null
-					&& !_registeredTags.Tags.Contains(selectedTag.ParentTagNode.CompleteTagKey))
+					&& !_forgePluginData.RegisteredTags.Contains(selectedTag.ParentTagNode.CompleteTagKey))
 				{
-					_registeredTags.Tags.Add(selectedTag.ParentTagNode.CompleteTagKey);
+					_forgePluginData.RegisteredTags.Add(selectedTag.ParentTagNode.CompleteTagKey);
 				}
 
-				ResourceSaver.Save(_registeredTags);
+				ResourceSaver.Save(_forgePluginData);
 				ReconstructTreeNode();
 			}
 		}

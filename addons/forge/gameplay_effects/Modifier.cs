@@ -27,7 +27,7 @@ public partial class Modifier : Resource
 	private AttributeBasedFloatCalculationType _attributeCalculationType;
 
 	[Export]
-	public string Attribute { get; set; }
+	public required string Attribute { get; set; }
 
 	[Export]
 	public ModifierOperation Operation { get; set; }
@@ -50,11 +50,11 @@ public partial class Modifier : Resource
 
 	[ExportGroup("Scalable Float")]
 	[Export]
-	public ScalableFloat ScalableFloat { get; set; }
+	public required ScalableFloat ScalableFloat { get; set; }
 
 	[ExportGroup("Attribute Based")]
 	[Export]
-	public string CapturedAttribute { get; set; }
+	public required string CapturedAttribute { get; set; }
 
 	[ExportSubgroup("Attribute Based Capture Definition")]
 	[Export]
@@ -80,30 +80,30 @@ public partial class Modifier : Resource
 	public ScalableFloat Coeficient { get; set; } = new(1);
 
 	[Export]
-	public ScalableFloat PreMultiplyAdditiveValue { get; set; }
+	public required ScalableFloat PreMultiplyAdditiveValue { get; set; }
 
 	[Export]
-	public ScalableFloat PostMultiplyAdditiveValue { get; set; }
+	public required ScalableFloat PostMultiplyAdditiveValue { get; set; }
 
 	[Export]
 	public int FinalChannel { get; set; }
 
 	[ExportGroup("Custom Calculator Class")]
 	[Export]
-	public CustomCalculator CustomCalculatorClass { get; set; }
+	public required CustomCalculator CustomCalculatorClass { get; set; }
 
 	[Export]
-	public ScalableFloat CalculatorCoeficient { get; set; }
+	public required ScalableFloat CalculatorCoeficient { get; set; }
 
 	[Export]
-	public ScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; }
+	public required ScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; }
 
 	[Export]
-	public ScalableFloat CalculatorPostMultiplyAdditiveValue { get; set; }
+	public required ScalableFloat CalculatorPostMultiplyAdditiveValue { get; set; }
 
 	[ExportGroup("Set by Caller Float")]
 	[Export]
-	public string CallerTargetTag { get; set; }
+	public required string CallerTargetTag { get; set; }
 
 	public override void _ValidateProperty(Dictionary property)
 	{

@@ -1,101 +1,13 @@
-[gd_scene load_steps=17 format=3 uid="uid://c8oc5rsdnu45v"]
+[gd_scene load_steps=3 format=3 uid="uid://c8oc5rsdnu45v"]
 
-[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/core/ForgeEntity.cs" id="1_y5408"]
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/gameplay_tags/TagContainer.cs" id="2_uulrj"]
-[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/core/AttributeSet.cs" id="3_6i8f1"]
-[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/core/AttributeValues.cs" id="4_q486f"]
-[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/gameplay_effects/GameplayEffect.cs" id="5_32kvf"]
+[ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/character.tscn" id="2_vosf0"]
 [ext_resource type="Script" uid="uid://ch56n6um46h21" path="res://examples/EntityView.cs" id="5_cxlab"]
-[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/health_regen.tres" id="6_6i8f1"]
-
-[sub_resource type="Resource" id="Resource_q486f"]
-script = ExtResource("2_uulrj")
-ContainerTags = Array[String](["1.2.3"])
-
-[sub_resource type="Resource" id="Resource_32kvf"]
-script = ExtResource("4_q486f")
-Default = 1
-Min = 0
-Max = 99
-
-[sub_resource type="Resource" id="Resource_6i8f1"]
-script = ExtResource("4_q486f")
-Default = 1
-Min = 0
-Max = 1000
-
-[sub_resource type="Resource" id="Resource_yxwfk"]
-script = ExtResource("4_q486f")
-Default = 1
-Min = 0
-Max = 99
-
-[sub_resource type="Resource" id="Resource_xt5xh"]
-script = ExtResource("4_q486f")
-Default = 1000
-Min = 0
-Max = 1000
-
-[sub_resource type="Resource" id="Resource_kfhhh"]
-script = ExtResource("4_q486f")
-Default = 1
-Min = 0
-Max = 99
-
-[sub_resource type="Resource" id="Resource_v5jd2"]
-script = ExtResource("4_q486f")
-Default = 100
-Min = 0
-Max = 100
-
-[sub_resource type="Resource" id="Resource_ayqcy"]
-script = ExtResource("4_q486f")
-Default = 100
-Min = 0
-Max = 1000
-
-[sub_resource type="Resource" id="Resource_qh7gp"]
-script = ExtResource("4_q486f")
-Default = 10
-Min = 0
-Max = 99
 
 [node name="Example" type="Node2D"]
 
-[node name="Forge Entity" type="Node" parent="."]
-script = ExtResource("1_y5408")
-BaseTags = SubResource("Resource_q486f")
-metadata/_custom_type_script = "uid://8uj04dfe8oql"
-
-[node name="Attribute Set" type="Node" parent="Forge Entity"]
-script = ExtResource("3_6i8f1")
-AttributeSetClass = "CharacterAttributes"
-InitialAttributeValues = Dictionary[String, ExtResource("4_q486f")]({
-"Agility": SubResource("Resource_32kvf"),
-"Health": SubResource("Resource_6i8f1"),
-"Intelligence": SubResource("Resource_yxwfk"),
-"Mana": SubResource("Resource_xt5xh"),
-"Strength": SubResource("Resource_kfhhh")
-})
-metadata/_custom_type_script = "uid://cxihb42t2mfqi"
-
-[node name="Attribute Set2" type="Node" parent="Forge Entity"]
-script = ExtResource("3_6i8f1")
-AttributeSetClass = "VitalAttributes"
-InitialAttributeValues = Dictionary[String, ExtResource("4_q486f")]({
-"CurrentHealth": SubResource("Resource_v5jd2"),
-"MaxHealth": SubResource("Resource_ayqcy"),
-"Vitality": SubResource("Resource_qh7gp")
-})
-metadata/_custom_type_script = "uid://cxihb42t2mfqi"
-
-[node name="Effect" type="Node" parent="Forge Entity"]
-script = ExtResource("5_32kvf")
-GameplayEffectData = ExtResource("6_6i8f1")
-metadata/_custom_type_script = "uid://dps0oef50noil"
-
-[node name="VBoxContainer" type="VBoxContainer" parent="." node_paths=PackedStringArray("Entity")]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("5_cxlab")
-Entity = NodePath("../Forge Entity")
+
+[node name="CharacterBody3D" parent="." instance=ExtResource("2_vosf0")]

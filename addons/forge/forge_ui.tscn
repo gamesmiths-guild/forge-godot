@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://pjscvogl6jak"]
+
+[ext_resource type="PackedScene" uid="uid://c17f812by5x23" path="res://addons/forge/gameplay_tags/GameplayTags.tscn" id="1_bxwfw"]
+[ext_resource type="PackedScene" uid="uid://b1ix8v6v1yf0a" path="res://addons/forge/gameplay_cues/CueKeysUI.tscn" id="2_gtsby"]
+
+[node name="Forge" type="TabContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+current_tab = 0
+
+[node name="Tags" parent="." instance=ExtResource("1_bxwfw")]
+unique_name_in_owner = true
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="Cues" parent="." instance=ExtResource("2_gtsby")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
