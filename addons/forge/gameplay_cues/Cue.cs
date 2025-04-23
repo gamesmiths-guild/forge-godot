@@ -18,6 +18,11 @@ public abstract partial class Cue : Node, IGameplayCue
 
 	public override void _Ready()
 	{
+		if (Engine.IsEditorHint())
+		{
+			return;
+		}
+
 		base._Ready();
 
 		CuesManager.RegisterCue(CueKey, this);
@@ -32,6 +37,7 @@ public abstract partial class Cue : Node, IGameplayCue
 		}
 	}
 
+#pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
 	public void OnApply(IForgeEntity? target, GameplayCueParameters? parameters)
 	{
 		if (target is ForgeEntity forgeEntity)
@@ -42,7 +48,6 @@ public abstract partial class Cue : Node, IGameplayCue
 		_CueOnApply(parameters);
 	}
 
-#pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
 	public virtual void _CueOnApply(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
 	}
