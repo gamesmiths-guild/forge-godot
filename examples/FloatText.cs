@@ -33,4 +33,10 @@ public partial class FloatText : Sprite3D
 		Debug.Assert(Label is not null, $"{nameof(Label)} reference is missing.");
 		Label.Text = text;
 	}
+
+	public void SetColor(Color color)
+	{
+		Debug.Assert(Label is not null, $"{nameof(Label)} reference is missing.");
+		Label.AddThemeColorOverride("font_color", color);
+	}
 }

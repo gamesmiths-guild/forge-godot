@@ -1,0 +1,28 @@
+[gd_scene load_steps=6 format=3 uid="uid://cug3xpmr36q85"]
+
+[sub_resource type="Gradient" id="Gradient_a0li7"]
+offsets = PackedFloat32Array(0, 0.634969, 1)
+colors = PackedColorArray(0.719454, 2.55093e-06, 5.77569e-07, 1, 0.913725, 0.239216, 0, 0.537255, 1, 1, 0, 0.423529)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_tna71"]
+gradient = SubResource("Gradient_a0li7")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_kw1tj"]
+lifetime_randomness = 0.2
+emission_shape = 1
+emission_sphere_radius = 0.1
+gravity = Vector3(0, 1, 0)
+scale_min = 0.3
+scale_max = 0.4
+color_ramp = SubResource("GradientTexture1D_tna71")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sgubq"]
+transparency = 1
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_cl7lv"]
+material = SubResource("StandardMaterial3D_sgubq")
+
+[node name="GPUParticles3D" type="GPUParticles3D"]
+process_material = SubResource("ParticleProcessMaterial_kw1tj")
+draw_pass_1 = SubResource("SphereMesh_cl7lv")

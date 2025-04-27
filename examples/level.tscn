@@ -1,11 +1,14 @@
-[gd_scene load_steps=12 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=15 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/character.tscn" id="1_5htmj"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/HealthCues.cs" id="2_qg36f"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/floating_text.tscn" id="3_66bdf"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://examples/EffectArea3d.cs" id="4_sgubq"]
+[ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/FireCues.cs" id="4_tna71"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/gameplay_effects/GameplayEffect.cs" id="4_x0oh0"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/fire_effect.tscn" id="5_kw1tj"]
 [ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/effects/damage.tres" id="5_sgubq"]
+[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/effects/fire.tres" id="9_kw1tj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_5htmj"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -60,6 +63,11 @@ script = ExtResource("2_qg36f")
 FloatingTextScene = ExtResource("3_66bdf")
 CueKey = "floating.text"
 
+[node name="Fire Cues" type="Node" parent="."]
+script = ExtResource("4_tna71")
+FireEffectScene = ExtResource("5_kw1tj")
+CueKey = "effect.fire"
+
 [node name="Area3D" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.16894, 0, -6.55749)
 script = ExtResource("4_sgubq")
@@ -75,4 +83,21 @@ mesh = SubResource("BoxMesh_phudj")
 [node name="Effect" type="Node" parent="Area3D"]
 script = ExtResource("4_x0oh0")
 GameplayEffectData = ExtResource("5_sgubq")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Area3D2" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.37039, 0, -6.55749)
+script = ExtResource("4_sgubq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_66bdf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Area3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_phudj")
+
+[node name="Effect" type="Node" parent="Area3D2"]
+script = ExtResource("4_x0oh0")
+GameplayEffectData = ExtResource("9_kw1tj")
 metadata/_custom_type_script = "uid://dps0oef50noil"

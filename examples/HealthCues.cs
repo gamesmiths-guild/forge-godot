@@ -12,6 +12,8 @@ namespace Gamesmiths.Forge.Example;
 [Tool]
 public partial class HealthCues : Cue
 {
+	private Color _damageColor = new(1, 0, 0);
+
 	[Export]
 	public PackedScene? FloatingTextScene { get; set; }
 
@@ -34,7 +36,7 @@ public partial class HealthCues : Cue
 
 		if (parameters.Value.Magnitude < 0)
 		{
-			floatingText.Label.AddThemeColorOverride("font_color", new Color(1, 0, 0));
+			floatingText.SetColor(_damageColor);
 		}
 
 		floatingText.Position = node3D.Position + new Vector3(0, 2, 0);
