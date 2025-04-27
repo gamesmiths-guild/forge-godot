@@ -1,11 +1,12 @@
-[gd_scene load_steps=18 format=3 uid="uid://ci5xp80c4vcod"]
+[gd_scene load_steps=19 format=3 uid="uid://ci5xp80c4vcod"]
 
+[ext_resource type="Script" uid="uid://bgm8wd05f18rh" path="res://examples/Character.cs" id="1_8qd58"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/core/ForgeEntity.cs" id="1_x3bge"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/gameplay_tags/TagContainer.cs" id="2_8qd58"]
 [ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/core/AttributeSet.cs" id="3_ced4t"]
 [ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/core/AttributeValues.cs" id="4_o72y0"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/gameplay_effects/GameplayEffect.cs" id="5_8m251"]
-[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/health_regen.tres" id="6_gnlmx"]
+[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/effects/health_regen.tres" id="6_gnlmx"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_x3bge"]
 
@@ -64,6 +65,7 @@ Min = 0
 Max = 99
 
 [node name="CharacterBody3D" type="CharacterBody3D"]
+script = ExtResource("1_8qd58")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
