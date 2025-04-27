@@ -9,8 +9,8 @@ namespace Gamesmiths.Forge.GameplayTags.Godot;
 public partial class ForgePluginData : Resource
 {
 	[Export]
-	public required Array<string> RegisteredTags { get; set; }
+	public Array<string>? RegisteredTags { get; set; }
 
 	[Export]
-	public required Array<string> RegisteredCues { get; set; }
+	public Array<string>? RegisteredCues { get; set; }
 }

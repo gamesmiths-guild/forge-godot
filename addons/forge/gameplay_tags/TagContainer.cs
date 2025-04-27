@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using Godot;
 using Godot.Collections;
 
@@ -13,10 +14,17 @@ namespace Gamesmiths.Forge.GameplayTags.Godot;
 public partial class TagContainer : Resource
 {
 	[Export]
-	public Array<string> ContainerTags { get; set; } = [];
+	public Array<string>? ContainerTags { get; set; }
 
 	public GameplayTagContainer GetTagContainer()
 	{
+		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+
+		if (ContainerTags is null)
+		{
+			return new GameplayTagContainer(TagsManager);
+		}
+
 		var tags = new HashSet<GameplayTag>();
 
 		foreach (var tag in ContainerTags)

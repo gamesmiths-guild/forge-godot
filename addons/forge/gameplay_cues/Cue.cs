@@ -1,6 +1,6 @@
 // Copyright © 2025 Gamesmiths Guild.
 
-using System.Linq;
+using System.Diagnostics;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Core.Godot;
 using Gamesmiths.Forge.GameplayTags.Godot;
@@ -10,11 +10,10 @@ using static Gamesmiths.Forge.Godot.Forge;
 
 namespace Gamesmiths.Forge.GameplayCues.Godot;
 
-[Tool]
 public abstract partial class Cue : Node, IGameplayCue
 {
 	[Export]
-	public required string CueKey { get; set; }
+	public string? CueKey { get; set; }
 
 	public override void _Ready()
 	{
@@ -24,6 +23,11 @@ public abstract partial class Cue : Node, IGameplayCue
 		}
 
 		base._Ready();
+
+		if (CuesManager is null || string.IsNullOrEmpty(CueKey))
+		{
+			return;
+		}
 
 		CuesManager.RegisterCue(CueKey, this);
 	}
@@ -112,9 +116,12 @@ public abstract partial class Cue : Node, IGameplayCue
 
 	private static string[] GetCueOptions()
 	{
-		ForgePluginData pluginData =
-			ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
+		ForgePluginData pluginData = ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
 
-		return pluginData.RegisteredCues.ToArray();
+		Debug.Assert(
+			pluginData.RegisteredCues is not null,
+			$"{nameof(pluginData.RegisteredCues)} should have been initialized by the Forge plugin.");
+
+		return [.. pluginData.RegisteredCues];
 	}
 }

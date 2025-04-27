@@ -15,7 +15,7 @@
 script = ExtResource("2_8qd58")
 ContainerTags = Array[String](["1.2.3"])
 
-[sub_resource type="Resource" id="Resource_32kvf"]
+[sub_resource type="Resource" id="Resource_l0fcu"]
 script = ExtResource("4_o72y0")
 Default = 1
 Min = 0
@@ -27,37 +27,37 @@ Default = 980
 Min = 0
 Max = 1000
 
-[sub_resource type="Resource" id="Resource_yxwfk"]
+[sub_resource type="Resource" id="Resource_ag5gy"]
 script = ExtResource("4_o72y0")
 Default = 1
 Min = 0
 Max = 99
 
-[sub_resource type="Resource" id="Resource_xt5xh"]
+[sub_resource type="Resource" id="Resource_8m251"]
 script = ExtResource("4_o72y0")
 Default = 1000
 Min = 0
 Max = 1000
 
-[sub_resource type="Resource" id="Resource_kfhhh"]
+[sub_resource type="Resource" id="Resource_gnlmx"]
 script = ExtResource("4_o72y0")
 Default = 1
 Min = 0
 Max = 99
 
-[sub_resource type="Resource" id="Resource_v5jd2"]
+[sub_resource type="Resource" id="Resource_o72y0"]
 script = ExtResource("4_o72y0")
 Default = 100
 Min = 0
 Max = 100
 
-[sub_resource type="Resource" id="Resource_ayqcy"]
+[sub_resource type="Resource" id="Resource_ced4t"]
 script = ExtResource("4_o72y0")
 Default = 100
 Min = 0
 Max = 1000
 
-[sub_resource type="Resource" id="Resource_qh7gp"]
+[sub_resource type="Resource" id="Resource_8qd58"]
 script = ExtResource("4_o72y0")
 Default = 10
 Min = 0
@@ -82,11 +82,11 @@ metadata/_custom_type_script = "uid://8uj04dfe8oql"
 script = ExtResource("3_ced4t")
 AttributeSetClass = "CharacterAttributes"
 InitialAttributeValues = Dictionary[String, ExtResource("4_o72y0")]({
-"Agility": SubResource("Resource_32kvf"),
+"Agility": SubResource("Resource_l0fcu"),
 "Health": SubResource("Resource_x3bge"),
-"Intelligence": SubResource("Resource_yxwfk"),
-"Mana": SubResource("Resource_xt5xh"),
-"Strength": SubResource("Resource_kfhhh")
+"Intelligence": SubResource("Resource_ag5gy"),
+"Mana": SubResource("Resource_8m251"),
+"Strength": SubResource("Resource_gnlmx")
 })
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
@@ -94,9 +94,9 @@ metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 script = ExtResource("3_ced4t")
 AttributeSetClass = "VitalAttributes"
 InitialAttributeValues = Dictionary[String, ExtResource("4_o72y0")]({
-"CurrentHealth": SubResource("Resource_v5jd2"),
-"MaxHealth": SubResource("Resource_ayqcy"),
-"Vitality": SubResource("Resource_qh7gp")
+"CurrentHealth": SubResource("Resource_o72y0"),
+"MaxHealth": SubResource("Resource_ced4t"),
+"Vitality": SubResource("Resource_8qd58")
 })
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 

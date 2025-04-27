@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 #if TOOLS
+using System.Diagnostics;
 using Gamesmiths.Forge.Editor;
 using Gamesmiths.Forge.GameplayCues.Godot;
 using Gamesmiths.Forge.GameplayTags;
@@ -23,7 +24,10 @@ public partial class ForgePluginLoader : EditorPlugin
 	public override void _EnterTree()
 	{
 		ForgePluginData pluginData =
-			ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
+			ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+
+		pluginData.RegisteredTags ??= [];
+
 		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
 		GD.Print("TagsManager Initialized");
 
@@ -57,6 +61,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _ExitTree()
 	{
+		Debug.Assert(_dockedScene is not null, $"{nameof(_dockedScene)} should have been initialized on _Ready().");
+
 		RemoveControlFromDocks(_dockedScene);
 		_dockedScene.Free();
 

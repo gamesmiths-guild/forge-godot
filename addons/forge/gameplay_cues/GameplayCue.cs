@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Core;
@@ -19,7 +20,7 @@ public partial class GameplayCue : Resource
 	private CueMagnitudeType _magnitudeType;
 
 	[Export]
-	public required string CueKey { get; set; }
+	public string? CueKey { get; set; }
 
 	[Export]
 	public int MinValue { get; set; }
@@ -40,10 +41,12 @@ public partial class GameplayCue : Resource
 	}
 
 	[Export]
-	public required string? MagnitudeAttribute { get; set; }
+	public string? MagnitudeAttribute { get; set; }
 
 	public GameplayCueData GetGameplayCueData()
 	{
+		Debug.Assert(!string.IsNullOrEmpty(CueKey), $"{nameof(CueKey)} should have been defined.");
+
 		return new GameplayCueData(
 			CueKey,
 			MinValue,
@@ -108,6 +111,11 @@ public partial class GameplayCue : Resource
 		ForgePluginData pluginData =
 			ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
 
-		return pluginData.RegisteredCues.ToArray();
+		if (pluginData is null || pluginData.RegisteredCues is null)
+		{
+			return [];
+		}
+
+		return [.. pluginData.RegisteredCues];
 	}
 }

@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using Gamesmiths.Forge.GameplayCues;
 using Gamesmiths.Forge.GameplayCues.Godot;
 using Gamesmiths.Forge.GameplayEffects.Calculator.Godot;
@@ -35,31 +36,25 @@ public partial class GameplayEffectData : Resource
 	private LevelComparison _levelOverridePolicy;
 
 	[Export]
-	public string Name { get; set; }
+	public string? Name { get; set; }
 
 	[Export]
-	public bool SnapshotLevel { get; set; }
-
-	[Export]
-	public bool RequireModifierSuccessToTriggerCue { get; set; }
-
-	[Export]
-	public bool SuppressStackingCues { get; set; }
+	public bool SnapshotLevel { get; set; } = true;
 
 	[ExportGroup("Modifier Data")]
 
 	[Export(PropertyHint.ResourceType, "Modifier")]
-	public Array<Modifier> Modifiers { get; set; } = [];
+	public Array<Modifier>? Modifiers { get; set; }
 
 	[ExportGroup("Components")]
 
 	[Export(PropertyHint.ResourceType, "EffectComponent")]
-	public Array<EffectComponent> Components { get; set; } = [];
+	public Array<EffectComponent>? Components { get; set; }
 
 	[ExportGroup("Executions")]
 
 	[Export(PropertyHint.ResourceType, "Execution")]
-	public Array<Execution> Executions { get; set; } = [];
+	public Array<Execution>? Executions { get; set; }
 
 	[ExportGroup("Duration Data")]
 	[Export]
@@ -82,7 +77,7 @@ public partial class GameplayEffectData : Resource
 	}
 
 	[Export]
-	public ScalableFloat Duration { get; set; }
+	public ScalableFloat? Duration { get; set; }
 
 	[ExportGroup("Periodic Data")]
 
@@ -99,7 +94,7 @@ public partial class GameplayEffectData : Resource
 	}
 
 	[Export]
-	public ScalableFloat Period { get; set; }
+	public ScalableFloat? Period { get; set; }
 
 	[Export]
 	public bool ExecuteOnApplication { get; set; }
@@ -118,10 +113,10 @@ public partial class GameplayEffectData : Resource
 	}
 
 	[Export]
-	public ScalableInt StackLimit { get; set; } = new ScalableInt(1);
+	public ScalableInt StackLimit { get; set; } = new(1);
 
 	[Export]
-	public ScalableInt InitialStack { get; set; } = new ScalableInt(1);
+	public ScalableInt InitialStack { get; set; } = new(1);
 
 	[Export]
 	public StackPolicy SourcePolicy
@@ -207,7 +202,13 @@ public partial class GameplayEffectData : Resource
 
 	[ExportGroup("Gameplay Cues")]
 	[Export(PropertyHint.ResourceType, "GameplayCue")]
-	public Array<GameplayCue> GameplayCues { get; set; } = [];
+	public Array<GameplayCue>? GameplayCues { get; set; }
+
+	[Export]
+	public bool RequireModifierSuccessToTriggerCue { get; set; }
+
+	[Export]
+	public bool SuppressStackingCues { get; set; }
 
 	public override void _ValidateProperty(Dictionary property)
 	{
@@ -216,7 +217,8 @@ public partial class GameplayEffectData : Resource
 			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
 		}
 
-		if (DurationType == DurationType.Instant && property["name"].AsStringName() == PropertyName.HasPeriodicApplication)
+		if (DurationType == DurationType.Instant
+			&& property["name"].AsStringName() == PropertyName.HasPeriodicApplication)
 		{
 			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
 		}
@@ -259,7 +261,8 @@ public partial class GameplayEffectData : Resource
 			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
 		}
 
-		if (InstigatorOverridePolicy != StackOwnerOverridePolicy.Override && property["name"].AsStringName() == PropertyName.InstigatorOverrideStackCountPolicy)
+		if (InstigatorOverridePolicy != StackOwnerOverridePolicy.Override
+			&& property["name"].AsStringName() == PropertyName.InstigatorOverrideStackCountPolicy)
 		{
 			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
 		}
@@ -291,6 +294,11 @@ public partial class GameplayEffectData : Resource
 			return _data.Value;
 		}
 
+		Modifiers ??= [];
+		Components ??= [];
+		Executions ??= [];
+		GameplayCues ??= [];
+
 		var modifiers = new List<ForgeModifier>();
 		foreach (Modifier modifier in Modifiers)
 		{
@@ -314,6 +322,8 @@ public partial class GameplayEffectData : Resource
 		{
 			gameplayCues.Add(gameplayCue.GetGameplayCueData());
 		}
+
+		Debug.Assert(Name is not null, $"{nameof(Duration)} is not set.");
 
 		_data = new ForgeGameplayEffectData(
 			Name,
@@ -342,6 +352,8 @@ public partial class GameplayEffectData : Resource
 		{
 			return null;
 		}
+
+		Debug.Assert(Duration is not null, $"{nameof(Duration)} reference is missing.");
 
 		return Duration.GetScalableFloat();
 	}
@@ -471,6 +483,11 @@ public partial class GameplayEffectData : Resource
 			return null;
 		}
 
-		return new PeriodicData(Period.GetScalableFloat(), ExecuteOnApplication, PeriodInhibitionRemovedPolicy.NeverReset);
+		Debug.Assert(Period is not null, $"{nameof(Period)} reference is missing.");
+
+		return new PeriodicData(
+			Period.GetScalableFloat(),
+			ExecuteOnApplication,
+			PeriodInhibitionRemovedPolicy.NeverReset);
 	}
 }

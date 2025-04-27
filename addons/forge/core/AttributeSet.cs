@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Godot;
@@ -14,19 +15,30 @@ namespace Gamesmiths.Forge.Core.Godot;
 public partial class AttributeSet : Node
 {
 	[Export]
-	public string AttributeSetClass { get; set; }
+	public string AttributeSetClass { get; set; } = string.Empty;
 
 	[Export]
-	public Dictionary<string, AttributeValues> InitialAttributeValues { get; set; } = [];
+	public Dictionary<string, AttributeValues>? InitialAttributeValues { get; set; }
 
-	public ForgeAttributeSet GetAttributeSet()
+	public override void _Ready()
+	{
+		base._Ready();
+
+		InitialAttributeValues ??= [];
+	}
+
+	public ForgeAttributeSet? GetAttributeSet()
 	{
 		if (string.IsNullOrEmpty(AttributeSetClass))
 		{
 			return null;
 		}
 
-		Type type = AppDomain.CurrentDomain.GetAssemblies()
+		Debug.Assert(
+			InitialAttributeValues is not null,
+			$"{nameof(InitialAttributeValues)} should have been initialized on _Ready.");
+
+		Type? type = AppDomain.CurrentDomain.GetAssemblies()
 			.SelectMany(x => x.GetTypes())
 			.FirstOrDefault(x => x.Name == AttributeSetClass);
 
@@ -35,7 +47,7 @@ public partial class AttributeSet : Node
 			return null;
 		}
 
-		var instance = (ForgeAttributeSet)Activator.CreateInstance(type);
+		var instance = (ForgeAttributeSet?)Activator.CreateInstance(type);
 		if (instance is null)
 		{
 			return null;
@@ -46,7 +58,7 @@ public partial class AttributeSet : Node
 			if (prop.PropertyType == typeof(Attribute))
 			{
 				var name = prop.Name;
-				if (InitialAttributeValues.TryGetValue(name, out AttributeValues value))
+				if (InitialAttributeValues.TryGetValue(name, out AttributeValues? value))
 				{
 					SetAttributeValue("SetAttributeBaseValue", instance, prop, value.Default);
 					SetAttributeValue("SetAttributeMinValue", instance, prop, value.Min);
@@ -62,11 +74,11 @@ public partial class AttributeSet : Node
 	{
 #pragma warning disable S3011 // Reflection should not be used to increase accessibility of classes, methods, or fields
 		// Do not attempt this in production environments without adult supervision.
-		MethodInfo method = typeof(ForgeAttributeSet).GetMethod(
+		MethodInfo? method = typeof(ForgeAttributeSet).GetMethod(
 			methodName,
 			BindingFlags.Static | BindingFlags.NonPublic);
 #pragma warning restore S3011 // Reflection should not be used to increase accessibility of classes, methods, or fields
 
-		method?.Invoke(null, [(Attribute)prop.GetValue(instance), value]);
+		method?.Invoke(null, [(Attribute?)prop.GetValue(instance), value]);
 	}
 }

@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Godot;
 using Godot.Collections;
@@ -167,6 +168,13 @@ public partial class AssetRepairTool : EditorPlugin
 
 	private static bool ValidateTagContainerProperty(TagContainer container, string nodeName)
 	{
+		if (container.ContainerTags is null)
+		{
+			return false;
+		}
+
+		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+
 		Array<string> originalTags = container.ContainerTags;
 		var newTags = new Array<string>();
 		var modified = false;

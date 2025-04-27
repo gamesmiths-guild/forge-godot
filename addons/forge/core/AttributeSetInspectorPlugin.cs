@@ -1,5 +1,6 @@
 // Copyright © 2025 Gamesmiths Guild.
 
+#if TOOLS
 using Gamesmiths.Forge.Core.Godot;
 using Godot;
 
@@ -8,7 +9,7 @@ namespace Gamesmiths.Forge.Editor;
 [Tool]
 public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 {
-	public PackedScene InspectorScene { get; set; }
+	private PackedScene? _inspectorScene;
 
 	public override bool _CanHandle(GodotObject @object)
 	{
@@ -22,9 +23,9 @@ public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 			return;
 		}
 
-		InspectorScene = ResourceLoader.Load<PackedScene>("res://addons/forge/core/AttributeSet.tscn");
+		_inspectorScene = ResourceLoader.Load<PackedScene>("uid://6h7g52vglco3");
 
-		var containerScene = (AttributeSetEditor)InspectorScene.Instantiate();
+		var containerScene = (AttributeSetEditor)_inspectorScene.Instantiate();
 		containerScene.IsPluginInstance = true;
 		containerScene.TargetAttributeSet = @object as AttributeSet;
 
@@ -32,14 +33,15 @@ public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 	}
 
 	public override bool _ParseProperty(
-	GodotObject @object,
-	Variant.Type type,
-	string name,
-	PropertyHint hintType,
-	string hintString,
-	PropertyUsageFlags usageFlags,
-	bool wide)
+		GodotObject @object,
+		Variant.Type type,
+		string name,
+		PropertyHint hintType,
+		string hintString,
+		PropertyUsageFlags usageFlags,
+		bool wide)
 	{
 		return true;
 	}
 }
+#endif

@@ -2,6 +2,8 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Gamesmiths.Forge.Core;
 using Godot;
 
@@ -16,14 +18,14 @@ public partial class TagContainerEditor : VBoxContainer
 {
 	private readonly Dictionary<TreeItem, GameplayTagNode> _treeItemToNode = [];
 
-	private Button _containerButton;
-	private Tree _tree;
-	private Texture2D _checkedIcon;
-	private Texture2D _uncheckedIcon;
+	private Button? _containerButton;
+	private Tree? _tree;
+	private Texture2D? _checkedIcon;
+	private Texture2D? _uncheckedIcon;
 
 	public bool IsPluginInstance { get; set; }
 
-	public GodotStringArray ContainerTags { get; set; }
+	public GodotStringArray? ContainerTags { get; set; }
 
 	public override void _Ready()
 	{
@@ -33,6 +35,8 @@ public partial class TagContainerEditor : VBoxContainer
 		{
 			return;
 		}
+
+		ContainerTags ??= [];
 
 		_containerButton = GetNode<Button>("%ContainerButton");
 
@@ -75,11 +79,15 @@ public partial class TagContainerEditor : VBoxContainer
 
 	private void OnButtonToggled(bool toggledOn)
 	{
+		EnsureInitialized();
+
 		_tree.Visible = toggledOn;
 	}
 
 	private void TreeButtonClicked(TreeItem item, long column, long id, long mouseButtonIndex)
 	{
+		EnsureInitialized();
+
 		StringKey itemName = _treeItemToNode[item].CompleteTagKey;
 
 		if (mouseButtonIndex == 1 && id == 0)
@@ -103,6 +111,8 @@ public partial class TagContainerEditor : VBoxContainer
 
 	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)
 	{
+		EnsureInitialized();
+
 		foreach (GameplayTagNode childTagNode in currentNode.ChildTags)
 		{
 			TreeItem childTreeNode = tree.CreateItem(currentTreeItem);
@@ -127,6 +137,8 @@ public partial class TagContainerEditor : VBoxContainer
 
 	private void AddEmptyTagsWarning(Tree tree, TreeItem currentTreeItem)
 	{
+		EnsureInitialized();
+
 		TreeItem childTreeNode = tree.CreateItem(currentTreeItem);
 		childTreeNode.SetText(0, "No tag has been registered yet.");
 		childTreeNode.SetCustomColor(0, Color.FromHtml("EED202"));
@@ -136,6 +148,8 @@ public partial class TagContainerEditor : VBoxContainer
 
 	private void TreeItemCollapsed(TreeItem item)
 	{
+		EnsureInitialized();
+
 		var childCount = 0;
 		TotalChilds(item, ref childCount);
 
@@ -151,6 +165,9 @@ public partial class TagContainerEditor : VBoxContainer
 
 	private void ValidateTags()
 	{
+		EnsureInitialized();
+		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+
 		for (var i = ContainerTags.Count - 1; i >= 0; i--)
 		{
 			var tag = ContainerTags[i];
@@ -165,6 +182,14 @@ public partial class TagContainerEditor : VBoxContainer
 				_containerButton.Text = $"Container (size: {ContainerTags.Count})";
 			}
 		}
+	}
+
+	[MemberNotNull(nameof(_tree), nameof(_containerButton), nameof(ContainerTags))]
+	private void EnsureInitialized()
+	{
+		Debug.Assert(_tree is not null, $"{_tree} should have been initialized on _Ready().");
+		Debug.Assert(_containerButton is not null, $"{_containerButton} should have been initialized on _Ready().");
+		Debug.Assert(ContainerTags is not null, $"{ContainerTags} should have been initialized on _Ready().");
 	}
 }
 #endif

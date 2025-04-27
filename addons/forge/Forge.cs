@@ -15,8 +15,9 @@ public partial class Forge : Node
 
 	public override void _Ready()
 	{
-		ForgePluginData pluginData =
-			ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
+		ForgePluginData pluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+
+		pluginData.RegisteredTags ??= [];
 
 		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
 		CuesManager = new GameplayCuesManager();

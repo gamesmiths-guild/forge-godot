@@ -1,5 +1,6 @@
 // Copyright © 2025 Gamesmiths Guild.
 
+using System.Diagnostics;
 using Godot;
 using Godot.Collections;
 
@@ -26,10 +27,10 @@ public partial class QueryExpression : Resource
 	}
 
 	[Export]
-	public Array<QueryExpression> Expressions { get; set; }
+	public Array<QueryExpression>? Expressions { get; set; }
 
 	[Export]
-	public TagContainer TagContainer { get; set; }
+	public TagContainer? TagContainer { get; set; }
 
 	public override void _ValidateProperty(Dictionary property)
 	{
@@ -55,6 +56,12 @@ public partial class QueryExpression : Resource
 
 	public GameplayTagQueryExpression GetQueryExpression()
 	{
+		Debug.Assert(
+			TagsManager is not null,
+			$"{nameof(TagsManager)} should have been initialized by the Forge plugin.");
+
+		TagContainer ??= new();
+
 		var expression = new GameplayTagQueryExpression(TagsManager);
 
 		switch (_expressionType)
@@ -110,6 +117,10 @@ public partial class QueryExpression : Resource
 
 	private void AddExpressions(GameplayTagQueryExpression expression)
 	{
+		Debug.Assert(
+			Expressions is not null,
+			$"{nameof(Expressions)} reference is missing.");
+
 		foreach (QueryExpression innerExpression in Expressions)
 		{
 			expression.AddExpression(innerExpression.GetQueryExpression());

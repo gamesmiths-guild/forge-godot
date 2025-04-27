@@ -1,5 +1,6 @@
 // Copyright © 2025 Gamesmiths Guild.
 
+using System.Diagnostics;
 using System.Globalization;
 using Gamesmiths.Forge.Core.Godot;
 using Gamesmiths.Forge.GameplayCues;
@@ -12,7 +13,7 @@ namespace Gamesmiths.Forge.Example;
 public partial class HealthCues : Cue
 {
 	[Export]
-	public required PackedScene FloatingTextScene { get; set; }
+	public PackedScene? FloatingTextScene { get; set; }
 
 	public override void _CueOnExecute(ForgeEntity? forgeEntity, GameplayCueParameters? parameters)
 	{
@@ -25,6 +26,8 @@ public partial class HealthCues : Cue
 		{
 			return;
 		}
+
+		Debug.Assert(FloatingTextScene is not null, $"{nameof(FloatingTextScene)} reference is missing.");
 
 		FloatText floatingText = FloatingTextScene.Instantiate<FloatText>();
 		floatingText.SetText(parameters.Value.Magnitude.ToString(CultureInfo.InvariantCulture));

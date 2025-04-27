@@ -14,7 +14,7 @@ public partial class ScalableInt : Resource
 	public int BaseValue { get; set; }
 
 	[Export]
-	public Curve ScalingCurve { get; set; }
+	public Curve? ScalingCurve { get; set; }
 
 	public ScalableInt()
 	{

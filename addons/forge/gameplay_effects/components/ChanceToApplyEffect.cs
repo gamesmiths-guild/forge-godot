@@ -11,7 +11,7 @@ namespace Gamesmiths.Forge.GameplayEffects.Components.Godot;
 public partial class ChanceToApplyEffect : EffectComponent
 {
 	[Export]
-	public ScalableFloat Chance { get; set; } = new(0);
+	public ScalableFloat Chance { get; set; } = new(1);
 
 	public override IGameplayEffectComponent GetComponent()
 	{

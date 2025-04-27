@@ -4,9 +4,9 @@ using Godot;
 
 namespace Gamesmiths.Forge.Core.Godot;
 
-public readonly struct ForgeCurve(Curve curve) : ICurve
+public readonly struct ForgeCurve(Curve? curve) : ICurve
 {
-	private readonly Curve _curve = curve;
+	private readonly Curve? _curve = curve;
 
 	public float Evaluate(float value)
 	{

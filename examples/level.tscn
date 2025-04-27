@@ -20,7 +20,9 @@ glow_enabled = true
 [node name="Level" type="Node3D"]
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.552417, 0.833568, 0, -0.833568, 0.552417, -0.408901, 5.58172, 5.00439)
+transform = Transform3D(0.707107, -0.440184, 0.553388, 0, 0.782608, 0.622515, -0.707107, -0.440184, 0.553388, 3.40307, 5.45521, 4.20488)
+projection = 1
+size = 9.854
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_66bdf")

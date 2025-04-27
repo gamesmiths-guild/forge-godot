@@ -1,6 +1,8 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 #if TOOLS
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.GameplayTags.Godot;
 using Godot;
@@ -29,7 +31,7 @@ public partial class CueKeysUI : VBoxContainer
 			return;
 		}
 
-		_forgePluginData = ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
+		_forgePluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
 
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
 
@@ -45,6 +47,11 @@ public partial class CueKeysUI : VBoxContainer
 
 	private void AddTagButton_Pressed()
 	{
+		EnsureInitialized();
+		Debug.Assert(
+			_forgePluginData.RegisteredCues is not null,
+			$"{_forgePluginData.RegisteredCues} should have been initialized by the Forge plugin.");
+
 		if (!GameplayTag.IsValidKey(_cueKeyTextField.Text, out var _, out var fixedTag))
 		{
 			_cueKeyTextField.Text = fixedTag;
@@ -64,12 +71,19 @@ public partial class CueKeysUI : VBoxContainer
 
 	private void ReconstructTreeNode()
 	{
+		EnsureInitialized();
+
 		_tree.Clear();
 		ConstructTagTree();
 	}
 
 	private void ConstructTagTree()
 	{
+		EnsureInitialized();
+		Debug.Assert(
+			_forgePluginData.RegisteredCues is not null,
+			$"{_forgePluginData.RegisteredCues} should have been initialized by the Forge plugin.");
+
 		TreeItem rootTreeNode = _tree.CreateItem();
 		_tree.HideRoot = true;
 
@@ -103,6 +117,11 @@ public partial class CueKeysUI : VBoxContainer
 
 	private void TreeButtonClicked(TreeItem item, long column, long id, long mouseButtonIndex)
 	{
+		EnsureInitialized();
+		Debug.Assert(
+			_forgePluginData.RegisteredCues is not null,
+			$"{_forgePluginData.RegisteredCues} should have been initialized by the Forge plugin.");
+
 		if (mouseButtonIndex == 1 && id == 0)
 		{
 			var selectedTag = item.GetText(0);
@@ -120,6 +139,14 @@ public partial class CueKeysUI : VBoxContainer
 			ResourceSaver.Save(_forgePluginData);
 			ReconstructTreeNode();
 		}
+	}
+
+	[MemberNotNull(nameof(_tree), nameof(_cueKeyTextField), nameof(_forgePluginData))]
+	private void EnsureInitialized()
+	{
+		Debug.Assert(_tree is not null, $"{_tree} should have been initialized on _Ready().");
+		Debug.Assert(_cueKeyTextField is not null, $"{_cueKeyTextField} should have been initialized on _Ready().");
+		Debug.Assert(_forgePluginData is not null, $"{_forgePluginData} should have been initialized on _Ready().");
 	}
 }
 #endif

@@ -7,7 +7,7 @@ namespace Gamesmiths.Forge.GameplayTags.Godot;
 
 public partial class TagsInspectorPlugin : EditorInspectorPlugin
 {
-	public PackedScene InspectorScene { get; set; }
+	private PackedScene? _inspectorScene;
 
 	public override bool _CanHandle(GodotObject @object)
 	{
@@ -23,11 +23,11 @@ public partial class TagsInspectorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		InspectorScene = ResourceLoader.Load<PackedScene>("res://addons/forge/gameplay_tags/TagContainer.tscn");
+		_inspectorScene = ResourceLoader.Load<PackedScene>("uid://tou2hv4cet4e");
 
 		if (type == Variant.Type.Array && name == "ContainerTags")
 		{
-			var containerScene = (TagContainerEditor)InspectorScene.Instantiate();
+			var containerScene = (TagContainerEditor)_inspectorScene.Instantiate();
 			containerScene.IsPluginInstance = true;
 
 			if (@object is TagContainer tagContainer)

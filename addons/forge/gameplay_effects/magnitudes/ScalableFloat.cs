@@ -14,7 +14,7 @@ public partial class ScalableFloat : Resource
 	public float BaseValue { get; set; }
 
 	[Export]
-	public Curve ScalingCurve { get; set; }
+	public Curve? ScalingCurve { get; set; }
 
 	public ScalableFloat()
 	{

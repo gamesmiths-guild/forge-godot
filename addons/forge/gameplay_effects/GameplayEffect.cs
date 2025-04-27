@@ -8,5 +8,5 @@ namespace Gamesmiths.Forge.GameplayEffects.Godot;
 public partial class GameplayEffect : Node
 {
 	[Export]
-	public GameplayEffectData GameplayEffectData { get; set; }
+	public GameplayEffectData? GameplayEffectData { get; set; }
 }

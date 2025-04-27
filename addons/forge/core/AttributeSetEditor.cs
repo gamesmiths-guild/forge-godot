@@ -1,6 +1,8 @@
 // Copyright © 2025 Gamesmiths Guild.
 
+#if TOOLS
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Godot;
@@ -12,12 +14,11 @@ namespace Gamesmiths.Forge.Core.Godot;
 [Tool]
 public partial class AttributeSetEditor : VBoxContainer
 {
-	private OptionButton _attributeSetClassOptionButton;
+	private OptionButton? _attributeSetClassOptionButton;
 
-	[Export]
-	public PackedScene AttributeScene { get; set; }
+	private PackedScene? _attributeScene;
 
-	public AttributeSet TargetAttributeSet { get; set; }
+	public AttributeSet? TargetAttributeSet { get; set; }
 
 	public bool IsPluginInstance { get; set; }
 
@@ -30,7 +31,7 @@ public partial class AttributeSetEditor : VBoxContainer
 			return;
 		}
 
-		AttributeScene = ResourceLoader.Load<PackedScene>("res://addons/forge/core/Attribute.tscn");
+		_attributeScene = ResourceLoader.Load<PackedScene>("uid://csgwfxn45gs4m");
 
 		_attributeSetClassOptionButton = GetNode<OptionButton>("%OptionButton");
 		_attributeSetClassOptionButton.Clear();
@@ -59,12 +60,6 @@ public partial class AttributeSetEditor : VBoxContainer
 				}
 			}
 		}
-		else if (_attributeSetClassOptionButton.GetItemCount() > 1)
-		{
-			// If no value is set, select the first real option (skipping the default)
-			_attributeSetClassOptionButton.Selected = 1;
-			AttributeSetClassOptionButton_ItemSelected(1);
-		}
 	}
 
 	/// <summary>
@@ -89,6 +84,19 @@ public partial class AttributeSetEditor : VBoxContainer
 
 	private void AttributeSetClassOptionButton_ItemSelected(long index)
 	{
+		Debug.Assert(
+			_attributeSetClassOptionButton is not null,
+			$"{nameof(_attributeSetClassOptionButton)} should have been initialized on _Ready().");
+		Debug.Assert(
+			TargetAttributeSet is not null,
+			$"{nameof(TargetAttributeSet)} should have been initialized by the inspector plugin.");
+		Debug.Assert(
+			TargetAttributeSet.InitialAttributeValues is not null,
+			$"{nameof(TargetAttributeSet.InitialAttributeValues)} should have been initialized.");
+		Debug.Assert(
+			_attributeScene is not null,
+			$"{nameof(_attributeScene)} should have been initialized on _Ready().");
+
 		if (TargetAttributeSet.AttributeSetClass != _attributeSetClassOptionButton.GetItemText((int)index))
 		{
 			TargetAttributeSet.AttributeSetClass = _attributeSetClassOptionButton.GetItemText((int)index);
@@ -100,7 +108,7 @@ public partial class AttributeSetEditor : VBoxContainer
 			}
 		}
 
-		Type targetType = Array.Find(
+		Type? targetType = Array.Find(
 			Assembly.GetExecutingAssembly().GetTypes(),
 			x => x.Name == _attributeSetClassOptionButton.GetItemText((int)index));
 
@@ -113,11 +121,16 @@ public partial class AttributeSetEditor : VBoxContainer
 			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 			.Where(x => x.PropertyType == typeof(Attribute));
 
-		ForgeAttributeSet attributeSet = TargetAttributeSet.GetAttributeSet();
+		ForgeAttributeSet? attributeSet = TargetAttributeSet.GetAttributeSet();
+
+		if (attributeSet is null)
+		{
+			return;
+		}
 
 		foreach (var attributeName in attributeProperties.Select(x => x.Name))
 		{
-			var attributeScene = (VBoxContainer)AttributeScene.Instantiate();
+			var attributeScene = (VBoxContainer)_attributeScene.Instantiate();
 			AddChild(attributeScene);
 			attributeScene.AddToGroup("attributes");
 
@@ -127,12 +140,14 @@ public partial class AttributeSetEditor : VBoxContainer
 
 			if (TargetAttributeSet.InitialAttributeValues is not null)
 			{
-				if (!TargetAttributeSet.InitialAttributeValues.TryGetValue(attributeName, out AttributeValues value))
+				if (!TargetAttributeSet.InitialAttributeValues.TryGetValue(attributeName, out AttributeValues? value))
 				{
+					var attributeSetClass = TargetAttributeSet.AttributeSetClass;
+
 					value = new AttributeValues(
-						attributeSet.AttributesMap[$"{TargetAttributeSet.AttributeSetClass}.{attributeName}"].CurrentValue,
-						attributeSet.AttributesMap[$"{TargetAttributeSet.AttributeSetClass}.{attributeName}"].Min,
-						attributeSet.AttributesMap[$"{TargetAttributeSet.AttributeSetClass}.{attributeName}"].Max);
+						attributeSet.AttributesMap[$"{attributeSetClass}.{attributeName}"].CurrentValue,
+						attributeSet.AttributesMap[$"{attributeSetClass}.{attributeName}"].Min,
+						attributeSet.AttributesMap[$"{attributeSetClass}.{attributeName}"].Max);
 					TargetAttributeSet.InitialAttributeValues.Add(attributeName, value);
 				}
 
@@ -191,3 +206,4 @@ public partial class AttributeSetEditor : VBoxContainer
 		}
 	}
 }
+#endif

@@ -1,6 +1,7 @@
 // Copyright © 2025 Gamesmiths Guild.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Core;
@@ -27,7 +28,7 @@ public partial class Modifier : Resource
 	private AttributeBasedFloatCalculationType _attributeCalculationType;
 
 	[Export]
-	public required string Attribute { get; set; }
+	public string? Attribute { get; set; }
 
 	[Export]
 	public ModifierOperation Operation { get; set; }
@@ -50,11 +51,11 @@ public partial class Modifier : Resource
 
 	[ExportGroup("Scalable Float")]
 	[Export]
-	public required ScalableFloat ScalableFloat { get; set; }
+	public ScalableFloat? ScalableFloat { get; set; }
 
 	[ExportGroup("Attribute Based")]
 	[Export]
-	public required string CapturedAttribute { get; set; }
+	public string? CapturedAttribute { get; set; }
 
 	[ExportSubgroup("Attribute Based Capture Definition")]
 	[Export]
@@ -80,30 +81,30 @@ public partial class Modifier : Resource
 	public ScalableFloat Coeficient { get; set; } = new(1);
 
 	[Export]
-	public required ScalableFloat PreMultiplyAdditiveValue { get; set; }
+	public ScalableFloat PreMultiplyAdditiveValue { get; set; } = new();
 
 	[Export]
-	public required ScalableFloat PostMultiplyAdditiveValue { get; set; }
+	public ScalableFloat PostMultiplyAdditiveValue { get; set; } = new();
 
 	[Export]
 	public int FinalChannel { get; set; }
 
 	[ExportGroup("Custom Calculator Class")]
 	[Export]
-	public required CustomCalculator CustomCalculatorClass { get; set; }
+	public CustomCalculator? CustomCalculatorClass { get; set; }
 
 	[Export]
-	public required ScalableFloat CalculatorCoeficient { get; set; }
+	public ScalableFloat CalculatorCoeficient { get; set; } = new(1);
 
 	[Export]
-	public required ScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; }
+	public ScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; } = new();
 
 	[Export]
-	public required ScalableFloat CalculatorPostMultiplyAdditiveValue { get; set; }
+	public ScalableFloat CalculatorPostMultiplyAdditiveValue { get; set; } = new();
 
 	[ExportGroup("Set by Caller Float")]
 	[Export]
-	public required string CallerTargetTag { get; set; }
+	public string? CallerTargetTag { get; set; }
 
 	public override void _ValidateProperty(Dictionary property)
 	{
@@ -157,6 +158,8 @@ public partial class Modifier : Resource
 
 	public ForgeModifier GetModifier()
 	{
+		Debug.Assert(Attribute is not null, $"{nameof(Attribute)} reference is missing.");
+
 		return new ForgeModifier(
 			Attribute,
 			Operation,
@@ -206,6 +209,8 @@ public partial class Modifier : Resource
 			return null;
 		}
 
+		Debug.Assert(ScalableFloat is not null, $"{nameof(ScalableFloat)} reference is missing.");
+
 		return ScalableFloat.GetScalableFloat();
 	}
 
@@ -215,6 +220,8 @@ public partial class Modifier : Resource
 		{
 			return null;
 		}
+
+		Debug.Assert(CapturedAttribute is not null, $"{nameof(CapturedAttribute)} reference is missing.");
 
 		return new AttributeBasedFloat(
 			new AttributeCaptureDefinition(
@@ -235,6 +242,8 @@ public partial class Modifier : Resource
 			return null;
 		}
 
+		Debug.Assert(CustomCalculatorClass is not null, $"{nameof(CustomCalculatorClass)} reference is missing.");
+
 		return new CustomCalculationBasedFloat(
 				CustomCalculatorClass.GetCustomCalculatorClass(),
 				CalculatorCoeficient.GetScalableFloat(),
@@ -249,6 +258,9 @@ public partial class Modifier : Resource
 		{
 			return null;
 		}
+
+		Debug.Assert(CallerTargetTag is not null, $"{nameof(CallerTargetTag)} reference is missing.");
+		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
 
 		return new SetByCallerFloat(GameplayTag.RequestTag(TagsManager, CallerTargetTag));
 	}

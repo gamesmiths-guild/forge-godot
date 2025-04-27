@@ -2,8 +2,9 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Godot;
-
 using static Gamesmiths.Forge.Godot.Forge;
 
 namespace Gamesmiths.Forge.GameplayTags.Godot;
@@ -33,7 +34,7 @@ public partial class GameplayTagsUI : VBoxContainer
 			return;
 		}
 
-		_forgePluginData = ResourceLoader.Load<ForgePluginData>("res://addons/forge/forge_data.tres");
+		_forgePluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
@@ -50,6 +51,11 @@ public partial class GameplayTagsUI : VBoxContainer
 
 	private void AddTagButton_Pressed()
 	{
+		EnsureInitialized();
+		Debug.Assert(
+			_forgePluginData.RegisteredTags is not null,
+			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
+
 		if (!GameplayTag.IsValidKey(_tagNameTextField.Text, out var _, out var fixedTag))
 		{
 			_tagNameTextField.Text = fixedTag;
@@ -69,6 +75,11 @@ public partial class GameplayTagsUI : VBoxContainer
 
 	private void ReconstructTreeNode()
 	{
+		EnsureInitialized();
+		Debug.Assert(
+			_forgePluginData.RegisteredTags is not null,
+			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
+
 		TagsManager?.DestroyTagTree();
 		TagsManager = new GameplayTagsManager([.. _forgePluginData.RegisteredTags]);
 
@@ -78,6 +89,9 @@ public partial class GameplayTagsUI : VBoxContainer
 
 	private void ConstructTagTree()
 	{
+		EnsureInitialized();
+		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+
 		TreeItem rootTreeNode = _tree.CreateItem();
 		_tree.HideRoot = true;
 
@@ -109,6 +123,11 @@ public partial class GameplayTagsUI : VBoxContainer
 
 	private void TreeButtonClicked(TreeItem item, long column, long id, long mouseButtonIndex)
 	{
+		EnsureInitialized();
+		Debug.Assert(
+			_forgePluginData.RegisteredTags is not null,
+			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
+
 		if (mouseButtonIndex == 1)
 		{
 			if (id == 0)
@@ -142,6 +161,14 @@ public partial class GameplayTagsUI : VBoxContainer
 				ReconstructTreeNode();
 			}
 		}
+	}
+
+	[MemberNotNull(nameof(_tree), nameof(_tagNameTextField), nameof(_forgePluginData))]
+	private void EnsureInitialized()
+	{
+		Debug.Assert(_tree is not null, $"{_tree} should have been initialized on _Ready().");
+		Debug.Assert(_tagNameTextField is not null, $"{_tagNameTextField} should have been initialized on _Ready().");
+		Debug.Assert(_forgePluginData is not null, $"{_forgePluginData} should have been initialized on _Ready().");
 	}
 }
 #endif
