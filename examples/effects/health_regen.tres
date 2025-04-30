@@ -124,7 +124,7 @@ ScalingCurve = SubResource("Curve_kf85k")
 
 [resource]
 script = ExtResource("6_mjt31")
-Name = ""
+Name = "Regen"
 SnapshotLevel = true
 Modifiers = Array[ExtResource("5_v1l1x")]([SubResource("Resource_v1l1x")])
 Components = Array[ExtResource("1_10q1i")]([SubResource("Resource_7yjjs")])

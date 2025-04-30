@@ -1,0 +1,73 @@
+[gd_resource type="Resource" load_steps=13 format=3 uid="uid://dgybn25of4xpg"]
+
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="1_q4yw0"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/gameplay_tags/TagContainer.cs" id="1_rwyct"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/gameplay_effects/components/ModifierTags.cs" id="2_25jvs"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="2_rwyct"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="3_25jvs"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="5_udmal"]
+
+[sub_resource type="Resource" id="Resource_u4cvi"]
+script = ExtResource("1_rwyct")
+ContainerTags = ["effect.wet"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_udmal"]
+script = ExtResource("2_25jvs")
+TagsToAdd = SubResource("Resource_u4cvi")
+metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_hevuu"]
+script = ExtResource("1_q4yw0")
+BaseValue = 5.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_oi1ck"]
+script = ExtResource("2_rwyct")
+CueKey = "effect.wet"
+MinValue = 0
+MaxValue = 1
+MagnitudeType = 0
+MagnitudeAttribute = ""
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_cn837"]
+script = ExtResource("3_25jvs")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_cd28o"]
+script = ExtResource("3_25jvs")
+BaseValue = 1
+
+[resource]
+script = ExtResource("5_udmal")
+Name = "Wet"
+SnapshotLevel = true
+Modifiers = Array[Object]([])
+Components = [SubResource("Resource_udmal")]
+Executions = []
+DurationType = 2
+Duration = SubResource("Resource_hevuu")
+HasPeriodicApplication = false
+ExecuteOnApplication = false
+CanStack = true
+StackLimit = SubResource("Resource_cd28o")
+InitialStack = SubResource("Resource_cn837")
+SourcePolicy = 1
+InstigatorDenialPolicy = 0
+InstigatorOverridePolicy = 1
+InstigatorOverrideStackCountPolicy = 0
+LevelPolicy = 0
+LevelDenialPolicy = 0
+LevelOverridePolicy = 0
+LevelOverrideStackCountPolicy = 0
+MagnitudePolicy = 0
+OverflowPolicy = 0
+ExpirationPolicy = 0
+ApplicationRefreshPolicy = 0
+ApplicationResetPeriodPolicy = 0
+ExecuteOnSuccessfulApplication = false
+GameplayCues = [SubResource("Resource_oi1ck")]
+RequireModifierSuccessToTriggerCue = false
+SuppressStackingCues = false
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

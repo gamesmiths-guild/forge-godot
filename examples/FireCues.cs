@@ -1,5 +1,6 @@
 // Copyright © 2025 Gamesmiths Guild.
 
+using System.Collections.Generic;
 using System.Diagnostics;
 using Gamesmiths.Forge.Core.Godot;
 using Gamesmiths.Forge.GameplayCues;
@@ -11,7 +12,7 @@ namespace Gamesmiths.Forge.Example;
 [Tool]
 public partial class FireCues : Cue
 {
-	private Node3D? _fireEffectSceneInsntace;
+	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
 
 	[Export]
 	public PackedScene? FireEffectScene { get; set; }
@@ -32,16 +33,32 @@ public partial class FireCues : Cue
 
 		Debug.Assert(FireEffectScene is not null, $"{nameof(FireEffectScene)} reference is missing.");
 
-		_fireEffectSceneInsntace = FireEffectScene.Instantiate<Node3D>();
+		Node3D effectInstance = FireEffectScene.Instantiate<Node3D>();
 
-		parent.AddChild(_fireEffectSceneInsntace);
-		_fireEffectSceneInsntace.Translate(new Vector3(0, 2, 0));
+		if (!_effectInstanceMapping.TryAdd(parent, effectInstance))
+		{
+			_effectInstanceMapping[parent] = effectInstance;
+		}
+
+		parent.AddChild(effectInstance);
+		effectInstance.Translate(new Vector3(0, 2, 0));
 	}
 
 	public override void _CueOnRemove(ForgeEntity forgeEntity, bool interrupted)
 	{
 		base._CueOnRemove(forgeEntity, interrupted);
 
-		_fireEffectSceneInsntace.Free();
+		GD.Print($"Remove effect {interrupted}");
+
+		if (forgeEntity.GetParent() is not Node3D parent
+			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
+			|| effectInstance is null)
+		{
+			return;
+		}
+
+		parent.RemoveChild(effectInstance);
+		effectInstance.QueueFree();
+		_effectInstanceMapping[parent] = null;
 	}
 }

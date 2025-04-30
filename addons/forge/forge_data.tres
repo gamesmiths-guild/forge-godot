@@ -4,5 +4,5 @@
 
 [resource]
 script = ExtResource("1_x0pne")
-RegisteredTags = Array[String](["1.2.3"])
-RegisteredCues = Array[String](["floating.text", "effect.fire"])
+RegisteredTags = Array[String](["effect.fire", "effect.wet"])
+RegisteredCues = Array[String](["floating.text", "effect.fire", "effect.wet"])

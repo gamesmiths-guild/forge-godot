@@ -14,7 +14,7 @@
 
 [sub_resource type="Resource" id="Resource_q486f"]
 script = ExtResource("2_8qd58")
-ContainerTags = Array[String](["1.2.3"])
+ContainerTags = Array[String]([])
 
 [sub_resource type="Resource" id="Resource_l0fcu"]
 script = ExtResource("4_o72y0")

@@ -1,10 +1,38 @@
-[gd_resource type="Resource" load_steps=20 format=3 uid="uid://drty8r1ibx5ug"]
+[gd_resource type="Resource" load_steps=28 format=3 uid="uid://drty8r1ibx5ug"]
 
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="1_hevuu"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/gameplay_tags/TagContainer.cs" id="1_mxksh"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/gameplay_effects/components/ModifierTags.cs" id="2_bgqdm"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="2_oi1ck"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="3_cho4q"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/gameplay_effects/components/TargetTagRequirements.cs" id="3_o1eft"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="4_mxksh"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="5_bgqdm"]
+
+[sub_resource type="Resource" id="Resource_nmed0"]
+script = ExtResource("1_mxksh")
+ContainerTags = ["effect.fire"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_6u7xf"]
+script = ExtResource("2_bgqdm")
+TagsToAdd = SubResource("Resource_nmed0")
+metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_4kmhu"]
+script = ExtResource("1_mxksh")
+ContainerTags = []
+
+[sub_resource type="Resource" id="Resource_mxksh"]
+script = ExtResource("1_mxksh")
+ContainerTags = ["effect.wet"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_o8bkg"]
+script = ExtResource("3_o1eft")
+ApplicationRequiredTags = SubResource("Resource_4kmhu")
+RemovalRequiredTags = SubResource("Resource_mxksh")
+metadata/_custom_type_script = "uid://b0eq12mjqfage"
 
 [sub_resource type="Resource" id="Resource_hevuu"]
 script = ExtResource("3_cho4q")
@@ -94,22 +122,22 @@ BaseValue = 1
 
 [resource]
 script = ExtResource("5_bgqdm")
-Name = "Damage"
+Name = "Fire"
 SnapshotLevel = true
 Modifiers = Array[Object]([SubResource("Resource_kpa2l")])
-Components = []
+Components = [SubResource("Resource_6u7xf"), SubResource("Resource_o8bkg")]
 Executions = []
 DurationType = 2
 Duration = SubResource("Resource_hevuu")
 HasPeriodicApplication = true
 Period = SubResource("Resource_cho4q")
 ExecuteOnApplication = true
-CanStack = false
+CanStack = true
 StackLimit = SubResource("Resource_cd28o")
 InitialStack = SubResource("Resource_cn837")
-SourcePolicy = 0
+SourcePolicy = 1
 InstigatorDenialPolicy = 0
-InstigatorOverridePolicy = 0
+InstigatorOverridePolicy = 1
 InstigatorOverrideStackCountPolicy = 0
 LevelPolicy = 0
 LevelDenialPolicy = 0
@@ -119,7 +147,7 @@ MagnitudePolicy = 0
 OverflowPolicy = 0
 ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
-ApplicationResetPeriodPolicy = 0
+ApplicationResetPeriodPolicy = 1
 ExecuteOnSuccessfulApplication = false
 GameplayCues = [SubResource("Resource_ygmrb"), SubResource("Resource_oi1ck")]
 RequireModifierSuccessToTriggerCue = false
