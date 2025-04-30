@@ -2,3 +2,7 @@
 .godot/
 /android/
 .vs/
+
+# Launch profile configs
+/Properties/
+*.user
