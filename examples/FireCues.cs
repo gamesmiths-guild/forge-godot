@@ -17,6 +17,9 @@ public partial class FireCues : Cue
 	[Export]
 	public PackedScene? FireEffectScene { get; set; }
 
+	[Export]
+	public bool UpdateEffectIntensity { get; set; }
+
 	public override void _CueOnApply(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
 		base._CueOnApply(forgeEntity, parameters);
@@ -42,6 +45,30 @@ public partial class FireCues : Cue
 
 		parent.AddChild(effectInstance);
 		effectInstance.Translate(new Vector3(0, 2, 0));
+	}
+
+	public override void _CueOnUpdate(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	{
+		if (!UpdateEffectIntensity)
+		{
+			return;
+		}
+
+		base._CueOnUpdate(forgeEntity, parameters);
+
+		if (forgeEntity.GetParent() is not Node3D parent
+			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
+			|| effectInstance is null)
+		{
+			return;
+		}
+
+		if (effectInstance is not GpuParticles3D particle3D)
+		{
+			return;
+		}
+
+		particle3D.Amount = parameters.Value.Magnitude;
 	}
 
 	public override void _CueOnRemove(ForgeEntity forgeEntity, bool interrupted)

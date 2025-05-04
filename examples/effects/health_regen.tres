@@ -1,4 +1,4 @@
-[gd_resource type="Resource" load_steps=34 format=3 uid="uid://d0ctw2d38gb15"]
+[gd_resource type="Resource" load_steps=33 format=3 uid="uid://d0ctw2d38gb15"]
 
 [ext_resource type="Script" uid="uid://cpcrmq51kgbpu" path="res://addons/forge/gameplay_effects/components/EffectComponent.cs" id="1_10q1i"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/gameplay_effects/components/TargetTagRequirements.cs" id="2_aash6"]
@@ -26,15 +26,6 @@ metadata/_custom_type_script = "uid://b0eq12mjqfage"
 script = ExtResource("6_m765o")
 BaseValue = 0.0
 ScalingCurve = SubResource("Curve_bbokj")
-
-[sub_resource type="Resource" id="Resource_bbokj"]
-script = ExtResource("3_10q1i")
-CueKey = "floating.text"
-MinValue = 0
-MaxValue = 1000
-MagnitudeType = 2
-MagnitudeAttribute = "CharacterAttributes.Health"
-metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
 [sub_resource type="Curve" id="Curve_7yjjs"]
 
@@ -85,7 +76,7 @@ BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_aash6"]
 script = ExtResource("6_m765o")
-BaseValue = 2.0
+BaseValue = 1.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_v1l1x"]
@@ -151,7 +142,7 @@ ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = Array[ExtResource("3_10q1i")]([SubResource("Resource_bbokj")])
+GameplayCues = Array[ExtResource("3_10q1i")]([])
 RequireModifierSuccessToTriggerCue = true
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

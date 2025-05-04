@@ -1,16 +1,19 @@
-[gd_scene load_steps=20 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=25 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/character.tscn" id="1_5htmj"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/HealthCues.cs" id="2_qg36f"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/floating_text.tscn" id="3_66bdf"]
-[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://examples/EffectArea3d.cs" id="4_sgubq"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://examples/EffectArea3D.cs" id="4_sgubq"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/FireCues.cs" id="4_tna71"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/gameplay_effects/GameplayEffect.cs" id="4_x0oh0"]
 [ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/fire_effect.tscn" id="5_kw1tj"]
 [ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/effects/damage.tres" id="5_sgubq"]
 [ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://examples/wet_effect.tscn" id="6_4ppvq"]
+[ext_resource type="PackedScene" uid="uid://cwn3bvfd3pobb" path="res://examples/regen_effect.tscn" id="7_xqa2x"]
 [ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/effects/fire.tres" id="9_kw1tj"]
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/effects/water.tres" id="10_cl7lv"]
+[ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/effects/heal.tres" id="10_gbw2x"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/effects/rejuvenation.tres" id="12_xqa2x"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_5htmj"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -32,11 +35,17 @@ glow_enabled = true
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kw1tj"]
 albedo_color = Color(0.82, 0.779, 0, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gof48"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(0, 0.529412, 0, 1)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cl7lv"]
 albedo_color = Color(1, 0.33, 0.33, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ppvq"]
 albedo_color = Color(0, 0.215686, 1, 1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_xqa2x"]
 
 [node name="Level" type="Node3D"]
 
@@ -83,8 +92,14 @@ script = ExtResource("4_tna71")
 FireEffectScene = ExtResource("6_4ppvq")
 CueKey = "effect.wet"
 
+[node name="Regen Cues" type="Node" parent="."]
+script = ExtResource("4_tna71")
+FireEffectScene = ExtResource("7_xqa2x")
+UpdateEffectIntensity = true
+CueKey = "effect.regen"
+
 [node name="Damage Area" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.16894, 0, -6.55749)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.83737, 0, -6.55749)
 script = ExtResource("4_sgubq")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Damage Area"]
@@ -99,6 +114,29 @@ surface_material_override/0 = SubResource("StandardMaterial3D_kw1tj")
 [node name="Effect" type="Node" parent="Damage Area"]
 script = ExtResource("4_x0oh0")
 GameplayEffectData = ExtResource("5_sgubq")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Regen Area" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.16894, 0, -0.78413)
+script = ExtResource("4_sgubq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Regen Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_66bdf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Regen Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_phudj")
+surface_material_override/0 = SubResource("StandardMaterial3D_gof48")
+
+[node name="Effect" type="Node" parent="Regen Area"]
+script = ExtResource("4_x0oh0")
+GameplayEffectData = ExtResource("10_gbw2x")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Effect2" type="Node" parent="Regen Area"]
+script = ExtResource("4_x0oh0")
+GameplayEffectData = ExtResource("12_xqa2x")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Fire Area" type="Area3D" parent="."]
@@ -122,6 +160,7 @@ metadata/_custom_type_script = "uid://dps0oef50noil"
 [node name="Water Area" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.37039, 0, -1.12338)
 script = ExtResource("4_sgubq")
+TriggerMode = 2
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Water Area"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
@@ -136,3 +175,17 @@ surface_material_override/0 = SubResource("StandardMaterial3D_4ppvq")
 script = ExtResource("4_x0oh0")
 GameplayEffectData = ExtResource("10_cl7lv")
 metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="ShapeCast3D" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55526, 4.3906, 1.82929)
+shape = SubResource("SphereShape3D_xqa2x")
+target_position = Vector3(0, -3, 0)
+margin = 0.5
+debug_shape_custom_color = Color(1, 0, 0, 1)
+
+[node name="RayCast3D" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.15056, 4.39659, 1.81254)
+target_position = Vector3(0, -4, 0)
+hit_back_faces = false
+debug_shape_custom_color = Color(0.603922, 0, 0, 1)
+debug_shape_thickness = 3

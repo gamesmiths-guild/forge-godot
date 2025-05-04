@@ -1,0 +1,146 @@
+[gd_resource type="Resource" load_steps=28 format=3 uid="uid://bgbbtfuhkcquk"]
+
+[ext_resource type="Script" uid="uid://cpcrmq51kgbpu" path="res://addons/forge/gameplay_effects/components/EffectComponent.cs" id="1_euif1"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="4_l03br"]
+[ext_resource type="Script" uid="uid://8vdy1awpc2a4" path="res://addons/forge/gameplay_effects/calculator/Execution.cs" id="5_csmdg"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="6_8605a"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="7_d1dxv"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="8_33oku"]
+[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/MyCustomCalculatorWrapper.cs" id="9_68ql8"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="10_egitd"]
+
+[sub_resource type="Resource" id="Resource_ny43b"]
+script = ExtResource("4_l03br")
+BaseValue = 10.0
+
+[sub_resource type="Resource" id="Resource_euif1"]
+script = ExtResource("6_8605a")
+CueKey = "floating.text"
+MinValue = 0
+MaxValue = 1000
+MagnitudeType = 2
+MagnitudeAttribute = "CharacterAttributes.Health"
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_s78f6"]
+script = ExtResource("6_8605a")
+CueKey = "effect.regen"
+MinValue = 1
+MaxValue = 3
+MagnitudeType = 1
+MagnitudeAttribute = ""
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_vmjmg"]
+script = ExtResource("7_d1dxv")
+BaseValue = 1
+
+[sub_resource type="Curve" id="Curve_0avqp"]
+
+[sub_resource type="Resource" id="Resource_pinn7"]
+script = ExtResource("4_l03br")
+BaseValue = 0.0
+ScalingCurve = SubResource("Curve_0avqp")
+
+[sub_resource type="Curve" id="Curve_ny43b"]
+
+[sub_resource type="Resource" id="Resource_5l3t8"]
+script = ExtResource("4_l03br")
+BaseValue = 0.0
+ScalingCurve = SubResource("Curve_ny43b")
+
+[sub_resource type="Curve" id="Curve_pinn7"]
+
+[sub_resource type="Resource" id="Resource_j2cm1"]
+script = ExtResource("4_l03br")
+BaseValue = 0.0
+ScalingCurve = SubResource("Curve_pinn7")
+
+[sub_resource type="Curve" id="Curve_5l3t8"]
+
+[sub_resource type="Resource" id="Resource_10q1i"]
+script = ExtResource("4_l03br")
+BaseValue = 1.0
+ScalingCurve = SubResource("Curve_5l3t8")
+
+[sub_resource type="Resource" id="Resource_1yprn"]
+script = ExtResource("9_68ql8")
+metadata/_custom_type_script = "uid://dkudjqjy2lqiq"
+
+[sub_resource type="Resource" id="Resource_kf85k"]
+script = ExtResource("4_l03br")
+BaseValue = 0.0
+
+[sub_resource type="Resource" id="Resource_fylsp"]
+script = ExtResource("4_l03br")
+BaseValue = 0.0
+
+[sub_resource type="Resource" id="Resource_aash6"]
+script = ExtResource("4_l03br")
+BaseValue = 2.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_v1l1x"]
+script = ExtResource("8_33oku")
+Attribute = "CharacterAttributes.Health"
+Operation = 0
+Channel = 0
+CalculationType = 0
+ScalableFloat = SubResource("Resource_aash6")
+CapturedAttribute = "CharacterAttributes.Mana"
+CaptureSource = 0
+SnapshotAttribute = false
+AttributeCalculationType = 0
+Coeficient = SubResource("Resource_10q1i")
+PreMultiplyAdditiveValue = SubResource("Resource_fylsp")
+PostMultiplyAdditiveValue = SubResource("Resource_kf85k")
+FinalChannel = 0
+CustomCalculatorClass = SubResource("Resource_1yprn")
+CalculatorCoeficient = SubResource("Resource_pinn7")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_j2cm1")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_5l3t8")
+CallerTargetTag = ""
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_mjt31"]
+script = ExtResource("4_l03br")
+BaseValue = 1.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_m765o"]
+script = ExtResource("7_d1dxv")
+BaseValue = 3
+
+[resource]
+script = ExtResource("10_egitd")
+Name = "Rejuvenation"
+SnapshotLevel = true
+Modifiers = Array[ExtResource("8_33oku")]([SubResource("Resource_v1l1x")])
+Components = Array[ExtResource("1_euif1")]([])
+Executions = Array[ExtResource("5_csmdg")]([])
+DurationType = 2
+Duration = SubResource("Resource_ny43b")
+HasPeriodicApplication = true
+Period = SubResource("Resource_mjt31")
+ExecuteOnApplication = false
+CanStack = true
+StackLimit = SubResource("Resource_m765o")
+InitialStack = SubResource("Resource_vmjmg")
+SourcePolicy = 1
+InstigatorDenialPolicy = 0
+InstigatorOverridePolicy = 0
+InstigatorOverrideStackCountPolicy = 0
+LevelPolicy = 0
+LevelDenialPolicy = 0
+LevelOverridePolicy = 0
+LevelOverrideStackCountPolicy = 0
+MagnitudePolicy = 1
+OverflowPolicy = 0
+ExpirationPolicy = 1
+ApplicationRefreshPolicy = 0
+ApplicationResetPeriodPolicy = 0
+ExecuteOnSuccessfulApplication = false
+GameplayCues = Array[ExtResource("6_8605a")]([SubResource("Resource_euif1"), SubResource("Resource_s78f6")])
+RequireModifierSuccessToTriggerCue = false
+SuppressStackingCues = false
+metadata/_custom_type_script = "uid://b83hf13nj37k3"
