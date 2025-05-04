@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://di25pm3dat1w4"]
 
-[ext_resource type="Script" uid="uid://ckjqc668745ox" path="res://examples/FloatText.cs" id="1_wh42t"]
+[ext_resource type="Script" uid="uid://ckjqc668745ox" path="res://examples/scripts/FloatText.cs" id="1_no2y3"]
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_5htmj"]
 viewport_path = NodePath("SubViewport")
@@ -8,7 +8,7 @@ viewport_path = NodePath("SubViewport")
 [node name="Sprite3D" type="Sprite3D" node_paths=PackedStringArray("Timer", "Label")]
 billboard = 1
 texture = SubResource("ViewportTexture_5htmj")
-script = ExtResource("1_wh42t")
+script = ExtResource("1_no2y3")
 Timer = NodePath("Timer")
 Label = NodePath("SubViewport/Label")
 

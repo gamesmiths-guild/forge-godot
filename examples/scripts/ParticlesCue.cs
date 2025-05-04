@@ -10,7 +10,7 @@ using Godot;
 namespace Gamesmiths.Forge.Example;
 
 [Tool]
-public partial class FireCues : Cue
+public partial class ParticlesCue : Cue
 {
 	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
 

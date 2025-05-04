@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="6_8605a"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="7_d1dxv"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="8_33oku"]
-[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/MyCustomCalculatorWrapper.cs" id="9_68ql8"]
+[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/scripts/MyCustomCalculatorWrapper.cs" id="9_68ql8"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="10_egitd"]
 
 [sub_resource type="Resource" id="Resource_ny43b"]

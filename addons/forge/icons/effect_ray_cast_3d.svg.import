@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d3wjawuu1ej3s"
-path="res://.godot/imported/ray_cast_2d.svg-e48fa15a74a8ac646dbb5270f9d2b7a3.ctex"
+uid="uid://dskf1b0eecaxl"
+path="res://.godot/imported/effect_ray_cast_3d.svg-d66a481d1126e3560bd16542349178e3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/forge/icons/ray_cast_2d.svg"
-dest_files=["res://.godot/imported/ray_cast_2d.svg-e48fa15a74a8ac646dbb5270f9d2b7a3.ctex"]
+source_file="res://addons/forge/icons/effect_ray_cast_3d.svg"
+dest_files=["res://.godot/imported/effect_ray_cast_3d.svg-d66a481d1126e3560bd16542349178e3.ctex"]
 
 [params]
 

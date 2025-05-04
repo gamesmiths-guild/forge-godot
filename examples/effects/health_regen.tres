@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="5_v1l1x"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="6_m765o"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="6_mjt31"]
-[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/MyCustomCalculatorWrapper.cs" id="8_aash6"]
+[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/scripts/MyCustomCalculatorWrapper.cs" id="8_aash6"]
 
 [sub_resource type="Resource" id="Resource_0avqp"]
 script = ExtResource("2_v1l1x")
