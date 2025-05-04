@@ -47,10 +47,10 @@ public partial class ForgePluginLoader : EditorPlugin
 		Script attributeSetBaseScript = GD.Load<Script>("res://addons/forge/core/AttributeSet.cs");
 		Script effectBaseScript = GD.Load<Script>("res://addons/forge/gameplay_effects/GameplayEffect.cs");
 		Script effectDataBaseScript = GD.Load<Script>("res://addons/forge/gameplay_effects/GameplayEffectData.cs");
-		Texture2D forgeIcon = GD.Load<Texture2D>("res://addons/forge/anvil.svg");
-		Texture2D attributeSetIcon = GD.Load<Texture2D>("res://addons/forge/attributes.svg");
-		Texture2D effectIcon = GD.Load<Texture2D>("res://addons/forge/effect.svg");
-		Texture2D effectDataIcon = GD.Load<Texture2D>("res://addons/forge/effect_data.svg");
+		Texture2D forgeIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20");
+		Texture2D attributeSetIcon = GD.Load<Texture2D>("uid://dnqaqpc02lx3p");
+		Texture2D effectIcon = GD.Load<Texture2D>("uid://bpl454nqdpfjx");
+		Texture2D effectDataIcon = GD.Load<Texture2D>("uid://obsk7rrtq1xd");
 		AddCustomType("Forge Entity", "Node", forgeEntityBaseScript, forgeIcon);
 		AddCustomType("Attribute Set", "Node", attributeSetBaseScript, attributeSetIcon);
 		AddCustomType("Effect", "Node", effectBaseScript, effectIcon);

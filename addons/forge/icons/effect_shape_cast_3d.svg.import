@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://obsk7rrtq1xd"
-path="res://.godot/imported/effect_data.svg-8b9eecca4f91008720c8861ae5aafdb5.ctex"
+uid="uid://e2ynjdppura3"
+path="res://.godot/imported/effect_shape_cast_3d.svg-7792dea5e674a600e08c04ad5e3ff501.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/forge/effect_data.svg"
-dest_files=["res://.godot/imported/effect_data.svg-8b9eecca4f91008720c8861ae5aafdb5.ctex"]
+source_file="res://addons/forge/icons/effect_shape_cast_3d.svg"
+dest_files=["res://.godot/imported/effect_shape_cast_3d.svg-7792dea5e674a600e08c04ad5e3ff501.ctex"]
 
 [params]
 
