@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=27 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/scenes/character.tscn" id="1_5htmj"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/scripts/HealthCues.cs" id="2_qg36f"]
@@ -14,6 +14,8 @@
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/effects/water.tres" id="10_cl7lv"]
 [ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/effects/heal.tres" id="10_gbw2x"]
 [ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/effects/rejuvenation.tres" id="12_xqa2x"]
+[ext_resource type="Script" uid="uid://7bhjrbrsll5y" path="res://addons/forge/nodes/EffectRayCast3D.cs" id="15_4djcp"]
+[ext_resource type="Script" uid="uid://cd1k8wqsbtpjc" path="res://addons/forge/nodes/EffectShapeCast3D.cs" id="15_q15cj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_5htmj"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -70,7 +72,7 @@ size = Vector3(20, 1, 20)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
 
 [node name="CharacterBody3D2" parent="." instance=ExtResource("1_5htmj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.13569, 0, -2.05924)
 
 [node name="CharacterBody3D3" parent="." instance=ExtResource("1_5htmj")]
 
@@ -182,6 +184,13 @@ shape = SubResource("SphereShape3D_xqa2x")
 target_position = Vector3(0, -3, 0)
 margin = 0.5
 debug_shape_custom_color = Color(1, 0, 0, 1)
+script = ExtResource("15_q15cj")
+TriggerMode = 2
+
+[node name="Effect" type="Node" parent="ShapeCast3D"]
+script = ExtResource("4_x0oh0")
+GameplayEffectData = ExtResource("10_cl7lv")
+metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="RayCast3D" type="RayCast3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.15056, 4.39659, 1.81254)
@@ -189,3 +198,10 @@ target_position = Vector3(0, -4, 0)
 hit_back_faces = false
 debug_shape_custom_color = Color(0.603922, 0, 0, 1)
 debug_shape_thickness = 3
+script = ExtResource("15_4djcp")
+TriggerMode = 2
+
+[node name="Effect" type="Node" parent="RayCast3D"]
+script = ExtResource("4_x0oh0")
+GameplayEffectData = ExtResource("10_cl7lv")
+metadata/_custom_type_script = "uid://dps0oef50noil"

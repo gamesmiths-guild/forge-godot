@@ -1,39 +1,15 @@
 // Copyright © 2025 Gamesmiths Guild.
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayEffects;
+using Gamesmiths.Forge.Nodes;
 using Godot;
-using ForgeGameplayEffect = Gamesmiths.Forge.GameplayEffects.GameplayEffect;
-using ForgeGameplayEffectData = Gamesmiths.Forge.GameplayEffects.GameplayEffectData;
-using GameplayEffect = Gamesmiths.Forge.GameplayEffects.Godot.GameplayEffect;
 
 namespace Gamesmiths.Forge.Example;
 
-public enum EffectTriggerMode
-{
-	/// <summary>
-	/// Add effects when entering the area.
-	/// </summary>
-	OnEnter = 0,
-
-	/// <summary>
-	/// Add effects when exiting the area.
-	/// </summary>
-	OnExit = 1,
-
-	/// <summary>
-	/// Add effects when entering the area and removes when exiting it.
-	/// </summary>
-	OnStay = 2,
-}
-
 public partial class EffectArea3D : Area3D
 {
-	private readonly List<ForgeGameplayEffectData> _effects = [];
-
-	private readonly Dictionary<IForgeEntity, List<ActiveGameplayEffectHandle>> _effectInstances = [];
+	private EffectApplier? _effectApplier;
 
 	[Export]
 	public Node? AreaOwner { get; set; }
@@ -52,13 +28,7 @@ public partial class EffectArea3D : Area3D
 
 		base._Ready();
 
-		foreach (Node node in GetChildren())
-		{
-			if (node is GameplayEffect effectNode && effectNode.GameplayEffectData is not null)
-			{
-				_effects.Add(effectNode.GameplayEffectData.GetEffectData());
-			}
-		}
+		_effectApplier = new EffectApplier(this);
 
 		switch (TriggerMode)
 		{
@@ -83,79 +53,19 @@ public partial class EffectArea3D : Area3D
 
 	private void ApplyEffects(Node3D node)
 	{
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntity)
-			{
-				AreaOwner ??= child;
-
-				Debug.Assert(ForgeEntity is not null, $"{nameof(ForgeEntity)} should never be null here.");
-
-				foreach (ForgeGameplayEffectData effectData in _effects)
-				{
-					var effect = new ForgeGameplayEffect(
-						effectData,
-						new GameplayEffectOwnership(ForgeEntity, ForgeEntity));
-
-					forgeEntity.EffectsManager.ApplyEffect(effect);
-				}
-			}
-		}
+		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
+		_effectApplier.ApplyEffects(node, ForgeEntity);
 	}
 
 	private void AddEffects(Node3D node)
 	{
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntity)
-			{
-				AreaOwner ??= child;
-
-				Debug.Assert(ForgeEntity is not null, $"{nameof(ForgeEntity)} should never be null here.");
-
-				var instanceEffects = new List<ActiveGameplayEffectHandle>();
-				if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
-				{
-					instanceEffects = _effectInstances[forgeEntity];
-				}
-
-				foreach (ForgeGameplayEffectData effectData in _effects)
-				{
-					var effect = new ForgeGameplayEffect(
-						effectData,
-						new GameplayEffectOwnership(ForgeEntity, ForgeEntity));
-
-					ActiveGameplayEffectHandle? handle = forgeEntity.EffectsManager.ApplyEffect(effect);
-
-					if (handle is null)
-					{
-						continue;
-					}
-
-					instanceEffects.Add(handle);
-				}
-			}
-		}
+		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
+		_effectApplier.AddEffects(node, ForgeEntity);
 	}
 
 	private void RemoveEffects(Node3D node)
 	{
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntity)
-			{
-				if (!_effectInstances.ContainsKey(forgeEntity))
-				{
-					continue;
-				}
-
-				foreach (ActiveGameplayEffectHandle handle in _effectInstances[forgeEntity])
-				{
-					forgeEntity.EffectsManager.UnapplyEffect(handle);
-				}
-
-				_effectInstances[forgeEntity] = [];
-			}
-		}
+		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
+		_effectApplier.RemoveEffects(node);
 	}
 }

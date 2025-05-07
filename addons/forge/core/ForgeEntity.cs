@@ -4,13 +4,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Gamesmiths.Forge.GameplayEffects;
 using Gamesmiths.Forge.GameplayTags.Godot;
+using Gamesmiths.Forge.Nodes;
 using Godot;
 
 using static Gamesmiths.Forge.Godot.Forge;
 
 using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
-using ForgeGameplayEffectData = Gamesmiths.Forge.GameplayEffects.GameplayEffectData;
-using GameplayEffect = Gamesmiths.Forge.GameplayEffects.Godot.GameplayEffect;
 
 namespace Gamesmiths.Forge.Core.Godot;
 
@@ -36,7 +35,6 @@ public partial class ForgeEntity : Node, IForgeEntity
 		EffectsManager = new GameplayEffectsManager(this, CuesManager);
 
 		List<ForgeAttributeSet> attributeSetList = [];
-		List<ForgeGameplayEffectData> effects = [];
 
 		foreach (Node node in GetChildren())
 		{
@@ -47,25 +45,14 @@ public partial class ForgeEntity : Node, IForgeEntity
 				if (attributeSet is not null)
 				{
 					attributeSetList.Add(attributeSet);
-					continue;
 				}
-			}
-
-			if (node is GameplayEffect effectNode && effectNode.GameplayEffectData is not null)
-			{
-				effects.Add(effectNode.GameplayEffectData.GetEffectData());
 			}
 		}
 
 		Attributes = new Attributes([.. attributeSetList]);
 
-		foreach (ForgeGameplayEffectData effectData in effects)
-		{
-			EffectsManager.ApplyEffect(
-				new GameplayEffects.GameplayEffect(
-					effectData,
-					new GameplayEffectOwnership(this, this)));
-		}
+		var effectApplier = new EffectApplier(this);
+		effectApplier.ApplyEffects(this, this);
 	}
 
 	public override void _Process(double delta)
