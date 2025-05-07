@@ -2,6 +2,8 @@
 
 using Godot;
 
+namespace Gamesmiths.Forge.Example;
+
 public partial class Character : CharacterBody3D
 {
 	private const float Speed = 5f;

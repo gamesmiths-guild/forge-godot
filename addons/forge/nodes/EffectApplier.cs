@@ -11,7 +11,7 @@ using GameplayEffect = Gamesmiths.Forge.GameplayEffects.Godot.GameplayEffect;
 
 namespace Gamesmiths.Forge.Nodes;
 
-internal class EffectApplier
+internal sealed class EffectApplier
 {
 	private readonly List<ForgeGameplayEffectData> _effects = [];
 

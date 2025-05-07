@@ -68,6 +68,11 @@ public partial class ParticlesCue : Cue
 			return;
 		}
 
+		if (!parameters.HasValue)
+		{
+			return;
+		}
+
 		particle3D.Amount = parameters.Value.Magnitude;
 	}
 
