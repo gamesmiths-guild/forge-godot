@@ -84,7 +84,7 @@ tab_width = 4
 # Organize usings
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true
-file_header_template = Copyright © 2025 Gamesmiths Guild.
+file_header_template = Copyright © Gamesmiths Guild.
 
 # this. and Me. preferences
 dotnet_style_qualification_for_event = false:warning

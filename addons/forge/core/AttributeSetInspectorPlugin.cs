@@ -1,4 +1,4 @@
-// Copyright © 2025 Gamesmiths Guild.
+// Copyright © Gamesmiths Guild.
 
 #if TOOLS
 using Gamesmiths.Forge.Core.Godot;

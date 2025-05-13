@@ -1,35 +1,35 @@
 {
-  // ACTION REQUIRED: This file was automatically added to your project, but it
-  // will not take effect until additional steps are taken to enable it. See the
-  // following page for additional information:
-  //
-  // https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/EnableConfiguration.md
+    // ACTION REQUIRED: This file was automatically added to your project, but it
+    // will not take effect until additional steps are taken to enable it. See the
+    // following page for additional information:
+    //
+    // https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/EnableConfiguration.md
 
-  "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
-  "settings": {
-    "documentationRules": {
-      "companyName": "Gamesmiths Guild",
-      "copyrightText": "Copyright © 2025 {companyName}.",
-      "xmlHeader" : false,
-      "documentInterfaces" : true,
-      "documentExposedElements" : true,
-      "documentInternalElements" : false,
-      "documentPrivateElements" : false,
-      "documentPrivateFields" : false,
-      "documentationCulture" : "en-US",
-      "fileNamingConvention" : "stylecop"
-    },
-    "layoutRules": {
-      "newlineAtEndOfFile": "require"
-    },
-    "orderingRules": {
-      "elementOrder": [
-        "kind",
-        "constant",
-        "accessibility",
-        "static",
-        "readonly"
-      ]
+    "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+    "settings": {
+        "documentationRules": {
+            "companyName": "Gamesmiths Guild",
+            "copyrightText": "Copyright © {companyName}.",
+            "xmlHeader": false,
+            "documentInterfaces": true,
+            "documentExposedElements": true,
+            "documentInternalElements": false,
+            "documentPrivateElements": false,
+            "documentPrivateFields": false,
+            "documentationCulture": "en-US",
+            "fileNamingConvention": "stylecop"
+        },
+        "layoutRules": {
+            "newlineAtEndOfFile": "require"
+        },
+        "orderingRules": {
+            "elementOrder": [
+                "kind",
+                "constant",
+                "accessibility",
+                "static",
+                "readonly"
+            ]
+        }
     }
-  }
 }
