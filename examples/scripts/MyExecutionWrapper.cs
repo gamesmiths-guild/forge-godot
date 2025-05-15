@@ -1,6 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.GameplayEffects.Calculator.Godot;
+using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Godot;
 
 using ForgeExecution = Gamesmiths.Forge.GameplayEffects.Calculator.Execution;

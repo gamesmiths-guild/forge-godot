@@ -1,13 +1,11 @@
-[gd_resource type="Resource" load_steps=28 format=3 uid="uid://bgbbtfuhkcquk"]
+[gd_resource type="Resource" load_steps=26 format=3 uid="uid://bgbbtfuhkcquk"]
 
-[ext_resource type="Script" uid="uid://cpcrmq51kgbpu" path="res://addons/forge/gameplay_effects/components/EffectComponent.cs" id="1_euif1"]
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="4_l03br"]
-[ext_resource type="Script" uid="uid://8vdy1awpc2a4" path="res://addons/forge/gameplay_effects/calculator/Execution.cs" id="5_csmdg"]
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="6_8605a"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="7_d1dxv"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="8_33oku"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="4_l03br"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="6_8605a"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="7_d1dxv"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="8_33oku"]
 [ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/scripts/MyCustomCalculatorWrapper.cs" id="9_68ql8"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="10_egitd"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="10_egitd"]
 
 [sub_resource type="Resource" id="Resource_ny43b"]
 script = ExtResource("4_l03br")
@@ -24,7 +22,7 @@ metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
 [sub_resource type="Resource" id="Resource_s78f6"]
 script = ExtResource("6_8605a")
-CueKey = "effect.regen"
+CueKey = "vfx.regen"
 MinValue = 1
 MaxValue = 3
 MagnitudeType = 1
@@ -115,9 +113,9 @@ BaseValue = 3
 script = ExtResource("10_egitd")
 Name = "Rejuvenation"
 SnapshotLevel = true
-Modifiers = Array[ExtResource("8_33oku")]([SubResource("Resource_v1l1x")])
-Components = Array[ExtResource("1_euif1")]([])
-Executions = Array[ExtResource("5_csmdg")]([])
+Modifiers = [SubResource("Resource_v1l1x")]
+Components = []
+Executions = []
 DurationType = 2
 Duration = SubResource("Resource_ny43b")
 HasPeriodicApplication = true
@@ -140,7 +138,7 @@ ExpirationPolicy = 1
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = Array[ExtResource("6_8605a")]([SubResource("Resource_euif1"), SubResource("Resource_s78f6")])
+GameplayCues = [SubResource("Resource_euif1"), SubResource("Resource_s78f6")]
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

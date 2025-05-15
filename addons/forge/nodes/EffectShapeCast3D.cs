@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Example;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
 
-namespace Gamesmiths.Forge.Nodes;
+namespace Gamesmiths.Forge.Godot.Nodes;
 
 public partial class EffectShapeCast3D : ShapeCast3D
 {

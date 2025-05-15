@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/scenes/floating_text.tscn" id="3_66bdf"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="4_sgubq"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/scripts/ParticlesCue.cs" id="4_tna71"]
-[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/gameplay_effects/GameplayEffect.cs" id="4_x0oh0"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/GameplayEffect.cs" id="4_x0oh0"]
 [ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/scenes/particles/fire_effect.tscn" id="5_kw1tj"]
 [ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/effects/damage.tres" id="5_sgubq"]
 [ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://examples/scenes/particles/wet_effect.tscn" id="6_4ppvq"]
@@ -87,18 +87,18 @@ CueKey = "floating.text"
 [node name="Fire Cues" type="Node" parent="."]
 script = ExtResource("4_tna71")
 FireEffectScene = ExtResource("5_kw1tj")
-CueKey = "effect.fire"
+CueKey = "vfx.fire"
 
 [node name="Wet Cues" type="Node" parent="."]
 script = ExtResource("4_tna71")
 FireEffectScene = ExtResource("6_4ppvq")
-CueKey = "effect.wet"
+CueKey = "vfx.wet"
 
 [node name="Regen Cues" type="Node" parent="."]
 script = ExtResource("4_tna71")
 FireEffectScene = ExtResource("7_xqa2x")
 UpdateEffectIntensity = true
-CueKey = "effect.regen"
+CueKey = "vfx.regen"
 
 [node name="Damage Area" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.83737, 0, -6.55749)

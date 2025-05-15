@@ -1,8 +1,9 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Core;
 using Godot;
 
-namespace Gamesmiths.Forge.Core.Godot;
+namespace Gamesmiths.Forge.Godot.Core;
 
 public readonly struct ForgeCurve(Curve? curve) : ICurve
 {

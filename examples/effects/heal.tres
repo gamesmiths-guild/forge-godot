@@ -1,10 +1,10 @@
 [gd_resource type="Resource" load_steps=17 format=3 uid="uid://d13vhgx0ys5s3"]
 
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="1_gfvqd"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="2_8xfre"]
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="3_uvude"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="4_h84da"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="5_3v4a0"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="1_gfvqd"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="2_8xfre"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="3_uvude"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="4_h84da"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="5_3v4a0"]
 
 [sub_resource type="Resource" id="Resource_ygmrb"]
 script = ExtResource("1_gfvqd")

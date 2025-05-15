@@ -1,6 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
-namespace Gamesmiths.Forge.Example;
+namespace Gamesmiths.Forge.Godot.Nodes;
 
 public enum EffectTriggerMode
 {

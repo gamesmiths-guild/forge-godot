@@ -2,7 +2,7 @@
 
 using System.Diagnostics;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Core.Godot;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;

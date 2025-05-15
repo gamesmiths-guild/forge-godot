@@ -1,6 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.Core.Godot;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 public partial class HealthBar : ProgressBar
@@ -14,7 +14,6 @@ public partial class HealthBar : ProgressBar
 
 		ForgeEntity forgeEntity = GetParent().GetNode<ForgeEntity>("%Forge Entity");
 
-		GD.Print("found");
 		Gamesmiths.Forge.Core.Attribute healthAttribute = forgeEntity.Attributes["CharacterAttributes.Health"];
 		healthAttribute.OnValueChanged += HealthBar_OnValueChanged;
 		Value = (float)healthAttribute.CurrentValue / healthAttribute.Max * 100;

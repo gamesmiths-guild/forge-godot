@@ -2,15 +2,14 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using Gamesmiths.Forge.Core.Godot;
 using Gamesmiths.Forge.GameplayCues;
-using Gamesmiths.Forge.GameplayCues.Godot;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
 [Tool]
-public partial class HealthCues : Cue
+public partial class HealthCues : GameplayCue
 {
 	private Color _damageColor = new(1, 0, 0);
 

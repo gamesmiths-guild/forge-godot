@@ -2,10 +2,10 @@
 
 using System.Diagnostics;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Example;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
 
-namespace Gamesmiths.Forge.Nodes;
+namespace Gamesmiths.Forge.Godot.Nodes;
 
 public partial class EffectRayCast3D : RayCast3D
 {

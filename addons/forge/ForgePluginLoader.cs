@@ -2,20 +2,20 @@
 
 #if TOOLS
 using System.Diagnostics;
-using Gamesmiths.Forge.Editor;
-using Gamesmiths.Forge.GameplayCues.Godot;
 using Gamesmiths.Forge.GameplayTags;
-using Gamesmiths.Forge.GameplayTags.Godot;
+using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Editor;
 using Godot;
-using static Gamesmiths.Forge.Godot.Forge;
+
+using static Gamesmiths.Forge.Godot.Core.Forge;
 
 namespace Gamesmiths.Forge.Godot;
 
 [Tool]
 public partial class ForgePluginLoader : EditorPlugin
 {
-	private const string AutoloadPath = "res://addons/forge/Forge.cs";
-	private const string PluginScenePath = "res://addons/forge/forge_ui.tscn";
+	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
+	private const string PluginScenePath = "uid://pjscvogl6jak";
 
 	private TabContainer? _dockedScene;
 	private TagsInspectorPlugin? _tagsInspectorPlugin;
@@ -34,8 +34,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
 		_dockedScene = (TabContainer)pluginScene.Instantiate();
-		_dockedScene.GetNode<GameplayTagsUI>("%Tags").IsPluginInstance = true;
-		_dockedScene.GetNode<CueKeysUI>("%Cues").IsPluginInstance = true;
+		_dockedScene.GetNode<GameplayTagsEditor>("%Tags").IsPluginInstance = true;
+		_dockedScene.GetNode<CueKeysEditor>("%Cues").IsPluginInstance = true;
 		AddControlToDock(DockSlot.RightUl, _dockedScene);
 
 		_tagsInspectorPlugin = new TagsInspectorPlugin();
@@ -43,10 +43,10 @@ public partial class ForgePluginLoader : EditorPlugin
 		_inspector = new AttributeSetInspectorPlugin();
 		AddInspectorPlugin(_inspector);
 
-		Script forgeEntityBaseScript = GD.Load<Script>("res://addons/forge/core/ForgeEntity.cs");
-		Script attributeSetBaseScript = GD.Load<Script>("res://addons/forge/core/AttributeSet.cs");
-		Script effectBaseScript = GD.Load<Script>("res://addons/forge/gameplay_effects/GameplayEffect.cs");
-		Script effectDataBaseScript = GD.Load<Script>("res://addons/forge/gameplay_effects/GameplayEffectData.cs");
+		Script forgeEntityBaseScript = GD.Load<Script>("uid://8uj04dfe8oql");
+		Script attributeSetBaseScript = GD.Load<Script>("uid://cxihb42t2mfqi");
+		Script effectBaseScript = GD.Load<Script>("uid://dps0oef50noil");
+		Script effectDataBaseScript = GD.Load<Script>("uid://b83hf13nj37k3");
 		Texture2D forgeIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20");
 		Texture2D attributeSetIcon = GD.Load<Texture2D>("uid://dnqaqpc02lx3p");
 		Texture2D effectIcon = GD.Load<Texture2D>("uid://bpl454nqdpfjx");

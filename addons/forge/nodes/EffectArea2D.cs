@@ -2,10 +2,10 @@
 
 using System.Diagnostics;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Nodes;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
 
-namespace Gamesmiths.Forge.Example;
+namespace Gamesmiths.Forge.Godot.Nodes;
 
 public partial class EffectArea2D : Area2D
 {

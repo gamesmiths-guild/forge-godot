@@ -1,14 +1,11 @@
-[gd_resource type="Resource" load_steps=33 format=3 uid="uid://d0ctw2d38gb15"]
+[gd_resource type="Resource" load_steps=30 format=3 uid="uid://d0ctw2d38gb15"]
 
-[ext_resource type="Script" uid="uid://cpcrmq51kgbpu" path="res://addons/forge/gameplay_effects/components/EffectComponent.cs" id="1_10q1i"]
-[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/gameplay_effects/components/TargetTagRequirements.cs" id="2_aash6"]
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/gameplay_tags/TagContainer.cs" id="2_v1l1x"]
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/gameplay_cues/GameplayCue.cs" id="3_10q1i"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/gameplay_effects/magnitudes/ScalableInt.cs" id="4_aash6"]
-[ext_resource type="Script" uid="uid://8vdy1awpc2a4" path="res://addons/forge/gameplay_effects/calculator/Execution.cs" id="4_v1l1x"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/gameplay_effects/Modifier.cs" id="5_v1l1x"]
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/gameplay_effects/magnitudes/ScalableFloat.cs" id="6_m765o"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/gameplay_effects/GameplayEffectData.cs" id="6_mjt31"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_aash6"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/TagContainer.cs" id="2_v1l1x"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="4_aash6"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="5_v1l1x"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="6_m765o"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="6_mjt31"]
 [ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/scripts/MyCustomCalculatorWrapper.cs" id="8_aash6"]
 
 [sub_resource type="Resource" id="Resource_0avqp"]
@@ -117,9 +114,9 @@ ScalingCurve = SubResource("Curve_kf85k")
 script = ExtResource("6_mjt31")
 Name = "Regen"
 SnapshotLevel = true
-Modifiers = Array[ExtResource("5_v1l1x")]([SubResource("Resource_v1l1x")])
-Components = Array[ExtResource("1_10q1i")]([SubResource("Resource_7yjjs")])
-Executions = Array[ExtResource("4_v1l1x")]([])
+Modifiers = [SubResource("Resource_v1l1x")]
+Components = [SubResource("Resource_7yjjs")]
+Executions = []
 DurationType = 1
 Duration = SubResource("Resource_ny43b")
 HasPeriodicApplication = true
@@ -142,7 +139,7 @@ ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = Array[ExtResource("3_10q1i")]([])
+GameplayCues = []
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

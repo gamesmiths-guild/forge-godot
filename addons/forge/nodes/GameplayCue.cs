@@ -1,0 +1,128 @@
+// Copyright © Gamesmiths Guild.
+
+using System.Diagnostics;
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.GameplayCues;
+using Gamesmiths.Forge.Godot.Core;
+using Godot;
+using Godot.Collections;
+
+using static Gamesmiths.Forge.Godot.Core.Forge;
+
+namespace Gamesmiths.Forge.Godot.Nodes;
+
+public abstract partial class GameplayCue : Node, IGameplayCue
+{
+	[Export]
+	public string? CueKey { get; set; }
+
+	public override void _Ready()
+	{
+		if (Engine.IsEditorHint())
+		{
+			return;
+		}
+
+		base._Ready();
+
+		if (CuesManager is null || string.IsNullOrEmpty(CueKey))
+		{
+			return;
+		}
+
+		CuesManager.RegisterCue(CueKey, this);
+	}
+
+	public override void _ValidateProperty(Dictionary property)
+	{
+		if (property["name"].AsStringName() == PropertyName.CueKey)
+		{
+			property["hint"] = (int)PropertyHint.Enum;
+			property["hint_string"] = string.Join(",", GetCueOptions());
+		}
+	}
+
+#pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
+	public void OnApply(IForgeEntity? target, GameplayCueParameters? parameters)
+	{
+		if (target is ForgeEntity forgeEntity)
+		{
+			_CueOnApply(forgeEntity, parameters);
+		}
+
+		_CueOnApply(parameters);
+	}
+
+	public virtual void _CueOnApply(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	{
+	}
+
+	public virtual void _CueOnApply(GameplayCueParameters? parameters)
+	{
+	}
+
+	public void OnExecute(IForgeEntity? target, GameplayCueParameters? parameters)
+	{
+		if (target is ForgeEntity forgeEntity)
+		{
+			_CueOnExecute(forgeEntity, parameters);
+		}
+
+		_CueOnExecute(parameters);
+	}
+
+	public virtual void _CueOnExecute(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	{
+	}
+
+	public virtual void _CueOnExecute(GameplayCueParameters? parameters)
+	{
+	}
+
+	public void OnRemove(IForgeEntity? target, bool interrupted)
+	{
+		if (target is ForgeEntity forgeEntity)
+		{
+			_CueOnRemove(forgeEntity, interrupted);
+		}
+
+		_CueOnRemove(interrupted);
+	}
+
+	public virtual void _CueOnRemove(ForgeEntity forgeEntity, bool interrupted)
+	{
+	}
+
+	public virtual void _CueOnRemove(bool interrupted)
+	{
+	}
+
+	public void OnUpdate(IForgeEntity? target, GameplayCueParameters? parameters)
+	{
+		if (target is ForgeEntity forgeEntity)
+		{
+			_CueOnUpdate(forgeEntity, parameters);
+		}
+
+		_CueOnUpdate(parameters);
+	}
+
+	public virtual void _CueOnUpdate(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	{
+	}
+
+	public virtual void _CueOnUpdate(GameplayCueParameters? parameters)
+	{
+	}
+
+	private static string[] GetCueOptions()
+	{
+		ForgePluginData pluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+
+		Debug.Assert(
+			pluginData.RegisteredCues is not null,
+			$"{nameof(pluginData.RegisteredCues)} should have been initialized by the Forge plugin.");
+
+		return [.. pluginData.RegisteredCues];
+	}
+}

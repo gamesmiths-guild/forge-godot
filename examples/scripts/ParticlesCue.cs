@@ -2,15 +2,14 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using Gamesmiths.Forge.Core.Godot;
 using Gamesmiths.Forge.GameplayCues;
-using Gamesmiths.Forge.GameplayCues.Godot;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
 [Tool]
-public partial class ParticlesCue : Cue
+public partial class ParticlesCue : GameplayCue
 {
 	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
 
@@ -79,8 +78,6 @@ public partial class ParticlesCue : Cue
 	public override void _CueOnRemove(ForgeEntity forgeEntity, bool interrupted)
 	{
 		base._CueOnRemove(forgeEntity, interrupted);
-
-		GD.Print($"Remove effect {interrupted}");
 
 		if (forgeEntity.GetParent() is not Node3D parent
 			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
