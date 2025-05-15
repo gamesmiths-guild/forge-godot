@@ -1,6 +1,6 @@
 [gd_resource type="Resource" load_steps=2 format=3 uid="uid://8j4xg16o3qnl"]
 
-[ext_resource type="Script" uid="uid://bq4vlbfx00hea" path="res://addons/forge/core/ForgePluginData.cs" id="1_x0pne"]
+[ext_resource type="Script" uid="uid://bq4vlbfx00hea" path="res://addons/forge/core/ForgeData.cs" id="1_x0pne"]
 
 [resource]
 script = ExtResource("1_x0pne")

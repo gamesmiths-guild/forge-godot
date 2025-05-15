@@ -17,7 +17,7 @@ public partial class GameplayTagsEditor : VBoxContainer
 {
 	private readonly Dictionary<TreeItem, GameplayTagNode> _treeItemToNode = [];
 
-	private ForgePluginData? _forgePluginData;
+	private ForgeData? _forgePluginData;
 
 	private Tree? _tree;
 	private LineEdit? _tagNameTextField;
@@ -37,7 +37,7 @@ public partial class GameplayTagsEditor : VBoxContainer
 			return;
 		}
 
-		_forgePluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+		_forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");

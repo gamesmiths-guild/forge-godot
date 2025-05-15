@@ -23,8 +23,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _EnterTree()
 	{
-		ForgePluginData pluginData =
-			ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
 
 		pluginData.RegisteredTags ??= [];
 

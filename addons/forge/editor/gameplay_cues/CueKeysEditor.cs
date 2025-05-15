@@ -12,7 +12,7 @@ namespace Gamesmiths.Forge.Godot.Editor;
 [Tool]
 public partial class CueKeysEditor : VBoxContainer
 {
-	private ForgePluginData? _forgePluginData;
+	private ForgeData? _forgePluginData;
 
 	private Tree? _tree;
 	private LineEdit? _cueKeyTextField;
@@ -31,7 +31,7 @@ public partial class CueKeysEditor : VBoxContainer
 			return;
 		}
 
-		_forgePluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+		_forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
 
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
 

@@ -9,7 +9,7 @@ namespace Gamesmiths.Forge.Godot.Core;
 
 public partial class Forge : Node
 {
-	private ForgePluginData? _pluginData;
+	private ForgeData? _pluginData;
 
 	public static GameplayTagsManager? TagsManager { get; set; }
 
@@ -21,7 +21,7 @@ public partial class Forge : Node
 
 	public override void _Ready()
 	{
-		_pluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+		_pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
 
 		_pluginData.RegisteredTags ??= [];
 		_pluginData.RegisteredCues ??= [];
