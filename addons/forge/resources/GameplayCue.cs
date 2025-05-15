@@ -7,9 +7,11 @@ using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayCues;
-using Gamesmiths.Forge.Godot.Core;
 using Godot;
 using Godot.Collections;
+
+using static Gamesmiths.Forge.Godot.Core.Forge;
+
 using Attribute = Gamesmiths.Forge.Core.Attribute;
 
 namespace Gamesmiths.Forge.Godot.Resources;
@@ -109,14 +111,11 @@ public partial class GameplayCue : Resource
 
 	private static string[] GetCueOptions()
 	{
-		ForgePluginData pluginData =
-			ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
-
-		if (pluginData is null || pluginData.RegisteredCues is null)
+		if (RegisteredCues is null)
 		{
 			return [];
 		}
 
-		return [.. pluginData.RegisteredCues];
+		return [.. RegisteredCues];
 	}
 }

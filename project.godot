@@ -17,7 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Forge="res://addons/forge/core/Forge.cs"
+Forge="uid://ba8fquhtwu5mu"
 
 [dotnet]
 

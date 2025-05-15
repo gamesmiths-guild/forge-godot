@@ -1,9 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
-using System.Diagnostics;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayCues;
-using Gamesmiths.Forge.Godot.Core;
 using Godot;
 using Godot.Collections;
 
@@ -117,12 +115,11 @@ public abstract partial class GameplayCue : Node, IGameplayCue
 
 	private static string[] GetCueOptions()
 	{
-		ForgePluginData pluginData = ResourceLoader.Load<ForgePluginData>("uid://8j4xg16o3qnl");
+		if (RegisteredCues is null)
+		{
+			return [];
+		}
 
-		Debug.Assert(
-			pluginData.RegisteredCues is not null,
-			$"{nameof(pluginData.RegisteredCues)} should have been initialized by the Forge plugin.");
-
-		return [.. pluginData.RegisteredCues];
+		return [.. RegisteredCues];
 	}
 }
