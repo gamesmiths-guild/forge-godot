@@ -22,7 +22,8 @@ namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
 [GlobalClass]
-public partial class Modifier : Resource
+[Icon("uid://bbwv58ku4cv0i")]
+public partial class Modifier : ForgeResource
 {
 	private MagnitudeCalculationType _calculationType;
 	private AttributeBasedFloatCalculationType _attributeCalculationType;
@@ -184,7 +185,7 @@ public partial class Modifier : Resource
 		System.Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
 		// Find all types that subclass AttributeSet
-		foreach (System.Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
+		foreach (System.Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(Forge.Core.AttributeSet))))
 		{
 			// Get public instance properties of type Attribute
 			IEnumerable<PropertyInfo> attributeProperties =

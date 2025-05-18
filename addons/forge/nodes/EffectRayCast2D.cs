@@ -7,6 +7,8 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
+[GlobalClass]
+[Icon("uid://d3wjawuu1ej3s")]
 public partial class EffectRayCast2D : RayCast2D
 {
 	private EffectApplier? _effectApplier;

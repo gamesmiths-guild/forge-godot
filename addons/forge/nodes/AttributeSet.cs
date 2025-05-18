@@ -13,7 +13,9 @@ using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
 namespace Gamesmiths.Forge.Godot.Nodes;
 
 [Tool]
-public partial class AttributeSet : Node
+[GlobalClass]
+[Icon("uid://dnqaqpc02lx3p")]
+public partial class AttributeSet : ForgeNode
 {
 	[Export]
 	public string AttributeSetClass { get; set; } = string.Empty;

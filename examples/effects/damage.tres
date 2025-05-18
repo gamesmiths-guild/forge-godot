@@ -1,4 +1,4 @@
-[gd_resource type="Resource" load_steps=17 format=3 uid="uid://dt5y704o0sldo"]
+[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=17 format=3 uid="uid://dt5y704o0sldo"]
 
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="1_cd28o"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="1_khd1u"]

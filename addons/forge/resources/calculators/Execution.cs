@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 using ForgeExecution = Gamesmiths.Forge.GameplayEffects.Calculator.Execution;
@@ -8,7 +9,8 @@ namespace Gamesmiths.Forge.Godot.Resources.Calculators;
 
 [Tool]
 [GlobalClass]
-public abstract partial class Execution : Resource
+[Icon("uid://dy874wbbpsewt")]
+public abstract partial class Execution : ForgeResource
 {
 	public abstract ForgeExecution GetExecutionClass();
 }

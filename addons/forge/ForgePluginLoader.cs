@@ -42,19 +42,6 @@ public partial class ForgePluginLoader : EditorPlugin
 		_inspector = new AttributeSetInspectorPlugin();
 		AddInspectorPlugin(_inspector);
 
-		Script forgeEntityBaseScript = GD.Load<Script>("uid://8uj04dfe8oql");
-		Script attributeSetBaseScript = GD.Load<Script>("uid://cxihb42t2mfqi");
-		Script effectBaseScript = GD.Load<Script>("uid://dps0oef50noil");
-		Script effectDataBaseScript = GD.Load<Script>("uid://b83hf13nj37k3");
-		Texture2D forgeIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20");
-		Texture2D attributeSetIcon = GD.Load<Texture2D>("uid://dnqaqpc02lx3p");
-		Texture2D effectIcon = GD.Load<Texture2D>("uid://bpl454nqdpfjx");
-		Texture2D effectDataIcon = GD.Load<Texture2D>("uid://obsk7rrtq1xd");
-		AddCustomType("Forge Entity", "Node", forgeEntityBaseScript, forgeIcon);
-		AddCustomType("Attribute Set", "Node", attributeSetBaseScript, attributeSetIcon);
-		AddCustomType("Effect", "Node", effectBaseScript, effectIcon);
-		AddCustomType("Effect Data", "Resource", effectDataBaseScript, effectDataIcon);
-
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
 
@@ -67,11 +54,6 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		RemoveInspectorPlugin(_tagsInspectorPlugin);
 		RemoveInspectorPlugin(_inspector);
-
-		RemoveCustomType("Forge Entity");
-		RemoveCustomType("Attribute Set");
-		RemoveCustomType("Effect");
-		RemoveCustomType("Effect Data");
 
 		RemoveToolMenuItem("Repair assets tags");
 

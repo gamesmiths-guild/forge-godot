@@ -9,7 +9,9 @@ using static Gamesmiths.Forge.Godot.Core.Forge;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
-public abstract partial class GameplayCue : Node, IGameplayCue
+[GlobalClass]
+[Icon("uid://snulmvxydrp4")]
+public abstract partial class CueHandler : ForgeNode, IGameplayCue
 {
 	[Export]
 	public string? CueKey { get; set; }

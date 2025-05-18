@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 using ForgeScalableInt = Gamesmiths.Forge.GameplayEffects.Magnitudes.ScalableInt;
 
@@ -8,7 +9,8 @@ namespace Gamesmiths.Forge.Godot.Resources.Magnitudes;
 
 [Tool]
 [GlobalClass]
-public partial class ScalableInt : Resource
+[Icon("uid://dnagt7tdo3dos")]
+public partial class ScalableInt : ForgeResource
 {
 	[Export]
 	public int BaseValue { get; set; }

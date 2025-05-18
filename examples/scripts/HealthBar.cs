@@ -3,6 +3,8 @@
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
+namespace Gamesmiths.Forge.Example;
+
 public partial class HealthBar : ProgressBar
 {
 	[Export]
@@ -14,13 +16,13 @@ public partial class HealthBar : ProgressBar
 
 		ForgeEntity forgeEntity = GetParent().GetNode<ForgeEntity>("%Forge Entity");
 
-		Gamesmiths.Forge.Core.Attribute healthAttribute = forgeEntity.Attributes["CharacterAttributes.Health"];
+		Core.Attribute healthAttribute = forgeEntity.Attributes["CharacterAttributes.Health"];
 		healthAttribute.OnValueChanged += HealthBar_OnValueChanged;
 		Value = (float)healthAttribute.CurrentValue / healthAttribute.Max * 100;
 		HealthBarLabel.Text = $"{healthAttribute.CurrentValue}/{healthAttribute.Max}";
 	}
 
-	private void HealthBar_OnValueChanged(Gamesmiths.Forge.Core.Attribute healthAttribute, int change)
+	private void HealthBar_OnValueChanged(Core.Attribute healthAttribute, int change)
 	{
 		Value = (float)healthAttribute.CurrentValue / healthAttribute.Max * 100;
 		HealthBarLabel.Text = $"{healthAttribute.CurrentValue}/{healthAttribute.Max}";

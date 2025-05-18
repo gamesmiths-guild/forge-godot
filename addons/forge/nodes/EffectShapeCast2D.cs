@@ -9,6 +9,8 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
+[GlobalClass]
+[Icon("uid://dni75h8pnigh2")]
 public partial class EffectShapeCast2D : ShapeCast2D
 {
 	private readonly HashSet<GodotObject> _lastFrameColliders = [];

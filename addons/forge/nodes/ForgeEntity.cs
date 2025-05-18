@@ -15,7 +15,9 @@ using ForgeGameplayTags = Gamesmiths.Forge.Core.GameplayTags;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
-public partial class ForgeEntity : Node, IForgeEntity
+[GlobalClass]
+[Icon("uid://cu6ncpuumjo20")]
+public partial class ForgeEntity : ForgeNode, IForgeEntity
 {
 	[Export]
 	public TagContainer BaseTags { get; set; } = new();

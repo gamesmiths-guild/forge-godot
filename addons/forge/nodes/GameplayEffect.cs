@@ -6,7 +6,9 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Nodes;
 
 [Tool]
-public partial class GameplayEffect : Node
+[GlobalClass]
+[Icon("uid://bpl454nqdpfjx")]
+public partial class GameplayEffect : ForgeNode
 {
 	[Export]
 	public GameplayEffectData? GameplayEffectData { get; set; }

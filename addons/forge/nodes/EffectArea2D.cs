@@ -7,6 +7,8 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
+[GlobalClass]
+[Icon("uid://cnjrjkgwyewjx")]
 public partial class EffectArea2D : Area2D
 {
 	private EffectApplier? _effectApplier;

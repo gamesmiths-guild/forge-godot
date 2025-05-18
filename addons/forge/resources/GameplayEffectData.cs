@@ -7,6 +7,7 @@ using Gamesmiths.Forge.GameplayEffects.Components;
 using Gamesmiths.Forge.GameplayEffects.Duration;
 using Gamesmiths.Forge.GameplayEffects.Periodic;
 using Gamesmiths.Forge.GameplayEffects.Stacking;
+using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Gamesmiths.Forge.Godot.Resources.Components;
 using Godot;
@@ -21,7 +22,9 @@ using ScalableInt = Gamesmiths.Forge.Godot.Resources.Magnitudes.ScalableInt;
 namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
-public partial class GameplayEffectData : Resource
+[GlobalClass]
+[Icon("uid://obsk7rrtq1xd")]
+public partial class GameplayEffectData : ForgeResource
 {
 	private ForgeGameplayEffectData? _data;
 

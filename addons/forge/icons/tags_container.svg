@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="16"
+   height="16"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="tags_container.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="77.4375"
+     inkscape:cx="8.0064568"
+     inkscape:cy="8"
+     inkscape:window-width="3407"
+     inkscape:window-height="1417"
+     inkscape:window-x="25"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g3" />
+  <g
+     fill="none"
+     stroke="#e0e0e0"
+     stroke-linejoin="round"
+     stroke-miterlimit="0"
+     id="g3">
+    <path
+       d="m2.1058 5.8844v-2.7749h2.9127m5.8565 0.0498h2.7749v2.9127"
+       transform="matrix(1.1315 0 0 1.1398 -.914 -1.888)"
+       id="path2" />
+    <path
+       d="m13.757 11.466v2.7749h-2.9127m-5.856-0.0499h-2.7749v-2.9127"
+       transform="matrix(1.1315 0 0 1.1398 -1.035 -1.888)"
+       id="path3" />
+    <path
+       fill="#8eef97"
+       d="M 5.5727153,3.5360126 A 0.89391939,0.89118867 0 0 0 4.9407147,3.797131 L 1.3650364,7.3618855 a 0.89391939,0.89118867 0 0 0 0,1.2601408 l 3.5756783,3.5647557 a 0.89391939,0.89118867 0 0 0 0.6320006,0.261117 h 7.1513567 a 0.89391939,0.89118867 0 0 0 0.893917,-0.891188 V 4.4272012 A 0.89391939,0.89118867 0 0 0 12.724072,3.5360126 Z M 4.6787954,7.1007674 a 0.89391939,0.89118867 0 0 1 0,1.7823771 0.89391939,0.89118867 0 0 1 0,-1.7823771 z"
+       id="path1"
+       style="fill:#e0e0e0;fill-opacity:1;stroke:none;stroke-width:0.892552" />
+  </g>
+</svg>

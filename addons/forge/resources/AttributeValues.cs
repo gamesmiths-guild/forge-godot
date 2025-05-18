@@ -1,11 +1,12 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
-public partial class AttributeValues : Resource
+public partial class AttributeValues : ForgeResource
 {
 	[Export]
 	public int Default { get; set; }

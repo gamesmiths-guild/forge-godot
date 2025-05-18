@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="16"
+   height="16"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="scalable_int.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="45.254834"
+     inkscape:cx="-7.0268736"
+     inkscape:cy="11.501534"
+     inkscape:window-width="3407"
+     inkscape:window-height="1417"
+     inkscape:window-x="25"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <g
+     fill="none"
+     stroke="#e0e0e0"
+     stroke-width="2"
+     id="g2">
+    <path
+       id="path1"
+       style="color:#000000;fill:#e0e0e0;fill-opacity:0.325;-inkscape-stroke:none;stroke:none"
+       d="M 1 1 L 1 1.234375 L 3 1.234375 L 3 1 L 1 1 z M 1 4.234375 L 1 5.234375 L 3 5.234375 L 3 4.234375 L 1 4.234375 z M 1 10.234375 L 1 15 L 15 15 L 15 13 L 3 13 L 3 10.234375 L 1 10.234375 z " />
+    <path
+       id="path2"
+       style="color:#000000;fill:#e0e0e0;stroke-linecap:round;-inkscape-stroke:none;stroke:none"
+       d="M 14 1 A 1 1 0 0 0 13.380859 1.234375 L 14.486328 1.234375 L 14.486328 3.234375 L 14.964844 3.234375 C 14.986572 2.8310508 15 2.4211509 15 2 A 1 1 0 0 0 14 1 z M 14.486328 6.234375 L 14.486328 6.5507812 C 14.512519 6.4459127 14.538352 6.3409854 14.5625 6.234375 L 14.486328 6.234375 z M 11.796875 8.1679688 C 11.437574 8.8960511 10.998628 9.5336185 10.486328 10.085938 L 10.486328 10.234375 L 10.347656 10.234375 C 10.328977 10.253455 10.311836 10.274102 10.292969 10.292969 C 8.5286743 12.057263 5.8333257 13 2 13 A 1 1 0 0 0 1 14 A 1 1 0 0 0 2 15 C 6.1666583 15 9.4713337 13.942729 11.707031 11.707031 C 12.289106 11.124957 12.788437 10.469434 13.212891 9.7460938 C 12.593176 9.3793126 12.095636 8.8282754 11.796875 8.1679688 z " />
+  </g>
+  <path
+     fill="#5abbef"
+     d="m 0.98607698,1.7338248 v 2 H 2.986077 v -2 z m 11.00000002,0 v 5.0000001 a 3,3 0 0 0 3,3 h 1 v -2 h -1 a 1,1 0 0 1 -1,-1 v -1 h 2 V 3.7338248 h -2 v -2 z m -8,2 v 6.0000001 h 2 v -4 h 1 a 1,1 0 0 1 1,1 v 3 h 2 v -3 a 3,3 0 0 0 -3,-3.0000001 h -1 z M 0.98607698,5.7338249 v 4 H 2.986077 v -4 z"
+     id="path1-8"
+     style="display:inline" />
+</svg>
