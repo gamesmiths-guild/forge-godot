@@ -8,7 +8,7 @@ using System.Reflection;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
-
+using ForgeAttribute = Gamesmiths.Forge.Core.Attribute;
 using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
 
 namespace Gamesmiths.Forge.Godot.Editor;
@@ -121,7 +121,7 @@ public partial class AttributeSetEditor : VBoxContainer
 
 		System.Collections.Generic.IEnumerable<PropertyInfo> attributeProperties = targetType
 			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-			.Where(x => x.PropertyType == typeof(Attribute));
+			.Where(x => x.PropertyType == typeof(ForgeAttribute));
 
 		ForgeAttributeSet? attributeSet = TargetAttributeSet.GetAttributeSet();
 
