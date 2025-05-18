@@ -1,85 +1,83 @@
-[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=26 format=3 uid="uid://bgbbtfuhkcquk"]
+[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=30 format=3 uid="uid://d0ctw2d38gb15"]
 
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="4_l03br"]
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="6_8605a"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="7_d1dxv"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="8_33oku"]
-[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/scripts/MyCustomCalculatorWrapper.cs" id="9_68ql8"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="10_egitd"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_aash6"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/TagContainer.cs" id="2_v1l1x"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="4_aash6"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="5_v1l1x"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="6_m765o"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="6_mjt31"]
+[ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/3d/scripts/MyCustomCalculatorWrapper.cs" id="8_aash6"]
+
+[sub_resource type="Resource" id="Resource_0avqp"]
+script = ExtResource("2_v1l1x")
+ContainerTags = []
+
+[sub_resource type="Resource" id="Resource_7yjjs"]
+script = ExtResource("2_aash6")
+ApplicationRequiredTags = SubResource("Resource_0avqp")
+metadata/_custom_type_script = "uid://b0eq12mjqfage"
+
+[sub_resource type="Curve" id="Curve_bbokj"]
 
 [sub_resource type="Resource" id="Resource_ny43b"]
-script = ExtResource("4_l03br")
-BaseValue = 10.0
+script = ExtResource("6_m765o")
+BaseValue = 0.0
+ScalingCurve = SubResource("Curve_bbokj")
 
-[sub_resource type="Resource" id="Resource_euif1"]
-script = ExtResource("6_8605a")
-CueKey = "floating.text"
-MinValue = 0
-MaxValue = 1000
-MagnitudeType = 2
-MagnitudeAttribute = "CharacterAttributes.Health"
-metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
-
-[sub_resource type="Resource" id="Resource_s78f6"]
-script = ExtResource("6_8605a")
-CueKey = "vfx.regen"
-MinValue = 1
-MaxValue = 3
-MagnitudeType = 1
-MagnitudeAttribute = ""
-metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+[sub_resource type="Curve" id="Curve_7yjjs"]
 
 [sub_resource type="Resource" id="Resource_vmjmg"]
-script = ExtResource("7_d1dxv")
+script = ExtResource("4_aash6")
 BaseValue = 1
+ScalingCurve = SubResource("Curve_7yjjs")
 
 [sub_resource type="Curve" id="Curve_0avqp"]
 
 [sub_resource type="Resource" id="Resource_pinn7"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 0.0
 ScalingCurve = SubResource("Curve_0avqp")
 
 [sub_resource type="Curve" id="Curve_ny43b"]
 
 [sub_resource type="Resource" id="Resource_5l3t8"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 0.0
 ScalingCurve = SubResource("Curve_ny43b")
 
 [sub_resource type="Curve" id="Curve_pinn7"]
 
 [sub_resource type="Resource" id="Resource_j2cm1"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 0.0
 ScalingCurve = SubResource("Curve_pinn7")
 
 [sub_resource type="Curve" id="Curve_5l3t8"]
 
 [sub_resource type="Resource" id="Resource_10q1i"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 1.0
 ScalingCurve = SubResource("Curve_5l3t8")
 
 [sub_resource type="Resource" id="Resource_1yprn"]
-script = ExtResource("9_68ql8")
+script = ExtResource("8_aash6")
 metadata/_custom_type_script = "uid://dkudjqjy2lqiq"
 
 [sub_resource type="Resource" id="Resource_kf85k"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_fylsp"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_aash6"]
-script = ExtResource("4_l03br")
-BaseValue = 2.0
+script = ExtResource("6_m765o")
+BaseValue = 1.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_v1l1x"]
-script = ExtResource("8_33oku")
+script = ExtResource("5_v1l1x")
 Attribute = "CharacterAttributes.Health"
 Operation = 0
 Channel = 0
@@ -101,30 +99,33 @@ CallerTargetTag = ""
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
 
 [sub_resource type="Resource" id="Resource_mjt31"]
-script = ExtResource("4_l03br")
+script = ExtResource("6_m765o")
 BaseValue = 1.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
+[sub_resource type="Curve" id="Curve_kf85k"]
+
 [sub_resource type="Resource" id="Resource_m765o"]
-script = ExtResource("7_d1dxv")
-BaseValue = 3
+script = ExtResource("4_aash6")
+BaseValue = 1
+ScalingCurve = SubResource("Curve_kf85k")
 
 [resource]
-script = ExtResource("10_egitd")
-Name = "Rejuvenation"
+script = ExtResource("6_mjt31")
+Name = "Regen"
 SnapshotLevel = true
 Modifiers = [SubResource("Resource_v1l1x")]
-Components = []
+Components = [SubResource("Resource_7yjjs")]
 Executions = []
-DurationType = 2
+DurationType = 1
 Duration = SubResource("Resource_ny43b")
 HasPeriodicApplication = true
 Period = SubResource("Resource_mjt31")
 ExecuteOnApplication = false
-CanStack = true
+CanStack = false
 StackLimit = SubResource("Resource_m765o")
 InitialStack = SubResource("Resource_vmjmg")
-SourcePolicy = 1
+SourcePolicy = 0
 InstigatorDenialPolicy = 0
 InstigatorOverridePolicy = 0
 InstigatorOverrideStackCountPolicy = 0
@@ -132,13 +133,13 @@ LevelPolicy = 0
 LevelDenialPolicy = 0
 LevelOverridePolicy = 0
 LevelOverrideStackCountPolicy = 0
-MagnitudePolicy = 1
+MagnitudePolicy = 0
 OverflowPolicy = 0
-ExpirationPolicy = 1
+ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = [SubResource("Resource_euif1"), SubResource("Resource_s78f6")]
+GameplayCues = []
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

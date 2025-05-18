@@ -1,0 +1,224 @@
+[gd_scene load_steps=29 format=3 uid="uid://dd3k2ajucir45"]
+
+[ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="1_381bb"]
+[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler.cs" id="2_l0q6a"]
+[ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="3_12jpl"]
+[ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler.cs" id="4_tpia4"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/3d/scenes/particles/3d_fire_effect.tscn" id="5_878nk"]
+[ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://examples/3d/scenes/particles/3d_wet_effect.tscn" id="6_1upbh"]
+[ext_resource type="PackedScene" uid="uid://cwn3bvfd3pobb" path="res://examples/3d/scenes/particles/3d_regen_effect.tscn" id="7_n5jaj"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="8_qu8d5"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/GameplayEffect.cs" id="9_gthfy"]
+[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/common/effects/fire.tres" id="10_vbh8h"]
+[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="11_5xwir"]
+[ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="12_baqw0"]
+[ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="13_c00bw"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/rejuvenation.tres" id="14_fltda"]
+[ext_resource type="Script" uid="uid://7bhjrbrsll5y" path="res://addons/forge/nodes/EffectRayCast3D.cs" id="15_lfn22"]
+[ext_resource type="Script" uid="uid://cd1k8wqsbtpjc" path="res://addons/forge/nodes/EffectShapeCast3D.cs" id="16_60occ"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_5htmj"]
+sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
+ground_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
+
+[sub_resource type="Sky" id="Sky_qg36f"]
+sky_material = SubResource("ProceduralSkyMaterial_5htmj")
+
+[sub_resource type="Environment" id="Environment_66bdf"]
+background_mode = 2
+sky = SubResource("Sky_qg36f")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_66bdf"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_phudj"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cl7lv"]
+albedo_color = Color(1, 0.33, 0.33, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kw1tj"]
+albedo_color = Color(0.82, 0.779, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ppvq"]
+albedo_color = Color(0, 0.215686, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gof48"]
+vertex_color_use_as_albedo = true
+albedo_color = Color(0, 0.529412, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hecij"]
+transparency = 1
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.431373, 1, 0.498039)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_gqfj1"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_xqa2x"]
+
+[node name="Level" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.782608, 0.622515, 0, -0.622515, 0.782608, 0, 5.88548, 7.60334)
+projection = 1
+size = 13.14
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_66bdf")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(20, 1, 20)
+
+[node name="CharacterBody3D" parent="." instance=ExtResource("1_381bb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
+
+[node name="CharacterBody3D2" parent="." instance=ExtResource("1_381bb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+
+[node name="CharacterBody3D3" parent="." instance=ExtResource("1_381bb")]
+
+[node name="CharacterBody3D4" parent="." instance=ExtResource("1_381bb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
+
+[node name="FloatingText Cues" type="Node" parent="."]
+script = ExtResource("2_l0q6a")
+FloatingTextScene = ExtResource("3_12jpl")
+CueKey = "floating.text"
+
+[node name="FireVFX Cues" type="Node" parent="."]
+script = ExtResource("4_tpia4")
+FireEffectScene = ExtResource("5_878nk")
+CueKey = "vfx.fire"
+
+[node name="WetVFX Cues" type="Node" parent="."]
+script = ExtResource("4_tpia4")
+FireEffectScene = ExtResource("6_1upbh")
+CueKey = "vfx.wet"
+
+[node name="RegenVFX Cues" type="Node" parent="."]
+script = ExtResource("4_tpia4")
+FireEffectScene = ExtResource("7_n5jaj")
+UpdateEffectIntensity = true
+CueKey = "vfx.regen"
+
+[node name="Fire Area" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -6)
+script = ExtResource("8_qu8d5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Fire Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_66bdf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Fire Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_phudj")
+surface_material_override/0 = SubResource("StandardMaterial3D_cl7lv")
+
+[node name="Effect" type="Node" parent="Fire Area"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("10_vbh8h")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Damage Area" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -6)
+script = ExtResource("8_qu8d5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Damage Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_66bdf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Damage Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_phudj")
+surface_material_override/0 = SubResource("StandardMaterial3D_kw1tj")
+
+[node name="Effect" type="Node" parent="Damage Area"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("11_5xwir")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Water Area" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 0)
+script = ExtResource("8_qu8d5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Water Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_66bdf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Water Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_phudj")
+surface_material_override/0 = SubResource("StandardMaterial3D_4ppvq")
+
+[node name="Effect" type="Node" parent="Water Area"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("12_baqw0")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Regen Area" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
+script = ExtResource("8_qu8d5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Regen Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_66bdf")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Regen Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_phudj")
+surface_material_override/0 = SubResource("StandardMaterial3D_gof48")
+
+[node name="Effect" type="Node" parent="Regen Area"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("13_c00bw")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Effect2" type="Node" parent="Regen Area"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("14_fltda")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="RayCast3D" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3, 5)
+target_position = Vector3(0, -2.9, 0)
+hit_back_faces = false
+debug_shape_custom_color = Color(0.603922, 0, 0, 1)
+debug_shape_thickness = 3
+script = ExtResource("15_lfn22")
+TriggerMode = 2
+
+[node name="Effect" type="Node" parent="RayCast3D"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("12_baqw0")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RayCast3D"]
+transform = Transform3D(0.05, 0, 0, 0, 3, 0, 0, 0, 0.05, 0, -3, 0)
+material_override = SubResource("StandardMaterial3D_hecij")
+mesh = SubResource("CylinderMesh_gqfj1")
+
+[node name="ShapeCast3D" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3, 5)
+shape = SubResource("SphereShape3D_xqa2x")
+target_position = Vector3(0, -2.4, 0)
+margin = 0.5
+debug_shape_custom_color = Color(1, 0, 0, 1)
+script = ExtResource("16_60occ")
+TriggerMode = 2
+
+[node name="Effect" type="Node" parent="ShapeCast3D"]
+script = ExtResource("9_gthfy")
+GameplayEffectData = ExtResource("12_baqw0")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ShapeCast3D"]
+transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 1, 0, -3, 0)
+material_override = SubResource("StandardMaterial3D_hecij")
+mesh = SubResource("CylinderMesh_gqfj1")
+skeleton = NodePath("../../RayCast3D")
