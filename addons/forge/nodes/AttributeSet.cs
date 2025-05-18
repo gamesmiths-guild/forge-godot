@@ -15,7 +15,7 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 [Tool]
 [GlobalClass]
 [Icon("uid://dnqaqpc02lx3p")]
-public partial class AttributeSet : ForgeNode
+public partial class AttributeSet : Node
 {
 	[Export]
 	public string AttributeSetClass { get; set; } = string.Empty;

@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Godot.Core;
-using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 using ForgeScalableFloat = Gamesmiths.Forge.GameplayEffects.Magnitudes.ScalableFloat;
 
@@ -10,7 +9,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Magnitudes;
 [Tool]
 [GlobalClass]
 [Icon("uid://dvlaw4yolashm")]
-public partial class ScalableFloat : ForgeResource
+public partial class ScalableFloat : Resource
 {
 	[Export]
 	public float BaseValue { get; set; }

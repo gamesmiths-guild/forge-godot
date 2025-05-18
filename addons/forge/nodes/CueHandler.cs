@@ -11,7 +11,7 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 
 [GlobalClass]
 [Icon("uid://snulmvxydrp4")]
-public abstract partial class CueHandler : ForgeNode, IGameplayCue
+public abstract partial class CueHandler : Node, IGameplayCue
 {
 	[Export]
 	public string? CueKey { get; set; }

@@ -17,7 +17,7 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 
 [GlobalClass]
 [Icon("uid://cu6ncpuumjo20")]
-public partial class ForgeEntity : ForgeNode, IForgeEntity
+public partial class ForgeEntity : Node, IForgeEntity
 {
 	[Export]
 	public TagContainer BaseTags { get; set; } = new();

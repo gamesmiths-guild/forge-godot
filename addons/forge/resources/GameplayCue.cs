@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayCues;
 using Godot;
 using Godot.Collections;
@@ -18,7 +19,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [Tool]
 [GlobalClass]
 [Icon("uid://din7fexs0x53h")]
-public partial class GameplayCue : ForgeResource
+public partial class GameplayCue : Resource
 {
 	private CueMagnitudeType _magnitudeType;
 
@@ -91,7 +92,7 @@ public partial class GameplayCue : ForgeResource
 		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
 		// Find all types that subclass AttributeSet
-		foreach (Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(Forge.Core.AttributeSet))))
+		foreach (Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
 		{
 			// Get public instance properties of type Attribute
 			IEnumerable<PropertyInfo> attributeProperties =

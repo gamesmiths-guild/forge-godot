@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using Gamesmiths.Forge.GameplayTags;
-using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 using Godot.Collections;
 
@@ -13,7 +12,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [Tool]
 [GlobalClass]
 [Icon("uid://dscm401i41h52")]
-public partial class QueryExpression : ForgeResource
+public partial class QueryExpression : Resource
 {
 	private GameplayTagQueryExpressionType _expressionType;
 

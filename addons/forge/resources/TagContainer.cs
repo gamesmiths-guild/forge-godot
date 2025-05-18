@@ -13,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [Tool]
 [GlobalClass]
 [Icon("uid://ddeg62ps243fn")]
-public partial class TagContainer : ForgeResource
+public partial class TagContainer : Resource
 {
 	[Export]
 	public Array<string>? ContainerTags { get; set; }
