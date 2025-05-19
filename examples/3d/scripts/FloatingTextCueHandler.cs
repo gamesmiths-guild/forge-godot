@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayCues;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
@@ -16,14 +17,14 @@ public partial class FloatingTextCueHandler : CueHandler
 	[Export]
 	public PackedScene? FloatingTextScene { get; set; }
 
-	public override void _CueOnExecute(ForgeEntity? forgeEntity, GameplayCueParameters? parameters)
+	public override void _CueOnExecute(IForgeEntity? forgeEntity, GameplayCueParameters? parameters)
 	{
-		if (forgeEntity is null || !parameters.HasValue)
+		if (forgeEntity is not Node node || !parameters.HasValue)
 		{
 			return;
 		}
 
-		if (forgeEntity.GetParent() is not Node3D node3D)
+		if (node.GetParent() is not Node3D node3D)
 		{
 			return;
 		}

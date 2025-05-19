@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayCues;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
@@ -19,16 +20,16 @@ public partial class ParticlesCueHandler : CueHandler
 	[Export]
 	public bool UpdateEffectIntensity { get; set; }
 
-	public override void _CueOnApply(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public override void _CueOnApply(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
 		base._CueOnApply(forgeEntity, parameters);
 
-		if (forgeEntity is null)
+		if (forgeEntity is not Node node)
 		{
 			return;
 		}
 
-		if (forgeEntity.GetParent() is not Node3D parent)
+		if (node.GetParent() is not Node3D parent)
 		{
 			return;
 		}
@@ -46,8 +47,13 @@ public partial class ParticlesCueHandler : CueHandler
 		effectInstance.Translate(new Vector3(0, 2, 0));
 	}
 
-	public override void _CueOnUpdate(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public override void _CueOnUpdate(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
+		if (forgeEntity is not Node node)
+		{
+			return;
+		}
+
 		if (!UpdateEffectIntensity)
 		{
 			return;
@@ -55,7 +61,7 @@ public partial class ParticlesCueHandler : CueHandler
 
 		base._CueOnUpdate(forgeEntity, parameters);
 
-		if (forgeEntity.GetParent() is not Node3D parent
+		if (node.GetParent() is not Node3D parent
 			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
 			|| effectInstance is null)
 		{
@@ -75,11 +81,16 @@ public partial class ParticlesCueHandler : CueHandler
 		particle3D.Amount = parameters.Value.Magnitude;
 	}
 
-	public override void _CueOnRemove(ForgeEntity forgeEntity, bool interrupted)
+	public override void _CueOnRemove(IForgeEntity forgeEntity, bool interrupted)
 	{
+		if (forgeEntity is not Node node)
+		{
+			return;
+		}
+
 		base._CueOnRemove(forgeEntity, interrupted);
 
-		if (forgeEntity.GetParent() is not Node3D parent
+		if (node.GetParent() is not Node3D parent
 			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
 			|| effectInstance is null)
 		{

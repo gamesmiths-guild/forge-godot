@@ -45,7 +45,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
 	public void OnApply(IForgeEntity? target, GameplayCueParameters? parameters)
 	{
-		if (target is ForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity)
 		{
 			_CueOnApply(forgeEntity, parameters);
 		}
@@ -53,7 +53,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnApply(parameters);
 	}
 
-	public virtual void _CueOnApply(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public virtual void _CueOnApply(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
 	}
 
@@ -63,7 +63,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 
 	public void OnExecute(IForgeEntity? target, GameplayCueParameters? parameters)
 	{
-		if (target is ForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity)
 		{
 			_CueOnExecute(forgeEntity, parameters);
 		}
@@ -71,7 +71,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnExecute(parameters);
 	}
 
-	public virtual void _CueOnExecute(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public virtual void _CueOnExecute(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
 	}
 
@@ -81,7 +81,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 
 	public void OnRemove(IForgeEntity? target, bool interrupted)
 	{
-		if (target is ForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity)
 		{
 			_CueOnRemove(forgeEntity, interrupted);
 		}
@@ -89,7 +89,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnRemove(interrupted);
 	}
 
-	public virtual void _CueOnRemove(ForgeEntity forgeEntity, bool interrupted)
+	public virtual void _CueOnRemove(IForgeEntity forgeEntity, bool interrupted)
 	{
 	}
 
@@ -99,7 +99,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 
 	public void OnUpdate(IForgeEntity? target, GameplayCueParameters? parameters)
 	{
-		if (target is ForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity)
 		{
 			_CueOnUpdate(forgeEntity, parameters);
 		}
@@ -107,7 +107,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnUpdate(parameters);
 	}
 
-	public virtual void _CueOnUpdate(ForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public virtual void _CueOnUpdate(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
 	}
 
