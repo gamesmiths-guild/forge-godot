@@ -9,9 +9,7 @@ namespace Gamesmiths.Forge.Godot.Core;
 
 public partial class Forge : Node
 {
-	private ForgeData? _pluginData;
-
-	public static GameplayTagsManager? TagsManager { get; set; }
+	public static GameplayTagsManager? TagsManager { get; private set; }
 
 	public static GameplayCuesManager? CuesManager { get; private set; }
 
@@ -19,17 +17,31 @@ public partial class Forge : Node
 
 	public static Array<string>? RegisteredCues { get; private set; }
 
+	public static void RebuildTagsManager()
+	{
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+
+		pluginData.RegisteredTags ??= [];
+
+		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
+	}
+
 	public override void _Ready()
 	{
-		_pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		Initialize();
+	}
 
-		_pluginData.RegisteredTags ??= [];
-		_pluginData.RegisteredCues ??= [];
+	private static void Initialize()
+	{
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
 
-		RegisteredTags = _pluginData.RegisteredTags;
-		RegisteredCues = _pluginData.RegisteredCues;
+		pluginData.RegisteredTags ??= [];
+		pluginData.RegisteredCues ??= [];
 
-		TagsManager = new GameplayTagsManager([.. _pluginData.RegisteredTags]);
+		RegisteredTags = pluginData.RegisteredTags;
+		RegisteredCues = pluginData.RegisteredCues;
+
+		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
 		CuesManager = new GameplayCuesManager();
 	}
 }

@@ -84,7 +84,7 @@ public partial class GameplayTagsEditor : VBoxContainer
 			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
 
 		TagsManager?.DestroyTagTree();
-		TagsManager = new GameplayTagsManager([.. _forgePluginData.RegisteredTags]);
+		RebuildTagsManager();
 
 		_tree.Clear();
 		ConstructTagTree();

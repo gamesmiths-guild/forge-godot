@@ -2,8 +2,6 @@
 
 #if TOOLS
 using System.Diagnostics;
-using Gamesmiths.Forge.GameplayTags;
-using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Godot;
 
@@ -23,13 +21,6 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _EnterTree()
 	{
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
-
-		pluginData.RegisteredTags ??= [];
-
-		TagsManager = new GameplayTagsManager([.. pluginData.RegisteredTags]);
-		GD.Print("TagsManager Initialized");
-
 		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
 		_dockedScene = (TabContainer)pluginScene.Instantiate();
