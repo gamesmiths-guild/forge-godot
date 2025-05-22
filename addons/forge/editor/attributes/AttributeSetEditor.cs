@@ -11,7 +11,7 @@ using Godot;
 using ForgeAttribute = Gamesmiths.Forge.Core.Attribute;
 using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
 
-namespace Gamesmiths.Forge.Godot.Editor;
+namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
 public partial class AttributeSetEditor : VBoxContainer

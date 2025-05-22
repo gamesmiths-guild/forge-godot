@@ -3,7 +3,6 @@
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.GameplayCues;
 using Godot;
-using Godot.Collections;
 
 using static Gamesmiths.Forge.Godot.Core.Forge;
 
@@ -31,15 +30,6 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		}
 
 		CuesManager.RegisterCue(CueKey, this);
-	}
-
-	public override void _ValidateProperty(Dictionary property)
-	{
-		if (property["name"].AsStringName() == PropertyName.CueKey)
-		{
-			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", GetCueOptions());
-		}
 	}
 
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
@@ -113,15 +103,5 @@ public abstract partial class CueHandler : Node, IGameplayCue
 
 	public virtual void _CueOnUpdate(GameplayCueParameters? parameters)
 	{
-	}
-
-	private static string[] GetCueOptions()
-	{
-		if (RegisteredCues is null)
-		{
-			return [];
-		}
-
-		return [.. RegisteredCues];
 	}
 }

@@ -9,7 +9,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-[Tool]
+[GlobalClass]
 public partial class FloatingTextCueHandler : CueHandler
 {
 	private Color _damageColor = new(1, 0, 0);

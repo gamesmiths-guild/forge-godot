@@ -7,7 +7,7 @@ using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.Godot.Core;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Editor;
+namespace Gamesmiths.Forge.Godot.Editor.GameplayCues;
 
 [Tool]
 public partial class CueKeysEditor : VBoxContainer

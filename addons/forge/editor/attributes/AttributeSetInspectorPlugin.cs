@@ -4,7 +4,7 @@
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Editor;
+namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
 public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin

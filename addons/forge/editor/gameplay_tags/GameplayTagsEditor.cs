@@ -10,7 +10,7 @@ using Godot;
 
 using static Gamesmiths.Forge.Godot.Core.Forge;
 
-namespace Gamesmiths.Forge.Godot.Editor;
+namespace Gamesmiths.Forge.Godot.Editor.GameplayTags;
 
 [Tool]
 public partial class GameplayTagsEditor : VBoxContainer

@@ -4,7 +4,7 @@
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Editor;
+namespace Gamesmiths.Forge.Godot.Editor.GameplayTags;
 
 public partial class TagsInspectorPlugin : EditorInspectorPlugin
 {

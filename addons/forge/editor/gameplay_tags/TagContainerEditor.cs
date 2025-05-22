@@ -12,7 +12,7 @@ using static Gamesmiths.Forge.Godot.Core.Forge;
 
 using GodotStringArray = Godot.Collections.Array<string>;
 
-namespace Gamesmiths.Forge.Godot.Editor;
+namespace Gamesmiths.Forge.Godot.Editor.GameplayTags;
 
 [Tool]
 public partial class TagContainerEditor : VBoxContainer

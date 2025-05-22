@@ -3,6 +3,9 @@
 #if TOOLS
 using System.Diagnostics;
 using Gamesmiths.Forge.Godot.Editor;
+using Gamesmiths.Forge.Godot.Editor.Attributes;
+using Gamesmiths.Forge.Godot.Editor.GameplayCues;
+using Gamesmiths.Forge.Godot.Editor.GameplayTags;
 using Godot;
 
 using static Gamesmiths.Forge.Godot.Core.Forge;
@@ -18,6 +21,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private TabContainer? _dockedScene;
 	private TagsInspectorPlugin? _tagsInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
+	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 
 	public override void _EnterTree()
 	{
@@ -32,6 +36,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddInspectorPlugin(_tagsInspectorPlugin);
 		_attributeSetInspectorPlugin = new AttributeSetInspectorPlugin();
 		AddInspectorPlugin(_attributeSetInspectorPlugin);
+		_cueHandlerInspectorPlugin = new CueHandlerInspectorPlugin();
+		AddInspectorPlugin(_cueHandlerInspectorPlugin);
 
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
@@ -45,6 +51,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		RemoveInspectorPlugin(_tagsInspectorPlugin);
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
+		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 
 		RemoveToolMenuItem("Repair assets tags");
 
