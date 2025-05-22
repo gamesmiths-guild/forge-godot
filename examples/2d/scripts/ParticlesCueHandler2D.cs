@@ -10,9 +10,9 @@ using Godot;
 namespace Gamesmiths.Forge.Example;
 
 [GlobalClass]
-public partial class ParticlesCueHandler : CueHandler
+public partial class ParticlesCueHandler2D : CueHandler
 {
-	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
+	private readonly Dictionary<Node2D, Node2D?> _effectInstanceMapping = [];
 
 	[Export]
 	public PackedScene? FireEffectScene { get; set; }
@@ -24,32 +24,26 @@ public partial class ParticlesCueHandler : CueHandler
 	{
 		base._CueOnApply(forgeEntity, parameters);
 
-		if (forgeEntity is not Node node)
-		{
-			return;
-		}
-
-		if (node.GetParent() is not Node3D parent)
+		if (forgeEntity is not Node2D node)
 		{
 			return;
 		}
 
 		Debug.Assert(FireEffectScene is not null, $"{nameof(FireEffectScene)} reference is missing.");
 
-		Node3D effectInstance = FireEffectScene.Instantiate<Node3D>();
+		Node2D effectInstance = FireEffectScene.Instantiate<Node2D>();
 
-		if (!_effectInstanceMapping.TryAdd(parent, effectInstance))
+		if (!_effectInstanceMapping.TryAdd(node, effectInstance))
 		{
-			_effectInstanceMapping[parent] = effectInstance;
+			_effectInstanceMapping[node] = effectInstance;
 		}
 
-		parent.AddChild(effectInstance);
-		effectInstance.Translate(new Vector3(0, 2, 0));
+		node.AddChild(effectInstance);
 	}
 
 	public override void _CueOnUpdate(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
 	{
-		if (forgeEntity is not Node node)
+		if (forgeEntity is not Node2D node)
 		{
 			return;
 		}
@@ -61,14 +55,13 @@ public partial class ParticlesCueHandler : CueHandler
 
 		base._CueOnUpdate(forgeEntity, parameters);
 
-		if (node.GetParent() is not Node3D parent
-			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
+		if (!_effectInstanceMapping.TryGetValue(node, out Node2D? effectInstance)
 			|| effectInstance is null)
 		{
 			return;
 		}
 
-		if (effectInstance is not GpuParticles3D particle3D)
+		if (effectInstance is not GpuParticles2D particle2D)
 		{
 			return;
 		}
@@ -78,27 +71,26 @@ public partial class ParticlesCueHandler : CueHandler
 			return;
 		}
 
-		particle3D.Amount = parameters.Value.Magnitude;
+		particle2D.Amount = parameters.Value.Magnitude;
 	}
 
 	public override void _CueOnRemove(IForgeEntity forgeEntity, bool interrupted)
 	{
-		if (forgeEntity is not Node node)
+		if (forgeEntity is not Node2D node)
 		{
 			return;
 		}
 
 		base._CueOnRemove(forgeEntity, interrupted);
 
-		if (node.GetParent() is not Node3D parent
-			|| !_effectInstanceMapping.TryGetValue(parent, out Node3D? effectInstance)
+		if (!_effectInstanceMapping.TryGetValue(node, out Node2D? effectInstance)
 			|| effectInstance is null)
 		{
 			return;
 		}
 
-		parent.RemoveChild(effectInstance);
+		node.RemoveChild(effectInstance);
 		effectInstance.QueueFree();
-		_effectInstanceMapping[parent] = null;
+		_effectInstanceMapping[node] = null;
 	}
 }

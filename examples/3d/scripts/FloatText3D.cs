@@ -5,7 +5,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-public partial class FloatText : Sprite3D
+public partial class FloatText3D : Sprite3D
 {
 	[Export]
 	public Timer? Timer { get; set; }

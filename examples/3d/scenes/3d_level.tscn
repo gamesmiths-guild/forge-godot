@@ -1,9 +1,9 @@
 [gd_scene load_steps=29 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="1_381bb"]
-[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler.cs" id="2_l0q6a"]
+[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="2_l0q6a"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="3_12jpl"]
-[ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler.cs" id="4_tpia4"]
+[ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler3D.cs" id="4_tpia4"]
 [ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/3d/scenes/particles/3d_fire_effect.tscn" id="5_878nk"]
 [ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://examples/3d/scenes/particles/3d_wet_effect.tscn" id="6_1upbh"]
 [ext_resource type="PackedScene" uid="uid://cwn3bvfd3pobb" path="res://examples/3d/scenes/particles/3d_regen_effect.tscn" id="7_n5jaj"]
@@ -214,7 +214,7 @@ TriggerMode = 2
 
 [node name="Effect" type="Node" parent="ShapeCast3D"]
 script = ExtResource("9_gthfy")
-GameplayEffectData = ExtResource("12_baqw0")
+GameplayEffectData = ExtResource("14_fltda")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="ShapeCast3D"]

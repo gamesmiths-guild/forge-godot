@@ -5,7 +5,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-public partial class HealthBar : ProgressBar
+public partial class HealthBar3D : ProgressBar
 {
 	[Export]
 	public required Label HealthBarLabel { get; set; }

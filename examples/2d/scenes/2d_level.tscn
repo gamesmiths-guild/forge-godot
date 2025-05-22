@@ -1,0 +1,151 @@
+[gd_scene load_steps=20 format=3 uid="uid://dpmrom6ut67fe"]
+
+[ext_resource type="PackedScene" uid="uid://cb122n4xo3vxb" path="res://examples/2d/scenes/2d_character.tscn" id="1_skmt1"]
+[ext_resource type="Script" uid="uid://bc8wkfv6rdpu1" path="res://addons/forge/nodes/EffectArea2D.cs" id="2_t1spg"]
+[ext_resource type="Texture2D" uid="uid://dcgvlpnbwg7q8" path="res://examples/2d/sprites/area.png" id="3_cgod4"]
+[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="4_b3se6"]
+[ext_resource type="Script" uid="uid://cbqisbcf7ohd7" path="res://examples/2d/scripts/FloatingTextCueHandler2D.cs" id="5_b3se6"]
+[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/common/effects/fire.tres" id="5_tr6ro"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/GameplayEffect.cs" id="5_xub8u"]
+[ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="6_hspd7"]
+[ext_resource type="PackedScene" uid="uid://dcld5rm0b5242" path="res://examples/2d/scenes/2d_floating_text.tscn" id="6_tr6ro"]
+[ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="7_xtisc"]
+[ext_resource type="Script" uid="uid://dko3hlj10yp8d" path="res://examples/2d/scripts/ParticlesCueHandler2D.cs" id="8_1r4gs"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/rejuvenation.tres" id="8_nc1t5"]
+[ext_resource type="PackedScene" uid="uid://oad72vjqmwl3" path="res://examples/2d/scenes/particles/2d_fire_effect.tscn" id="9_30teu"]
+[ext_resource type="Script" uid="uid://btstkyo5h46w2" path="res://addons/forge/nodes/EffectRayCast2D.cs" id="9_xtisc"]
+[ext_resource type="Script" uid="uid://cxrmka1hqkn82" path="res://addons/forge/nodes/EffectShapeCast2D.cs" id="10_nc1t5"]
+[ext_resource type="PackedScene" uid="uid://darrnj6a8oyrb" path="res://examples/2d/scenes/particles/2d_wet_effect.tscn" id="10_wwqts"]
+[ext_resource type="PackedScene" uid="uid://ba0r8577pngn4" path="res://examples/2d/scenes/particles/2d_regen_effect.tscn" id="11_8b8ra"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4cx3t"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_0pjy8"]
+
+[node name="Level" type="Node2D"]
+
+[node name="Fire Area" type="Area2D" parent="."]
+position = Vector2(530, 280)
+script = ExtResource("2_t1spg")
+metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Fire Area"]
+shape = SubResource("RectangleShape2D_4cx3t")
+
+[node name="Sprite2D" type="Sprite2D" parent="Fire Area"]
+modulate = Color(0.75, 0, 0, 1)
+texture = ExtResource("3_cgod4")
+
+[node name="Effect" type="Node" parent="Fire Area"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("5_tr6ro")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Damage Area" type="Area2D" parent="."]
+position = Vector2(610, 280)
+script = ExtResource("2_t1spg")
+metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Damage Area"]
+shape = SubResource("RectangleShape2D_4cx3t")
+
+[node name="Sprite2D" type="Sprite2D" parent="Damage Area"]
+modulate = Color(0.85, 0.779167, 0, 1)
+texture = ExtResource("3_cgod4")
+
+[node name="Effect" type="Node" parent="Damage Area"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("4_b3se6")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Water Area" type="Area2D" parent="."]
+position = Vector2(510, 340)
+script = ExtResource("2_t1spg")
+metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Water Area"]
+shape = SubResource("RectangleShape2D_4cx3t")
+
+[node name="Sprite2D" type="Sprite2D" parent="Water Area"]
+modulate = Color(0.217455, 0.236907, 0.983861, 1)
+texture = ExtResource("3_cgod4")
+
+[node name="Effect" type="Node" parent="Water Area"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("6_hspd7")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Regen Area" type="Area2D" parent="."]
+position = Vector2(630, 340)
+script = ExtResource("2_t1spg")
+metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Regen Area"]
+shape = SubResource("RectangleShape2D_4cx3t")
+
+[node name="Sprite2D" type="Sprite2D" parent="Regen Area"]
+modulate = Color(0, 0.81, 0.243, 1)
+texture = ExtResource("3_cgod4")
+
+[node name="Effect" type="Node" parent="Regen Area"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("7_xtisc")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Effect2" type="Node" parent="Regen Area"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("8_nc1t5")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="EffectRayCast2D" type="RayCast2D" parent="."]
+position = Vector2(550, 420)
+target_position = Vector2(0, -50)
+script = ExtResource("9_xtisc")
+TriggerMode = 2
+metadata/_custom_type_script = "uid://btstkyo5h46w2"
+
+[node name="Effect" type="Node" parent="EffectRayCast2D"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("6_hspd7")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="EffectShapeCast2D" type="ShapeCast2D" parent="."]
+position = Vector2(590, 420)
+shape = SubResource("CircleShape2D_0pjy8")
+target_position = Vector2(0, -40)
+script = ExtResource("10_nc1t5")
+TriggerMode = 2
+metadata/_custom_type_script = "uid://cxrmka1hqkn82"
+
+[node name="Effect" type="Node" parent="EffectShapeCast2D"]
+script = ExtResource("5_xub8u")
+GameplayEffectData = ExtResource("8_nc1t5")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="FloatingText Cues" type="Node" parent="."]
+script = ExtResource("5_b3se6")
+FloatingTextScene = ExtResource("6_tr6ro")
+CueKey = "floating.text"
+metadata/_custom_type_script = "uid://cbqisbcf7ohd7"
+
+[node name="FireVFX Cues" type="Node" parent="."]
+script = ExtResource("8_1r4gs")
+FireEffectScene = ExtResource("9_30teu")
+CueKey = "vfx.fire"
+metadata/_custom_type_script = "uid://dko3hlj10yp8d"
+
+[node name="WetVFX Cues" type="Node" parent="."]
+script = ExtResource("8_1r4gs")
+FireEffectScene = ExtResource("10_wwqts")
+CueKey = "vfx.wet"
+metadata/_custom_type_script = "uid://dko3hlj10yp8d"
+
+[node name="RegenVFX Cues" type="Node" parent="."]
+script = ExtResource("8_1r4gs")
+FireEffectScene = ExtResource("11_8b8ra")
+UpdateEffectIntensity = true
+CueKey = "vfx.regen"
+metadata/_custom_type_script = "uid://dko3hlj10yp8d"
+
+[node name="CharacterBody2D" parent="." instance=ExtResource("1_skmt1")]
+position = Vector2(570, 320)

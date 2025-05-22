@@ -10,7 +10,7 @@ using Godot;
 namespace Gamesmiths.Forge.Example;
 
 [GlobalClass]
-public partial class FloatingTextCueHandler : CueHandler
+public partial class FloatingTextCueHandler2D : CueHandler
 {
 	private Color _damageColor = new(1, 0, 0);
 
@@ -19,19 +19,14 @@ public partial class FloatingTextCueHandler : CueHandler
 
 	public override void _CueOnExecute(IForgeEntity? forgeEntity, GameplayCueParameters? parameters)
 	{
-		if (forgeEntity is not Node node || !parameters.HasValue)
-		{
-			return;
-		}
-
-		if (node.GetParent() is not Node3D node3D)
+		if (forgeEntity is not Node2D node2D || !parameters.HasValue)
 		{
 			return;
 		}
 
 		Debug.Assert(FloatingTextScene is not null, $"{nameof(FloatingTextScene)} reference is missing.");
 
-		FloatText floatingText = FloatingTextScene.Instantiate<FloatText>();
+		FloatText2D floatingText = FloatingTextScene.Instantiate<FloatText2D>();
 		floatingText.SetText(parameters.Value.Magnitude.ToString(CultureInfo.InvariantCulture));
 
 		if (parameters.Value.Magnitude < 0)
@@ -39,8 +34,8 @@ public partial class FloatingTextCueHandler : CueHandler
 			floatingText.SetColor(_damageColor);
 		}
 
-		floatingText.Position = node3D.Position + new Vector3(0, 2, 0);
-
 		AddChild(floatingText);
+
+		floatingText.Position = node2D.Position + new Vector2(-20, -30);
 	}
 }

@@ -7,7 +7,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-public partial class EntityView : VBoxContainer
+public partial class EntityView3D : VBoxContainer
 {
 	[Export]
 	public ForgeEntity? Entity { get; set; }

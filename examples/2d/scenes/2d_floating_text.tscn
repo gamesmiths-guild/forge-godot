@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcld5rm0b5242"]
+
+[ext_resource type="Script" uid="uid://bdrua4kp0sfwd" path="res://examples/2d/scripts/FloatText2D.cs" id="1_hc8gd"]
+
+[node name="Label" type="Label" node_paths=PackedStringArray("Timer")]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -9.5
+offset_top = -11.5
+offset_right = 9.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.302082, 0.887326, 0.303488, 1)
+text = "01"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("1_hc8gd")
+Timer = NodePath("Timer")
+
+[node name="Timer" type="Timer" parent="."]
+one_shot = true
+autostart = true
