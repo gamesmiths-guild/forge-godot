@@ -15,6 +15,8 @@ public partial class TagsEditor : VBoxContainer
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
+	private TagsManager _tagsManager = null!;
+
 	private ForgeData? _forgePluginData;
 
 	private Tree? _tree;
@@ -36,6 +38,7 @@ public partial class TagsEditor : VBoxContainer
 		}
 
 		_forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
@@ -81,8 +84,8 @@ public partial class TagsEditor : VBoxContainer
 			_forgePluginData.RegisteredTags is not null,
 			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
 
-		ForgeContext.TagsManager?.DestroyTagTree();
-		ForgeContext.RebuildTagsManager();
+		_tagsManager.DestroyTagTree();
+		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 
 		_tree.Clear();
 		ConstructTagTree();
@@ -91,12 +94,11 @@ public partial class TagsEditor : VBoxContainer
 	private void ConstructTagTree()
 	{
 		EnsureInitialized();
-		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
 		TreeItem rootTreeNode = _tree.CreateItem();
 		_tree.HideRoot = true;
 
-		if (ForgeContext.TagsManager.RootNode.ChildTags.Count == 0)
+		if (_tagsManager.RootNode.ChildTags.Count == 0)
 		{
 			TreeItem childTreeNode = _tree.CreateItem(rootTreeNode);
 			childTreeNode.SetText(0, "No tag has been registered yet.");
@@ -104,7 +106,7 @@ public partial class TagsEditor : VBoxContainer
 			return;
 		}
 
-		BuildTreeRecursively(_tree, rootTreeNode, ForgeContext.TagsManager.RootNode);
+		BuildTreeRecursively(_tree, rootTreeNode, _tagsManager.RootNode);
 	}
 
 	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, TagNode currentNode)

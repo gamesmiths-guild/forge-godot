@@ -3,7 +3,6 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
@@ -18,6 +17,9 @@ public partial class AssetRepairTool : EditorPlugin
 {
 	public static void RepairAllAssetsTags()
 	{
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		var tagsManager = new TagsManager([.. pluginData.RegisteredTags]);
+
 		List<string> scenes = GetScenePaths("res://");
 		GD.Print($"Found {scenes.Count} scene(s) to process.");
 
@@ -38,7 +40,7 @@ public partial class AssetRepairTool : EditorPlugin
 			}
 
 			Node sceneInstance = packedScene.Instantiate();
-			var modified = ProcessNode(sceneInstance);
+			var modified = ProcessNode(sceneInstance, tagsManager);
 
 			if (!modified)
 			{
@@ -117,20 +119,21 @@ public partial class AssetRepairTool : EditorPlugin
 	/// Recursively process nodes; returns true if any ForgeEntity was modified.
 	/// </summary>
 	/// <param name="node">Current node iteration.</param>
+	/// <param name="tagsManager">The tags manager used to validate tags.</param>
 	/// <returns><see langword="true"/> if any ForgeEntity was modified.</returns>
-	private static bool ProcessNode(Node node)
+	private static bool ProcessNode(Node node, TagsManager tagsManager)
 	{
-		var modified = ValidateNode(node);
+		var modified = ValidateNode(node, tagsManager);
 
 		foreach (Node child in node.GetChildren())
 		{
-			modified |= ProcessNode(child);
+			modified |= ProcessNode(child, tagsManager);
 		}
 
 		return modified;
 	}
 
-	private static bool ValidateNode(Node node)
+	private static bool ValidateNode(Node node, TagsManager tagsManager)
 	{
 		var modified = false;
 		foreach (Dictionary propertyInfo in node.GetPropertyList())
@@ -160,21 +163,19 @@ public partial class AssetRepairTool : EditorPlugin
 
 			if (value.As<Resource>() is ForgeTagContainer tagContainer)
 			{
-				modified |= ValidateTagContainerProperty(tagContainer, node.Name);
+				modified |= ValidateTagContainerProperty(tagContainer, node.Name, tagsManager);
 			}
 		}
 
 		return modified;
 	}
 
-	private static bool ValidateTagContainerProperty(ForgeTagContainer container, string nodeName)
+	private static bool ValidateTagContainerProperty(ForgeTagContainer container, string nodeName, TagsManager tagsManager)
 	{
 		if (container.ContainerTags is null)
 		{
 			return false;
 		}
-
-		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
 		Array<string> originalTags = container.ContainerTags;
 		var newTags = new Array<string>();
@@ -184,7 +185,7 @@ public partial class AssetRepairTool : EditorPlugin
 		{
 			try
 			{
-				Tag.RequestTag(ForgeContext.TagsManager, tag);
+				Tag.RequestTag(tagsManager, tag);
 				newTags.Add(tag);
 			}
 			catch (TagNotRegisteredException)

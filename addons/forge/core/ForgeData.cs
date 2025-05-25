@@ -9,8 +9,8 @@ namespace Gamesmiths.Forge.Godot.Core;
 public partial class ForgeData : Resource
 {
 	[Export]
-	public Array<string>? RegisteredTags { get; set; }
+	public Array<string> RegisteredTags { get; set; } = [];
 
 	[Export]
-	public Array<string>? RegisteredCues { get; set; }
+	public Array<string> RegisteredCues { get; set; } = [];
 }

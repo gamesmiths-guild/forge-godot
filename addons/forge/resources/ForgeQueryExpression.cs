@@ -57,13 +57,9 @@ public partial class QueryExpression : Resource
 
 	public TagQueryExpression GetQueryExpression()
 	{
-		Debug.Assert(
-			ForgeContext.TagsManager is not null,
-			$"{nameof(TagsManager)} should have been initialized by the Forge plugin.");
-
 		TagContainer ??= new();
 
-		var expression = new TagQueryExpression(ForgeContext.TagsManager);
+		var expression = new TagQueryExpression(ForgeManagers.Instance.TagsManager);
 
 		switch (_expressionType)
 		{

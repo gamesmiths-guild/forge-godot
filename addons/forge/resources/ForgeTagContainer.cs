@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Tags;
 using Godot;
@@ -19,11 +18,9 @@ public partial class ForgeTagContainer : Resource
 
 	public TagContainer GetTagContainer()
 	{
-		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
-
 		if (ContainerTags is null)
 		{
-			return new TagContainer(ForgeContext.TagsManager);
+			return new TagContainer(ForgeManagers.Instance.TagsManager);
 		}
 
 		var tags = new HashSet<Tag>();
@@ -32,7 +29,7 @@ public partial class ForgeTagContainer : Resource
 		{
 			try
 			{
-				tags.Add(Tag.RequestTag(ForgeContext.TagsManager, tag));
+				tags.Add(Tag.RequestTag(ForgeManagers.Instance.TagsManager, tag));
 			}
 			catch (TagNotRegisteredException)
 			{
@@ -40,6 +37,6 @@ public partial class ForgeTagContainer : Resource
 			}
 		}
 
-		return new TagContainer(ForgeContext.TagsManager, tags);
+		return new TagContainer(ForgeManagers.Instance.TagsManager, tags);
 	}
 }

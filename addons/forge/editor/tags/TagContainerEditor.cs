@@ -31,10 +31,13 @@ public partial class TagContainerEditor : VBoxContainer
 	{
 		base._Ready();
 
-		if (!IsPluginInstance || ForgeContext.TagsManager is null)
+		if (!IsPluginInstance)
 		{
 			return;
 		}
+
+		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
 
 		ContainerTags ??= [];
 
@@ -54,15 +57,15 @@ public partial class TagContainerEditor : VBoxContainer
 		_tree.Visible = false;
 		_tree.CustomMinimumSize += new Vector2(0, 12);
 
-		if (ForgeContext.TagsManager.RootNode.ChildTags.Count == 0)
+		if (tagsManager.RootNode.ChildTags.Count == 0)
 		{
 			AddEmptyTagsWarning(_tree, rootTreeNode);
 			return;
 		}
 
-		ValidateTags();
+		ValidateTags(tagsManager);
 
-		BuildTreeRecursively(_tree, rootTreeNode, ForgeContext.TagsManager.RootNode);
+		BuildTreeRecursively(_tree, rootTreeNode, tagsManager.RootNode);
 
 		_tree.ItemCollapsed += TreeItemCollapsed;
 		_tree.ButtonClicked += TreeButtonClicked;
@@ -163,10 +166,9 @@ public partial class TagContainerEditor : VBoxContainer
 		}
 	}
 
-	private void ValidateTags()
+	private void ValidateTags(TagsManager tagsManager)
 	{
 		EnsureInitialized();
-		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
 		for (var i = ContainerTags.Count - 1; i >= 0; i--)
 		{
@@ -174,7 +176,7 @@ public partial class TagContainerEditor : VBoxContainer
 
 			try
 			{
-				Tag.RequestTag(ForgeContext.TagsManager, tag);
+				Tag.RequestTag(tagsManager, tag);
 			}
 			catch (TagNotRegisteredException)
 			{

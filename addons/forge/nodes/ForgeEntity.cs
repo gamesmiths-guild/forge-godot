@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
@@ -18,21 +17,18 @@ public partial class ForgeEntity : Node, IForgeEntity
 	[Export]
 	public ForgeTagContainer BaseTags { get; set; } = new();
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
-	public EntityAttributes Attributes { get; set; }
+	public EntityAttributes Attributes { get; set; } = null!;
 
-	public EntityTags Tags { get; set; }
+	public EntityTags Tags { get; set; } = null!;
 
-	public EffectsManager EffectsManager { get; set; }
+	public EffectsManager EffectsManager { get; set; } = null!;
 
 	public override void _Ready()
 	{
-		Debug.Assert(ForgeContext.CuesManager is not null, $"{ForgeContext.CuesManager} should have been initialized by the Forge plugin.");
-
 		base._Ready();
 
 		Tags = new(BaseTags.GetTagContainer());
-		EffectsManager = new EffectsManager(this, ForgeContext.CuesManager);
+		EffectsManager = new EffectsManager(this, ForgeManagers.Instance.CuesManager);
 
 		List<AttributeSet> attributeSetList = [];
 

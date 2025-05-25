@@ -101,8 +101,25 @@ public partial class ForgeModifier : Resource
 
 	[ExportGroup("Set by Caller Float")]
 	[Export]
-	public string? CallerTargetTag { get; set; }
+	public string CallerTargetTag { get; set; } = string.Empty;
 
+	public Modifier GetModifier()
+	{
+		Debug.Assert(Attribute is not null, $"{nameof(Attribute)} reference is missing.");
+
+		return new Modifier(
+			Attribute,
+			Operation,
+			new ModifierMagnitude(
+				CalculationType,
+				GetScalableFloatMagnitude(),
+				GetAttributeBasedFloat(),
+				GetCustomCalculationBasedFloat(),
+				GetSetByCallerFloat()),
+			Channel);
+	}
+
+#if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
 		if (property["name"].AsStringName() == PropertyName.Attribute ||
@@ -153,22 +170,6 @@ public partial class ForgeModifier : Resource
 		}
 	}
 
-	public Modifier GetModifier()
-	{
-		Debug.Assert(Attribute is not null, $"{nameof(Attribute)} reference is missing.");
-
-		return new Modifier(
-			Attribute,
-			Operation,
-			new ModifierMagnitude(
-				CalculationType,
-				GetScalableFloatMagnitude(),
-				GetAttributeBasedFloat(),
-				GetCustomCalculationBasedFloat(),
-				GetSetByCallerFloat()),
-			Channel);
-	}
-
 	/// <summary>
 	/// Uses reflection to gather all classes inheriting from AttributeSet and their fields of type Attribute.
 	/// </summary>
@@ -198,6 +199,7 @@ public partial class ForgeModifier : Resource
 
 		return [.. options];
 	}
+#endif
 
 	private ScalableFloat? GetScalableFloatMagnitude()
 	{
@@ -256,9 +258,6 @@ public partial class ForgeModifier : Resource
 			return null;
 		}
 
-		Debug.Assert(CallerTargetTag is not null, $"{nameof(CallerTargetTag)} reference is missing.");
-		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
-
-		return new SetByCallerFloat(Tag.RequestTag(ForgeContext.TagsManager, CallerTargetTag));
+		return new SetByCallerFloat(Tag.RequestTag(ForgeManagers.Instance.TagsManager, CallerTargetTag));
 	}
 }

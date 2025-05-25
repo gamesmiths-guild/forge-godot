@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System.Diagnostics;
-using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
@@ -18,7 +17,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string PluginScenePath = "uid://pjscvogl6jak";
 
 	private TabContainer? _dockedScene;
-	private TagsInspectorPlugin? _tagsInspectorPlugin;
+	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 
@@ -31,8 +30,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		_dockedScene.GetNode<CueKeysEditor>("%Cues").IsPluginInstance = true;
 		AddControlToDock(DockSlot.RightUl, _dockedScene);
 
-		_tagsInspectorPlugin = new TagsInspectorPlugin();
-		AddInspectorPlugin(_tagsInspectorPlugin);
+		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
+		AddInspectorPlugin(_tagContainerInspectorPlugin);
 		_attributeSetInspectorPlugin = new AttributeSetInspectorPlugin();
 		AddInspectorPlugin(_attributeSetInspectorPlugin);
 		_cueHandlerInspectorPlugin = new CueHandlerInspectorPlugin();
@@ -48,13 +47,11 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveControlFromDocks(_dockedScene);
 		_dockedScene.Free();
 
-		RemoveInspectorPlugin(_tagsInspectorPlugin);
+		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 
 		RemoveToolMenuItem("Repair assets tags");
-
-		ForgeContext.TagsManager?.DestroyTagTree();
 	}
 
 	public override void _EnablePlugin()

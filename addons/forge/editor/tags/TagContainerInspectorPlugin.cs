@@ -6,7 +6,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
-public partial class TagsInspectorPlugin : EditorInspectorPlugin
+public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 {
 	private PackedScene? _inspectorScene;
 

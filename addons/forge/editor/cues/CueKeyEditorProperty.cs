@@ -13,10 +13,12 @@ public partial class CueKeyEditorProperty : EditorProperty
 
 	public override void _Ready()
 	{
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+
 		AddChild(_dropdown);
 		AddFocusable(_dropdown);
 
-		foreach (var cue in ForgeContext.RegisteredCues ?? [])
+		foreach (var cue in pluginData.RegisteredCues ?? [])
 		{
 			_dropdown.AddItem(cue);
 		}

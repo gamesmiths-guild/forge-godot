@@ -23,12 +23,12 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 		base._Ready();
 
-		if (ForgeContext.CuesManager is null || string.IsNullOrEmpty(CueKey))
+		if (string.IsNullOrEmpty(CueKey))
 		{
 			return;
 		}
 
-		ForgeContext.CuesManager.RegisterCue(CueKey, this);
+		ForgeManagers.Instance.CuesManager.RegisterCue(CueKey, this);
 	}
 
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores

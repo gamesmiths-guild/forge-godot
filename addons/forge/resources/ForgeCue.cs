@@ -56,6 +56,7 @@ public partial class ForgeCue : Resource
 			string.IsNullOrEmpty(MagnitudeAttribute) ? null : MagnitudeAttribute);
 	}
 
+#if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
 		if (property["name"].AsStringName() == PropertyName.MagnitudeAttribute)
@@ -109,11 +110,14 @@ public partial class ForgeCue : Resource
 
 	private static string[] GetCueOptions()
 	{
-		if (ForgeContext.RegisteredCues is null)
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+
+		if (pluginData.RegisteredCues is null)
 		{
 			return [];
 		}
 
-		return [.. ForgeContext.RegisteredCues];
+		return [.. pluginData.RegisteredCues];
 	}
+#endif
 }

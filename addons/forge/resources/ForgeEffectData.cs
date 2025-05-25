@@ -210,6 +210,61 @@ public partial class ForgeEffectData : Resource
 	[Export]
 	public bool SuppressStackingCues { get; set; }
 
+	public EffectData GetEffectData()
+	{
+		if (_data.HasValue)
+		{
+			return _data.Value;
+		}
+
+		Modifiers ??= [];
+		Components ??= [];
+		Executions ??= [];
+		Cues ??= [];
+
+		var modifiers = new List<Modifier>();
+		foreach (ForgeModifier modifier in Modifiers)
+		{
+			modifiers.Add(modifier.GetModifier());
+		}
+
+		var components = new List<IEffectComponent>();
+		foreach (ForgeEffectComponent component in Components)
+		{
+			components.Add(component.GetComponent());
+		}
+
+		var executions = new List<CustomExecution>();
+		foreach (ForgeCustomExecution execution in Executions)
+		{
+			executions.Add(execution.GetExecutionClass());
+		}
+
+		var cues = new List<CueData>();
+		foreach (ForgeCue cue in Cues)
+		{
+			cues.Add(cue.GetCueData());
+		}
+
+		Debug.Assert(Name is not null, $"{nameof(Duration)} is not set.");
+
+		_data = new EffectData(
+			Name,
+			[.. modifiers],
+			GetDurationData(),
+			GetStackingData(),
+			GetPeriodicData(),
+			SnapshotLevel,
+			[.. components],
+			RequireModifierSuccessToTriggerCue,
+			SuppressStackingCues,
+			[.. executions],
+			[.. cues]);
+
+		return _data.Value;
+	}
+
+#if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
 		if (property["name"].AsStringName() == PropertyName.Duration && DurationType != DurationType.HasDuration)
@@ -286,60 +341,7 @@ public partial class ForgeEffectData : Resource
 			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
 		}
 	}
-
-	public EffectData GetEffectData()
-	{
-		if (_data.HasValue)
-		{
-			return _data.Value;
-		}
-
-		Modifiers ??= [];
-		Components ??= [];
-		Executions ??= [];
-		Cues ??= [];
-
-		var modifiers = new List<Modifier>();
-		foreach (ForgeModifier modifier in Modifiers)
-		{
-			modifiers.Add(modifier.GetModifier());
-		}
-
-		var components = new List<IEffectComponent>();
-		foreach (ForgeEffectComponent component in Components)
-		{
-			components.Add(component.GetComponent());
-		}
-
-		var executions = new List<CustomExecution>();
-		foreach (ForgeCustomExecution execution in Executions)
-		{
-			executions.Add(execution.GetExecutionClass());
-		}
-
-		var cues = new List<CueData>();
-		foreach (ForgeCue cue in Cues)
-		{
-			cues.Add(cue.GetCueData());
-		}
-
-		Debug.Assert(Name is not null, $"{nameof(Duration)} is not set.");
-
-		_data = new EffectData(
-			Name,
-			[.. modifiers],
-			GetDurationData(),
-			GetStackingData(),
-			GetPeriodicData(),
-			SnapshotLevel,
-			[.. components],
-			RequireModifierSuccessToTriggerCue,
-			SuppressStackingCues,
-			[.. executions],
-			[.. cues]);
-
-		return _data.Value;
-	}
+#endif
 
 	private DurationData GetDurationData()
 	{
