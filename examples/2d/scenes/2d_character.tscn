@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" uid="uid://di28cwvr6qcfr" path="res://examples/2d/scripts/CustomForgeEntity.cs" id="1_jsr62"]
 [ext_resource type="Texture2D" uid="uid://d2p61ancgmal0" path="res://examples/2d/sprites/character.png" id="2_484pn"]
-[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/AttributeSet.cs" id="3_v7ry3"]
-[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/resources/AttributeValues.cs" id="4_6b5u8"]
-[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/GameplayEffect.cs" id="5_i52a6"]
-[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/common/effects/health_regen.tres" id="6_vcihp"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="3_v7ry3"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="4_6b5u8"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_i52a6"]
+[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/common/effects/health_regen.tres" id="6_484pn"]
 [ext_resource type="Script" uid="uid://mmc2tykfsrj3" path="res://examples/2d/scripts/HealthBar2D.cs" id="7_484pn"]
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_t1spg"]
@@ -73,7 +73,7 @@ metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
 [node name="Effect" type="Node" parent="."]
 script = ExtResource("5_i52a6")
-GameplayEffectData = ExtResource("6_vcihp")
+EffectData = ExtResource("6_484pn")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="ProgressBar" type="ProgressBar" parent="." node_paths=PackedStringArray("ForgeEntity")]

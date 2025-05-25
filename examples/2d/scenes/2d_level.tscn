@@ -3,15 +3,15 @@
 [ext_resource type="PackedScene" uid="uid://cb122n4xo3vxb" path="res://examples/2d/scenes/2d_character.tscn" id="1_skmt1"]
 [ext_resource type="Script" uid="uid://bc8wkfv6rdpu1" path="res://addons/forge/nodes/EffectArea2D.cs" id="2_t1spg"]
 [ext_resource type="Texture2D" uid="uid://dcgvlpnbwg7q8" path="res://examples/2d/sprites/area.png" id="3_cgod4"]
-[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="4_b3se6"]
+[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/common/effects/fire.tres" id="4_nc1t5"]
+[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="5_0pjy8"]
 [ext_resource type="Script" uid="uid://cbqisbcf7ohd7" path="res://examples/2d/scripts/FloatingTextCueHandler2D.cs" id="5_b3se6"]
-[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/common/effects/fire.tres" id="5_tr6ro"]
-[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/GameplayEffect.cs" id="5_xub8u"]
-[ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="6_hspd7"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_xub8u"]
 [ext_resource type="PackedScene" uid="uid://dcld5rm0b5242" path="res://examples/2d/scenes/2d_floating_text.tscn" id="6_tr6ro"]
-[ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="7_xtisc"]
+[ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="6_yv8mo"]
+[ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="7_cuuac"]
 [ext_resource type="Script" uid="uid://dko3hlj10yp8d" path="res://examples/2d/scripts/ParticlesCueHandler2D.cs" id="8_1r4gs"]
-[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/rejuvenation.tres" id="8_nc1t5"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/rejuvenation.tres" id="8_3qm5n"]
 [ext_resource type="PackedScene" uid="uid://oad72vjqmwl3" path="res://examples/2d/scenes/particles/2d_fire_effect.tscn" id="9_30teu"]
 [ext_resource type="Script" uid="uid://btstkyo5h46w2" path="res://addons/forge/nodes/EffectRayCast2D.cs" id="9_xtisc"]
 [ext_resource type="Script" uid="uid://cxrmka1hqkn82" path="res://addons/forge/nodes/EffectShapeCast2D.cs" id="10_nc1t5"]
@@ -38,7 +38,7 @@ texture = ExtResource("3_cgod4")
 
 [node name="Effect" type="Node" parent="Fire Area"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("5_tr6ro")
+EffectData = ExtResource("4_nc1t5")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Damage Area" type="Area2D" parent="."]
@@ -55,7 +55,7 @@ texture = ExtResource("3_cgod4")
 
 [node name="Effect" type="Node" parent="Damage Area"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("4_b3se6")
+EffectData = ExtResource("5_0pjy8")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Water Area" type="Area2D" parent="."]
@@ -72,7 +72,7 @@ texture = ExtResource("3_cgod4")
 
 [node name="Effect" type="Node" parent="Water Area"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("6_hspd7")
+EffectData = ExtResource("6_yv8mo")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Regen Area" type="Area2D" parent="."]
@@ -89,12 +89,12 @@ texture = ExtResource("3_cgod4")
 
 [node name="Effect" type="Node" parent="Regen Area"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("7_xtisc")
+EffectData = ExtResource("7_cuuac")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Effect2" type="Node" parent="Regen Area"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("8_nc1t5")
+EffectData = ExtResource("8_3qm5n")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="EffectRayCast2D" type="RayCast2D" parent="."]
@@ -106,7 +106,7 @@ metadata/_custom_type_script = "uid://btstkyo5h46w2"
 
 [node name="Effect" type="Node" parent="EffectRayCast2D"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("6_hspd7")
+EffectData = ExtResource("6_yv8mo")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="EffectShapeCast2D" type="ShapeCast2D" parent="."]
@@ -119,7 +119,7 @@ metadata/_custom_type_script = "uid://cxrmka1hqkn82"
 
 [node name="Effect" type="Node" parent="EffectShapeCast2D"]
 script = ExtResource("5_xub8u")
-GameplayEffectData = ExtResource("8_nc1t5")
+EffectData = ExtResource("8_3qm5n")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="FloatingText Cues" type="Node" parent="."]

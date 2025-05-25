@@ -3,21 +3,21 @@
 using System.Diagnostics;
 using System.Globalization;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayCues;
+using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
 [GlobalClass]
-public partial class FloatingTextCueHandler2D : CueHandler
+public partial class FloatingTextCueHandler2D : ForgeCueHandler
 {
 	private Color _damageColor = new(1, 0, 0);
 
 	[Export]
 	public PackedScene? FloatingTextScene { get; set; }
 
-	public override void _CueOnExecute(IForgeEntity? forgeEntity, GameplayCueParameters? parameters)
+	public override void _CueOnExecute(IForgeEntity? forgeEntity, CueParameters? parameters)
 	{
 		if (forgeEntity is not Node2D node2D || !parameters.HasValue)
 		{

@@ -1,15 +1,15 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Godot.Core;
 using Godot;
-using ForgeScalableFloat = Gamesmiths.Forge.GameplayEffects.Magnitudes.ScalableFloat;
 
 namespace Gamesmiths.Forge.Godot.Resources.Magnitudes;
 
 [Tool]
 [GlobalClass]
 [Icon("uid://dvlaw4yolashm")]
-public partial class ScalableFloat : Resource
+public partial class ForgeScalableFloat : Resource
 {
 	[Export]
 	public float BaseValue { get; set; }
@@ -17,18 +17,18 @@ public partial class ScalableFloat : Resource
 	[Export]
 	public Curve? ScalingCurve { get; set; }
 
-	public ScalableFloat()
+	public ForgeScalableFloat()
 	{
 		// Constructor intentionally left blank.
 	}
 
-	public ScalableFloat(float baseValue)
+	public ForgeScalableFloat(float baseValue)
 	{
 		BaseValue = baseValue;
 	}
 
-	public ForgeScalableFloat GetScalableFloat()
+	public ScalableFloat GetScalableFloat()
 	{
-		return new ForgeScalableFloat(BaseValue, new ForgeCurve(ScalingCurve));
+		return new ScalableFloat(BaseValue, new ForgeCurve(ScalingCurve));
 	}
 }

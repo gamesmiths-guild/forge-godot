@@ -1,16 +1,15 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayCues;
+using Gamesmiths.Forge.Cues;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
 [GlobalClass]
 [Icon("uid://snulmvxydrp4")]
-public abstract partial class CueHandler : Node, IGameplayCue
+public abstract partial class ForgeCueHandler : Node, ICueHandler
 {
 	[Export]
 	public string? CueKey { get; set; }
@@ -24,16 +23,16 @@ public abstract partial class CueHandler : Node, IGameplayCue
 
 		base._Ready();
 
-		if (CuesManager is null || string.IsNullOrEmpty(CueKey))
+		if (ForgeContext.CuesManager is null || string.IsNullOrEmpty(CueKey))
 		{
 			return;
 		}
 
-		CuesManager.RegisterCue(CueKey, this);
+		ForgeContext.CuesManager.RegisterCue(CueKey, this);
 	}
 
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
-	public void OnApply(IForgeEntity? target, GameplayCueParameters? parameters)
+	public void OnApply(IForgeEntity? target, CueParameters? parameters)
 	{
 		if (target is IForgeEntity forgeEntity)
 		{
@@ -43,15 +42,15 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnApply(parameters);
 	}
 
-	public virtual void _CueOnApply(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public virtual void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
 	}
 
-	public virtual void _CueOnApply(GameplayCueParameters? parameters)
+	public virtual void _CueOnApply(CueParameters? parameters)
 	{
 	}
 
-	public void OnExecute(IForgeEntity? target, GameplayCueParameters? parameters)
+	public void OnExecute(IForgeEntity? target, CueParameters? parameters)
 	{
 		if (target is IForgeEntity forgeEntity)
 		{
@@ -61,11 +60,11 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnExecute(parameters);
 	}
 
-	public virtual void _CueOnExecute(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public virtual void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
 	}
 
-	public virtual void _CueOnExecute(GameplayCueParameters? parameters)
+	public virtual void _CueOnExecute(CueParameters? parameters)
 	{
 	}
 
@@ -87,7 +86,7 @@ public abstract partial class CueHandler : Node, IGameplayCue
 	{
 	}
 
-	public void OnUpdate(IForgeEntity? target, GameplayCueParameters? parameters)
+	public void OnUpdate(IForgeEntity? target, CueParameters? parameters)
 	{
 		if (target is IForgeEntity forgeEntity)
 		{
@@ -97,11 +96,11 @@ public abstract partial class CueHandler : Node, IGameplayCue
 		_CueOnUpdate(parameters);
 	}
 
-	public virtual void _CueOnUpdate(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public virtual void _CueOnUpdate(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
 	}
 
-	public virtual void _CueOnUpdate(GameplayCueParameters? parameters)
+	public virtual void _CueOnUpdate(CueParameters? parameters)
 	{
 	}
 }

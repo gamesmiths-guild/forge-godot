@@ -5,12 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Gamesmiths.Forge.GameplayTags;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Tags;
 using Godot;
 using Godot.Collections;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
 
 namespace Gamesmiths.Forge.Godot.Editor;
 
@@ -30,7 +29,7 @@ public partial class AssetRepairTool : EditorPlugin
 			var scenePath = originalScenePath.Replace("res:///", "res://");
 
 			GD.Print($"Processing scene: {scenePath}.");
-			var packedScene = (PackedScene)ResourceLoader.Load(scenePath);
+			PackedScene? packedScene = ResourceLoader.Load<PackedScene>(scenePath);
 
 			if (packedScene is null)
 			{
@@ -159,7 +158,7 @@ public partial class AssetRepairTool : EditorPlugin
 				continue;
 			}
 
-			if (value.As<Resource>() is TagContainer tagContainer)
+			if (value.As<Resource>() is ForgeTagContainer tagContainer)
 			{
 				modified |= ValidateTagContainerProperty(tagContainer, node.Name);
 			}
@@ -168,14 +167,14 @@ public partial class AssetRepairTool : EditorPlugin
 		return modified;
 	}
 
-	private static bool ValidateTagContainerProperty(TagContainer container, string nodeName)
+	private static bool ValidateTagContainerProperty(ForgeTagContainer container, string nodeName)
 	{
 		if (container.ContainerTags is null)
 		{
 			return false;
 		}
 
-		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
 		Array<string> originalTags = container.ContainerTags;
 		var newTags = new Array<string>();
@@ -185,10 +184,10 @@ public partial class AssetRepairTool : EditorPlugin
 		{
 			try
 			{
-				GameplayTag.RequestTag(TagsManager, tag);
+				Tag.RequestTag(ForgeContext.TagsManager, tag);
 				newTags.Add(tag);
 			}
-			catch (GameplayTagNotRegisteredException)
+			catch (TagNotRegisteredException)
 			{
 				GD.PrintRich(
 					$"[color=LIGHT_STEEL_BLUE][RepairTool] Removing invalid tag [{tag}] from node {nodeName}.");

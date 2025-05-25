@@ -4,26 +4,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayEffects.Magnitudes;
-using Gamesmiths.Forge.GameplayEffects.Modifiers;
-using Gamesmiths.Forge.GameplayTags;
+using Gamesmiths.Forge.Attributes;
+using Gamesmiths.Forge.Effects.Magnitudes;
+using Gamesmiths.Forge.Effects.Modifiers;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
+using Gamesmiths.Forge.Godot.Resources.Magnitudes;
+using Gamesmiths.Forge.Tags;
 using Godot;
 using Godot.Collections;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
-
-using ForgeModifier = Gamesmiths.Forge.GameplayEffects.Modifiers.Modifier;
-using ForgeScalableFloat = Gamesmiths.Forge.GameplayEffects.Magnitudes.ScalableFloat;
-using ScalableFloat = Gamesmiths.Forge.Godot.Resources.Magnitudes.ScalableFloat;
 
 namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
 [GlobalClass]
 [Icon("uid://bbwv58ku4cv0i")]
-public partial class Modifier : Resource
+public partial class ForgeModifier : Resource
 {
 	private MagnitudeCalculationType _calculationType;
 	private AttributeBasedFloatCalculationType _attributeCalculationType;
@@ -52,7 +48,7 @@ public partial class Modifier : Resource
 
 	[ExportGroup("Scalable Float")]
 	[Export]
-	public ScalableFloat? ScalableFloat { get; set; }
+	public ForgeScalableFloat? ScalableFloat { get; set; }
 
 	[ExportGroup("Attribute Based")]
 	[Export]
@@ -79,29 +75,29 @@ public partial class Modifier : Resource
 	}
 
 	[Export]
-	public ScalableFloat Coeficient { get; set; } = new(1);
+	public ForgeScalableFloat Coeficient { get; set; } = new(1);
 
 	[Export]
-	public ScalableFloat PreMultiplyAdditiveValue { get; set; } = new();
+	public ForgeScalableFloat PreMultiplyAdditiveValue { get; set; } = new(0);
 
 	[Export]
-	public ScalableFloat PostMultiplyAdditiveValue { get; set; } = new();
+	public ForgeScalableFloat PostMultiplyAdditiveValue { get; set; } = new(0);
 
 	[Export]
 	public int FinalChannel { get; set; }
 
 	[ExportGroup("Custom Calculator Class")]
 	[Export]
-	public CustomCalculator? CustomCalculatorClass { get; set; }
+	public ForgeCustomCalculator? CustomCalculatorClass { get; set; }
 
 	[Export]
-	public ScalableFloat CalculatorCoeficient { get; set; } = new(1);
+	public ForgeScalableFloat CalculatorCoeficient { get; set; } = new(1);
 
 	[Export]
-	public ScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; } = new();
+	public ForgeScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; } = new(0);
 
 	[Export]
-	public ScalableFloat CalculatorPostMultiplyAdditiveValue { get; set; } = new();
+	public ForgeScalableFloat CalculatorPostMultiplyAdditiveValue { get; set; } = new(0);
 
 	[ExportGroup("Set by Caller Float")]
 	[Export]
@@ -157,11 +153,11 @@ public partial class Modifier : Resource
 		}
 	}
 
-	public ForgeModifier GetModifier()
+	public Modifier GetModifier()
 	{
 		Debug.Assert(Attribute is not null, $"{nameof(Attribute)} reference is missing.");
 
-		return new ForgeModifier(
+		return new Modifier(
 			Attribute,
 			Operation,
 			new ModifierMagnitude(
@@ -190,7 +186,7 @@ public partial class Modifier : Resource
 			// Get public instance properties of type Attribute
 			IEnumerable<PropertyInfo> attributeProperties =
 				attributeSetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-					.Where(x => x.PropertyType == typeof(Attribute));
+					.Where(x => x.PropertyType == typeof(EntityAttribute));
 
 			foreach (PropertyInfo field in attributeProperties)
 			{
@@ -203,7 +199,7 @@ public partial class Modifier : Resource
 		return [.. options];
 	}
 
-	private ForgeScalableFloat? GetScalableFloatMagnitude()
+	private ScalableFloat? GetScalableFloatMagnitude()
 	{
 		if (CalculationType != MagnitudeCalculationType.ScalableFloat)
 		{
@@ -261,8 +257,8 @@ public partial class Modifier : Resource
 		}
 
 		Debug.Assert(CallerTargetTag is not null, $"{nameof(CallerTargetTag)} reference is missing.");
-		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
-		return new SetByCallerFloat(GameplayTag.RequestTag(TagsManager, CallerTargetTag));
+		return new SetByCallerFloat(Tag.RequestTag(ForgeContext.TagsManager, CallerTargetTag));
 	}
 }

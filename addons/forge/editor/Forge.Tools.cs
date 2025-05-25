@@ -6,7 +6,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Core;
 
 [Tool]
-public partial class Forge : ISerializationListener
+public partial class ForgeBootstrap : ISerializationListener
 {
 	public void OnBeforeSerialize()
 	{
@@ -14,7 +14,7 @@ public partial class Forge : ISerializationListener
 
 	public void OnAfterDeserialize()
 	{
-		Initialize();
+		ForgeContext.Initialize();
 	}
 }
 #endif

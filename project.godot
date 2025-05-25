@@ -17,7 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Forge="uid://ba8fquhtwu5mu"
+"Forge Bootstrap"="uid://ba8fquhtwu5mu"
 
 [dotnet]
 

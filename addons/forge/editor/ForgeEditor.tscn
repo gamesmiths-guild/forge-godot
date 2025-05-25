@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://pjscvogl6jak"]
 
-[ext_resource type="PackedScene" uid="uid://c17f812by5x23" path="res://addons/forge/editor/gameplay_tags/GameplayTagsEditor.tscn" id="1_bxwfw"]
-[ext_resource type="PackedScene" uid="uid://b1ix8v6v1yf0a" path="res://addons/forge/editor/gameplay_cues/CueKeysEditor.tscn" id="2_gtsby"]
+[ext_resource type="PackedScene" uid="uid://c17f812by5x23" path="res://addons/forge/editor/tags/TagsEditor.tscn" id="1_bxwfw"]
+[ext_resource type="PackedScene" uid="uid://b1ix8v6v1yf0a" path="res://addons/forge/editor/cues/CueKeysEditor.tscn" id="2_gtsby"]
 
 [node name="Forge" type="TabContainer"]
 anchors_preset = 15

@@ -2,13 +2,12 @@
 
 #if TOOLS
 using System.Diagnostics;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
-using Gamesmiths.Forge.Godot.Editor.GameplayCues;
-using Gamesmiths.Forge.Godot.Editor.GameplayTags;
+using Gamesmiths.Forge.Godot.Editor.Cues;
+using Gamesmiths.Forge.Godot.Editor.Tags;
 using Godot;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
 
 namespace Gamesmiths.Forge.Godot;
 
@@ -28,7 +27,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
 		_dockedScene = (TabContainer)pluginScene.Instantiate();
-		_dockedScene.GetNode<GameplayTagsEditor>("%Tags").IsPluginInstance = true;
+		_dockedScene.GetNode<TagsEditor>("%Tags").IsPluginInstance = true;
 		_dockedScene.GetNode<CueKeysEditor>("%Cues").IsPluginInstance = true;
 		AddControlToDock(DockSlot.RightUl, _dockedScene);
 
@@ -55,7 +54,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		RemoveToolMenuItem("Repair assets tags");
 
-		TagsManager?.DestroyTagTree();
+		ForgeContext.TagsManager?.DestroyTagTree();
 	}
 
 	public override void _EnablePlugin()
@@ -66,22 +65,22 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		if (config)
 		{
-			GD.PrintErr("Failed to load script at res://addons/forge/Forge.cs");
+			GD.PrintErr("Failed to load script at res://addons/forge/core/ForgeBootstrap.cs");
 			return;
 		}
 
-		if (!ProjectSettings.HasSetting("autoload/Forge"))
+		if (!ProjectSettings.HasSetting("autoload/Forge Bootstrap"))
 		{
-			ProjectSettings.SetSetting("autoload/Forge", AutoloadPath);
+			ProjectSettings.SetSetting("autoload/Forge Bootstrap", AutoloadPath);
 			ProjectSettings.Save();
 		}
 	}
 
 	public override void _DisablePlugin()
 	{
-		if (ProjectSettings.HasSetting("autoload/Forge"))
+		if (ProjectSettings.HasSetting("autoload/Forge Bootstrap"))
 		{
-			ProjectSettings.Clear("autoload/Forge");
+			ProjectSettings.Clear("autoload/Forge Bootstrap");
 			ProjectSettings.Save();
 		}
 	}

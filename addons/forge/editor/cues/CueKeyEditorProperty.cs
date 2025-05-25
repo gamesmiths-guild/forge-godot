@@ -1,10 +1,10 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
-using static Gamesmiths.Forge.Godot.Core.Forge;
 
-namespace Gamesmiths.Forge.Godot.Editor.GameplayCues;
+namespace Gamesmiths.Forge.Godot.Editor.Cues;
 
 [Tool]
 public partial class CueKeyEditorProperty : EditorProperty
@@ -16,7 +16,7 @@ public partial class CueKeyEditorProperty : EditorProperty
 		AddChild(_dropdown);
 		AddFocusable(_dropdown);
 
-		foreach (var cue in RegisteredCues ?? [])
+		foreach (var cue in ForgeContext.RegisteredCues ?? [])
 		{
 			_dropdown.AddItem(cue);
 		}

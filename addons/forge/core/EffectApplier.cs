@@ -2,28 +2,25 @@
 
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayEffects;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
-
-using ForgeGameplayEffect = Gamesmiths.Forge.GameplayEffects.GameplayEffect;
-using ForgeGameplayEffectData = Gamesmiths.Forge.GameplayEffects.GameplayEffectData;
-using GameplayEffect = Gamesmiths.Forge.Godot.Nodes.GameplayEffect;
 
 namespace Gamesmiths.Forge.Godot.Core;
 
 internal sealed class EffectApplier
 {
-	private readonly List<ForgeGameplayEffectData> _effects = [];
+	private readonly List<EffectData> _effects = [];
 
-	private readonly Dictionary<IForgeEntity, List<ActiveGameplayEffectHandle>> _effectInstances = [];
+	private readonly Dictionary<IForgeEntity, List<ActiveEffectHandle>> _effectInstances = [];
 
 	public EffectApplier(Node node)
 	{
 		foreach (Node child in node.GetChildren())
 		{
-			if (child is GameplayEffect effectNode && effectNode.GameplayEffectData is not null)
+			if (child is ForgeEffect effectNode && effectNode.EffectData is not null)
 			{
-				_effects.Add(effectNode.GameplayEffectData.GetEffectData());
+				_effects.Add(effectNode.EffectData.GetEffectData());
 			}
 		}
 	}
@@ -84,11 +81,11 @@ internal sealed class EffectApplier
 
 	private void ApplyEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectCauser)
 	{
-		foreach (ForgeGameplayEffectData effectData in _effects)
+		foreach (EffectData effectData in _effects)
 		{
-			var effect = new ForgeGameplayEffect(
+			var effect = new Effect(
 				effectData,
-				new GameplayEffectOwnership(effectOwner, effectCauser));
+				new EffectOwnership(effectOwner, effectCauser));
 
 			forgeEntity.EffectsManager.ApplyEffect(effect);
 		}
@@ -96,19 +93,19 @@ internal sealed class EffectApplier
 
 	private void AddEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectCauser)
 	{
-		var instanceEffects = new List<ActiveGameplayEffectHandle>();
+		var instanceEffects = new List<ActiveEffectHandle>();
 		if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
 		{
 			instanceEffects = _effectInstances[forgeEntity];
 		}
 
-		foreach (ForgeGameplayEffectData effectData in _effects)
+		foreach (EffectData effectData in _effects)
 		{
-			var effect = new ForgeGameplayEffect(
+			var effect = new Effect(
 				effectData,
-				new GameplayEffectOwnership(effectOwner, effectCauser));
+				new EffectOwnership(effectOwner, effectCauser));
 
-			ActiveGameplayEffectHandle? handle = forgeEntity.EffectsManager.ApplyEffect(effect);
+			ActiveEffectHandle? handle = forgeEntity.EffectsManager.ApplyEffect(effect);
 
 			if (handle is null)
 			{
@@ -121,12 +118,12 @@ internal sealed class EffectApplier
 
 	private void RemoveEffects(IForgeEntity forgeEntity)
 	{
-		if (!_effectInstances.TryGetValue(forgeEntity, out List<ActiveGameplayEffectHandle>? value))
+		if (!_effectInstances.TryGetValue(forgeEntity, out List<ActiveEffectHandle>? value))
 		{
 			return;
 		}
 
-		foreach (ActiveGameplayEffectHandle handle in value)
+		foreach (ActiveEffectHandle handle in value)
 		{
 			forgeEntity.EffectsManager.UnapplyEffect(handle);
 		}

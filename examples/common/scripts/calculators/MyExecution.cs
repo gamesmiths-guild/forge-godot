@@ -2,14 +2,14 @@
 
 using System;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayEffects;
-using Gamesmiths.Forge.GameplayEffects.Calculator;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Effects.Calculator;
 
 namespace Gamesmiths.Forge.Example;
 
-public class MyExecution : Execution
+public class MyExecution : CustomExecution
 {
-	public override ModifierEvaluatedData[] CalculateExecution(GameplayEffect effect, IForgeEntity target)
+	public override ModifierEvaluatedData[] EvaluateExecution(Effect effect, IForgeEntity target)
 	{
 		throw new NotImplementedException();
 	}

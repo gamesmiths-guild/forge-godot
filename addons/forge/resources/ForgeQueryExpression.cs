@@ -1,11 +1,10 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Diagnostics;
-using Gamesmiths.Forge.GameplayTags;
+using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Tags;
 using Godot;
 using Godot.Collections;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
 
 namespace Gamesmiths.Forge.Godot.Resources;
 
@@ -14,10 +13,10 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [Icon("uid://dscm401i41h52")]
 public partial class QueryExpression : Resource
 {
-	private GameplayTagQueryExpressionType _expressionType;
+	private TagQueryExpressionType _expressionType;
 
 	[Export]
-	public GameplayTagQueryExpressionType ExpressionType
+	public TagQueryExpressionType ExpressionType
 	{
 		get => _expressionType;
 
@@ -32,17 +31,17 @@ public partial class QueryExpression : Resource
 	public Array<QueryExpression>? Expressions { get; set; }
 
 	[Export]
-	public TagContainer? TagContainer { get; set; }
+	public ForgeTagContainer? TagContainer { get; set; }
 
 	public override void _ValidateProperty(Dictionary property)
 	{
-		if ((ExpressionType == GameplayTagQueryExpressionType.Undefined || IsExpressionType())
+		if ((ExpressionType == TagQueryExpressionType.Undefined || IsExpressionType())
 			&& property["name"].AsStringName() == PropertyName.TagContainer)
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
 		}
 
-		if ((ExpressionType == GameplayTagQueryExpressionType.Undefined || !IsExpressionType())
+		if ((ExpressionType == TagQueryExpressionType.Undefined || !IsExpressionType())
 			&& property["name"].AsStringName() == PropertyName.Expressions)
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
@@ -51,64 +50,64 @@ public partial class QueryExpression : Resource
 
 	public bool IsExpressionType()
 	{
-		return ExpressionType == GameplayTagQueryExpressionType.AnyExpressionsMatch
-				|| ExpressionType == GameplayTagQueryExpressionType.AllExpressionsMatch
-				|| ExpressionType == GameplayTagQueryExpressionType.NoExpressionsMatch;
+		return ExpressionType == TagQueryExpressionType.AnyExpressionsMatch
+				|| ExpressionType == TagQueryExpressionType.AllExpressionsMatch
+				|| ExpressionType == TagQueryExpressionType.NoExpressionsMatch;
 	}
 
-	public GameplayTagQueryExpression GetQueryExpression()
+	public TagQueryExpression GetQueryExpression()
 	{
 		Debug.Assert(
-			TagsManager is not null,
+			ForgeContext.TagsManager is not null,
 			$"{nameof(TagsManager)} should have been initialized by the Forge plugin.");
 
 		TagContainer ??= new();
 
-		var expression = new GameplayTagQueryExpression(TagsManager);
+		var expression = new TagQueryExpression(ForgeContext.TagsManager);
 
 		switch (_expressionType)
 		{
-			case GameplayTagQueryExpressionType.AnyExpressionsMatch:
+			case TagQueryExpressionType.AnyExpressionsMatch:
 				expression = expression.AnyExpressionsMatch();
 				AddExpressions(expression);
 				break;
 
-			case GameplayTagQueryExpressionType.AllExpressionsMatch:
+			case TagQueryExpressionType.AllExpressionsMatch:
 				expression = expression.AllExpressionsMatch();
 				AddExpressions(expression);
 				break;
 
-			case GameplayTagQueryExpressionType.NoExpressionsMatch:
+			case TagQueryExpressionType.NoExpressionsMatch:
 				expression = expression.NoExpressionsMatch();
 				AddExpressions(expression);
 				break;
 
-			case GameplayTagQueryExpressionType.AnyTagsMatch:
+			case TagQueryExpressionType.AnyTagsMatch:
 				expression = expression.AnyTagsMatch();
 				expression.AddTags(TagContainer.GetTagContainer());
 				break;
 
-			case GameplayTagQueryExpressionType.AllTagsMatch:
+			case TagQueryExpressionType.AllTagsMatch:
 				expression = expression.AllTagsMatch();
 				expression.AddTags(TagContainer.GetTagContainer());
 				break;
 
-			case GameplayTagQueryExpressionType.NoTagsMatch:
+			case TagQueryExpressionType.NoTagsMatch:
 				expression = expression.NoTagsMatch();
 				expression.AddTags(TagContainer.GetTagContainer());
 				break;
 
-			case GameplayTagQueryExpressionType.AnyTagsMatchExact:
+			case TagQueryExpressionType.AnyTagsMatchExact:
 				expression = expression.AnyTagsMatchExact();
 				expression.AddTags(TagContainer.GetTagContainer());
 				break;
 
-			case GameplayTagQueryExpressionType.AllTagsMatchExact:
+			case TagQueryExpressionType.AllTagsMatchExact:
 				expression = expression.AllTagsMatchExact();
 				expression.AddTags(TagContainer.GetTagContainer());
 				break;
 
-			case GameplayTagQueryExpressionType.NoTagsMatchExact:
+			case TagQueryExpressionType.NoTagsMatchExact:
 				expression = expression.NoTagsMatchExact();
 				expression.AddTags(TagContainer.GetTagContainer());
 				break;
@@ -117,7 +116,7 @@ public partial class QueryExpression : Resource
 		return expression;
 	}
 
-	private void AddExpressions(GameplayTagQueryExpression expression)
+	private void AddExpressions(TagQueryExpression expression)
 	{
 		Debug.Assert(
 			Expressions is not null,

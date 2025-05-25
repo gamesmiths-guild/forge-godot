@@ -1,17 +1,16 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Effects.Calculator;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Godot;
-
-using ForgeCustomCalculator = Gamesmiths.Forge.GameplayEffects.Calculator.CustomModifierMagnitudeCalculator;
 
 namespace Gamesmiths.Forge.Example;
 
 [Tool]
 [GlobalClass]
-public partial class MyCustomCalculatorWrapper : CustomCalculator
+public partial class MyCustomCalculatorWrapper : ForgeCustomCalculator
 {
-	public override ForgeCustomCalculator GetCustomCalculatorClass()
+	public override CustomModifierMagnitudeCalculator GetCustomCalculatorClass()
 	{
 		return new MyCustomCalculator();
 	}

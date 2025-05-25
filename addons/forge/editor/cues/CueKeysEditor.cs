@@ -3,11 +3,11 @@
 #if TOOLS
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Editor.GameplayCues;
+namespace Gamesmiths.Forge.Godot.Editor.Cues;
 
 [Tool]
 public partial class CueKeysEditor : VBoxContainer
@@ -52,7 +52,7 @@ public partial class CueKeysEditor : VBoxContainer
 			_forgePluginData.RegisteredCues is not null,
 			$"{_forgePluginData.RegisteredCues} should have been initialized by the Forge plugin.");
 
-		if (!GameplayTag.IsValidKey(_cueKeyTextField.Text, out var _, out var fixedTag))
+		if (!Tag.IsValidKey(_cueKeyTextField.Text, out var _, out var fixedTag))
 		{
 			_cueKeyTextField.Text = fixedTag;
 		}
@@ -103,9 +103,9 @@ public partial class CueKeysEditor : VBoxContainer
 		}
 	}
 
-	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)
+	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, TagNode currentNode)
 	{
-		foreach (GameplayTagNode childTagNode in currentNode.ChildTags)
+		foreach (TagNode childTagNode in currentNode.ChildTags)
 		{
 			TreeItem childTreeNode = tree.CreateItem(currentTreeItem);
 			childTreeNode.SetText(0, childTagNode.TagKey);

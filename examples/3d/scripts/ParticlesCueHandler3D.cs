@@ -3,14 +3,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayCues;
+using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
 [GlobalClass]
-public partial class ParticlesCueHandler3D : CueHandler
+public partial class ParticlesCueHandler3D : ForgeCueHandler
 {
 	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
 
@@ -20,7 +20,7 @@ public partial class ParticlesCueHandler3D : CueHandler
 	[Export]
 	public bool UpdateEffectIntensity { get; set; }
 
-	public override void _CueOnApply(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public override void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
 		base._CueOnApply(forgeEntity, parameters);
 
@@ -47,7 +47,7 @@ public partial class ParticlesCueHandler3D : CueHandler
 		effectInstance.Translate(new Vector3(0, 2, 0));
 	}
 
-	public override void _CueOnUpdate(IForgeEntity forgeEntity, GameplayCueParameters? parameters)
+	public override void _CueOnUpdate(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
 		if (forgeEntity is not Node node)
 		{

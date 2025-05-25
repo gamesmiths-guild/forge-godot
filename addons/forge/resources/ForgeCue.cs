@@ -5,21 +5,18 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayCues;
+using Gamesmiths.Forge.Attributes;
+using Gamesmiths.Forge.Cues;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
 using Godot.Collections;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
-
-using Attribute = Gamesmiths.Forge.Core.Attribute;
 
 namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
 [GlobalClass]
 [Icon("uid://din7fexs0x53h")]
-public partial class GameplayCue : Resource
+public partial class ForgeCue : Resource
 {
 	private CueMagnitudeType _magnitudeType;
 
@@ -47,11 +44,11 @@ public partial class GameplayCue : Resource
 	[Export]
 	public string? MagnitudeAttribute { get; set; }
 
-	public GameplayCueData GetGameplayCueData()
+	public CueData GetCueData()
 	{
 		Debug.Assert(!string.IsNullOrEmpty(CueKey), $"{nameof(CueKey)} should have been defined.");
 
-		return new GameplayCueData(
+		return new CueData(
 			CueKey,
 			MinValue,
 			MaxValue,
@@ -97,7 +94,7 @@ public partial class GameplayCue : Resource
 			// Get public instance properties of type Attribute
 			IEnumerable<PropertyInfo> attributeProperties =
 				attributeSetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-					.Where(x => x.PropertyType == typeof(Attribute));
+					.Where(x => x.PropertyType == typeof(EntityAttribute));
 
 			foreach (PropertyInfo field in attributeProperties)
 			{
@@ -112,11 +109,11 @@ public partial class GameplayCue : Resource
 
 	private static string[] GetCueOptions()
 	{
-		if (RegisteredCues is null)
+		if (ForgeContext.RegisteredCues is null)
 		{
 			return [];
 		}
 
-		return [.. RegisteredCues];
+		return [.. ForgeContext.RegisteredCues];
 	}
 }

@@ -13,12 +13,12 @@ public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 
 	public override bool _CanHandle(GodotObject @object)
 	{
-		return @object is AttributeSet;
+		return @object is ForgeAttributeSet;
 	}
 
 	public override void _ParseCategory(GodotObject @object, string category)
 	{
-		if (category != "AttributeSet")
+		if (category != "ForgeAttributeSet")
 		{
 			return;
 		}
@@ -27,7 +27,7 @@ public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 
 		var containerScene = (AttributeSetEditor)_inspectorScene.Instantiate();
 		containerScene.IsPluginInstance = true;
-		containerScene.TargetAttributeSet = @object as AttributeSet;
+		containerScene.TargetAttributeSet = @object as ForgeAttributeSet;
 
 		AddCustomControl(containerScene);
 	}

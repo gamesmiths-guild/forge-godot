@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=28 format=3 uid="uid://drty8r1ibx5ug"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=28 format=3 uid="uid://drty8r1ibx5ug"]
 
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="1_hevuu"]
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/TagContainer.cs" id="1_mxksh"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_mxksh"]
 [ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_bgqdm"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="2_oi1ck"]
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="3_cho4q"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_oi1ck"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_cho4q"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="3_o1eft"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="4_mxksh"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="5_bgqdm"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="4_mxksh"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="4_ow18a"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_bgqdm"]
 
 [sub_resource type="Resource" id="Resource_nmed0"]
 script = ExtResource("1_mxksh")
@@ -34,13 +34,8 @@ ApplicationRequiredTags = SubResource("Resource_4kmhu")
 RemovalRequiredTags = SubResource("Resource_mxksh")
 metadata/_custom_type_script = "uid://b0eq12mjqfage"
 
-[sub_resource type="Resource" id="Resource_hevuu"]
-script = ExtResource("3_cho4q")
-BaseValue = 10.0
-metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
-
-[sub_resource type="Resource" id="Resource_ygmrb"]
-script = ExtResource("1_hevuu")
+[sub_resource type="Resource" id="Resource_ow18a"]
+script = ExtResource("4_ow18a")
 CueKey = "floating.text"
 MinValue = 0
 MaxValue = 1000
@@ -48,14 +43,19 @@ MagnitudeType = 2
 MagnitudeAttribute = "CharacterAttributes.Health"
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
-[sub_resource type="Resource" id="Resource_oi1ck"]
-script = ExtResource("1_hevuu")
+[sub_resource type="Resource" id="Resource_pptqi"]
+script = ExtResource("4_ow18a")
 CueKey = "vfx.fire"
 MinValue = 0
 MaxValue = 1
 MagnitudeType = 0
 MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_hevuu"]
+script = ExtResource("3_cho4q")
+BaseValue = 10.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_cn837"]
 script = ExtResource("2_oi1ck")
@@ -149,7 +149,7 @@ ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 1
 ExecuteOnSuccessfulApplication = false
-GameplayCues = [SubResource("Resource_ygmrb"), SubResource("Resource_oi1ck")]
+Cues = [SubResource("Resource_ow18a"), SubResource("Resource_pptqi")]
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

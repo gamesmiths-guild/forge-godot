@@ -2,11 +2,11 @@
 
 [ext_resource type="Script" uid="uid://bgm8wd05f18rh" path="res://examples/3d/scripts/Character3D.cs" id="1_8qd58"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="1_x3bge"]
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/TagContainer.cs" id="2_8qd58"]
-[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/AttributeSet.cs" id="3_ced4t"]
-[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/resources/AttributeValues.cs" id="4_o72y0"]
-[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/GameplayEffect.cs" id="5_8m251"]
-[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/common/effects/health_regen.tres" id="6_gnlmx"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="2_8qd58"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="3_ced4t"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="4_o72y0"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_8m251"]
+[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/common/effects/health_regen.tres" id="7_yl5ww"]
 [ext_resource type="Script" uid="uid://lgxurajmwoly" path="res://examples/3d/scripts/HealthBar3D.cs" id="8_iod0y"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_x3bge"]
@@ -115,7 +115,7 @@ metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
 [node name="Effect" type="Node" parent="Forge Entity"]
 script = ExtResource("5_8m251")
-GameplayEffectData = ExtResource("6_gnlmx")
+EffectData = ExtResource("7_yl5ww")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="SubViewport" type="SubViewport" parent="."]

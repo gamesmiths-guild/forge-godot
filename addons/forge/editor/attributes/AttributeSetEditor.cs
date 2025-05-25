@@ -5,11 +5,9 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Godot.Nodes;
-using Gamesmiths.Forge.Godot.Resources;
 using Godot;
-using ForgeAttribute = Gamesmiths.Forge.Core.Attribute;
-using ForgeAttributeSet = Gamesmiths.Forge.Core.AttributeSet;
 
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
@@ -20,7 +18,7 @@ public partial class AttributeSetEditor : VBoxContainer
 
 	private PackedScene? _attributeScene;
 
-	public AttributeSet? TargetAttributeSet { get; set; }
+	public ForgeAttributeSet? TargetAttributeSet { get; set; }
 
 	public bool IsPluginInstance { get; set; }
 
@@ -76,7 +74,7 @@ public partial class AttributeSetEditor : VBoxContainer
 		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
 		// Find all types that subclass AttributeSet
-		foreach (Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(ForgeAttributeSet))))
+		foreach (Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
 		{
 			options.Add(attributeSetType.Name);
 		}
@@ -121,9 +119,9 @@ public partial class AttributeSetEditor : VBoxContainer
 
 		System.Collections.Generic.IEnumerable<PropertyInfo> attributeProperties = targetType
 			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-			.Where(x => x.PropertyType == typeof(ForgeAttribute));
+			.Where(x => x.PropertyType == typeof(EntityAttribute));
 
-		ForgeAttributeSet? attributeSet = TargetAttributeSet.GetAttributeSet();
+		AttributeSet? attributeSet = TargetAttributeSet.GetAttributeSet();
 
 		if (attributeSet is null)
 		{

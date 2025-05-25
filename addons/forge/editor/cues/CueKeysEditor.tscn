@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b1ix8v6v1yf0a"]
 
-[ext_resource type="Script" uid="uid://dnsy7p8h1ujjv" path="res://addons/forge/editor/gameplay_cues/CueKeysEditor.cs" id="1_bpbs2"]
+[ext_resource type="Script" uid="uid://dnsy7p8h1ujjv" path="res://addons/forge/editor/cues/CueKeysEditor.cs" id="1_bpbs2"]
 
 [node name="CueKeysEditor" type="VBoxContainer"]
 anchors_preset = 15

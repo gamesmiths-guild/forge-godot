@@ -5,7 +5,7 @@ using System;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Editor.GameplayCues;
+namespace Gamesmiths.Forge.Godot.Editor.Cues;
 
 [Tool]
 public partial class CueHandlerInspectorPlugin : EditorInspectorPlugin
@@ -17,7 +17,7 @@ public partial class CueHandlerInspectorPlugin : EditorInspectorPlugin
 		{
 			StringName className = script.GetGlobalName();
 
-			Type baseType = typeof(CueHandler);
+			Type baseType = typeof(ForgeCueHandler);
 			System.Reflection.Assembly assembly = baseType.Assembly;
 
 			Type? implementationType =

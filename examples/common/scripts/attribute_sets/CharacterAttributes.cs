@@ -1,20 +1,20 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Attributes;
 
 namespace Gamesmiths.Forge.Example;
 
 public class CharacterAttributes : AttributeSet
 {
-	public Attribute Health { get; private set; }
+	public EntityAttribute Health { get; private set; }
 
-	public Attribute Mana { get; private set; }
+	public EntityAttribute Mana { get; private set; }
 
-	public Attribute Strength { get; private set; }
+	public EntityAttribute Strength { get; private set; }
 
-	public Attribute Agility { get; private set; }
+	public EntityAttribute Agility { get; private set; }
 
-	public Attribute Intelligence { get; private set; }
+	public EntityAttribute Intelligence { get; private set; }
 
 	public CharacterAttributes()
 	{

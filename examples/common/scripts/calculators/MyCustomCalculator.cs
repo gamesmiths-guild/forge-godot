@@ -2,13 +2,14 @@
 
 using System;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayEffects.Calculator;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Effects.Calculator;
 
 namespace Gamesmiths.Forge.Example;
 
 public class MyCustomCalculator : CustomModifierMagnitudeCalculator
 {
-	public override float CalculateBaseMagnitude(GameplayEffects.GameplayEffect effect, IForgeEntity target)
+	public override float CalculateBaseMagnitude(Effect effect, IForgeEntity target)
 	{
 		throw new NotImplementedException();
 	}

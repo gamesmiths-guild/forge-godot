@@ -7,8 +7,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 
 [GlobalClass]
 [Icon("uid://bpl454nqdpfjx")]
-public partial class GameplayEffect : Node
+public partial class ForgeEffect : Node
 {
 	[Export]
-	public GameplayEffectData? GameplayEffectData { get; set; }
+	public ForgeEffectData? EffectData { get; set; }
 }

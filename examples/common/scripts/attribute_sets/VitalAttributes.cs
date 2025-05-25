@@ -1,17 +1,17 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Attributes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
 public class VitalAttributes : AttributeSet
 {
-	public Attribute Vitality { get; private set; }
+	public EntityAttribute Vitality { get; private set; }
 
-	public Attribute MaxHealth { get; private set; }
+	public EntityAttribute MaxHealth { get; private set; }
 
-	public Attribute CurrentHealth { get; private set; }
+	public EntityAttribute CurrentHealth { get; private set; }
 
 	public VitalAttributes()
 	{
@@ -20,7 +20,7 @@ public class VitalAttributes : AttributeSet
 		CurrentHealth = InitializeAttribute(nameof(CurrentHealth), 100, 0, MaxHealth.CurrentValue);
 	}
 
-	protected override void AttributeOnValueChanged(Attribute attribute, int change)
+	protected override void AttributeOnValueChanged(EntityAttribute attribute, int change)
 	{
 		base.AttributeOnValueChanged(attribute, change);
 

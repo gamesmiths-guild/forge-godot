@@ -4,7 +4,7 @@
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Editor.GameplayTags;
+namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 public partial class TagsInspectorPlugin : EditorInspectorPlugin
 {
@@ -12,7 +12,7 @@ public partial class TagsInspectorPlugin : EditorInspectorPlugin
 
 	public override bool _CanHandle(GodotObject @object)
 	{
-		return @object is TagContainer;
+		return @object is ForgeTagContainer;
 	}
 
 	public override bool _ParseProperty(
@@ -31,7 +31,7 @@ public partial class TagsInspectorPlugin : EditorInspectorPlugin
 			var containerScene = (TagContainerEditor)_inspectorScene.Instantiate();
 			containerScene.IsPluginInstance = true;
 
-			if (@object is TagContainer tagContainer)
+			if (@object is ForgeTagContainer tagContainer)
 			{
 				containerScene.ContainerTags = tagContainer.ContainerTags;
 			}

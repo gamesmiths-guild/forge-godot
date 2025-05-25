@@ -1,15 +1,15 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Godot.Core;
 using Godot;
-using ForgeScalableInt = Gamesmiths.Forge.GameplayEffects.Magnitudes.ScalableInt;
 
 namespace Gamesmiths.Forge.Godot.Resources.Magnitudes;
 
 [Tool]
 [GlobalClass]
 [Icon("uid://dnagt7tdo3dos")]
-public partial class ScalableInt : Resource
+public partial class ForgeScalableInt : Resource
 {
 	[Export]
 	public int BaseValue { get; set; }
@@ -17,18 +17,18 @@ public partial class ScalableInt : Resource
 	[Export]
 	public Curve? ScalingCurve { get; set; }
 
-	public ScalableInt()
+	public ForgeScalableInt()
 	{
 		// Constructor intentionally left blank.
 	}
 
-	public ScalableInt(int baseValue)
+	public ForgeScalableInt(int baseValue)
 	{
 		BaseValue = baseValue;
 	}
 
-	public ForgeScalableInt GetScalableInt()
+	public ScalableInt GetScalableInt()
 	{
-		return new ForgeScalableInt(BaseValue, new ForgeCurve(ScalingCurve));
+		return new ScalableInt(BaseValue, new ForgeCurve(ScalingCurve));
 	}
 }

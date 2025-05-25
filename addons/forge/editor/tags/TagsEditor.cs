@@ -4,18 +4,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Gamesmiths.Forge.GameplayTags;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
-using static Gamesmiths.Forge.Godot.Core.Forge;
-
-namespace Gamesmiths.Forge.Godot.Editor.GameplayTags;
+namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
-public partial class GameplayTagsEditor : VBoxContainer
+public partial class TagsEditor : VBoxContainer
 {
-	private readonly Dictionary<TreeItem, GameplayTagNode> _treeItemToNode = [];
+	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
 	private ForgeData? _forgePluginData;
 
@@ -59,7 +57,7 @@ public partial class GameplayTagsEditor : VBoxContainer
 			_forgePluginData.RegisteredTags is not null,
 			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
 
-		if (!GameplayTag.IsValidKey(_tagNameTextField.Text, out var _, out var fixedTag))
+		if (!Tag.IsValidKey(_tagNameTextField.Text, out var _, out var fixedTag))
 		{
 			_tagNameTextField.Text = fixedTag;
 		}
@@ -83,8 +81,8 @@ public partial class GameplayTagsEditor : VBoxContainer
 			_forgePluginData.RegisteredTags is not null,
 			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
 
-		TagsManager?.DestroyTagTree();
-		RebuildTagsManager();
+		ForgeContext.TagsManager?.DestroyTagTree();
+		ForgeContext.RebuildTagsManager();
 
 		_tree.Clear();
 		ConstructTagTree();
@@ -93,12 +91,12 @@ public partial class GameplayTagsEditor : VBoxContainer
 	private void ConstructTagTree()
 	{
 		EnsureInitialized();
-		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
 		TreeItem rootTreeNode = _tree.CreateItem();
 		_tree.HideRoot = true;
 
-		if (TagsManager.RootNode.ChildTags.Count == 0)
+		if (ForgeContext.TagsManager.RootNode.ChildTags.Count == 0)
 		{
 			TreeItem childTreeNode = _tree.CreateItem(rootTreeNode);
 			childTreeNode.SetText(0, "No tag has been registered yet.");
@@ -106,12 +104,12 @@ public partial class GameplayTagsEditor : VBoxContainer
 			return;
 		}
 
-		BuildTreeRecursively(_tree, rootTreeNode, TagsManager.RootNode);
+		BuildTreeRecursively(_tree, rootTreeNode, ForgeContext.TagsManager.RootNode);
 	}
 
-	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)
+	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, TagNode currentNode)
 	{
-		foreach (GameplayTagNode childTagNode in currentNode.ChildTags)
+		foreach (TagNode childTagNode in currentNode.ChildTags)
 		{
 			TreeItem childTreeNode = tree.CreateItem(currentTreeItem);
 			childTreeNode.SetText(0, childTagNode.TagKey);
@@ -142,7 +140,7 @@ public partial class GameplayTagsEditor : VBoxContainer
 
 			if (id == 1)
 			{
-				GameplayTagNode selectedTag = _treeItemToNode[item];
+				TagNode selectedTag = _treeItemToNode[item];
 
 				for (var i = _forgePluginData.RegisteredTags.Count - 1; i >= 0; i--)
 				{

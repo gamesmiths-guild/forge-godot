@@ -2,7 +2,7 @@
 
 using Godot;
 
-namespace Gamesmiths.Forge.Godot.Resources;
+namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
 public partial class AttributeValues : Resource

@@ -1,18 +1,18 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.GameplayEffects.Components;
+using Gamesmiths.Forge.Effects.Components;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Resources.Components;
 
 [Tool]
 [GlobalClass]
-public partial class ModifierTags : EffectComponent
+public partial class ModifierTags : ForgeEffectComponent
 {
 	[Export]
-	public TagContainer? TagsToAdd { get; set; }
+	public ForgeTagContainer? TagsToAdd { get; set; }
 
-	public override IGameplayEffectComponent GetComponent()
+	public override IEffectComponent GetComponent()
 	{
 		TagsToAdd ??= new();
 

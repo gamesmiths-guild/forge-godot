@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=17 format=3 uid="uid://dt5y704o0sldo"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=17 format=3 uid="uid://dt5y704o0sldo"]
 
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="1_cd28o"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="1_khd1u"]
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="2_cn837"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="2_j5nmc"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="3_cd28o"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="1_khd1u"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="1_m13e3"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="2_cn837"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="2_j5nmc"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="3_cd28o"]
 
-[sub_resource type="Resource" id="Resource_ygmrb"]
-script = ExtResource("1_cd28o")
+[sub_resource type="Resource" id="Resource_ikt6e"]
+script = ExtResource("1_m13e3")
 CueKey = "floating.text"
 MinValue = 0
 MaxValue = 1000
@@ -100,7 +100,7 @@ ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = [SubResource("Resource_ygmrb")]
+Cues = [SubResource("Resource_ikt6e")]
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

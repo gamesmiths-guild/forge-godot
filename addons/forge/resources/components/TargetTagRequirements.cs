@@ -1,46 +1,46 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.GameplayEffects.Components;
-using Gamesmiths.Forge.GameplayTags;
+using Gamesmiths.Forge.Effects.Components;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Resources.Components;
 
 [Tool]
 [GlobalClass]
-public partial class TargetTagRequirements : EffectComponent
+public partial class TargetTagRequirements : ForgeEffectComponent
 {
 	[ExportGroup("Application Requirements")]
 	[Export]
-	public TagContainer? ApplicationRequiredTags { get; set; } = new();
+	public ForgeTagContainer? ApplicationRequiredTags { get; set; } = new();
 
 	[Export]
-	public TagContainer? ApplicationIgnoredTags { get; set; }
+	public ForgeTagContainer? ApplicationIgnoredTags { get; set; }
 
 	[Export]
 	public QueryExpression? ApplicationTagQuery { get; set; }
 
 	[ExportGroup("Removal Requirements")]
 	[Export]
-	public TagContainer? RemovalRequiredTags { get; set; }
+	public ForgeTagContainer? RemovalRequiredTags { get; set; }
 
 	[Export]
-	public TagContainer? RemovalIgnoredTags { get; set; }
+	public ForgeTagContainer? RemovalIgnoredTags { get; set; }
 
 	[Export]
 	public QueryExpression? RemovalTagQuery { get; set; }
 
 	[ExportGroup("Ongoing Requirements")]
 	[Export]
-	public TagContainer? OngoingRequiredTags { get; set; }
+	public ForgeTagContainer? OngoingRequiredTags { get; set; }
 
 	[Export]
-	public TagContainer? OngoingIgnoredTags { get; set; }
+	public ForgeTagContainer? OngoingIgnoredTags { get; set; }
 
 	[Export]
 	public QueryExpression? OngoingTagQuery { get; set; }
 
-	public override IGameplayEffectComponent GetComponent()
+	public override IEffectComponent GetComponent()
 	{
 		ApplicationRequiredTags ??= new();
 		ApplicationIgnoredTags ??= new();
@@ -49,34 +49,34 @@ public partial class TargetTagRequirements : EffectComponent
 		OngoingRequiredTags ??= new();
 		OngoingIgnoredTags ??= new();
 
-		var applicationQuery = new GameplayTagQuery();
+		var applicationQuery = new TagQuery();
 		if (ApplicationTagQuery is not null)
 		{
 			applicationQuery.Build(ApplicationTagQuery.GetQueryExpression());
 		}
 
-		var removalQuery = new GameplayTagQuery();
+		var removalQuery = new TagQuery();
 		if (RemovalTagQuery is not null)
 		{
 			removalQuery.Build(RemovalTagQuery.GetQueryExpression());
 		}
 
-		var ongoingQuery = new GameplayTagQuery();
+		var ongoingQuery = new TagQuery();
 		if (OngoingTagQuery is not null)
 		{
 			ongoingQuery.Build(OngoingTagQuery.GetQueryExpression());
 		}
 
 		return new TargetTagRequirementsEffectComponent(
-		new GameplayTagRequirements(
+		new TagRequirements(
 			ApplicationRequiredTags.GetTagContainer(),
 			ApplicationIgnoredTags.GetTagContainer(),
 			applicationQuery),
-		new GameplayTagRequirements(
+		new TagRequirements(
 			RemovalRequiredTags.GetTagContainer(),
 			RemovalIgnoredTags.GetTagContainer(),
 			removalQuery),
-		new GameplayTagRequirements(
+		new TagRequirements(
 			OngoingRequiredTags.GetTagContainer(),
 			OngoingIgnoredTags.GetTagContainer(),
 			ongoingQuery));

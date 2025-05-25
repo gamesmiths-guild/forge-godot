@@ -2,30 +2,29 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using Gamesmiths.Forge.GameplayCues;
-using Gamesmiths.Forge.GameplayEffects.Components;
-using Gamesmiths.Forge.GameplayEffects.Duration;
-using Gamesmiths.Forge.GameplayEffects.Periodic;
-using Gamesmiths.Forge.GameplayEffects.Stacking;
+using Gamesmiths.Forge.Cues;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Effects.Calculator;
+using Gamesmiths.Forge.Effects.Components;
+using Gamesmiths.Forge.Effects.Duration;
+using Gamesmiths.Forge.Effects.Magnitudes;
+using Gamesmiths.Forge.Effects.Modifiers;
+using Gamesmiths.Forge.Effects.Periodic;
+using Gamesmiths.Forge.Effects.Stacking;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Gamesmiths.Forge.Godot.Resources.Components;
+using Gamesmiths.Forge.Godot.Resources.Magnitudes;
 using Godot;
 using Godot.Collections;
-using ForgeExecution = Gamesmiths.Forge.GameplayEffects.Calculator.Execution;
-using ForgeGameplayEffectData = Gamesmiths.Forge.GameplayEffects.GameplayEffectData;
-using ForgeModifier = Gamesmiths.Forge.GameplayEffects.Modifiers.Modifier;
-using ForgeScalableFloat = Gamesmiths.Forge.GameplayEffects.Magnitudes.ScalableFloat;
-using ScalableFloat = Gamesmiths.Forge.Godot.Resources.Magnitudes.ScalableFloat;
-using ScalableInt = Gamesmiths.Forge.Godot.Resources.Magnitudes.ScalableInt;
 
 namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
 [GlobalClass]
 [Icon("uid://obsk7rrtq1xd")]
-public partial class GameplayEffectData : Resource
+public partial class ForgeEffectData : Resource
 {
-	private ForgeGameplayEffectData? _data;
+	private EffectData? _data;
 
 	private DurationType _durationType;
 	private bool _hasPeriodicApplication;
@@ -44,18 +43,18 @@ public partial class GameplayEffectData : Resource
 
 	[ExportGroup("Modifier Data")]
 
-	[Export(PropertyHint.ResourceType, "Modifier")]
-	public Array<Modifier>? Modifiers { get; set; }
+	[Export(PropertyHint.ResourceType, "ForgeModifier")]
+	public Array<ForgeModifier>? Modifiers { get; set; }
 
 	[ExportGroup("Components")]
 
 	[Export(PropertyHint.ResourceType, "EffectComponent")]
-	public Array<EffectComponent>? Components { get; set; }
+	public Array<ForgeEffectComponent>? Components { get; set; }
 
 	[ExportGroup("Executions")]
 
-	[Export(PropertyHint.ResourceType, "Execution")]
-	public Array<Execution>? Executions { get; set; }
+	[Export(PropertyHint.ResourceType, "ForgeCustomExecution")]
+	public Array<ForgeCustomExecution>? Executions { get; set; }
 
 	[ExportGroup("Duration Data")]
 	[Export]
@@ -78,7 +77,7 @@ public partial class GameplayEffectData : Resource
 	}
 
 	[Export]
-	public ScalableFloat? Duration { get; set; }
+	public ForgeScalableFloat? Duration { get; set; }
 
 	[ExportGroup("Periodic Data")]
 
@@ -95,7 +94,7 @@ public partial class GameplayEffectData : Resource
 	}
 
 	[Export]
-	public ScalableFloat? Period { get; set; }
+	public ForgeScalableFloat? Period { get; set; }
 
 	[Export]
 	public bool ExecuteOnApplication { get; set; }
@@ -114,10 +113,10 @@ public partial class GameplayEffectData : Resource
 	}
 
 	[Export]
-	public ScalableInt StackLimit { get; set; } = new(1);
+	public ForgeScalableInt StackLimit { get; set; } = new(1);
 
 	[Export]
-	public ScalableInt InitialStack { get; set; } = new(1);
+	public ForgeScalableInt InitialStack { get; set; } = new(1);
 
 	[Export]
 	public StackPolicy SourcePolicy
@@ -201,9 +200,9 @@ public partial class GameplayEffectData : Resource
 	[Export]
 	public bool ExecuteOnSuccessfulApplication { get; set; }
 
-	[ExportGroup("Gameplay Cues")]
-	[Export(PropertyHint.ResourceType, "GameplayCue")]
-	public Array<GameplayCue>? GameplayCues { get; set; }
+	[ExportGroup("Cues")]
+	[Export(PropertyHint.ResourceType, "ForgeCue")]
+	public Array<ForgeCue>? Cues { get; set; }
 
 	[Export]
 	public bool RequireModifierSuccessToTriggerCue { get; set; }
@@ -288,7 +287,7 @@ public partial class GameplayEffectData : Resource
 		}
 	}
 
-	public ForgeGameplayEffectData GetEffectData()
+	public EffectData GetEffectData()
 	{
 		if (_data.HasValue)
 		{
@@ -298,35 +297,35 @@ public partial class GameplayEffectData : Resource
 		Modifiers ??= [];
 		Components ??= [];
 		Executions ??= [];
-		GameplayCues ??= [];
+		Cues ??= [];
 
-		var modifiers = new List<ForgeModifier>();
-		foreach (Modifier modifier in Modifiers)
+		var modifiers = new List<Modifier>();
+		foreach (ForgeModifier modifier in Modifiers)
 		{
 			modifiers.Add(modifier.GetModifier());
 		}
 
-		var components = new List<IGameplayEffectComponent>();
-		foreach (EffectComponent component in Components)
+		var components = new List<IEffectComponent>();
+		foreach (ForgeEffectComponent component in Components)
 		{
 			components.Add(component.GetComponent());
 		}
 
-		var executions = new List<ForgeExecution>();
-		foreach (Execution execution in Executions)
+		var executions = new List<CustomExecution>();
+		foreach (ForgeCustomExecution execution in Executions)
 		{
 			executions.Add(execution.GetExecutionClass());
 		}
 
-		var gameplayCues = new List<GameplayCueData>();
-		foreach (GameplayCue gameplayCue in GameplayCues)
+		var cues = new List<CueData>();
+		foreach (ForgeCue cue in Cues)
 		{
-			gameplayCues.Add(gameplayCue.GetGameplayCueData());
+			cues.Add(cue.GetCueData());
 		}
 
 		Debug.Assert(Name is not null, $"{nameof(Duration)} is not set.");
 
-		_data = new ForgeGameplayEffectData(
+		_data = new EffectData(
 			Name,
 			[.. modifiers],
 			GetDurationData(),
@@ -337,7 +336,7 @@ public partial class GameplayEffectData : Resource
 			RequireModifierSuccessToTriggerCue,
 			SuppressStackingCues,
 			[.. executions],
-			[.. gameplayCues]);
+			[.. cues]);
 
 		return _data.Value;
 	}
@@ -347,7 +346,7 @@ public partial class GameplayEffectData : Resource
 		return new DurationData(DurationType, GetDuration());
 	}
 
-	private ForgeScalableFloat? GetDuration()
+	private ScalableFloat? GetDuration()
 	{
 		if (DurationType != DurationType.HasDuration)
 		{

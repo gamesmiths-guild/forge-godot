@@ -1,16 +1,16 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Attributes;
 
 namespace Gamesmiths.Forge.Example;
 
 public class ItemAttributes : AttributeSet
 {
-	public Attribute Price { get; private set; }
+	public EntityAttribute Price { get; private set; }
 
-	public Attribute Weight { get; private set; }
+	public EntityAttribute Weight { get; private set; }
 
-	public Attribute Rarity { get; private set; }
+	public EntityAttribute Rarity { get; private set; }
 
 	public ItemAttributes()
 	{

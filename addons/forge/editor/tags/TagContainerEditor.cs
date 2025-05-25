@@ -5,19 +5,18 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.GameplayTags;
+using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Tags;
 using Godot;
-
-using static Gamesmiths.Forge.Godot.Core.Forge;
 
 using GodotStringArray = Godot.Collections.Array<string>;
 
-namespace Gamesmiths.Forge.Godot.Editor.GameplayTags;
+namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
 public partial class TagContainerEditor : VBoxContainer
 {
-	private readonly Dictionary<TreeItem, GameplayTagNode> _treeItemToNode = [];
+	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
 	private Button? _containerButton;
 	private Tree? _tree;
@@ -32,7 +31,7 @@ public partial class TagContainerEditor : VBoxContainer
 	{
 		base._Ready();
 
-		if (!IsPluginInstance || TagsManager is null)
+		if (!IsPluginInstance || ForgeContext.TagsManager is null)
 		{
 			return;
 		}
@@ -55,7 +54,7 @@ public partial class TagContainerEditor : VBoxContainer
 		_tree.Visible = false;
 		_tree.CustomMinimumSize += new Vector2(0, 12);
 
-		if (TagsManager.RootNode.ChildTags.Count == 0)
+		if (ForgeContext.TagsManager.RootNode.ChildTags.Count == 0)
 		{
 			AddEmptyTagsWarning(_tree, rootTreeNode);
 			return;
@@ -63,7 +62,7 @@ public partial class TagContainerEditor : VBoxContainer
 
 		ValidateTags();
 
-		BuildTreeRecursively(_tree, rootTreeNode, TagsManager.RootNode);
+		BuildTreeRecursively(_tree, rootTreeNode, ForgeContext.TagsManager.RootNode);
 
 		_tree.ItemCollapsed += TreeItemCollapsed;
 		_tree.ButtonClicked += TreeButtonClicked;
@@ -110,11 +109,11 @@ public partial class TagContainerEditor : VBoxContainer
 		}
 	}
 
-	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, GameplayTagNode currentNode)
+	private void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, TagNode currentNode)
 	{
 		EnsureInitialized();
 
-		foreach (GameplayTagNode childTagNode in currentNode.ChildTags)
+		foreach (TagNode childTagNode in currentNode.ChildTags)
 		{
 			TreeItem childTreeNode = tree.CreateItem(currentTreeItem);
 			childTreeNode.SetText(0, childTagNode.TagKey);
@@ -167,7 +166,7 @@ public partial class TagContainerEditor : VBoxContainer
 	private void ValidateTags()
 	{
 		EnsureInitialized();
-		Debug.Assert(TagsManager is not null, $"{TagsManager} should have been initialized by the Forge plugin.");
+		Debug.Assert(ForgeContext.TagsManager is not null, $"{ForgeContext.TagsManager} should have been initialized by the Forge plugin.");
 
 		for (var i = ContainerTags.Count - 1; i >= 0; i--)
 		{
@@ -175,9 +174,9 @@ public partial class TagContainerEditor : VBoxContainer
 
 			try
 			{
-				GameplayTag.RequestTag(TagsManager, tag);
+				Tag.RequestTag(ForgeContext.TagsManager, tag);
 			}
-			catch (GameplayTagNotRegisteredException)
+			catch (TagNotRegisteredException)
 			{
 				ContainerTags.Remove(tag);
 				_containerButton.Text = $"Container (size: {ContainerTags.Count})";

@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Attributes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
@@ -22,12 +23,12 @@ public partial class HealthBar2D : ProgressBar
 			return;
 		}
 
-		Core.Attribute healthAttribute = ForgeEntity.Attributes["CharacterAttributes.Health"];
+		EntityAttribute healthAttribute = ForgeEntity.Attributes["CharacterAttributes.Health"];
 		healthAttribute.OnValueChanged += HealthBar_OnValueChanged;
 		Value = (float)healthAttribute.CurrentValue / healthAttribute.Max * 100;
 	}
 
-	private void HealthBar_OnValueChanged(Core.Attribute healthAttribute, int change)
+	private void HealthBar_OnValueChanged(EntityAttribute healthAttribute, int change)
 	{
 		Value = (float)healthAttribute.CurrentValue / healthAttribute.Max * 100;
 	}

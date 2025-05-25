@@ -1,18 +1,14 @@
-[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=26 format=3 uid="uid://bgbbtfuhkcquk"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=26 format=3 uid="uid://bgbbtfuhkcquk"]
 
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="4_l03br"]
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="6_8605a"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="7_d1dxv"]
-[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/Modifier.cs" id="8_33oku"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="1_4mxm7"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_l03br"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="7_d1dxv"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="8_33oku"]
 [ext_resource type="Script" uid="uid://dkudjqjy2lqiq" path="res://examples/common/scripts/calculators/MyCustomCalculatorWrapper.cs" id="9_68ql8"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="10_egitd"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="10_egitd"]
 
-[sub_resource type="Resource" id="Resource_ny43b"]
-script = ExtResource("4_l03br")
-BaseValue = 10.0
-
-[sub_resource type="Resource" id="Resource_euif1"]
-script = ExtResource("6_8605a")
+[sub_resource type="Resource" id="Resource_jvapm"]
+script = ExtResource("1_4mxm7")
 CueKey = "floating.text"
 MinValue = 0
 MaxValue = 1000
@@ -20,14 +16,18 @@ MagnitudeType = 2
 MagnitudeAttribute = "CharacterAttributes.Health"
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
-[sub_resource type="Resource" id="Resource_s78f6"]
-script = ExtResource("6_8605a")
+[sub_resource type="Resource" id="Resource_kh3wg"]
+script = ExtResource("1_4mxm7")
 CueKey = "vfx.regen"
 MinValue = 1
 MaxValue = 3
 MagnitudeType = 1
 MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_ny43b"]
+script = ExtResource("4_l03br")
+BaseValue = 10.0
 
 [sub_resource type="Resource" id="Resource_vmjmg"]
 script = ExtResource("7_d1dxv")
@@ -138,7 +138,7 @@ ExpirationPolicy = 1
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = [SubResource("Resource_euif1"), SubResource("Resource_s78f6")]
+Cues = [SubResource("Resource_jvapm"), SubResource("Resource_kh3wg")]
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

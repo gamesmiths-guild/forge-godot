@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="GameplayEffectData" load_steps=13 format=3 uid="uid://dgybn25of4xpg"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=13 format=3 uid="uid://dgybn25of4xpg"]
 
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ScalableFloat.cs" id="1_q4yw0"]
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/TagContainer.cs" id="1_rwyct"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="1_q4yw0"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_rwyct"]
 [ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_25jvs"]
-[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/GameplayCue.cs" id="2_rwyct"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ScalableInt.cs" id="3_25jvs"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/GameplayEffectData.cs" id="5_udmal"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="3_6njdu"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_25jvs"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_udmal"]
 
 [sub_resource type="Resource" id="Resource_u4cvi"]
 script = ExtResource("1_rwyct")
@@ -17,19 +17,19 @@ script = ExtResource("2_25jvs")
 TagsToAdd = SubResource("Resource_u4cvi")
 metadata/_custom_type_script = "uid://dngf30hxy5go4"
 
-[sub_resource type="Resource" id="Resource_hevuu"]
-script = ExtResource("1_q4yw0")
-BaseValue = 5.0
-metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
-
-[sub_resource type="Resource" id="Resource_oi1ck"]
-script = ExtResource("2_rwyct")
+[sub_resource type="Resource" id="Resource_fwqnh"]
+script = ExtResource("3_6njdu")
 CueKey = "vfx.wet"
 MinValue = 0
 MaxValue = 1
 MagnitudeType = 0
 MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_hevuu"]
+script = ExtResource("1_q4yw0")
+BaseValue = 5.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_cn837"]
 script = ExtResource("3_25jvs")
@@ -67,7 +67,7 @@ ExpirationPolicy = 0
 ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
-GameplayCues = [SubResource("Resource_oi1ck")]
+Cues = [SubResource("Resource_fwqnh")]
 RequireModifierSuccessToTriggerCue = false
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"
