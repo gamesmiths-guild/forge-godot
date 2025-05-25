@@ -35,8 +35,10 @@ public partial class ForgeEffectData : Resource
 	private StackOwnerOverridePolicy _instigatorOverridePolicy;
 	private LevelComparison _levelOverridePolicy;
 
+	private bool _previousSnapshotLevel = true;
+
 	[Export]
-	public string? Name { get; set; }
+	public string Name { get; set; } = string.Empty;
 
 	[Export]
 	public bool SnapshotLevel { get; set; } = true;
@@ -64,12 +66,19 @@ public partial class ForgeEffectData : Resource
 
 		set
 		{
+			if (_durationType == DurationType.Instant && value != _durationType)
+			{
+				SnapshotLevel = _previousSnapshotLevel;
+			}
+
 			_durationType = value;
 
 			if (value == DurationType.Instant)
 			{
 				_hasPeriodicApplication = false;
 				_canStack = false;
+				_previousSnapshotLevel = SnapshotLevel;
+				SnapshotLevel = true;
 			}
 
 			NotifyPropertyListChanged();

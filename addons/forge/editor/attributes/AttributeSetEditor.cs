@@ -39,7 +39,7 @@ public partial class AttributeSetEditor : VBoxContainer
 		// Add a default empty option if needed
 		_attributeSetClassOptionButton.AddItem("Select AttributeSet Class");
 
-		foreach (var option in GetAttributeSetOptions())
+		foreach (var option in EditorUtils.GetAttributeSetOptions())
 		{
 			_attributeSetClassOptionButton.AddItem(option);
 		}
@@ -60,26 +60,6 @@ public partial class AttributeSetEditor : VBoxContainer
 				}
 			}
 		}
-	}
-
-	/// <summary>
-	/// Uses reflection to gather all classes inheriting from AttributeSet and their fields of type Attribute.
-	/// </summary>
-	/// <returns>An array with the avaiable attributes.</returns>
-	private static string[] GetAttributeSetOptions()
-	{
-		var options = new System.Collections.Generic.List<string>();
-
-		// Get all types in the current assembly
-		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-		// Find all types that subclass AttributeSet
-		foreach (Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
-		{
-			options.Add(attributeSetType.Name);
-		}
-
-		return [.. options];
 	}
 
 	private void AttributeSetClassOptionButton_ItemSelected(long index)

@@ -1,10 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Effects.Modifiers;
 using Gamesmiths.Forge.Godot.Core;
@@ -23,6 +19,22 @@ public partial class ForgeModifier : Resource
 {
 	private MagnitudeCalculationType _calculationType;
 	private AttributeBasedFloatCalculationType _attributeCalculationType;
+	private string? _targetAttributeSet;
+	private string? _capturedAttributeSet;
+
+	[ExportGroup("Target Attribute")]
+	[Export]
+	public string? AttributeSet
+	{
+		get => _targetAttributeSet;
+
+		set
+		{
+			_targetAttributeSet = value;
+			Attribute = null;
+			NotifyPropertyListChanged();
+		}
+	}
 
 	[Export]
 	public string? Attribute { get; set; }
@@ -51,6 +63,19 @@ public partial class ForgeModifier : Resource
 	public ForgeScalableFloat? ScalableFloat { get; set; }
 
 	[ExportGroup("Attribute Based")]
+	[Export]
+	public string? CapturedAttributeSet
+	{
+		get => _capturedAttributeSet;
+
+		set
+		{
+			_capturedAttributeSet = value;
+			CapturedAttribute = null;
+			NotifyPropertyListChanged();
+		}
+	}
+
 	[Export]
 	public string? CapturedAttribute { get; set; }
 
@@ -122,11 +147,38 @@ public partial class ForgeModifier : Resource
 #if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
-		if (property["name"].AsStringName() == PropertyName.Attribute ||
-			property["name"].AsStringName() == PropertyName.CapturedAttribute)
+		if (property["name"].AsStringName() == PropertyName.AttributeSet)
 		{
 			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", GetAttributeOptions());
+			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeSetOptions());
+		}
+
+		if (property["name"].AsStringName() == PropertyName.Attribute)
+		{
+			if (string.IsNullOrEmpty(AttributeSet))
+			{
+				property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
+			}
+
+			property["hint"] = (int)PropertyHint.Enum;
+			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeOptions(AttributeSet));
+		}
+
+		if (property["name"].AsStringName() == PropertyName.CapturedAttributeSet)
+		{
+			property["hint"] = (int)PropertyHint.Enum;
+			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeSetOptions());
+		}
+
+		if (property["name"].AsStringName() == PropertyName.CapturedAttribute)
+		{
+			if (string.IsNullOrEmpty(CapturedAttributeSet))
+			{
+				property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
+			}
+
+			property["hint"] = (int)PropertyHint.Enum;
+			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeOptions(CapturedAttributeSet));
 		}
 
 		if (property["name"].AsStringName() == PropertyName.ScalableFloat
@@ -136,7 +188,8 @@ public partial class ForgeModifier : Resource
 		}
 
 		if (CalculationType != MagnitudeCalculationType.AttributeBased
-			&& (property["name"].AsStringName() == PropertyName.CapturedAttribute ||
+			&& (property["name"].AsStringName() == PropertyName.CapturedAttributeSet ||
+				property["name"].AsStringName() == PropertyName.CapturedAttribute ||
 				property["name"].AsStringName() == PropertyName.CaptureSource ||
 				property["name"].AsStringName() == PropertyName.SnapshotAttribute ||
 				property["name"].AsStringName() == PropertyName.AttributeCalculationType ||
@@ -168,36 +221,6 @@ public partial class ForgeModifier : Resource
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
 		}
-	}
-
-	/// <summary>
-	/// Uses reflection to gather all classes inheriting from AttributeSet and their fields of type Attribute.
-	/// </summary>
-	/// <returns>An array with the avaiable attributes.</returns>
-	private static string[] GetAttributeOptions()
-	{
-		var options = new List<string>();
-
-		// Get all types in the current assembly
-		System.Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-		// Find all types that subclass AttributeSet
-		foreach (System.Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
-		{
-			// Get public instance properties of type Attribute
-			IEnumerable<PropertyInfo> attributeProperties =
-				attributeSetType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-					.Where(x => x.PropertyType == typeof(EntityAttribute));
-
-			foreach (PropertyInfo field in attributeProperties)
-			{
-				// Build the dropdown option string in the format ClassName.FieldName
-				var option = $"{attributeSetType.Name}.{field.Name}";
-				options.Add(option);
-			}
-		}
-
-		return [.. options];
 	}
 #endif
 
