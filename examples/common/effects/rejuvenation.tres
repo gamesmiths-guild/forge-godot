@@ -13,8 +13,8 @@ CueKey = "floating.text"
 MinValue = 0
 MaxValue = 1000
 MagnitudeType = 2
-MagnitudeAttributeSet = ""
-MagnitudeAttribute = ""
+MagnitudeAttributeSet = "CharacterAttributes"
+MagnitudeAttribute = "CharacterAttributes.Health"
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
 [sub_resource type="Resource" id="Resource_kh3wg"]
@@ -82,8 +82,8 @@ metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_v1l1x"]
 script = ExtResource("8_33oku")
-AttributeSet = ""
-Attribute = ""
+AttributeSet = "CharacterAttributes"
+Attribute = "CharacterAttributes.Health"
 Operation = 0
 Channel = 0
 CalculationType = 0
