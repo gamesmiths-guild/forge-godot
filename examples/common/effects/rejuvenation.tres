@@ -143,6 +143,6 @@ ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 0
 ExecuteOnSuccessfulApplication = false
 Cues = [SubResource("Resource_jvapm"), SubResource("Resource_kh3wg")]
-RequireModifierSuccessToTriggerCue = false
+RequireModifierSuccessToTriggerCue = true
 SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"
