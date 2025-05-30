@@ -35,8 +35,6 @@ public partial class ForgeEffectData : Resource
 	private StackOwnerOverridePolicy _instigatorOverridePolicy;
 	private LevelComparison _levelOverridePolicy;
 
-	private bool _previousSnapshotLevel = true;
-
 	[Export]
 	public string Name { get; set; } = string.Empty;
 
@@ -66,19 +64,12 @@ public partial class ForgeEffectData : Resource
 
 		set
 		{
-			if (_durationType == DurationType.Instant && value != _durationType)
-			{
-				SnapshotLevel = _previousSnapshotLevel;
-			}
-
 			_durationType = value;
 
 			if (value == DurationType.Instant)
 			{
 				_hasPeriodicApplication = false;
 				_canStack = false;
-				_previousSnapshotLevel = SnapshotLevel;
-				SnapshotLevel = true;
 			}
 
 			NotifyPropertyListChanged();
@@ -276,6 +267,13 @@ public partial class ForgeEffectData : Resource
 #if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
+		if (property["name"].AsStringName() == PropertyName.SnapshotLevel
+			&& DurationType == DurationType.Instant)
+		{
+			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
+			SnapshotLevel = true;
+		}
+
 		if (property["name"].AsStringName() == PropertyName.Duration && DurationType != DurationType.HasDuration)
 		{
 			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
