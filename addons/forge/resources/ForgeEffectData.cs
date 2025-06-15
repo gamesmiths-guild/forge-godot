@@ -267,11 +267,22 @@ public partial class ForgeEffectData : Resource
 #if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
-		if (property["name"].AsStringName() == PropertyName.SnapshotLevel
-			&& DurationType == DurationType.Instant)
+		if (property["name"].AsStringName() == PropertyName.SnapshotLevel)
 		{
-			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
-			SnapshotLevel = true;
+			if (DurationType == DurationType.Instant)
+			{
+				property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
+				SnapshotLevel = true;
+			}
+
+			// This is used to sure Modifiers are set as snapshot for instant effects.
+			if (Modifiers is not null)
+			{
+				foreach (ForgeModifier modifier in Modifiers)
+				{
+					modifier.IsInstantEffect = DurationType == DurationType.Instant;
+				}
+			}
 		}
 
 		if (property["name"].AsStringName() == PropertyName.Duration && DurationType != DurationType.HasDuration)

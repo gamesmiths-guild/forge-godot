@@ -84,7 +84,7 @@ public partial class ForgeModifier : Resource
 	public AttributeCaptureSource CaptureSource { get; set; }
 
 	[Export]
-	public bool SnapshotAttribute { get; set; }
+	public bool SnapshotAttribute { get; set; } = true;
 
 	[ExportSubgroup("Attribute Based Calculation")]
 	[Export]
@@ -127,6 +127,10 @@ public partial class ForgeModifier : Resource
 	[ExportGroup("Set by Caller Float")]
 	[Export]
 	public string CallerTargetTag { get; set; } = string.Empty;
+
+#if TOOLS
+	public bool IsInstantEffect { get; set; }
+#endif
 
 	public Modifier GetModifier()
 	{
@@ -199,6 +203,11 @@ public partial class ForgeModifier : Resource
 				property["name"].AsStringName() == PropertyName.FinalChannel))
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
+		}
+		else if (property["name"].AsStringName() == PropertyName.SnapshotAttribute && IsInstantEffect)
+		{
+			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
+			SnapshotAttribute = true;
 		}
 
 		if (property["name"].AsStringName() == PropertyName.FinalChannel &&
