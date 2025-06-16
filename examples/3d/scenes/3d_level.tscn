@@ -89,23 +89,23 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
 [node name="FloatingText Cues" type="Node" parent="."]
 script = ExtResource("2_l0q6a")
 FloatingTextScene = ExtResource("3_12jpl")
-CueKey = "floating.text"
+CueTag = "cue.floating.text"
 
 [node name="FireVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
 FireEffectScene = ExtResource("5_878nk")
-CueKey = "vfx.fire"
+CueTag = "cue.vfx.fire"
 
 [node name="WetVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
 FireEffectScene = ExtResource("6_1upbh")
-CueKey = "vfx.wet"
+CueTag = "cue.vfx.wet"
 
 [node name="RegenVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
 FireEffectScene = ExtResource("7_n5jaj")
 UpdateEffectIntensity = true
-CueKey = "vfx.regen"
+CueTag = "cue.vfx.regen"
 
 [node name="Fire Area" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -6)

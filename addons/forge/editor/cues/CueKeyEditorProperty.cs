@@ -18,7 +18,7 @@ public partial class CueKeyEditorProperty : EditorProperty
 		AddChild(_dropdown);
 		AddFocusable(_dropdown);
 
-		foreach (var cue in pluginData.RegisteredCues ?? [])
+		foreach (var cue in pluginData.RegisteredTags ?? [])
 		{
 			_dropdown.AddItem(cue);
 		}

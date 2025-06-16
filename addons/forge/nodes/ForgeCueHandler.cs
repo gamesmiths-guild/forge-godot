@@ -3,6 +3,7 @@
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
@@ -12,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 public abstract partial class ForgeCueHandler : Node, ICueHandler
 {
 	[Export]
-	public string? CueKey { get; set; }
+	public string? CueTag { get; set; }
 
 	public override void _Ready()
 	{
@@ -23,12 +24,13 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 		base._Ready();
 
-		if (string.IsNullOrEmpty(CueKey))
+		if (string.IsNullOrEmpty(CueTag))
 		{
 			return;
 		}
 
-		ForgeManagers.Instance.CuesManager.RegisterCue(CueKey, this);
+		ForgeManagers.Instance.CuesManager.RegisterCue(
+			Tag.RequestTag(ForgeManagers.Instance.TagsManager, CueTag), this);
 	}
 
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores

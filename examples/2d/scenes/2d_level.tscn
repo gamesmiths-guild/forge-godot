@@ -125,26 +125,26 @@ metadata/_custom_type_script = "uid://dps0oef50noil"
 [node name="FloatingText Cues" type="Node" parent="."]
 script = ExtResource("5_b3se6")
 FloatingTextScene = ExtResource("6_tr6ro")
-CueKey = "floating.text"
+CueTag = "cue.floating.text"
 metadata/_custom_type_script = "uid://cbqisbcf7ohd7"
 
 [node name="FireVFX Cues" type="Node" parent="."]
 script = ExtResource("8_1r4gs")
 FireEffectScene = ExtResource("9_30teu")
-CueKey = "vfx.fire"
+CueTag = "cue.vfx.fire"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
 [node name="WetVFX Cues" type="Node" parent="."]
 script = ExtResource("8_1r4gs")
 FireEffectScene = ExtResource("10_wwqts")
-CueKey = "vfx.wet"
+CueTag = "cue.vfx.wet"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
 [node name="RegenVFX Cues" type="Node" parent="."]
 script = ExtResource("8_1r4gs")
 FireEffectScene = ExtResource("11_8b8ra")
 UpdateEffectIntensity = true
-CueKey = "vfx.regen"
+CueTag = "cue.vfx.regen"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
 [node name="CharacterBody2D" parent="." instance=ExtResource("1_skmt1")]

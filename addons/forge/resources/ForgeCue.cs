@@ -1,8 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
-using System.Diagnostics;
 using Gamesmiths.Forge.Cues;
-using Gamesmiths.Forge.Godot.Core;
 using Godot;
 using Godot.Collections;
 
@@ -17,7 +15,7 @@ public partial class ForgeCue : Resource
 	private string? _magnitudeAttributeSet;
 
 	[Export]
-	public string? CueKey { get; set; }
+	public required ForgeTagContainer CueKeys { get; set; }
 
 	[Export]
 	public int MinValue { get; set; }
@@ -56,10 +54,8 @@ public partial class ForgeCue : Resource
 
 	public CueData GetCueData()
 	{
-		Debug.Assert(!string.IsNullOrEmpty(CueKey), $"{nameof(CueKey)} should have been defined.");
-
 		return new CueData(
-			CueKey,
+			CueKeys.GetTagContainer(),
 			MinValue,
 			MaxValue,
 			MagnitudeType,
@@ -93,24 +89,6 @@ public partial class ForgeCue : Resource
 				property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
 			}
 		}
-
-		if (property["name"].AsStringName() == PropertyName.CueKey)
-		{
-			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", GetCueOptions());
-		}
-	}
-
-	private static string[] GetCueOptions()
-	{
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
-
-		if (pluginData.RegisteredCues is null)
-		{
-			return [];
-		}
-
-		return [.. pluginData.RegisteredCues];
 	}
 #endif
 }

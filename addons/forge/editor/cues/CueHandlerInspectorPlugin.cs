@@ -40,7 +40,7 @@ public partial class CueHandlerInspectorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		if (name == "CueKey")
+		if (name == "CueTag")
 		{
 			var cueKeyEditorProperty = new CueKeyEditorProperty();
 			AddPropertyEditor(name, cueKeyEditorProperty);

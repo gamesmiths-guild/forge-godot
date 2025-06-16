@@ -16,7 +16,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
 	private const string PluginScenePath = "uid://pjscvogl6jak";
 
-	private TabContainer? _dockedScene;
+	private PanelContainer? _dockedScene;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
@@ -25,9 +25,8 @@ public partial class ForgePluginLoader : EditorPlugin
 	{
 		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
-		_dockedScene = (TabContainer)pluginScene.Instantiate();
+		_dockedScene = (PanelContainer)pluginScene.Instantiate();
 		_dockedScene.GetNode<TagsEditor>("%Tags").IsPluginInstance = true;
-		_dockedScene.GetNode<CueKeysEditor>("%Cues").IsPluginInstance = true;
 		AddControlToDock(DockSlot.RightUl, _dockedScene);
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();

@@ -1,14 +1,20 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=17 format=3 uid="uid://dt5y704o0sldo"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=19 format=3 uid="uid://dt5y704o0sldo"]
 
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_ikt6e"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="1_khd1u"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="1_m13e3"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="2_cn837"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="2_j5nmc"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="3_cd28o"]
 
+[sub_resource type="Resource" id="Resource_yy5ki"]
+script = ExtResource("1_ikt6e")
+ContainerTags = ["cue.floating.text"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
 [sub_resource type="Resource" id="Resource_ikt6e"]
 script = ExtResource("1_m13e3")
-CueKey = "floating.text"
+CueKeys = SubResource("Resource_yy5ki")
 MinValue = 0
 MaxValue = 1000
 MagnitudeType = 2
