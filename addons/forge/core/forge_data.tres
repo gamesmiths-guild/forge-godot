@@ -5,4 +5,3 @@
 [resource]
 script = ExtResource("1_x0pne")
 RegisteredTags = Array[String](["effect.fire", "effect.wet", "cue.floating.text", "cue.vfx.fire", "cue.vfx.wet", "cue.vfx.regen"])
-RegisteredCues = Array[String](["floating.text", "vfx.fire", "vfx.wet", "vfx.regen"])

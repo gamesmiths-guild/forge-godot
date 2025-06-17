@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -148,7 +149,8 @@ public partial class TagsEditor : VBoxContainer
 				{
 					var tag = _forgePluginData.RegisteredTags[i];
 
-					if (tag.StartsWith(selectedTag.CompleteTagKey, System.StringComparison.InvariantCultureIgnoreCase))
+					if (string.Equals(tag, selectedTag.CompleteTagKey, StringComparison.OrdinalIgnoreCase) ||
+						tag.StartsWith(selectedTag.CompleteTagKey + ".", StringComparison.InvariantCultureIgnoreCase))
 					{
 						_forgePluginData.RegisteredTags.Remove(tag);
 					}
