@@ -19,23 +19,8 @@ public partial class ForgeModifier : Resource
 {
 	private MagnitudeCalculationType _calculationType;
 	private AttributeBasedFloatCalculationType _attributeCalculationType;
-	private string? _targetAttributeSet;
-	private string? _capturedAttributeSet;
 
 	[ExportGroup("Target Attribute")]
-	[Export]
-	public string? AttributeSet
-	{
-		get => _targetAttributeSet;
-
-		set
-		{
-			_targetAttributeSet = value;
-			Attribute = null;
-			NotifyPropertyListChanged();
-		}
-	}
-
 	[Export]
 	public string? Attribute { get; set; }
 
@@ -63,19 +48,6 @@ public partial class ForgeModifier : Resource
 	public ForgeScalableFloat? ScalableFloat { get; set; }
 
 	[ExportGroup("Attribute Based")]
-	[Export]
-	public string? CapturedAttributeSet
-	{
-		get => _capturedAttributeSet;
-
-		set
-		{
-			_capturedAttributeSet = value;
-			CapturedAttribute = null;
-			NotifyPropertyListChanged();
-		}
-	}
-
 	[Export]
 	public string? CapturedAttribute { get; set; }
 
@@ -151,40 +123,6 @@ public partial class ForgeModifier : Resource
 #if TOOLS
 	public override void _ValidateProperty(Dictionary property)
 	{
-		if (property["name"].AsStringName() == PropertyName.AttributeSet)
-		{
-			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeSetOptions());
-		}
-
-		if (property["name"].AsStringName() == PropertyName.Attribute)
-		{
-			if (string.IsNullOrEmpty(AttributeSet))
-			{
-				property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
-			}
-
-			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeOptions(AttributeSet));
-		}
-
-		if (property["name"].AsStringName() == PropertyName.CapturedAttributeSet)
-		{
-			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeSetOptions());
-		}
-
-		if (property["name"].AsStringName() == PropertyName.CapturedAttribute)
-		{
-			if (string.IsNullOrEmpty(CapturedAttributeSet))
-			{
-				property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
-			}
-
-			property["hint"] = (int)PropertyHint.Enum;
-			property["hint_string"] = string.Join(",", Editor.EditorUtils.GetAttributeOptions(CapturedAttributeSet));
-		}
-
 		if (property["name"].AsStringName() == PropertyName.ScalableFloat
 			&& CalculationType != MagnitudeCalculationType.ScalableFloat)
 		{
@@ -192,8 +130,7 @@ public partial class ForgeModifier : Resource
 		}
 
 		if (CalculationType != MagnitudeCalculationType.AttributeBased
-			&& (property["name"].AsStringName() == PropertyName.CapturedAttributeSet ||
-				property["name"].AsStringName() == PropertyName.CapturedAttribute ||
+			&& (property["name"].AsStringName() == PropertyName.CapturedAttribute ||
 				property["name"].AsStringName() == PropertyName.CaptureSource ||
 				property["name"].AsStringName() == PropertyName.SnapshotAttribute ||
 				property["name"].AsStringName() == PropertyName.AttributeCalculationType ||

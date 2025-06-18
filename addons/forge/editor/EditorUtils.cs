@@ -56,7 +56,7 @@ internal static class EditorUtils
 		IEnumerable<PropertyInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 			.Where(x => x.PropertyType == typeof(EntityAttribute));
 
-		return [.. properties.Select(x => $"{type.Name}.{x.Name}")];
+		return [.. properties.Select(x => $"{x.Name}")];
 	}
 }
 #endif

@@ -20,6 +20,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
+	private AttributeEditorPlugin? _attributeEditorPlugin;
 
 	public override void _EnterTree()
 	{
@@ -35,6 +36,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddInspectorPlugin(_attributeSetInspectorPlugin);
 		_cueHandlerInspectorPlugin = new CueHandlerInspectorPlugin();
 		AddInspectorPlugin(_cueHandlerInspectorPlugin);
+		_attributeEditorPlugin = new AttributeEditorPlugin();
+		AddInspectorPlugin(_attributeEditorPlugin);
 
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
@@ -49,6 +52,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
+		RemoveInspectorPlugin(_attributeEditorPlugin);
 
 		RemoveToolMenuItem("Repair assets tags");
 	}

@@ -28,7 +28,6 @@ CueKeys = SubResource("Resource_6njdu")
 MinValue = 0
 MaxValue = 1
 MagnitudeType = 0
-MagnitudeAttributeSet = ""
 MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 

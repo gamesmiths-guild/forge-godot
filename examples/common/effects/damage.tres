@@ -18,7 +18,6 @@ CueKeys = SubResource("Resource_yy5ki")
 MinValue = 0
 MaxValue = 1000
 MagnitudeType = 2
-MagnitudeAttributeSet = "CharacterAttributes"
 MagnitudeAttribute = "CharacterAttributes.Health"
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
@@ -57,13 +56,11 @@ metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_kpa2l"]
 script = ExtResource("3_cd28o")
-AttributeSet = "CharacterAttributes"
 Attribute = "CharacterAttributes.Health"
 Operation = 0
 Channel = 0
 CalculationType = 0
 ScalableFloat = SubResource("Resource_xmlma")
-CapturedAttributeSet = ""
 CapturedAttribute = ""
 CaptureSource = 0
 SnapshotAttribute = false
