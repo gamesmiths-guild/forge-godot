@@ -12,7 +12,7 @@ public partial class TargetTagRequirements : ForgeEffectComponent
 {
 	[ExportGroup("Application Requirements")]
 	[Export]
-	public ForgeTagContainer? ApplicationRequiredTags { get; set; } = new();
+	public ForgeTagContainer? ApplicationRequiredTags { get; set; }
 
 	[Export]
 	public ForgeTagContainer? ApplicationIgnoredTags { get; set; }

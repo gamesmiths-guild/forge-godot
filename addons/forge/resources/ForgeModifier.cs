@@ -18,7 +18,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 public partial class ForgeModifier : Resource
 {
 	private MagnitudeCalculationType _calculationType;
-	private AttributeBasedFloatCalculationType _attributeCalculationType;
+	private AttributeCalculationType _attributeCalculationType;
 
 	[ExportGroup("Target Attribute")]
 	[Export]
@@ -60,7 +60,7 @@ public partial class ForgeModifier : Resource
 
 	[ExportSubgroup("Attribute Based Calculation")]
 	[Export]
-	public AttributeBasedFloatCalculationType AttributeCalculationType
+	public AttributeCalculationType AttributeCalculationType
 	{
 		get => _attributeCalculationType;
 
@@ -148,7 +148,7 @@ public partial class ForgeModifier : Resource
 		}
 
 		if (property["name"].AsStringName() == PropertyName.FinalChannel &&
-			AttributeCalculationType != AttributeBasedFloatCalculationType.AttributeMagnitudeEvaluatedUpToChannel)
+			AttributeCalculationType != AttributeCalculationType.MagnitudeEvaluatedUpToChannel)
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
 		}

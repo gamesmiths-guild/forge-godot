@@ -250,8 +250,8 @@ public partial class ForgeEffectData : Resource
 
 		_data = new EffectData(
 			Name,
-			[.. modifiers],
 			GetDurationData(),
+			[.. modifiers],
 			GetStackingData(),
 			GetPeriodicData(),
 			SnapshotLevel,
