@@ -12,7 +12,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
-public partial class TagsEditor : VBoxContainer
+public partial class TagsEditor : VBoxContainer, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
@@ -52,6 +52,19 @@ public partial class TagsEditor : VBoxContainer
 
 		_tree.ButtonClicked += TreeButtonClicked;
 		_addTagButton.Pressed += AddTagButton_Pressed;
+	}
+
+	public void OnBeforeSerialize()
+	{
+		// This method was intentionally left empty.
+	}
+
+	public void OnAfterDeserialize()
+	{
+		EnsureInitialized();
+
+		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
+		ReconstructTreeNode();
 	}
 
 	private void AddTagButton_Pressed()
