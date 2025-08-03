@@ -48,7 +48,7 @@ public partial class ForgeEffectData : Resource
 
 	[ExportGroup("Components")]
 
-	[Export(PropertyHint.ResourceType, "EffectComponent")]
+	[Export(PropertyHint.ResourceType, "ForgeEffectComponent")]
 	public Array<ForgeEffectComponent>? Components { get; set; }
 
 	[ExportGroup("Executions")]
