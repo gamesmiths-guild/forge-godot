@@ -2,7 +2,7 @@
 
 This guide will help you quickly set up and use the Forge Framework in your Godot project.
 
-> **Note:** For detailed information about how specific Forge systems work (attributes, effects, tags, etc.), please refer to the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md). This guide focuses on Godot-specific integration.
+> **Note:** For detailed information about how specific Forge systems work (attributes, effects, tags, etc.), please refer to the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ This guide will help you quickly set up and use the Forge Framework in your Godo
 
 1. Copy the `addons/forge` folder into your Godot project's `addons` directory.
 2. Copy the `Directory.Build.props` file to the root of your Godot project.
-3. Enable the plugin in Project Settings > Plugins.
+3. Enable the plugin in **Project → Project Settings → Plugins**.
 4. Restart the Godot editor.
 
 ---
@@ -96,6 +96,7 @@ public partial class Player : CharacterBody2D
 
     public override void _Ready()
     {
+        // Get a reference to our ForgeEntity component
         _forgeEntity = GetNode<ForgeEntity>("ForgeEntity");
     }
 
@@ -116,6 +117,7 @@ public partial class Player : CharacterBody2D
 
     public int GetHealthValue()
     {
+        // Access health attribute directly from the ForgeEntity
         return _forgeEntity?.Attributes["PlayerAttributes.Health"].CurrentValue ?? 0;
     }
 }
@@ -194,6 +196,7 @@ using Gamesmiths.Forge.Godot.Nodes;
 
 public partial class Enemy : CharacterBody2D
 {
+    // Reference the effect resource in the Inspector
     [Export]
     public ForgeEffectData? DamageEffectData { get; set; }
 
@@ -249,6 +252,7 @@ using Gamesmiths.Forge.Godot.Nodes;
 [GlobalClass]
 public partial class DamageCueHandler : ForgeCueHandler
 {
+    // Reference a visual effect scene in the Inspector
     [Export]
     public PackedScene? DamageEffectScene { get; set; }
 
