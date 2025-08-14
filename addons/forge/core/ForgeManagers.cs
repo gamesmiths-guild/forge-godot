@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Tags;
 
@@ -16,6 +17,12 @@ public class ForgeManagers
 	public ForgeManagers(ForgeData pluginData)
 	{
 		Instance = this;
+
+#if DEBUG
+		Validation.Enabled = true;
+#else
+		Validation.Enabled = false;
+#endif
 
 		TagsManager = new TagsManager([.. pluginData.RegisteredTags]);
 		CuesManager = new CuesManager();
