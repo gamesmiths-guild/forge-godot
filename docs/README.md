@@ -1,6 +1,6 @@
 # Forge for Godot Documentation
 
-This documentation covers the integration of the Forge Gameplay Framework into the Godot Engine through the Forge for Godot plugin.
+This documentation covers the integration of the Forge Gameplay System into the Godot Engine through the Forge for Godot plugin.
 
 ## What is Forge?
 
@@ -10,7 +10,7 @@ For detailed documentation on the core framework concepts, please refer to the [
 
 ## Architecture
 
-Forge for Godot bridges the Forge Framework with Godot's node-based architecture through several key components:
+Forge for Godot bridges the Forge system with Godot's node-based architecture through several key components:
 
 ### Core Management
 
@@ -28,7 +28,7 @@ Forge for Godot bridges the Forge Framework with Godot's node-based architecture
 
 1. **Configuration**: Define attribute sets, effects, tags, and cues through C# code and resources.
 2. **Runtime Initialization**: ForgeBootstrap loads and configures Forge systems.
-3. **Entity Integration**: ForgeEntity nodes (or custom nodes implementing IForgeEntity) connect to the framework.
+3. **Entity Integration**: ForgeEntity nodes (or custom nodes implementing IForgeEntity) connect to the system.
 4. **Gameplay Logic**: Effects are applied and processed through the system.
 5. **Feedback**: Cues trigger visual and audio feedback based on gameplay events.
 

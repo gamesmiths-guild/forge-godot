@@ -1,9 +1,10 @@
 # Quick Start Guide
 
-This guide will help you quickly set up and use the Forge Framework in your Godot project.
+This guide will help you quickly set up and use the Forge system in your Godot project.
 
 > **Note:** For detailed information about how specific Forge systems work (attributes, effects, tags, etc.), please refer to the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
+If you'd like to see sample scenes demonstrating the system in action, you can clone the repository directly and explore the examples included in the `examples` folder.
 
 ---
 
@@ -28,7 +29,7 @@ This guide will help you quickly set up and use the Forge Framework in your Godo
 
 ## The ForgeManagers Singleton
 
-When you enable the plugin, it automatically registers a `ForgeBootstrap` autoload that initializes the `ForgeManagers` singleton. This singleton provides access to core framework managers:
+When you enable the plugin, it automatically registers a `ForgeBootstrap` autoload that initializes the `ForgeManagers` singleton. This singleton provides access to core system managers:
 
 ```csharp
 // Access the TagsManager and CuesManager from anywhere in your code

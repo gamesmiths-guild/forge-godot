@@ -6,7 +6,7 @@ This page documents all the custom nodes provided by the Forge for Godot plugin.
 
 ### ForgeEntity
 
-The central node for adding Forge Framework functionality to any game object.
+The central node for adding Forge system functionality to any game object.
 
 **Properties:**
 
@@ -207,7 +207,7 @@ public partial class DamageCueHandler : ForgeCueHandler
 
 ### ForgeBootstrap
 
-An autoload singleton that initializes the Forge Framework.
+An autoload singleton that initializes the Forge system.
 
 **Description:**
 

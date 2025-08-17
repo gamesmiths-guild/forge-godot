@@ -1,24 +1,26 @@
 # Forge for Godot
 
-A Godot plugin for integrating the [Forge Gameplay Framework](https://github.com/gamesmiths-guild/forge) into Godot Engine.
+A Godot plugin for integrating the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot Engine.
 
-Forge for Godot bridges the powerful, data-driven systems of the Forge Framework with Godot Engine's node-based architecture. This plugin provides custom nodes, resources, and editor extensions that make implementing robust gameplay systems in Godot straightforward and maintainable.
+Forge for Godot bridges the powerful, data-driven systems of the Forge system with Godot Engine's node-based architecture. This plugin provides custom nodes, resources, and editor extensions that make implementing robust gameplay systems in Godot straightforward and maintainable.
 
-The plugin allows Godot developers to leverage Forge's comprehensive gameplay framework with its attribute management, effects system, and tagging capabilities, without having to reimplement these systems from scratch for each project.
+The plugin allows Godot developers to leverage Forge's comprehensive gameplay system with its attribute management, effects system, and tagging capabilities, without having to reimplement these systems from scratch for each project.
 
-**Keywords:** godot plugin, gameplay framework, C# game development, attribute system, status effects, tag system, gameplay integration
+**Keywords:** godot plugin, gameplay system, C# game development, attribute system, status effects, tag system, gameplay integration
 
 ## Quick Start
 
 New to Forge for Godot? Check out the [Quick Start Guide](docs/quick-start.md) to integrate Forge into your Godot project in minutes.
 
+If you'd like to see sample scenes demonstrating the system in action, you can clone the repository directly and explore the examples included in the `examples` folder.
+
 ## Architecture Overview
 
-Forge for Godot extends the core Forge Framework architecture with Godot-specific implementations:
+Forge for Godot extends the core Forge system architecture with Godot-specific implementations:
 
 ### Core Integration
 
-- **ForgeBootstrap**: Autoload singleton that initializes the core framework managers.
+- **ForgeBootstrap**: Autoload singleton that initializes the core system managers.
 - **Tags Editor**: Built-in editor tool for managing hierarchical gameplay tags.
 - **Custom Resources**: Godot resources for configuring Forge components through the Inspector.
 - **Custom Nodes**: Node classes that encapsulate Forge concepts for easy integration and visual composition in the scene tree.
@@ -75,10 +77,13 @@ Forge for Godot includes specialized nodes that integrate Forge concepts with Go
 
 ### Steps
 
-1. Copy the `addons/forge` folder into your Godot project's `addons` directory.
-2. Copy the `Directory.Build.props` file to the root of your Godot project.
-3. Enable the plugin in Project Settings > Plugins.
-4. Restart the Godot editor.
+1. [Install the plugin](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html) by copying over the `addons` folder.
+2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
+   ```xml
+   <Import Project="addons/forge/Forge.props" />
+   ```
+3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
+4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
 
 ## Documentation
 
