@@ -70,7 +70,7 @@ Forge for Godot includes specialized nodes that integrate Forge concepts with Go
 
 ### Requirements
 
-- Godot 4.x with C# support.
+- Godot 4.4 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps

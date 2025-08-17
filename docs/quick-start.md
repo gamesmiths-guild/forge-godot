@@ -4,17 +4,25 @@ This guide will help you quickly set up and use the Forge Framework in your Godo
 
 > **Note:** For detailed information about how specific Forge systems work (attributes, effects, tags, etc.), please refer to the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
-## Prerequisites
 
-- Godot 4.x with C# support enabled.
-- Basic familiarity with C# and Godot.
+---
 
 ## Installation
 
-1. Copy the `addons/forge` folder into your Godot project's `addons` directory.
-2. Copy the `Directory.Build.props` file to the root of your Godot project.
-3. Enable the plugin in **Project → Project Settings → Plugins**.
-4. Restart the Godot editor.
+### Requirements
+
+- Godot 4.4 or later with .NET support.
+- .NET SDK 8.0 or later.
+
+### Steps
+
+1. [Install the plugin](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html) by copying over the `addons` folder.
+2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
+   ```xml
+   <Import Project="addons/forge/Forge.props" />
+   ```
+3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
+4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
 
 ---
 
@@ -36,6 +44,10 @@ The `ForgeManagers` singleton handles:
 - Initializing the tag system with registered tags.
 - Managing the cue system for audio/visual feedback.
 - Providing global access to these systems through a static Instance property.
+
+### Validation Behavior
+
+By default, validation is **enabled** in the Godot editor and during development builds. For exported **Release builds**, validation is automatically **disabled** unless the "Include Debug Symbols" option is checked during the export process. This ensures that validation checks are not run in production builds unless explicitly requested.
 
 ---
 
