@@ -16,8 +16,6 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ./artifacts/*
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           draft: false
