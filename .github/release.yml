@@ -1,0 +1,28 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+    authors:
+      - INSANE-Droid
+  categories:
+    - title: "Added"
+      labels:
+        - added
+    - title: "Changed"
+      labels:
+        - changed
+    - title: "Deprecated"
+      labels:
+        - deprecated
+    - title: "Removed"
+      labels:
+        - removed
+    - title: "Fixed"
+      labels:
+        - fixed
+    - title: "Security"
+      labels:
+        - security
+    - title: "Others"
+      labels:
+        - "*"
