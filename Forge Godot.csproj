@@ -4,4 +4,5 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>ForgeGodot</RootNamespace>
   </PropertyGroup>
+  <Import Project="addons\forge\Forge.props" />
 </Project>
