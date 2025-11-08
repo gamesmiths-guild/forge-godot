@@ -95,7 +95,7 @@ For comprehensive documentation, explore the [docs](docs) directory:
 
 ## Contributing
 
-This project is not currently accepting contributions as it's still in early development. However, if you're interested in contributing or have suggestions, feel free to reach out via GitHub issues.
+This project is not currently accepting contributions as it's still in early development. However, if you're interested in contributing or have suggestions, feel free to reach out via GitHub issues or discussions.
 
 ## License
 
