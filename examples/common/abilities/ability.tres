@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=2 format=3 uid="uid://cg5tr0npybh0k"]
+
+[ext_resource type="Script" uid="uid://dr3ogjydnnqhh" path="res://addons/forge/resources/ForgeAbilityData.cs" id="1_omq63"]
+
+[resource]
+script = ExtResource("1_omq63")
+metadata/_custom_type_script = "uid://dr3ogjydnnqhh"
