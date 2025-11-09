@@ -9,7 +9,8 @@ namespace Gamesmiths.Forge.Example;
 
 public class MyCustomCalculator : CustomModifierMagnitudeCalculator
 {
-	public override float CalculateBaseMagnitude(Effect effect, IForgeEntity target)
+	public override float CalculateBaseMagnitude(
+		Effect effect, IForgeEntity target, EffectEvaluatedData? effectEvaluatedData)
 	{
 		throw new NotImplementedException();
 	}

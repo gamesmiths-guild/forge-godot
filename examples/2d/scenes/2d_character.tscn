@@ -15,31 +15,26 @@
 [sub_resource type="Resource" id="Resource_l0fcu"]
 script = ExtResource("4_6b5u8")
 Default = 1
-Min = 0
 Max = 99
 
 [sub_resource type="Resource" id="Resource_jsr62"]
 script = ExtResource("4_6b5u8")
 Default = 800
-Min = 0
 Max = 1000
 
 [sub_resource type="Resource" id="Resource_ag5gy"]
 script = ExtResource("4_6b5u8")
 Default = 1
-Min = 0
 Max = 99
 
 [sub_resource type="Resource" id="Resource_8m251"]
 script = ExtResource("4_6b5u8")
 Default = 1000
-Min = 0
 Max = 1000
 
 [sub_resource type="Resource" id="Resource_gnlmx"]
 script = ExtResource("4_6b5u8")
 Default = 1
-Min = 0
 Max = 99
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v7ry3"]

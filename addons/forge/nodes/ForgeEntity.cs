@@ -23,12 +23,15 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public EffectsManager EffectsManager { get; set; } = null!;
 
+	public EntityAbilities Abilities { get; set; } = null!;
+
 	public override void _Ready()
 	{
 		base._Ready();
 
 		Tags = new(BaseTags.GetTagContainer());
 		EffectsManager = new EffectsManager(this, ForgeManagers.Instance.CuesManager);
+		Abilities = new EntityAbilities(this);
 
 		List<AttributeSet> attributeSetList = [];
 

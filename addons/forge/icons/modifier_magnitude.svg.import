@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bbwv58ku4cv0i"
-path="res://.godot/imported/modifier.svg-3b296d7c6fecf2c20d9d36cbf7b38059.ctex"
+uid="uid://cesj1p71jsco5"
+path="res://.godot/imported/modifier_magnitude.svg-e06a8ba19595207512a4ac520c20cda1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/forge/icons/modifier.svg"
-dest_files=["res://.godot/imported/modifier.svg-3b296d7c6fecf2c20d9d36cbf7b38059.ctex"]
+source_file="res://addons/forge/icons/modifier_magnitude.svg"
+dest_files=["res://.godot/imported/modifier_magnitude.svg-e06a8ba19595207512a4ac520c20cda1.ctex"]
 
 [params]
 

@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=29 format=3 uid="uid://bgbbtfuhkcquk"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=37 format=3 uid="uid://bgbbtfuhkcquk"]
 
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="1_4mxm7"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_kh3wg"]
+[ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="4_jvapm"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_l03br"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="7_d1dxv"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="8_33oku"]
@@ -16,7 +17,6 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 [sub_resource type="Resource" id="Resource_jvapm"]
 script = ExtResource("1_4mxm7")
 CueKeys = SubResource("Resource_6cyxe")
-MinValue = 0
 MaxValue = 1000
 MagnitudeType = 2
 MagnitudeAttribute = "CharacterAttributes.Health"
@@ -33,12 +33,43 @@ CueKeys = SubResource("Resource_tehia")
 MinValue = 1
 MaxValue = 3
 MagnitudeType = 1
-MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
-[sub_resource type="Resource" id="Resource_ny43b"]
+[sub_resource type="Resource" id="Resource_lcjp0"]
+script = ExtResource("4_l03br")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_ky5x0"]
+script = ExtResource("4_l03br")
+
+[sub_resource type="Resource" id="Resource_iskdx"]
+script = ExtResource("4_l03br")
+
+[sub_resource type="Resource" id="Resource_6gp10"]
+script = ExtResource("4_l03br")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_uotn8"]
+script = ExtResource("4_l03br")
+
+[sub_resource type="Resource" id="Resource_lndqs"]
+script = ExtResource("4_l03br")
+
+[sub_resource type="Resource" id="Resource_h1apm"]
 script = ExtResource("4_l03br")
 BaseValue = 10.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_igrut"]
+script = ExtResource("4_jvapm")
+ScalableFloat = SubResource("Resource_h1apm")
+Coeficient = SubResource("Resource_6gp10")
+PreMultiplyAdditiveValue = SubResource("Resource_lndqs")
+PostMultiplyAdditiveValue = SubResource("Resource_uotn8")
+CalculatorCoeficient = SubResource("Resource_lcjp0")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_iskdx")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_ky5x0")
+metadata/_custom_type_script = "uid://2gm1hdhi8u08"
 
 [sub_resource type="Resource" id="Resource_vmjmg"]
 script = ExtResource("7_d1dxv")
@@ -48,21 +79,18 @@ BaseValue = 1
 
 [sub_resource type="Resource" id="Resource_pinn7"]
 script = ExtResource("4_l03br")
-BaseValue = 0.0
 ScalingCurve = SubResource("Curve_0avqp")
 
 [sub_resource type="Curve" id="Curve_ny43b"]
 
 [sub_resource type="Resource" id="Resource_5l3t8"]
 script = ExtResource("4_l03br")
-BaseValue = 0.0
 ScalingCurve = SubResource("Curve_ny43b")
 
 [sub_resource type="Curve" id="Curve_pinn7"]
 
 [sub_resource type="Resource" id="Resource_j2cm1"]
 script = ExtResource("4_l03br")
-BaseValue = 0.0
 ScalingCurve = SubResource("Curve_pinn7")
 
 [sub_resource type="Curve" id="Curve_5l3t8"]
@@ -78,11 +106,9 @@ metadata/_custom_type_script = "uid://dkudjqjy2lqiq"
 
 [sub_resource type="Resource" id="Resource_kf85k"]
 script = ExtResource("4_l03br")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_fylsp"]
 script = ExtResource("4_l03br")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_aash6"]
 script = ExtResource("4_l03br")
@@ -92,23 +118,15 @@ metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 [sub_resource type="Resource" id="Resource_v1l1x"]
 script = ExtResource("8_33oku")
 Attribute = "CharacterAttributes.Health"
-Operation = 0
-Channel = 0
-CalculationType = 0
 ScalableFloat = SubResource("Resource_aash6")
-CapturedAttribute = ""
-CaptureSource = 0
 SnapshotAttribute = false
-AttributeCalculationType = 0
 Coeficient = SubResource("Resource_10q1i")
 PreMultiplyAdditiveValue = SubResource("Resource_fylsp")
 PostMultiplyAdditiveValue = SubResource("Resource_kf85k")
-FinalChannel = 0
 CustomCalculatorClass = SubResource("Resource_1yprn")
 CalculatorCoeficient = SubResource("Resource_pinn7")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_j2cm1")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_5l3t8")
-CallerTargetTag = ""
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
 
 [sub_resource type="Resource" id="Resource_mjt31"]
@@ -123,33 +141,18 @@ BaseValue = 3
 [resource]
 script = ExtResource("10_egitd")
 Name = "Rejuvenation"
-SnapshotLevel = true
 Modifiers = [SubResource("Resource_v1l1x")]
 Components = []
 Executions = []
 DurationType = 2
-Duration = SubResource("Resource_ny43b")
+Duration = SubResource("Resource_igrut")
 HasPeriodicApplication = true
 Period = SubResource("Resource_mjt31")
-ExecuteOnApplication = false
 CanStack = true
 StackLimit = SubResource("Resource_m765o")
 InitialStack = SubResource("Resource_vmjmg")
 SourcePolicy = 1
-InstigatorDenialPolicy = 0
-InstigatorOverridePolicy = 0
-InstigatorOverrideStackCountPolicy = 0
-LevelPolicy = 0
-LevelDenialPolicy = 0
-LevelOverridePolicy = 0
-LevelOverrideStackCountPolicy = 0
 MagnitudePolicy = 1
-OverflowPolicy = 0
 ExpirationPolicy = 1
-ApplicationRefreshPolicy = 0
-ApplicationResetPeriodPolicy = 0
-ExecuteOnSuccessfulApplication = false
 Cues = [SubResource("Resource_jvapm"), SubResource("Resource_kh3wg")]
-RequireModifierSuccessToTriggerCue = false
-SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

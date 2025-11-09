@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Calculator;
@@ -77,7 +78,7 @@ public partial class ForgeEffectData : Resource
 	}
 
 	[Export]
-	public ForgeScalableFloat? Duration { get; set; }
+	public ForgeModifierMagnitude? Duration { get; set; }
 
 	[ExportGroup("Periodic Data")]
 
@@ -363,10 +364,10 @@ public partial class ForgeEffectData : Resource
 
 	private DurationData GetDurationData()
 	{
-		return new DurationData(DurationType, GetDuration());
+		return new DurationData(DurationType, GetDurationModifier());
 	}
 
-	private ScalableFloat? GetDuration()
+	private ModifierMagnitude? GetDurationModifier()
 	{
 		if (DurationType != DurationType.HasDuration)
 		{
@@ -375,7 +376,7 @@ public partial class ForgeEffectData : Resource
 
 		Debug.Assert(Duration is not null, $"{nameof(Duration)} reference is missing.");
 
-		return Duration.GetScalableFloat();
+		return Duration.GetModifier();
 	}
 
 	private StackingData? GetStackingData()
