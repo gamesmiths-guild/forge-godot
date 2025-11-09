@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects.Components;
-using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Godot.Resources.Magnitudes;
 using Godot;
 

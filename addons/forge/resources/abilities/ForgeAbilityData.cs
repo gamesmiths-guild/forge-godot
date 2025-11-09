@@ -4,7 +4,7 @@ using Gamesmiths.Forge.Abilities;
 using Godot;
 using Godot.Collections;
 
-namespace Gamesmiths.Forge.Godot.Resources;
+namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 
 [Tool]
 [GlobalClass]
@@ -36,6 +36,9 @@ public partial class ForgeAbilityData : Resource
 
 	[Export]
 	public ForgeEffectData? CostEffect { get; set; }
+
+	[Export]
+	public ForgeAbilityBehavior? AbilityBehavior { get; set; }
 
 	[ExportGroup("Tags")]
 	[Export]
@@ -77,8 +80,8 @@ public partial class ForgeAbilityData : Resource
 
 		_data = new AbilityData(
 			Name,
-			CooldownEffect?.GetEffectData(),
 			CostEffect?.GetEffectData(),
+			CooldownEffect?.GetEffectData(),
 			AbilityTags?.GetTagContainer(),
 			InstancingPolicy,
 			RetriggerInstancedAbility,
@@ -91,7 +94,8 @@ public partial class ForgeAbilityData : Resource
 			SourceRequiredTags?.GetTagContainer(),
 			SourceBlockedTags?.GetTagContainer(),
 			TargetRequiredTags?.GetTagContainer(),
-			TargetBlockedTags?.GetTagContainer());
+			TargetBlockedTags?.GetTagContainer(),
+			() => AbilityBehavior?.GetBehavior()!);
 		return _data.Value;
 	}
 

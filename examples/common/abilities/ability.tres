@@ -1,7 +1,18 @@
-[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=2 format=3 uid="uid://cg5tr0npybh0k"]
+[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=6 format=3 uid="uid://7c67atykv7d4"]
 
-[ext_resource type="Script" uid="uid://dr3ogjydnnqhh" path="res://addons/forge/resources/ForgeAbilityData.cs" id="1_omq63"]
+[ext_resource type="Script" uid="uid://bgt0nnn2j54ui" path="res://examples/common/scripts/TestAbilityBehavior.cs" id="1_1cr77"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="2_uwoll"]
+[ext_resource type="Resource" uid="uid://besaiburar7vm" path="res://examples/common/abilities/cooldown.tres" id="2_xb61n"]
+[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="3_xb61n"]
+
+[sub_resource type="Resource" id="Resource_xb61n"]
+script = ExtResource("1_1cr77")
+metadata/_custom_type_script = "uid://bgt0nnn2j54ui"
 
 [resource]
-script = ExtResource("1_omq63")
-metadata/_custom_type_script = "uid://dr3ogjydnnqhh"
+script = ExtResource("2_uwoll")
+Name = "Test Ability"
+CooldownEffect = ExtResource("2_xb61n")
+CostEffect = ExtResource("3_xb61n")
+AbilityBehavior = SubResource("Resource_xb61n")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"
