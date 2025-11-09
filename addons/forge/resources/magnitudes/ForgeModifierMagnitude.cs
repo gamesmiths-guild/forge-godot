@@ -60,7 +60,7 @@ public partial class ForgeModifierMagnitude : Resource
 	}
 
 	[Export]
-	public ForgeScalableFloat Coeficient { get; set; } = new(1);
+	public ForgeScalableFloat Coefficient { get; set; } = new(1);
 
 	[Export]
 	public ForgeScalableFloat PreMultiplyAdditiveValue { get; set; } = new(0);
@@ -76,7 +76,7 @@ public partial class ForgeModifierMagnitude : Resource
 	public ForgeCustomCalculator? CustomCalculatorClass { get; set; }
 
 	[Export]
-	public ForgeScalableFloat CalculatorCoeficient { get; set; } = new(1);
+	public ForgeScalableFloat CalculatorCoefficient { get; set; } = new(1);
 
 	[Export]
 	public ForgeScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; } = new(0);
@@ -116,7 +116,7 @@ public partial class ForgeModifierMagnitude : Resource
 				property["name"].AsStringName() == PropertyName.CaptureSource ||
 				property["name"].AsStringName() == PropertyName.SnapshotAttribute ||
 				property["name"].AsStringName() == PropertyName.AttributeCalculationType ||
-				property["name"].AsStringName() == PropertyName.Coeficient ||
+				property["name"].AsStringName() == PropertyName.Coefficient ||
 				property["name"].AsStringName() == PropertyName.PreMultiplyAdditiveValue ||
 				property["name"].AsStringName() == PropertyName.PostMultiplyAdditiveValue ||
 				property["name"].AsStringName() == PropertyName.FinalChannel))
@@ -137,7 +137,7 @@ public partial class ForgeModifierMagnitude : Resource
 
 		if (CalculationType != MagnitudeCalculationType.CustomCalculatorClass
 			&& (property["name"].AsStringName() == PropertyName.CustomCalculatorClass ||
-				property["name"].AsStringName() == PropertyName.CalculatorCoeficient ||
+				property["name"].AsStringName() == PropertyName.CalculatorCoefficient ||
 				property["name"].AsStringName() == PropertyName.CalculatorPreMultiplyAdditiveValue ||
 				property["name"].AsStringName() == PropertyName.CalculatorPostMultiplyAdditiveValue))
 		{
@@ -179,7 +179,7 @@ public partial class ForgeModifierMagnitude : Resource
 				CaptureSource,
 				SnapshotAttribute),
 			AttributeCalculationType,
-			Coeficient.GetScalableFloat(),
+			Coefficient.GetScalableFloat(),
 			PreMultiplyAdditiveValue.GetScalableFloat(),
 			PostMultiplyAdditiveValue.GetScalableFloat(),
 			FinalChannel);
@@ -196,7 +196,7 @@ public partial class ForgeModifierMagnitude : Resource
 
 		return new CustomCalculationBasedFloat(
 				CustomCalculatorClass.GetCustomCalculatorClass(),
-				CalculatorCoeficient.GetScalableFloat(),
+				CalculatorCoefficient.GetScalableFloat(),
 				CalculatorPreMultiplyAdditiveValue.GetScalableFloat(),
 				CalculatorPostMultiplyAdditiveValue.GetScalableFloat(),
 				null);

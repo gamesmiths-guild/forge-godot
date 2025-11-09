@@ -57,10 +57,10 @@ metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 [sub_resource type="Resource" id="Resource_bo6yr"]
 script = ExtResource("5_fwqnh")
 ScalableFloat = SubResource("Resource_syb5j")
-Coeficient = SubResource("Resource_5kg6i")
+Coefficient = SubResource("Resource_5kg6i")
 PreMultiplyAdditiveValue = SubResource("Resource_x4nny")
 PostMultiplyAdditiveValue = SubResource("Resource_7qhew")
-CalculatorCoeficient = SubResource("Resource_2fh6r")
+CalculatorCoefficient = SubResource("Resource_2fh6r")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_5inrd")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_6iyw7")
 metadata/_custom_type_script = "uid://2gm1hdhi8u08"
