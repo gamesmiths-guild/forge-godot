@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=6 format=3 uid="uid://7c67atykv7d4"]
 
-[ext_resource type="Script" uid="uid://bgt0nnn2j54ui" path="res://examples/common/scripts/TestAbilityBehavior.cs" id="1_1cr77"]
+[ext_resource type="Script" uid="uid://bgt0nnn2j54ui" path="res://examples/common/scripts/abilities/TestAbilityBehavior.cs" id="1_1cr77"]
 [ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="2_uwoll"]
 [ext_resource type="Resource" uid="uid://besaiburar7vm" path="res://examples/common/abilities/cooldown.tres" id="2_xb61n"]
 [ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="3_xb61n"]
