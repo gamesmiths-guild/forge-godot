@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
@@ -26,6 +27,8 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 
 	public EntityAbilities Abilities { get; set; } = null!;
 
+	public EventManager Events { get; set;} = null!;
+
 	public override void _Ready()
 	{
 		base._Ready();
@@ -33,6 +36,7 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 		Tags = new(BaseTags.GetTagContainer());
 		EffectsManager = new EffectsManager(this, ForgeManagers.Instance.CuesManager);
 		Abilities = new EntityAbilities(this);
+		Events = new EventManager();
 
 		List<AttributeSet> attributeSetList = [];
 

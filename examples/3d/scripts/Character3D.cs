@@ -2,9 +2,9 @@
 
 using System.Linq;
 using Gamesmiths.Forge.Abilities;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
@@ -14,9 +14,15 @@ public partial class Character3D : CharacterBody3D
 	private const float Speed = 5f;
 
 	private AbilityHandle? _abilityHandle;
+	private Tag _cooldownTag;
+	private float _totalCooldownTime;
+	private TagContainer? _entityTags;
 
 	[Export]
 	public ForgeAbilityData? TestAbilityData { get; set; }
+
+	[Export]
+	public CooldownView? CooldownView { get; set; }
 
 	public override void _Ready()
 	{
@@ -24,7 +30,13 @@ public partial class Character3D : CharacterBody3D
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
 
-		_abilityHandle = forgeEntity?.Abilities.GrantedAbilities.FirstOrDefault();
+		forgeEntity?.Abilities.TryGetAbility(TestAbilityData!.GetAbilityData(), out _abilityHandle, forgeEntity);
+
+		_entityTags = forgeEntity.Tags.CombinedTags;
+
+		CooldownData[]? cooldownData = _abilityHandle!.GetCooldownData();
+		_cooldownTag = cooldownData![0].CooldownTags.First();
+		_totalCooldownTime = cooldownData[0].TotalTime;
 	}
 
 	public override void _Process(double delta)
@@ -33,8 +45,24 @@ public partial class Character3D : CharacterBody3D
 
 		if (Input.IsActionJustPressed("skill_1"))
 		{
-			_abilityHandle!.Activate(out AbilityActivationResult result);
+			_abilityHandle!.Activate(out AbilityActivationFailures result);
 			GD.Print($"Ability activation result: {result}");
+		}
+
+		if (CooldownView is not null && _abilityHandle is not null)
+		{
+			var cooldownRemaining = _abilityHandle.GetRemainingCooldownTime(_cooldownTag);
+			CooldownView.UpdateCooldown(cooldownRemaining, _totalCooldownTime);
+
+			var costText = _abilityHandle.GetCostData()![0].Cost;
+			CooldownView.UpdateCost(costText.ToString());
+
+			var tagsText = "";
+			foreach (var tag in _entityTags)
+			{
+				tagsText += tag.ToString() + "\n";
+			}
+			CooldownView.UpdateTags(tagsText);
 		}
 	}
 
@@ -48,5 +76,6 @@ public partial class Character3D : CharacterBody3D
 		Velocity = direction * Speed;
 
 		MoveAndSlide();
+		
 	}
 }

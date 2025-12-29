@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=30 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="1_381bb"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="2_l0q6a"]
@@ -16,6 +16,7 @@
 [ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/rejuvenation.tres" id="14_12jpl"]
 [ext_resource type="Script" uid="uid://7bhjrbrsll5y" path="res://addons/forge/nodes/EffectRayCast3D.cs" id="15_lfn22"]
 [ext_resource type="Script" uid="uid://cd1k8wqsbtpjc" path="res://addons/forge/nodes/EffectShapeCast3D.cs" id="16_60occ"]
+[ext_resource type="PackedScene" uid="uid://6ttcv0dk6kaq" path="res://examples/common/CooldownView.tscn" id="17_l0q6a"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_5htmj"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -75,8 +76,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 use_collision = true
 size = Vector3(20, 1, 20)
 
-[node name="CharacterBody3D" parent="." instance=ExtResource("1_381bb")]
+[node name="CharacterBody3D" parent="." node_paths=PackedStringArray("CooldownView") instance=ExtResource("1_381bb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
+CooldownView = NodePath("../CanvasLayer/CooldownView")
 
 [node name="CharacterBody3D2" parent="." instance=ExtResource("1_381bb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
@@ -222,3 +224,7 @@ transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 1, 0, -3, 0)
 material_override = SubResource("StandardMaterial3D_hecij")
 mesh = SubResource("CylinderMesh_gqfj1")
 skeleton = NodePath("../../RayCast3D")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="CooldownView" parent="CanvasLayer" instance=ExtResource("17_l0q6a")]

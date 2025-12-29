@@ -1,6 +1,8 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Collections.Generic;
 using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Effects;
 using Godot;
 using Godot.Collections;
 
@@ -32,7 +34,7 @@ public partial class ForgeAbilityData : Resource
 	public bool RetriggerInstancedAbility { get; set; }
 
 	[Export]
-	public ForgeEffectData? CooldownEffect { get; set; }
+	public ForgeEffectData[]? CooldownEffects { get; set; }
 
 	[Export]
 	public ForgeEffectData? CostEffect { get; set; }
@@ -78,10 +80,16 @@ public partial class ForgeAbilityData : Resource
 			return _data.Value;
 		}
 
+		List<EffectData> cooldownEffects = [];
+		foreach (ForgeEffectData cooldownEffect in CooldownEffects ?? [])
+		{
+			cooldownEffects.Add(cooldownEffect.GetEffectData());
+		}
+
 		_data = new AbilityData(
 			Name,
 			CostEffect?.GetEffectData(),
-			CooldownEffect?.GetEffectData(),
+			[.. cooldownEffects],
 			AbilityTags?.GetTagContainer(),
 			InstancingPolicy,
 			RetriggerInstancedAbility,

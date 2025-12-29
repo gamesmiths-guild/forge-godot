@@ -12,7 +12,8 @@ metadata/_custom_type_script = "uid://bgt0nnn2j54ui"
 [resource]
 script = ExtResource("2_uwoll")
 Name = "Test Ability"
-CooldownEffect = ExtResource("2_xb61n")
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("2_xb61n")]
 CostEffect = ExtResource("3_xb61n")
 AbilityBehavior = SubResource("Resource_xb61n")
 metadata/_custom_type_script = "uid://dhxfbxh54pyxp"
