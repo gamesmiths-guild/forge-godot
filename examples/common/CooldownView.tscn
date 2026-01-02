@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://6ttcv0dk6kaq"]
 
-[ext_resource type="Script" uid="uid://bqotneekxchg7" path="res://examples/common/CooldownView.cs" id="1_grro5"]
+[ext_resource type="Script" uid="uid://bqotneekxchg7" path="res://examples/abilities/scripts/CooldownView.cs" id="1_grro5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_grro5"]
 content_margin_left = 2.0

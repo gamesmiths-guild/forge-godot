@@ -1,61 +1,65 @@
-[gd_scene load_steps=27 format=3 uid="uid://ci5xp80c4vcod"]
+[gd_scene load_steps=29 format=3 uid="uid://cgjkn4vyifs06"]
 
-[ext_resource type="Script" uid="uid://bgm8wd05f18rh" path="res://examples/3d/scripts/Character3D.cs" id="1_8qd58"]
-[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="1_x3bge"]
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="2_8qd58"]
-[ext_resource type="Resource" uid="uid://7c67atykv7d4" path="res://examples/abilities/abilities/player/projectile.tres" id="2_tf8eu"]
-[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="3_ced4t"]
-[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="4_o72y0"]
-[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_8m251"]
-[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/common/effects/health_regen.tres" id="7_yl5ww"]
-[ext_resource type="Script" uid="uid://lgxurajmwoly" path="res://examples/3d/scripts/HealthBar3D.cs" id="8_iod0y"]
-[ext_resource type="Resource" uid="uid://cdm6ldp5kxyg0" path="res://examples/abilities/abilities/player/grant_ability.tres" id="8_irbwk"]
+[ext_resource type="Script" uid="uid://dik4k7dos655m" path="res://examples/abilities/scripts/SimpleEnemy3D.cs" id="1_y7tem"]
+[ext_resource type="Resource" uid="uid://c8pyecr40jr66" path="res://examples/abilities/abilities/enemy/enemy_attack.tres" id="2_y7tem"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_wdvip"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="4_u38d3"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="5_0b0g8"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="6_sudkk"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="7_l7c22"]
+[ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://examples/common/effects/health_regen.tres" id="8_emq55"]
+[ext_resource type="Resource" uid="uid://yaq582h7bhfb" path="res://examples/abilities/abilities/enemy/enemy_grant_ability.tres" id="9_y7tem"]
+[ext_resource type="Script" uid="uid://lgxurajmwoly" path="res://examples/3d/scripts/HealthBar3D.cs" id="10_73yk4"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y7tem"]
+albedo_color = Color(1, 0.45999998, 0.45999998, 1)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_x3bge"]
+material = SubResource("StandardMaterial3D_y7tem")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_l0fcu"]
 
 [sub_resource type="Resource" id="Resource_q486f"]
-script = ExtResource("2_8qd58")
+script = ExtResource("4_u38d3")
 ContainerTags = Array[String]([])
 
 [sub_resource type="Resource" id="Resource_l0fcu"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 1
 Max = 99
 
 [sub_resource type="Resource" id="Resource_x3bge"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 980
 Max = 1000
 
 [sub_resource type="Resource" id="Resource_ag5gy"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 1
 Max = 99
 
 [sub_resource type="Resource" id="Resource_8m251"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 1000
 Max = 1000
 
 [sub_resource type="Resource" id="Resource_gnlmx"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 1
 Max = 99
 
 [sub_resource type="Resource" id="Resource_o72y0"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 100
 Max = 100
 
 [sub_resource type="Resource" id="Resource_ced4t"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 100
 Max = 1000
 
 [sub_resource type="Resource" id="Resource_8qd58"]
-script = ExtResource("4_o72y0")
+script = ExtResource("6_sudkk")
 Default = 10
 Max = 99
 
@@ -74,9 +78,12 @@ bg_color = Color(0.17566097, 0.34232214, 1, 1)
 [sub_resource type="ViewportTexture" id="ViewportTexture_nt152"]
 viewport_path = NodePath("SubViewport")
 
-[node name="CharacterBody3D" type="CharacterBody3D"]
-script = ExtResource("1_8qd58")
-TestAbilityData = ExtResource("2_tf8eu")
+[sub_resource type="SphereShape3D" id="SphereShape3D_y7tem"]
+
+[node name="CharacterBody3D" type="CharacterBody3D" node_paths=PackedStringArray("AttackRange")]
+script = ExtResource("1_y7tem")
+EnemyAttackAbilityData = ExtResource("2_y7tem")
+AttackRange = NodePath("Area3D")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
@@ -88,12 +95,12 @@ shape = SubResource("CapsuleShape3D_l0fcu")
 
 [node name="Forge Entity" type="Node" parent="."]
 unique_name_in_owner = true
-script = ExtResource("1_x3bge")
+script = ExtResource("3_wdvip")
 BaseTags = SubResource("Resource_q486f")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"
 
 [node name="Attribute Set" type="Node" parent="Forge Entity"]
-script = ExtResource("3_ced4t")
+script = ExtResource("5_0b0g8")
 AttributeSetClass = "CharacterAttributes"
 InitialAttributeValues = Dictionary[String, Variant]({
 "Agility": SubResource("Resource_l0fcu"),
@@ -105,7 +112,7 @@ InitialAttributeValues = Dictionary[String, Variant]({
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
 [node name="Attribute Set2" type="Node" parent="Forge Entity"]
-script = ExtResource("3_ced4t")
+script = ExtResource("5_0b0g8")
 AttributeSetClass = "VitalAttributes"
 InitialAttributeValues = Dictionary[String, Variant]({
 "CurrentHealth": SubResource("Resource_o72y0"),
@@ -115,13 +122,13 @@ InitialAttributeValues = Dictionary[String, Variant]({
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
 [node name="Effect" type="Node" parent="Forge Entity"]
-script = ExtResource("5_8m251")
-EffectData = ExtResource("7_yl5ww")
+script = ExtResource("7_l7c22")
+EffectData = ExtResource("8_emq55")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="GrantAbilityEffect" type="Node" parent="Forge Entity"]
-script = ExtResource("5_8m251")
-EffectData = ExtResource("8_irbwk")
+script = ExtResource("7_l7c22")
+EffectData = ExtResource("9_y7tem")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="SubViewport" type="SubViewport" parent="."]
@@ -142,7 +149,7 @@ theme_override_styles/background = SubResource("StyleBoxFlat_iod0y")
 theme_override_styles/fill = SubResource("StyleBoxFlat_cku17")
 value = 50.0
 show_percentage = false
-script = ExtResource("8_iod0y")
+script = ExtResource("10_73yk4")
 HealthBarLabel = NodePath("Label")
 
 [node name="Label" type="Label" parent="SubViewport/VBoxContainer/ProgressBar"]
@@ -169,7 +176,7 @@ theme_override_styles/background = SubResource("StyleBoxFlat_tf8eu")
 theme_override_styles/fill = SubResource("StyleBoxFlat_lkgyj")
 value = 50.0
 show_percentage = false
-script = ExtResource("8_iod0y")
+script = ExtResource("10_73yk4")
 HealthBarLabel = NodePath("Label")
 Attribute = "Mana"
 
@@ -194,3 +201,11 @@ vertical_alignment = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 billboard = 1
 texture = SubResource("ViewportTexture_nt152")
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+collision_layer = 2147483648
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+shape = SubResource("SphereShape3D_y7tem")

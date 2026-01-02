@@ -1,0 +1,61 @@
+[gd_scene load_steps=10 format=3 uid="uid://ca1f6valfuo1n"]
+
+[ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_qvkro"]
+[ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="2_gd1rs"]
+[ext_resource type="PackedScene" uid="uid://cgjkn4vyifs06" path="res://examples/abilities/scenes/simple_3d_enemy.tscn" id="3_5x68q"]
+[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="4_5x68q"]
+[ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="5_st7ct"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qkyss"]
+sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
+ground_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
+
+[sub_resource type="Sky" id="Sky_qg36f"]
+sky_material = SubResource("ProceduralSkyMaterial_qkyss")
+
+[sub_resource type="Environment" id="Environment_k5xdk"]
+background_mode = 2
+sky = SubResource("Sky_qg36f")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k5xdk"]
+render_priority = 0
+shader = ExtResource("1_qvkro")
+shader_parameter/color_a = Color(0.23921569, 0.3372549, 0.49803922, 1)
+shader_parameter/color_b = Color(0.40784314, 0.5647059, 0.7490196, 1)
+shader_parameter/tile_size = 2.0
+
+[node name="AbilitiesLevel" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_k5xdk")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.86602354, -0.43301606, 0.25000072, 0, 0.49999818, 0.86602646, -0.5000033, 0.7499993, -0.4330102, -0.04232073, 0, -0.0011863708)
+shadow_enabled = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.351, -0.5, 0.933)
+use_collision = true
+size = Vector3(100, 1, 100)
+material = SubResource("ShaderMaterial_k5xdk")
+
+[node name="Player" parent="." instance=ExtResource("2_gd1rs")]
+unique_name_in_owner = true
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 0.7826079, 0.62251496, 0, -0.62251496, 0.7826079, 0, 7.309, 7.602)
+projection = 1
+size = 13.14
+
+[node name="CharacterBody3D" parent="." instance=ExtResource("3_5x68q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5425377, 0, -1.8287411)
+
+[node name="CharacterBody3D2" parent="." instance=ExtResource("3_5x68q")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08504766, 0, 5.8531375)
+
+[node name="FloatingText Cues" type="Node" parent="."]
+script = ExtResource("4_5x68q")
+FloatingTextScene = ExtResource("5_st7ct")
+CueTag = "cue.floating.text"

@@ -1,18 +1,20 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Linq;
+using System.Text;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Tags;
 using Godot;
+using Godot.Collections;
 
 namespace Gamesmiths.Forge.Example;
 
 public partial class Character3D : CharacterBody3D
 {
 	private const float Speed = 5f;
-
+	private const int FloorLayer = 1 << 0;
 	private AbilityHandle? _abilityHandle;
 	private Tag _cooldownTag;
 	private float _totalCooldownTime;
@@ -30,7 +32,7 @@ public partial class Character3D : CharacterBody3D
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
 
-		forgeEntity?.Abilities.TryGetAbility(TestAbilityData!.GetAbilityData(), out _abilityHandle, forgeEntity);
+		forgeEntity.Abilities.TryGetAbility(TestAbilityData!.GetAbilityData(), out _abilityHandle, forgeEntity);
 
 		_entityTags = forgeEntity.Tags.CombinedTags;
 
@@ -45,8 +47,38 @@ public partial class Character3D : CharacterBody3D
 
 		if (Input.IsActionJustPressed("skill_1"))
 		{
-			_abilityHandle!.Activate(out AbilityActivationFailures result);
-			GD.Print($"Ability activation result: {result}");
+			Camera3D camera = GetViewport().GetCamera3D();
+
+			Vector2 mousePos = GetViewport().GetMousePosition();
+
+			Vector3 rayOrigin = camera.ProjectRayOrigin(mousePos);
+			Vector3 rayDirection = camera.ProjectRayNormal(mousePos);
+
+			PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
+
+			var query = PhysicsRayQueryParameters3D.Create(
+				rayOrigin,
+				rayOrigin + (rayDirection * 1000f));
+
+			query.CollisionMask = FloorLayer;
+			query.CollideWithAreas = false;
+
+			Dictionary? result = spaceState.IntersectRay(query);
+			if (result.Count == 0)
+			{
+				return;
+			}
+
+			var mouseWorldPos = (Vector3)result["position"];
+
+			Vector3 sourcePos = GlobalTransform.Origin;
+			Vector3 direction = (mouseWorldPos - sourcePos).Normalized();
+
+			_abilityHandle!.Activate(
+				new TargetData { Direction = direction },
+				out AbilityActivationFailures activationResult);
+
+			GD.Print($"Ability activation result: {activationResult}");
 		}
 
 		if (CooldownView is not null && _abilityHandle is not null)
@@ -55,14 +87,15 @@ public partial class Character3D : CharacterBody3D
 			CooldownView.UpdateCooldown(cooldownRemaining, _totalCooldownTime);
 
 			var costText = _abilityHandle.GetCostData()![0].Cost;
-			CooldownView.UpdateCost(costText.ToString());
+			CooldownView.UpdateCost($"{costText}");
 
-			var tagsText = "";
-			foreach (var tag in _entityTags)
+			var tagsText = new StringBuilder();
+			foreach (Tag tag in _entityTags!)
 			{
-				tagsText += tag.ToString() + "\n";
+				tagsText.Append(tag.ToString() + "\n");
 			}
-			CooldownView.UpdateTags(tagsText);
+
+			CooldownView.UpdateTags(tagsText.ToString());
 		}
 	}
 
@@ -76,6 +109,7 @@ public partial class Character3D : CharacterBody3D
 		Velocity = direction * Speed;
 
 		MoveAndSlide();
-		
 	}
+
+	public record struct TargetData(Vector3 Direction);
 }

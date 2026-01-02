@@ -1,0 +1,36 @@
+[gd_scene load_steps=8 format=3 uid="uid://cv53xhuo2be2x"]
+
+[ext_resource type="Script" uid="uid://bhqyt4i2kjyrr" path="res://examples/abilities/scripts/Projectile.cs" id="1_6hmvh"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="2_bk3el"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="3_eqjfu"]
+[ext_resource type="Resource" uid="uid://8q6crdcnqojs" path="res://examples/abilities/abilities/player/projectile_damage.tres" id="4_6hmvh"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_wjrje"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_we0ym"]
+albedo_color = Color(0.9029792, 0.762822, 3.85046e-07, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_7hqfq"]
+material = SubResource("StandardMaterial3D_we0ym")
+radius = 0.3
+height = 0.6
+
+[node name="Projectile" type="Node3D" node_paths=PackedStringArray("CollisionArea")]
+script = ExtResource("1_6hmvh")
+CollisionArea = NodePath("EffectArea3D")
+
+[node name="EffectArea3D" type="Area3D" parent="."]
+script = ExtResource("2_bk3el")
+metadata/_custom_type_script = "uid://cvhkilfepqpyi"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EffectArea3D"]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0)
+shape = SubResource("SphereShape3D_wjrje")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="EffectArea3D"]
+mesh = SubResource("SphereMesh_7hqfq")
+
+[node name="Effect" type="Node" parent="EffectArea3D"]
+script = ExtResource("3_eqjfu")
+EffectData = ExtResource("4_6hmvh")
+metadata/_custom_type_script = "uid://dps0oef50noil"

@@ -1,19 +1,22 @@
+// Copyright © Gamesmiths Guild.
+
 using Godot;
-using System;
+
+namespace Gamesmiths.Forge.Example;
 
 public partial class CooldownView : Control
 {
 	[Export]
-	public ProgressBar CooldownProgressBar { get; private set; }
+	public required ProgressBar CooldownProgressBar { get; set; }
 
 	[Export]
-	public Label CooldownLabel { get; private set; }
+	public required Label CooldownLabel { get; set; }
 
 	[Export]
-	public Label CostLabel { get; private set; }
+	public required Label CostLabel { get; set; }
 
 	[Export]
-	public Label TagsLabel { get; private set; }
+	public required Label TagsLabel { get; set; }
 
 	public void UpdateCooldown(float cooldownRemaining, float totalCooldown)
 	{
@@ -24,7 +27,7 @@ public partial class CooldownView : Control
 			return;
 		}
 
-		CooldownProgressBar.Value = (float)((totalCooldown - cooldownRemaining) / totalCooldown * 100f);
+		CooldownProgressBar.Value = (totalCooldown - cooldownRemaining) / totalCooldown * 100f;
 		CooldownLabel.Text = $"{cooldownRemaining:F1}s";
 	}
 

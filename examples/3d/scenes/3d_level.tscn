@@ -1,5 +1,6 @@
-[gd_scene load_steps=30 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=32 format=3 uid="uid://dd3k2ajucir45"]
 
+[ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_12jpl"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="1_381bb"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="2_l0q6a"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="3_12jpl"]
@@ -30,6 +31,13 @@ background_mode = 2
 sky = SubResource("Sky_qg36f")
 tonemap_mode = 2
 glow_enabled = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tpia4"]
+render_priority = 0
+shader = ExtResource("1_12jpl")
+shader_parameter/color_a = Color(0.23921569, 0.3372549, 0.49803922, 1)
+shader_parameter/color_b = Color(0.40784314, 0.5647059, 0.7490196, 1)
+shader_parameter/tile_size = 1.0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_66bdf"]
 
@@ -72,9 +80,10 @@ transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -
 shadow_enabled = true
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0021886826, -0.47895813, -0.032510757)
 use_collision = true
 size = Vector3(20, 1, 20)
+material = SubResource("ShaderMaterial_tpia4")
 
 [node name="CharacterBody3D" parent="." node_paths=PackedStringArray("CooldownView") instance=ExtResource("1_381bb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)

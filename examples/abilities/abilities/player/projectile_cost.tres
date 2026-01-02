@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=15 format=3 uid="uid://6l1xokupjto1"]
+
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_lr50r"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_aigmc"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="5_v0456"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_qdvgo"]
+
+[sub_resource type="Resource" id="Resource_cn837"]
+script = ExtResource("3_lr50r")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_pvxif"]
+script = ExtResource("4_aigmc")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_i21lj"]
+script = ExtResource("4_aigmc")
+
+[sub_resource type="Resource" id="Resource_6nyv0"]
+script = ExtResource("4_aigmc")
+
+[sub_resource type="Resource" id="Resource_8f587"]
+script = ExtResource("4_aigmc")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_qpd8e"]
+script = ExtResource("4_aigmc")
+
+[sub_resource type="Resource" id="Resource_tgk5n"]
+script = ExtResource("4_aigmc")
+
+[sub_resource type="Resource" id="Resource_xmlma"]
+script = ExtResource("4_aigmc")
+BaseValue = -5.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_kpa2l"]
+script = ExtResource("5_v0456")
+Attribute = "CharacterAttributes.Mana"
+ScalableFloat = SubResource("Resource_xmlma")
+SnapshotAttribute = false
+Coeficient = SubResource("Resource_8f587")
+PreMultiplyAdditiveValue = SubResource("Resource_tgk5n")
+PostMultiplyAdditiveValue = SubResource("Resource_qpd8e")
+CalculatorCoeficient = SubResource("Resource_pvxif")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_6nyv0")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_i21lj")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_cd28o"]
+script = ExtResource("3_lr50r")
+BaseValue = 1
+
+[resource]
+script = ExtResource("6_qdvgo")
+Name = "Damage"
+Modifiers = Array[Object]([SubResource("Resource_kpa2l")])
+Components = []
+Executions = []
+StackLimit = SubResource("Resource_cd28o")
+InitialStack = SubResource("Resource_cn837")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

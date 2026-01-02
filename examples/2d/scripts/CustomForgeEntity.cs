@@ -27,7 +27,7 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 
 	public EntityAbilities Abilities { get; set; } = null!;
 
-	public EventManager Events { get; set;} = null!;
+	public EventManager Events { get; set; } = null!;
 
 	public override void _Ready()
 	{

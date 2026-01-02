@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=7 format=3 uid="uid://7c67atykv7d4"]
+
+[ext_resource type="PackedScene" uid="uid://cv53xhuo2be2x" path="res://examples/abilities/scenes/projectile.tscn" id="1_dma25"]
+[ext_resource type="Script" uid="uid://bgt0nnn2j54ui" path="res://examples/abilities/scripts/ProjectileAbilityBehavior.cs" id="2_ehxmd"]
+[ext_resource type="Resource" uid="uid://besaiburar7vm" path="res://examples/abilities/abilities/player/projectile_cooldown.tres" id="3_h4yil"]
+[ext_resource type="Resource" uid="uid://6l1xokupjto1" path="res://examples/abilities/abilities/player/projectile_cost.tres" id="4_hn43o"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_xjy6q"]
+
+[sub_resource type="Resource" id="Resource_xb61n"]
+script = ExtResource("2_ehxmd")
+Projectile = ExtResource("1_dma25")
+metadata/_custom_type_script = "uid://bgt0nnn2j54ui"
+
+[resource]
+script = ExtResource("5_xjy6q")
+Name = "Test Ability"
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("3_h4yil")]
+CostEffect = ExtResource("4_hn43o")
+AbilityBehavior = SubResource("Resource_xb61n")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"
