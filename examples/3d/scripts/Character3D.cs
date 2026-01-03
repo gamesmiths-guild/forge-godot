@@ -3,6 +3,8 @@
 using System.Linq;
 using System.Text;
 using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Events;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Tags;
@@ -15,13 +17,13 @@ public partial class Character3D : CharacterBody3D
 {
 	private const float Speed = 5f;
 	private const int FloorLayer = 1 << 0;
-	private AbilityHandle? _abilityHandle;
+	private AbilityHandle? _projectileAbilityHandle;
 	private Tag _cooldownTag;
 	private float _totalCooldownTime;
 	private TagContainer? _entityTags;
 
 	[Export]
-	public ForgeAbilityData? TestAbilityData { get; set; }
+	public ForgeAbilityData? ProjectileAbilityData { get; set; }
 
 	[Export]
 	public CooldownView? CooldownView { get; set; }
@@ -32,13 +34,33 @@ public partial class Character3D : CharacterBody3D
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
 
-		forgeEntity.Abilities.TryGetAbility(TestAbilityData!.GetAbilityData(), out _abilityHandle, forgeEntity);
+		forgeEntity.Abilities.TryGetAbility(
+			ProjectileAbilityData!.GetAbilityData(),
+			out _projectileAbilityHandle,
+			forgeEntity);
 
 		_entityTags = forgeEntity.Tags.CombinedTags;
 
-		CooldownData[]? cooldownData = _abilityHandle!.GetCooldownData();
+		CooldownData[]? cooldownData = _projectileAbilityHandle!.GetCooldownData();
 		_cooldownTag = cooldownData![0].CooldownTags.First();
 		_totalCooldownTime = cooldownData[0].TotalTime;
+
+		forgeEntity.Attributes["CharacterAttributes.Health"].OnValueChanged += (_, change) =>
+		{
+			if (change <= 0)
+			{
+				GD.Print("Damage event raised");
+
+				forgeEntity.Events.Raise(new EventData
+				{
+					EventTags =
+						Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage").GetSingleTagContainer()!,
+					Source = forgeEntity,
+					Target = forgeEntity,
+					EventMagnitude = change,
+				});
+			}
+		};
 	}
 
 	public override void _Process(double delta)
@@ -74,19 +96,19 @@ public partial class Character3D : CharacterBody3D
 			Vector3 sourcePos = GlobalTransform.Origin;
 			Vector3 direction = (mouseWorldPos - sourcePos).Normalized();
 
-			_abilityHandle!.Activate(
+			_projectileAbilityHandle!.Activate(
 				new TargetData { Direction = direction },
 				out AbilityActivationFailures activationResult);
 
 			GD.Print($"Ability activation result: {activationResult}");
 		}
 
-		if (CooldownView is not null && _abilityHandle is not null)
+		if (CooldownView is not null && _projectileAbilityHandle is not null)
 		{
-			var cooldownRemaining = _abilityHandle.GetRemainingCooldownTime(_cooldownTag);
+			var cooldownRemaining = _projectileAbilityHandle.GetRemainingCooldownTime(_cooldownTag);
 			CooldownView.UpdateCooldown(cooldownRemaining, _totalCooldownTime);
 
-			var costText = _abilityHandle.GetCostData()![0].Cost;
+			var costText = _projectileAbilityHandle.GetCostData()![0].Cost;
 			CooldownView.UpdateCost($"{costText}");
 
 			var tagsText = new StringBuilder();

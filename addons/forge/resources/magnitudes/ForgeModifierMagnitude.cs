@@ -2,10 +2,8 @@
 
 using System.Diagnostics;
 using Gamesmiths.Forge.Effects.Magnitudes;
-using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Gamesmiths.Forge.Godot.Resources.Magnitudes;
-using Gamesmiths.Forge.Tags;
 using Godot;
 using Godot.Collections;
 
@@ -86,7 +84,7 @@ public partial class ForgeModifierMagnitude : Resource
 
 	[ExportGroup("Set by Caller Float")]
 	[Export]
-	public string CallerTargetTag { get; set; } = string.Empty;
+	public ForgeTag? CallerTargetTag { get; set; }
 
 #if TOOLS
 	public bool IsInstantEffect { get; set; }
@@ -209,6 +207,6 @@ public partial class ForgeModifierMagnitude : Resource
 			return null;
 		}
 
-		return new SetByCallerFloat(Tag.RequestTag(ForgeManagers.Instance.TagsManager, CallerTargetTag));
+		return new SetByCallerFloat(CallerTargetTag!.GetTag());
 	}
 }

@@ -3,10 +3,8 @@
 using System.Diagnostics;
 using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Effects.Modifiers;
-using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Gamesmiths.Forge.Godot.Resources.Magnitudes;
-using Gamesmiths.Forge.Tags;
 using Godot;
 using Godot.Collections;
 
@@ -72,7 +70,7 @@ public partial class ForgeModifier : Resource
 	}
 
 	[Export]
-	public ForgeScalableFloat Coeficient { get; set; } = new(1);
+	public ForgeScalableFloat Coefficient { get; set; } = new(1);
 
 	[Export]
 	public ForgeScalableFloat PreMultiplyAdditiveValue { get; set; } = new(0);
@@ -88,7 +86,7 @@ public partial class ForgeModifier : Resource
 	public ForgeCustomCalculator? CustomCalculatorClass { get; set; }
 
 	[Export]
-	public ForgeScalableFloat CalculatorCoeficient { get; set; } = new(1);
+	public ForgeScalableFloat CalculatorCoefficient { get; set; } = new(1);
 
 	[Export]
 	public ForgeScalableFloat CalculatorPreMultiplyAdditiveValue { get; set; } = new(0);
@@ -98,7 +96,7 @@ public partial class ForgeModifier : Resource
 
 	[ExportGroup("Set by Caller Float")]
 	[Export]
-	public string CallerTargetTag { get; set; } = string.Empty;
+	public ForgeTag? CallerTargetTag { get; set; }
 
 #if TOOLS
 	public bool IsInstantEffect { get; set; }
@@ -134,7 +132,7 @@ public partial class ForgeModifier : Resource
 				property["name"].AsStringName() == PropertyName.CaptureSource ||
 				property["name"].AsStringName() == PropertyName.SnapshotAttribute ||
 				property["name"].AsStringName() == PropertyName.AttributeCalculationType ||
-				property["name"].AsStringName() == PropertyName.Coeficient ||
+				property["name"].AsStringName() == PropertyName.Coefficient ||
 				property["name"].AsStringName() == PropertyName.PreMultiplyAdditiveValue ||
 				property["name"].AsStringName() == PropertyName.PostMultiplyAdditiveValue ||
 				property["name"].AsStringName() == PropertyName.FinalChannel))
@@ -155,7 +153,7 @@ public partial class ForgeModifier : Resource
 
 		if (CalculationType != MagnitudeCalculationType.CustomCalculatorClass
 			&& (property["name"].AsStringName() == PropertyName.CustomCalculatorClass ||
-				property["name"].AsStringName() == PropertyName.CalculatorCoeficient ||
+				property["name"].AsStringName() == PropertyName.CalculatorCoefficient ||
 				property["name"].AsStringName() == PropertyName.CalculatorPreMultiplyAdditiveValue ||
 				property["name"].AsStringName() == PropertyName.CalculatorPostMultiplyAdditiveValue))
 		{
@@ -197,7 +195,7 @@ public partial class ForgeModifier : Resource
 				CaptureSource,
 				SnapshotAttribute),
 			AttributeCalculationType,
-			Coeficient.GetScalableFloat(),
+			Coefficient.GetScalableFloat(),
 			PreMultiplyAdditiveValue.GetScalableFloat(),
 			PostMultiplyAdditiveValue.GetScalableFloat(),
 			FinalChannel);
@@ -214,7 +212,7 @@ public partial class ForgeModifier : Resource
 
 		return new CustomCalculationBasedFloat(
 				CustomCalculatorClass.GetCustomCalculatorClass(),
-				CalculatorCoeficient.GetScalableFloat(),
+				CalculatorCoefficient.GetScalableFloat(),
 				CalculatorPreMultiplyAdditiveValue.GetScalableFloat(),
 				CalculatorPostMultiplyAdditiveValue.GetScalableFloat(),
 				null);
@@ -227,6 +225,6 @@ public partial class ForgeModifier : Resource
 			return null;
 		}
 
-		return new SetByCallerFloat(Tag.RequestTag(ForgeManagers.Instance.TagsManager, CallerTargetTag));
+		return new SetByCallerFloat(CallerTargetTag!.GetTag());
 	}
 }

@@ -1,6 +1,8 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Effects;
 using Godot;
@@ -41,6 +43,16 @@ public partial class ForgeAbilityData : Resource
 
 	[Export]
 	public ForgeAbilityBehavior? AbilityBehavior { get; set; }
+
+	[ExportGroup("Trigger")]
+	[Export]
+	public TriggerSource TriggerSource { get; set; }
+
+	[Export]
+	public ForgeTag? TriggerTag { get; set; }
+
+	[Export]
+	public int Priority { get; set; }
 
 	[ExportGroup("Tags")]
 	[Export]
@@ -93,7 +105,7 @@ public partial class ForgeAbilityData : Resource
 			AbilityTags?.GetTagContainer(),
 			InstancingPolicy,
 			RetriggerInstancedAbility,
-			null,
+			GetTriggerData(),
 			CancelAbilitiesWithTag?.GetTagContainer(),
 			BlockAbilitiesWithTag?.GetTagContainer(),
 			ActivationOwnedTags?.GetTagContainer(),
@@ -117,4 +129,51 @@ public partial class ForgeAbilityData : Resource
 		}
 	}
 #endif
+
+	private AbilityTriggerData? GetTriggerData()
+	{
+		if (TriggerSource == TriggerSource.None)
+		{
+			return null;
+		}
+
+		Tags.Tag triggerTag = TriggerTag!.GetTag();
+
+		switch (TriggerSource)
+		{
+			case TriggerSource.Event:
+				IAbilityBehavior? behavior = AbilityBehavior?.GetBehavior();
+
+				if (behavior is not null)
+				{
+					System.Type behaviorType = behavior.GetType();
+					System.Type? payloadInterface =
+						System.Array.Find(behaviorType.GetInterfaces(), x =>
+							x.IsGenericType &&
+							x.GetGenericTypeDefinition() == typeof(IAbilityBehavior<>));
+
+					if (payloadInterface is not null)
+					{
+						System.Type payloadType = payloadInterface.GetGenericArguments()[0];
+						MethodInfo method = typeof(AbilityTriggerData)
+							.GetMethods(BindingFlags.Public | BindingFlags.Static)
+							.First(x => x.Name == nameof(AbilityTriggerData.ForEvent)
+								&& x.IsGenericMethodDefinition)
+							.MakeGenericMethod(payloadType);
+
+						return (AbilityTriggerData)method.Invoke(null, [triggerTag, Priority])!;
+					}
+				}
+
+				GD.Print($"call {triggerTag} - {Name}");
+
+				return AbilityTriggerData.ForEvent(triggerTag, Priority);
+			case TriggerSource.TagAdded:
+				return AbilityTriggerData.ForTagAdded(triggerTag);
+			case TriggerSource.TagPresent:
+				return AbilityTriggerData.ForTagPresent(triggerTag);
+			default:
+				return null;
+		}
+	}
 }

@@ -18,6 +18,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private PanelContainer? _dockedScene;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
+	private TagInspectorPlugin? _tagInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
@@ -32,6 +33,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
 		AddInspectorPlugin(_tagContainerInspectorPlugin);
+		_tagInspectorPlugin = new TagInspectorPlugin();
+		AddInspectorPlugin(_tagInspectorPlugin);
 		_attributeSetInspectorPlugin = new AttributeSetInspectorPlugin();
 		AddInspectorPlugin(_attributeSetInspectorPlugin);
 		_cueHandlerInspectorPlugin = new CueHandlerInspectorPlugin();
@@ -50,6 +53,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		_dockedScene.Free();
 
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
+		RemoveInspectorPlugin(_tagInspectorPlugin);
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeEditorPlugin);

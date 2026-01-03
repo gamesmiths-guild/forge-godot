@@ -1,0 +1,79 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=20 format=3 uid="uid://c2rmd65jvtry5"]
+
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_odnmd"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="2_w82xq"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_k23yg"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_1sl1k"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="5_hmdve"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_eu2la"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="6_k23yg"]
+
+[sub_resource type="Resource" id="Resource_yy5ki"]
+script = ExtResource("1_odnmd")
+ContainerTags = ["cue.floating.text"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_ikt6e"]
+script = ExtResource("2_w82xq")
+CueKeys = SubResource("Resource_yy5ki")
+MaxValue = 1000
+MagnitudeType = 2
+MagnitudeAttribute = "CharacterAttributes.Health"
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_cn837"]
+script = ExtResource("3_k23yg")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_1sl1k"]
+script = ExtResource("4_1sl1k")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_w82xq"]
+script = ExtResource("4_1sl1k")
+
+[sub_resource type="Resource" id="Resource_k23yg"]
+script = ExtResource("4_1sl1k")
+
+[sub_resource type="Resource" id="Resource_vsj1u"]
+script = ExtResource("6_k23yg")
+Tag = "set_by_caller.damage"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_c85i6"]
+script = ExtResource("4_1sl1k")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_hmdve"]
+script = ExtResource("4_1sl1k")
+
+[sub_resource type="Resource" id="Resource_eu2la"]
+script = ExtResource("4_1sl1k")
+
+[sub_resource type="Resource" id="Resource_vkfwp"]
+script = ExtResource("5_hmdve")
+Attribute = "CharacterAttributes.Health"
+CalculationType = 3
+Coefficient = SubResource("Resource_c85i6")
+PreMultiplyAdditiveValue = SubResource("Resource_eu2la")
+PostMultiplyAdditiveValue = SubResource("Resource_hmdve")
+CalculatorCoefficient = SubResource("Resource_1sl1k")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_k23yg")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_w82xq")
+CallerTargetTag = SubResource("Resource_vsj1u")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_cd28o"]
+script = ExtResource("3_k23yg")
+BaseValue = 1
+
+[resource]
+script = ExtResource("6_eu2la")
+Name = "Damage"
+Modifiers = Array[Object]([SubResource("Resource_vkfwp")])
+Components = []
+Executions = []
+StackLimit = SubResource("Resource_cd28o")
+InitialStack = SubResource("Resource_cn837")
+Cues = [SubResource("Resource_ikt6e")]
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

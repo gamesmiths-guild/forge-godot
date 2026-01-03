@@ -26,22 +26,17 @@ public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 	{
 		_inspectorScene = ResourceLoader.Load<PackedScene>("uid://tou2hv4cet4e");
 
-		if (type == Variant.Type.Array && name == "ContainerTags")
+		var containerScene = (TagContainerEditor)_inspectorScene.Instantiate();
+		containerScene.IsPluginInstance = true;
+
+		if (@object is ForgeTagContainer tagContainer)
 		{
-			var containerScene = (TagContainerEditor)_inspectorScene.Instantiate();
-			containerScene.IsPluginInstance = true;
-
-			if (@object is ForgeTagContainer tagContainer)
-			{
-				containerScene.ContainerTags = tagContainer.ContainerTags;
-			}
-
-			AddCustomControl(containerScene);
-
-			return true;
+			containerScene.ContainerTags = tagContainer.ContainerTags;
 		}
 
-		return false;
+		AddPropertyEditor(name, containerScene);
+
+		return true;
 	}
 }
 #endif

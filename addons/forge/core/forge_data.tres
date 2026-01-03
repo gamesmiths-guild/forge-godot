@@ -4,4 +4,4 @@
 
 [resource]
 script = ExtResource("1_x0pne")
-RegisteredTags = Array[String](["effect.fire", "effect.wet", "cue.floating.text", "cue.vfx.fire", "cue.vfx.wet", "cue.vfx.regen", "cooldown.skill_1", "cooldown.enemy.attack"])
+RegisteredTags = Array[String](["effect.fire", "effect.wet", "cue.floating.text", "cue.vfx.fire", "cue.vfx.wet", "cue.vfx.regen", "cooldown.enemy.attack", "set_by_caller.damage", "event.damage", "cooldown", "cooldown.skill.thorns", "cooldown.skill.projectile"])

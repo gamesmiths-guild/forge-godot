@@ -24,7 +24,7 @@ metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 script = ExtResource("1_khd1u")
 BaseValue = 1
 
-[sub_resource type="Resource" id="Resource_pvxif"]
+[sub_resource type="Resource" id="Resource_t2uae"]
 script = ExtResource("2_cn837")
 BaseValue = 1.0
 
@@ -34,7 +34,7 @@ script = ExtResource("2_cn837")
 [sub_resource type="Resource" id="Resource_6nyv0"]
 script = ExtResource("2_cn837")
 
-[sub_resource type="Resource" id="Resource_8f587"]
+[sub_resource type="Resource" id="Resource_t5c6b"]
 script = ExtResource("2_cn837")
 BaseValue = 1.0
 
@@ -54,10 +54,10 @@ script = ExtResource("3_cd28o")
 Attribute = "CharacterAttributes.Health"
 ScalableFloat = SubResource("Resource_xmlma")
 SnapshotAttribute = false
-Coeficient = SubResource("Resource_8f587")
+Coefficient = SubResource("Resource_t5c6b")
 PreMultiplyAdditiveValue = SubResource("Resource_tgk5n")
 PostMultiplyAdditiveValue = SubResource("Resource_qpd8e")
-CalculatorCoeficient = SubResource("Resource_pvxif")
+CalculatorCoefficient = SubResource("Resource_t2uae")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_6nyv0")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_i21lj")
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"

@@ -15,7 +15,7 @@ public sealed class ProjectileAbilityBehaviorImplementation : IAbilityBehavior<C
 		_projectileScene = projectileScene;
 	}
 
-	public void OnStarted(AbilityBehaviorContext context, Character3D.TargetData payload)
+	public void OnStarted(AbilityBehaviorContext context, Character3D.TargetData data)
 	{
 		if (context.Owner is not ForgeEntity ownerNode)
 		{
@@ -29,8 +29,8 @@ public sealed class ProjectileAbilityBehaviorImplementation : IAbilityBehavior<C
 
 		Node3D parentNode = ownerNode.GetParent<Node3D>();
 
-		projectile.GlobalTransform = parentNode.GlobalTransform.Translated(payload.Direction + Vector3.Up);
-		projectile.Launch(payload.Direction, 10f);
+		projectile.GlobalTransform = parentNode.GlobalTransform.Translated(data.Direction + Vector3.Up);
+		projectile.Launch(data.Direction, 10f);
 		context.InstanceHandle.End();
 	}
 

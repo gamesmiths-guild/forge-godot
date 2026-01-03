@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=37 format=3 uid="uid://bgbbtfuhkcquk"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=35 format=3 uid="uid://bgbbtfuhkcquk"]
 
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="1_4mxm7"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_kh3wg"]
@@ -75,11 +75,9 @@ metadata/_custom_type_script = "uid://2gm1hdhi8u08"
 script = ExtResource("7_d1dxv")
 BaseValue = 1
 
-[sub_resource type="Curve" id="Curve_0avqp"]
-
-[sub_resource type="Resource" id="Resource_pinn7"]
+[sub_resource type="Resource" id="Resource_sbpx4"]
 script = ExtResource("4_l03br")
-ScalingCurve = SubResource("Curve_0avqp")
+BaseValue = 1.0
 
 [sub_resource type="Curve" id="Curve_ny43b"]
 
@@ -93,12 +91,9 @@ ScalingCurve = SubResource("Curve_ny43b")
 script = ExtResource("4_l03br")
 ScalingCurve = SubResource("Curve_pinn7")
 
-[sub_resource type="Curve" id="Curve_5l3t8"]
-
-[sub_resource type="Resource" id="Resource_10q1i"]
+[sub_resource type="Resource" id="Resource_a1y6t"]
 script = ExtResource("4_l03br")
 BaseValue = 1.0
-ScalingCurve = SubResource("Curve_5l3t8")
 
 [sub_resource type="Resource" id="Resource_1yprn"]
 script = ExtResource("9_68ql8")
@@ -120,11 +115,11 @@ script = ExtResource("8_33oku")
 Attribute = "CharacterAttributes.Health"
 ScalableFloat = SubResource("Resource_aash6")
 SnapshotAttribute = false
-Coeficient = SubResource("Resource_10q1i")
+Coefficient = SubResource("Resource_a1y6t")
 PreMultiplyAdditiveValue = SubResource("Resource_fylsp")
 PostMultiplyAdditiveValue = SubResource("Resource_kf85k")
 CustomCalculatorClass = SubResource("Resource_1yprn")
-CalculatorCoeficient = SubResource("Resource_pinn7")
+CalculatorCoefficient = SubResource("Resource_sbpx4")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_j2cm1")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_5l3t8")
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"

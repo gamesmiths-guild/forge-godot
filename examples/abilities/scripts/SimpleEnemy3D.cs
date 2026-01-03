@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Diagnostics;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
@@ -59,7 +60,6 @@ public partial class SimpleEnemy3D : CharacterBody3D
 				continue;
 			}
 
-			// Here you would typically trigger an attack ability or animation.
 			_abilityHandle!.Activate(out AbilityActivationFailures _, _forgePlayer);
 		}
 	}
