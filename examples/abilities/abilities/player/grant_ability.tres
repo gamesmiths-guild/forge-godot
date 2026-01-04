@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=14 format=3 uid="uid://cdm6ldp5kxyg0"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=17 format=3 uid="uid://cdm6ldp5kxyg0"]
 
-[ext_resource type="Resource" uid="uid://7c67atykv7d4" path="res://examples/abilities/abilities/player/projectile.tres" id="1_h1fff"]
+[ext_resource type="Resource" uid="uid://7c67atykv7d4" path="res://examples/abilities/abilities/player/projectile/projectile.tres" id="1_c52b4"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_jm1ed"]
 [ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="3_4gm32"]
 [ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="4_3ritx"]
-[ext_resource type="Resource" uid="uid://cpnut4w1fqhga" path="res://examples/abilities/abilities/player/thorns.tres" id="4_55kh6"]
+[ext_resource type="Resource" uid="uid://cpnut4w1fqhga" path="res://examples/abilities/abilities/player/thorns/thorns.tres" id="4_woojq"]
+[ext_resource type="Resource" uid="uid://b4ijs00jkdcnk" path="res://examples/abilities/abilities/player/dash/dash.tres" id="5_3nanh"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_n6j2m"]
 
 [sub_resource type="Resource" id="Resource_h1fff"]
@@ -13,7 +14,7 @@ BaseValue = 1
 
 [sub_resource type="Resource" id="Resource_jm1ed"]
 script = ExtResource("3_4gm32")
-AbilityData = ExtResource("1_h1fff")
+AbilityData = ExtResource("1_c52b4")
 AbilityLevel = SubResource("Resource_h1fff")
 metadata/_custom_type_script = "uid://72kj3n4lm1em"
 
@@ -23,13 +24,23 @@ BaseValue = 1
 
 [sub_resource type="Resource" id="Resource_woojq"]
 script = ExtResource("3_4gm32")
-AbilityData = ExtResource("4_55kh6")
+AbilityData = ExtResource("4_woojq")
 AbilityLevel = SubResource("Resource_c52b4")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_jarbh"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_ctdwi"]
+script = ExtResource("3_4gm32")
+AbilityData = ExtResource("5_3nanh")
+AbilityLevel = SubResource("Resource_jarbh")
 metadata/_custom_type_script = "uid://72kj3n4lm1em"
 
 [sub_resource type="Resource" id="Resource_4gm32"]
 script = ExtResource("4_3ritx")
-GrantAbilityConfigs = [SubResource("Resource_jm1ed"), SubResource("Resource_woojq")]
+GrantAbilityConfigs = [SubResource("Resource_jm1ed"), SubResource("Resource_woojq"), SubResource("Resource_ctdwi")]
 metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
 
 [sub_resource type="Resource" id="Resource_cn837"]

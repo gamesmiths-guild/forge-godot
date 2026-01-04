@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bhqyt4i2kjyrr" path="res://examples/abilities/scripts/Projectile.cs" id="1_6hmvh"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="2_bk3el"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="3_eqjfu"]
-[ext_resource type="Resource" uid="uid://8q6crdcnqojs" path="res://examples/abilities/abilities/player/projectile_damage.tres" id="4_6hmvh"]
+[ext_resource type="Resource" uid="uid://8q6crdcnqojs" path="res://examples/abilities/abilities/player/projectile/projectile_damage.tres" id="4_6hmvh"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_wjrje"]
 

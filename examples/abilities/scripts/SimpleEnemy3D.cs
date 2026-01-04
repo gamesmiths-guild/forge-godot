@@ -68,7 +68,7 @@ public partial class SimpleEnemy3D : CharacterBody3D
 	{
 		base._PhysicsProcess(delta);
 
-		if (_entityTags!.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cooldown.enemy.attack")))
+		if (_entityTags!.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "movement.block")))
 		{
 			return;
 		}
