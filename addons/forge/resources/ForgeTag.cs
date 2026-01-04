@@ -9,6 +9,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 
 [Tool]
 [GlobalClass]
+[Icon("uid://vsfdeevye6jm")]
 public partial class ForgeTag : Resource
 {
 	[Export]

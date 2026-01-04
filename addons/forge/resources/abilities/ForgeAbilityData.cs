@@ -12,6 +12,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 
 [Tool]
 [GlobalClass]
+[Icon("uid://l04b8et2244r")]
 public partial class ForgeAbilityData : Resource
 {
 	private AbilityData? _data;
