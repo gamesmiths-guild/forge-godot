@@ -1,13 +1,15 @@
-[gd_scene load_steps=13 format=3 uid="uid://ca1f6valfuo1n"]
+[gd_scene load_steps=15 format=3 uid="uid://ca1f6valfuo1n"]
 
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_qvkro"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="2_gd1rs"]
 [ext_resource type="PackedScene" uid="uid://cgjkn4vyifs06" path="res://examples/abilities/scenes/simple_3d_enemy.tscn" id="3_5x68q"]
+[ext_resource type="Resource" uid="uid://cpnut4w1fqhga" path="res://examples/abilities/abilities/player/thorns/thorns.tres" id="3_245sh"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="4_5x68q"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="5_st7ct"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler3D.cs" id="6_632vb"]
 [ext_resource type="PackedScene" uid="uid://6aow5rsrf22" path="res://examples/3d/scenes/particles/shield_effect.tscn" id="7_my1os"]
 [ext_resource type="PackedScene" uid="uid://dn5d64jtdgft5" path="res://examples/3d/scenes/particles/thorns_effect.tscn" id="8_my1os"]
+[ext_resource type="PackedScene" uid="uid://f0cdtm7kc3qx" path="res://examples/common/ActionBarView.tscn" id="9_cvpsg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qkyss"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -44,8 +46,13 @@ use_collision = true
 size = Vector3(100, 1, 100)
 material = SubResource("ShaderMaterial_k5xdk")
 
-[node name="Player" parent="." instance=ExtResource("2_gd1rs")]
+[node name="Player" parent="." node_paths=PackedStringArray("Skill1View", "Skill2View", "Skill3View", "Skill4View") instance=ExtResource("2_gd1rs")]
 unique_name_in_owner = true
+ThornsAbilityData = ExtResource("3_245sh")
+Skill1View = NodePath("../CanvasLayer/HBoxContainer/Projectile")
+Skill2View = NodePath("../CanvasLayer/HBoxContainer/Dash")
+Skill3View = NodePath("../CanvasLayer/HBoxContainer/Shield")
+Skill4View = NodePath("../CanvasLayer/HBoxContainer/Thorns")
 
 [node name="Camera3D" type="Camera3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 0.7826079, 0.62251496, 0, -0.62251496, 0.7826079, 0, 7.309, 7.602)
@@ -72,3 +79,35 @@ CueTag = "cue.vfx.shield"
 script = ExtResource("6_632vb")
 EffectScene = ExtResource("8_my1os")
 CueTag = "cue.vfx.thorns"
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer"]
+custom_minimum_size = Vector2(200, 40)
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -40.0
+offset_right = 100.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="Projectile" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+layout_mode = 2
+KeyText = "LMB"
+
+[node name="Dash" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+layout_mode = 2
+KeyText = "SPC"
+
+[node name="Shield" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+layout_mode = 2
+KeyText = "3"
+
+[node name="Thorns" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+layout_mode = 2
+KeyText = "-"

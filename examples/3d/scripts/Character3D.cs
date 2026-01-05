@@ -1,7 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Linq;
-using System.Text;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
@@ -17,11 +17,9 @@ public partial class Character3D : CharacterBody3D
 {
 	private const float Speed = 5f;
 	private const int FloorLayer = 1 << 0;
-	private AbilityHandle? _projectileAbilityHandle;
-	private AbilityHandle? _dashAbilityHandle;
-	private AbilityHandle? _shieldAbilityHandle;
-	private Tag _cooldownTag;
-	private float _totalCooldownTime;
+	private const int SkillCount = 4;
+
+	private readonly SkillSlot[] _skillSlots = new SkillSlot[SkillCount];
 	private TagContainer? _entityTags;
 	private Vector3 _previousVelocity = Vector3.Forward;
 
@@ -35,103 +33,37 @@ public partial class Character3D : CharacterBody3D
 	public ForgeAbilityData? ShieldAbilityData { get; set; }
 
 	[Export]
-	public CooldownView? CooldownView { get; set; }
+	public ForgeAbilityData? ThornsAbilityData { get; set; }
+
+	[Export]
+	public ActionBarView? Skill1View { get; set; }
+
+	[Export]
+	public ActionBarView? Skill2View { get; set; }
+
+	[Export]
+	public ActionBarView? Skill3View { get; set; }
+
+	[Export]
+	public ActionBarView? Skill4View { get; set; }
 
 	public override void _Ready()
 	{
 		base._Ready();
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
-
-		forgeEntity.Abilities.TryGetAbility(
-			ProjectileAbilityData!.GetAbilityData(),
-			out _projectileAbilityHandle,
-			forgeEntity);
-
-		forgeEntity.Abilities.TryGetAbility(
-			DashAbilityData!.GetAbilityData(),
-			out _dashAbilityHandle,
-			forgeEntity);
-
-		forgeEntity.Abilities.TryGetAbility(
-			ShieldAbilityData!.GetAbilityData(),
-			out _shieldAbilityHandle,
-			forgeEntity);
-
 		_entityTags = forgeEntity.Tags.CombinedTags;
 
-		CooldownData[]? cooldownData = _projectileAbilityHandle!.GetCooldownData();
-		_cooldownTag = cooldownData![0].CooldownTags.First();
-		_totalCooldownTime = cooldownData[0].TotalTime;
-
-		forgeEntity.Attributes["CharacterAttributes.Health"].OnValueChanged += (_, change) =>
-		{
-			if (change <= 0)
-			{
-				forgeEntity.Events.Raise(new EventData
-				{
-					EventTags =
-						Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage").GetSingleTagContainer()!,
-					Source = forgeEntity,
-					Target = forgeEntity,
-					EventMagnitude = change,
-				});
-			}
-		};
+		InitializeSkillSlots(forgeEntity);
+		SetupHealthEventHandler(forgeEntity);
 	}
 
 	public override void _Process(double delta)
 	{
 		base._Process(delta);
 
-		if (Input.IsActionJustPressed("skill_1"))
-		{
-			_projectileAbilityHandle!.Activate(
-				new TargetData { Direction = GetMouseDirection() },
-				out AbilityActivationFailures activationResult);
-
-			GD.Print($"Projectile ability activation result: {activationResult}");
-		}
-
-		if (Input.IsActionJustPressed("skill_2"))
-		{
-			_dashAbilityHandle!.Activate(
-				new TargetData { Direction = GetMouseDirection() },
-				out AbilityActivationFailures activationResult);
-
-			GD.Print($"Dash ability activation result: {activationResult}");
-		}
-
-		if (Input.IsActionJustPressed("skill_3"))
-		{
-			if (!_shieldAbilityHandle!.IsActive)
-			{
-				_shieldAbilityHandle!.Activate(out AbilityActivationFailures activationResult);
-				GD.Print($"Shield ability activation result: {activationResult}");
-			}
-			else
-			{
-				_shieldAbilityHandle.Cancel();
-				GD.Print("Shield ability canceled.");
-			}
-		}
-
-		if (CooldownView is not null && _projectileAbilityHandle is not null)
-		{
-			var cooldownRemaining = _projectileAbilityHandle.GetRemainingCooldownTime(_cooldownTag);
-			CooldownView.UpdateCooldown(cooldownRemaining, _totalCooldownTime);
-
-			var costText = _projectileAbilityHandle.GetCostData()![0].Cost;
-			CooldownView.UpdateCost($"{costText}");
-
-			var tagsText = new StringBuilder();
-			foreach (Tag tag in _entityTags!)
-			{
-				tagsText.Append(tag.ToString() + "\n");
-			}
-
-			CooldownView.UpdateTags(tagsText.ToString());
-		}
+		HandleSkillInputs();
+		UpdateSkillViews();
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -151,6 +83,113 @@ public partial class Character3D : CharacterBody3D
 		}
 
 		MoveAndSlide();
+	}
+
+	private static SkillSlot CreateSkillSlot(ForgeEntity forgeEntity, SkillConfig config)
+	{
+		forgeEntity.Abilities.TryGetAbility(
+			config.AbilityData!.GetAbilityData(),
+			out AbilityHandle? handle,
+			forgeEntity);
+
+		Tag? cooldownTag = null;
+		var totalCooldownTime = 0f;
+
+		if (config.HasCooldown)
+		{
+			CooldownData[]? cooldownData = handle!.GetCooldownData();
+			if (cooldownData is { Length: > 0 })
+			{
+				cooldownTag = cooldownData[0].CooldownTags.First();
+				totalCooldownTime = cooldownData[0].TotalTime;
+			}
+		}
+
+		return new SkillSlot(
+			handle!,
+			config.View,
+			config.InputAction,
+			cooldownTag,
+			totalCooldownTime,
+			config.ActivationStrategy);
+	}
+
+	private static void SetupHealthEventHandler(ForgeEntity forgeEntity)
+	{
+		forgeEntity.Attributes["CharacterAttributes.Health"].OnValueChanged += (_, change) =>
+		{
+			if (change <= 0)
+			{
+				forgeEntity.Events.Raise(new EventData
+				{
+					EventTags =
+						Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage").GetSingleTagContainer()!,
+					Source = forgeEntity,
+					Target = forgeEntity,
+					EventMagnitude = change,
+				});
+			}
+		};
+	}
+
+	private static void ActivateToggleAbility(AbilityHandle handle)
+	{
+		if (!handle.IsActive)
+		{
+			handle.Activate(out AbilityActivationFailures activationResult);
+			GD.Print($"{handle} activation result: {activationResult}");
+		}
+		else
+		{
+			handle.Cancel();
+			GD.Print($"{handle} canceled.");
+		}
+	}
+
+	private void InitializeSkillSlots(ForgeEntity forgeEntity)
+	{
+		SkillConfig[] skillConfigs =
+		[
+			new SkillConfig(
+				ProjectileAbilityData, Skill1View, "skill_1", ActivateDirectionalAbility, HasCooldown: true),
+			new SkillConfig(
+				DashAbilityData, Skill2View, "skill_2", ActivateDirectionalAbility, HasCooldown: true),
+			new SkillConfig(
+				ShieldAbilityData, Skill3View, "skill_3", ActivateToggleAbility, HasCooldown: false),
+			new SkillConfig(
+				ThornsAbilityData, Skill4View, InputAction: null, ActivationStrategy: null, HasCooldown: true),
+		];
+
+		for (var i = 0; i < SkillCount; i++)
+		{
+			_skillSlots[i] = CreateSkillSlot(forgeEntity, skillConfigs[i]);
+		}
+	}
+
+	private void HandleSkillInputs()
+	{
+		foreach (SkillSlot slot in _skillSlots.Where(
+			x => x.CanActivateByInput && Input.IsActionJustPressed(x.InputAction!)))
+		{
+			slot.ActivationStrategy!(slot.Handle);
+		}
+	}
+
+	private void UpdateSkillViews()
+	{
+		foreach (SkillSlot slot in _skillSlots)
+		{
+			slot.UpdateView();
+		}
+	}
+
+	private void ActivateDirectionalAbility(AbilityHandle handle)
+	{
+		handle.Activate(
+			new TargetData { Direction = GetMouseDirection() },
+			out AbilityActivationFailures activationResult);
+
+		GD.Print($"{handle} activation result: {activationResult}");
 	}
 
 	private Vector3 GetMouseDirection()
@@ -183,5 +222,55 @@ public partial class Character3D : CharacterBody3D
 		return (mouseWorldPos - sourcePos).Normalized();
 	}
 
+	private sealed class SkillSlot(
+		AbilityHandle handle,
+		ActionBarView? view,
+		string? inputAction,
+		Tag? cooldownTag,
+		float totalCooldownTime,
+		Action<AbilityHandle>? activationStrategy)
+	{
+		private readonly Tag? _cooldownTag = cooldownTag;
+
+		private readonly float _totalCooldownTime = totalCooldownTime;
+
+		public AbilityHandle Handle { get; } = handle;
+
+		public string? InputAction { get; } = inputAction;
+
+		public Action<AbilityHandle>? ActivationStrategy { get; } = activationStrategy;
+
+		public bool CanActivateByInput => InputAction is not null && ActivationStrategy is not null;
+
+		public void UpdateView()
+		{
+			if (view is null)
+			{
+				return;
+			}
+
+			if (_cooldownTag is not null)
+			{
+				var cooldownRemaining = Handle.GetRemainingCooldownTime(_cooldownTag.Value);
+				view.UpdateCooldown(cooldownRemaining, _totalCooldownTime);
+			}
+
+			CostData[]? costData = Handle.GetCostData();
+			if (costData is { Length: > 0 })
+			{
+				view.UpdateCost($"{costData[0].Cost}");
+			}
+
+			view.UpdateActive(Handle.IsActive);
+		}
+	}
+
 	public record struct TargetData(Vector3 Direction);
+
+	private readonly record struct SkillConfig(
+		ForgeAbilityData? AbilityData,
+		ActionBarView? View,
+		string? InputAction,
+		Action<AbilityHandle>? ActivationStrategy,
+		bool HasCooldown);
 }

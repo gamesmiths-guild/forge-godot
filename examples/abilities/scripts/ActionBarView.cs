@@ -4,10 +4,10 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-public partial class CooldownView : Control
+public partial class ActionBarView : Control
 {
 	[Export]
-	public required ProgressBar CooldownProgressBar { get; set; }
+	public required TextureProgressBar CooldownProgressBar { get; set; }
 
 	[Export]
 	public required Label CooldownLabel { get; set; }
@@ -16,7 +16,16 @@ public partial class CooldownView : Control
 	public required Label CostLabel { get; set; }
 
 	[Export]
-	public required Label TagsLabel { get; set; }
+	public required Label KeyLabel { get; set; }
+
+	[Export]
+	public required string KeyText { get; set; }
+
+	public override void _Ready()
+	{
+		base._Ready();
+		KeyLabel.Text = KeyText;
+	}
 
 	public void UpdateCooldown(float cooldownRemaining, float totalCooldown)
 	{
@@ -27,7 +36,7 @@ public partial class CooldownView : Control
 			return;
 		}
 
-		CooldownProgressBar.Value = (totalCooldown - cooldownRemaining) / totalCooldown * 100f;
+		CooldownProgressBar.Value = 100f - ((totalCooldown - cooldownRemaining) / totalCooldown * 100f);
 		CooldownLabel.Text = $"{cooldownRemaining:F1}s";
 	}
 
@@ -36,8 +45,8 @@ public partial class CooldownView : Control
 		CostLabel.Text = costText;
 	}
 
-	public void UpdateTags(string tagsText)
+	public void UpdateActive(bool active)
 	{
-		TagsLabel.Text = tagsText;
+		KeyLabel.AddThemeColorOverride("font_color", active ? Colors.Yellow : Colors.Black);
 	}
 }
