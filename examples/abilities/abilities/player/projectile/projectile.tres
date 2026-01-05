@@ -13,7 +13,7 @@ metadata/_custom_type_script = "uid://bgt0nnn2j54ui"
 
 [resource]
 script = ExtResource("5_xjy6q")
-Name = "Test Ability"
+Name = "Projectile"
 RetriggerInstancedAbility = true
 CooldownEffects = [ExtResource("3_h4yil")]
 CostEffect = ExtResource("4_hn43o")

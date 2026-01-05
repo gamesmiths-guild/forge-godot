@@ -17,7 +17,7 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 
 [resource]
 script = ExtResource("5_25gwv")
-Name = "Test Ability"
+Name = "Dash"
 RetriggerInstancedAbility = true
 CooldownEffects = [ExtResource("3_evx4m")]
 CostEffect = ExtResource("4_q3u3i")

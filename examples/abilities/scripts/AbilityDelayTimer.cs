@@ -8,16 +8,14 @@ namespace Gamesmiths.Forge.Example;
 public partial class AbilityDelayTimer : Node
 {
 	private AbilityBehaviorContext? _context;
-	private string _testProperty = string.Empty;
 	private double _delaySeconds = 1.0;
 
 	private Timer? _timer;
 	private bool _initialized;
 
-	public void Initialize(AbilityBehaviorContext context, string testProperty, double delaySeconds = 1.0)
+	public void Initialize(AbilityBehaviorContext context, double delaySeconds = 1.0)
 	{
 		_context = context;
-		_testProperty = testProperty;
 		_delaySeconds = delaySeconds;
 		_initialized = true;
 
@@ -67,7 +65,6 @@ public partial class AbilityDelayTimer : Node
 
 	private void OnTimeout()
 	{
-		GD.Print($"Ability delayed action (after {_delaySeconds:0.##}s) with TestProperty: {_testProperty}");
 		_context?.InstanceHandle.End();
 		QueueFree();
 	}

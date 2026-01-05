@@ -1,6 +1,5 @@
 // Copyright © Gamesmiths Guild.
 
-using System;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Tags;
 using Godot;
@@ -17,11 +16,6 @@ public partial class ForgeTag : Resource
 
 	public Tag GetTag()
 	{
-		if (string.IsNullOrEmpty(Tag))
-		{
-			throw new ArgumentNullException(nameof(Tag));
-		}
-
 		return Tags.Tag.RequestTag(ForgeManagers.Instance.TagsManager, Tag);
 	}
 }

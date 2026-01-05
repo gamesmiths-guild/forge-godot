@@ -8,13 +8,10 @@ namespace Gamesmiths.Forge.Example;
 
 [Tool]
 [GlobalClass]
-public partial class MyExecutionWrapper : ForgeCustomExecution
+public partial class DamageExecutionWrapper : ForgeCustomExecution
 {
-	[Export]
-	public float Expoent { get; set; }
-
 	public override CustomExecution GetExecutionClass()
 	{
-		return new MyExecution();
+		return new DamageExecution();
 	}
 }

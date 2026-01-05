@@ -19,6 +19,7 @@ public partial class Character3D : CharacterBody3D
 	private const int FloorLayer = 1 << 0;
 	private AbilityHandle? _projectileAbilityHandle;
 	private AbilityHandle? _dashAbilityHandle;
+	private AbilityHandle? _shieldAbilityHandle;
 	private Tag _cooldownTag;
 	private float _totalCooldownTime;
 	private TagContainer? _entityTags;
@@ -29,6 +30,9 @@ public partial class Character3D : CharacterBody3D
 
 	[Export]
 	public ForgeAbilityData? DashAbilityData { get; set; }
+
+	[Export]
+	public ForgeAbilityData? ShieldAbilityData { get; set; }
 
 	[Export]
 	public CooldownView? CooldownView { get; set; }
@@ -47,6 +51,11 @@ public partial class Character3D : CharacterBody3D
 		forgeEntity.Abilities.TryGetAbility(
 			DashAbilityData!.GetAbilityData(),
 			out _dashAbilityHandle,
+			forgeEntity);
+
+		forgeEntity.Abilities.TryGetAbility(
+			ShieldAbilityData!.GetAbilityData(),
+			out _shieldAbilityHandle,
 			forgeEntity);
 
 		_entityTags = forgeEntity.Tags.CombinedTags;
@@ -93,6 +102,20 @@ public partial class Character3D : CharacterBody3D
 			GD.Print($"Dash ability activation result: {activationResult}");
 		}
 
+		if (Input.IsActionJustPressed("skill_3"))
+		{
+			if (!_shieldAbilityHandle!.IsActive)
+			{
+				_shieldAbilityHandle!.Activate(out AbilityActivationFailures activationResult);
+				GD.Print($"Shield ability activation result: {activationResult}");
+			}
+			else
+			{
+				_shieldAbilityHandle.Cancel();
+				GD.Print("Shield ability canceled.");
+			}
+		}
+
 		if (CooldownView is not null && _projectileAbilityHandle is not null)
 		{
 			var cooldownRemaining = _projectileAbilityHandle.GetRemainingCooldownTime(_cooldownTag);
@@ -132,35 +155,32 @@ public partial class Character3D : CharacterBody3D
 
 	private Vector3 GetMouseDirection()
 	{
+		Camera3D camera = GetViewport().GetCamera3D();
 
-Camera3D camera = GetViewport().GetCamera3D();
+		Vector2 mousePos = GetViewport().GetMousePosition();
 
-Vector2 mousePos = GetViewport().GetMousePosition();
+		Vector3 rayOrigin = camera.ProjectRayOrigin(mousePos);
+		Vector3 rayDirection = camera.ProjectRayNormal(mousePos);
 
-Vector3 rayOrigin = camera.ProjectRayOrigin(mousePos);
-Vector3 rayDirection = camera.ProjectRayNormal(mousePos);
+		PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
 
-PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
+		var query = PhysicsRayQueryParameters3D.Create(
+			rayOrigin,
+			rayOrigin + (rayDirection * 1000f));
 
-var query = PhysicsRayQueryParameters3D.Create(
-	rayOrigin,
-	rayOrigin + (rayDirection * 1000f));
+		query.CollisionMask = FloorLayer;
+		query.CollideWithAreas = false;
 
-query.CollisionMask = FloorLayer;
-query.CollideWithAreas = false;
+		Dictionary? result = spaceState.IntersectRay(query);
+		if (result.Count == 0)
+		{
+			return Vector3.Zero;
+		}
 
-Dictionary? result = spaceState.IntersectRay(query);
-if (result.Count == 0)
-{
-	return Vector3.Zero;
-}
+		var mouseWorldPos = (Vector3)result["position"];
 
-var mouseWorldPos = (Vector3)result["position"];
-
-Vector3 sourcePos = GlobalTransform.Origin;
-Vector3 direction = (mouseWorldPos - sourcePos).Normalized();
-
-		return direction;
+		Vector3 sourcePos = GlobalTransform.Origin;
+		return (mouseWorldPos - sourcePos).Normalized();
 	}
 
 	public record struct TargetData(Vector3 Direction);

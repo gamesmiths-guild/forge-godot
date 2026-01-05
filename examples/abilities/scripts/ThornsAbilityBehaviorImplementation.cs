@@ -22,8 +22,6 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior
 
 	public void OnStarted(AbilityBehaviorContext context)
 	{
-		GD.Print("Behavior called");
-
 		if (context.Owner is not ForgeEntity ownerNode)
 		{
 			return;
@@ -46,8 +44,6 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior
 			_damageEffect.SetSetByCallerMagnitude(
 				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "set_by_caller.damage"),
 				context.Magnitude * 2);
-
-			GD.Print($"Thorns dealing {context.Magnitude * 2} damage to {forgeEntity.Name}");
 
 			forgeEntity.EffectsManager.ApplyEffect(_damageEffect);
 		}
