@@ -104,17 +104,17 @@ CueTag = "cue.floating.text"
 
 [node name="FireVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
-FireEffectScene = ExtResource("5_878nk")
+EffectScene = ExtResource("5_878nk")
 CueTag = "cue.vfx.fire"
 
 [node name="WetVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
-FireEffectScene = ExtResource("6_1upbh")
+EffectScene = ExtResource("6_1upbh")
 CueTag = "cue.vfx.wet"
 
 [node name="RegenVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
-FireEffectScene = ExtResource("7_n5jaj")
+EffectScene = ExtResource("7_n5jaj")
 UpdateEffectIntensity = true
 CueTag = "cue.vfx.regen"
 

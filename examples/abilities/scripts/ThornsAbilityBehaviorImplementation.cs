@@ -46,6 +46,11 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior
 				context.Magnitude * 2);
 
 			forgeEntity.EffectsManager.ApplyEffect(_damageEffect);
+
+			ForgeManagers.Instance.CuesManager.ExecuteCue(
+				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.thorns"),
+				ownerNode,
+				null);
 		}
 
 		context.InstanceHandle.End();

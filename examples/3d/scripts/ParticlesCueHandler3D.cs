@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Godot.Nodes;
@@ -15,7 +16,7 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
 
 	[Export]
-	public PackedScene? FireEffectScene { get; set; }
+	public PackedScene? EffectScene { get; set; }
 
 	[Export]
 	public bool UpdateEffectIntensity { get; set; }
@@ -34,9 +35,9 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 			return;
 		}
 
-		Debug.Assert(FireEffectScene is not null, $"{nameof(FireEffectScene)} reference is missing.");
+		Debug.Assert(EffectScene is not null, $"{nameof(EffectScene)} reference is missing.");
 
-		Node3D effectInstance = FireEffectScene.Instantiate<Node3D>();
+		Node3D effectInstance = EffectScene.Instantiate<Node3D>();
 
 		if (!_effectInstanceMapping.TryAdd(parent, effectInstance))
 		{
@@ -100,5 +101,44 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 		parent.RemoveChild(effectInstance);
 		effectInstance.QueueFree();
 		_effectInstanceMapping[parent] = null;
+	}
+
+	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
+	{
+		base._CueOnExecute(forgeEntity, parameters);
+
+		if (forgeEntity is not Node node)
+		{
+			return;
+		}
+
+		if (node.GetParent() is not Node3D parent)
+		{
+			return;
+		}
+
+		Debug.Assert(EffectScene is not null, $"{nameof(EffectScene)} reference is missing.");
+
+		Node3D effectInstance = EffectScene.Instantiate<Node3D>();
+
+		parent.AddChild(effectInstance);
+		effectInstance.Translate(new Vector3(0, 2, 0));
+
+		if (effectInstance is not GpuParticles3D particles)
+		{
+			return;
+		}
+
+		particles.Emitting = false;
+		particles.Restart();
+		particles.Emitting = true;
+
+		_ = DestroyAfter(particles, (float)(particles.Lifetime + 0.1f));
+	}
+
+	private async Task DestroyAfter(Node node, float delay)
+	{
+		await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
+		node.QueueFree();
 	}
 }

@@ -130,19 +130,19 @@ metadata/_custom_type_script = "uid://cbqisbcf7ohd7"
 
 [node name="FireVFX Cues" type="Node" parent="."]
 script = ExtResource("8_1r4gs")
-FireEffectScene = ExtResource("9_30teu")
+EffectScene = ExtResource("9_30teu")
 CueTag = "cue.vfx.fire"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
 [node name="WetVFX Cues" type="Node" parent="."]
 script = ExtResource("8_1r4gs")
-FireEffectScene = ExtResource("10_wwqts")
+EffectScene = ExtResource("10_wwqts")
 CueTag = "cue.vfx.wet"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
 [node name="RegenVFX Cues" type="Node" parent="."]
 script = ExtResource("8_1r4gs")
-FireEffectScene = ExtResource("11_8b8ra")
+EffectScene = ExtResource("11_8b8ra")
 UpdateEffectIntensity = true
 CueTag = "cue.vfx.regen"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"

@@ -15,7 +15,7 @@ public partial class ParticlesCueHandler2D : ForgeCueHandler
 	private readonly Dictionary<Node2D, Node2D?> _effectInstanceMapping = [];
 
 	[Export]
-	public PackedScene? FireEffectScene { get; set; }
+	public PackedScene? EffectScene { get; set; }
 
 	[Export]
 	public bool UpdateEffectIntensity { get; set; }
@@ -29,9 +29,9 @@ public partial class ParticlesCueHandler2D : ForgeCueHandler
 			return;
 		}
 
-		Debug.Assert(FireEffectScene is not null, $"{nameof(FireEffectScene)} reference is missing.");
+		Debug.Assert(EffectScene is not null, $"{nameof(EffectScene)} reference is missing.");
 
-		Node2D effectInstance = FireEffectScene.Instantiate<Node2D>();
+		Node2D effectInstance = EffectScene.Instantiate<Node2D>();
 
 		if (!_effectInstanceMapping.TryAdd(node, effectInstance))
 		{

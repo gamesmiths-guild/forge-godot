@@ -27,6 +27,11 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 			{
 				context.InstanceHandle.End();
 			});
+
+		ForgeManagers.Instance.CuesManager.ApplyCue(
+			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.shield"),
+			ownerNode,
+			null);
 	}
 
 	public void OnEnded(AbilityBehaviorContext context)
@@ -35,6 +40,9 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 		{
 			return;
 		}
+
+		ForgeManagers.Instance.CuesManager.RemoveCue(
+			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.shield"), ownerNode, false);
 
 		ownerNode.Events.Unsubscribe(_notEnoughManaSubscriptionToken!.Value);
 	}
