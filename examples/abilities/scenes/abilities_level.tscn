@@ -1,9 +1,8 @@
-[gd_scene load_steps=15 format=3 uid="uid://ca1f6valfuo1n"]
+[gd_scene load_steps=14 format=3 uid="uid://ca1f6valfuo1n"]
 
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_qvkro"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="2_gd1rs"]
 [ext_resource type="PackedScene" uid="uid://cgjkn4vyifs06" path="res://examples/abilities/scenes/simple_3d_enemy.tscn" id="3_5x68q"]
-[ext_resource type="Resource" uid="uid://cpnut4w1fqhga" path="res://examples/abilities/abilities/player/thorns/thorns.tres" id="3_245sh"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="4_5x68q"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="5_st7ct"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler3D.cs" id="6_632vb"]
@@ -48,7 +47,6 @@ material = SubResource("ShaderMaterial_k5xdk")
 
 [node name="Player" parent="." node_paths=PackedStringArray("Skill1View", "Skill2View", "Skill3View", "Skill4View") instance=ExtResource("2_gd1rs")]
 unique_name_in_owner = true
-ThornsAbilityData = ExtResource("3_245sh")
 Skill1View = NodePath("../CanvasLayer/HBoxContainer/Projectile")
 Skill2View = NodePath("../CanvasLayer/HBoxContainer/Dash")
 Skill3View = NodePath("../CanvasLayer/HBoxContainer/Shield")
