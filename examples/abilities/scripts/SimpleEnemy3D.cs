@@ -11,7 +11,7 @@ namespace Gamesmiths.Forge.Example;
 
 public partial class SimpleEnemy3D : CharacterBody3D
 {
-	private const float Speed = 3f;
+	private const float Speed = 2f;
 
 	private TagContainer? _entityTags;
 

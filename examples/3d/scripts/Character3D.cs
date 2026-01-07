@@ -2,6 +2,7 @@
 
 using System;
 using System.Linq;
+using System.Text;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
@@ -47,6 +48,9 @@ public partial class Character3D : CharacterBody3D
 	[Export]
 	public ActionBarView? Skill4View { get; set; }
 
+	[Export]
+	public Label? TagsView { get; set; }
+
 	public override void _Ready()
 	{
 		base._Ready();
@@ -64,6 +68,7 @@ public partial class Character3D : CharacterBody3D
 
 		HandleSkillInputs();
 		UpdateSkillViews();
+		UpdateTagsView();
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -181,6 +186,22 @@ public partial class Character3D : CharacterBody3D
 		{
 			slot.UpdateView();
 		}
+	}
+
+	private void UpdateTagsView()
+	{
+		if (TagsView is null || _entityTags is null)
+		{
+			return;
+		}
+
+		var tagsText = new StringBuilder();
+		foreach (Tag tag in _entityTags!)
+		{
+			tagsText.Append(tag.ToString() + "\n");
+		}
+
+		TagsView.Text = tagsText.ToString();
 	}
 
 	private void ActivateDirectionalAbility(AbilityHandle handle)
