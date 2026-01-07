@@ -14,18 +14,23 @@ public partial class EffectArea2D : Area2D
 	private EffectApplier? _effectApplier;
 
 	[Export]
-	public Node? AreaOwner { get; set; }
+	public Node? EffectOwner { get; set; }
+
+	[Export]
+	public Node? EffectSource { get; set; }
 
 	[Export]
 	public EffectTriggerMode TriggerMode { get; set; }
 
-	private IForgeEntity? ForgeEntity => AreaOwner as IForgeEntity;
+	private IForgeEntity? OwnerEntity => EffectOwner as IForgeEntity;
+
+	private IForgeEntity? SourceEntity => EffectSource as IForgeEntity;
 
 	public override void _Ready()
 	{
-		if (AreaOwner is not null && AreaOwner is not IForgeEntity)
+		if (EffectOwner is not null && EffectOwner is not IForgeEntity)
 		{
-			GD.PushError($"{nameof(AreaOwner)} must implement {nameof(IForgeEntity)}.");
+			GD.PushError($"{nameof(EffectOwner)} must implement {nameof(IForgeEntity)}.");
 		}
 
 		base._Ready();
@@ -56,13 +61,13 @@ public partial class EffectArea2D : Area2D
 	private void ApplyEffects(Node2D node)
 	{
 		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
-		_effectApplier.ApplyEffects(node, ForgeEntity);
+		_effectApplier.ApplyEffects(node, OwnerEntity, SourceEntity);
 	}
 
 	private void AddEffects(Node2D node)
 	{
 		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
-		_effectApplier.AddEffects(node, ForgeEntity);
+		_effectApplier.AddEffects(node, OwnerEntity, SourceEntity);
 	}
 
 	private void RemoveEffects(Node2D node)

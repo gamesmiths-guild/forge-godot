@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://ca1f6valfuo1n"]
+[gd_scene load_steps=21 format=3 uid="uid://ca1f6valfuo1n"]
 
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_qvkro"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="2_gd1rs"]
@@ -8,7 +8,11 @@
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler3D.cs" id="6_632vb"]
 [ext_resource type="PackedScene" uid="uid://6aow5rsrf22" path="res://examples/3d/scenes/particles/shield_effect.tscn" id="7_my1os"]
 [ext_resource type="PackedScene" uid="uid://dn5d64jtdgft5" path="res://examples/3d/scenes/particles/thorns_effect.tscn" id="8_my1os"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/3d/scenes/particles/3d_fire_effect.tscn" id="9_2nh6t"]
 [ext_resource type="PackedScene" uid="uid://f0cdtm7kc3qx" path="res://examples/common/ActionBarView.tscn" id="9_cvpsg"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="10_r34v8"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="11_2nh6t"]
+[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/common/effects/fire.tres" id="12_bpn7r"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qkyss"]
 sky_horizon_color = Color(0.662243, 0.671743, 0.686743, 1)
@@ -29,6 +33,13 @@ shader = ExtResource("1_qvkro")
 shader_parameter/color_a = Color(0.23921569, 0.3372549, 0.49803922, 1)
 shader_parameter/color_b = Color(0.40784314, 0.5647059, 0.7490196, 1)
 shader_parameter/tile_size = 2.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fj3om"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_84bh7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0psim"]
+albedo_color = Color(1, 0.33, 0.33, 1)
 
 [node name="AbilitiesLevel" type="Node3D"]
 
@@ -78,6 +89,11 @@ script = ExtResource("6_632vb")
 EffectScene = ExtResource("8_my1os")
 CueTag = "cue.vfx.thorns"
 
+[node name="FireVFX Cues" type="Node" parent="."]
+script = ExtResource("6_632vb")
+EffectScene = ExtResource("9_2nh6t")
+CueTag = "cue.vfx.fire"
+
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer"]
@@ -109,3 +125,21 @@ KeyText = "3"
 [node name="Thorns" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
 layout_mode = 2
 KeyText = "-"
+
+[node name="Fire Area" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 2.0680504)
+script = ExtResource("10_r34v8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Fire Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_fj3om")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Fire Area"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_84bh7")
+surface_material_override/0 = SubResource("StandardMaterial3D_0psim")
+
+[node name="Effect" type="Node" parent="Fire Area"]
+script = ExtResource("11_2nh6t")
+EffectData = ExtResource("12_bpn7r")
+metadata/_custom_type_script = "uid://dps0oef50noil"

@@ -1,6 +1,5 @@
 // Copyright © Gamesmiths Guild.
 
-using System.Diagnostics;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
@@ -12,7 +11,7 @@ namespace Gamesmiths.Forge.Example;
 
 public partial class SimpleEnemy3D : CharacterBody3D
 {
-	private const float Speed = 4f;
+	private const float Speed = 3f;
 
 	private TagContainer? _entityTags;
 

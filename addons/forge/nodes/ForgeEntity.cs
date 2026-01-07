@@ -55,7 +55,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 		Attributes = new EntityAttributes([.. attributeSetList]);
 
 		var effectApplier = new EffectApplier(this);
-		effectApplier.ApplyEffects(this, this);
+		effectApplier.ApplyEffects(this, this, this);
 	}
 
 	public override void _Process(double delta)

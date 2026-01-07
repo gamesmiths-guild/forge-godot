@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://cgjkn4vyifs06"]
+[gd_scene load_steps=27 format=3 uid="uid://cgjkn4vyifs06"]
 
 [ext_resource type="Script" uid="uid://dik4k7dos655m" path="res://examples/abilities/scripts/SimpleEnemy3D.cs" id="1_y7tem"]
 [ext_resource type="Resource" uid="uid://c8pyecr40jr66" path="res://examples/abilities/abilities/enemy/enemy_attack.tres" id="2_y7tem"]
@@ -48,20 +48,9 @@ script = ExtResource("6_sudkk")
 Default = 1
 Max = 99
 
-[sub_resource type="Resource" id="Resource_o72y0"]
+[sub_resource type="Resource" id="Resource_4evlf"]
 script = ExtResource("6_sudkk")
-Default = 100
-Max = 100
-
-[sub_resource type="Resource" id="Resource_ced4t"]
-script = ExtResource("6_sudkk")
-Default = 100
 Max = 1000
-
-[sub_resource type="Resource" id="Resource_8qd58"]
-script = ExtResource("6_sudkk")
-Default = 10
-Max = 99
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iod0y"]
 bg_color = Color(0.215432, 6.34724e-07, 0.000667838, 1)
@@ -113,11 +102,9 @@ metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
 [node name="Attribute Set2" type="Node" parent="Forge Entity"]
 script = ExtResource("5_0b0g8")
-AttributeSetClass = "VitalAttributes"
+AttributeSetClass = "MetaAttributes"
 InitialAttributeValues = Dictionary[String, Variant]({
-"CurrentHealth": SubResource("Resource_o72y0"),
-"MaxHealth": SubResource("Resource_ced4t"),
-"Vitality": SubResource("Resource_8qd58")
+"IncomingDamage": SubResource("Resource_4evlf")
 })
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 

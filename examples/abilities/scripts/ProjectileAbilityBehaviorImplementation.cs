@@ -30,7 +30,7 @@ public sealed class ProjectileAbilityBehaviorImplementation : IAbilityBehavior<C
 		Node3D parentNode = ownerNode.GetParent<Node3D>();
 
 		projectile.GlobalTransform = parentNode.GlobalTransform.Translated(data.Direction + Vector3.Up);
-		projectile.Launch(data.Direction, 10f);
+		projectile.Launch(data.Direction, 10f, ownerNode);
 		context.InstanceHandle.End();
 	}
 

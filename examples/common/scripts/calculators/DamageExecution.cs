@@ -15,6 +15,8 @@ namespace Gamesmiths.Forge.Example;
 
 public class DamageExecution : CustomExecution
 {
+	private readonly EffectData _fireEffectData;
+
 	// Define attributes to capture and modify
 	public AttributeCaptureDefinition TargetHealth { get; }
 
@@ -22,7 +24,7 @@ public class DamageExecution : CustomExecution
 
 	public AttributeCaptureDefinition TargetIncomingDamage { get; }
 
-	public DamageExecution()
+	public DamageExecution(EffectData fireEffectData)
 	{
 		// Capture target mana and magic resistance
 		TargetHealth = new AttributeCaptureDefinition(
@@ -41,6 +43,7 @@ public class DamageExecution : CustomExecution
 		AttributesToCapture.Add(TargetHealth);
 		AttributesToCapture.Add(TargetMana);
 		AttributesToCapture.Add(TargetIncomingDamage);
+		_fireEffectData = fireEffectData;
 	}
 
 	public override ModifierEvaluatedData[] EvaluateExecution(
@@ -95,6 +98,13 @@ public class DamageExecution : CustomExecution
 				targetHealthAttribute,
 				ModifierOperation.FlatBonus,
 				-targetIncomingDamage)); // Negative for damage
+		}
+
+		if (effect.Ownership.Source!.Tags.CombinedTags.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "effect.fire")))
+		{
+			// Apply fire effect to target
+			var fireEffect = new Effect(_fireEffectData, new EffectOwnership(effect.Ownership.Owner, effect.Ownership.Source));
+			target.EffectsManager.ApplyEffect(fireEffect);
 		}
 
 		return [.. results];

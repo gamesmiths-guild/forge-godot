@@ -25,11 +25,11 @@ internal sealed class EffectApplier
 		}
 	}
 
-	public void ApplyEffects(Node node, IForgeEntity? effectOwner)
+	public void ApplyEffects(Node node, IForgeEntity? effectOwner, IForgeEntity? effectSource)
 	{
 		if (node is IForgeEntity forgeEntity)
 		{
-			ApplyEffects(forgeEntity, effectOwner, effectOwner);
+			ApplyEffects(forgeEntity, effectOwner, effectSource);
 			return;
 		}
 
@@ -37,17 +37,17 @@ internal sealed class EffectApplier
 		{
 			if (child is IForgeEntity forgeEntityChild)
 			{
-				ApplyEffects(forgeEntityChild, effectOwner, effectOwner);
+				ApplyEffects(forgeEntityChild, effectOwner, effectSource);
 				return;
 			}
 		}
 	}
 
-	public void AddEffects(Node node, IForgeEntity? effectOwner)
+	public void AddEffects(Node node, IForgeEntity? effectOwner, IForgeEntity? effectSource)
 	{
 		if (node is IForgeEntity forgeEntity)
 		{
-			AddEffects(forgeEntity, effectOwner, effectOwner);
+			AddEffects(forgeEntity, effectOwner, effectSource);
 			return;
 		}
 
@@ -55,7 +55,7 @@ internal sealed class EffectApplier
 		{
 			if (child is IForgeEntity forgeEntityChild)
 			{
-				AddEffects(forgeEntityChild, effectOwner, effectOwner);
+				AddEffects(forgeEntityChild, effectOwner, effectSource);
 				return;
 			}
 		}
@@ -79,19 +79,19 @@ internal sealed class EffectApplier
 		}
 	}
 
-	private void ApplyEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectCauser)
+	private void ApplyEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectSource)
 	{
 		foreach (EffectData effectData in _effects)
 		{
 			var effect = new Effect(
 				effectData,
-				new EffectOwnership(effectOwner, effectCauser));
+				new EffectOwnership(effectOwner, effectSource));
 
 			forgeEntity.EffectsManager.ApplyEffect(effect);
 		}
 	}
 
-	private void AddEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectCauser)
+	private void AddEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectSource)
 	{
 		var instanceEffects = new List<ActiveEffectHandle>();
 		if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
@@ -103,7 +103,7 @@ internal sealed class EffectApplier
 		{
 			var effect = new Effect(
 				effectData,
-				new EffectOwnership(effectOwner, effectCauser));
+				new EffectOwnership(effectOwner, effectSource));
 
 			ActiveEffectHandle? handle = forgeEntity.EffectsManager.ApplyEffect(effect);
 

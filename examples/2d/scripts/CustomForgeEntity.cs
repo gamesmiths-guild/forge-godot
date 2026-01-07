@@ -56,7 +56,7 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 		Attributes = new EntityAttributes([.. attributeSetList]);
 
 		var effectApplier = new EffectApplier(this);
-		effectApplier.ApplyEffects(this, this);
+		effectApplier.ApplyEffects(this, this, this);
 	}
 
 	public override void _PhysicsProcess(double delta)

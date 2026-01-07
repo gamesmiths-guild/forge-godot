@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
@@ -13,17 +14,21 @@ public partial class Projectile : Node3D
 	[Export]
 	public Area3D? CollisionArea { get; set; }
 
+	[Export]
+	public EffectArea3D? EffectArea { get; set; }
+
 	public override void _Ready()
 	{
 		CollisionArea!.BodyEntered += Destroy;
 		CollisionArea.AreaEntered += Destroy;
 	}
 
-	public void Launch(Vector3 dir, float vel)
+	public void Launch(Vector3 dir, float vel, Node owner)
 	{
 		_direction = dir.Normalized();
 		_direction = new Vector3(_direction.X, 0, _direction.Z).Normalized();
 		_velocity = vel;
+		EffectArea!.EffectOwner = owner;
 	}
 
 	public override void _Process(double delta)
@@ -32,8 +37,13 @@ public partial class Projectile : Node3D
 		GlobalTranslate(motion);
 	}
 
-	private void Destroy(Node3D discard)
+	private void Destroy(Node3D other)
 	{
+		if (other is not CharacterBody3D)
+		{
+			return;
+		}
+
 		QueueFree();
 	}
 }
