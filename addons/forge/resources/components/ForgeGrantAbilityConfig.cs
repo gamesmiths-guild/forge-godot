@@ -27,6 +27,12 @@ public partial class ForgeGrantAbilityConfig : Resource
 	public AbilityDeactivationPolicy InhibitionPolicy { get; set; } = AbilityDeactivationPolicy.CancelImmediately;
 
 	[Export]
+	public bool TryActivateOnGrant { get; set; }
+
+	[Export]
+	public bool TryActivateOnEnable { get; set; }
+
+	[Export]
 	public LevelComparison LevelOverridePolicy { get; set; } = LevelComparison.None;
 
 	public GrantAbilityConfig GetGrantAbilityConfig()
@@ -38,6 +44,8 @@ public partial class ForgeGrantAbilityConfig : Resource
 			AbilityLevel.GetScalableInt(),
 			RemovalPolicy,
 			InhibitionPolicy,
+			TryActivateOnGrant,
+			TryActivateOnEnable,
 			LevelOverridePolicy);
 	}
 }

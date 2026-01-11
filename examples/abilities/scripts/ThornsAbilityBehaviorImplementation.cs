@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Core;
@@ -46,7 +47,11 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior<Damag
 				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "set_by_caller.damage"),
 				context.Magnitude * 2);
 
-			forgeEntity.EffectsManager.ApplyEffect(_damageEffect);
+			var distance = ownerNode.GetParent<Node3D>().GlobalTransform.Origin.DistanceTo(body.GlobalTransform.Origin);
+			distance--;
+			var damageFalloffMultiplier = Math.Clamp(1f - (distance / 3.5f), 0.1f, 1f);
+
+			forgeEntity.EffectsManager.ApplyEffect(_damageEffect, damageFalloffMultiplier);
 		}
 
 		ForgeManagers.Instance.CuesManager.ExecuteCue(

@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
@@ -56,6 +57,11 @@ public class DamageExecution : CustomExecution
 			return [.. results];
 		}
 
+		if (effectEvaluatedData?.TryGetContextData(out float multiplier) == true)
+		{
+			targetIncomingDamage *= multiplier;
+		}
+
 		// Apply health reduction to target if attribute exists
 		if (TargetHealth.TryGetAttribute(target, out EntityAttribute? targetHealthAttribute))
 		{
@@ -65,13 +71,20 @@ public class DamageExecution : CustomExecution
 				-targetIncomingDamage)); // Negative for damage
 		}
 
+		var finalDamage = targetIncomingDamage;
+
+		if (targetHealthAttribute!.CurrentValue - targetIncomingDamage <= targetHealthAttribute.Min)
+		{
+			finalDamage = targetHealthAttribute.CurrentValue - targetHealthAttribute.Min;
+		}
+
 		target.Events.Raise(new EventData<DamageType>
 		{
 			EventTags =
 				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.taken").GetSingleTagContainer()!,
 			Source = effect.Ownership.Owner,
 			Target = target,
-			EventMagnitude = targetIncomingDamage,
+			EventMagnitude = finalDamage,
 			Payload = _damageType,
 		});
 
@@ -86,7 +99,7 @@ public class DamageExecution : CustomExecution
 				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.dealt").GetSingleTagContainer()!,
 			Source = effect.Ownership.Owner,
 			Target = target,
-			EventMagnitude = targetIncomingDamage,
+			EventMagnitude = finalDamage,
 			Payload = _damageType,
 		});
 

@@ -31,7 +31,7 @@ BaseValue = 1
 
 [resource]
 script = ExtResource("5_i0bcm")
-Name = "Damage"
+Name = "Grant Enemy Ability"
 Modifiers = Array[Object]([])
 Components = [SubResource("Resource_4gm32")]
 Executions = []

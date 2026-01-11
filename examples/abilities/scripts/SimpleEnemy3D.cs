@@ -72,14 +72,14 @@ public partial class SimpleEnemy3D : CharacterBody3D
 			return;
 		}
 
-		// world-space vector from this to the player
+		// World-space vector from this to the player
 		Vector3 toPlayer = _player!.GlobalTransform.Origin - GlobalTransform.Origin;
 		if (toPlayer == Vector3.Zero)
 		{
 			return;
 		}
 
-		// Optional: keep movement on the XZ plane
+		// Keep movement on the XZ plane
 		toPlayer.Y = 0;
 
 		Vector3 direction = toPlayer.Normalized();

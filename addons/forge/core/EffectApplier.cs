@@ -43,6 +43,24 @@ internal sealed class EffectApplier
 		}
 	}
 
+	public void ApplyEffects<TData>(Node node, TData contextData, IForgeEntity? effectOwner, IForgeEntity? effectSource)
+	{
+		if (node is IForgeEntity forgeEntity)
+		{
+			ApplyEffects(forgeEntity, contextData, effectOwner, effectSource);
+			return;
+		}
+
+		foreach (Node? child in node.GetChildren())
+		{
+			if (child is IForgeEntity forgeEntityChild)
+			{
+				ApplyEffects(forgeEntityChild, contextData, effectOwner, effectSource);
+				return;
+			}
+		}
+	}
+
 	public void AddEffects(Node node, IForgeEntity? effectOwner, IForgeEntity? effectSource)
 	{
 		if (node is IForgeEntity forgeEntity)
@@ -56,6 +74,24 @@ internal sealed class EffectApplier
 			if (child is IForgeEntity forgeEntityChild)
 			{
 				AddEffects(forgeEntityChild, effectOwner, effectSource);
+				return;
+			}
+		}
+	}
+
+	public void AddEffects<TData>(Node node, TData contextData, IForgeEntity? effectOwner, IForgeEntity? effectSource)
+	{
+		if (node is IForgeEntity forgeEntity)
+		{
+			AddEffects(forgeEntity, contextData, effectOwner, effectSource);
+			return;
+		}
+
+		foreach (Node? child in node.GetChildren())
+		{
+			if (child is IForgeEntity forgeEntityChild)
+			{
+				AddEffects(forgeEntityChild, contextData, effectOwner, effectSource);
 				return;
 			}
 		}
@@ -91,6 +127,22 @@ internal sealed class EffectApplier
 		}
 	}
 
+	private void ApplyEffects<TData>(
+		IForgeEntity forgeEntity,
+		TData contextData,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource)
+	{
+		foreach (EffectData effectData in _effects)
+		{
+			var effect = new Effect(
+				effectData,
+				new EffectOwnership(effectOwner, effectSource));
+
+			forgeEntity.EffectsManager.ApplyEffect(effect, contextData);
+		}
+	}
+
 	private void AddEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectSource)
 	{
 		var instanceEffects = new List<ActiveEffectHandle>();
@@ -116,6 +168,35 @@ internal sealed class EffectApplier
 		}
 	}
 
+	private void AddEffects<TData>(
+		IForgeEntity forgeEntity,
+		TData contextData,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource)
+	{
+		var instanceEffects = new List<ActiveEffectHandle>();
+		if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
+		{
+			instanceEffects = _effectInstances[forgeEntity];
+		}
+
+		foreach (EffectData effectData in _effects)
+		{
+			var effect = new Effect(
+				effectData,
+				new EffectOwnership(effectOwner, effectSource));
+
+			ActiveEffectHandle? handle = forgeEntity.EffectsManager.ApplyEffect(effect, contextData);
+
+			if (handle is null)
+			{
+				continue;
+			}
+
+			instanceEffects.Add(handle);
+		}
+	}
+
 	private void RemoveEffects(IForgeEntity forgeEntity)
 	{
 		if (!_effectInstances.TryGetValue(forgeEntity, out List<ActiveEffectHandle>? value))
@@ -125,7 +206,7 @@ internal sealed class EffectApplier
 
 		foreach (ActiveEffectHandle handle in value)
 		{
-			forgeEntity.EffectsManager.UnapplyEffect(handle);
+			forgeEntity.EffectsManager.RemoveEffect(handle);
 		}
 
 		_effectInstances[forgeEntity] = [];
