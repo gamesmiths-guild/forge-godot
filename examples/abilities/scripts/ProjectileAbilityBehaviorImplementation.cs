@@ -19,6 +19,7 @@ public sealed class ProjectileAbilityBehaviorImplementation : IAbilityBehavior<C
 	{
 		if (context.Owner is not ForgeEntity ownerNode)
 		{
+			context.InstanceHandle.End();
 			return;
 		}
 

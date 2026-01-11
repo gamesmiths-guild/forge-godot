@@ -10,7 +10,12 @@ public enum DamageType
 	Physical = 0,
 
 	/// <summary>
-	/// Magical or elemental damage.
+	/// Magical damage.
 	/// </summary>
 	Magical = 1,
+
+	/// <summary>
+	/// Elemental damage.
+	/// </summary>
+	Elemental = 2,
 }

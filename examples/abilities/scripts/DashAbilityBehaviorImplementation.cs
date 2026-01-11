@@ -16,6 +16,7 @@ public sealed class DashAbilityBehaviorImplementation : IAbilityBehavior<Charact
 	{
 		if (context.Owner is not ForgeEntity ownerNode)
 		{
+			context.InstanceHandle.End();
 			return;
 		}
 

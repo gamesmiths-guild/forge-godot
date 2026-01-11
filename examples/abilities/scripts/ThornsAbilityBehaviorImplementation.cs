@@ -22,8 +22,9 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior<Damag
 
 	public void OnStarted(AbilityBehaviorContext context, DamageType data)
 	{
-		if (context.Owner is not ForgeEntity ownerNode || data == DamageType.Magical)
+		if (context.Owner is not ForgeEntity ownerNode || data != DamageType.Physical)
 		{
+			context.InstanceHandle.End();
 			return;
 		}
 

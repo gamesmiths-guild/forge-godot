@@ -80,13 +80,14 @@ public class DamageExecution : CustomExecution
 			return [.. results];
 		}
 
-		effect.Ownership.Source.Events.Raise(new EventData
+		effect.Ownership.Source.Events.Raise(new EventData<DamageType>
 		{
 			EventTags =
 				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.dealt").GetSingleTagContainer()!,
 			Source = effect.Ownership.Owner,
 			Target = target,
 			EventMagnitude = targetIncomingDamage,
+			Payload = _damageType,
 		});
 
 		return [.. results];

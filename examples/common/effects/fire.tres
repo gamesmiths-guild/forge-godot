@@ -116,6 +116,7 @@ metadata/_custom_type_script = "uid://2gm1hdhi8u08"
 
 [sub_resource type="Resource" id="Resource_geth4"]
 script = ExtResource("7_akf8i")
+DamageType = 2
 metadata/_custom_type_script = "uid://dpoo864fev8me"
 
 [sub_resource type="Resource" id="Resource_cn837"]

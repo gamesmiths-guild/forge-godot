@@ -35,6 +35,7 @@ metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
 [sub_resource type="Resource" id="Resource_x1ev2"]
 script = ExtResource("5_jqxqn")
+DamageType = 1
 metadata/_custom_type_script = "uid://dpoo864fev8me"
 
 [sub_resource type="Resource" id="Resource_cn837"]

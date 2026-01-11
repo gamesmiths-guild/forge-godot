@@ -27,6 +27,7 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 	{
 		if (context.Owner is not ForgeEntity ownerNode)
 		{
+			context.InstanceHandle.End();
 			return;
 		}
 
