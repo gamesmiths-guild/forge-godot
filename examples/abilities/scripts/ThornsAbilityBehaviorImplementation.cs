@@ -9,7 +9,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior
+public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior<DamageType>
 {
 	private readonly EffectData _effectData;
 	private Area3D? _thornsArea;
@@ -20,9 +20,9 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior
 		_effectData = damageEffect;
 	}
 
-	public void OnStarted(AbilityBehaviorContext context)
+	public void OnStarted(AbilityBehaviorContext context, DamageType data)
 	{
-		if (context.Owner is not ForgeEntity ownerNode)
+		if (context.Owner is not ForgeEntity ownerNode || data == DamageType.Magical)
 		{
 			return;
 		}

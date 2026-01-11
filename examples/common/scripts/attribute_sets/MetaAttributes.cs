@@ -10,6 +10,6 @@ public class MetaAttributes : AttributeSet
 
 	public MetaAttributes()
 	{
-		IncomingDamage = InitializeAttribute(nameof(IncomingDamage), 0, 0, 1000);
+		IncomingDamage = InitializeAttribute(nameof(IncomingDamage), 0, 0, 1000, 2);
 	}
 }

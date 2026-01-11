@@ -150,4 +150,5 @@ SourcePolicy = 1
 MagnitudePolicy = 1
 ExpirationPolicy = 1
 Cues = [SubResource("Resource_jvapm"), SubResource("Resource_kh3wg")]
+RequireModifierSuccessToTriggerCue = true
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

@@ -75,4 +75,5 @@ Executions = []
 StackLimit = SubResource("Resource_cd28o")
 InitialStack = SubResource("Resource_cn837")
 Cues = [SubResource("Resource_0ac2n")]
+RequireModifierSuccessToTriggerCue = true
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

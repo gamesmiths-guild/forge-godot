@@ -1,9 +1,18 @@
-[gd_scene load_steps=3 format=3 uid="uid://di25pm3dat1w4"]
+[gd_scene load_steps=5 format=3 uid="uid://di25pm3dat1w4"]
 
 [ext_resource type="Script" uid="uid://ckjqc668745ox" path="res://examples/3d/scripts/FloatText3D.cs" id="1_no2y3"]
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_5htmj"]
 viewport_path = NodePath("SubViewport")
+
+[sub_resource type="SystemFont" id="SystemFont_raofk"]
+subpixel_positioning = 0
+
+[sub_resource type="LabelSettings" id="LabelSettings_raofk"]
+font = SubResource("SystemFont_raofk")
+font_size = 24
+outline_size = 5
+outline_color = Color(0, 0, 0, 1)
 
 [node name="Sprite3D" type="Sprite3D" node_paths=PackedStringArray("Timer", "Label")]
 billboard = 1
@@ -14,13 +23,14 @@ Label = NodePath("SubViewport/Label")
 
 [node name="SubViewport" type="SubViewport" parent="."]
 transparent_bg = true
-size = Vector2i(61, 20)
+size = Vector2i(61, 35)
 
 [node name="Label" type="Label" parent="SubViewport"]
 offset_right = 61.0
-offset_bottom = 23.0
+offset_bottom = 34.0
 theme_override_colors/font_color = Color(0, 0.741176, 0.113725, 1)
 text = "0"
+label_settings = SubResource("LabelSettings_raofk")
 horizontal_alignment = 1
 
 [node name="Timer" type="Timer" parent="."]

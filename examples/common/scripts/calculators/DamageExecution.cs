@@ -15,25 +15,20 @@ namespace Gamesmiths.Forge.Example;
 
 public class DamageExecution : CustomExecution
 {
-	private readonly EffectData _fireEffectData;
+	private readonly DamageType _damageType;
 
 	// Define attributes to capture and modify
 	public AttributeCaptureDefinition TargetHealth { get; }
 
-	public AttributeCaptureDefinition TargetMana { get; }
-
 	public AttributeCaptureDefinition TargetIncomingDamage { get; }
 
-	public DamageExecution(EffectData fireEffectData)
+	public DamageExecution(DamageType damageType)
 	{
 		// Capture target mana and magic resistance
 		TargetHealth = new AttributeCaptureDefinition(
 			"CharacterAttributes.Health",
-			AttributeCaptureSource.Target);
-
-		TargetMana = new AttributeCaptureDefinition(
-			"CharacterAttributes.Mana",
-			AttributeCaptureSource.Target);
+			AttributeCaptureSource.Target,
+			false);
 
 		TargetIncomingDamage = new AttributeCaptureDefinition(
 			"MetaAttributes.IncomingDamage",
@@ -41,9 +36,8 @@ public class DamageExecution : CustomExecution
 
 		// Register attributes for capture
 		AttributesToCapture.Add(TargetHealth);
-		AttributesToCapture.Add(TargetMana);
 		AttributesToCapture.Add(TargetIncomingDamage);
-		_fireEffectData = fireEffectData;
+		_damageType = damageType;
 	}
 
 	public override ModifierEvaluatedData[] EvaluateExecution(
@@ -51,44 +45,15 @@ public class DamageExecution : CustomExecution
 	{
 		var results = new List<ModifierEvaluatedData>();
 
-		var targetMana = CaptureAttributeMagnitude(
-			TargetMana,
-			effect,
-			target,
-			effectEvaluatedData);
-
 		float targetIncomingDamage = CaptureAttributeMagnitude(
 			TargetIncomingDamage,
 			effect,
 			target,
 			effectEvaluatedData);
 
-		if (target.Tags.CombinedTags.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "effect.mana_shield")))
+		if (targetIncomingDamage <= 0)
 		{
-			if (targetMana > 10)
-			{
-				targetIncomingDamage *= 0.2f;
-
-				// Apply mana reduction to source if attribute exists
-				if (TargetMana.TryGetAttribute(target, out EntityAttribute? targetManaAttribute))
-				{
-					results.Add(new ModifierEvaluatedData(
-						targetManaAttribute,
-						ModifierOperation.FlatBonus,
-						-10));
-				}
-			}
-			else
-			{
-				target.Events.Raise(new EventData
-				{
-					EventTags =
-						Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.shield.not_enough_mana")
-							.GetSingleTagContainer()!,
-					Source = target,
-					Target = target,
-				});
-			}
+			return [.. results];
 		}
 
 		// Apply health reduction to target if attribute exists
@@ -100,12 +65,29 @@ public class DamageExecution : CustomExecution
 				-targetIncomingDamage)); // Negative for damage
 		}
 
-		if (effect.Ownership.Source!.Tags.CombinedTags.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "effect.fire")))
+		target.Events.Raise(new EventData<DamageType>
 		{
-			// Apply fire effect to target
-			var fireEffect = new Effect(_fireEffectData, new EffectOwnership(effect.Ownership.Owner, effect.Ownership.Source));
-			target.EffectsManager.ApplyEffect(fireEffect);
+			EventTags =
+				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.taken").GetSingleTagContainer()!,
+			Source = effect.Ownership.Owner,
+			Target = target,
+			EventMagnitude = targetIncomingDamage,
+			Payload = _damageType,
+		});
+
+		if (effect.Ownership.Source is null)
+		{
+			return [.. results];
 		}
+
+		effect.Ownership.Source.Events.Raise(new EventData
+		{
+			EventTags =
+				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.dealt").GetSingleTagContainer()!,
+			Source = effect.Ownership.Owner,
+			Target = target,
+			EventMagnitude = targetIncomingDamage,
+		});
 
 		return [.. results];
 	}

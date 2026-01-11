@@ -28,7 +28,13 @@ public partial class Projectile : Node3D
 		_direction = dir.Normalized();
 		_direction = new Vector3(_direction.X, 0, _direction.Z).Normalized();
 		_velocity = vel;
-		EffectArea!.EffectOwner = owner;
+
+		if (EffectArea is null)
+		{
+			return;
+		}
+
+		EffectArea.EffectOwner = owner;
 	}
 
 	public override void _Process(double delta)

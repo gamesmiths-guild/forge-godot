@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using System.Text;
 using Gamesmiths.Forge.Abilities;
-using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
@@ -59,7 +58,6 @@ public partial class Character3D : CharacterBody3D
 		_entityTags = forgeEntity.Tags.CombinedTags;
 
 		InitializeSkillSlots(forgeEntity);
-		SetupHealthEventHandler(forgeEntity);
 	}
 
 	public override void _Process(double delta)
@@ -117,24 +115,6 @@ public partial class Character3D : CharacterBody3D
 			cooldownTag,
 			totalCooldownTime,
 			config.ActivationStrategy);
-	}
-
-	private static void SetupHealthEventHandler(ForgeEntity forgeEntity)
-	{
-		forgeEntity.Attributes["CharacterAttributes.Health"].OnValueChanged += (_, change) =>
-		{
-			if (change <= 0)
-			{
-				forgeEntity.Events.Raise(new EventData
-				{
-					EventTags =
-						Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage").GetSingleTagContainer()!,
-					Source = forgeEntity,
-					Target = forgeEntity,
-					EventMagnitude = change,
-				});
-			}
-		};
 	}
 
 	private static void ActivateToggleAbility(AbilityHandle handle)

@@ -19,6 +19,11 @@ public partial class FloatText3D : Sprite3D
 
 		Debug.Assert(Timer is not null, $"{nameof(Timer)} reference is missing.");
 		Timer.Timeout += QueueFree;
+
+		if (Label?.LabelSettings is not null)
+		{
+			Label.LabelSettings = Label.LabelSettings.Duplicate() as LabelSettings;
+		}
 	}
 
 	public override void _Process(double delta)
@@ -37,6 +42,6 @@ public partial class FloatText3D : Sprite3D
 	public void SetColor(Color color)
 	{
 		Debug.Assert(Label is not null, $"{nameof(Label)} reference is missing.");
-		Label.AddThemeColorOverride("font_color", color);
+		Label.LabelSettings.FontColor = color;
 	}
 }
