@@ -45,7 +45,7 @@ public partial class FloatingTextCueHandler3D : ForgeCueHandler
 			floatingText.SetColor(_healingColor);
 		}
 
-		floatingText.Position = node3D.GlobalPosition + new Vector3(0, 2, 0);
+		floatingText.Position = node3D.GlobalPosition + new Vector3(0, 3, 0);
 
 		AddChild(floatingText);
 	}
