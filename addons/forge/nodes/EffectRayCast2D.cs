@@ -22,6 +22,9 @@ public partial class EffectRayCast2D : RayCast2D
 	public Node? EffectSource { get; set; }
 
 	[Export]
+	public int EffectLevel { get; set; } = 1;
+
+	[Export]
 	public EffectTriggerMode TriggerMode { get; set; }
 
 	private IForgeEntity? OwnerEntity => EffectOwner as IForgeEntity;
@@ -55,11 +58,11 @@ public partial class EffectRayCast2D : RayCast2D
 		{
 			if (TriggerMode == EffectTriggerMode.OnStay)
 			{
-				_effectApplier.AddEffects(currentNode, OwnerEntity, SourceEntity);
+				_effectApplier.AddEffects(currentNode, OwnerEntity, SourceEntity, EffectLevel);
 			}
 			else if (TriggerMode == EffectTriggerMode.OnEnter)
 			{
-				_effectApplier.ApplyEffects(currentNode, OwnerEntity, SourceEntity);
+				_effectApplier.ApplyEffects(currentNode, OwnerEntity, SourceEntity, EffectLevel);
 			}
 		}
 
@@ -72,7 +75,7 @@ public partial class EffectRayCast2D : RayCast2D
 			}
 			else if (TriggerMode == EffectTriggerMode.OnExit)
 			{
-				_effectApplier.ApplyEffects(lastNode, OwnerEntity, SourceEntity);
+				_effectApplier.ApplyEffects(lastNode, OwnerEntity, SourceEntity, EffectLevel);
 			}
 		}
 
