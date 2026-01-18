@@ -8,8 +8,6 @@ namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 public partial class TagInspectorPlugin : EditorInspectorPlugin
 {
-	private PackedScene? _inspectorScene;
-
 	public override bool _CanHandle(GodotObject @object)
 	{
 		return @object is ForgeTag;
@@ -24,29 +22,13 @@ public partial class TagInspectorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		_inspectorScene = ResourceLoader.Load<PackedScene>("uid://cjgo744707fci");
-
-		var tagEditorScene = (TagEditor)_inspectorScene.Instantiate();
-		tagEditorScene.IsPluginInstance = true;
-
-		if (@object is ForgeTag tag)
+		if (name != "Tag")
 		{
-			tagEditorScene.Tag = tag.Tag;
-
-			tagEditorScene.TagChanged += (newTag) =>
-			{
-				EditorUndoRedoManager undo = EditorInterface.Singleton.GetEditorUndoRedo();
-				var oldTag = tag.Tag;
-
-				undo.CreateAction("Modify Tag");
-				undo.AddDoProperty(tag, "Tag", newTag);
-				undo.AddUndoProperty(tag, "Tag", oldTag);
-				undo.CommitAction();
-			};
+			return false;
 		}
 
-		AddPropertyEditor(name, tagEditorScene);
-
+		var prop = new TagEditorProperty();
+		AddPropertyEditor(name, prop);
 		return true;
 	}
 }
