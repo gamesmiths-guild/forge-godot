@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://cv53xhuo2be2x"]
+[gd_scene load_steps=10 format=3 uid="uid://cv53xhuo2be2x"]
 
 [ext_resource type="Script" uid="uid://bhqyt4i2kjyrr" path="res://examples/abilities/scripts/Projectile.cs" id="1_6hmvh"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_bk3el"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="3_eqjfu"]
 [ext_resource type="Resource" uid="uid://8q6crdcnqojs" path="res://examples/abilities/abilities/player/projectile/projectile_damage.tres" id="4_6hmvh"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_bk3el"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_we0ym"]
 albedo_color = Color(0.9029792, 0.762822, 3.85046e-07, 1)
@@ -14,6 +15,11 @@ radius = 0.3
 height = 0.6
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_wjrje"]
+
+[sub_resource type="Resource" id="Resource_bk3el"]
+script = ExtResource("5_bk3el")
+ContainerTags = Array[String](["trait.flammable"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 
 [node name="Projectile" type="Node3D" node_paths=PackedStringArray("CollisionArea", "ForgeEntity")]
 script = ExtResource("1_6hmvh")
@@ -37,4 +43,5 @@ shape = SubResource("SphereShape3D_wjrje")
 
 [node name="ForgeEntity" type="Node" parent="Area3D"]
 script = ExtResource("3_bk3el")
+BaseTags = SubResource("Resource_bk3el")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"

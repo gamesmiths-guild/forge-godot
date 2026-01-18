@@ -32,10 +32,16 @@ public partial class TagInspectorPlugin : EditorInspectorPlugin
 		if (@object is ForgeTag tag)
 		{
 			tagEditorScene.Tag = tag.Tag;
+
 			tagEditorScene.TagChanged += (newTag) =>
 			{
-				tag.Tag = newTag;
-				tag.EmitChanged();
+				EditorUndoRedoManager undo = EditorInterface.Singleton.GetEditorUndoRedo();
+				var oldTag = tag.Tag;
+
+				undo.CreateAction("Modify Tag");
+				undo.AddDoProperty(tag, "Tag", newTag);
+				undo.AddUndoProperty(tag, "Tag", oldTag);
+				undo.CommitAction();
 			};
 		}
 

@@ -14,7 +14,7 @@ metadata/_custom_type_script = "uid://yw3v26wmuh02"
 
 [sub_resource type="Resource" id="Resource_mapsd"]
 script = ExtResource("5_h8owh")
-Tag = "event.damage"
+Tag = "event.damage.taken"
 metadata/_custom_type_script = "uid://dpakv7agvir6y"
 
 [resource]

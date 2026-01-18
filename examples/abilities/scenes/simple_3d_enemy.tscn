@@ -21,7 +21,7 @@ material = SubResource("StandardMaterial3D_y7tem")
 
 [sub_resource type="Resource" id="Resource_q486f"]
 script = ExtResource("4_u38d3")
-ContainerTags = Array[String]([])
+ContainerTags = Array[String](["trait.wettable", "trait.healable", "trait.flammable", "trait.damageable"])
 
 [sub_resource type="Resource" id="Resource_l0fcu"]
 script = ExtResource("6_sudkk")

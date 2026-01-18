@@ -206,7 +206,7 @@ public partial class ForgeEffectData : Resource
 	public Array<ForgeCue>? Cues { get; set; }
 
 	[Export]
-	public bool RequireModifierSuccessToTriggerCue { get; set; }
+	public CueTriggerRequirement RequireModifierSuccessToTriggerCue { get; set; }
 
 	[Export]
 	public bool SuppressStackingCues { get; set; }

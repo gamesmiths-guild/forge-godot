@@ -113,28 +113,33 @@ CueTag = "cue.floating.text"
 
 [node name="ShieldVFX Cues" type="Node" parent="."]
 script = ExtResource("6_632vb")
-EffectScene = ExtResource("7_my1os")
+PersistentEffectScene = ExtResource("7_my1os")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.shield"
 
 [node name="ThornsVFX Cues" type="Node" parent="."]
 script = ExtResource("6_632vb")
-EffectScene = ExtResource("8_my1os")
+InstantEffectScene = ExtResource("8_my1os")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.thorns"
 
 [node name="FireVFX Cues" type="Node" parent="."]
 script = ExtResource("6_632vb")
-EffectScene = ExtResource("9_2nh6t")
+PersistentEffectScene = ExtResource("9_2nh6t")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.fire"
 
 [node name="WetVFX Cues" type="Node" parent="."]
 script = ExtResource("6_632vb")
-EffectScene = ExtResource("10_t70tc")
+PersistentEffectScene = ExtResource("10_t70tc")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.wet"
 
 [node name="RegenVFX Cues" type="Node" parent="."]
 script = ExtResource("6_632vb")
-EffectScene = ExtResource("11_djihv")
+PersistentEffectScene = ExtResource("11_djihv")
 UpdateEffectIntensity = true
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.regen"
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]

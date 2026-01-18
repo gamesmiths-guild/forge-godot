@@ -1,8 +1,9 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=22 format=3 uid="uid://dgybn25of4xpg"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=25 format=3 uid="uid://dgybn25of4xpg"]
 
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="1_q4yw0"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_rwyct"]
 [ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_25jvs"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="3_2fh6r"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="3_6njdu"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_25jvs"]
 [ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="5_fwqnh"]
@@ -17,6 +18,16 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 script = ExtResource("2_25jvs")
 TagsToAdd = SubResource("Resource_u4cvi")
 metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_40mq1"]
+script = ExtResource("1_rwyct")
+ContainerTags = ["trait.wettable"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_aodsk"]
+script = ExtResource("3_2fh6r")
+ApplicationRequiredTags = SubResource("Resource_40mq1")
+metadata/_custom_type_script = "uid://b0eq12mjqfage"
 
 [sub_resource type="Resource" id="Resource_6njdu"]
 script = ExtResource("1_rwyct")
@@ -77,7 +88,7 @@ BaseValue = 1
 script = ExtResource("5_udmal")
 Name = "Wet"
 Modifiers = Array[Object]([])
-Components = [SubResource("Resource_udmal")]
+Components = [SubResource("Resource_udmal"), SubResource("Resource_aodsk")]
 Executions = []
 DurationType = 2
 Duration = SubResource("Resource_bo6yr")

@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -22,6 +23,8 @@ public partial class TagContainerEditor : VBoxContainer
 	private Tree? _tree;
 	private Texture2D? _checkedIcon;
 	private Texture2D? _uncheckedIcon;
+
+	public event Action? TagsChanged;
 
 	public bool IsPluginInstance { get; set; }
 
@@ -108,7 +111,7 @@ public partial class TagContainerEditor : VBoxContainer
 
 			_containerButton.Text = $"Container (size: {ContainerTags.Count})";
 
-			NotifyPropertyListChanged();
+			TagsChanged?.Invoke();
 		}
 	}
 

@@ -3,6 +3,7 @@
 #if TOOLS
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
+using Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
@@ -31,7 +32,26 @@ public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 
 		if (@object is ForgeTagContainer tagContainer)
 		{
+			tagContainer.ContainerTags ??= [];
 			containerScene.ContainerTags = tagContainer.ContainerTags;
+
+			containerScene.TagsChanged += () =>
+			{
+				Array<string> oldValue = tagContainer.ContainerTags ?? [];
+				Array<string> newValue = containerScene.ContainerTags ?? [];
+
+				var oldCopy = new Array<string>();
+				oldCopy.AddRange(oldValue);
+
+				var newCopy = new Array<string>();
+				newCopy.AddRange(newValue);
+
+				EditorUndoRedoManager undo = EditorInterface.Singleton.GetEditorUndoRedo();
+				undo.CreateAction("Modify Tag Container");
+				undo.AddDoProperty(tagContainer, "ContainerTags", newCopy);
+				undo.AddUndoProperty(tagContainer, "ContainerTags", oldCopy);
+				undo.CommitAction();
+			};
 		}
 
 		AddPropertyEditor(name, containerScene);

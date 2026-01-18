@@ -20,7 +20,7 @@
 
 [sub_resource type="Resource" id="Resource_q486f"]
 script = ExtResource("2_8qd58")
-ContainerTags = Array[String]([])
+ContainerTags = Array[String](["trait.damageable", "trait.flammable", "trait.healable", "trait.wettable"])
 
 [sub_resource type="Resource" id="Resource_l0fcu"]
 script = ExtResource("4_o72y0")

@@ -26,7 +26,7 @@ metadata/_custom_type_script = "uid://dngf30hxy5go4"
 
 [sub_resource type="Resource" id="Resource_4kmhu"]
 script = ExtResource("1_mxksh")
-ContainerTags = []
+ContainerTags = ["trait.flammable"]
 
 [sub_resource type="Resource" id="Resource_mxksh"]
 script = ExtResource("1_mxksh")
@@ -189,5 +189,5 @@ SourcePolicy = 1
 InstigatorOverridePolicy = 1
 ApplicationResetPeriodPolicy = 1
 Cues = [SubResource("Resource_ow18a"), SubResource("Resource_pptqi")]
-RequireModifierSuccessToTriggerCue = true
+RequireModifierSuccessToTriggerCue = 4
 metadata/_custom_type_script = "uid://b83hf13nj37k3"
