@@ -25,8 +25,6 @@ public partial class TagEditorProperty : EditorProperty
 
 	public override void _Ready()
 	{
-		Label = string.Empty;
-
 		_root = new VBoxContainer
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
