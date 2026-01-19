@@ -16,22 +16,6 @@ public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 		return @object is ForgeAttributeSet;
 	}
 
-	public override void _ParseCategory(GodotObject @object, string category)
-	{
-		if (category != "ForgeAttributeSet")
-		{
-			return;
-		}
-
-		_inspectorScene = ResourceLoader.Load<PackedScene>("uid://6h7g52vglco3");
-
-		var containerScene = (AttributeSetEditor)_inspectorScene.Instantiate();
-		containerScene.IsPluginInstance = true;
-		containerScene.TargetAttributeSet = @object as ForgeAttributeSet;
-
-		AddCustomControl(containerScene);
-	}
-
 	public override bool _ParseProperty(
 		GodotObject @object,
 		Variant.Type type,
@@ -41,7 +25,19 @@ public partial class AttributeSetInspectorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		return true;
+		if (name == "AttributeSetClass")
+		{
+			AddPropertyEditor(name, new AttributeSetClassEditorProperty());
+			return true;
+		}
+
+		if (name == "InitialAttributeValues")
+		{
+			AddPropertyEditor(name, new AttributeSetValuesEditorProperty());
+			return true;
+		}
+
+		return false;
 	}
 }
 #endif

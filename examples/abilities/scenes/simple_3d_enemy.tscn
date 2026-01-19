@@ -28,9 +28,9 @@ script = ExtResource("6_sudkk")
 Default = 1
 Max = 99
 
-[sub_resource type="Resource" id="Resource_x3bge"]
+[sub_resource type="Resource" id="Resource_y6kvg"]
 script = ExtResource("6_sudkk")
-Default = 980
+Default = 1000
 Max = 1000
 
 [sub_resource type="Resource" id="Resource_ag5gy"]
@@ -91,9 +91,9 @@ metadata/_custom_type_script = "uid://8uj04dfe8oql"
 [node name="Attribute Set" type="Node" parent="Forge Entity"]
 script = ExtResource("5_0b0g8")
 AttributeSetClass = "CharacterAttributes"
-InitialAttributeValues = Dictionary[String, Variant]({
+InitialAttributeValues = Dictionary[String, ExtResource("6_sudkk")]({
 "Agility": SubResource("Resource_l0fcu"),
-"Health": SubResource("Resource_x3bge"),
+"Health": SubResource("Resource_y6kvg"),
 "Intelligence": SubResource("Resource_ag5gy"),
 "Mana": SubResource("Resource_8m251"),
 "Strength": SubResource("Resource_gnlmx")
