@@ -1,13 +1,13 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
-
-using GodotDictionary = Godot.Collections.Dictionary<string, Gamesmiths.Forge.Godot.Editor.Attributes.AttributeValues>;
+using Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
@@ -27,21 +27,19 @@ public partial class AttributeSetClassEditorProperty : EditorProperty
 			_optionButton.AddItem(option);
 		}
 
-		_optionButton.ItemSelected += idx =>
+		_optionButton.ItemSelected += x =>
 		{
-			var className = _optionButton.GetItemText((int)idx);
+			var className = _optionButton.GetItemText((int)x);
 			EmitChanged(GetEditedProperty(), className);
 
 			GodotObject obj = GetEditedObject();
-			if (obj != null)
+			if (obj is not null)
 			{
-				// Reset InitialAttributeValues when changing the class
-				var dict = new GodotDictionary();
+				var dict = new Dictionary<string, AttributeValues>();
 
-				// Get the new set's PropertyInfos just like in your values editor
 				var assembly = Assembly.GetAssembly(typeof(ForgeAttributeSet));
-				System.Type? targetType = assembly?.GetTypes().FirstOrDefault(x => x.Name == className);
-				if (targetType != null)
+				Type? targetType = System.Array.Find(assembly?.GetTypes() ?? [], x => x.Name == className);
+				if (targetType is not null)
 				{
 					System.Collections.Generic.IEnumerable<PropertyInfo> attrProps = targetType
 						.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -49,7 +47,7 @@ public partial class AttributeSetClassEditorProperty : EditorProperty
 
 					foreach (PropertyInfo? pi in attrProps)
 					{
-						dict[pi.Name] = new AttributeValues(0, 0, 1000); // Or your preferred defaults
+						dict[pi.Name] = new AttributeValues(0, 0, int.MaxValue);
 					}
 				}
 

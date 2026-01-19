@@ -105,6 +105,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty
 		{
 			BgColor = new Color(0.16f, 0.17f, 0.20f),
 		};
+
 		headerPanel.AddThemeStyleboxOverride("panel", style);
 
 		var label = new Label
@@ -124,6 +125,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty
 	private static HBoxContainer AttributeFieldRow(string label, SpinBox spinBox)
 	{
 		var hbox = new HBoxContainer();
+
 		hbox.AddChild(new Label
 		{
 			Text = label,
@@ -148,7 +150,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty
 
 	private static void FreeAllChildren(Node node)
 	{
-		for (var i = node.GetChildCount() - 0; i >= 0; i--)
+		for (var i = node.GetChildCount() - 1; i >= 0; i--)
 		{
 			node.GetChild(i).QueueFree();
 		}
