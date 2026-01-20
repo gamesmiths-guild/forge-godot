@@ -17,7 +17,7 @@
 [ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="11_a6nt0"]
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="12_381bb"]
 [ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="13_l0q6a"]
-[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/regen_effect.tres" id="14_12jpl"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/regen.tres" id="14_12jpl"]
 [ext_resource type="Script" uid="uid://7bhjrbrsll5y" path="res://addons/forge/nodes/EffectRayCast3D.cs" id="15_lfn22"]
 [ext_resource type="Script" uid="uid://cd1k8wqsbtpjc" path="res://addons/forge/nodes/EffectShapeCast3D.cs" id="16_60occ"]
 

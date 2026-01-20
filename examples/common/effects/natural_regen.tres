@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=26 format=3 uid="uid://d0ctw2d38gb15"]
+[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=34 format=3 uid="uid://d0ctw2d38gb15"]
 
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_aash6"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="2_v1l1x"]
@@ -73,6 +73,43 @@ CalculatorPreMultiplyAdditiveValue = SubResource("Resource_j2cm1")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_5l3t8")
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
 
+[sub_resource type="Resource" id="Resource_gfddf"]
+script = ExtResource("6_m765o")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_6s5ug"]
+script = ExtResource("6_m765o")
+
+[sub_resource type="Resource" id="Resource_3gvax"]
+script = ExtResource("6_m765o")
+
+[sub_resource type="Resource" id="Resource_g4hoi"]
+script = ExtResource("6_m765o")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_obi0b"]
+script = ExtResource("6_m765o")
+
+[sub_resource type="Resource" id="Resource_2pyvx"]
+script = ExtResource("6_m765o")
+
+[sub_resource type="Resource" id="Resource_wbely"]
+script = ExtResource("6_m765o")
+BaseValue = 1.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_6pqd1"]
+script = ExtResource("5_v1l1x")
+Attribute = "CharacterAttributes.Mana"
+ScalableFloat = SubResource("Resource_wbely")
+Coefficient = SubResource("Resource_g4hoi")
+PreMultiplyAdditiveValue = SubResource("Resource_2pyvx")
+PostMultiplyAdditiveValue = SubResource("Resource_obi0b")
+CalculatorCoefficient = SubResource("Resource_gfddf")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_3gvax")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_6s5ug")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
 [sub_resource type="Resource" id="Resource_mjt31"]
 script = ExtResource("6_m765o")
 BaseValue = 1.0
@@ -88,7 +125,7 @@ ScalingCurve = SubResource("Curve_kf85k")
 [resource]
 script = ExtResource("6_mjt31")
 Name = "Regen"
-Modifiers = [SubResource("Resource_v1l1x")]
+Modifiers = [SubResource("Resource_v1l1x"), SubResource("Resource_6pqd1")]
 Components = [SubResource("Resource_7yjjs")]
 Executions = []
 DurationType = 1

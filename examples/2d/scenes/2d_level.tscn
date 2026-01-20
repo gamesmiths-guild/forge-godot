@@ -12,7 +12,7 @@
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="6_yv8mo"]
 [ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="7_cuuac"]
 [ext_resource type="Script" uid="uid://dko3hlj10yp8d" path="res://examples/2d/scripts/ParticlesCueHandler2D.cs" id="8_1r4gs"]
-[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/regen_effect.tres" id="8_3qm5n"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/regen.tres" id="8_3qm5n"]
 [ext_resource type="PackedScene" uid="uid://oad72vjqmwl3" path="res://examples/2d/scenes/particles/2d_fire_effect.tscn" id="9_30teu"]
 [ext_resource type="Script" uid="uid://btstkyo5h46w2" path="res://addons/forge/nodes/EffectRayCast2D.cs" id="9_xtisc"]
 [ext_resource type="Script" uid="uid://cxrmka1hqkn82" path="res://addons/forge/nodes/EffectShapeCast2D.cs" id="10_nc1t5"]
