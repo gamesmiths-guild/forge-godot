@@ -1,7 +1,8 @@
-[gd_scene load_steps=33 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=34 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_12jpl"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="1_381bb"]
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://examples/common/QuitScene.cs" id="1_878nk"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="2_l0q6a"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="3_12jpl"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler3D.cs" id="4_tpia4"]
@@ -67,6 +68,7 @@ albedo_color = Color(1, 0.431373, 1, 0.498039)
 [sub_resource type="SphereShape3D" id="SphereShape3D_xqa2x"]
 
 [node name="Level" type="Node3D"]
+script = ExtResource("1_878nk")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.782608, 0.622515, 0, -0.622515, 0.782608, 0, 5.88548, 7.60334)

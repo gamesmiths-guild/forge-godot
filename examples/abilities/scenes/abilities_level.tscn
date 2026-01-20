@@ -1,5 +1,6 @@
-[gd_scene load_steps=37 format=3 uid="uid://ca1f6valfuo1n"]
+[gd_scene load_steps=38 format=3 uid="uid://ca1f6valfuo1n"]
 
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://examples/common/QuitScene.cs" id="1_djihv"]
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_qvkro"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="2_gd1rs"]
 [ext_resource type="PackedScene" uid="uid://cgjkn4vyifs06" path="res://examples/abilities/scenes/simple_3d_enemy.tscn" id="3_5x68q"]
@@ -73,6 +74,7 @@ albedo_color = Color(1, 0.431373, 1, 0.498039)
 [sub_resource type="SphereShape3D" id="SphereShape3D_iob04"]
 
 [node name="AbilitiesLevel" type="Node3D"]
+script = ExtResource("1_djihv")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_k5xdk")

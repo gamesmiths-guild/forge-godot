@@ -32,7 +32,7 @@ public partial class SimpleEnemy3D : CharacterBody3D
 		base._Ready();
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
-		_player = GetTree().CurrentScene?.GetNodeOrNull<Node3D>("Player");
+		_player = GetNodeOrNull<Node3D>("%Player");
 		_forgePlayer = _player?.GetNodeOrNull<ForgeEntity>("%Forge Entity");
 
 		forgeEntity.Abilities.TryGetAbility(EnemyAttackAbilityData!.GetAbilityData(), out _abilityHandle, forgeEntity);
