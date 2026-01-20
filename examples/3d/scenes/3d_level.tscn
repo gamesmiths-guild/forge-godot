@@ -1,13 +1,18 @@
-[gd_scene load_steps=28 format=3 uid="uid://dd3k2ajucir45"]
+[gd_scene load_steps=33 format=3 uid="uid://dd3k2ajucir45"]
 
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/common/scripts/floor.gdshader" id="1_12jpl"]
 [ext_resource type="PackedScene" uid="uid://ci5xp80c4vcod" path="res://examples/3d/scenes/3d_character.tscn" id="1_381bb"]
 [ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://examples/3d/scripts/FloatingTextCueHandler3D.cs" id="2_l0q6a"]
 [ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://examples/3d/scenes/3d_floating_text.tscn" id="3_12jpl"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://examples/3d/scripts/ParticlesCueHandler3D.cs" id="4_tpia4"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://examples/3d/scenes/particles/3d_fire_effect.tscn" id="6_tpia4"]
+[ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://examples/3d/scenes/particles/3d_wet_effect.tscn" id="7_878nk"]
+[ext_resource type="PackedScene" uid="uid://cwn3bvfd3pobb" path="res://examples/3d/scenes/particles/3d_regen_effect.tscn" id="8_1upbh"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="8_qu8d5"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="9_gthfy"]
+[ext_resource type="PackedScene" uid="uid://6aow5rsrf22" path="res://examples/3d/scenes/particles/shield_effect.tscn" id="9_n5jaj"]
 [ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://examples/common/effects/fire.tres" id="10_4afw1"]
+[ext_resource type="PackedScene" uid="uid://dn5d64jtdgft5" path="res://examples/3d/scenes/particles/thorns_effect.tscn" id="10_qu8d5"]
 [ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://examples/common/effects/damage.tres" id="11_a6nt0"]
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="12_381bb"]
 [ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="13_l0q6a"]
@@ -99,23 +104,33 @@ CueTag = "cue.floating.text"
 
 [node name="FireVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
+PersistentEffectScene = ExtResource("6_tpia4")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.fire"
 
 [node name="WetVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
+PersistentEffectScene = ExtResource("7_878nk")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.wet"
 
 [node name="RegenVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
+PersistentEffectScene = ExtResource("8_1upbh")
 UpdateEffectIntensity = true
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.regen"
 
 [node name="ShieldVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
+PersistentEffectScene = ExtResource("9_n5jaj")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.shield"
 
 [node name="ThornsVFX Cues" type="Node" parent="."]
 script = ExtResource("4_tpia4")
+InstantEffectScene = ExtResource("10_qu8d5")
+Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.thorns"
 
 [node name="Fire Area" type="Area3D" parent="."]

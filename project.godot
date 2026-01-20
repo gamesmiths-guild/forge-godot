@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Forge Godot Plugin"
-run/main_scene="uid://ca1f6valfuo1n"
+run/main_scene="uid://dpmrom6ut67fe"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
