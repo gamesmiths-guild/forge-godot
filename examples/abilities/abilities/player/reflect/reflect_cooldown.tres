@@ -1,49 +1,49 @@
 [gd_resource type="Resource" script_class="ForgeEffectData" load_steps=19 format=3 uid="uid://b0ql0qmn4jlgg"]
 
-[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_exruy"]
-[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_2b3mu"]
-[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_vrcgi"]
-[ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="4_76hje"]
-[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="5_jbcfj"]
-[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_kmbc1"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_5moqj"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_b4u1m"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_kyube"]
+[ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="4_sv3li"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="5_a4pr7"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_gvtp5"]
 
 [sub_resource type="Resource" id="Resource_611xj"]
-script = ExtResource("1_exruy")
-ContainerTags = ["cooldown.skill.thorns"]
+script = ExtResource("1_5moqj")
+ContainerTags = Array[String](["cooldown.skill.reflect"])
 metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 
 [sub_resource type="Resource" id="Resource_q7ccr"]
-script = ExtResource("2_2b3mu")
+script = ExtResource("2_b4u1m")
 TagsToAdd = SubResource("Resource_611xj")
 metadata/_custom_type_script = "uid://dngf30hxy5go4"
 
 [sub_resource type="Resource" id="Resource_ds3if"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 BaseValue = 1.0
 
 [sub_resource type="Resource" id="Resource_nu5s8"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 
 [sub_resource type="Resource" id="Resource_r7vh4"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 
 [sub_resource type="Resource" id="Resource_cme5w"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 BaseValue = 1.0
 
 [sub_resource type="Resource" id="Resource_841pu"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 
 [sub_resource type="Resource" id="Resource_q0mch"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 
 [sub_resource type="Resource" id="Resource_rxp43"]
-script = ExtResource("3_vrcgi")
+script = ExtResource("3_kyube")
 BaseValue = 3.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_jkajk"]
-script = ExtResource("4_76hje")
+script = ExtResource("4_sv3li")
 ScalableFloat = SubResource("Resource_rxp43")
 Coefficient = SubResource("Resource_cme5w")
 PreMultiplyAdditiveValue = SubResource("Resource_q0mch")
@@ -54,15 +54,15 @@ CalculatorPostMultiplyAdditiveValue = SubResource("Resource_nu5s8")
 metadata/_custom_type_script = "uid://2gm1hdhi8u08"
 
 [sub_resource type="Resource" id="Resource_gpv1f"]
-script = ExtResource("5_jbcfj")
+script = ExtResource("5_a4pr7")
 BaseValue = 1
 
 [sub_resource type="Resource" id="Resource_o8ji7"]
-script = ExtResource("5_jbcfj")
+script = ExtResource("5_a4pr7")
 BaseValue = 1
 
 [resource]
-script = ExtResource("6_kmbc1")
+script = ExtResource("6_gvtp5")
 Name = "Skill 1 Cooldown"
 Modifiers = []
 Components = Array[Object]([SubResource("Resource_q7ccr")])

@@ -10,13 +10,13 @@ using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
-public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior<DamageType>
+public sealed class ReflectAbilityBehaviorImplementation : IAbilityBehavior<DamageType>
 {
 	private readonly EffectData _effectData;
-	private Area3D? _thornsArea;
+	private Area3D? _reflectArea;
 	private Effect? _damageEffect;
 
-	public ThornsAbilityBehaviorImplementation(EffectData damageEffect)
+	public ReflectAbilityBehaviorImplementation(EffectData damageEffect)
 	{
 		_effectData = damageEffect;
 	}
@@ -29,11 +29,11 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior<Damag
 			return;
 		}
 
-		_thornsArea ??= ownerNode.GetNode<Area3D>("%ThornsArea");
+		_reflectArea ??= ownerNode.GetNode<Area3D>("%ReflectArea");
 
 		context.AbilityHandle.CommitAbility();
 
-		foreach (Node3D? body in _thornsArea.GetOverlappingBodies())
+		foreach (Node3D? body in _reflectArea.GetOverlappingBodies())
 		{
 			ForgeEntity? forgeEntity = body.GetNodeOrNull<ForgeEntity>("%Forge Entity");
 			if (forgeEntity is null || forgeEntity == context.Owner)
@@ -55,7 +55,7 @@ public sealed class ThornsAbilityBehaviorImplementation : IAbilityBehavior<Damag
 		}
 
 		ForgeManagers.Instance.CuesManager.ExecuteCue(
-			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.thorns"),
+			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.reflect"),
 			ownerNode,
 			null);
 

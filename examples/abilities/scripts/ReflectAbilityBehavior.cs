@@ -9,13 +9,13 @@ namespace Gamesmiths.Forge.Example;
 
 [Tool]
 [GlobalClass]
-public partial class ThornsAbilityBehavior : ForgeAbilityBehavior
+public partial class ReflectAbilityBehavior : ForgeAbilityBehavior
 {
 	[Export]
 	public required ForgeEffectData DamageEffect { get; set; }
 
 	public override IAbilityBehavior GetBehavior()
 	{
-		return new ThornsAbilityBehaviorImplementation(DamageEffect.GetEffectData());
+		return new ReflectAbilityBehaviorImplementation(DamageEffect.GetEffectData());
 	}
 }
