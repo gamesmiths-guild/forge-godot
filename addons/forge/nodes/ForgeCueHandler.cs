@@ -33,6 +33,19 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 			Tag.RequestTag(ForgeManagers.Instance.TagsManager, CueTag), this);
 	}
 
+	public override void _ExitTree()
+	{
+		base._ExitTree();
+
+		if (string.IsNullOrEmpty(CueTag))
+		{
+			return;
+		}
+
+		ForgeManagers.Instance.CuesManager.UnregisterCue(
+			Tag.RequestTag(ForgeManagers.Instance.TagsManager, CueTag), this);
+	}
+
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
 	public void OnApply(IForgeEntity? target, CueParameters? parameters)
 	{
