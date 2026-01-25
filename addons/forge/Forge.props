@@ -3,6 +3,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Gamesmiths.Forge" Version="0.1.2" />
+    <PackageReference Include="Gamesmiths.Forge" Version="0.2.0" />
   </ItemGroup>
 </Project>
