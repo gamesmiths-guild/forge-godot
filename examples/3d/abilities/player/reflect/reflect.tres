@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=9 format=3 uid="uid://cpnut4w1fqhga"]
 
-[ext_resource type="Resource" uid="uid://c2rmd65jvtry5" path="res://examples/abilities/abilities/player/reflect/reflect_damage.tres" id="1_mqaic"]
-[ext_resource type="Script" uid="uid://yw3v26wmuh02" path="res://examples/abilities/scripts/ReflectAbilityBehavior.cs" id="2_h8owh"]
-[ext_resource type="Resource" uid="uid://b0ql0qmn4jlgg" path="res://examples/abilities/abilities/player/reflect/reflect_cooldown.tres" id="3_mqaic"]
-[ext_resource type="Resource" uid="uid://b1dkf4jexcaif" path="res://examples/abilities/abilities/player/reflect/reflect_cost.tres" id="4_h8owh"]
+[ext_resource type="Resource" uid="uid://c2rmd65jvtry5" path="res://examples/3d/abilities/player/reflect/reflect_damage.tres" id="1_mqaic"]
+[ext_resource type="Script" uid="uid://yw3v26wmuh02" path="res://examples/3d/scripts/abilities/ReflectAbilityBehavior.cs" id="2_h8owh"]
+[ext_resource type="Resource" uid="uid://b0ql0qmn4jlgg" path="res://examples/3d/abilities/player/reflect/reflect_cooldown.tres" id="3_mqaic"]
+[ext_resource type="Resource" uid="uid://b1dkf4jexcaif" path="res://examples/3d/abilities/player/reflect/reflect_cost.tres" id="4_h8owh"]
 [ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_awijf"]
 [ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="5_h8owh"]
 

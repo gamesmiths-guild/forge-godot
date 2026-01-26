@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ForgeEffectData" load_steps=11 format=3 uid="uid://yaq582h7bhfb"]
 
-[ext_resource type="Resource" uid="uid://c8pyecr40jr66" path="res://examples/abilities/abilities/enemy/enemy_attack.tres" id="1_0yqjd"]
+[ext_resource type="Resource" uid="uid://c8pyecr40jr66" path="res://examples/3d/abilities/enemy/enemy_attack.tres" id="1_0yqjd"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_7sbii"]
 [ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="3_n56fb"]
 [ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="4_wdtpk"]

@@ -15,12 +15,6 @@ public partial class Hub : Control
 	public void OnDemoB()
 	{
 		GetTree().Root.GetNode<Main>("Main")
-			.ChangeScene("uid://dd3k2ajucir45");
-	}
-
-	public void OnDemoC()
-	{
-		GetTree().Root.GetNode<Main>("Main")
 			.ChangeScene("uid://dpmrom6ut67fe");
 	}
 }

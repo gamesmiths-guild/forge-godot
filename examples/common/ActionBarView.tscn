@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://f0cdtm7kc3qx"]
 
-[ext_resource type="Script" uid="uid://bqotneekxchg7" path="res://examples/abilities/scripts/ActionBarView.cs" id="1_s6ll1"]
+[ext_resource type="Script" uid="uid://bqotneekxchg7" path="res://examples/3d/scripts/ActionBarView.cs" id="1_s6ll1"]
 
 [sub_resource type="Gradient" id="Gradient_s6ll1"]
 colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)

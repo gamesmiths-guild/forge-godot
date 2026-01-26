@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_oi1ck"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_cho4q"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="3_o1eft"]
-[ext_resource type="Resource" uid="uid://bn8wjd3t272uv" path="res://examples/abilities/abilities/common/spread_fire.tres" id="4_i58qe"]
+[ext_resource type="Resource" uid="uid://bn8wjd3t272uv" path="res://examples/3d/abilities/common/spread_fire.tres" id="4_i58qe"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="4_mxksh"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="4_ow18a"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_bgqdm"]

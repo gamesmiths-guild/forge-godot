@@ -1,9 +1,9 @@
 [gd_scene load_steps=10 format=3 uid="uid://cv53xhuo2be2x"]
 
-[ext_resource type="Script" uid="uid://bhqyt4i2kjyrr" path="res://examples/abilities/scripts/Projectile.cs" id="1_6hmvh"]
+[ext_resource type="Script" uid="uid://bhqyt4i2kjyrr" path="res://examples/3d/scripts/abilities/Projectile.cs" id="1_6hmvh"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_bk3el"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="3_eqjfu"]
-[ext_resource type="Resource" uid="uid://8q6crdcnqojs" path="res://examples/abilities/abilities/player/projectile/projectile_damage.tres" id="4_6hmvh"]
+[ext_resource type="Resource" uid="uid://8q6crdcnqojs" path="res://examples/3d/abilities/player/projectile/projectile_damage.tres" id="4_6hmvh"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_bk3el"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_we0ym"]
