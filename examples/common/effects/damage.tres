@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=25 format=3 uid="uid://dt5y704o0sldo"]
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://dt5y704o0sldo"]
 
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_ikt6e"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="1_khd1u"]

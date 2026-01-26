@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=6 format=3 uid="uid://bn8wjd3t272uv"]
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://bn8wjd3t272uv"]
 
 [ext_resource type="Script" uid="uid://dfe1h4xylta21" path="res://examples/3d/scripts/abilities/SpreadFireAbilityBehavior.cs" id="2_s6nwc"]
 [ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="3_77umg"]

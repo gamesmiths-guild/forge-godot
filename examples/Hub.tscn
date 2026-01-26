@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://c555ix6yk55jj"]
+[gd_scene format=3 uid="uid://c555ix6yk55jj"]
 
 [ext_resource type="Script" uid="uid://cqoo1l13mvgdd" path="res://examples/Hub.cs" id="1_p5sdp"]
 
-[node name="Hub" type="Control"]
+[node name="Hub" type="Control" unique_id=1571884233]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_p5sdp")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=337443057]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,10 +23,10 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1577380840]
 layout_mode = 2
 
-[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer" unique_id=282221336]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
@@ -41,7 +41,7 @@ This hub showcases two simple demos focused on demonstrating how Forge handles [
 [color=#dddddd]
 A real-time 3D scene featuring a player and two basic enemies (approach and attack behavior only).[/color]
 
-• [color=#ff6d6d]Fire Area[/color]: 10 magic damage over time.
+• [color=#ff6d6d]Fire Area[/color]: 10 elemental damage over time, spreads when the source entity is on fire and causes damage.
 • [color=#6d9eeb]Water Area[/color]: removes and prevents Fire.
 • [color=#f1c232]Instant Damage Area[/color]: 100 instant physical damage.
 • [color=#93c47d]Regen Area[/color]: instant heal (50) + up to 3 heal over time stacks (10/s).
@@ -56,14 +56,14 @@ Player has natural regeneration: [b]+1 Health/s[/b] and [b]+1 Mana/s[/b].[/color
 
 [color=#ffffff][b]Abilities[/b][/color]
 
-• [b]Projectile[/b] (Mouse 1): projectile, distance-scaled damage, can inherit Fire.
+• [b]Projectile[/b] (Mouse 1): projectile, distance-scaled damage, can be set on Fire.
 • [b]Dash[/b] (Space): dash toward mouse direction, temporary physical immunity.
 • [b]Shield[/b] (3): toggle, reduces damage by 80%, consumes 20 mana per hit.
 • [b]Reflect[/b] (Passive): on physical damage taken, triggers an AoE damage reflection.
 
 [hr]
 
-[b][color=#8e7cc3]Demo B – Turn-Based 2D[/color][/b]
+[b][color=#8e7cc`3]Demo B – Turn-Based 2D[/color][/b]
 [color=#dddddd]A 2D scene focused on turn-based effects.
 Time only advances when you move.[/color]
 
@@ -74,18 +74,18 @@ Time only advances when you move.[/color]
 
 [color=#bbbbbb]Ideal for visualizing effects adapted to turn-based systems.[/color]"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1745840025]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Demo A" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="Demo A" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1089163866]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Demo A"
 
-[node name="Demo B" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="Demo B" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=34487616]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 size_flags_horizontal = 4

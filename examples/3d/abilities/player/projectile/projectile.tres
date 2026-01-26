@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=7 format=3 uid="uid://7c67atykv7d4"]
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://7c67atykv7d4"]
 
 [ext_resource type="PackedScene" uid="uid://cv53xhuo2be2x" path="res://examples/3d/scenes/projectile.tscn" id="1_dma25"]
 [ext_resource type="Script" uid="uid://bgt0nnn2j54ui" path="res://examples/3d/scripts/abilities/ProjectileAbilityBehavior.cs" id="2_ehxmd"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=20 format=3 uid="uid://cdm6ldp5kxyg0"]
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://cdm6ldp5kxyg0"]
 
 [ext_resource type="Resource" uid="uid://7c67atykv7d4" path="res://examples/3d/abilities/player/projectile/projectile.tres" id="1_c52b4"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_jm1ed"]

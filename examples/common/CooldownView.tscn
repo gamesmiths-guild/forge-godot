@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://6ttcv0dk6kaq"]
+[gd_scene format=3 uid="uid://6ttcv0dk6kaq"]
 
 [ext_resource type="Script" uid="uid://bqotneekxchg7" path="res://examples/3d/scripts/ActionBarView.cs" id="1_grro5"]
 
@@ -14,7 +14,7 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 corner_detail = 6
 
-[node name="CooldownView" type="Control" node_paths=PackedStringArray("CooldownProgressBar", "CooldownLabel", "CostLabel", "TagsLabel")]
+[node name="CooldownView" type="Control" unique_id=1213399512 node_paths=PackedStringArray("CooldownProgressBar", "CooldownLabel", "CostLabel")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -25,16 +25,15 @@ script = ExtResource("1_grro5")
 CooldownProgressBar = NodePath("ProgressBar")
 CooldownLabel = NodePath("Label")
 CostLabel = NodePath("CostLabel")
-TagsLabel = NodePath("Tags")
 
-[node name="ProgressBar" type="ProgressBar" parent="."]
+[node name="ProgressBar" type="ProgressBar" parent="." unique_id=964105600]
 layout_mode = 0
 offset_right = 100.0
 offset_bottom = 27.0
 theme_override_colors/font_color = Color(0.031114617, 0.045831025, 0.13811257, 1)
 theme_override_styles/fill = SubResource("StyleBoxFlat_grro5")
 
-[node name="Label" type="Label" parent="."]
+[node name="Label" type="Label" parent="." unique_id=171370877]
 layout_mode = 0
 offset_left = 107.0
 offset_right = 147.0
@@ -42,7 +41,7 @@ offset_bottom = 23.0
 theme_override_colors/font_color = Color(0.07763139, 0.09801621, 0.30679765, 1)
 text = "0s"
 
-[node name="CostLabel" type="Label" parent="."]
+[node name="CostLabel" type="Label" parent="." unique_id=638523318]
 layout_mode = 0
 offset_top = 34.0
 offset_right = 100.0
@@ -50,7 +49,7 @@ offset_bottom = 57.0
 theme_override_colors/font_color = Color(0.49070764, 0.122526966, 0.08136558, 1)
 text = "0"
 
-[node name="Tags" type="Label" parent="."]
+[node name="Tags" type="Label" parent="." unique_id=262318905]
 layout_mode = 0
 offset_top = 66.0
 offset_right = 158.0

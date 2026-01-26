@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeAbilityData" load_steps=6 format=3 uid="uid://c8pyecr40jr66"]
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c8pyecr40jr66"]
 
 [ext_resource type="Resource" uid="uid://dqxkkl85jh26g" path="res://examples/3d/abilities/enemy/enemy_damage.tres" id="1_w1fgy"]
 [ext_resource type="Script" uid="uid://c2yo587a7a5k1" path="res://examples/3d/scripts/abilities/EnemyAttackAbilityBehavior.cs" id="2_6xmok"]

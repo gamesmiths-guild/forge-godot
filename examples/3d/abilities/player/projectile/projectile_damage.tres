@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=25 format=3 uid="uid://8q6crdcnqojs"]
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://8q6crdcnqojs"]
 
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_vnu6c"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_1xrk2"]
