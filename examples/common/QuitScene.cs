@@ -10,8 +10,7 @@ public partial class QuitScene : Node
 	{
 		if (@event is InputEventKey eventKey && eventKey.Pressed && eventKey.Keycode == Key.Escape)
 		{
-			GetTree().Root.GetNode<Main>("Main")
-				.ChangeScene("uid://c555ix6yk55jj");
+			GetTree().Root.GetNode<Main>("Main").ChangeScene("uid://c555ix6yk55jj");
 		}
 	}
 }

@@ -6,7 +6,6 @@ using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Tags;
-using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
@@ -36,8 +35,6 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 		context.AbilityHandle.CommitAbility();
 
 		_protectEffect ??= new Effect(_effectData, new EffectOwnership(context.Owner, context.Source));
-
-		GD.Print(_effectData.Modifiers[0].Magnitude);
 
 		_activeEffectHandle = ownerNode.EffectsManager.ApplyEffect(_protectEffect);
 
