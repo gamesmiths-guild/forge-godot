@@ -28,7 +28,11 @@ internal sealed class EffectApplier
 		}
 	}
 
-	public void ApplyEffects(Node node, IForgeEntity? effectOwner, IForgeEntity? effectSource, int level = 1)
+	public void ApplyEffects(
+		Node node,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level = 1)
 	{
 		if (node is IForgeEntity forgeEntity)
 		{
@@ -69,7 +73,11 @@ internal sealed class EffectApplier
 		}
 	}
 
-	public void AddEffects(Node node, IForgeEntity? effectOwner, IForgeEntity? effectSource, int level)
+	public void AddEffects(
+		Node node,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level)
 	{
 		if (node is IForgeEntity forgeEntity)
 		{
@@ -187,7 +195,12 @@ internal sealed class EffectApplier
 		}
 	}
 
-	private void AddEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectSource, int level)
+	private void AddEffects(
+		IForgeEntity forgeEntity,
+		IForgeEntity?
+		effectOwner,
+		IForgeEntity? effectSource,
+		int level)
 	{
 		var instanceEffects = new List<ActiveEffectHandle>();
 		if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
