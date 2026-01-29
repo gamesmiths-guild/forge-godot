@@ -1,5 +1,8 @@
 # Forge for Godot
 
+[![License](https://img.shields.io/github/license/gamesmiths-guild/forge-godot)](LICENSE)
+[![Godot .NET](https://img.shields.io/badge/Godot-4.6%2B%20.NET-478cbf)](https://godotengine.org/download/)
+
 Forge for Godot is an Unreal GAS-like gameplay framework built for the Godot Engine.
 
 It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for implementing gameplay features such as attributes, effects, gameplay tags, abilities, events, and cues, fully aligned with Godot’s node, resource, and editor workflows.
