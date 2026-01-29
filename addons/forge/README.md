@@ -33,7 +33,9 @@ This plugin enables you to:
 
 ### Steps
 
-1. [Install the plugin](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html) by copying over the `addons` folder.
+1. Install the plugin via the Godot Asset Library or manually by copying the `addons` folder.
+   - [Godot Asset Library](https://godotengine.org/asset-library/asset/4239)
+   - [Manual installation guide](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)
 2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
    ```xml
    <Import Project="addons/forge/Forge.props" />
