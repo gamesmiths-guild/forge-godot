@@ -1,5 +1,6 @@
-[gd_scene load_steps=20 format=3 uid="uid://dpmrom6ut67fe"]
+[gd_scene format=3 uid="uid://dpmrom6ut67fe"]
 
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://examples/common/QuitScene.cs" id="1_0pjy8"]
 [ext_resource type="PackedScene" uid="uid://cb122n4xo3vxb" path="res://examples/2d/scenes/2d_character.tscn" id="1_skmt1"]
 [ext_resource type="Script" uid="uid://bc8wkfv6rdpu1" path="res://addons/forge/nodes/EffectArea2D.cs" id="2_t1spg"]
 [ext_resource type="Texture2D" uid="uid://dcgvlpnbwg7q8" path="res://examples/2d/sprites/area.png" id="3_cgod4"]
@@ -11,7 +12,7 @@
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://examples/common/effects/water.tres" id="6_yv8mo"]
 [ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://examples/common/effects/heal.tres" id="7_cuuac"]
 [ext_resource type="Script" uid="uid://dko3hlj10yp8d" path="res://examples/2d/scripts/ParticlesCueHandler2D.cs" id="8_1r4gs"]
-[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/rejuvenation.tres" id="8_3qm5n"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://examples/common/effects/regen.tres" id="8_3qm5n"]
 [ext_resource type="PackedScene" uid="uid://oad72vjqmwl3" path="res://examples/2d/scenes/particles/2d_fire_effect.tscn" id="9_30teu"]
 [ext_resource type="Script" uid="uid://btstkyo5h46w2" path="res://addons/forge/nodes/EffectRayCast2D.cs" id="9_xtisc"]
 [ext_resource type="Script" uid="uid://cxrmka1hqkn82" path="res://addons/forge/nodes/EffectShapeCast2D.cs" id="10_nc1t5"]
@@ -22,94 +23,95 @@
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_0pjy8"]
 
-[node name="Level" type="Node2D"]
+[node name="Level" type="Node2D" unique_id=350974731]
+script = ExtResource("1_0pjy8")
 
-[node name="Fire Area" type="Area2D" parent="."]
+[node name="Fire Area" type="Area2D" parent="." unique_id=835459926]
 position = Vector2(530, 280)
 script = ExtResource("2_t1spg")
 metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Fire Area"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Fire Area" unique_id=99036664]
 shape = SubResource("RectangleShape2D_4cx3t")
 
-[node name="Sprite2D" type="Sprite2D" parent="Fire Area"]
+[node name="Sprite2D" type="Sprite2D" parent="Fire Area" unique_id=1397983381]
 modulate = Color(0.75, 0, 0, 1)
 texture = ExtResource("3_cgod4")
 
-[node name="Effect" type="Node" parent="Fire Area"]
+[node name="Effect" type="Node" parent="Fire Area" unique_id=1317745094]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("4_nc1t5")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Damage Area" type="Area2D" parent="."]
+[node name="Damage Area" type="Area2D" parent="." unique_id=843499346]
 position = Vector2(610, 280)
 script = ExtResource("2_t1spg")
 metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Damage Area"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Damage Area" unique_id=1486717209]
 shape = SubResource("RectangleShape2D_4cx3t")
 
-[node name="Sprite2D" type="Sprite2D" parent="Damage Area"]
+[node name="Sprite2D" type="Sprite2D" parent="Damage Area" unique_id=1208097055]
 modulate = Color(0.85, 0.779167, 0, 1)
 texture = ExtResource("3_cgod4")
 
-[node name="Effect" type="Node" parent="Damage Area"]
+[node name="Effect" type="Node" parent="Damage Area" unique_id=1518655125]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("5_0pjy8")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Water Area" type="Area2D" parent="."]
+[node name="Water Area" type="Area2D" parent="." unique_id=964946193]
 position = Vector2(510, 340)
 script = ExtResource("2_t1spg")
 metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Water Area"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Water Area" unique_id=650924587]
 shape = SubResource("RectangleShape2D_4cx3t")
 
-[node name="Sprite2D" type="Sprite2D" parent="Water Area"]
+[node name="Sprite2D" type="Sprite2D" parent="Water Area" unique_id=1328511700]
 modulate = Color(0.217455, 0.236907, 0.983861, 1)
 texture = ExtResource("3_cgod4")
 
-[node name="Effect" type="Node" parent="Water Area"]
+[node name="Effect" type="Node" parent="Water Area" unique_id=1561504413]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("6_yv8mo")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Regen Area" type="Area2D" parent="."]
+[node name="Regen Area" type="Area2D" parent="." unique_id=571685195]
 position = Vector2(630, 340)
 script = ExtResource("2_t1spg")
 metadata/_custom_type_script = "uid://bc8wkfv6rdpu1"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Regen Area"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Regen Area" unique_id=1997243065]
 shape = SubResource("RectangleShape2D_4cx3t")
 
-[node name="Sprite2D" type="Sprite2D" parent="Regen Area"]
+[node name="Sprite2D" type="Sprite2D" parent="Regen Area" unique_id=420289550]
 modulate = Color(0, 0.81, 0.243, 1)
 texture = ExtResource("3_cgod4")
 
-[node name="Effect" type="Node" parent="Regen Area"]
+[node name="Effect" type="Node" parent="Regen Area" unique_id=563673424]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("7_cuuac")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Effect2" type="Node" parent="Regen Area"]
+[node name="Effect2" type="Node" parent="Regen Area" unique_id=1084664618]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("8_3qm5n")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="EffectRayCast2D" type="RayCast2D" parent="."]
+[node name="EffectRayCast2D" type="RayCast2D" parent="." unique_id=1158396190]
 position = Vector2(550, 420)
 target_position = Vector2(0, -50)
 script = ExtResource("9_xtisc")
 TriggerMode = 2
 metadata/_custom_type_script = "uid://btstkyo5h46w2"
 
-[node name="Effect" type="Node" parent="EffectRayCast2D"]
+[node name="Effect" type="Node" parent="EffectRayCast2D" unique_id=1777109562]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("6_yv8mo")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="EffectShapeCast2D" type="ShapeCast2D" parent="."]
+[node name="EffectShapeCast2D" type="ShapeCast2D" parent="." unique_id=1342677005]
 position = Vector2(590, 420)
 shape = SubResource("CircleShape2D_0pjy8")
 target_position = Vector2(0, -40)
@@ -117,35 +119,35 @@ script = ExtResource("10_nc1t5")
 TriggerMode = 2
 metadata/_custom_type_script = "uid://cxrmka1hqkn82"
 
-[node name="Effect" type="Node" parent="EffectShapeCast2D"]
+[node name="Effect" type="Node" parent="EffectShapeCast2D" unique_id=1512979736]
 script = ExtResource("5_xub8u")
 EffectData = ExtResource("8_3qm5n")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="FloatingText Cues" type="Node" parent="."]
+[node name="FloatingText Cues" type="Node" parent="." unique_id=146564023]
 script = ExtResource("5_b3se6")
 FloatingTextScene = ExtResource("6_tr6ro")
 CueTag = "cue.floating.text"
 metadata/_custom_type_script = "uid://cbqisbcf7ohd7"
 
-[node name="FireVFX Cues" type="Node" parent="."]
+[node name="FireVFX Cues" type="Node" parent="." unique_id=663945503]
 script = ExtResource("8_1r4gs")
-FireEffectScene = ExtResource("9_30teu")
+PersistentEffectScene = ExtResource("9_30teu")
 CueTag = "cue.vfx.fire"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
-[node name="WetVFX Cues" type="Node" parent="."]
+[node name="WetVFX Cues" type="Node" parent="." unique_id=145641816]
 script = ExtResource("8_1r4gs")
-FireEffectScene = ExtResource("10_wwqts")
+PersistentEffectScene = ExtResource("10_wwqts")
 CueTag = "cue.vfx.wet"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
-[node name="RegenVFX Cues" type="Node" parent="."]
+[node name="RegenVFX Cues" type="Node" parent="." unique_id=249619973]
 script = ExtResource("8_1r4gs")
-FireEffectScene = ExtResource("11_8b8ra")
+PersistentEffectScene = ExtResource("11_8b8ra")
 UpdateEffectIntensity = true
 CueTag = "cue.vfx.regen"
 metadata/_custom_type_script = "uid://dko3hlj10yp8d"
 
-[node name="CharacterBody2D" parent="." instance=ExtResource("1_skmt1")]
+[node name="CharacterBody2D" parent="." unique_id=434644439 instance=ExtResource("1_skmt1")]
 position = Vector2(570, 320)

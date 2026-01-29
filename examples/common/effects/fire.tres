@@ -1,13 +1,18 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=30 format=3 uid="uid://drty8r1ibx5ug"]
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://drty8r1ibx5ug"]
 
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_mxksh"]
 [ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_bgqdm"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_oi1ck"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_cho4q"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="3_o1eft"]
+[ext_resource type="Resource" uid="uid://bn8wjd3t272uv" path="res://examples/3d/abilities/common/spread_fire.tres" id="4_i58qe"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="4_mxksh"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="4_ow18a"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_bgqdm"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="5_ogls3"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="6_i58qe"]
+[ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="6_pptqi"]
+[ext_resource type="Script" uid="uid://dpoo864fev8me" path="res://examples/common/scripts/calculators/DamageExecutionWrapper.cs" id="7_akf8i"]
 
 [sub_resource type="Resource" id="Resource_nmed0"]
 script = ExtResource("1_mxksh")
@@ -21,7 +26,7 @@ metadata/_custom_type_script = "uid://dngf30hxy5go4"
 
 [sub_resource type="Resource" id="Resource_4kmhu"]
 script = ExtResource("1_mxksh")
-ContainerTags = []
+ContainerTags = ["trait.flammable"]
 
 [sub_resource type="Resource" id="Resource_mxksh"]
 script = ExtResource("1_mxksh")
@@ -34,6 +39,21 @@ ApplicationRequiredTags = SubResource("Resource_4kmhu")
 RemovalRequiredTags = SubResource("Resource_mxksh")
 metadata/_custom_type_script = "uid://b0eq12mjqfage"
 
+[sub_resource type="Resource" id="Resource_r28cc"]
+script = ExtResource("2_oi1ck")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_8ign3"]
+script = ExtResource("5_ogls3")
+AbilityData = ExtResource("4_i58qe")
+AbilityLevel = SubResource("Resource_r28cc")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_s7wul"]
+script = ExtResource("6_i58qe")
+GrantAbilityConfigs = [SubResource("Resource_8ign3")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
 [sub_resource type="Resource" id="Resource_akf8i"]
 script = ExtResource("1_mxksh")
 ContainerTags = ["cue.floating.text"]
@@ -42,7 +62,6 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 [sub_resource type="Resource" id="Resource_ow18a"]
 script = ExtResource("4_ow18a")
 CueKeys = SubResource("Resource_akf8i")
-MinValue = 0
 MaxValue = 1000
 MagnitudeType = 2
 MagnitudeAttribute = "CharacterAttributes.Health"
@@ -56,69 +75,91 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 [sub_resource type="Resource" id="Resource_pptqi"]
 script = ExtResource("4_ow18a")
 CueKeys = SubResource("Resource_6jj1e")
-MinValue = 0
 MaxValue = 1
-MagnitudeType = 0
-MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
-[sub_resource type="Resource" id="Resource_hevuu"]
+[sub_resource type="Resource" id="Resource_ogls3"]
+script = ExtResource("3_cho4q")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_i58qe"]
+script = ExtResource("3_cho4q")
+
+[sub_resource type="Resource" id="Resource_ssvy5"]
+script = ExtResource("3_cho4q")
+
+[sub_resource type="Resource" id="Resource_fhbb4"]
+script = ExtResource("3_cho4q")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_kjgx8"]
+script = ExtResource("3_cho4q")
+
+[sub_resource type="Resource" id="Resource_yqjs6"]
+script = ExtResource("3_cho4q")
+
+[sub_resource type="Resource" id="Resource_kx1rg"]
 script = ExtResource("3_cho4q")
 BaseValue = 10.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_fyxfh"]
+script = ExtResource("6_pptqi")
+ScalableFloat = SubResource("Resource_kx1rg")
+Coefficient = SubResource("Resource_fhbb4")
+PreMultiplyAdditiveValue = SubResource("Resource_yqjs6")
+PostMultiplyAdditiveValue = SubResource("Resource_kjgx8")
+CalculatorCoefficient = SubResource("Resource_ogls3")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_ssvy5")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_i58qe")
+metadata/_custom_type_script = "uid://2gm1hdhi8u08"
+
+[sub_resource type="Resource" id="Resource_geth4"]
+script = ExtResource("7_akf8i")
+DamageType = 2
+metadata/_custom_type_script = "uid://dpoo864fev8me"
 
 [sub_resource type="Resource" id="Resource_cn837"]
 script = ExtResource("2_oi1ck")
 BaseValue = 1
 
-[sub_resource type="Resource" id="Resource_pvxif"]
+[sub_resource type="Resource" id="Resource_yof2g"]
 script = ExtResource("3_cho4q")
 BaseValue = 1.0
 
 [sub_resource type="Resource" id="Resource_i21lj"]
 script = ExtResource("3_cho4q")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_6nyv0"]
 script = ExtResource("3_cho4q")
-BaseValue = 0.0
 
-[sub_resource type="Resource" id="Resource_8f587"]
+[sub_resource type="Resource" id="Resource_s5kxh"]
 script = ExtResource("3_cho4q")
 BaseValue = 1.0
 
 [sub_resource type="Resource" id="Resource_qpd8e"]
 script = ExtResource("3_cho4q")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_tgk5n"]
 script = ExtResource("3_cho4q")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_xmlma"]
 script = ExtResource("3_cho4q")
-BaseValue = -10.0
+BaseValue = 10.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 
 [sub_resource type="Resource" id="Resource_kpa2l"]
 script = ExtResource("4_mxksh")
-Attribute = "CharacterAttributes.Health"
-Operation = 0
-Channel = 0
-CalculationType = 0
+Attribute = "MetaAttributes.IncomingDamage"
+Operation = 2
 ScalableFloat = SubResource("Resource_xmlma")
-CapturedAttribute = ""
-CaptureSource = 0
 SnapshotAttribute = false
-AttributeCalculationType = 0
-Coeficient = SubResource("Resource_8f587")
+Coefficient = SubResource("Resource_s5kxh")
 PreMultiplyAdditiveValue = SubResource("Resource_tgk5n")
 PostMultiplyAdditiveValue = SubResource("Resource_qpd8e")
-FinalChannel = 0
-CalculatorCoeficient = SubResource("Resource_pvxif")
+CalculatorCoefficient = SubResource("Resource_yof2g")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_6nyv0")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_i21lj")
-CallerTargetTag = ""
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
 
 [sub_resource type="Resource" id="Resource_cho4q"]
@@ -133,12 +174,11 @@ BaseValue = 1
 [resource]
 script = ExtResource("5_bgqdm")
 Name = "Fire"
-SnapshotLevel = true
 Modifiers = Array[Object]([SubResource("Resource_kpa2l")])
-Components = [SubResource("Resource_6u7xf"), SubResource("Resource_o8bkg")]
-Executions = []
+Components = [SubResource("Resource_6u7xf"), SubResource("Resource_o8bkg"), SubResource("Resource_s7wul")]
+Executions = [SubResource("Resource_geth4")]
 DurationType = 2
-Duration = SubResource("Resource_hevuu")
+Duration = SubResource("Resource_fyxfh")
 HasPeriodicApplication = true
 Period = SubResource("Resource_cho4q")
 ExecuteOnApplication = true
@@ -146,20 +186,8 @@ CanStack = true
 StackLimit = SubResource("Resource_cd28o")
 InitialStack = SubResource("Resource_cn837")
 SourcePolicy = 1
-InstigatorDenialPolicy = 0
 InstigatorOverridePolicy = 1
-InstigatorOverrideStackCountPolicy = 0
-LevelPolicy = 0
-LevelDenialPolicy = 0
-LevelOverridePolicy = 0
-LevelOverrideStackCountPolicy = 0
-MagnitudePolicy = 0
-OverflowPolicy = 0
-ExpirationPolicy = 0
-ApplicationRefreshPolicy = 0
 ApplicationResetPeriodPolicy = 1
-ExecuteOnSuccessfulApplication = false
 Cues = [SubResource("Resource_ow18a"), SubResource("Resource_pptqi")]
-RequireModifierSuccessToTriggerCue = false
-SuppressStackingCues = false
+RequireModifierSuccessToTriggerCue = 4
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

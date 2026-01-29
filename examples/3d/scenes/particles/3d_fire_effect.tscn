@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://cug3xpmr36q85"]
+[gd_scene format=3 uid="uid://cug3xpmr36q85"]
 
 [sub_resource type="Gradient" id="Gradient_a0li7"]
 offsets = PackedFloat32Array(0, 0.634969, 1)
@@ -23,6 +23,6 @@ vertex_color_use_as_albedo = true
 [sub_resource type="SphereMesh" id="SphereMesh_cl7lv"]
 material = SubResource("StandardMaterial3D_sgubq")
 
-[node name="GPUParticles3D" type="GPUParticles3D"]
+[node name="GPUParticles3D" type="GPUParticles3D" unique_id=1436908559]
 process_material = SubResource("ParticleProcessMaterial_kw1tj")
 draw_pass_1 = SubResource("SphereMesh_cl7lv")

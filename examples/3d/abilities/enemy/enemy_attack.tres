@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c8pyecr40jr66"]
+
+[ext_resource type="Resource" uid="uid://dqxkkl85jh26g" path="res://examples/3d/abilities/enemy/enemy_damage.tres" id="1_w1fgy"]
+[ext_resource type="Script" uid="uid://c2yo587a7a5k1" path="res://examples/3d/scripts/abilities/EnemyAttackAbilityBehavior.cs" id="2_6xmok"]
+[ext_resource type="Resource" uid="uid://bkkce1bf72tjx" path="res://examples/3d/abilities/enemy/enemy_attack_cooldown.tres" id="3_6xmok"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_qrbkt"]
+
+[sub_resource type="Resource" id="Resource_c6ahm"]
+script = ExtResource("2_6xmok")
+DamageEffect = ExtResource("1_w1fgy")
+metadata/_custom_type_script = "uid://c2yo587a7a5k1"
+
+[resource]
+script = ExtResource("5_qrbkt")
+Name = "Enemy Attack"
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("3_6xmok")]
+AbilityBehavior = SubResource("Resource_c6ahm")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

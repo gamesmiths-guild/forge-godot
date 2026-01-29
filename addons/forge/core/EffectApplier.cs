@@ -10,9 +10,12 @@ namespace Gamesmiths.Forge.Godot.Core;
 
 internal sealed class EffectApplier
 {
+	private record struct EffectKey(EffectData EffectData, EffectOwnership EffectOwnership, int Level);
+
 	private readonly List<EffectData> _effects = [];
 
 	private readonly Dictionary<IForgeEntity, List<ActiveEffectHandle>> _effectInstances = [];
+	private readonly Dictionary<EffectKey, Effect> _effectsCache = [];
 
 	public EffectApplier(Node node)
 	{
@@ -25,11 +28,15 @@ internal sealed class EffectApplier
 		}
 	}
 
-	public void ApplyEffects(Node node, IForgeEntity? effectOwner)
+	public void ApplyEffects(
+		Node node,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level = 1)
 	{
 		if (node is IForgeEntity forgeEntity)
 		{
-			ApplyEffects(forgeEntity, effectOwner, effectOwner);
+			ApplyEffects(forgeEntity, effectOwner, effectSource, level);
 			return;
 		}
 
@@ -37,17 +44,22 @@ internal sealed class EffectApplier
 		{
 			if (child is IForgeEntity forgeEntityChild)
 			{
-				ApplyEffects(forgeEntityChild, effectOwner, effectOwner);
+				ApplyEffects(forgeEntityChild, effectOwner, effectSource, level);
 				return;
 			}
 		}
 	}
 
-	public void AddEffects(Node node, IForgeEntity? effectOwner)
+	public void ApplyEffects<TData>(
+		Node node,
+		TData contextData,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level = 1)
 	{
 		if (node is IForgeEntity forgeEntity)
 		{
-			AddEffects(forgeEntity, effectOwner, effectOwner);
+			ApplyEffects(forgeEntity, contextData, effectOwner, effectSource, level);
 			return;
 		}
 
@@ -55,7 +67,52 @@ internal sealed class EffectApplier
 		{
 			if (child is IForgeEntity forgeEntityChild)
 			{
-				AddEffects(forgeEntityChild, effectOwner, effectOwner);
+				ApplyEffects(forgeEntityChild, contextData, effectOwner, effectSource, level);
+				return;
+			}
+		}
+	}
+
+	public void AddEffects(
+		Node node,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level)
+	{
+		if (node is IForgeEntity forgeEntity)
+		{
+			AddEffects(forgeEntity, effectOwner, effectSource, level);
+			return;
+		}
+
+		foreach (Node? child in node.GetChildren())
+		{
+			if (child is IForgeEntity forgeEntityChild)
+			{
+				AddEffects(forgeEntityChild, effectOwner, effectSource, level);
+				return;
+			}
+		}
+	}
+
+	public void AddEffects<TData>(
+		Node node,
+		TData contextData,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level)
+	{
+		if (node is IForgeEntity forgeEntity)
+		{
+			AddEffects(forgeEntity, contextData, effectOwner, effectSource, level);
+			return;
+		}
+
+		foreach (Node? child in node.GetChildren())
+		{
+			if (child is IForgeEntity forgeEntityChild)
+			{
+				AddEffects(forgeEntityChild, contextData, effectOwner, effectSource, level);
 				return;
 			}
 		}
@@ -79,19 +136,71 @@ internal sealed class EffectApplier
 		}
 	}
 
-	private void ApplyEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectCauser)
+	private void ApplyEffects(
+		IForgeEntity forgeEntity,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level)
 	{
+		var effectOwnership = new EffectOwnership(effectOwner, effectSource);
+
 		foreach (EffectData effectData in _effects)
 		{
+			var key = new EffectKey(effectData, effectOwnership, level);
+
+			if (_effectsCache.TryGetValue(key, out Effect? cachedEffect))
+			{
+				forgeEntity.EffectsManager.ApplyEffect(cachedEffect);
+				continue;
+			}
+
 			var effect = new Effect(
 				effectData,
-				new EffectOwnership(effectOwner, effectCauser));
+				new EffectOwnership(effectOwner, effectSource),
+				level);
+
+			_effectsCache[key] = effect;
 
 			forgeEntity.EffectsManager.ApplyEffect(effect);
 		}
 	}
 
-	private void AddEffects(IForgeEntity forgeEntity, IForgeEntity? effectOwner, IForgeEntity? effectCauser)
+	private void ApplyEffects<TData>(
+		IForgeEntity forgeEntity,
+		TData contextData,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level)
+	{
+		var effectOwnership = new EffectOwnership(effectOwner, effectSource);
+
+		foreach (EffectData effectData in _effects)
+		{
+			var key = new EffectKey(effectData, effectOwnership, level);
+
+			if (_effectsCache.TryGetValue(key, out Effect? cachedEffect))
+			{
+				forgeEntity.EffectsManager.ApplyEffect(cachedEffect);
+				continue;
+			}
+
+			var effect = new Effect(
+				effectData,
+				new EffectOwnership(effectOwner, effectSource),
+				level);
+
+			_effectsCache[key] = effect;
+
+			forgeEntity.EffectsManager.ApplyEffect(effect, contextData);
+		}
+	}
+
+	private void AddEffects(
+		IForgeEntity forgeEntity,
+		IForgeEntity?
+		effectOwner,
+		IForgeEntity? effectSource,
+		int level)
 	{
 		var instanceEffects = new List<ActiveEffectHandle>();
 		if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
@@ -99,13 +208,83 @@ internal sealed class EffectApplier
 			instanceEffects = _effectInstances[forgeEntity];
 		}
 
+		var effectOwnership = new EffectOwnership(effectOwner, effectSource);
+
 		foreach (EffectData effectData in _effects)
 		{
+			var key = new EffectKey(effectData, effectOwnership, level);
+
+			ActiveEffectHandle? handle;
+			if (_effectsCache.TryGetValue(key, out Effect? cachedEffect))
+			{
+				handle = forgeEntity.EffectsManager.ApplyEffect(cachedEffect);
+
+				if (handle is null)
+				{
+					continue;
+				}
+
+				instanceEffects.Add(handle);
+
+				continue;
+			}
+
 			var effect = new Effect(
 				effectData,
-				new EffectOwnership(effectOwner, effectCauser));
+				new EffectOwnership(effectOwner, effectSource),
+				level);
 
-			ActiveEffectHandle? handle = forgeEntity.EffectsManager.ApplyEffect(effect);
+			handle = forgeEntity.EffectsManager.ApplyEffect(effect);
+
+			if (handle is null)
+			{
+				continue;
+			}
+
+			instanceEffects.Add(handle);
+		}
+	}
+
+	private void AddEffects<TData>(
+		IForgeEntity forgeEntity,
+		TData contextData,
+		IForgeEntity? effectOwner,
+		IForgeEntity? effectSource,
+		int level)
+	{
+		var instanceEffects = new List<ActiveEffectHandle>();
+		if (!_effectInstances.TryAdd(forgeEntity, instanceEffects))
+		{
+			instanceEffects = _effectInstances[forgeEntity];
+		}
+
+		var effectOwnership = new EffectOwnership(effectOwner, effectSource);
+
+		foreach (EffectData effectData in _effects)
+		{
+			var key = new EffectKey(effectData, effectOwnership, level);
+
+			ActiveEffectHandle? handle;
+			if (_effectsCache.TryGetValue(key, out Effect? cachedEffect))
+			{
+				handle = forgeEntity.EffectsManager.ApplyEffect(cachedEffect);
+
+				if (handle is null)
+				{
+					continue;
+				}
+
+				instanceEffects.Add(handle);
+
+				continue;
+			}
+
+			var effect = new Effect(
+				effectData,
+				new EffectOwnership(effectOwner, effectSource),
+				level);
+
+			handle = forgeEntity.EffectsManager.ApplyEffect(effect, contextData);
 
 			if (handle is null)
 			{
@@ -125,7 +304,7 @@ internal sealed class EffectApplier
 
 		foreach (ActiveEffectHandle handle in value)
 		{
-			forgeEntity.EffectsManager.UnapplyEffect(handle);
+			forgeEntity.EffectsManager.RemoveEffect(handle);
 		}
 
 		_effectInstances[forgeEntity] = [];

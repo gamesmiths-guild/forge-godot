@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://b4ijs00jkdcnk"]
+
+[ext_resource type="Script" uid="uid://sdbcl24bconw" path="res://examples/3d/scripts/abilities/DashAbilityBehavior.cs" id="1_33apx"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="2_6cpim"]
+[ext_resource type="Resource" uid="uid://3qfsk67w2uau" path="res://examples/3d/abilities/player/dash/dash_cooldown.tres" id="3_evx4m"]
+[ext_resource type="Resource" uid="uid://djxce4yga8s83" path="res://examples/3d/abilities/player/dash/dash_cost.tres" id="4_q3u3i"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_25gwv"]
+
+[sub_resource type="Resource" id="Resource_6cpim"]
+script = ExtResource("1_33apx")
+metadata/_custom_type_script = "uid://sdbcl24bconw"
+
+[sub_resource type="Resource" id="Resource_0vob0"]
+script = ExtResource("2_6cpim")
+ContainerTags = ["movement.block", "immunity.damage"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[resource]
+script = ExtResource("5_25gwv")
+Name = "Dash"
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("3_evx4m")]
+CostEffect = ExtResource("4_q3u3i")
+AbilityBehavior = SubResource("Resource_6cpim")
+ActivationOwnedTags = SubResource("Resource_0vob0")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

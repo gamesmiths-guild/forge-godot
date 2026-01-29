@@ -6,26 +6,24 @@ This guide will help you quickly set up and use the Forge system in your Godot p
 
 If you'd like to see sample scenes demonstrating the system in action, you can clone the repository directly and explore the examples included in the `examples` folder.
 
----
-
 ## Installation
 
 ### Requirements
 
-- Godot 4.4 or later with .NET support.
+- Godot 4.5 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps
 
-1. [Install the plugin](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html) by copying over the `addons` folder.
+1. Install the plugin via the Godot Asset Library or manually by copying the `addons` folder.
+   - [Godot Asset Library](https://godotengine.org/asset-library/asset/4239)
+   - [Manual installation guide](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)
 2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
    ```xml
    <Import Project="addons/forge/Forge.props" />
    ```
 3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
 4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
-
----
 
 ## The ForgeManagers Singleton
 
@@ -49,8 +47,6 @@ The `ForgeManagers` singleton handles:
 ### Validation Behavior
 
 By default, validation is **enabled** in the Godot editor and during development builds. For exported **Release builds**, validation is automatically **disabled** unless the "Include Debug Symbols" option is checked during the export process. This ensures that validation checks are not run in production builds unless explicitly requested.
-
----
 
 ## Creating Your First Forge Entity
 
@@ -136,8 +132,6 @@ public partial class Player : CharacterBody2D
 }
 ```
 
----
-
 ## Working with Tags
 
 Tags are hierarchical identifiers used throughout the Forge system for classification and targeting.
@@ -170,8 +164,6 @@ bool isCharacter = forgeEntity.Tags.CombinedTags.HasTag(
 ```
 
 Note: To add or remove tags at runtime, you need to use effects with ModifierTagsEffectComponent. See the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/quick-start.md) for examples.
-
----
 
 ## Creating and Applying Effects
 
@@ -228,8 +220,6 @@ public partial class Enemy : CharacterBody2D
 }
 ```
 
----
-
 ## Using Area-Based Effects
 
 The following principles apply similarly to EffectRayCast2D/3D and EffectShapeCast2D/3D nodes, with appropriate collision configuration for each node type.
@@ -250,7 +240,157 @@ The following principles apply similarly to EffectRayCast2D/3D and EffectShapeCa
 
 Any entity that enters the area must have a ForgeEntity component or implement IForgeEntity to receive the effect.
 
----
+## Creating a Simple Ability
+
+Let’s add a “SimpleAttack” ability to your player. This covers the full process: making the effect, the ability, a simple ability behavior, granting to the player, and using it in gameplay.
+
+### Step 1: Create the Attack Effect Resource
+
+1. Right-click in the FileSystem panel, choose **New Resource > ForgeEffectData**.
+2. Save as `simple_attack_effect.tres`.
+3. In the Inspector, configure:
+   - `Name`: "PlayerAttack"
+   - `Duration Type`: "Instant"
+   - _Under Modifiers:_
+     1. Add a new ForgeModifier.
+     2. `Attribute`: `"PlayerAttributes.Health"`
+     3. `Operation`: `FlatBonus`
+     4. `Calculation Type`: `ScalableFloat`
+     5. For "Scalable Float," create a new ForgeScalableFloat, set its **Base Value** to (e.g.) `-20` for damage.
+
+### Step 2: Implement the Ability Behavior
+
+Create a new script called `SimpleAttackAbilityBehavior.cs`:
+
+```csharp
+using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Resources;
+using Godot;
+
+// This script must have [Tool] and [GlobalClass] so it can be assigned in the inspector
+[Tool]
+[GlobalClass]
+public partial class SimpleAttackAbilityBehavior : ForgeAbilityBehavior
+{
+    [Export]
+    public required ForgeEffectData AttackEffect { get; set; }
+
+    public override IAbilityBehavior GetBehavior()
+    {
+        // Wrap effect application logic for the ability
+        return new SimpleAttackBehavior(AttackEffect.GetEffectData());
+    }
+}
+
+public sealed class SimpleAttackBehavior : IAbilityBehavior
+{
+    private readonly EffectData _effectData;
+    private Effect? _attackEffect;
+
+    public SimpleAttackBehavior(EffectData effectData)
+    {
+        _effectData = effectData;
+    }
+
+    public void OnStarted(AbilityBehaviorContext context)
+    {
+        _attackEffect ??= new Effect(
+            _effectData,
+            new EffectOwnership(context.Owner, context.Source)
+        );
+
+        // (Optional) If using cooldowns via cooldown effect, commit here
+        context.AbilityHandle.CommitCooldown();
+
+        context.Target!.EffectsManager.ApplyEffect(_attackEffect);
+
+        context.InstanceHandle.End();
+    }
+
+    public void OnEnded(AbilityBehaviorContext context) { }
+}
+```
+
+### Step 3: Create the Ability Resource
+
+1. Right-click, **New Resource > ForgeAbilityData**. Save as `simple_attack_ability.tres`.
+2. In Inspector:
+   - `Name`: "SimpleAttack"
+   - Assign your `SimpleAttackAbilityBehavior` script as the `AbilityBehavior`.
+   - Under the behavior, set the `AttackEffect` property to your `simple_attack_effect.tres`.
+   - (Optional) Add tags, cooldown, or requirements as desired.
+
+### Step 4: Grant the Ability to the Player
+
+In most games, you want the player to always have their basic attack. For clarity, grant this ability permanently and save the handle for activation.
+
+Update your Player script:
+
+```csharp
+using Godot;
+using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Godot.Nodes;
+using Gamesmiths.Forge.Godot.Resources.Abilities;
+
+public partial class Player : CharacterBody2D
+{
+    private ForgeEntity? _forgeEntity;
+    private AbilityHandle? _attackHandle;
+
+    [Export]
+    public ForgeAbilityData? SimpleAttackAbilityData { get; set; }
+
+    public override void _Ready()
+    {
+        _forgeEntity = GetNode<ForgeEntity>("ForgeEntity");
+        if (_forgeEntity != null && SimpleAttackAbilityData != null)
+        {
+            // Grant ability permanently and get handle
+            _attackHandle = _forgeEntity.Abilities.GrantAbilityPermanently(
+                SimpleAttackAbilityData.GetAbilityData(),
+                abilityLevel: 1,
+                levelOverridePolicy: Core.LevelComparison.None,
+                sourceEntity: null // or the object granting the ability
+            );
+        }
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        // On attack input (e.g., pressing "attack"), activate the ability
+        if (@event.IsActionPressed("attack") && _attackHandle != null)
+        {
+            // Target selection logic here; for example, get nearest enemy
+            // For simplicity, suppose target is set externally
+            IForgeEntity? target = GetNearestEnemy();
+            if (target != null)
+            {
+                _attackHandle.Activate(out var failures, target);
+            }
+        }
+    }
+
+    private IForgeEntity? GetNearestEnemy()
+    {
+        // Your targeting logic ...
+        return null;
+    }
+}
+```
+
+**Note:**
+
+You can also grant abilities via effects using the `GrantAbilityComponent`, which links the ability's lifetime to the effect (for temporary or conditional grants). To use this method, add a ForgeEffectData with a GrantAbilityComponent, apply the effect to the entity, and fetch the handle with `TryGetAbility()`.
+
+**Summary:**
+- Create a `ForgeEffectData` for your damage.
+- Create an ability behavior (with `[Tool]` and `[GlobalClass]`).
+- Create a `ForgeAbilityData` and assign the behavior/effect to it.
+- Add the ability to your player (via API or effect) and hold onto the handle.
+- Call `Activate` on input, passing the intended target.
+
+This pattern works for simple and complex abilities alike; just expand the effect logic and ability behavior for more advanced needs.
 
 ## Setting Up Visual Feedback with Cues
 
@@ -309,10 +449,10 @@ public partial class DamageCueHandler : ForgeCueHandler
    - Set "Magnitude Type" to "AttributeValueChange".
    - Select "PlayerAttributes.Health" as your "Magnitude Attribute".
 
----
-
 ## Next Steps
 
 - Learn more about the [custom nodes](nodes.md) provided by the plugin.
-- Explore the examples in the repository.
-- Check out the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) for advanced usage.
+- Browse all available [Forge resources](resources.md) for configuring effects, abilities, tags, and more.
+- Discover [helper classes](helper-classes.md) for streamlining common Forge workflows in Godot.
+- Clone and explore the examples in the repository.
+- Check out the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) for advanced topics and reference.

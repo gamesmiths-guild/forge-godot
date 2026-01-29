@@ -1,0 +1,102 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://8q6crdcnqojs"]
+
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_vnu6c"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_1xrk2"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="2_17x02"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_k2fau"]
+[ext_resource type="Script" uid="uid://dpoo864fev8me" path="res://examples/common/scripts/calculators/DamageExecutionWrapper.cs" id="3_uqw53"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_ugwgr"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="5_l02rh"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_wyde7"]
+
+[sub_resource type="Resource" id="Resource_6vxlq"]
+script = ExtResource("1_vnu6c")
+ContainerTags = ["immunity.damage"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_1xrk2"]
+script = ExtResource("1_vnu6c")
+ContainerTags = ["trait.damageable"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_dnujx"]
+script = ExtResource("2_1xrk2")
+ApplicationRequiredTags = SubResource("Resource_1xrk2")
+ApplicationIgnoredTags = SubResource("Resource_6vxlq")
+metadata/_custom_type_script = "uid://b0eq12mjqfage"
+
+[sub_resource type="Resource" id="Resource_yy5ki"]
+script = ExtResource("1_vnu6c")
+ContainerTags = ["cue.floating.text"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_ikt6e"]
+script = ExtResource("2_17x02")
+CueKeys = SubResource("Resource_yy5ki")
+MaxValue = 1000
+MagnitudeType = 2
+MagnitudeAttribute = "CharacterAttributes.Health"
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_p7f67"]
+script = ExtResource("3_uqw53")
+metadata/_custom_type_script = "uid://dpoo864fev8me"
+
+[sub_resource type="Resource" id="Resource_cn837"]
+script = ExtResource("3_k2fau")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_vnu6c"]
+script = ExtResource("4_ugwgr")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_i21lj"]
+script = ExtResource("4_ugwgr")
+
+[sub_resource type="Resource" id="Resource_6nyv0"]
+script = ExtResource("4_ugwgr")
+
+[sub_resource type="Resource" id="Resource_17x02"]
+script = ExtResource("4_ugwgr")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_qpd8e"]
+script = ExtResource("4_ugwgr")
+
+[sub_resource type="Resource" id="Resource_tgk5n"]
+script = ExtResource("4_ugwgr")
+
+[sub_resource type="Resource" id="Resource_xmlma"]
+script = ExtResource("4_ugwgr")
+BaseValue = 100.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_kpa2l"]
+script = ExtResource("5_l02rh")
+Attribute = "MetaAttributes.IncomingDamage"
+Operation = 2
+ScalableFloat = SubResource("Resource_xmlma")
+SnapshotAttribute = false
+Coefficient = SubResource("Resource_17x02")
+PreMultiplyAdditiveValue = SubResource("Resource_tgk5n")
+PostMultiplyAdditiveValue = SubResource("Resource_qpd8e")
+CalculatorCoefficient = SubResource("Resource_vnu6c")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_6nyv0")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_i21lj")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_cd28o"]
+script = ExtResource("3_k2fau")
+BaseValue = 1
+
+[resource]
+script = ExtResource("6_wyde7")
+Name = "Damage"
+Modifiers = Array[Object]([SubResource("Resource_kpa2l")])
+Components = [SubResource("Resource_dnujx")]
+Executions = [SubResource("Resource_p7f67")]
+StackLimit = SubResource("Resource_cd28o")
+InitialStack = SubResource("Resource_cn837")
+Cues = [SubResource("Resource_ikt6e")]
+RequireModifierSuccessToTriggerCue = 1
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

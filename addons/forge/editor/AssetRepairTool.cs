@@ -27,7 +27,7 @@ public partial class AssetRepairTool : EditorPlugin
 
 		foreach (var originalScenePath in scenes)
 		{
-			// For some weird reason scenes from the GetScenePath are comming with 3 slahes instead of just two.
+			// For some weird reason scenes from the GetScenePath are coming with 3 slashes instead of just two.
 			var scenePath = originalScenePath.Replace("res:///", "res://");
 
 			GD.Print($"Processing scene: {scenePath}.");
@@ -170,7 +170,10 @@ public partial class AssetRepairTool : EditorPlugin
 		return modified;
 	}
 
-	private static bool ValidateTagContainerProperty(ForgeTagContainer container, string nodeName, TagsManager tagsManager)
+	private static bool ValidateTagContainerProperty(
+		ForgeTagContainer container,
+		string nodeName,
+		TagsManager tagsManager)
 	{
 		if (container.ContainerTags is null)
 		{

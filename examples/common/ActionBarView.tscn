@@ -1,0 +1,71 @@
+[gd_scene load_steps=6 format=3 uid="uid://f0cdtm7kc3qx"]
+
+[ext_resource type="Script" uid="uid://bqotneekxchg7" path="res://examples/3d/scripts/ActionBarView.cs" id="1_s6ll1"]
+
+[sub_resource type="Gradient" id="Gradient_s6ll1"]
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_2sihs"]
+gradient = SubResource("Gradient_s6ll1")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_1knph"]
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_7x5di"]
+gradient = SubResource("Gradient_1knph")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 1)
+
+[node name="ActionBarView" type="Control" node_paths=PackedStringArray("CooldownProgressBar", "CooldownLabel", "CostLabel", "KeyLabel")]
+custom_minimum_size = Vector2(50, 90)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_s6ll1")
+CooldownProgressBar = NodePath("TextureProgressBar")
+CooldownLabel = NodePath("Label")
+CostLabel = NodePath("CostLabel")
+KeyLabel = NodePath("Label2")
+
+[node name="CostLabel" type="Label" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0.49070764, 0.122526966, 0.08136558, 1)
+text = "0"
+horizontal_alignment = 1
+
+[node name="TextureProgressBar" type="TextureProgressBar" parent="."]
+layout_mode = 0
+offset_top = 23.0
+offset_right = 40.0
+offset_bottom = 63.0
+fill_mode = 4
+nine_patch_stretch = true
+texture_under = SubResource("GradientTexture2D_2sihs")
+texture_progress = SubResource("GradientTexture2D_7x5di")
+tint_progress = Color(0.39688927, 0.39688927, 0.39688924, 1)
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_top = 30.0
+offset_right = 40.0
+offset_bottom = 53.0
+theme_override_colors/font_color = Color(0.07763139, 0.09801621, 0.30679765, 1)
+text = "0s"
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="."]
+layout_mode = 0
+offset_top = 63.0
+offset_right = 40.0
+offset_bottom = 86.0
+theme_override_colors/font_color = Color(0.07763139, 0.09801621, 0.30679765, 1)
+text = "LMB"
+horizontal_alignment = 1

@@ -1,11 +1,22 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=19 format=3 uid="uid://d13vhgx0ys5s3"]
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://d13vhgx0ys5s3"]
 
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_0ac2n"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="1_oetcp"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_8xfre"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_ndnkd"]
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_uvude"]
 [ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="4_h84da"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_3v4a0"]
+
+[sub_resource type="Resource" id="Resource_boc5q"]
+script = ExtResource("1_0ac2n")
+ContainerTags = ["trait.healable"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_oatky"]
+script = ExtResource("2_ndnkd")
+ApplicationRequiredTags = SubResource("Resource_boc5q")
+metadata/_custom_type_script = "uid://b0eq12mjqfage"
 
 [sub_resource type="Resource" id="Resource_ndnkd"]
 script = ExtResource("1_0ac2n")
@@ -15,7 +26,6 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 [sub_resource type="Resource" id="Resource_0ac2n"]
 script = ExtResource("1_oetcp")
 CueKeys = SubResource("Resource_ndnkd")
-MinValue = 0
 MaxValue = 1000
 MagnitudeType = 2
 MagnitudeAttribute = "CharacterAttributes.Health"
@@ -25,29 +35,25 @@ metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 script = ExtResource("2_8xfre")
 BaseValue = 1
 
-[sub_resource type="Resource" id="Resource_pvxif"]
+[sub_resource type="Resource" id="Resource_inkq1"]
 script = ExtResource("3_uvude")
 BaseValue = 1.0
 
 [sub_resource type="Resource" id="Resource_i21lj"]
 script = ExtResource("3_uvude")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_6nyv0"]
 script = ExtResource("3_uvude")
-BaseValue = 0.0
 
-[sub_resource type="Resource" id="Resource_8f587"]
+[sub_resource type="Resource" id="Resource_bnwm2"]
 script = ExtResource("3_uvude")
 BaseValue = 1.0
 
 [sub_resource type="Resource" id="Resource_qpd8e"]
 script = ExtResource("3_uvude")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_tgk5n"]
 script = ExtResource("3_uvude")
-BaseValue = 0.0
 
 [sub_resource type="Resource" id="Resource_xmlma"]
 script = ExtResource("3_uvude")
@@ -57,22 +63,14 @@ metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 [sub_resource type="Resource" id="Resource_kpa2l"]
 script = ExtResource("4_h84da")
 Attribute = "CharacterAttributes.Health"
-Operation = 0
-Channel = 0
-CalculationType = 0
 ScalableFloat = SubResource("Resource_xmlma")
-CapturedAttribute = ""
-CaptureSource = 0
 SnapshotAttribute = false
-AttributeCalculationType = 0
-Coeficient = SubResource("Resource_8f587")
+Coefficient = SubResource("Resource_bnwm2")
 PreMultiplyAdditiveValue = SubResource("Resource_tgk5n")
 PostMultiplyAdditiveValue = SubResource("Resource_qpd8e")
-FinalChannel = 0
-CalculatorCoeficient = SubResource("Resource_pvxif")
+CalculatorCoefficient = SubResource("Resource_inkq1")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_6nyv0")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_i21lj")
-CallerTargetTag = ""
 metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
 
 [sub_resource type="Resource" id="Resource_cd28o"]
@@ -82,31 +80,11 @@ BaseValue = 1
 [resource]
 script = ExtResource("5_3v4a0")
 Name = "Heal"
-SnapshotLevel = true
 Modifiers = Array[Object]([SubResource("Resource_kpa2l")])
-Components = []
+Components = [SubResource("Resource_oatky")]
 Executions = []
-DurationType = 0
-HasPeriodicApplication = false
-ExecuteOnApplication = false
-CanStack = false
 StackLimit = SubResource("Resource_cd28o")
 InitialStack = SubResource("Resource_cn837")
-SourcePolicy = 0
-InstigatorDenialPolicy = 0
-InstigatorOverridePolicy = 0
-InstigatorOverrideStackCountPolicy = 0
-LevelPolicy = 0
-LevelDenialPolicy = 0
-LevelOverridePolicy = 0
-LevelOverrideStackCountPolicy = 0
-MagnitudePolicy = 0
-OverflowPolicy = 0
-ExpirationPolicy = 0
-ApplicationRefreshPolicy = 0
-ApplicationResetPeriodPolicy = 0
-ExecuteOnSuccessfulApplication = false
 Cues = [SubResource("Resource_0ac2n")]
-RequireModifierSuccessToTriggerCue = false
-SuppressStackingCues = false
+RequireModifierSuccessToTriggerCue = 4
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

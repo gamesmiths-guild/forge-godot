@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://c17f812by5x23"]
+[gd_scene format=3 uid="uid://c17f812by5x23"]
 
 [ext_resource type="Script" uid="uid://do8jplrf64p5f" path="res://addons/forge/editor/tags/TagsEditor.cs" id="1_7jg4t"]
 
-[node name="GameplayTagsEditor" type="VBoxContainer"]
+[node name="GameplayTagsEditor" type="VBoxContainer" unique_id=1724725192]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -10,24 +10,24 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_7jg4t")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=613044022]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBoxContainer"]
+[node name="Label" type="Label" parent="HBoxContainer" unique_id=2121441014]
 layout_mode = 2
 text = "Tag Name:"
 
-[node name="TagNameField" type="LineEdit" parent="HBoxContainer"]
+[node name="TagNameField" type="LineEdit" parent="HBoxContainer" unique_id=337174471]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="AddTagButton" type="Button" parent="HBoxContainer"]
+[node name="AddTagButton" type="Button" parent="HBoxContainer" unique_id=19730410]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Add Tag"
 
-[node name="Tree" type="Tree" parent="."]
+[node name="Tree" type="Tree" parent="." unique_id=1467435445]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3

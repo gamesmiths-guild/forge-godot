@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://yaq582h7bhfb"]
+
+[ext_resource type="Resource" uid="uid://c8pyecr40jr66" path="res://examples/3d/abilities/enemy/enemy_attack.tres" id="1_0yqjd"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_7sbii"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="3_n56fb"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="4_wdtpk"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_i0bcm"]
+
+[sub_resource type="Resource" id="Resource_h1fff"]
+script = ExtResource("2_7sbii")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_jm1ed"]
+script = ExtResource("3_n56fb")
+AbilityData = ExtResource("1_0yqjd")
+AbilityLevel = SubResource("Resource_h1fff")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_4gm32"]
+script = ExtResource("4_wdtpk")
+GrantAbilityConfigs = [SubResource("Resource_jm1ed")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_cn837"]
+script = ExtResource("2_7sbii")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_cd28o"]
+script = ExtResource("2_7sbii")
+BaseValue = 1
+
+[resource]
+script = ExtResource("5_i0bcm")
+Name = "Grant Enemy Ability"
+Modifiers = Array[Object]([])
+Components = [SubResource("Resource_4gm32")]
+Executions = []
+StackLimit = SubResource("Resource_cd28o")
+InitialStack = SubResource("Resource_cn837")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

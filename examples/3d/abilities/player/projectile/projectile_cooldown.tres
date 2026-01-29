@@ -1,0 +1,75 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://besaiburar7vm"]
+
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_6c4pv"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_dlja4"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="3_r5o60"]
+[ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="4_5occg"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="5_bubpx"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_jr4uo"]
+
+[sub_resource type="Resource" id="Resource_611xj"]
+script = ExtResource("1_6c4pv")
+ContainerTags = ["cooldown.skill.projectile"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_q7ccr"]
+script = ExtResource("2_dlja4")
+TagsToAdd = SubResource("Resource_611xj")
+metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_ds3if"]
+script = ExtResource("3_r5o60")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_nu5s8"]
+script = ExtResource("3_r5o60")
+
+[sub_resource type="Resource" id="Resource_r7vh4"]
+script = ExtResource("3_r5o60")
+
+[sub_resource type="Resource" id="Resource_cme5w"]
+script = ExtResource("3_r5o60")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_841pu"]
+script = ExtResource("3_r5o60")
+
+[sub_resource type="Resource" id="Resource_q0mch"]
+script = ExtResource("3_r5o60")
+
+[sub_resource type="Resource" id="Resource_rxp43"]
+script = ExtResource("3_r5o60")
+BaseValue = 0.2
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_jkajk"]
+script = ExtResource("4_5occg")
+ScalableFloat = SubResource("Resource_rxp43")
+Coefficient = SubResource("Resource_cme5w")
+PreMultiplyAdditiveValue = SubResource("Resource_q0mch")
+PostMultiplyAdditiveValue = SubResource("Resource_841pu")
+CalculatorCoefficient = SubResource("Resource_ds3if")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_r7vh4")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_nu5s8")
+metadata/_custom_type_script = "uid://2gm1hdhi8u08"
+
+[sub_resource type="Resource" id="Resource_gpv1f"]
+script = ExtResource("5_bubpx")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_o8ji7"]
+script = ExtResource("5_bubpx")
+BaseValue = 1
+
+[resource]
+script = ExtResource("6_jr4uo")
+Name = "Skill 1 Cooldown"
+Modifiers = []
+Components = Array[Object]([SubResource("Resource_q7ccr")])
+Executions = []
+DurationType = 2
+Duration = SubResource("Resource_jkajk")
+StackLimit = SubResource("Resource_o8ji7")
+InitialStack = SubResource("Resource_gpv1f")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

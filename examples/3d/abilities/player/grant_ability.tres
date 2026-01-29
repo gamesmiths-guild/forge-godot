@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://cdm6ldp5kxyg0"]
+
+[ext_resource type="Resource" uid="uid://7c67atykv7d4" path="res://examples/3d/abilities/player/projectile/projectile.tres" id="1_c52b4"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_jm1ed"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="3_4gm32"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="4_3ritx"]
+[ext_resource type="Resource" uid="uid://cpnut4w1fqhga" path="res://examples/3d/abilities/player/reflect/reflect.tres" id="4_woojq"]
+[ext_resource type="Resource" uid="uid://b4ijs00jkdcnk" path="res://examples/3d/abilities/player/dash/dash.tres" id="5_3nanh"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_n6j2m"]
+[ext_resource type="Resource" uid="uid://pb1diwvev512" path="res://examples/3d/abilities/player/shield/shield.tres" id="6_woojq"]
+
+[sub_resource type="Resource" id="Resource_h1fff"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_jm1ed"]
+script = ExtResource("3_4gm32")
+AbilityData = ExtResource("1_c52b4")
+AbilityLevel = SubResource("Resource_h1fff")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_c52b4"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_woojq"]
+script = ExtResource("3_4gm32")
+AbilityData = ExtResource("4_woojq")
+AbilityLevel = SubResource("Resource_c52b4")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_jarbh"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_ctdwi"]
+script = ExtResource("3_4gm32")
+AbilityData = ExtResource("5_3nanh")
+AbilityLevel = SubResource("Resource_jarbh")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_3nanh"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_3aq7l"]
+script = ExtResource("3_4gm32")
+AbilityData = ExtResource("6_woojq")
+AbilityLevel = SubResource("Resource_3nanh")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_4gm32"]
+script = ExtResource("4_3ritx")
+GrantAbilityConfigs = [SubResource("Resource_jm1ed"), SubResource("Resource_woojq"), SubResource("Resource_ctdwi"), SubResource("Resource_3aq7l")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_cn837"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_cd28o"]
+script = ExtResource("2_jm1ed")
+BaseValue = 1
+
+[resource]
+script = ExtResource("5_n6j2m")
+Name = "Damage"
+Modifiers = Array[Object]([])
+Components = [SubResource("Resource_4gm32")]
+Executions = []
+StackLimit = SubResource("Resource_cd28o")
+InitialStack = SubResource("Resource_cn837")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

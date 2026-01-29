@@ -14,7 +14,7 @@ internal static class EditorUtils
 	/// <summary>
 	/// Uses reflection to gather all classes inheriting from AttributeSet and their fields of type Attribute.
 	/// </summary>
-	/// <returns>An array with the avaiable attributes.</returns>
+	/// <returns>An array with the available attributes.</returns>
 	public static string[] GetAttributeSetOptions()
 	{
 		var options = new List<string>();
@@ -35,7 +35,7 @@ internal static class EditorUtils
 	/// Uses reflection to gather all classes inheriting from AttributeSet and their fields of type Attribute.
 	/// </summary>
 	/// <param name="attributeSet">The attribute set used to search for the attributes.</param>
-	/// <returns>An array with the avaiable attributes.</returns>
+	/// <returns>An array with the available attributes.</returns>
 	public static string[] GetAttributeOptions(string? attributeSet)
 	{
 		if (string.IsNullOrEmpty(attributeSet))

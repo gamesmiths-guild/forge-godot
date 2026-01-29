@@ -1,10 +1,12 @@
-[gd_resource type="Resource" script_class="ForgeEffectData" load_steps=14 format=3 uid="uid://dgybn25of4xpg"]
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://dgybn25of4xpg"]
 
 [ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="1_q4yw0"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_rwyct"]
 [ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_25jvs"]
+[ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="3_2fh6r"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="3_6njdu"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_25jvs"]
+[ext_resource type="Script" uid="uid://2gm1hdhi8u08" path="res://addons/forge/resources/magnitudes/ForgeModifierMagnitude.cs" id="5_fwqnh"]
 [ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_udmal"]
 
 [sub_resource type="Resource" id="Resource_u4cvi"]
@@ -17,6 +19,16 @@ script = ExtResource("2_25jvs")
 TagsToAdd = SubResource("Resource_u4cvi")
 metadata/_custom_type_script = "uid://dngf30hxy5go4"
 
+[sub_resource type="Resource" id="Resource_40mq1"]
+script = ExtResource("1_rwyct")
+ContainerTags = ["trait.wettable"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_aodsk"]
+script = ExtResource("3_2fh6r")
+ApplicationRequiredTags = SubResource("Resource_40mq1")
+metadata/_custom_type_script = "uid://b0eq12mjqfage"
+
 [sub_resource type="Resource" id="Resource_6njdu"]
 script = ExtResource("1_rwyct")
 ContainerTags = ["cue.vfx.wet"]
@@ -25,16 +37,44 @@ metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 [sub_resource type="Resource" id="Resource_fwqnh"]
 script = ExtResource("3_6njdu")
 CueKeys = SubResource("Resource_6njdu")
-MinValue = 0
 MaxValue = 1
-MagnitudeType = 0
-MagnitudeAttribute = ""
 metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
 
-[sub_resource type="Resource" id="Resource_hevuu"]
+[sub_resource type="Resource" id="Resource_2fh6r"]
+script = ExtResource("1_q4yw0")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_6iyw7"]
+script = ExtResource("1_q4yw0")
+
+[sub_resource type="Resource" id="Resource_5inrd"]
+script = ExtResource("1_q4yw0")
+
+[sub_resource type="Resource" id="Resource_5kg6i"]
+script = ExtResource("1_q4yw0")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_7qhew"]
+script = ExtResource("1_q4yw0")
+
+[sub_resource type="Resource" id="Resource_x4nny"]
+script = ExtResource("1_q4yw0")
+
+[sub_resource type="Resource" id="Resource_syb5j"]
 script = ExtResource("1_q4yw0")
 BaseValue = 5.0
 metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_bo6yr"]
+script = ExtResource("5_fwqnh")
+ScalableFloat = SubResource("Resource_syb5j")
+Coefficient = SubResource("Resource_5kg6i")
+PreMultiplyAdditiveValue = SubResource("Resource_x4nny")
+PostMultiplyAdditiveValue = SubResource("Resource_7qhew")
+CalculatorCoefficient = SubResource("Resource_2fh6r")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_5inrd")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_6iyw7")
+metadata/_custom_type_script = "uid://2gm1hdhi8u08"
 
 [sub_resource type="Resource" id="Resource_cn837"]
 script = ExtResource("3_25jvs")
@@ -47,32 +87,15 @@ BaseValue = 1
 [resource]
 script = ExtResource("5_udmal")
 Name = "Wet"
-SnapshotLevel = true
 Modifiers = Array[Object]([])
-Components = [SubResource("Resource_udmal")]
+Components = [SubResource("Resource_udmal"), SubResource("Resource_aodsk")]
 Executions = []
 DurationType = 2
-Duration = SubResource("Resource_hevuu")
-HasPeriodicApplication = false
-ExecuteOnApplication = false
+Duration = SubResource("Resource_bo6yr")
 CanStack = true
 StackLimit = SubResource("Resource_cd28o")
 InitialStack = SubResource("Resource_cn837")
 SourcePolicy = 1
-InstigatorDenialPolicy = 0
 InstigatorOverridePolicy = 1
-InstigatorOverrideStackCountPolicy = 0
-LevelPolicy = 0
-LevelDenialPolicy = 0
-LevelOverridePolicy = 0
-LevelOverrideStackCountPolicy = 0
-MagnitudePolicy = 0
-OverflowPolicy = 0
-ExpirationPolicy = 0
-ApplicationRefreshPolicy = 0
-ApplicationResetPeriodPolicy = 0
-ExecuteOnSuccessfulApplication = false
 Cues = [SubResource("Resource_fwqnh")]
-RequireModifierSuccessToTriggerCue = false
-SuppressStackingCues = false
 metadata/_custom_type_script = "uid://b83hf13nj37k3"

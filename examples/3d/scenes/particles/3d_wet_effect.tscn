@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://dk27gs27pk67k"]
+[gd_scene format=3 uid="uid://dk27gs27pk67k"]
 
 [sub_resource type="Gradient" id="Gradient_a0li7"]
 colors = PackedColorArray(0, 0.377156, 0.701318, 1, 0.266667, 0.937255, 0.980392, 0.423529)
@@ -26,6 +26,6 @@ vertex_color_use_as_albedo = true
 [sub_resource type="SphereMesh" id="SphereMesh_cl7lv"]
 material = SubResource("StandardMaterial3D_sgubq")
 
-[node name="GPUParticles3D" type="GPUParticles3D"]
+[node name="GPUParticles3D" type="GPUParticles3D" unique_id=1378410299]
 process_material = SubResource("ParticleProcessMaterial_kw1tj")
 draw_pass_1 = SubResource("SphereMesh_cl7lv")

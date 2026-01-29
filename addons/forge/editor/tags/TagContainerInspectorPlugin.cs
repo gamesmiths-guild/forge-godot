@@ -8,8 +8,6 @@ namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 {
-	private PackedScene? _inspectorScene;
-
 	public override bool _CanHandle(GodotObject @object)
 	{
 		return @object is ForgeTagContainer;
@@ -24,24 +22,14 @@ public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		_inspectorScene = ResourceLoader.Load<PackedScene>("uid://tou2hv4cet4e");
-
-		if (type == Variant.Type.Array && name == "ContainerTags")
+		if (name != "ContainerTags")
 		{
-			var containerScene = (TagContainerEditor)_inspectorScene.Instantiate();
-			containerScene.IsPluginInstance = true;
-
-			if (@object is ForgeTagContainer tagContainer)
-			{
-				containerScene.ContainerTags = tagContainer.ContainerTags;
-			}
-
-			AddCustomControl(containerScene);
-
-			return true;
+			return false;
 		}
 
-		return false;
+		var prop = new TagContainerEditorProperty();
+		AddPropertyEditor(name, prop);
+		return true;
 	}
 }
 #endif

@@ -16,8 +16,10 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
 	private const string PluginScenePath = "uid://pjscvogl6jak";
 
+	private EditorDock? _editorDock;
 	private PanelContainer? _dockedScene;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
+	private TagInspectorPlugin? _tagInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
@@ -26,12 +28,23 @@ public partial class ForgePluginLoader : EditorPlugin
 	{
 		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
+		_editorDock = new EditorDock
+		{
+			Title = "Forge",
+			DockIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20"),
+			DefaultSlot = EditorDock.DockSlot.RightUl,
+		};
+
 		_dockedScene = (PanelContainer)pluginScene.Instantiate();
 		_dockedScene.GetNode<TagsEditor>("%Tags").IsPluginInstance = true;
-		AddControlToDock(DockSlot.RightUl, _dockedScene);
+
+		_editorDock.AddChild(_dockedScene);
+		AddDock(_editorDock);
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
 		AddInspectorPlugin(_tagContainerInspectorPlugin);
+		_tagInspectorPlugin = new TagInspectorPlugin();
+		AddInspectorPlugin(_tagInspectorPlugin);
 		_attributeSetInspectorPlugin = new AttributeSetInspectorPlugin();
 		AddInspectorPlugin(_attributeSetInspectorPlugin);
 		_cueHandlerInspectorPlugin = new CueHandlerInspectorPlugin();
@@ -44,12 +57,15 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _ExitTree()
 	{
+		Debug.Assert(_editorDock is not null, $"{nameof(_editorDock)} should have been initialized on _Ready().");
 		Debug.Assert(_dockedScene is not null, $"{nameof(_dockedScene)} should have been initialized on _Ready().");
 
-		RemoveControlFromDocks(_dockedScene);
+		RemoveDock(_editorDock);
+		_editorDock.QueueFree();
 		_dockedScene.Free();
 
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
+		RemoveInspectorPlugin(_tagInspectorPlugin);
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeEditorPlugin);

@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dcld5rm0b5242"]
+[gd_scene format=3 uid="uid://dcld5rm0b5242"]
 
 [ext_resource type="Script" uid="uid://bdrua4kp0sfwd" path="res://examples/2d/scripts/FloatText2D.cs" id="1_hc8gd"]
 
-[node name="Label" type="Label" node_paths=PackedStringArray("Timer")]
+[node name="Label" type="Label" unique_id=1652064718 node_paths=PackedStringArray("Timer")]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -22,6 +22,6 @@ vertical_alignment = 1
 script = ExtResource("1_hc8gd")
 Timer = NodePath("Timer")
 
-[node name="Timer" type="Timer" parent="."]
+[node name="Timer" type="Timer" parent="." unique_id=1666180141]
 one_shot = true
 autostart = true

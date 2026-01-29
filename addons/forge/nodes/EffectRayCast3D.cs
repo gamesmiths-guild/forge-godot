@@ -16,18 +16,26 @@ public partial class EffectRayCast3D : RayCast3D
 	private GodotObject? _lastFrameCollider;
 
 	[Export]
-	public Node? AreaOwner { get; set; }
+	public Node? EffectOwner { get; set; }
+
+	[Export]
+	public Node? EffectSource { get; set; }
+
+	[Export]
+	public int EffectLevel { get; set; } = 1;
 
 	[Export]
 	public EffectTriggerMode TriggerMode { get; set; }
 
-	private IForgeEntity? ForgeEntity => AreaOwner as IForgeEntity;
+	private IForgeEntity? OwnerEntity => EffectOwner as IForgeEntity;
+
+	private IForgeEntity? SourceEntity => EffectSource as IForgeEntity;
 
 	public override void _Ready()
 	{
-		if (AreaOwner is not null && AreaOwner is not IForgeEntity)
+		if (EffectOwner is not null && EffectOwner is not IForgeEntity)
 		{
-			GD.PushError($"{nameof(AreaOwner)} must implement {nameof(IForgeEntity)}.");
+			GD.PushError($"{nameof(EffectOwner)} must implement {nameof(IForgeEntity)}.");
 		}
 
 		base._Ready();
@@ -50,11 +58,11 @@ public partial class EffectRayCast3D : RayCast3D
 		{
 			if (TriggerMode == EffectTriggerMode.OnStay)
 			{
-				_effectApplier.AddEffects(currentNode, ForgeEntity);
+				_effectApplier.AddEffects(currentNode, OwnerEntity, SourceEntity, EffectLevel);
 			}
 			else if (TriggerMode == EffectTriggerMode.OnEnter)
 			{
-				_effectApplier.ApplyEffects(currentNode, ForgeEntity);
+				_effectApplier.ApplyEffects(currentNode, OwnerEntity, SourceEntity, EffectLevel);
 			}
 		}
 
@@ -67,7 +75,7 @@ public partial class EffectRayCast3D : RayCast3D
 			}
 			else if (TriggerMode == EffectTriggerMode.OnExit)
 			{
-				_effectApplier.ApplyEffects(lastNode, ForgeEntity);
+				_effectApplier.ApplyEffects(lastNode, OwnerEntity, SourceEntity, EffectLevel);
 			}
 		}
 

@@ -13,6 +13,7 @@ namespace Gamesmiths.Forge.Example;
 public partial class FloatingTextCueHandler3D : ForgeCueHandler
 {
 	private Color _damageColor = new(1, 0, 0);
+	private Color _healingColor = new(0, 1, 0);
 
 	[Export]
 	public PackedScene? FloatingTextScene { get; set; }
@@ -34,12 +35,16 @@ public partial class FloatingTextCueHandler3D : ForgeCueHandler
 		FloatText3D floatingText = FloatingTextScene.Instantiate<FloatText3D>();
 		floatingText.SetText(parameters.Value.Magnitude.ToString(CultureInfo.InvariantCulture));
 
-		if (parameters.Value.Magnitude < 0)
+		if (parameters.Value.Magnitude <= 0)
 		{
 			floatingText.SetColor(_damageColor);
 		}
+		else
+		{
+			floatingText.SetColor(_healingColor);
+		}
 
-		floatingText.Position = node3D.Position + new Vector3(0, 2, 0);
+		floatingText.Position = node3D.GlobalPosition + new Vector3(0, 3, 0);
 
 		AddChild(floatingText);
 	}

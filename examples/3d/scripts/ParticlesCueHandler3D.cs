@@ -1,7 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Threading.Tasks;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Godot.Nodes;
@@ -15,14 +15,25 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 	private readonly Dictionary<Node3D, Node3D?> _effectInstanceMapping = [];
 
 	[Export]
-	public PackedScene? FireEffectScene { get; set; }
+	public PackedScene? PersistentEffectScene { get; set; }
+
+	[Export]
+	public PackedScene? InstantEffectScene { get; set; }
 
 	[Export]
 	public bool UpdateEffectIntensity { get; set; }
 
+	[Export]
+	public Vector3 Offset { get; set; } = new(0, 0, 0);
+
 	public override void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
 		base._CueOnApply(forgeEntity, parameters);
+
+		if (PersistentEffectScene is null)
+		{
+			return;
+		}
 
 		if (forgeEntity is not Node node)
 		{
@@ -34,9 +45,7 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 			return;
 		}
 
-		Debug.Assert(FireEffectScene is not null, $"{nameof(FireEffectScene)} reference is missing.");
-
-		Node3D effectInstance = FireEffectScene.Instantiate<Node3D>();
+		Node3D effectInstance = PersistentEffectScene.Instantiate<Node3D>();
 
 		if (!_effectInstanceMapping.TryAdd(parent, effectInstance))
 		{
@@ -44,7 +53,7 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 		}
 
 		parent.AddChild(effectInstance);
-		effectInstance.Translate(new Vector3(0, 2, 0));
+		effectInstance.Translate(Offset);
 	}
 
 	public override void _CueOnUpdate(IForgeEntity forgeEntity, CueParameters? parameters)
@@ -100,5 +109,49 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 		parent.RemoveChild(effectInstance);
 		effectInstance.QueueFree();
 		_effectInstanceMapping[parent] = null;
+	}
+
+	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
+	{
+		base._CueOnExecute(forgeEntity, parameters);
+
+		if (InstantEffectScene is null)
+		{
+			return;
+		}
+
+		if (forgeEntity is not Node node)
+		{
+			return;
+		}
+
+		if (node.GetParent() is not Node3D parent)
+		{
+			return;
+		}
+
+		Node3D effectInstance = InstantEffectScene.Instantiate<Node3D>();
+
+		parent.AddChild(effectInstance);
+		effectInstance.Translate(Offset);
+
+		if (effectInstance is not GpuParticles3D particles)
+		{
+			return;
+		}
+
+		particles.Emitting = false;
+		particles.Restart();
+		particles.Emitting = true;
+
+		_ = DestroyAfter(particles, (float)(particles.Lifetime + 0.1f));
+	}
+
+	private async Task DestroyAfter(Node node, float delay)
+	{
+		GD.Print($"Destroying node {node.Name} after {delay} seconds.");
+
+		await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
+		node.QueueFree();
 	}
 }

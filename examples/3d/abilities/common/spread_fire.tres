@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://bn8wjd3t272uv"]
+
+[ext_resource type="Script" uid="uid://dfe1h4xylta21" path="res://examples/3d/scripts/abilities/SpreadFireAbilityBehavior.cs" id="2_s6nwc"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="3_77umg"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="4_5rqwj"]
+
+[sub_resource type="Resource" id="Resource_v5818"]
+script = ExtResource("2_s6nwc")
+FireEffectUID = "uid://drty8r1ibx5ug"
+metadata/_custom_type_script = "uid://dfe1h4xylta21"
+
+[sub_resource type="Resource" id="Resource_py5oy"]
+script = ExtResource("3_77umg")
+Tag = "event.damage.dealt"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[resource]
+script = ExtResource("4_5rqwj")
+Name = "Spread Fire"
+InstancingPolicy = 1
+CooldownEffects = []
+AbilityBehavior = SubResource("Resource_v5818")
+TriggerSource = 1
+TriggerTag = SubResource("Resource_py5oy")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"
