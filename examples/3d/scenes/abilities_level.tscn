@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://ca1f6valfuo1n"]
+[gd_scene format=3 uid="uid://ca1f6valfuo1n"]
 
 [ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://examples/common/QuitScene.cs" id="1_djihv"]
 [ext_resource type="Shader" uid="uid://dryn58ip2k1yn" path="res://examples/3d/scripts/floor.gdshader" id="1_qvkro"]
@@ -73,23 +73,23 @@ albedo_color = Color(1, 0.431373, 1, 0.498039)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_iob04"]
 
-[node name="AbilitiesLevel" type="Node3D"]
+[node name="AbilitiesLevel" type="Node3D" unique_id=1147888929]
 script = ExtResource("1_djihv")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1552964617]
 environment = SubResource("Environment_k5xdk")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=622641339]
 transform = Transform3D(-0.86602354, -0.43301606, 0.25000072, 0, 0.49999818, 0.86602646, -0.5000033, 0.7499993, -0.4330102, -0.04232073, 0, -0.0011863708)
 shadow_enabled = true
 
-[node name="CSGBox3D" type="CSGBox3D" parent="."]
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1980620772]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.351, -0.5, 0.933)
 use_collision = true
 size = Vector3(100, 1, 100)
 material = SubResource("ShaderMaterial_k5xdk")
 
-[node name="Player" parent="." node_paths=PackedStringArray("Skill1View", "Skill2View", "Skill3View", "Skill4View", "TagsView") instance=ExtResource("2_gd1rs")]
+[node name="Player" parent="." unique_id=576463237 node_paths=PackedStringArray("Skill1View", "Skill2View", "Skill3View", "Skill4View", "TagsView") instance=ExtResource("2_gd1rs")]
 unique_name_in_owner = true
 Skill1View = NodePath("../CanvasLayer/HBoxContainer/Projectile")
 Skill2View = NodePath("../CanvasLayer/HBoxContainer/Dash")
@@ -97,56 +97,56 @@ Skill3View = NodePath("../CanvasLayer/HBoxContainer/Shield")
 Skill4View = NodePath("../CanvasLayer/HBoxContainer/Thorns")
 TagsView = NodePath("../CanvasLayer/TagsView")
 
-[node name="Camera3D" type="Camera3D" parent="Player"]
+[node name="Camera3D" type="Camera3D" parent="Player" unique_id=742136383]
 transform = Transform3D(1, 0, 0, 0, 0.7826079, 0.62251496, 0, -0.62251496, 0.7826079, 0, 7.309, 7.602)
 projection = 1
 size = 13.14
 
-[node name="CharacterBody3D" parent="." instance=ExtResource("3_5x68q")]
+[node name="CharacterBody3D" parent="." unique_id=1097285158 instance=ExtResource("3_5x68q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5425377, 0, -1.8287411)
 
-[node name="CharacterBody3D2" parent="." instance=ExtResource("3_5x68q")]
+[node name="CharacterBody3D2" parent="." unique_id=2081524462 instance=ExtResource("3_5x68q")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08504766, 0, 5.8531375)
 
-[node name="FloatingText Cues" type="Node" parent="."]
+[node name="FloatingText Cues" type="Node" parent="." unique_id=2094332363]
 script = ExtResource("4_5x68q")
 FloatingTextScene = ExtResource("5_st7ct")
 CueTag = "cue.floating.text"
 
-[node name="ShieldVFX Cues" type="Node" parent="."]
+[node name="ShieldVFX Cues" type="Node" parent="." unique_id=196858696]
 script = ExtResource("6_632vb")
 PersistentEffectScene = ExtResource("7_my1os")
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.shield"
 
-[node name="ReflectVFX Cues" type="Node" parent="."]
+[node name="ReflectVFX Cues" type="Node" parent="." unique_id=1367296992]
 script = ExtResource("6_632vb")
 InstantEffectScene = ExtResource("8_my1os")
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.reflect"
 
-[node name="FireVFX Cues" type="Node" parent="."]
+[node name="FireVFX Cues" type="Node" parent="." unique_id=1141490943]
 script = ExtResource("6_632vb")
 PersistentEffectScene = ExtResource("9_2nh6t")
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.fire"
 
-[node name="WetVFX Cues" type="Node" parent="."]
+[node name="WetVFX Cues" type="Node" parent="." unique_id=1183039492]
 script = ExtResource("6_632vb")
 PersistentEffectScene = ExtResource("10_t70tc")
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.wet"
 
-[node name="RegenVFX Cues" type="Node" parent="."]
+[node name="RegenVFX Cues" type="Node" parent="." unique_id=244512168]
 script = ExtResource("6_632vb")
 PersistentEffectScene = ExtResource("11_djihv")
 UpdateEffectIntensity = true
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.regen"
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1435360806]
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer" unique_id=1067755618]
 custom_minimum_size = Vector2(200, 40)
 anchors_preset = 7
 anchor_left = 0.5
@@ -160,105 +160,105 @@ grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
 
-[node name="Projectile" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+[node name="Projectile" parent="CanvasLayer/HBoxContainer" unique_id=1055944486 instance=ExtResource("9_cvpsg")]
 layout_mode = 2
 KeyText = "LMB"
 
-[node name="Dash" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+[node name="Dash" parent="CanvasLayer/HBoxContainer" unique_id=1073140440 instance=ExtResource("9_cvpsg")]
 layout_mode = 2
 KeyText = "SPC"
 
-[node name="Shield" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+[node name="Shield" parent="CanvasLayer/HBoxContainer" unique_id=2091574725 instance=ExtResource("9_cvpsg")]
 layout_mode = 2
 KeyText = "3"
 
-[node name="Thorns" parent="CanvasLayer/HBoxContainer" instance=ExtResource("9_cvpsg")]
+[node name="Thorns" parent="CanvasLayer/HBoxContainer" unique_id=1589664201 instance=ExtResource("9_cvpsg")]
 layout_mode = 2
 KeyText = "-"
 
-[node name="TagsView" type="Label" parent="CanvasLayer"]
+[node name="TagsView" type="Label" parent="CanvasLayer" unique_id=1086319466]
 offset_right = 40.0
 offset_bottom = 23.0
 theme_override_colors/font_color = Color(0.05908472, 0.0017870708, 0.2683399, 1)
 
-[node name="Fire Area" type="Area3D" parent="."]
+[node name="Fire Area" type="Area3D" parent="." unique_id=1303407820]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -5.9377413)
 script = ExtResource("10_r34v8")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Fire Area"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Fire Area" unique_id=1353482985]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_fj3om")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Fire Area"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Fire Area" unique_id=1444008561]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 mesh = SubResource("BoxMesh_84bh7")
 surface_material_override/0 = SubResource("StandardMaterial3D_0psim")
 
-[node name="Effect" type="Node" parent="Fire Area"]
+[node name="Effect" type="Node" parent="Fire Area" unique_id=1987436122]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("12_bpn7r")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Damage Area" type="Area3D" parent="."]
+[node name="Damage Area" type="Area3D" parent="." unique_id=1993823306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -6)
 script = ExtResource("10_r34v8")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Damage Area"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Damage Area" unique_id=1153526730]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_q44wy")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Damage Area"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Damage Area" unique_id=119718945]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 mesh = SubResource("BoxMesh_e603u")
 surface_material_override/0 = SubResource("StandardMaterial3D_fhuol")
 
-[node name="Effect" type="Node" parent="Damage Area"]
+[node name="Effect" type="Node" parent="Damage Area" unique_id=1871669012]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("16_i5kii")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Water Area" type="Area3D" parent="."]
+[node name="Water Area" type="Area3D" parent="." unique_id=1716310594]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 0)
 script = ExtResource("10_r34v8")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Water Area"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Water Area" unique_id=896104236]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_q44wy")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Water Area"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Water Area" unique_id=1162292454]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 mesh = SubResource("BoxMesh_e603u")
 surface_material_override/0 = SubResource("StandardMaterial3D_mbgu3")
 
-[node name="Effect" type="Node" parent="Water Area"]
+[node name="Effect" type="Node" parent="Water Area" unique_id=1154487577]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("17_u4sn2")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Regen Area" type="Area3D" parent="."]
+[node name="Regen Area" type="Area3D" parent="." unique_id=1311866760]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
 script = ExtResource("10_r34v8")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Regen Area"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Regen Area" unique_id=1735002357]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_q44wy")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Regen Area"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Regen Area" unique_id=936579002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 mesh = SubResource("BoxMesh_e603u")
 surface_material_override/0 = SubResource("StandardMaterial3D_naqyl")
 
-[node name="Effect" type="Node" parent="Regen Area"]
+[node name="Effect" type="Node" parent="Regen Area" unique_id=1444469527]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("18_vbbt7")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Effect2" type="Node" parent="Regen Area"]
+[node name="Effect2" type="Node" parent="Regen Area" unique_id=1481239981]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("19_ghk4b")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="RayCast3D" type="RayCast3D" parent="."]
+[node name="RayCast3D" type="RayCast3D" parent="." unique_id=369955878]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3, 5)
 target_position = Vector3(0, -2.9, 0)
 hit_back_faces = false
@@ -267,17 +267,17 @@ debug_shape_thickness = 3
 script = ExtResource("20_4bxsc")
 TriggerMode = 2
 
-[node name="Effect" type="Node" parent="RayCast3D"]
+[node name="Effect" type="Node" parent="RayCast3D" unique_id=1830786870]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("17_u4sn2")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="RayCast3D"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RayCast3D" unique_id=1922557755]
 transform = Transform3D(0.05, 0, 0, 0, 3, 0, 0, 0, 0.05, 0, -3, 0)
 material_override = SubResource("StandardMaterial3D_l6qy0")
 mesh = SubResource("CylinderMesh_6yqby")
 
-[node name="ShapeCast3D" type="ShapeCast3D" parent="."]
+[node name="ShapeCast3D" type="ShapeCast3D" parent="." unique_id=1219478660]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3, 5)
 shape = SubResource("SphereShape3D_iob04")
 target_position = Vector3(0, -2.4, 0)
@@ -286,12 +286,12 @@ debug_shape_custom_color = Color(1, 0, 0, 1)
 script = ExtResource("21_u6pyb")
 TriggerMode = 2
 
-[node name="Effect" type="Node" parent="ShapeCast3D"]
+[node name="Effect" type="Node" parent="ShapeCast3D" unique_id=1560923692]
 script = ExtResource("11_2nh6t")
 EffectData = ExtResource("19_ghk4b")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="ShapeCast3D"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ShapeCast3D" unique_id=766086187]
 transform = Transform3D(1, 0, 0, 0, 3, 0, 0, 0, 1, 0, -3, 0)
 material_override = SubResource("StandardMaterial3D_l6qy0")
 mesh = SubResource("CylinderMesh_6yqby")

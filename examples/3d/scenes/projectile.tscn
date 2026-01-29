@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cv53xhuo2be2x"]
+[gd_scene format=3 uid="uid://cv53xhuo2be2x"]
 
 [ext_resource type="Script" uid="uid://bhqyt4i2kjyrr" path="res://examples/3d/scripts/abilities/Projectile.cs" id="1_6hmvh"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_bk3el"]
@@ -21,27 +21,27 @@ script = ExtResource("5_bk3el")
 ContainerTags = Array[String](["trait.flammable"])
 metadata/_custom_type_script = "uid://cw525n4mjqgw0"
 
-[node name="Projectile" type="Node3D" node_paths=PackedStringArray("CollisionArea", "ForgeEntity")]
+[node name="Projectile" type="Node3D" unique_id=1359218025 node_paths=PackedStringArray("CollisionArea", "ForgeEntity")]
 script = ExtResource("1_6hmvh")
 CollisionArea = NodePath("Area3D")
 ForgeEntity = NodePath("Area3D/ForgeEntity")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1894323006]
 mesh = SubResource("SphereMesh_7hqfq")
 skeleton = NodePath("")
 
-[node name="Effect" type="Node" parent="."]
+[node name="Effect" type="Node" parent="." unique_id=1036944677]
 script = ExtResource("3_eqjfu")
 EffectData = ExtResource("4_6hmvh")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Area3D" type="Area3D" parent="."]
+[node name="Area3D" type="Area3D" parent="." unique_id=412654058]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1648754803]
 transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0)
 shape = SubResource("SphereShape3D_wjrje")
 
-[node name="ForgeEntity" type="Node" parent="Area3D"]
+[node name="ForgeEntity" type="Node" parent="Area3D" unique_id=221755849]
 script = ExtResource("3_bk3el")
 BaseTags = SubResource("Resource_bk3el")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"

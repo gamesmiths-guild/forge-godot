@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://darrnj6a8oyrb"]
+[gd_scene format=3 uid="uid://darrnj6a8oyrb"]
 
 [sub_resource type="Gradient" id="Gradient_a0li7"]
 colors = PackedColorArray(0, 0.377156, 0.701318, 1, 0.266667, 0.937255, 0.980392, 0.423529)
@@ -15,5 +15,5 @@ scale_min = 3.0
 scale_max = 4.0
 color_ramp = SubResource("GradientTexture1D_vxal2")
 
-[node name="GPUParticles2D" type="GPUParticles2D"]
+[node name="GPUParticles2D" type="GPUParticles2D" unique_id=2084044579]
 process_material = SubResource("ParticleProcessMaterial_30teu")

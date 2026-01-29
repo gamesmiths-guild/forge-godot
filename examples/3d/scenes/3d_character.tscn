@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://ci5xp80c4vcod"]
+[gd_scene format=3 uid="uid://ci5xp80c4vcod"]
 
 [ext_resource type="Script" uid="uid://bgm8wd05f18rh" path="res://examples/3d/scripts/Character3D.cs" id="1_8qd58"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="1_x3bge"]
@@ -68,28 +68,28 @@ viewport_path = NodePath("SubViewport")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_tf8eu"]
 
-[node name="CharacterBody3D" type="CharacterBody3D"]
+[node name="CharacterBody3D" type="CharacterBody3D" unique_id=996931572]
 script = ExtResource("1_8qd58")
 ProjectileAbilityData = ExtResource("2_tf8eu")
 DashAbilityData = ExtResource("3_lkgyj")
 ShieldAbilityData = ExtResource("4_xta2i")
 ThornsAbilityData = ExtResource("5_r7p11")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1072893354]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("CapsuleMesh_x3bge")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=582291630]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_l0fcu")
 
-[node name="Forge Entity" type="Node" parent="."]
+[node name="Forge Entity" type="Node" parent="." unique_id=2145660801]
 unique_name_in_owner = true
 script = ExtResource("1_x3bge")
 BaseTags = SubResource("Resource_q486f")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"
 
-[node name="Attribute Set" type="Node" parent="Forge Entity"]
+[node name="Attribute Set" type="Node" parent="Forge Entity" unique_id=872664191]
 script = ExtResource("3_ced4t")
 AttributeSetClass = "CharacterAttributes"
 InitialAttributeValues = Dictionary[String, ExtResource("4_o72y0")]({
@@ -101,7 +101,7 @@ InitialAttributeValues = Dictionary[String, ExtResource("4_o72y0")]({
 })
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
-[node name="Attribute Set2" type="Node" parent="Forge Entity"]
+[node name="Attribute Set2" type="Node" parent="Forge Entity" unique_id=157406052]
 script = ExtResource("3_ced4t")
 AttributeSetClass = "MetaAttributes"
 InitialAttributeValues = Dictionary[String, Variant]({
@@ -109,20 +109,20 @@ InitialAttributeValues = Dictionary[String, Variant]({
 })
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
-[node name="Effect" type="Node" parent="Forge Entity"]
+[node name="Effect" type="Node" parent="Forge Entity" unique_id=656179490]
 script = ExtResource("5_8m251")
 EffectData = ExtResource("7_yl5ww")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="GrantAbilityEffect" type="Node" parent="Forge Entity"]
+[node name="GrantAbilityEffect" type="Node" parent="Forge Entity" unique_id=1842405186]
 script = ExtResource("5_8m251")
 EffectData = ExtResource("8_irbwk")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="SubViewport" type="SubViewport" parent="."]
+[node name="SubViewport" type="SubViewport" parent="." unique_id=471719797]
 size = Vector2i(100, 40)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="SubViewport"]
+[node name="VBoxContainer" type="VBoxContainer" parent="SubViewport" unique_id=1355099027]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -130,7 +130,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 0
 
-[node name="ProgressBar" type="ProgressBar" parent="SubViewport/VBoxContainer" node_paths=PackedStringArray("HealthBarLabel")]
+[node name="ProgressBar" type="ProgressBar" parent="SubViewport/VBoxContainer" unique_id=2014284663 node_paths=PackedStringArray("HealthBarLabel")]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/background = SubResource("StyleBoxFlat_iod0y")
@@ -140,7 +140,7 @@ show_percentage = false
 script = ExtResource("8_iod0y")
 HealthBarLabel = NodePath("Label")
 
-[node name="Label" type="Label" parent="SubViewport/VBoxContainer/ProgressBar"]
+[node name="Label" type="Label" parent="SubViewport/VBoxContainer/ProgressBar" unique_id=1627027268]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -157,7 +157,7 @@ text = "990/1000"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ManaBar" type="ProgressBar" parent="SubViewport/VBoxContainer" node_paths=PackedStringArray("HealthBarLabel")]
+[node name="ManaBar" type="ProgressBar" parent="SubViewport/VBoxContainer" unique_id=288382805 node_paths=PackedStringArray("HealthBarLabel")]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/background = SubResource("StyleBoxFlat_tf8eu")
@@ -168,7 +168,7 @@ script = ExtResource("8_iod0y")
 HealthBarLabel = NodePath("Label")
 Attribute = "Mana"
 
-[node name="Label" type="Label" parent="SubViewport/VBoxContainer/ManaBar"]
+[node name="Label" type="Label" parent="SubViewport/VBoxContainer/ManaBar" unique_id=1022035233]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -185,16 +185,16 @@ text = "990/1000"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Sprite3D" type="Sprite3D" parent="."]
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=947280397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 billboard = 1
 texture = SubResource("ViewportTexture_nt152")
 
-[node name="ReflectArea" type="Area3D" parent="."]
+[node name="ReflectArea" type="Area3D" parent="." unique_id=1030220212]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 collision_layer = 2147483648
 
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="ReflectArea"]
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="ReflectArea" unique_id=1229396040]
 transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0)
 shape = SubResource("SphereShape3D_tf8eu")

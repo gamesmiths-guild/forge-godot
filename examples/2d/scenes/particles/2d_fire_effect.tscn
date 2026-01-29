@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://oad72vjqmwl3"]
+[gd_scene format=3 uid="uid://oad72vjqmwl3"]
 
 [sub_resource type="Gradient" id="Gradient_a0li7"]
 offsets = PackedFloat32Array(0, 0.634969, 1)
@@ -16,5 +16,5 @@ scale_min = 3.0
 scale_max = 4.0
 color_ramp = SubResource("GradientTexture1D_1r4gs")
 
-[node name="GPUParticles2D" type="GPUParticles2D"]
+[node name="GPUParticles2D" type="GPUParticles2D" unique_id=160937113]
 process_material = SubResource("ParticleProcessMaterial_30teu")
