@@ -1,12 +1,12 @@
 # Forge for Godot
 
-A Godot plugin for integrating the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot Engine.
+Forge for Godot is an Unreal GAS-like gameplay framework built for the Godot Engine.
 
-Forge for Godot bridges the powerful, data-driven systems of the Forge system with Godot Engine's node-based architecture. This plugin provides custom nodes, resources, and editor extensions that make implementing robust gameplay systems in Godot straightforward and maintainable.
+It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for implementing gameplay features such as attributes, effects, gameplay tags, abilities, events, and cues, fully aligned with Godot’s node, resource, and editor workflows.
 
-The plugin allows Godot developers to leverage Forge's comprehensive gameplay system with its attribute management, effects system, and tagging capabilities, without having to reimplement these systems from scratch for each project.
+Forge for Godot provides custom nodes, resources, and editor extensions that make building scalable and maintainable gameplay systems straightforward, allowing developers to leverage Forge’s architecture without reimplementing complex gameplay logic from scratch.
 
-**Keywords:** godot plugin, gameplay system, C# game development, attribute system, status effects, tag system, gameplay integration
+**Keywords:** godot plugin, gameplay framework, C#, attributes, gameplay effects, abilities, gameplay tags
 
 ## Quick Start
 
@@ -34,45 +34,49 @@ Game objects use Forge in one of two ways:
 
 Both approaches provide:
 
-- `Attributes` - Manages all attributes and attribute sets.
-- `Tags` - Handles base and modifier tags with automatic inheritance.
-- `EffectsManager` - Controls effect application, stacking, and lifecycle.
+- **Attributes**: Manages all attribute sets, with lifecycle and modification handled by Forge.
+- **Tags**: Handles base and modifier tags with automatic inheritance; supports runtime addition and removal via effects.
+- **EffectsManager**: Controls effect application, stacking, periodic execution, expiration, and clean up.
+- **Abilities**: Grants, activates, or removes gameplay abilities, including custom ability logic, cooldowns, costs, and triggers.
+- **Events**: Entity or global event bus for raising, subscribing, and handling gameplay events.
 
 ### Godot-Specific Features
 
-Forge for Godot includes specialized nodes that integrate Forge concepts with Godot's workflow:
+Forge for Godot includes specialized nodes and resources to integrate Forge concepts into Godot's workflow:
 
 - **ForgeAttributeSet**: Configure attribute sets directly in the Godot editor.
 - **EffectArea2D/3D**: Apply effects to entities entering/exiting areas.
 - **EffectRayCast2D/3D**: Apply effects to entities hit by raycasts.
 - **EffectShapeCast2D/3D**: Apply effects to entities hit by shape casts.
-- **ForgeCueHandler**: Base class for implementing visual and audio feedback.
+- **ForgeCueHandler**: Base class for implementing visual and audio feedback in response to gameplay cues.
 
 ## Project Status
 
-⚠️ **Work in Progress** - This plugin is currently under active development and not ready for production use.
+⚠️ **Work in Progress**: This plugin is under active development and is not yet recommended for production use.
 
-⚠️ **Godot C# Only** - Currently only works with Godot projects using C#.
+⚠️ **Godot C# Only**: Currently only works with Godot projects using C#.
 
 ### Current Features ✅
 
-- **Tags System**: Complete hierarchical tag system with editor integration.
-- **Attributes System**: Full attribute management with editor configuration.
-- **Effects System**: Comprehensive effect application with specialized nodes.
-- **Cues System**: Visual feedback system for effect application/removal.
-- **Editor Extensions**: Custom inspector elements and tag editor.
+- **Attributes System**: Attribute management, supporting sets, modifiers, and configuration.
+- **Effects System**: Comprehensive effect application and management, including stacking, periodic, instant, and infinite effects.
+- **Tags System**: Full hierarchical tag system with Godot editor integration.
+- **Abilities System**: Feature-complete ability system, supporting grant/removal, custom behaviors, triggers, cooldowns, and costs.
+- **Events System**: Gameplay event bus supporting event-driven logic, subscriptions, and triggers.
+- **Cues System**: Visual/audio feedback layer; decouples presentation from game logic.
+- **Editor Extensions**: Custom inspector elements and tag editor with Godot integration.
+- **Custom Nodes**: Includes nodes like `ForgeEntity`, `ForgeAttributeSet`, `EffectArea2D`, and more.
 
 ### Planned Features 🚧
 
-- **Abilities System**: Complete ability system similar to GAS abilities.
-- **Multiplayer Support**: Network replication for all systems.
-- **Events System**: Gameplay event handling and propagation.
+- **Multiplayer Support**: Network replication for all systems, deterministic/authoritative support.
+- **Statescript**: Visual state-based scripting for implementing ability behaviors and custom logic.
 
 ## Installation
 
 ### Requirements
 
-- Godot 4.4 or later with .NET support.
+- Godot 4.6 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps
@@ -82,8 +86,8 @@ Forge for Godot includes specialized nodes that integrate Forge concepts with Go
    ```xml
    <Import Project="addons/forge/Forge.props" />
    ```
-3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
-4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
+3. In the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
+4. Enable **Forge Gameplay System** under `Project > Project Settings > Plugins`.
 
 ## Documentation
 
@@ -91,7 +95,9 @@ For comprehensive documentation, explore the [docs](docs) directory:
 
 - [Documentation Overview](docs/README.md)
 - [Quick Start Guide](docs/quick-start.md)
-- [Custom Nodes](docs/nodes.md)
+- [Forge Nodes](docs/nodes.md)
+- [Forge Resources](docs/resources.md)
+- [Helper Classes](docs/helper-classes.md)
 
 ## Contributing
 

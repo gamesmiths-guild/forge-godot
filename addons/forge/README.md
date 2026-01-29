@@ -1,28 +1,34 @@
 # Forge for Godot
 
-Forge for Godot is a plugin that integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into the Godot Engine. It bridges the powerful, data-driven systems of Forge with Godot's node-based architecture, providing tools to streamline game development.
+Forge for Godot is an Unreal GAS-like gameplay framework for the Godot Engine.
+
+It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for gameplay features such as attributes, effects, gameplay tags, abilities, events, and cues, fully aligned with Godot’s node, resource, and editor workflows.
 
 This plugin enables you to:
 
-- Use **ForgeEntity** nodes or implement `IForgeEntity` to integrate core Forge systems like attributes, effects, and tags.
-- Configure attributes and effects directly in the Godot editor using custom resources and inspector properties.
+- Use **ForgeEntity** nodes or implement `IForgeEntity` to integrate core Forge systems like attributes, effects, abilities, events and tags.
+- Define attributes, effects, abilities, cues, and tags directly in the Godot editor.
 - Apply and manage gameplay effects with area or raycasting nodes.
 - Create hierarchical gameplay tags using the built-in Tags Editor.
 - Trigger visual and audio feedback with the Cues system.
+- Create player skills, attacks, or behaviors, with support for custom logic, costs, cooldowns, and triggers.
 
 ## Features
 
-- **Attributes System**: Manage gameplay attributes with configurable ranges, modifiers, and calculations.
-- **Effects System**: Apply instant, periodic, or infinite effects with stacking and custom rules.
-- **Tags System**: Define hierarchical tags for classification and targeting.
-- **Cues System**: Translate gameplay events into visual and audio feedback.
+- **Effects System**: Comprehensive effect application and management, including stacking, periodic, instant, and infinite effects.
+- **Attributes System**: Attribute management, supporting sets, modifiers, and configuration.
+- **Tags System**: Full hierarchical tag system with Godot editor integration.
+- **Abilities System**: Feature-complete ability system, supporting grant/removal, custom behaviors, triggers, cooldowns, and costs.
+- **Events System**: Gameplay event bus supporting event-driven logic, subscriptions, and triggers.
+- **Cues System**: Visual/audio feedback layer; decouples presentation from game logic.
+- **Editor Extensions**: Custom inspector elements and tag editor with Godot integration.
 - **Custom Nodes**: Includes nodes like `ForgeEntity`, `ForgeAttributeSet`, `EffectArea2D`, and more.
 
 ## Installation
 
 ### Requirements
 
-- Godot 4.4 or later with .NET support.
+- Godot 4.6 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps
@@ -35,16 +41,16 @@ This plugin enables you to:
 3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
 4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
 
-## Quick Start
+## Getting Started
 
-Refer to the [Quick Start Guide](https://github.com/gamesmiths-guild/forge-godot/blob/main/docs/quick-start.md) to set up your project and start using Forge in minutes.
-
-If you'd like to see sample scenes demonstrating the system in action, you can clone the repository directly and explore the examples included in the `examples` folder.
+- See the [Quick Start Guide](https://github.com/gamesmiths-guild/forge-godot/blob/main/docs/quick-start.md) for a basic setup.
+- Explore [sample scenes](https://github.com/gamesmiths-guild/forge-godot/tree/main/examples) by cloning the full repo.
 
 ## Documentation
 
-For detailed documentation, examples, and advanced usage, visit the [Forge for Godot repository](https://github.com/gamesmiths-guild/forge-godot).
+Full documentation, examples, and advanced usage are available in the [Forge for Godot GitHub repository](https://github.com/gamesmiths-guild/forge-godot).
+For technical details about core systems, see the [Forge Gameplay System documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
 ## License
 
-This plugin is licensed under the terms of the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) license.
+This plugin is licensed under the same terms as the core [Forge Gameplay System](https://github.com/gamesmiths-guild/forge).
