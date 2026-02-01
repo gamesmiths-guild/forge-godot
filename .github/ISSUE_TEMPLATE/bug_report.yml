@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a reproducible bug or regression
+
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+        Please note that this project is in early development and APIs may change.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+      placeholder: Clear and concise description of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Forge Version
+      placeholder: e.g. release version / branch / commit hash
+    validations:
+      required: false
+
+  - type: input
+    id: engine
+    attributes:
+      label: Engine / Runtime
+      placeholder: e.g. Godot 4.6 / .NET 8
+    validations:
+      required: false

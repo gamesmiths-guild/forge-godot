@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Discussions
+    url: https://github.com/gamesmiths-guild/forge-godot/discussions
+    about: Use GitHub Discussions for Godot-specific questions, feedback, and integration discussions.
+
+  - name: Documentation
+    url: https://github.com/gamesmiths-guild/forge-godot/tree/main/docs
+    about: Please check the README and documentation before opening an issue.
+
+  - name: Forge Core Repository
+    url: https://github.com/gamesmiths-guild/forge
+    about: For core framework issues or design discussions, use the main Forge repository.
