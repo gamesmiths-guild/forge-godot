@@ -24,20 +24,20 @@
      inkscape:zoom="38.71875"
      inkscape:cx="9.4527845"
      inkscape:cy="11.867635"
-     inkscape:window-width="3408"
+     inkscape:window-width="2560"
      inkscape:window-height="1417"
-     inkscape:window-x="24"
-     inkscape:window-y="723"
+     inkscape:window-x="3432"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:current-layer="svg4" />
   <path
      fill="#5fff97"
      d="M 7.9265536,11.734463 3.9895075,3.8603713 0.05246155,11.734463 Z"
      id="path1-1"
-     style="stroke-width:1.96852" />
+     style="stroke-width:1.96852;fill:#8eef97;fill-opacity:1" />
   <path
      fill="#ff5f5f"
      d="M 15.800646,3.8603713 11.8636,11.734463 7.9265536,3.8603713 Z"
      id="path2"
-     style="stroke-width:1.96852" />
+     style="stroke-width:1.96852;fill:#fc7f7f;fill-opacity:1" />
 </svg>

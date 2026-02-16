@@ -49,9 +49,11 @@
   <path
      fill="#5fff97"
      d="m 7.9265537,9.7974173 -2,-4 -2,4 z"
-     id="path1-1" />
+     id="path1-1"
+     style="fill:#8eef97;fill-opacity:1" />
   <path
      fill="#ff5f5f"
      d="m 11.926554,5.7974173 -2.0000003,4 -2,-4 z"
-     id="path2" />
+     id="path2"
+     style="fill:#fc7f7f;fill-opacity:1" />
 </svg>
