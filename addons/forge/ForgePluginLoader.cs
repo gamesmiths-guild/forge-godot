@@ -5,7 +5,9 @@ using System.Diagnostics;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
+using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Tags;
+using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot;
@@ -16,30 +18,31 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
 	private const string PluginScenePath = "uid://pjscvogl6jak";
 
-	private EditorDock? _editorDock;
-	private PanelContainer? _dockedScene;
+	private EditorDock? _tagsEditorDock;
+	private PanelContainer? _tagsEditorScene;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private TagInspectorPlugin? _tagInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
+	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
 	public override void _EnterTree()
 	{
 		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
 
-		_editorDock = new EditorDock
+		_tagsEditorDock = new EditorDock
 		{
-			Title = "Forge",
-			DockIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20"),
+			Title = "Tags",
+			DockIcon = GD.Load<Texture2D>("uid://vsfdeevye6jm"),
 			DefaultSlot = EditorDock.DockSlot.RightUl,
 		};
 
-		_dockedScene = (PanelContainer)pluginScene.Instantiate();
-		_dockedScene.GetNode<TagsEditor>("%Tags").IsPluginInstance = true;
+		_tagsEditorScene = (PanelContainer)pluginScene.Instantiate();
+		_tagsEditorScene.GetNode<TagsEditor>("%Tags").IsPluginInstance = true;
 
-		_editorDock.AddChild(_dockedScene);
-		AddDock(_editorDock);
+		_tagsEditorDock.AddChild(_tagsEditorScene);
+		AddDock(_tagsEditorDock);
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
 		AddInspectorPlugin(_tagContainerInspectorPlugin);
@@ -52,17 +55,28 @@ public partial class ForgePluginLoader : EditorPlugin
 		_attributeEditorPlugin = new AttributeEditorPlugin();
 		AddInspectorPlugin(_attributeEditorPlugin);
 
+		_statescriptGraphEditorDock = new StatescriptGraphEditorDock();
+		_statescriptGraphEditorDock.SetUndoRedo(GetUndoRedo());
+		AddDock(_statescriptGraphEditorDock);
+
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
 
 	public override void _ExitTree()
 	{
-		Debug.Assert(_editorDock is not null, $"{nameof(_editorDock)} should have been initialized on _Ready().");
-		Debug.Assert(_dockedScene is not null, $"{nameof(_dockedScene)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_tagsEditorDock is not null,
+			$"{nameof(_tagsEditorDock)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_tagsEditorScene is not null,
+			$"{nameof(_tagsEditorScene)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_statescriptGraphEditorDock is not null,
+			$"{nameof(_statescriptGraphEditorDock)} should have been initialized on _Ready().");
 
-		RemoveDock(_editorDock);
-		_editorDock.QueueFree();
-		_dockedScene.Free();
+		RemoveDock(_tagsEditorDock);
+		_tagsEditorDock.QueueFree();
+		_tagsEditorScene.Free();
 
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
 		RemoveInspectorPlugin(_tagInspectorPlugin);
@@ -70,7 +84,37 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeEditorPlugin);
 
+		RemoveDock(_statescriptGraphEditorDock);
+		_statescriptGraphEditorDock.QueueFree();
+
 		RemoveToolMenuItem("Repair assets tags");
+	}
+
+	public override bool _Handles(GodotObject @object)
+	{
+		return @object is StatescriptGraph;
+	}
+
+	public override void _Edit(GodotObject? @object)
+	{
+		if (@object is StatescriptGraph graph && _statescriptGraphEditorDock is not null)
+		{
+			_statescriptGraphEditorDock.OpenGraph(graph);
+		}
+	}
+
+	public override void _MakeVisible(bool visible)
+	{
+		if (_statescriptGraphEditorDock is null)
+		{
+			return;
+		}
+
+		if (visible)
+		{
+			_statescriptGraphEditorDock.Open();
+			_statescriptGraphEditorDock.Visible = visible;
+		}
 	}
 
 	public override void _EnablePlugin()
