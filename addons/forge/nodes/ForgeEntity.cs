@@ -7,7 +7,9 @@ using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Statescript;
 using Godot;
+using Node = Godot.Node;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
@@ -27,6 +29,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 	public EntityAbilities Abilities { get; set; } = null!;
 
 	public EventManager Events { get; set; } = null!;
+
+	public Variables SharedVariables { get; set; } = null!;
 
 	public override void _Ready()
 	{

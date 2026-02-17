@@ -54,6 +54,9 @@ public partial class ForgePluginLoader : EditorPlugin
 		Debug.Assert(
 			_tagsEditorDock is not null,
 			$"{nameof(_tagsEditorDock)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_statescriptGraphEditorDock is not null,
+			$"{nameof(_statescriptGraphEditorDock)} should have been initialized on _Ready().");
 
 		RemoveDock(_tagsEditorDock);
 		_tagsEditorDock.QueueFree();
