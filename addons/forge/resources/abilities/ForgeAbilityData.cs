@@ -19,7 +19,7 @@ public partial class ForgeAbilityData : Resource
 	private AbilityInstancingPolicy _instancingPolicy;
 
 	[Export]
-	public string Name { get; set; } = string.Empty;
+	public string Name { get; set; } = "New Ability";
 
 	[Export]
 	public AbilityInstancingPolicy InstancingPolicy
