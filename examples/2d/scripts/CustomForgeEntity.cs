@@ -7,7 +7,9 @@ using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Statescript;
 using Godot;
+using Node = Godot.Node;
 
 namespace Gamesmiths.Forge.Example;
 
@@ -29,6 +31,8 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 
 	public EventManager Events { get; set; } = null!;
 
+	public Variables SharedVariables { get; set; } = null!;
+
 	public override void _Ready()
 	{
 		base._Ready();
@@ -37,6 +41,7 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 		EffectsManager = new EffectsManager(this, ForgeManagers.Instance.CuesManager);
 		Abilities = new EntityAbilities(this);
 		Events = new EventManager();
+		SharedVariables = new Variables();
 
 		List<AttributeSet> attributeSetList = [];
 

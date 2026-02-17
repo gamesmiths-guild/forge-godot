@@ -5,7 +5,9 @@ using System.Diagnostics;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
+using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Tags;
+using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot;
@@ -21,6 +23,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
+	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
 	public override void _EnterTree()
 	{
@@ -38,6 +41,10 @@ public partial class ForgePluginLoader : EditorPlugin
 		_attributeEditorPlugin = new AttributeEditorPlugin();
 		AddInspectorPlugin(_attributeEditorPlugin);
 
+		_statescriptGraphEditorDock = new StatescriptGraphEditorDock();
+		_statescriptGraphEditorDock.SetUndoRedo(GetUndoRedo());
+		AddDock(_statescriptGraphEditorDock);
+
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 	}
 
@@ -46,6 +53,9 @@ public partial class ForgePluginLoader : EditorPlugin
 		Debug.Assert(
 			_tagsEditorDock is not null,
 			$"{nameof(_tagsEditorDock)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_statescriptGraphEditorDock is not null,
+			$"{nameof(_statescriptGraphEditorDock)} should have been initialized on _Ready().");
 
 		RemoveDock(_tagsEditorDock);
 		_tagsEditorDock.QueueFree();
@@ -56,7 +66,38 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeEditorPlugin);
 
+		RemoveDock(_statescriptGraphEditorDock);
+		_statescriptGraphEditorDock.QueueFree();
+
 		RemoveToolMenuItem("Repair assets tags");
+	}
+
+	public override bool _Handles(GodotObject @object)
+	{
+		return @object is StatescriptGraph;
+	}
+
+	public override void _Edit(GodotObject? @object)
+	{
+		if (@object is StatescriptGraph graph && _statescriptGraphEditorDock is not null)
+		{
+			_statescriptGraphEditorDock.OpenGraph(graph);
+		}
+	}
+
+	public override void _MakeVisible(bool visible)
+	{
+		if (_statescriptGraphEditorDock is null)
+		{
+			return;
+		}
+
+		if (visible)
+		{
+			_statescriptGraphEditorDock.Open();
+		}
+
+		_statescriptGraphEditorDock.Visible = visible;
 	}
 
 	public override void _EnablePlugin()
