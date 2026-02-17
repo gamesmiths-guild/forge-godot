@@ -37,7 +37,7 @@ public partial class ForgeEffectData : Resource
 	private LevelComparison _levelOverridePolicy;
 
 	[Export]
-	public string Name { get; set; } = string.Empty;
+	public string Name { get; set; } = "New Effect";
 
 	[Export]
 	public bool SnapshotLevel { get; set; } = true;
