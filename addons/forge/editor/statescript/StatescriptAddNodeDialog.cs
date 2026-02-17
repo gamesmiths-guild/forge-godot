@@ -340,7 +340,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 	private void OnCanceled()
 	{
-		// Method intentionally left blank - no action needed on cancel.
+		// Method intentionally left blank, no action needed on cancel.
 	}
 
 	private void UpdateDescription(string? runtimeTypeName)
