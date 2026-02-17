@@ -71,12 +71,16 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		UpdateVisibility();
 
 		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged += OnFilesystemChanged;
+
+		// Defer restoration so the filesystem is fully scanned first.
+		GetTree().CreateTimer(0).Timeout += RestoreOpenTabs;
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
 
+		SaveOpenTabs();
 		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged -= OnFilesystemChanged;
 	}
 
@@ -131,6 +135,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		LoadGraphIntoEditor(graph);
 		UpdateVisibility();
+		SaveOpenTabs();
 	}
 
 	/// <summary>
@@ -174,6 +179,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		UpdateVisibility();
+		SaveOpenTabs();
 	}
 
 	private void BuildUI()
@@ -1120,6 +1126,55 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		ResourceSaver.Save(graph);
 		GD.Print($"Statescript graph saved: {graph.ResourcePath}");
+	}
+
+	private void SaveOpenTabs()
+	{
+		EditorSettings settings = EditorInterface.Singleton.GetEditorSettings();
+
+		var paths = new string[_openTabs.Count];
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			paths[i] = _openTabs[i].ResourcePath;
+		}
+
+		settings.SetProjectMetadata("statescript", "open_tabs", string.Join(";", paths));
+		settings.SetProjectMetadata(
+			"statescript",
+			"active_tab",
+			_tabBar is not null && _openTabs.Count > 0 ? _tabBar.CurrentTab : 0);
+	}
+
+	private void RestoreOpenTabs()
+	{
+		EditorSettings settings = EditorInterface.Singleton.GetEditorSettings();
+
+		var tabsValue = settings.GetProjectMetadata("statescript", "open_tabs", string.Empty).AsString();
+		if (string.IsNullOrEmpty(tabsValue))
+		{
+			return;
+		}
+
+		var paths = tabsValue.Split(';', System.StringSplitOptions.RemoveEmptyEntries);
+		foreach (var path in paths)
+		{
+			if (!ResourceLoader.Exists(path))
+			{
+				continue;
+			}
+
+			var graph = ResourceLoader.Load<StatescriptGraph>(path);
+			if (graph is not null)
+			{
+				OpenGraph(graph);
+			}
+		}
+
+		var activeTab = settings.GetProjectMetadata("statescript", "active_tab", 0).AsInt32();
+		if (_tabBar is not null && activeTab >= 0 && activeTab < _openTabs.Count)
+		{
+			_tabBar.CurrentTab = activeTab;
+		}
 	}
 
 	/// <summary>
