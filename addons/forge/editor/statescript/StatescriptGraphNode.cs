@@ -229,8 +229,8 @@ public partial class StatescriptGraphNode : GraphNode
 		var abortLabel = new Label { Text = "Abort" };
 		hBox2.AddThemeConstantOverride("separation", 16);
 		hBox2.AddChild(abortLabel);
-		SetSlotEnabledLeft(0, true);
-		SetSlotColorLeft(0, _eventColor);
+		SetSlotEnabledLeft(1, true);
+		SetSlotColorLeft(1, _eventColor);
 
 		// OnActivate output port.
 		var activateLabel = new Label

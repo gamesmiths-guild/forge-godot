@@ -18,7 +18,6 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
 
 	private TagsEditorDock? _tagsEditorDock;
-	private PanelContainer? _tagsEditorScene;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private TagInspectorPlugin? _tagInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
@@ -96,8 +95,9 @@ public partial class ForgePluginLoader : EditorPlugin
 		if (visible)
 		{
 			_statescriptGraphEditorDock.Open();
-			_statescriptGraphEditorDock.Visible = visible;
 		}
+
+		_statescriptGraphEditorDock.Visible = visible;
 	}
 
 	public override void _EnablePlugin()

@@ -41,6 +41,7 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 		EffectsManager = new EffectsManager(this, ForgeManagers.Instance.CuesManager);
 		Abilities = new EntityAbilities(this);
 		Events = new EventManager();
+		SharedVariables = new Variables();
 
 		List<AttributeSet> attributeSetList = [];
 

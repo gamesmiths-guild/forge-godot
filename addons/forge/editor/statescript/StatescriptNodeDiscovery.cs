@@ -366,13 +366,14 @@ internal static class StatescriptNodeDiscovery
 		return nodeType switch
 		{
 			StatescriptNodeType.Action => [new PortLayout("Execute", "Done", false)],
-			StatescriptNodeType.Condition =>
-				[new PortLayout("Condition", "True", false), new PortLayout("Condition", "False", false)],
+			StatescriptNodeType.Condition => [
+				new PortLayout("Condition", "True", false),
+				new PortLayout(string.Empty, "False", false)],
 			StatescriptNodeType.State => [
-				new PortLayout("Input", "OnActivate", false),
+				new PortLayout("Begin", "OnActivate", false),
 				new PortLayout("Abort", "OnDeactivate", false),
-				new PortLayout("Input", "OnAbort", false),
-				new PortLayout("Input", "Subgraph", true)],
+				new PortLayout(string.Empty, "OnAbort", false),
+				new PortLayout(string.Empty, "Subgraph", true)],
 			StatescriptNodeType.Entry => throw new NotImplementedException(),
 			StatescriptNodeType.Exit => throw new NotImplementedException(),
 			_ => [new PortLayout("Input", "Output", false)],
@@ -413,7 +414,7 @@ internal static class StatescriptNodeDiscovery
 		public string DisplayName { get; }
 
 		/// <summary>
-		/// Gets the assembly-qualified type name used for serialization.
+		/// Gets the CLR type name used for serialization (typically the type's full name).
 		/// </summary>
 		public string RuntimeTypeName { get; }
 
