@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 [Tool]
 [GlobalClass]
 [Icon("uid://b6yrjb46fluw3")]
-public partial class ForgeGraphAbilityBehavior : ForgeAbilityBehavior
+public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 {
 	/// <summary>
 	/// Gets or sets the Statescript graph resource that defines the ability's behavior.
@@ -29,9 +29,9 @@ public partial class ForgeGraphAbilityBehavior : ForgeAbilityBehavior
 	{
 		if (Statescript is null)
 		{
-			GD.PushError("ForgeGraphAbilityBehavior: Statescript is null.");
+			GD.PushError("StatescriptAbilityBehavior: Statescript is null.");
 			throw new System.InvalidOperationException(
-				"ForgeGraphAbilityBehavior requires a valid Statescript assigned.");
+				"StatescriptAbilityBehavior requires a valid Statescript assigned.");
 		}
 
 		Graph runtimeGraph = StatescriptGraphBuilder.Build(Statescript);
