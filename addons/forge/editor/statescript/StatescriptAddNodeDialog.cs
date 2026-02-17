@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -18,13 +19,15 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 	private const int DialogWidth = 244;
 	private const int DialogHeight = 400;
 
+	private static readonly string _exitNodeDescription = new ExitNode().Description;
+
 	private LineEdit? _searchBar;
 	private MenuButton? _expandCollapseButton;
 	private Tree? _tree;
 	private Label? _descriptionHeader;
 	private RichTextLabel? _descriptionLabel;
 
-	private bool _allExpanded = true;
+	private bool _isFiltering;
 
 	/// <summary>
 	/// Raised when the user confirms node creation. The first argument is the selected
@@ -73,12 +76,23 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 	public void ShowAtPosition(Vector2 spawnPosition, Vector2I screenPosition)
 	{
 		SpawnPosition = spawnPosition;
-		_searchBar?.Clear();
-		PopulateTree();
-		GetOkButton().Disabled = true;
-		_descriptionLabel?.Set("text", string.Empty);
 
-		// Show the dialog at the click position, matching VisualShader behavior.
+		// Clear transient state without rebuilding the tree.
+		if (_isFiltering)
+		{
+			// Search was active last time, rebuild to restore the full unfiltered tree.
+			_searchBar?.Clear();
+			PopulateTree();
+		}
+		else
+		{
+			_searchBar?.Clear();
+		}
+
+		_tree?.DeselectAll();
+		GetOkButton().Disabled = true;
+		UpdateDescription(null);
+
 		Position = screenPosition;
 		Size = new Vector2I(DialogWidth, DialogHeight);
 		Popup();
@@ -107,7 +121,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 		AddChild(vBox);
 
-		// Top row: search bar + expand/collapse menu button (matches VisualShader's magnifier + dropdown).
+		// Top row: search bar + expand/collapse menu button.
 		var searchHBox = new HBoxContainer();
 		vBox.AddChild(searchHBox);
 
@@ -122,7 +136,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 		_searchBar.TextChanged += OnSearchTextChanged;
 		searchHBox.AddChild(_searchBar);
 
-		// Expand/Collapse dropdown matching VisualShader's small arrow button.
 		_expandCollapseButton = new MenuButton
 		{
 			Flat = true,
@@ -149,7 +162,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 		_tree.ItemActivated += OnTreeItemActivated;
 		vBox.AddChild(_tree);
 
-		// Description area: matches VisualShader's "Description:" label + text.
+		// Description area.
 		_descriptionHeader = new Label
 		{
 			Text = "Description:",
@@ -174,13 +187,13 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			return;
 		}
 
+		_isFiltering = !string.IsNullOrWhiteSpace(filter);
 		_tree.Clear();
 		TreeItem root = _tree.CreateItem();
 
 		IReadOnlyList<StatescriptNodeDiscovery.NodeTypeInfo> discoveredTypes =
 			StatescriptNodeDiscovery.GetDiscoveredNodeTypes();
 
-		var hasFilter = !string.IsNullOrWhiteSpace(filter);
 		var filterLower = filter.ToLowerInvariant();
 
 		TreeItem? actionCategory = null;
@@ -189,7 +202,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 		foreach (StatescriptNodeDiscovery.NodeTypeInfo typeInfo in discoveredTypes)
 		{
-			if (hasFilter && !typeInfo.DisplayName.Contains(filterLower, StringComparison.OrdinalIgnoreCase))
+			if (_isFiltering && !typeInfo.DisplayName.Contains(filterLower, StringComparison.OrdinalIgnoreCase))
 			{
 				continue;
 			}
@@ -219,24 +232,17 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			item.SetMetadata(0, typeInfo.RuntimeTypeName);
 		}
 
-		// Add Exit node under Special category.
-		if (!hasFilter || "exit".Contains(filterLower, StringComparison.OrdinalIgnoreCase)
+		// Add Exit node at the end.
+		if (!_isFiltering || "exit".Contains(filterLower, StringComparison.OrdinalIgnoreCase)
 			|| "exit node".Contains(filterLower, StringComparison.OrdinalIgnoreCase))
 		{
-			TreeItem specialCategory = CreateCategoryItem(root, "Special");
-			TreeItem exitItem = _tree.CreateItem(specialCategory);
+			TreeItem exitItem = _tree.CreateItem(root);
 			exitItem.SetText(0, "Exit");
 			exitItem.SetMetadata(0, "__exit__");
 		}
 
-		if (_allExpanded || hasFilter)
-		{
-			SetAllCollapsed(root, false);
-		}
-		else
-		{
-			SetAllCollapsed(root, true);
-		}
+		// Filters expand everything; default tree starts collapsed.
+		SetAllCollapsed(root, !_isFiltering);
 
 		UpdateDescription(null);
 	}
@@ -268,8 +274,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			return;
 		}
 
-		_allExpanded = id == 0;
-		SetAllCollapsed(root, !_allExpanded);
+		SetAllCollapsed(root, id != 0);
 	}
 
 	private void OnTreeItemSelected()
@@ -353,8 +358,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 		if (runtimeTypeName == "__exit__")
 		{
-			_descriptionLabel.Text = "Terminates graph execution. When reached, all active state nodes " +
-				"are disabled and the graph is finalized.";
+			_descriptionLabel.Text = _exitNodeDescription;
 			return;
 		}
 

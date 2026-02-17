@@ -18,14 +18,13 @@ public partial class StatescriptGraphEditorDock : EditorDock
 {
 	private readonly List<GraphTab> _openTabs = [];
 	private readonly Dictionary<StringName, Vector2> _preMovePositions = [];
-	private readonly List<StatescriptNodeDiscovery.NodeTypeInfo> _menuNodeTypes = [];
 
 	private PanelContainer? _tabBarBackground;
 	private TabBar? _tabBar;
 	private PanelContainer? _contentPanel;
 	private GraphEdit? _graphEdit;
 	private Label? _emptyLabel;
-	private MenuButton? _addNodeButton;
+	private Button? _addNodeButton;
 	private Button? _saveButton;
 	private StatescriptAddNodeDialog? _addNodeDialog;
 
@@ -33,6 +32,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 	private int _nextNodeId;
 	private bool _isLoadingGraph;
+
+	// Pending connection state for drag-to-empty behavior.
+	private string? _pendingConnectionNode;
+	private int _pendingConnectionPort;
+	private bool _pendingConnectionIsOutput;
 
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
@@ -247,6 +251,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_graphEdit.BeginNodeMove += OnBeginNodeMove;
 		_graphEdit.EndNodeMove += OnEndNodeMove;
 		_graphEdit.PopupRequest += OnGraphEditPopupRequest;
+		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
+		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
 		contentVBox.AddChild(_graphEdit);
 
 		// Add custom buttons to GraphEdit's built-in toolbar.
@@ -256,15 +262,13 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		menuHBox.AddChild(separator);
 		menuHBox.MoveChild(separator, 0);
 
-		_addNodeButton = new MenuButton
+		_addNodeButton = new Button
 		{
 			Text = "Add Node...",
 			Flat = true,
 		};
 
-		PopupMenu popup = _addNodeButton.GetPopup();
-		BuildAddNodeMenu(popup);
-		popup.IdPressed += OnAddNodePressed;
+		_addNodeButton.Pressed += OnAddNodeButtonPressed;
 
 		menuHBox.AddChild(_addNodeButton);
 		menuHBox.MoveChild(_addNodeButton, 0);
@@ -285,6 +289,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		// Add Node dialog (created once, reused).
 		_addNodeDialog = new StatescriptAddNodeDialog();
 		_addNodeDialog.NodeCreationRequested += OnDialogNodeCreationRequested;
+		_addNodeDialog.Canceled += OnDialogCanceled;
 		AddChild(_addNodeDialog);
 
 		// Apply initial theme.
@@ -653,6 +658,9 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
+		// Clear any existing pending connection state.
+		ClearPendingConnection();
+
 		// Convert the click position from GraphEdit local coordinates to graph-local coordinates.
 		Vector2 graphPosition = (_graphEdit.ScrollOffset + atPosition) / _graphEdit.Zoom;
 
@@ -662,163 +670,87 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
 	}
 
+	private void OnConnectionToEmpty(StringName fromNode, long fromPort, Vector2 releasePosition)
+	{
+		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null)
+		{
+			return;
+		}
+
+		// Dragging from an output port to empty space.
+		_pendingConnectionNode = fromNode;
+		_pendingConnectionPort = (int)fromPort;
+		_pendingConnectionIsOutput = true;
+
+		Vector2 graphPosition = (_graphEdit.ScrollOffset + releasePosition) / _graphEdit.Zoom;
+		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + releasePosition);
+
+		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
+	}
+
+	private void OnConnectionFromEmpty(StringName toNode, long toPort, Vector2 releasePosition)
+	{
+		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null)
+		{
+			return;
+		}
+
+		// Dragging from an input port to empty space.
+		_pendingConnectionNode = toNode;
+		_pendingConnectionPort = (int)toPort;
+		_pendingConnectionIsOutput = false;
+
+		Vector2 graphPosition = (_graphEdit.ScrollOffset + releasePosition) / _graphEdit.Zoom;
+		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + releasePosition);
+
+		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
+	}
+
 	private void OnDialogNodeCreationRequested(
 		StatescriptNodeDiscovery.NodeTypeInfo? typeInfo,
 		StatescriptNodeType nodeType,
 		Vector2 position)
 	{
+		string newNodeId;
+
 		if (typeInfo is not null)
 		{
-			AddNodeAtPosition(nodeType, typeInfo.DisplayName, typeInfo.RuntimeTypeName, position);
+			newNodeId = AddNodeAtPosition(nodeType, typeInfo.DisplayName, typeInfo.RuntimeTypeName, position);
 		}
 		else
 		{
-			// Exit node.
-			AddNodeAtPosition(StatescriptNodeType.Exit, "Exit", string.Empty, position);
+			newNodeId = AddNodeAtPosition(StatescriptNodeType.Exit, "Exit", string.Empty, position);
 		}
-	}
 
-	private void OnAddNodePressed(long id)
-	{
-		if (id == 10000)
+		// Auto-connect if there is a pending connection from a drag-to-empty action.
+		if (_pendingConnectionNode is not null && _graphEdit is not null)
 		{
-			AddNodeAtCenter(StatescriptNodeType.Exit, "Exit", string.Empty);
-		}
-	}
-
-	private void BuildAddNodeMenu(PopupMenu popup)
-	{
-		popup.Clear();
-		_menuNodeTypes.Clear();
-
-		IReadOnlyList<StatescriptNodeDiscovery.NodeTypeInfo> discoveredTypes =
-			StatescriptNodeDiscovery.GetDiscoveredNodeTypes();
-
-		// Group by category with submenus.
-		var actionMenu = new PopupMenu { Name = "ActionSubmenu" };
-		var conditionMenu = new PopupMenu { Name = "ConditionSubmenu" };
-		var stateMenu = new PopupMenu { Name = "StateSubmenu" };
-
-		var actionCount = 0;
-		var conditionCount = 0;
-		var stateCount = 0;
-
-		for (var i = 0; i < discoveredTypes.Count; i++)
-		{
-			StatescriptNodeDiscovery.NodeTypeInfo typeInfo = discoveredTypes[i];
-			_menuNodeTypes.Add(typeInfo);
-
-			switch (typeInfo.NodeType)
+			if (_pendingConnectionIsOutput)
 			{
-				case StatescriptNodeType.Action:
-					actionMenu.AddItem(typeInfo.DisplayName, i);
-					actionCount++;
-					break;
-				case StatescriptNodeType.Condition:
-					conditionMenu.AddItem(typeInfo.DisplayName, i);
-					conditionCount++;
-					break;
-				case StatescriptNodeType.State:
-					stateMenu.AddItem(typeInfo.DisplayName, i);
-					stateCount++;
-					break;
+				var inputPort = FindFirstEnabledInputPort(newNodeId);
+				if (inputPort >= 0)
+				{
+					OnConnectionRequest(
+						_pendingConnectionNode,
+						_pendingConnectionPort,
+						newNodeId,
+						inputPort);
+				}
 			}
-		}
+			else
+			{
+				var outputPort = FindFirstEnabledOutputPort(newNodeId);
+				if (outputPort >= 0)
+				{
+					OnConnectionRequest(
+						newNodeId,
+						outputPort,
+						_pendingConnectionNode,
+						_pendingConnectionPort);
+				}
+			}
 
-		if (actionCount > 0)
-		{
-			actionMenu.IdPressed += OnAddConcreteNodePressed;
-			popup.AddChild(actionMenu);
-			popup.AddSubmenuNodeItem("Action", actionMenu);
-		}
-
-		if (conditionCount > 0)
-		{
-			conditionMenu.IdPressed += OnAddConcreteNodePressed;
-			popup.AddChild(conditionMenu);
-			popup.AddSubmenuNodeItem("Condition", conditionMenu);
-		}
-
-		if (stateCount > 0)
-		{
-			stateMenu.IdPressed += OnAddConcreteNodePressed;
-			popup.AddChild(stateMenu);
-			popup.AddSubmenuNodeItem("State", stateMenu);
-		}
-
-		popup.AddSeparator();
-		popup.AddItem("Exit Node", 10000);
-	}
-
-	private void OnAddConcreteNodePressed(long id)
-	{
-		var index = (int)id;
-		if (index < 0 || index >= _menuNodeTypes.Count)
-		{
-			return;
-		}
-
-		StatescriptNodeDiscovery.NodeTypeInfo typeInfo = _menuNodeTypes[index];
-		AddNodeAtCenter(typeInfo.NodeType, typeInfo.DisplayName, typeInfo.RuntimeTypeName);
-	}
-
-	private void AddNodeAtCenter(StatescriptNodeType nodeType, string title, string runtimeTypeName)
-	{
-		if (_graphEdit is null)
-		{
-			return;
-		}
-
-		// Place the new node near the center of the current view.
-		Vector2 spawnPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
-		AddNodeAtPosition(nodeType, title, runtimeTypeName, spawnPosition);
-	}
-
-	private void AddNodeAtPosition(
-		StatescriptNodeType nodeType,
-		string title,
-		string runtimeTypeName,
-		Vector2 position)
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return;
-		}
-
-		var nodeId = $"node_{_nextNodeId++}";
-
-		var nodeResource = new StatescriptNode
-		{
-			NodeId = nodeId,
-			Title = title,
-			NodeType = nodeType,
-			RuntimeTypeName = runtimeTypeName,
-			PositionOffset = position,
-		};
-
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Add Statescript Node", customContext: graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoAddNode, graph, nodeResource);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddNode, graph, nodeResource);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoAddNode(graph, nodeResource);
-		}
-	}
-
-	private void DoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
-	{
-		graph.Nodes.Add(nodeResource);
-
-		if (CurrentGraph == graph && _graphEdit is not null)
-		{
-			var graphNode = new StatescriptGraphNode();
-			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(nodeResource);
+			ClearPendingConnection();
 		}
 	}
 
@@ -830,6 +762,54 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			LoadGraphIntoEditor(graph);
 		}
+	}
+
+	private int FindFirstEnabledInputPort(string nodeId)
+	{
+		if (_graphEdit is null)
+		{
+			return -1;
+		}
+
+		Node? child = _graphEdit.GetNodeOrNull(nodeId);
+		if (child is not GraphNode graphNode)
+		{
+			return -1;
+		}
+
+		for (var i = 0; i < graphNode.GetChildCount(); i++)
+		{
+			if (graphNode.IsSlotEnabledLeft(i))
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private int FindFirstEnabledOutputPort(string nodeId)
+	{
+		if (_graphEdit is null)
+		{
+			return -1;
+		}
+
+		Node? child = _graphEdit.GetNodeOrNull(nodeId);
+		if (child is not GraphNode graphNode)
+		{
+			return -1;
+		}
+
+		for (var i = 0; i < graphNode.GetChildCount(); i++)
+		{
+			if (graphNode.IsSlotEnabledRight(i))
+			{
+				return i;
+			}
+		}
+
+		return -1;
 	}
 
 	private void OnConnectionRequest(StringName fromNode, long fromPort, StringName toNode, long toPort)
@@ -1024,6 +1004,98 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		if (CurrentGraph == graph)
 		{
 			LoadGraphIntoEditor(graph);
+		}
+	}
+
+	private void OnDialogCanceled()
+	{
+		ClearPendingConnection();
+	}
+
+	private void ClearPendingConnection()
+	{
+		_pendingConnectionNode = null;
+		_pendingConnectionPort = 0;
+		_pendingConnectionIsOutput = false;
+	}
+
+	private void OnAddNodeButtonPressed()
+	{
+		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null || _addNodeButton is null)
+		{
+			return;
+		}
+
+		ClearPendingConnection();
+
+		// Position the dialog near the Add Node button.
+		var screenPosition = (Vector2I)(_addNodeButton.GetScreenPosition() + new Vector2(0, _addNodeButton.Size.Y));
+
+		// Nodes created via the button are placed at the center of the current view.
+		Vector2 centerPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
+
+		_addNodeDialog.ShowAtPosition(centerPosition, screenPosition);
+	}
+
+	private void AddNodeAtCenter(StatescriptNodeType nodeType, string title, string runtimeTypeName)
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		// Place the new node near the center of the current view.
+		Vector2 spawnPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
+		AddNodeAtPosition(nodeType, title, runtimeTypeName, spawnPosition);
+	}
+
+	private string AddNodeAtPosition(
+		StatescriptNodeType nodeType,
+		string title,
+		string runtimeTypeName,
+		Vector2 position)
+	{
+		StatescriptGraph? graph = CurrentGraph;
+		if (graph is null || _graphEdit is null)
+		{
+			return string.Empty;
+		}
+
+		var nodeId = $"node_{_nextNodeId++}";
+
+		var nodeResource = new StatescriptNode
+		{
+			NodeId = nodeId,
+			Title = title,
+			NodeType = nodeType,
+			RuntimeTypeName = runtimeTypeName,
+			PositionOffset = position,
+		};
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Add Statescript Node", customContext: graph);
+			_undoRedo.AddDoMethod(this, MethodName.DoAddNode, graph, nodeResource);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoAddNode, graph, nodeResource);
+			_undoRedo.CommitAction();
+		}
+		else
+		{
+			DoAddNode(graph, nodeResource);
+		}
+
+		return nodeId;
+	}
+
+	private void DoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
+	{
+		graph.Nodes.Add(nodeResource);
+
+		if (CurrentGraph == graph && _graphEdit is not null)
+		{
+			var graphNode = new StatescriptGraphNode();
+			_graphEdit.AddChild(graphNode);
+			graphNode.Initialize(nodeResource);
 		}
 	}
 

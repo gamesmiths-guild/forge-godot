@@ -366,7 +366,8 @@ internal static class StatescriptNodeDiscovery
 		return nodeType switch
 		{
 			StatescriptNodeType.Action => [new PortLayout("Execute", "Done", false)],
-			StatescriptNodeType.Condition => [new PortLayout("Condition", "True", false), new PortLayout("Condition", "False", false)],
+			StatescriptNodeType.Condition =>
+				[new PortLayout("Condition", "True", false), new PortLayout("Condition", "False", false)],
 			StatescriptNodeType.State => [
 				new PortLayout("Input", "OnActivate", false),
 				new PortLayout("Abort", "OnDeactivate", false),
