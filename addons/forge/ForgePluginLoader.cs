@@ -14,10 +14,8 @@ namespace Gamesmiths.Forge.Godot;
 public partial class ForgePluginLoader : EditorPlugin
 {
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
-	private const string PluginScenePath = "uid://pjscvogl6jak";
 
-	private EditorDock? _editorDock;
-	private PanelContainer? _dockedScene;
+	private TagsEditorDock? _tagsEditorDock;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private TagInspectorPlugin? _tagInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
@@ -26,20 +24,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _EnterTree()
 	{
-		PackedScene pluginScene = ResourceLoader.Load<PackedScene>(PluginScenePath);
-
-		_editorDock = new EditorDock
-		{
-			Title = "Forge",
-			DockIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20"),
-			DefaultSlot = EditorDock.DockSlot.RightUl,
-		};
-
-		_dockedScene = (PanelContainer)pluginScene.Instantiate();
-		_dockedScene.GetNode<TagsEditor>("%Tags").IsPluginInstance = true;
-
-		_editorDock.AddChild(_dockedScene);
-		AddDock(_editorDock);
+		_tagsEditorDock = new TagsEditorDock();
+		AddDock(_tagsEditorDock);
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
 		AddInspectorPlugin(_tagContainerInspectorPlugin);
@@ -57,12 +43,12 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _ExitTree()
 	{
-		Debug.Assert(_editorDock is not null, $"{nameof(_editorDock)} should have been initialized on _Ready().");
-		Debug.Assert(_dockedScene is not null, $"{nameof(_dockedScene)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_tagsEditorDock is not null,
+			$"{nameof(_tagsEditorDock)} should have been initialized on _Ready().");
 
-		RemoveDock(_editorDock);
-		_editorDock.QueueFree();
-		_dockedScene.Free();
+		RemoveDock(_tagsEditorDock);
+		_tagsEditorDock.QueueFree();
 
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
 		RemoveInspectorPlugin(_tagInspectorPlugin);

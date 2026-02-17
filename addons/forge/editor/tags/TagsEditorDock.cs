@@ -11,8 +11,11 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
+/// <summary>
+/// Editor dock for managing gameplay tags.
+/// </summary>
 [Tool]
-public partial class TagsEditor : VBoxContainer, ISerializationListener
+public partial class TagsEditorDock : EditorDock, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
@@ -27,16 +30,16 @@ public partial class TagsEditor : VBoxContainer, ISerializationListener
 	private Texture2D? _addIcon;
 	private Texture2D? _removeIcon;
 
-	public bool IsPluginInstance { get; set; }
+	public TagsEditorDock()
+	{
+		Title = "Tags";
+		DockIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20");
+		DefaultSlot = DockSlot.RightUl;
+	}
 
 	public override void _Ready()
 	{
 		base._Ready();
-
-		if (!IsPluginInstance)
-		{
-			return;
-		}
 
 		_forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
 		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
@@ -44,14 +47,11 @@ public partial class TagsEditor : VBoxContainer, ISerializationListener
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
 
-		_tree = GetNode<Tree>("%Tree");
-		_tagNameTextField = GetNode<LineEdit>("%TagNameField");
-		_addTagButton = GetNode<Button>("%AddTagButton");
-
+		BuildUI();
 		ConstructTagTree();
 
-		_tree.ButtonClicked += TreeButtonClicked;
-		_addTagButton.Pressed += AddTagButton_Pressed;
+		_tree!.ButtonClicked += TreeButtonClicked;
+		_addTagButton!.Pressed += AddTagButton_Pressed;
 	}
 
 	public void OnBeforeSerialize()
@@ -65,6 +65,53 @@ public partial class TagsEditor : VBoxContainer, ISerializationListener
 
 		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 		ReconstructTreeNode();
+	}
+
+	private void BuildUI()
+	{
+		var vBox = new VBoxContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			SizeFlagsVertical = SizeFlags.ExpandFill,
+		};
+
+		AddChild(vBox);
+
+		var hBox = new HBoxContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		vBox.AddChild(hBox);
+
+		var label = new Label
+		{
+			Text = "Tag Name:",
+		};
+
+		hBox.AddChild(label);
+
+		_tagNameTextField = new LineEdit
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		hBox.AddChild(_tagNameTextField);
+
+		_addTagButton = new Button
+		{
+			Text = "Add Tag",
+		};
+
+		hBox.AddChild(_addTagButton);
+
+		_tree = new Tree
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			SizeFlagsVertical = SizeFlags.ExpandFill,
+		};
+
+		vBox.AddChild(_tree);
 	}
 
 	private void AddTagButton_Pressed()
