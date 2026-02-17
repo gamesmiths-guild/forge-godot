@@ -17,7 +17,7 @@ public partial class StatescriptGraph : Resource
 	/// Gets or sets the display name for this graph.
 	/// </summary>
 	[Export]
-	public string GraphName { get; set; } = "New Graph";
+	public string StatescriptName { get; set; } = "New Statescript";
 
 	/// <summary>
 	/// Gets or sets the nodes in this graph.

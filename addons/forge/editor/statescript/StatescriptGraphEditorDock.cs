@@ -18,6 +18,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 {
 	private readonly List<GraphTab> _openTabs = [];
 	private readonly Dictionary<StringName, Vector2> _preMovePositions = [];
+	private readonly List<StatescriptNodeDiscovery.NodeTypeInfo> _menuNodeTypes = [];
 
 	private PanelContainer? _tabBarBackground;
 	private TabBar? _tabBar;
@@ -26,6 +27,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private Label? _emptyLabel;
 	private MenuButton? _addNodeButton;
 	private Button? _saveButton;
+	private StatescriptAddNodeDialog? _addNodeDialog;
 
 	private EditorUndoRedoManager? _undoRedo;
 
@@ -120,7 +122,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		var tab = new GraphTab(graph);
 		_openTabs.Add(tab);
 
-		_tabBar.AddTab(graph.GraphName);
+		_tabBar.AddTab(graph.StatescriptName);
 		_tabBar.CurrentTab = _openTabs.Count - 1;
 
 		LoadGraphIntoEditor(graph);
@@ -244,6 +246,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_graphEdit.DeleteNodesRequest += OnDeleteNodesRequest;
 		_graphEdit.BeginNodeMove += OnBeginNodeMove;
 		_graphEdit.EndNodeMove += OnEndNodeMove;
+		_graphEdit.PopupRequest += OnGraphEditPopupRequest;
 		contentVBox.AddChild(_graphEdit);
 
 		// Add custom buttons to GraphEdit's built-in toolbar.
@@ -260,11 +263,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		};
 
 		PopupMenu popup = _addNodeButton.GetPopup();
-		popup.AddItem("Action Node", (int)StatescriptNodeType.Action);
-		popup.AddItem("Condition Node", (int)StatescriptNodeType.Condition);
-		popup.AddItem("State Node", (int)StatescriptNodeType.State);
-		popup.AddSeparator();
-		popup.AddItem("Exit Node", (int)StatescriptNodeType.Exit);
+		BuildAddNodeMenu(popup);
 		popup.IdPressed += OnAddNodePressed;
 
 		menuHBox.AddChild(_addNodeButton);
@@ -273,7 +272,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		// Empty state label.
 		_emptyLabel = new Label
 		{
-			Text = "Select a Statescript Graph resource to begin editing.",
+			Text = "Select a Statescript resource to begin editing.",
 			HorizontalAlignment = HorizontalAlignment.Center,
 			VerticalAlignment = VerticalAlignment.Center,
 			SizeFlagsVertical = SizeFlags.ExpandFill,
@@ -282,6 +281,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		_emptyLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 		contentVBox.AddChild(_emptyLabel);
+
+		// Add Node dialog (created once, reused).
+		_addNodeDialog = new StatescriptAddNodeDialog();
+		_addNodeDialog.NodeCreationRequested += OnDialogNodeCreationRequested;
+		AddChild(_addNodeDialog);
 
 		// Apply initial theme.
 		UpdateTheme();
@@ -410,7 +414,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		for (var i = 0; i < _openTabs.Count; i++)
 		{
-			_tabBar.SetTabTitle(i, _openTabs[i].GraphResource.GraphName);
+			_tabBar.SetTabTitle(i, _openTabs[i].GraphResource.StatescriptName);
 		}
 	}
 
@@ -642,7 +646,139 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 	}
 
+	private void OnGraphEditPopupRequest(Vector2 atPosition)
+	{
+		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null)
+		{
+			return;
+		}
+
+		// Convert the click position from GraphEdit local coordinates to graph-local coordinates.
+		Vector2 graphPosition = (_graphEdit.ScrollOffset + atPosition) / _graphEdit.Zoom;
+
+		// Convert to screen position for dialog placement.
+		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + atPosition);
+
+		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
+	}
+
+	private void OnDialogNodeCreationRequested(
+		StatescriptNodeDiscovery.NodeTypeInfo? typeInfo,
+		StatescriptNodeType nodeType,
+		Vector2 position)
+	{
+		if (typeInfo is not null)
+		{
+			AddNodeAtPosition(nodeType, typeInfo.DisplayName, typeInfo.RuntimeTypeName, position);
+		}
+		else
+		{
+			// Exit node.
+			AddNodeAtPosition(StatescriptNodeType.Exit, "Exit", string.Empty, position);
+		}
+	}
+
 	private void OnAddNodePressed(long id)
+	{
+		if (id == 10000)
+		{
+			AddNodeAtCenter(StatescriptNodeType.Exit, "Exit", string.Empty);
+		}
+	}
+
+	private void BuildAddNodeMenu(PopupMenu popup)
+	{
+		popup.Clear();
+		_menuNodeTypes.Clear();
+
+		IReadOnlyList<StatescriptNodeDiscovery.NodeTypeInfo> discoveredTypes =
+			StatescriptNodeDiscovery.GetDiscoveredNodeTypes();
+
+		// Group by category with submenus.
+		var actionMenu = new PopupMenu { Name = "ActionSubmenu" };
+		var conditionMenu = new PopupMenu { Name = "ConditionSubmenu" };
+		var stateMenu = new PopupMenu { Name = "StateSubmenu" };
+
+		var actionCount = 0;
+		var conditionCount = 0;
+		var stateCount = 0;
+
+		for (var i = 0; i < discoveredTypes.Count; i++)
+		{
+			StatescriptNodeDiscovery.NodeTypeInfo typeInfo = discoveredTypes[i];
+			_menuNodeTypes.Add(typeInfo);
+
+			switch (typeInfo.NodeType)
+			{
+				case StatescriptNodeType.Action:
+					actionMenu.AddItem(typeInfo.DisplayName, i);
+					actionCount++;
+					break;
+				case StatescriptNodeType.Condition:
+					conditionMenu.AddItem(typeInfo.DisplayName, i);
+					conditionCount++;
+					break;
+				case StatescriptNodeType.State:
+					stateMenu.AddItem(typeInfo.DisplayName, i);
+					stateCount++;
+					break;
+			}
+		}
+
+		if (actionCount > 0)
+		{
+			actionMenu.IdPressed += OnAddConcreteNodePressed;
+			popup.AddChild(actionMenu);
+			popup.AddSubmenuNodeItem("Action", actionMenu);
+		}
+
+		if (conditionCount > 0)
+		{
+			conditionMenu.IdPressed += OnAddConcreteNodePressed;
+			popup.AddChild(conditionMenu);
+			popup.AddSubmenuNodeItem("Condition", conditionMenu);
+		}
+
+		if (stateCount > 0)
+		{
+			stateMenu.IdPressed += OnAddConcreteNodePressed;
+			popup.AddChild(stateMenu);
+			popup.AddSubmenuNodeItem("State", stateMenu);
+		}
+
+		popup.AddSeparator();
+		popup.AddItem("Exit Node", 10000);
+	}
+
+	private void OnAddConcreteNodePressed(long id)
+	{
+		var index = (int)id;
+		if (index < 0 || index >= _menuNodeTypes.Count)
+		{
+			return;
+		}
+
+		StatescriptNodeDiscovery.NodeTypeInfo typeInfo = _menuNodeTypes[index];
+		AddNodeAtCenter(typeInfo.NodeType, typeInfo.DisplayName, typeInfo.RuntimeTypeName);
+	}
+
+	private void AddNodeAtCenter(StatescriptNodeType nodeType, string title, string runtimeTypeName)
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		// Place the new node near the center of the current view.
+		Vector2 spawnPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
+		AddNodeAtPosition(nodeType, title, runtimeTypeName, spawnPosition);
+	}
+
+	private void AddNodeAtPosition(
+		StatescriptNodeType nodeType,
+		string title,
+		string runtimeTypeName,
+		Vector2 position)
 	{
 		StatescriptGraph? graph = CurrentGraph;
 		if (graph is null || _graphEdit is null)
@@ -650,28 +786,15 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		var nodeType = (StatescriptNodeType)(int)id;
-
 		var nodeId = $"node_{_nextNodeId++}";
-		var title = nodeType switch
-		{
-			StatescriptNodeType.Action => "Action",
-			StatescriptNodeType.Condition => "Condition",
-			StatescriptNodeType.State => "State",
-			StatescriptNodeType.Exit => "Exit",
-			StatescriptNodeType.Entry => throw new System.NotImplementedException(),
-			_ => "Node",
-		};
-
-		// Place the new node near the center of the current view.
-		Vector2 spawnPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
 
 		var nodeResource = new StatescriptNode
 		{
 			NodeId = nodeId,
 			Title = title,
 			NodeType = nodeType,
-			PositionOffset = spawnPosition,
+			RuntimeTypeName = runtimeTypeName,
+			PositionOffset = position,
 		};
 
 		if (_undoRedo is not null)
@@ -919,7 +1042,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		if (string.IsNullOrEmpty(graph.ResourcePath))
 		{
-			GD.PushWarning("Graph resource has no path. Save it as a resource file first.");
+			GD.PushWarning("Statescript resource has no path. Save it as a resource file first.");
 			return;
 		}
 

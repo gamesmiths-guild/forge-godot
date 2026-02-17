@@ -8,6 +8,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 /// <summary>
 /// Visual GraphNode representation for a single Statescript node in the editor.
+/// Supports both built-in node types (Entry/Exit) and dynamically discovered concrete types.
 /// </summary>
 [Tool]
 public partial class StatescriptGraphNode : GraphNode
@@ -38,7 +39,84 @@ public partial class StatescriptGraphNode : GraphNode
 		PositionOffset = resource.PositionOffset;
 
 		ClearSlots();
-		SetupNodeByType(resource.NodeType);
+
+		// For Entry/Exit nodes or nodes without a runtime type, use the fixed layout.
+		if (resource.NodeType is StatescriptNodeType.Entry or StatescriptNodeType.Exit
+			|| string.IsNullOrEmpty(resource.RuntimeTypeName))
+		{
+			SetupNodeByType(resource.NodeType);
+			return;
+		}
+
+		// For concrete types, use reflection-based port discovery.
+		StatescriptNodeDiscovery.NodeTypeInfo? typeInfo =
+			StatescriptNodeDiscovery.FindByRuntimeTypeName(resource.RuntimeTypeName);
+
+		if (typeInfo is not null)
+		{
+			SetupFromTypeInfo(typeInfo);
+		}
+		else
+		{
+			// Fallback to default layout if the type can't be resolved.
+			SetupNodeByType(resource.NodeType);
+		}
+	}
+
+	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		var maxSlots = System.Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
+
+		for (var slot = 0; slot < maxSlots; slot++)
+		{
+			var hBox = new HBoxContainer();
+			hBox.AddThemeConstantOverride("separation", 16);
+			AddChild(hBox);
+
+			// Left side: input port label.
+			if (slot < typeInfo.InputPortLabels.Length)
+			{
+				var inputLabel = new Label { Text = typeInfo.InputPortLabels[slot] };
+				hBox.AddChild(inputLabel);
+				SetSlotEnabledLeft(slot, true);
+				SetSlotColorLeft(slot, _eventColor);
+			}
+			else
+			{
+				// Spacer to keep alignment.
+				var spacer = new Control();
+				hBox.AddChild(spacer);
+			}
+
+			// Right side: output port label.
+			if (slot < typeInfo.OutputPortLabels.Length)
+			{
+				var outputLabel = new Label
+				{
+					Text = typeInfo.OutputPortLabels[slot],
+					HorizontalAlignment = HorizontalAlignment.Right,
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
+				};
+				hBox.AddChild(outputLabel);
+				SetSlotEnabledRight(slot, true);
+
+				Color portColor = typeInfo.IsSubgraphPort[slot] ? _subgraphColor : _eventColor;
+				SetSlotColorRight(slot, portColor);
+			}
+		}
+
+		// Apply title bar color based on category.
+		Color titleColor = typeInfo.NodeType switch
+		{
+			StatescriptNodeType.Action => _actionColor,
+			StatescriptNodeType.Condition => _conditionColor,
+			StatescriptNodeType.State => _stateColor,
+			StatescriptNodeType.Entry => throw new System.NotImplementedException(),
+			StatescriptNodeType.Exit => throw new System.NotImplementedException(),
+			_ => _entryExitColor,
+		};
+
+		ApplyTitleBarColor(titleColor);
 	}
 
 	private void SetupNodeByType(StatescriptNodeType nodeType)
@@ -139,7 +217,7 @@ public partial class StatescriptGraphNode : GraphNode
 		AddChild(hBox1);
 
 		// Input port.
-		var inputLabel = new Label { Text = "Input" };
+		var inputLabel = new Label { Text = "Begin" };
 		hBox1.AddChild(inputLabel);
 		SetSlotEnabledLeft(0, true);
 		SetSlotColorLeft(0, _eventColor);

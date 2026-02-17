@@ -412,3 +412,6 @@ dotnet_diagnostic.T0004.severity = none
 
 # RCS1170: Use read-only auto-implemented property
 dotnet_diagnostic.RCS1170.severity = none
+
+# IDE0270: Use coalesce expression
+dotnet_diagnostic.IDE0270.severity = suggestion

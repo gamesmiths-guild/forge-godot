@@ -62,6 +62,13 @@ public partial class StatescriptNode : Resource
 	public StatescriptNodeType NodeType { get; set; }
 
 	/// <summary>
+	/// Gets or sets the fully qualified runtime type name of the concrete node class from the Forge library.
+	/// Empty for Entry and Exit nodes which are handled specially.
+	/// </summary>
+	[Export]
+	public string RuntimeTypeName { get; set; } = string.Empty;
+
+	/// <summary>
 	/// Gets or sets the position of this node in the graph editor.
 	/// </summary>
 	[Export]
@@ -70,6 +77,9 @@ public partial class StatescriptNode : Resource
 	/// <summary>
 	/// Gets or sets additional custom data for extended node implementations.
 	/// </summary>
+	/// <remarks>
+	/// Keys are constructor parameter names; values are the serialized parameter values.
+	/// </remarks>
 	[Export]
 	public Dictionary<string, Variant> CustomData { get; set; } = [];
 }
