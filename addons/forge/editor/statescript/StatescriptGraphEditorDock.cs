@@ -26,7 +26,10 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private Label? _emptyLabel;
 	private Button? _addNodeButton;
 	private Button? _saveButton;
+	private Button? _variablesToggleButton;
 	private StatescriptAddNodeDialog? _addNodeDialog;
+	private StatescriptVariablePanel? _variablePanel;
+	private HSplitContainer? _splitContainer;
 
 	private EditorUndoRedoManager? _undoRedo;
 
@@ -60,12 +63,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		base._Ready();
 
 		// Apply negative margins to fill the bottom panel edge-to-edge, matching the MSBuild panel approach.
-		StyleBox bottomPanelStylebox = EditorInterface.Singleton.GetBaseControl()
+		StyleBox bottomPanelStyleBox = EditorInterface.Singleton.GetBaseControl()
 			.GetThemeStylebox("BottomPanel", "EditorStyles");
 
-		AddThemeConstantOverride("margin_top", -(int)bottomPanelStylebox.ContentMarginTop);
-		AddThemeConstantOverride("margin_left", -(int)bottomPanelStylebox.ContentMarginLeft);
-		AddThemeConstantOverride("margin_right", -(int)bottomPanelStylebox.ContentMarginRight);
+		AddThemeConstantOverride("margin_top", -(int)bottomPanelStyleBox.ContentMarginTop);
+		AddThemeConstantOverride("margin_left", -(int)bottomPanelStyleBox.ContentMarginLeft);
+		AddThemeConstantOverride("margin_right", -(int)bottomPanelStyleBox.ContentMarginRight);
 
 		BuildUI();
 		UpdateVisibility();
@@ -225,6 +228,17 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_saveButton.Pressed += OnSavePressed;
 		tabBarHBox.AddChild(_saveButton);
 
+		// Variables toggle button in the tab bar area.
+		_variablesToggleButton = new Button
+		{
+			Text = "Variables",
+			ToggleMode = true,
+			Flat = true,
+		};
+
+		_variablesToggleButton.Toggled += OnVariablesToggled;
+		tabBarHBox.AddChild(_variablesToggleButton);
+
 		// Content panel styled like a TabContainer content area.
 		_contentPanel = new PanelContainer
 		{
@@ -234,13 +248,15 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		vBox.AddChild(_contentPanel);
 
-		var contentVBox = new VBoxContainer
+		// Split container to hold graph editor and variable panel side-by-side.
+		_splitContainer = new HSplitContainer
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			Visible = false,
 		};
 
-		_contentPanel.AddChild(contentVBox);
+		_contentPanel.AddChild(_splitContainer);
 
 		// GraphEdit.
 		_graphEdit = new GraphEdit
@@ -248,7 +264,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			SizeFlagsVertical = SizeFlags.ExpandFill,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			RightDisconnects = true,
-			Visible = false,
 		};
 
 		_graphEdit.ConnectionRequest += OnConnectionRequest;
@@ -259,7 +274,16 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_graphEdit.PopupRequest += OnGraphEditPopupRequest;
 		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
 		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
-		contentVBox.AddChild(_graphEdit);
+		_splitContainer.AddChild(_graphEdit);
+
+		// Variables panel (initially hidden).
+		_variablePanel = new StatescriptVariablePanel
+		{
+			Visible = false,
+		};
+
+		_variablePanel.VariablesChanged += OnGraphVariablesChanged;
+		_splitContainer.AddChild(_variablePanel);
 
 		// Add custom buttons to GraphEdit's built-in toolbar.
 		HBoxContainer menuHBox = _graphEdit.GetMenuHBox();
@@ -290,7 +314,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		};
 
 		_emptyLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
-		contentVBox.AddChild(_emptyLabel);
+		_contentPanel.AddChild(_emptyLabel);
 
 		// Add Node dialog (created once, reused).
 		_addNodeDialog = new StatescriptAddNodeDialog();
@@ -516,6 +540,39 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			SyncConnectionsToGraph(graph);
 		}
+	}
+
+	private void OnVariablesToggled(bool pressed)
+	{
+		if (_variablePanel is null || _splitContainer is null)
+		{
+			return;
+		}
+
+		_variablePanel.Visible = pressed;
+
+		if (pressed)
+		{
+			_splitContainer.Visible = true;
+
+			StatescriptGraph? graph = CurrentGraph;
+			if (graph is not null)
+			{
+				_variablePanel.SetGraph(graph);
+			}
+		}
+	}
+
+	private void OnGraphVariablesChanged()
+	{
+		StatescriptGraph? graph = CurrentGraph;
+		if (graph is null)
+		{
+			return;
+		}
+
+		// Reload the current graph to reflect variable changes in node property dropdowns.
+		LoadGraphIntoEditor(graph);
 	}
 
 	private void OnFilesystemChanged()
@@ -1155,15 +1212,14 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		var paths = tabsValue.Split(';', System.StringSplitOptions.RemoveEmptyEntries);
-		foreach (var path in paths)
+		foreach (var path in tabsValue.Split(';', System.StringSplitOptions.RemoveEmptyEntries))
 		{
 			if (!ResourceLoader.Exists(path))
 			{
 				continue;
 			}
 
-			var graph = ResourceLoader.Load<StatescriptGraph>(path);
+			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
 			if (graph is not null)
 			{
 				OpenGraph(graph);

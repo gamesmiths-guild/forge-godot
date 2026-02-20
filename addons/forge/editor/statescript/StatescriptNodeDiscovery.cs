@@ -142,6 +142,8 @@ internal static class StatescriptNodeDiscovery
 		string[] outputLabels;
 		bool[] isSubgraph;
 		string description;
+		InputPropertyInfo[] inputPropertiesInfo;
+		OutputVariableInfo[] outputVariablesInfo;
 
 		try
 		{
@@ -150,6 +152,8 @@ internal static class StatescriptNodeDiscovery
 			outputLabels = GetOutputPortLabels(tempNode, nodeType);
 			isSubgraph = GetSubgraphFlags(tempNode);
 			description = tempNode.Description;
+			inputPropertiesInfo = GetInputPropertiesInfo(tempNode);
+			outputVariablesInfo = GetOutputVariablesInfo(tempNode);
 		}
 		catch
 		{
@@ -158,7 +162,9 @@ internal static class StatescriptNodeDiscovery
 			inputLabels = [.. portLayouts.Select(x => x.InputLabel)];
 			outputLabels = [.. portLayouts.Select(x => x.OutputLabel)];
 			isSubgraph = [.. portLayouts.Select(x => x.IsSubgraph)];
-			description = $"A {displayName} node.";
+			description = $"{displayName} node.";
+			inputPropertiesInfo = [];
+			outputVariablesInfo = [];
 		}
 
 		return new NodeTypeInfo(
@@ -169,7 +175,9 @@ internal static class StatescriptNodeDiscovery
 			outputLabels,
 			isSubgraph,
 			constructorParamNames,
-			description);
+			description,
+			inputPropertiesInfo,
+			outputVariablesInfo);
 	}
 
 	private static Node CreateTemporaryNode(Type type)
@@ -360,6 +368,33 @@ internal static class StatescriptNodeDiscovery
 		return flags;
 	}
 
+	private static InputPropertyInfo[] GetInputPropertiesInfo(Node node)
+	{
+		var propertiesInfo = new InputPropertyInfo[node.InputProperties.Length];
+		for (var i = 0; i < node.InputProperties.Length; i++)
+		{
+			propertiesInfo[i] = new InputPropertyInfo(
+				node.InputProperties[i].Label,
+				node.InputProperties[i].ExpectedType);
+		}
+
+		return propertiesInfo;
+	}
+
+	private static OutputVariableInfo[] GetOutputVariablesInfo(Node node)
+	{
+		var variablesInfo = new OutputVariableInfo[node.OutputVariables.Length];
+		for (var i = 0; i < node.OutputVariables.Length; i++)
+		{
+			variablesInfo[i] = new OutputVariableInfo(
+				node.OutputVariables[i].Label,
+				node.OutputVariables[i].ValueType,
+				node.OutputVariables[i].Scope);
+		}
+
+		return variablesInfo;
+	}
+
 	private static PortLayout[] GetDefaultPortLayout(
 		StatescriptNodeType nodeType)
 	{
@@ -449,6 +484,16 @@ internal static class StatescriptNodeDiscovery
 		/// </summary>
 		public string Description { get; }
 
+		/// <summary>
+		/// Gets the input property declarations for this node type.
+		/// </summary>
+		public InputPropertyInfo[] InputPropertiesInfo { get; }
+
+		/// <summary>
+		/// Gets the output variable declarations for this node type.
+		/// </summary>
+		public OutputVariableInfo[] OutputVariablesInfo { get; }
+
 		public NodeTypeInfo(
 			string displayName,
 			string runtimeTypeName,
@@ -457,7 +502,9 @@ internal static class StatescriptNodeDiscovery
 			string[] outputPortLabels,
 			bool[] isSubgraphPort,
 			string[] constructorParameterNames,
-			string description)
+			string description,
+			InputPropertyInfo[] inputPropertiesInfo,
+			OutputVariableInfo[] outputVariablesInfo)
 		{
 			DisplayName = displayName;
 			RuntimeTypeName = runtimeTypeName;
@@ -467,8 +514,25 @@ internal static class StatescriptNodeDiscovery
 			IsSubgraphPort = isSubgraphPort;
 			ConstructorParameterNames = constructorParameterNames;
 			Description = description;
+			InputPropertiesInfo = inputPropertiesInfo;
+			OutputVariablesInfo = outputVariablesInfo;
 		}
 	}
+
+	/// <summary>
+	/// Describes an input property declared by a node type.
+	/// </summary>
+	/// <param name="Label">The human-readable label for this input property.</param>
+	/// <param name="ExpectedType">The type the node expects to read.</param>
+	internal readonly record struct InputPropertyInfo(string Label, Type ExpectedType);
+
+	/// <summary>
+	/// Describes an output variable declared by a node type.
+	/// </summary>
+	/// <param name="Label">The human-readable label for this output variable.</param>
+	/// <param name="ValueType">The type the node writes.</param>
+	/// <param name="Scope">The default scope for this output variable.</param>
+	internal readonly record struct OutputVariableInfo(string Label, Type ValueType, VariableScope Scope);
 
 	private record struct PortLayout(string InputLabel, string OutputLabel, bool IsSubgraph);
 }
