@@ -651,6 +651,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			SaveOutgoingTabState((int)tab);
 			LoadGraphIntoEditor(_openTabs[(int)tab].GraphResource);
+
+			if (_variablePanel is not null && _variablePanel.Visible)
+			{
+				_variablePanel.SetGraph(_openTabs[(int)tab].GraphResource);
+			}
 		}
 	}
 
