@@ -129,6 +129,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				checkBox.Toggled += x =>
 				{
 					variable.InitialValue = Variant.From(x);
+					variable.EmitChanged();
 				};
 
 				hBox.AddChild(checkBox);
@@ -151,6 +152,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				intSpin.ValueChanged += value =>
 				{
 					variable.InitialValue = Variant.From((int)value);
+					variable.EmitChanged();
 				};
 
 				hBox.AddChild(intSpin);
@@ -170,6 +172,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				longSpin.ValueChanged += value =>
 				{
 					variable.InitialValue = Variant.From((long)value);
+					variable.EmitChanged();
 				};
 
 				hBox.AddChild(longSpin);
@@ -189,6 +192,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				floatSpin.ValueChanged += value =>
 				{
 					variable.InitialValue = Variant.From(value);
+					variable.EmitChanged();
 				};
 
 				hBox.AddChild(floatSpin);
@@ -317,21 +321,10 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 					(float)spins[1].Value,
 					(float)spins[2].Value,
 					(float)spins[3].Value)),
-			StatescriptVariableType.Bool => throw new NotImplementedException(),
-			StatescriptVariableType.Byte => throw new NotImplementedException(),
-			StatescriptVariableType.SByte => throw new NotImplementedException(),
-			StatescriptVariableType.Char => throw new NotImplementedException(),
-			StatescriptVariableType.Decimal => throw new NotImplementedException(),
-			StatescriptVariableType.Double => throw new NotImplementedException(),
-			StatescriptVariableType.Float => throw new NotImplementedException(),
-			StatescriptVariableType.Int => throw new NotImplementedException(),
-			StatescriptVariableType.UInt => throw new NotImplementedException(),
-			StatescriptVariableType.Long => throw new NotImplementedException(),
-			StatescriptVariableType.ULong => throw new NotImplementedException(),
-			StatescriptVariableType.Short => throw new NotImplementedException(),
-			StatescriptVariableType.UShort => throw new NotImplementedException(),
 			_ => variable.InitialValue,
 		};
+
+		variable.EmitChanged();
 	}
 
 	private static bool IsIntegerType(StatescriptVariableType type)
@@ -473,6 +466,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				{
 					variable.InitialArrayValues[capturedIndex] = Variant.From(value);
 				}
+
+				variable.EmitChanged();
 			};
 
 			elementRow.AddChild(elementSpin);
