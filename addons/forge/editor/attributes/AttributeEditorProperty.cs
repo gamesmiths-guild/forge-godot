@@ -15,17 +15,15 @@ public partial class AttributeEditorProperty : EditorProperty
 
 	public override void _Ready()
 	{
-		Texture2D dropdownIcon = EditorInterface.Singleton
-			.GetEditorTheme()
-			.GetIcon("GuiDropdown", "EditorIcons");
+		Texture2D dropdownIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("GuiDropdown", "EditorIcons");
 
-		var hbox = new HBoxContainer();
+		var hBox = new HBoxContainer();
 		_label = new Label { Text = "None", SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		var button = new Button { Icon = dropdownIcon, CustomMinimumSize = new Vector2(ButtonSize, 0) };
 
-		hbox.AddChild(_label);
-		hbox.AddChild(button);
-		AddChild(hbox);
+		hBox.AddChild(_label);
+		hBox.AddChild(button);
+		AddChild(hBox);
 
 		var popup = new Popup { Size = new Vector2I(PopupSize, PopupSize) };
 		var tree = new Tree
