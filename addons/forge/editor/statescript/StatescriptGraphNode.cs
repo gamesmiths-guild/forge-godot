@@ -25,11 +25,10 @@ public partial class StatescriptGraphNode : GraphNode
 	private static readonly Color _inputPropertyColor = new(0x61afefff);
 	private static readonly Color _outputVariableColor = new(0xe5c07bff);
 
+	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
+
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
-
-	private readonly Dictionary<(StatescriptPropertyDirection, int), IStatescriptResolverEditor> _activeResolverEditors
-		= [];
 
 	/// <summary>
 	/// Raised when a property binding has been modified in the UI.
@@ -82,6 +81,9 @@ public partial class StatescriptGraphNode : GraphNode
 		{
 			VariableResolverResource => "Variable",
 			VariantResolverResource => "Variant",
+			AttributeResolverResource => "Attribute",
+			TagResolverResource => "Tag",
+			ComparisonResolverResource => "Comparison",
 			_ => string.Empty,
 		};
 	}
@@ -140,21 +142,21 @@ public partial class StatescriptGraphNode : GraphNode
 
 		if (typeInfo.InputPropertiesInfo.Length > 0)
 		{
-			AddPropertySectionDivider("Input Properties", _inputPropertyColor);
+			FoldableContainer inputContainer = AddPropertySectionDivider("Input Properties", _inputPropertyColor);
 
 			for (var i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
-				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i);
+				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
 			}
 		}
 
 		if (typeInfo.OutputVariablesInfo.Length > 0)
 		{
-			AddPropertySectionDivider("Output Variables", _outputVariableColor);
+			FoldableContainer outputContainer = AddPropertySectionDivider("Output Variables", _outputVariableColor);
 
 			for (var i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 			{
-				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i);
+				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
 			}
 		}
 
@@ -171,23 +173,26 @@ public partial class StatescriptGraphNode : GraphNode
 		ApplyTitleBarColor(titleColor);
 	}
 
-	private void AddPropertySectionDivider(string sectionTitle, Color color)
+	private FoldableContainer AddPropertySectionDivider(string sectionTitle, Color color)
 	{
 		var divider = new HSeparator { CustomMinimumSize = new Vector2(0, 4) };
 		AddChild(divider);
 
-		var sectionLabel = new Label
+		var sectionContainer = new FoldableContainer
 		{
-			Text = sectionTitle,
-			HorizontalAlignment = HorizontalAlignment.Center,
+			Title = sectionTitle,
 		};
 
-		sectionLabel.AddThemeColorOverride("font_color", color);
-		sectionLabel.AddThemeFontSizeOverride("font_size", 11);
-		AddChild(sectionLabel);
+		sectionContainer.AddThemeColorOverride("font_color", color);
+		AddChild(sectionContainer);
+
+		return sectionContainer;
 	}
 
-	private void AddInputPropertyRow(StatescriptNodeDiscovery.InputPropertyInfo propInfo, int index)
+	private void AddInputPropertyRow(
+		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
+		int index,
+		FoldableContainer sectionContainer)
 	{
 		if (NodeResource is null)
 		{
@@ -195,7 +200,7 @@ public partial class StatescriptGraphNode : GraphNode
 		}
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		AddChild(container);
+		sectionContainer.AddChild(container);
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(headerRow);
@@ -210,21 +215,21 @@ public partial class StatescriptGraphNode : GraphNode
 		headerRow.AddChild(nameLabel);
 
 		// Build the list of compatible resolvers from the registry.
-		List<IStatescriptResolverEditor> resolvers =
-			StatescriptResolverRegistry.GetCompatibleResolvers(propInfo.ExpectedType);
+		List<Func<NodeEditorProperty>> resolverFactories =
+			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
 
-		// Resolver type dropdown: "(None)" + one entry per compatible resolver.
+		// Resolver type dropdown: one entry per compatible resolver (no "None" — always required).
 		var resolverDropdown = new OptionButton
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			CustomMinimumSize = new Vector2(80, 0),
 		};
 
-		resolverDropdown.AddItem("(None)");
-
-		foreach (IStatescriptResolverEditor resolver in resolvers)
+		foreach (Func<NodeEditorProperty> factory in resolverFactories)
 		{
-			resolverDropdown.AddItem(resolver.DisplayName);
+			// Create a temporary instance just to read DisplayName.
+			using NodeEditorProperty temp = factory();
+			resolverDropdown.AddItem(temp.DisplayName);
 		}
 
 		// Determine which resolver is currently selected from the existing binding.
@@ -233,11 +238,27 @@ public partial class StatescriptGraphNode : GraphNode
 
 		if (binding?.Resolver is not null)
 		{
-			for (var i = 0; i < resolvers.Count; i++)
+			for (var i = 0; i < resolverFactories.Count; i++)
 			{
-				if (resolvers[i].ResolverTypeId == GetResolverTypeId(binding.Resolver))
+				using NodeEditorProperty temp = resolverFactories[i]();
+
+				if (temp.ResolverTypeId == GetResolverTypeId(binding.Resolver))
 				{
-					selectedIndex = i + 1;
+					selectedIndex = i;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// Default: find the Variant (Constant) resolver, or fall back to first.
+			for (var i = 0; i < resolverFactories.Count; i++)
+			{
+				using NodeEditorProperty temp = resolverFactories[i]();
+
+				if (temp.ResolverTypeId == "Variant")
+				{
+					selectedIndex = i;
 					break;
 				}
 			}
@@ -246,57 +267,54 @@ public partial class StatescriptGraphNode : GraphNode
 		resolverDropdown.Selected = selectedIndex;
 		headerRow.AddChild(resolverDropdown);
 
-		// Container for the resolver-specific configuration UI.
-		var resolverUIContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		container.AddChild(resolverUIContainer);
-
-		// Show the resolver UI if one is already bound.
-		if (selectedIndex > 0)
-		{
-			ShowResolverEditorUI(
-				resolvers[selectedIndex - 1],
-				binding,
-				propInfo.ExpectedType,
-				resolverUIContainer,
-				StatescriptPropertyDirection.Input,
-				index);
-		}
+		// Show the resolver UI for the current selection.
+		ShowResolverEditorUI(
+			resolverFactories[selectedIndex],
+			binding,
+			propInfo.ExpectedType,
+			container,
+			StatescriptPropertyDirection.Input,
+			index);
 
 		resolverDropdown.ItemSelected += x =>
 		{
-			ClearContainer(resolverUIContainer);
-			_activeResolverEditors.Remove((StatescriptPropertyDirection.Input, index));
+			var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
+
+			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? old))
+			{
+				old.QueueFree();
+				_activeResolverEditors.Remove(key);
+			}
+
+			ClearContainer(container);
 
 			if (NodeResource is null)
 			{
 				return;
 			}
 
-			if (x == 0)
-			{
-				// "(None)" selected — clear the binding.
-				RemoveBinding(StatescriptPropertyDirection.Input, index);
-				PropertyBindingChanged?.Invoke();
-				return;
-			}
-
-			IStatescriptResolverEditor resolverEditor = resolvers[(int)x - 1];
-
 			ShowResolverEditorUI(
-				resolverEditor,
+				resolverFactories[(int)x],
 				null,
 				propInfo.ExpectedType,
-				resolverUIContainer,
+				container,
 				StatescriptPropertyDirection.Input,
 				index);
 
 			// Save immediately so the resource stays in sync.
-			SaveResolverEditor(resolverEditor, StatescriptPropertyDirection.Input, index);
+			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
+			{
+				SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+			}
+
 			PropertyBindingChanged?.Invoke();
 		};
 	}
 
-	private void AddOutputVariableRow(StatescriptNodeDiscovery.OutputVariableInfo varInfo, int index)
+	private void AddOutputVariableRow(
+		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
+		int index,
+		FoldableContainer sectionContainer)
 	{
 		if (NodeResource is null || _graph is null)
 		{
@@ -304,7 +322,7 @@ public partial class StatescriptGraphNode : GraphNode
 		}
 
 		var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		AddChild(hBox);
+		sectionContainer.AddChild(hBox);
 
 		var nameLabel = new Label
 		{
@@ -315,17 +333,15 @@ public partial class StatescriptGraphNode : GraphNode
 		nameLabel.AddThemeColorOverride("font_color", _outputVariableColor);
 		hBox.AddChild(nameLabel);
 
-		// Output variables always bind to a graph variable (VariableResolverEditor).
+		// Output variables always bind to a graph variable.
 		var variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		variableDropdown.AddItem("(None)");
 
 		foreach (StatescriptGraphVariable v in _graph.Variables)
 		{
 			variableDropdown.AddItem(v.VariableName);
 		}
 
-		// Restore selection from existing binding.
+		// Restore selection from existing binding, default to first variable.
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Output, index);
 		var selectedIndex = 0;
 
@@ -336,13 +352,24 @@ public partial class StatescriptGraphNode : GraphNode
 			{
 				if (_graph.Variables[i].VariableName == varRes.VariableName)
 				{
-					selectedIndex = i + 1;
+					selectedIndex = i;
 					break;
 				}
 			}
 		}
 
-		variableDropdown.Selected = selectedIndex;
+		if (_graph.Variables.Count > 0)
+		{
+			variableDropdown.Selected = selectedIndex;
+
+			// Ensure binding exists for the default.
+			if (binding is null)
+			{
+				var variableName = _graph.Variables[selectedIndex].VariableName;
+				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
+					new VariableResolverResource { VariableName = variableName };
+			}
+		}
 
 		variableDropdown.ItemSelected += x =>
 		{
@@ -351,15 +378,9 @@ public partial class StatescriptGraphNode : GraphNode
 				return;
 			}
 
-			if (x == 0)
-			{
-				RemoveBinding(StatescriptPropertyDirection.Output, index);
-			}
-			else
-			{
-				var variableName = _graph.Variables[(int)x - 1].VariableName;
-				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = new VariableResolverResource { VariableName = variableName };
-			}
+			var variableName = _graph.Variables[(int)x].VariableName;
+			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
+				new VariableResolverResource { VariableName = variableName };
 
 			PropertyBindingChanged?.Invoke();
 		};
@@ -368,7 +389,7 @@ public partial class StatescriptGraphNode : GraphNode
 	}
 
 	private void ShowResolverEditorUI(
-		IStatescriptResolverEditor resolverEditor,
+		Func<NodeEditorProperty> factory,
 		StatescriptNodeProperty? existingBinding,
 		Type expectedType,
 		VBoxContainer container,
@@ -380,7 +401,9 @@ public partial class StatescriptGraphNode : GraphNode
 			return;
 		}
 
-		Control? editorControl = resolverEditor.CreateEditorUI(
+		NodeEditorProperty resolverEditor = factory();
+
+		resolverEditor.Setup(
 			_graph,
 			existingBinding,
 			expectedType,
@@ -390,16 +413,14 @@ public partial class StatescriptGraphNode : GraphNode
 				PropertyBindingChanged?.Invoke();
 			});
 
-		if (editorControl is not null)
-		{
-			container.AddChild(editorControl);
-		}
+		container.AddChild(resolverEditor);
 
-		_activeResolverEditors[(direction, propertyIndex)] = resolverEditor;
+		var key = new PropertySlotKey(direction, propertyIndex);
+		_activeResolverEditors[key] = resolverEditor;
 	}
 
 	private void SaveResolverEditor(
-		IStatescriptResolverEditor resolverEditor,
+		NodeEditorProperty resolverEditor,
 		StatescriptPropertyDirection direction,
 		int propertyIndex)
 	{
@@ -654,4 +675,11 @@ public partial class StatescriptGraphNode : GraphNode
 		AddThemeStyleboxOverride("titlebar_selected", selectedTitleBarStyleBox);
 	}
 }
+
+/// <summary>
+/// Identifies a property binding slot by direction and index.
+/// </summary>
+/// <param name="Direction">The direction of the property (input or output).</param>
+/// <param name="PropertyIndex">The index of the property within its direction.</param>
+internal readonly record struct PropertySlotKey(StatescriptPropertyDirection Direction, int PropertyIndex);
 #endif

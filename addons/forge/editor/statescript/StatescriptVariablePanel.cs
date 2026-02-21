@@ -9,8 +9,8 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 /// <summary>
-/// Right-side panel for editing graph variables. Lists all variables in the current graph and allows adding, removing,
-/// renaming, changing types, and setting initial values.
+/// Right-side panel for editing graph variables. Variables are created with a name and type via a creation dialog.
+/// Once created, only the initial value can be edited. To change name or type, delete and recreate the variable.
 /// </summary>
 [Tool]
 internal sealed partial class StatescriptVariablePanel : VBoxContainer
@@ -19,8 +19,14 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 	private VBoxContainer? _variableList;
 	private Button? _addButton;
 
+	// Creation dialog controls.
+	private Window? _creationDialog;
+	private LineEdit? _newNameEdit;
+	private OptionButton? _newTypeDropdown;
+	private CheckButton? _newArrayToggle;
+
 	/// <summary>
-	/// Raised when any variable is added, removed, renamed, or its type changes.
+	/// Raised when any variable is added, removed, or its value changes.
 	/// </summary>
 	public event Action? VariablesChanged;
 
@@ -107,112 +113,14 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		}
 	}
 
-	private void AddVariableRow(StatescriptGraphVariable variable, int index)
-	{
-		if (_variableList is null)
-		{
-			return;
-		}
-
-		var rowContainer = new VBoxContainer
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		_variableList.AddChild(rowContainer);
-
-		// Row 1: Name + Delete button.
-		var nameRow = new HBoxContainer
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		rowContainer.AddChild(nameRow);
-
-		var nameEdit = new LineEdit
-		{
-			Text = variable.VariableName,
-			PlaceholderText = "Variable Name",
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			CustomMinimumSize = new Vector2(100, 0),
-		};
-
-		var capturedIndex = index;
-		nameEdit.TextSubmitted += x => OnNameChanged(capturedIndex, x, nameEdit);
-		nameEdit.FocusExited += () => OnNameChanged(capturedIndex, nameEdit.Text, nameEdit);
-		nameRow.AddChild(nameEdit);
-
-		var deleteButton = new Button
-		{
-			Text = "✕",
-			TooltipText = "Remove Variable",
-			CustomMinimumSize = new Vector2(28, 28),
-		};
-
-		deleteButton.Pressed += () => OnDeletePressed(capturedIndex);
-		nameRow.AddChild(deleteButton);
-
-		// Row 2: Type dropdown + Array toggle.
-		var typeRow = new HBoxContainer
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		rowContainer.AddChild(typeRow);
-
-		var typeDropdown = new OptionButton
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		StatescriptVariableType[] allTypes = StatescriptVariableTypeConverter.GetAllTypes();
-		for (var t = 0; t < allTypes.Length; t++)
-		{
-			typeDropdown.AddItem(StatescriptVariableTypeConverter.GetDisplayName(allTypes[t]), t);
-		}
-
-		typeDropdown.Selected = (int)variable.VariableType;
-		typeDropdown.ItemSelected += x => OnTypeChanged(capturedIndex, (StatescriptVariableType)(int)x);
-		typeRow.AddChild(typeDropdown);
-
-		var arrayToggle = new CheckButton
-		{
-			Text = "Array",
-			ButtonPressed = variable.IsArray,
-		};
-
-		arrayToggle.Toggled += x => OnArrayToggled(capturedIndex, x);
-		typeRow.AddChild(arrayToggle);
-
-		// Row 3: Initial value editor.
-		if (!variable.IsArray)
-		{
-			Control? valueEditor = CreateScalarValueEditor(variable);
-			if (valueEditor is not null)
-			{
-				rowContainer.AddChild(valueEditor);
-			}
-		}
-		else
-		{
-			Control arrayEditor = CreateArrayValueEditor(variable);
-			rowContainer.AddChild(arrayEditor);
-		}
-
-		// Separator between variables.
-		var separator = new HSeparator();
-		rowContainer.AddChild(separator);
-	}
-
-	private Control? CreateScalarValueEditor(StatescriptGraphVariable variable)
+	private static HBoxContainer? CreateScalarValueEditor(StatescriptGraphVariable variable)
 	{
 		var hBox = new HBoxContainer
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
-		var label = new Label { Text = "Value:" };
-		hBox.AddChild(label);
+		hBox.AddChild(new Label { Text = "Value:" });
 
 		switch (variable.VariableType)
 		{
@@ -222,6 +130,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				{
 					variable.InitialValue = Variant.From(x);
 				};
+
 				hBox.AddChild(checkBox);
 				break;
 
@@ -238,10 +147,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 					Rounded = true,
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
+
 				intSpin.ValueChanged += value =>
 				{
 					variable.InitialValue = Variant.From((int)value);
 				};
+
 				hBox.AddChild(intSpin);
 				break;
 
@@ -255,10 +166,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 					Rounded = true,
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
+
 				longSpin.ValueChanged += value =>
 				{
 					variable.InitialValue = Variant.From((long)value);
 				};
+
 				hBox.AddChild(longSpin);
 				break;
 
@@ -272,10 +185,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 					Rounded = false,
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
+
 				floatSpin.ValueChanged += value =>
 				{
 					variable.InitialValue = Variant.From(value);
 				};
+
 				hBox.AddChild(floatSpin);
 				break;
 
@@ -311,9 +226,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		};
 
 		var spins = new SpinBox[components];
+
 		for (var i = 0; i < components; i++)
 		{
 			parent.AddChild(new Label { Text = labels[i] });
+
 			var spin = new SpinBox
 			{
 				Value = GetVectorComponent(variable, i),
@@ -417,7 +334,87 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		};
 	}
 
-	private Control CreateArrayValueEditor(StatescriptGraphVariable variable)
+	private static bool IsIntegerType(StatescriptVariableType type)
+	{
+		return type is StatescriptVariableType.Int or StatescriptVariableType.UInt
+			or StatescriptVariableType.Long or StatescriptVariableType.ULong
+			or StatescriptVariableType.Short or StatescriptVariableType.UShort
+			or StatescriptVariableType.Byte or StatescriptVariableType.SByte
+			or StatescriptVariableType.Char;
+	}
+
+	private void AddVariableRow(StatescriptGraphVariable variable, int index)
+	{
+		if (_variableList is null)
+		{
+			return;
+		}
+
+		var rowContainer = new VBoxContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		_variableList.AddChild(rowContainer);
+
+		// Row 1: Name label (read-only) + Type label + Delete button.
+		var headerRow = new HBoxContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		rowContainer.AddChild(headerRow);
+
+		var nameLabel = new Label
+		{
+			Text = variable.VariableName,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		headerRow.AddChild(nameLabel);
+
+		var typeLabel = new Label
+		{
+			Text = $"({StatescriptVariableTypeConverter.GetDisplayName(variable.VariableType)}"
+				+ (variable.IsArray ? "[])" : ")"),
+		};
+
+		typeLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
+		headerRow.AddChild(typeLabel);
+
+		var capturedIndex = index;
+
+		var deleteButton = new Button
+		{
+			Text = "✕",
+			TooltipText = "Remove Variable",
+			CustomMinimumSize = new Vector2(28, 28),
+		};
+
+		deleteButton.Pressed += () => OnDeletePressed(capturedIndex);
+		headerRow.AddChild(deleteButton);
+
+		// Row 2: Initial value editor.
+		if (!variable.IsArray)
+		{
+			HBoxContainer? valueEditor = CreateScalarValueEditor(variable);
+
+			if (valueEditor is not null)
+			{
+				rowContainer.AddChild(valueEditor);
+			}
+		}
+		else
+		{
+			VBoxContainer arrayEditor = CreateArrayValueEditor(variable);
+			rowContainer.AddChild(arrayEditor);
+		}
+
+		// Separator between variables.
+		rowContainer.AddChild(new HSeparator());
+	}
+
+	private VBoxContainer CreateArrayValueEditor(StatescriptGraphVariable variable)
 	{
 		var vBox = new VBoxContainer
 		{
@@ -442,6 +439,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variable.VariableType));
 			RebuildList();
 		};
+
 		headerRow.AddChild(addElementButton);
 
 		for (var i = 0; i < variable.InitialArrayValues.Count; i++)
@@ -476,6 +474,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 					variable.InitialArrayValues[capturedIndex] = Variant.From(value);
 				}
 			};
+
 			elementRow.AddChild(elementSpin);
 
 			var removeElementButton = new Button
@@ -489,19 +488,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				variable.InitialArrayValues.RemoveAt(capturedIndex);
 				RebuildList();
 			};
+
 			elementRow.AddChild(removeElementButton);
 		}
 
 		return vBox;
-	}
-
-	private static bool IsIntegerType(StatescriptVariableType type)
-	{
-		return type is StatescriptVariableType.Int or StatescriptVariableType.UInt
-			or StatescriptVariableType.Long or StatescriptVariableType.ULong
-			or StatescriptVariableType.Short or StatescriptVariableType.UShort
-			or StatescriptVariableType.Byte or StatescriptVariableType.SByte
-			or StatescriptVariableType.Char;
 	}
 
 	private void OnAddPressed()
@@ -511,16 +502,101 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			return;
 		}
 
+		ShowCreationDialog();
+	}
+
+	private void ShowCreationDialog()
+	{
+		_creationDialog?.QueueFree();
+
+		_creationDialog = new AcceptDialog
+		{
+			Title = "Add Variable",
+			Size = new Vector2I(300, 160),
+			Exclusive = true,
+		};
+
+		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		// Name row.
+		var nameRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		vBox.AddChild(nameRow);
+
+		nameRow.AddChild(new Label { Text = "Name:", CustomMinimumSize = new Vector2(60, 0) });
+
+		_newNameEdit = new LineEdit
+		{
+			Text = GenerateUniqueName(),
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		nameRow.AddChild(_newNameEdit);
+
+		// Type row.
+		var typeRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		vBox.AddChild(typeRow);
+
+		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });
+
+		_newTypeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		StatescriptVariableType[] allTypes = StatescriptVariableTypeConverter.GetAllTypes();
+
+		for (var t = 0; t < allTypes.Length; t++)
+		{
+			_newTypeDropdown.AddItem(StatescriptVariableTypeConverter.GetDisplayName(allTypes[t]), t);
+		}
+
+		_newTypeDropdown.Selected = (int)StatescriptVariableType.Int;
+		typeRow.AddChild(_newTypeDropdown);
+
+		// Array toggle.
+		var arrayRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		vBox.AddChild(arrayRow);
+
+		arrayRow.AddChild(new Label { Text = "Array:", CustomMinimumSize = new Vector2(60, 0) });
+
+		_newArrayToggle = new CheckButton();
+		arrayRow.AddChild(_newArrayToggle);
+
+		_creationDialog.AddChild(vBox);
+
+		((AcceptDialog)_creationDialog).Confirmed += OnCreationConfirmed;
+
+		AddChild(_creationDialog);
+		_creationDialog.PopupCentered();
+	}
+
+	private void OnCreationConfirmed()
+	{
+		if (_graph is null || _newNameEdit is null || _newTypeDropdown is null || _newArrayToggle is null)
+		{
+			return;
+		}
+
+		var name = _newNameEdit.Text.Trim();
+
+		if (string.IsNullOrEmpty(name) || HasVariableNamed(name))
+		{
+			return;
+		}
+
+		var varType = (StatescriptVariableType)_newTypeDropdown.Selected;
+
 		var newVariable = new StatescriptGraphVariable
 		{
-			VariableName = GenerateUniqueName(),
-			VariableType = StatescriptVariableType.Int,
-			InitialValue = Variant.From(0),
+			VariableName = name,
+			VariableType = varType,
+			IsArray = _newArrayToggle.ButtonPressed,
+			InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(varType),
 		};
 
 		_graph.Variables.Add(newVariable);
 		RebuildList();
 		VariablesChanged?.Invoke();
+
+		_creationDialog?.QueueFree();
+		_creationDialog = null;
 	}
 
 	private void OnDeletePressed(int index)
@@ -540,96 +616,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		VariablesChanged?.Invoke();
 	}
 
-	private void OnNameChanged(int index, string newName, LineEdit _)
-	{
-		if (_graph is null || index < 0 || index >= _graph.Variables.Count)
-		{
-			return;
-		}
-
-		var oldName = _graph.Variables[index].VariableName;
-		if (oldName == newName)
-		{
-			return;
-		}
-
-		_graph.Variables[index].VariableName = newName;
-
-		// Update all node property bindings that reference the old name.
-		UpdateReferencesToVariable(oldName, newName);
-
-		VariablesChanged?.Invoke();
-	}
-
-	private void OnTypeChanged(int index, StatescriptVariableType newType)
-	{
-		if (_graph is null || index < 0 || index >= _graph.Variables.Count)
-		{
-			return;
-		}
-
-		StatescriptGraphVariable variable = _graph.Variables[index];
-		StatescriptVariableType oldType = variable.VariableType;
-
-		if (oldType == newType)
-		{
-			return;
-		}
-
-		variable.VariableType = newType;
-		variable.InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(newType);
-		variable.InitialArrayValues.Clear();
-
-		// Clear bindings that are no longer type-compatible.
-		ClearIncompatibleReferences(variable.VariableName, newType);
-
-		RebuildList();
-		VariablesChanged?.Invoke();
-	}
-
-	private void OnArrayToggled(int index, bool isArray)
-	{
-		if (_graph is null || index < 0 || index >= _graph.Variables.Count)
-		{
-			return;
-		}
-
-		StatescriptGraphVariable variable = _graph.Variables[index];
-		variable.IsArray = isArray;
-
-		if (isArray)
-		{
-			variable.InitialArrayValues.Clear();
-		}
-		else
-		{
-			variable.InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variable.VariableType);
-		}
-
-		RebuildList();
-		VariablesChanged?.Invoke();
-	}
-
-	private void UpdateReferencesToVariable(string oldName, string newName)
-	{
-		if (_graph is null)
-		{
-			return;
-		}
-
-		foreach (StatescriptNode node in _graph.Nodes)
-		{
-			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
-			{
-				if (binding.Resolver is VariableResolverResource varRes
-					&& varRes.VariableName == oldName)
-				{
-					varRes.VariableName = newName;
-				}
-			}
-		}
-	}
-
 	private void ClearReferencesToVariable(string variableName)
 	{
 		if (_graph is null)
@@ -643,61 +629,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			{
 				if (binding.Resolver is VariableResolverResource varRes
 					&& varRes.VariableName == variableName)
-				{
-					varRes.VariableName = string.Empty;
-				}
-			}
-		}
-	}
-
-	private void ClearIncompatibleReferences(string variableName, StatescriptVariableType newType)
-	{
-		if (_graph is null)
-		{
-			return;
-		}
-
-		foreach (StatescriptNode node in _graph.Nodes)
-		{
-			if (string.IsNullOrEmpty(node.RuntimeTypeName))
-			{
-				continue;
-			}
-
-			StatescriptNodeDiscovery.NodeTypeInfo? typeInfo =
-				StatescriptNodeDiscovery.FindByRuntimeTypeName(node.RuntimeTypeName);
-
-			if (typeInfo is null)
-			{
-				continue;
-			}
-
-			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
-			{
-				if (binding.Resolver is not VariableResolverResource varRes
-					|| varRes.VariableName != variableName)
-				{
-					continue;
-				}
-
-				// Check type compatibility based on binding direction.
-				Type expectedType;
-				if (binding.Direction == StatescriptPropertyDirection.Input
-					&& binding.PropertyIndex < typeInfo.InputPropertiesInfo.Length)
-				{
-					expectedType = typeInfo.InputPropertiesInfo[binding.PropertyIndex].ExpectedType;
-				}
-				else if (binding.Direction == StatescriptPropertyDirection.Output
-					&& binding.PropertyIndex < typeInfo.OutputVariablesInfo.Length)
-				{
-					expectedType = typeInfo.OutputVariablesInfo[binding.PropertyIndex].ValueType;
-				}
-				else
-				{
-					continue;
-				}
-
-				if (!StatescriptVariableTypeConverter.IsCompatible(expectedType, newType))
 				{
 					varRes.VariableName = string.Empty;
 				}

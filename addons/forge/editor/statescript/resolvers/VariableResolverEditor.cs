@@ -14,7 +14,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Resolver editor that binds an input property to a graph variable. Only variables whose type is compatible with the
 /// expected type are shown in the dropdown.
 /// </summary>
-internal sealed class VariableResolverEditor : IStatescriptResolverEditor
+[Tool]
+internal sealed partial class VariableResolverEditor : NodeEditorProperty
 {
 	private readonly List<string> _variableNames = [];
 
@@ -22,31 +23,34 @@ internal sealed class VariableResolverEditor : IStatescriptResolverEditor
 	private string _selectedVariableName = string.Empty;
 
 	/// <inheritdoc/>
-	public string DisplayName => "Variable";
+	public override string DisplayName => "Variable";
 
 	/// <inheritdoc/>
-	public Type ValueType => typeof(Variant128);
+	public override Type ValueType => typeof(Variant128);
 
 	/// <inheritdoc/>
-	public string ResolverTypeId => "Variable";
+	public override string ResolverTypeId => "Variable";
 
 	/// <inheritdoc/>
-	public bool IsCompatibleWith(Type expectedType)
+	public override bool IsCompatibleWith(Type expectedType)
 	{
 		// Variable resolver is compatible with anything since we filter by variable type at selection time.
 		return true;
 	}
 
 	/// <inheritdoc/>
-	public Control? CreateEditorUI(
+	public override void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
 		Action onChanged)
 	{
+		SizeFlagsHorizontal = SizeFlags.ExpandFill;
+		CustomMinimumSize = new Vector2(200, 25);
+
 		_dropdown = new OptionButton
 		{
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			CustomMinimumSize = new Vector2(100, 0),
 		};
 
@@ -67,33 +71,16 @@ internal sealed class VariableResolverEditor : IStatescriptResolverEditor
 			onChanged();
 		};
 
-		return _dropdown;
+		AddChild(_dropdown);
 	}
 
 	/// <inheritdoc/>
-	public void SaveTo(StatescriptNodeProperty property)
+	public override void SaveTo(StatescriptNodeProperty property)
 	{
 		property.Resolver = new VariableResolverResource
 		{
 			VariableName = _selectedVariableName,
 		};
-	}
-
-	/// <summary>
-	/// Refreshes the dropdown list when graph variables change.
-	/// </summary>
-	/// <param name="graph">The current graph.</param>
-	/// <param name="expectedType">The expected type for filtering.</param>
-	public void RefreshDropdown(StatescriptGraph graph, Type expectedType)
-	{
-		if (_dropdown is null)
-		{
-			return;
-		}
-
-		var previousSelection = _selectedVariableName;
-		PopulateDropdown(graph, expectedType);
-		SelectByName(previousSelection);
 	}
 
 	private void PopulateDropdown(StatescriptGraph graph, Type expectedType)

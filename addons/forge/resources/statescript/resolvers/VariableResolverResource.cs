@@ -8,6 +8,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// Resolver resource that binds a node property to a graph variable by name.
 /// </summary>
 [Tool]
+[GlobalClass]
 public partial class VariableResolverResource : StatescriptResolverResource
 {
 	/// <summary>

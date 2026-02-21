@@ -160,6 +160,19 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		CloseTabByIndex(currentTab);
 	}
 
+	private static void SyncNodePositionsToResource(
+		StatescriptGraph graph,
+		GodotCollections.Dictionary<StringName, Vector2> positions)
+	{
+		foreach (StatescriptNode node in graph.Nodes)
+		{
+			if (positions.TryGetValue(node.NodeId, out Vector2 pos))
+			{
+				node.PositionOffset = pos;
+			}
+		}
+	}
+
 	private void CloseTabByIndex(int tabIndex)
 	{
 		if (_tabBar is null || tabIndex < 0 || tabIndex >= _openTabs.Count)
@@ -253,7 +266,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			Visible = false,
 		};
 
 		_contentPanel.AddChild(_splitContainer);
@@ -347,9 +359,9 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	{
 		var hasOpenGraph = _openTabs.Count > 0;
 
-		if (_graphEdit is not null)
+		if (_splitContainer is not null)
 		{
-			_graphEdit.Visible = hasOpenGraph;
+			_splitContainer.Visible = hasOpenGraph;
 		}
 
 		if (_tabBarBackground is not null)
@@ -360,6 +372,17 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		if (_emptyLabel is not null)
 		{
 			_emptyLabel.Visible = !hasOpenGraph;
+		}
+
+		// Hide the variable panel when there's no graph open.
+		if (!hasOpenGraph)
+		{
+			if (_variablePanel is not null)
+			{
+				_variablePanel.Visible = false;
+			}
+
+			_variablesToggleButton?.SetPressedNoSignal(false);
 		}
 	}
 
@@ -385,7 +408,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			var graphNode = new StatescriptGraphNode();
 			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(nodeResource);
+			graphNode.Initialize(nodeResource, graph);
 		}
 
 		// Restore connections.
@@ -465,6 +488,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		graph.ScrollOffset = _graphEdit.ScrollOffset;
 		graph.Zoom = _graphEdit.Zoom;
 
+		SyncVisualNodePositionsToGraph();
 		SyncConnectionsToGraph(graph);
 	}
 
@@ -542,9 +566,27 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 	}
 
+	private void SyncVisualNodePositionsToGraph()
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		foreach (Node child in _graphEdit.GetChildren())
+		{
+			if (child is not StatescriptGraphNode sgn || sgn.NodeResource is null)
+			{
+				continue;
+			}
+
+			sgn.NodeResource.PositionOffset = sgn.PositionOffset;
+		}
+	}
+
 	private void OnVariablesToggled(bool pressed)
 	{
-		if (_variablePanel is null || _splitContainer is null)
+		if (_variablePanel is null)
 		{
 			return;
 		}
@@ -553,8 +595,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		if (pressed)
 		{
-			_splitContainer.Visible = true;
-
 			StatescriptGraph? graph = CurrentGraph;
 			if (graph is not null)
 			{
@@ -681,11 +721,10 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			_undoRedo.AddUndoMethod(this, MethodName.DoMoveNodes, graph, oldPositions);
 			_undoRedo.CommitAction(false);
 		}
-		else
-		{
-			// Without undo/redo, just sync positions directly.
-			DoMoveNodes(graph, movedNodes);
-		}
+
+		// Always sync the new positions to the resource. CommitAction(false) skips the Do method,
+		// so the resource would not be updated without this.
+		SyncNodePositionsToResource(graph, movedNodes);
 	}
 
 	private void DoMoveNodes(
@@ -1158,7 +1197,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			var graphNode = new StatescriptGraphNode();
 			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(nodeResource);
+			graphNode.Initialize(nodeResource, graph);
 		}
 	}
 
@@ -1173,6 +1212,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		// Save the current tab's state directly.
 		graph.ScrollOffset = _graphEdit.ScrollOffset;
 		graph.Zoom = _graphEdit.Zoom;
+		SyncVisualNodePositionsToGraph();
 		SyncConnectionsToCurrentGraph();
 
 		if (string.IsNullOrEmpty(graph.ResourcePath))

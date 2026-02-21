@@ -18,29 +18,30 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// <summary>
 /// Resolver editor that holds a constant (inline) value. The user edits the value directly in the node.
 /// </summary>
-internal sealed class VariantResolverEditor : IStatescriptResolverEditor
+[Tool]
+internal sealed partial class VariantResolverEditor : NodeEditorProperty
 {
 	private StatescriptVariableType _valueType;
 	private GodotVariant _currentValue;
 
 	/// <inheritdoc/>
-	public string DisplayName => "Constant";
+	public override string DisplayName => "Constant";
 
 	/// <inheritdoc/>
-	public Type ValueType => typeof(Variant128);
+	public override Type ValueType => typeof(Variant128);
 
 	/// <inheritdoc/>
-	public string ResolverTypeId => "Variant";
+	public override string ResolverTypeId => "Variant";
 
 	/// <inheritdoc/>
-	public bool IsCompatibleWith(Type expectedType)
+	public override bool IsCompatibleWith(Type expectedType)
 	{
 		// Constants can match any supported type.
 		return true;
 	}
 
 	/// <inheritdoc/>
-	public Control? CreateEditorUI(
+	public override void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
@@ -64,11 +65,14 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 			_currentValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(_valueType);
 		}
 
-		return CreateValueEditor(onChanged);
+		CustomMinimumSize = new GodotVector2(200, 40);
+
+		HBoxContainer valueEditor = CreateValueEditor(onChanged);
+		AddChild(valueEditor);
 	}
 
 	/// <inheritdoc/>
-	public void SaveTo(StatescriptNodeProperty property)
+	public override void SaveTo(StatescriptNodeProperty property)
 	{
 		property.Resolver = new VariantResolverResource
 		{
@@ -77,11 +81,11 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 		};
 	}
 
-	private Control CreateValueEditor(Action onChanged)
+	private HBoxContainer CreateValueEditor(Action onChanged)
 	{
 		var hBox = new HBoxContainer
 		{
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
 		switch (_valueType)
@@ -107,14 +111,16 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 					Value = _currentValue.AsInt32(),
 					Step = 1,
 					Rounded = true,
-					SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 					CustomMinimumSize = new GodotVector2(80, 0),
 				};
+
 				intSpin.ValueChanged += value =>
 				{
 					_currentValue = GodotVariant.From((int)value);
 					onChanged();
 				};
+
 				hBox.AddChild(intSpin);
 				break;
 
@@ -126,14 +132,16 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 					Value = _currentValue.AsInt64(),
 					Step = 1,
 					Rounded = true,
-					SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 					CustomMinimumSize = new GodotVector2(80, 0),
 				};
+
 				longSpin.ValueChanged += value =>
 				{
 					_currentValue = GodotVariant.From((long)value);
 					onChanged();
 				};
+
 				hBox.AddChild(longSpin);
 				break;
 
@@ -145,14 +153,16 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 					Value = _currentValue.AsDouble(),
 					Step = 0.01,
 					Rounded = false,
-					SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 					CustomMinimumSize = new GodotVector2(80, 0),
 				};
+
 				floatSpin.ValueChanged += value =>
 				{
 					_currentValue = GodotVariant.From(value);
 					onChanged();
 				};
+
 				hBox.AddChild(floatSpin);
 				break;
 
@@ -191,15 +201,14 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 
 		for (var i = 0; i < components; i++)
 		{
-			var label = new Label { Text = labels[i] };
-			parent.AddChild(label);
+			parent.AddChild(new Label { Text = labels[i] });
 
 			var spin = new SpinBox
 			{
 				Value = GetVectorComponent(i),
 				Step = 0.01,
 				Rounded = false,
-				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+				SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				CustomMinimumSize = new GodotVector2(50, 0),
 			};
 
@@ -213,11 +222,9 @@ internal sealed class VariantResolverEditor : IStatescriptResolverEditor
 	{
 		return _valueType switch
 		{
-			StatescriptVariableType.Vector2 => index switch
-			{
-				0 => _currentValue.AsVector2().X,
-				_ => _currentValue.AsVector2().Y,
-			},
+			StatescriptVariableType.Vector2 => index == 0
+				? _currentValue.AsVector2().X
+				: _currentValue.AsVector2().Y,
 			StatescriptVariableType.Vector3 => index switch
 			{
 				0 => _currentValue.AsVector3().X,

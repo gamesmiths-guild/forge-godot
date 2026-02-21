@@ -8,6 +8,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// Resolver resource that holds a constant (inline) value for a node property.
 /// </summary>
 [Tool]
+[GlobalClass]
 public partial class VariantResolverResource : StatescriptResolverResource
 {
 	/// <summary>
