@@ -19,7 +19,8 @@ public partial class StatescriptGraphNode : GraphNode
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
 
-	private static readonly Color _entryExitColor = new(0x2a4a8dff);
+	private static readonly Color _entryColor = new(0x2a4a8dff);
+	private static readonly Color _exitColor = new(0x8a549aff);
 	private static readonly Color _actionColor = new(0x3a7856ff);
 	private static readonly Color _conditionColor = new(0x99811fff);
 	private static readonly Color _stateColor = new(0xa52c38ff);
@@ -182,9 +183,9 @@ public partial class StatescriptGraphNode : GraphNode
 			StatescriptNodeType.Action => _actionColor,
 			StatescriptNodeType.Condition => _conditionColor,
 			StatescriptNodeType.State => _stateColor,
-			StatescriptNodeType.Entry => throw new NotImplementedException(),
-			StatescriptNodeType.Exit => throw new NotImplementedException(),
-			_ => _entryExitColor,
+			StatescriptNodeType.Entry => _entryColor,
+			StatescriptNodeType.Exit => _exitColor,
+			_ => _entryColor,
 		};
 
 		ApplyTitleBarColor(titleColor);
@@ -558,22 +559,26 @@ public partial class StatescriptGraphNode : GraphNode
 
 	private void SetupEntryNode()
 	{
+		CustomMinimumSize = new Vector2(100, 0);
+
 		var label = new Label { Text = "Start" };
 		AddChild(label);
 		SetSlotEnabledRight(0, true);
 		SetSlotColorRight(0, _eventColor);
 
-		ApplyTitleBarColor(_entryExitColor);
+		ApplyTitleBarColor(_entryColor);
 	}
 
 	private void SetupExitNode()
 	{
+		CustomMinimumSize = new Vector2(100, 0);
+
 		var label = new Label { Text = "End" };
 		AddChild(label);
 		SetSlotEnabledLeft(0, true);
 		SetSlotColorLeft(0, _eventColor);
 
-		ApplyTitleBarColor(_entryExitColor);
+		ApplyTitleBarColor(_exitColor);
 	}
 
 	private void SetupActionNode()
