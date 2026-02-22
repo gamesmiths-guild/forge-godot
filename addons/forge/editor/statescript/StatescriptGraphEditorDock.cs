@@ -337,6 +337,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			ShowZoomLabel = true,
 			RightDisconnects = true,
+			GridPattern = GraphEdit.GridPatternEnum.Dots,
 		};
 
 		_graphEdit.ConnectionRequest += OnConnectionRequest;
