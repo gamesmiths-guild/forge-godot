@@ -47,14 +47,11 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		Type expectedType,
 		Action onChanged)
 	{
-		// Determine the variable type from expectedType.
 		if (!StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _valueType))
 		{
-			// If expectedType is Variant128 (wildcard), default to Int.
 			_valueType = StatescriptVariableType.Int;
 		}
 
-		// Restore value from existing binding.
 		if (property?.Resolver is VariantResolverResource variantRes)
 		{
 			_currentValue = variantRes.Value;

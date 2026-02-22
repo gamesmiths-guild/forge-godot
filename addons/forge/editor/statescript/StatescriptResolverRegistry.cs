@@ -17,7 +17,6 @@ internal static class StatescriptResolverRegistry
 
 	static StatescriptResolverRegistry()
 	{
-		// Register built-in resolvers.
 		Register(() => new VariantResolverEditor());
 		Register(() => new VariableResolverEditor());
 		Register(() => new AttributeResolverEditor());
@@ -45,7 +44,6 @@ internal static class StatescriptResolverRegistry
 
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			// Create a temporary instance to check compatibility, then dispose it.
 			using NodeEditorProperty temp = factory();
 
 			if (temp.IsCompatibleWith(expectedType))

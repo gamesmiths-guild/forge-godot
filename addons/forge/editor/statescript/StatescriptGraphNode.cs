@@ -16,6 +16,9 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 public partial class StatescriptGraphNode : GraphNode
 {
+	private const string FoldInputKey = "_fold_input";
+	private const string FoldOutputKey = "_fold_output";
+
 	private static readonly Color _entryExitColor = new(0x2a4a8dff);
 	private static readonly Color _actionColor = new(0x3a7856ff);
 	private static readonly Color _conditionColor = new(0x99811fff);
@@ -54,6 +57,7 @@ public partial class StatescriptGraphNode : GraphNode
 		Name = resource.NodeId;
 		Title = resource.Title;
 		PositionOffset = resource.PositionOffset;
+		CustomMinimumSize = new Vector2(240, 0);
 
 		ClearSlots();
 
@@ -61,6 +65,7 @@ public partial class StatescriptGraphNode : GraphNode
 			|| string.IsNullOrEmpty(resource.RuntimeTypeName))
 		{
 			SetupNodeByType(resource.NodeType);
+			ApplyBottomPadding();
 			return;
 		}
 
@@ -73,6 +78,8 @@ public partial class StatescriptGraphNode : GraphNode
 		{
 			SetupNodeByType(resource.NodeType);
 		}
+
+		ApplyBottomPadding();
 	}
 
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
@@ -92,13 +99,13 @@ public partial class StatescriptGraphNode : GraphNode
 	{
 		foreach (Node child in container.GetChildren())
 		{
+			container.RemoveChild(child);
 			child.QueueFree();
 		}
 	}
 
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		// Port slots.
 		var maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
 
 		for (var slot = 0; slot < maxSlots; slot++)
@@ -142,7 +149,12 @@ public partial class StatescriptGraphNode : GraphNode
 
 		if (typeInfo.InputPropertiesInfo.Length > 0)
 		{
-			FoldableContainer inputContainer = AddPropertySectionDivider("Input Properties", _inputPropertyColor);
+			var folded = GetFoldState(FoldInputKey);
+			FoldableContainer inputContainer = AddPropertySectionDivider(
+				"Input Properties",
+				_inputPropertyColor,
+				FoldInputKey,
+				folded);
 
 			for (var i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
@@ -152,7 +164,12 @@ public partial class StatescriptGraphNode : GraphNode
 
 		if (typeInfo.OutputVariablesInfo.Length > 0)
 		{
-			FoldableContainer outputContainer = AddPropertySectionDivider("Output Variables", _outputVariableColor);
+			var folded = GetFoldState(FoldOutputKey);
+			FoldableContainer outputContainer = AddPropertySectionDivider(
+				"Output Variables",
+				_outputVariableColor,
+				FoldOutputKey,
+				folded);
 
 			for (var i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 			{
@@ -173,7 +190,11 @@ public partial class StatescriptGraphNode : GraphNode
 		ApplyTitleBarColor(titleColor);
 	}
 
-	private FoldableContainer AddPropertySectionDivider(string sectionTitle, Color color)
+	private FoldableContainer AddPropertySectionDivider(
+		string sectionTitle,
+		Color color,
+		string foldKey,
+		bool folded)
 	{
 		var divider = new HSeparator { CustomMinimumSize = new Vector2(0, 4) };
 		AddChild(divider);
@@ -181,12 +202,39 @@ public partial class StatescriptGraphNode : GraphNode
 		var sectionContainer = new FoldableContainer
 		{
 			Title = sectionTitle,
+			Folded = folded,
 		};
 
 		sectionContainer.AddThemeColorOverride("font_color", color);
+		sectionContainer.FoldingChanged += isFolded =>
+		{
+			SetFoldState(foldKey, isFolded);
+			ResetSize();
+		};
+
 		AddChild(sectionContainer);
 
 		return sectionContainer;
+	}
+
+	private bool GetFoldState(string key)
+	{
+		if (NodeResource is not null && NodeResource.CustomData.TryGetValue(key, out Variant value))
+		{
+			return value.AsBool();
+		}
+
+		return false;
+	}
+
+	private void SetFoldState(string key, bool folded)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		NodeResource.CustomData[key] = Variant.From(folded);
 	}
 
 	private void AddInputPropertyRow(
@@ -214,11 +262,9 @@ public partial class StatescriptGraphNode : GraphNode
 		nameLabel.AddThemeColorOverride("font_color", _inputPropertyColor);
 		headerRow.AddChild(nameLabel);
 
-		// Build the list of compatible resolvers from the registry.
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
 
-		// Resolver type dropdown: one entry per compatible resolver (no "None" — always required).
 		var resolverDropdown = new OptionButton
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -227,12 +273,10 @@ public partial class StatescriptGraphNode : GraphNode
 
 		foreach (Func<NodeEditorProperty> factory in resolverFactories)
 		{
-			// Create a temporary instance just to read DisplayName.
 			using NodeEditorProperty temp = factory();
 			resolverDropdown.AddItem(temp.DisplayName);
 		}
 
-		// Determine which resolver is currently selected from the existing binding.
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Input, index);
 		var selectedIndex = 0;
 
@@ -251,7 +295,6 @@ public partial class StatescriptGraphNode : GraphNode
 		}
 		else
 		{
-			// Default: find the Variant (Constant) resolver, or fall back to first.
 			for (var i = 0; i < resolverFactories.Count; i++)
 			{
 				using NodeEditorProperty temp = resolverFactories[i]();
@@ -267,12 +310,14 @@ public partial class StatescriptGraphNode : GraphNode
 		resolverDropdown.Selected = selectedIndex;
 		headerRow.AddChild(resolverDropdown);
 
-		// Show the resolver UI for the current selection.
+		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		container.AddChild(editorContainer);
+
 		ShowResolverEditorUI(
 			resolverFactories[selectedIndex],
 			binding,
 			propInfo.ExpectedType,
-			container,
+			editorContainer,
 			StatescriptPropertyDirection.Input,
 			index);
 
@@ -282,11 +327,10 @@ public partial class StatescriptGraphNode : GraphNode
 
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? old))
 			{
-				old.QueueFree();
 				_activeResolverEditors.Remove(key);
 			}
 
-			ClearContainer(container);
+			ClearContainer(editorContainer);
 
 			if (NodeResource is null)
 			{
@@ -297,17 +341,17 @@ public partial class StatescriptGraphNode : GraphNode
 				resolverFactories[(int)x],
 				null,
 				propInfo.ExpectedType,
-				container,
+				editorContainer,
 				StatescriptPropertyDirection.Input,
 				index);
 
-			// Save immediately so the resource stays in sync.
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
 			{
 				SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
 			}
 
 			PropertyBindingChanged?.Invoke();
+			ResetSize();
 		};
 	}
 
@@ -333,7 +377,6 @@ public partial class StatescriptGraphNode : GraphNode
 		nameLabel.AddThemeColorOverride("font_color", _outputVariableColor);
 		hBox.AddChild(nameLabel);
 
-		// Output variables always bind to a graph variable.
 		var variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
 		foreach (StatescriptGraphVariable v in _graph.Variables)
@@ -341,7 +384,6 @@ public partial class StatescriptGraphNode : GraphNode
 			variableDropdown.AddItem(v.VariableName);
 		}
 
-		// Restore selection from existing binding, default to first variable.
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Output, index);
 		var selectedIndex = 0;
 
@@ -362,7 +404,6 @@ public partial class StatescriptGraphNode : GraphNode
 		{
 			variableDropdown.Selected = selectedIndex;
 
-			// Ensure binding exists for the default.
 			if (binding is null)
 			{
 				var variableName = _graph.Variables[selectedIndex].VariableName;
@@ -412,6 +453,8 @@ public partial class StatescriptGraphNode : GraphNode
 				SaveResolverEditor(resolverEditor, direction, propertyIndex);
 				PropertyBindingChanged?.Invoke();
 			});
+
+		resolverEditor.LayoutSizeChanged += ResetSize;
 
 		container.AddChild(resolverEditor);
 
@@ -673,6 +716,27 @@ public partial class StatescriptGraphNode : GraphNode
 		var selectedTitleBarStyleBox = (StyleBoxFlat)titleBarStyleBox.Duplicate();
 		selectedTitleBarStyleBox.BgColor = color.Lightened(0.2f);
 		AddThemeStyleboxOverride("titlebar_selected", selectedTitleBarStyleBox);
+	}
+
+	private void ApplyBottomPadding()
+	{
+		StyleBox? existing = GetThemeStylebox("panel");
+
+		if (existing is not null)
+		{
+			var panelStyle = (StyleBox)existing.Duplicate();
+			panelStyle.ContentMarginBottom = 8;
+			AddThemeStyleboxOverride("panel", panelStyle);
+		}
+
+		StyleBox? selectedExisting = GetThemeStylebox("panel_selected");
+
+		if (selectedExisting is not null)
+		{
+			var selectedPanelStyle = (StyleBox)selectedExisting.Duplicate();
+			selectedPanelStyle.ContentMarginBottom = 8;
+			AddThemeStyleboxOverride("panel_selected", selectedPanelStyle);
+		}
 	}
 }
 

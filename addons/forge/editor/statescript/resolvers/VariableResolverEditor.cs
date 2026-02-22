@@ -34,7 +34,6 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		// Variable resolver is compatible with anything since we filter by variable type at selection time.
 		return true;
 	}
 
@@ -56,7 +55,6 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 		PopulateDropdown(graph, expectedType);
 
-		// Restore selection from existing binding.
 		if (property?.Resolver is VariableResolverResource varRes
 			&& !string.IsNullOrEmpty(varRes.VariableName))
 		{
@@ -129,7 +127,6 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			}
 		}
 
-		// Variable was deleted or renamed. Reset.
 		_selectedVariableName = string.Empty;
 	}
 }

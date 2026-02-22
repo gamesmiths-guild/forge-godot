@@ -19,7 +19,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 	private VBoxContainer? _variableList;
 	private Button? _addButton;
 
-	// Creation dialog controls.
 	private Window? _creationDialog;
 	private LineEdit? _newNameEdit;
 	private OptionButton? _newTypeDropdown;
@@ -321,6 +320,19 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 					(float)spins[1].Value,
 					(float)spins[2].Value,
 					(float)spins[3].Value)),
+			StatescriptVariableType.Bool => throw new NotImplementedException(),
+			StatescriptVariableType.Byte => throw new NotImplementedException(),
+			StatescriptVariableType.SByte => throw new NotImplementedException(),
+			StatescriptVariableType.Char => throw new NotImplementedException(),
+			StatescriptVariableType.Decimal => throw new NotImplementedException(),
+			StatescriptVariableType.Double => throw new NotImplementedException(),
+			StatescriptVariableType.Float => throw new NotImplementedException(),
+			StatescriptVariableType.Int => throw new NotImplementedException(),
+			StatescriptVariableType.UInt => throw new NotImplementedException(),
+			StatescriptVariableType.Long => throw new NotImplementedException(),
+			StatescriptVariableType.ULong => throw new NotImplementedException(),
+			StatescriptVariableType.Short => throw new NotImplementedException(),
+			StatescriptVariableType.UShort => throw new NotImplementedException(),
 			_ => variable.InitialValue,
 		};
 
@@ -350,7 +362,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		_variableList.AddChild(rowContainer);
 
-		// Row 1: Name label (read-only) + Type label + Delete button.
 		var headerRow = new HBoxContainer
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -387,7 +398,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		deleteButton.Pressed += () => OnDeletePressed(capturedIndex);
 		headerRow.AddChild(deleteButton);
 
-		// Row 2: Initial value editor.
 		if (!variable.IsArray)
 		{
 			HBoxContainer? valueEditor = CreateScalarValueEditor(variable);
@@ -403,7 +413,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			rowContainer.AddChild(arrayEditor);
 		}
 
-		// Separator between variables.
 		rowContainer.AddChild(new HSeparator());
 	}
 
@@ -513,7 +522,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
-		// Name row.
 		var nameRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(nameRow);
 
@@ -527,7 +535,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		nameRow.AddChild(_newNameEdit);
 
-		// Type row.
 		var typeRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(typeRow);
 
@@ -545,7 +552,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		_newTypeDropdown.Selected = (int)StatescriptVariableType.Int;
 		typeRow.AddChild(_newTypeDropdown);
 
-		// Array toggle.
 		var arrayRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(arrayRow);
 
@@ -604,7 +610,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		var deletedName = _graph.Variables[index].VariableName;
 		_graph.Variables.RemoveAt(index);
 
-		// Clear any node property bindings that referenced the deleted variable.
 		ClearReferencesToVariable(deletedName);
 
 		RebuildList();

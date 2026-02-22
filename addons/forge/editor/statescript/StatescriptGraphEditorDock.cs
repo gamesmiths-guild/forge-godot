@@ -36,7 +36,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private int _nextNodeId;
 	private bool _isLoadingGraph;
 
-	// Pending connection state for drag-to-empty behavior.
 	private string? _pendingConnectionNode;
 	private int _pendingConnectionPort;
 	private bool _pendingConnectionIsOutput;
@@ -62,7 +61,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	{
 		base._Ready();
 
-		// Apply negative margins to fill the bottom panel edge-to-edge, matching the MSBuild panel approach.
 		StyleBox bottomPanelStyleBox = EditorInterface.Singleton.GetBaseControl()
 			.GetThemeStylebox("BottomPanel", "EditorStyles");
 
@@ -75,8 +73,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged += OnFilesystemChanged;
 
-		// Defer restoration so the filesystem is fully scanned first.
-		GetTree().CreateTimer(0).Timeout += RestoreOpenTabs;
+		RestoreOpenTabs();
 	}
 
 	public override void _ExitTree()
@@ -117,7 +114,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Check if this graph is already open in a tab.
 		for (var i = 0; i < _openTabs.Count; i++)
 		{
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
@@ -208,7 +204,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		AddChild(vBox);
 
-		// Tab bar background panel styled like a TabContainer header.
 		_tabBarBackground = new PanelContainer();
 		vBox.AddChild(_tabBarBackground);
 
@@ -219,7 +214,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		_tabBarBackground.AddChild(tabBarHBox);
 
-		// Tab bar for multiple open graphs.
 		_tabBar = new TabBar
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -231,7 +225,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_tabBar.TabClosePressed += OnTabClosePressed;
 		tabBarHBox.AddChild(_tabBar);
 
-		// Save button in the tab bar area.
 		_saveButton = new Button
 		{
 			Text = "Save",
@@ -241,7 +234,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_saveButton.Pressed += OnSavePressed;
 		tabBarHBox.AddChild(_saveButton);
 
-		// Variables toggle button in the tab bar area.
 		_variablesToggleButton = new Button
 		{
 			Text = "Variables",
@@ -252,7 +244,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_variablesToggleButton.Toggled += OnVariablesToggled;
 		tabBarHBox.AddChild(_variablesToggleButton);
 
-		// Content panel styled like a TabContainer content area.
 		_contentPanel = new PanelContainer
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
@@ -261,7 +252,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		vBox.AddChild(_contentPanel);
 
-		// Split container to hold graph editor and variable panel side-by-side.
 		_splitContainer = new HSplitContainer
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
@@ -270,7 +260,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		_contentPanel.AddChild(_splitContainer);
 
-		// GraphEdit.
 		_graphEdit = new GraphEdit
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
@@ -286,9 +275,9 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_graphEdit.PopupRequest += OnGraphEditPopupRequest;
 		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
 		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
+		_graphEdit.GuiInput += OnGraphEditGuiInput;
 		_splitContainer.AddChild(_graphEdit);
 
-		// Variables panel (initially hidden).
 		_variablePanel = new StatescriptVariablePanel
 		{
 			Visible = false,
@@ -297,7 +286,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_variablePanel.VariablesChanged += OnGraphVariablesChanged;
 		_splitContainer.AddChild(_variablePanel);
 
-		// Add custom buttons to GraphEdit's built-in toolbar.
 		HBoxContainer menuHBox = _graphEdit.GetMenuHBox();
 
 		var separator = new VSeparator();
@@ -315,7 +303,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		menuHBox.AddChild(_addNodeButton);
 		menuHBox.MoveChild(_addNodeButton, 0);
 
-		// Empty state label.
 		_emptyLabel = new Label
 		{
 			Text = "Select a Statescript resource to begin editing.",
@@ -328,13 +315,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_emptyLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 		_contentPanel.AddChild(_emptyLabel);
 
-		// Add Node dialog (created once, reused).
 		_addNodeDialog = new StatescriptAddNodeDialog();
 		_addNodeDialog.NodeCreationRequested += OnDialogNodeCreationRequested;
 		_addNodeDialog.Canceled += OnDialogCanceled;
 		AddChild(_addNodeDialog);
 
-		// Apply initial theme.
 		UpdateTheme();
 	}
 
@@ -345,7 +330,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Pull the TabContainer style boxes from the editor theme for consistent styling.
 		Control baseControl = EditorInterface.Singleton.GetBaseControl();
 
 		StyleBox tabBarStyle = baseControl.GetThemeStylebox("tabbar_background", "TabContainer");
@@ -374,7 +358,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			_emptyLabel.Visible = !hasOpenGraph;
 		}
 
-		// Hide the variable panel when there's no graph open.
 		if (!hasOpenGraph)
 		{
 			if (_variablePanel is not null)
@@ -393,6 +376,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
+		var wasLoading = _isLoadingGraph;
 		_isLoadingGraph = true;
 
 		ClearGraphEditor();
@@ -400,10 +384,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_graphEdit.ScrollOffset = graph.ScrollOffset;
 		_graphEdit.Zoom = graph.Zoom;
 
-		// Update the next node ID counter based on existing nodes to avoid ID collisions.
 		UpdateNextNodeId(graph);
 
-		// Create visual nodes.
 		foreach (StatescriptNode nodeResource in graph.Nodes)
 		{
 			var graphNode = new StatescriptGraphNode();
@@ -411,7 +393,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			graphNode.Initialize(nodeResource, graph);
 		}
 
-		// Restore connections.
 		foreach (StatescriptConnection connection in graph.Connections)
 		{
 			_graphEdit.ConnectNode(
@@ -421,7 +402,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				connection.InputPort);
 		}
 
-		_isLoadingGraph = false;
+		_isLoadingGraph = wasLoading;
 	}
 
 	private void ClearGraphEditor()
@@ -433,7 +414,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		_graphEdit.ClearConnections();
 
-		// Remove all GraphNode children immediately so they don't interfere with new nodes.
 		var toRemove = new List<Node>();
 		toRemove.AddRange(_graphEdit.GetChildren().Where(x => x is GraphNode));
 
@@ -499,7 +479,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Identify the outgoing tab by matching node resources in GraphEdit to graph nodes.
 		StatescriptGraphNode? firstNode = null;
 		foreach (Node child in _graphEdit.GetChildren())
 		{
@@ -515,7 +494,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Find which tab owns this node.
 		for (var i = 0; i < _openTabs.Count; i++)
 		{
 			if (i == newTabIndex)
@@ -611,7 +589,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Reload the current graph to reflect variable changes in node property dropdowns.
 		LoadGraphIntoEditor(graph);
 	}
 
@@ -619,7 +596,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	{
 		EditorFileSystem filesystem = EditorInterface.Singleton.GetResourceFilesystem();
 
-		// Close tabs whose resource files have been deleted.
 		for (var i = _openTabs.Count - 1; i >= 0; i--)
 		{
 			var path = _openTabs[i].ResourcePath;
@@ -629,14 +605,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				continue;
 			}
 
-			// GetFileType returns an empty string if the file is not in the scanned filesystem.
 			if (string.IsNullOrEmpty(filesystem.GetFileType(path)))
 			{
 				CloseTabByIndex(i);
 			}
 		}
 
-		// Refresh tab titles in case a graph was renamed externally.
 		RefreshTabTitles();
 	}
 
@@ -652,7 +626,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			SaveOutgoingTabState((int)tab);
 			LoadGraphIntoEditor(_openTabs[(int)tab].GraphResource);
 
-			if (_variablePanel is not null && _variablePanel.Visible)
+			if (_variablePanel?.Visible == true)
 			{
 				_variablePanel.SetGraph(_openTabs[(int)tab].GraphResource);
 			}
@@ -693,7 +667,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Collect the before/after positions for all moved nodes.
 		var movedNodes = new GodotCollections.Dictionary<StringName, Vector2>();
 		var oldPositions = new GodotCollections.Dictionary<StringName, Vector2>();
 
@@ -727,8 +700,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			_undoRedo.CommitAction(false);
 		}
 
-		// Always sync the new positions to the resource. CommitAction(false) skips the Do method,
-		// so the resource would not be updated without this.
 		SyncNodePositionsToResource(graph, movedNodes);
 	}
 
@@ -736,7 +707,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		StatescriptGraph graph,
 		GodotCollections.Dictionary<StringName, Vector2> positions)
 	{
-		// Update the resource positions.
 		foreach (StatescriptNode node in graph.Nodes)
 		{
 			if (positions.TryGetValue(node.NodeId, out Vector2 pos))
@@ -745,7 +715,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			}
 		}
 
-		// Update the visual nodes if this graph is currently displayed.
 		if (CurrentGraph == graph && _graphEdit is not null)
 		{
 			foreach (Node child in _graphEdit.GetChildren())
@@ -765,13 +734,10 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Clear any existing pending connection state.
 		ClearPendingConnection();
 
-		// Convert the click position from GraphEdit local coordinates to graph-local coordinates.
 		Vector2 graphPosition = (_graphEdit.ScrollOffset + atPosition) / _graphEdit.Zoom;
 
-		// Convert to screen position for dialog placement.
 		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + atPosition);
 
 		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
@@ -784,7 +750,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Dragging from an output port to empty space.
 		_pendingConnectionNode = fromNode;
 		_pendingConnectionPort = (int)fromPort;
 		_pendingConnectionIsOutput = true;
@@ -802,7 +767,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Dragging from an input port to empty space.
 		_pendingConnectionNode = toNode;
 		_pendingConnectionPort = (int)toPort;
 		_pendingConnectionIsOutput = false;
@@ -829,7 +793,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			newNodeId = AddNodeAtPosition(StatescriptNodeType.Exit, "Exit", string.Empty, position);
 		}
 
-		// Auto-connect if there is a pending connection from a drag-to-empty action.
 		if (_pendingConnectionNode is not null && _graphEdit is not null)
 		{
 			if (_pendingConnectionIsOutput)
@@ -917,6 +880,102 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		return -1;
+	}
+
+	private void OnGraphEditGuiInput(InputEvent @event)
+	{
+		if (@event is InputEventKey { Pressed: true, Keycode: Key.D, CtrlPressed: true })
+		{
+			DuplicateSelectedNodes();
+			GetViewport().SetInputAsHandled();
+		}
+	}
+
+	private void DuplicateSelectedNodes()
+	{
+		StatescriptGraph? graph = CurrentGraph;
+		if (graph is null || _graphEdit is null)
+		{
+			return;
+		}
+
+		var selectedNodes = new List<StatescriptGraphNode>();
+
+		foreach (Node child in _graphEdit.GetChildren())
+		{
+			if (child is StatescriptGraphNode { Selected: true } sgn
+				&& sgn.NodeResource is not null
+				&& sgn.NodeResource.NodeType != StatescriptNodeType.Entry)
+			{
+				selectedNodes.Add(sgn);
+			}
+		}
+
+		if (selectedNodes.Count == 0)
+		{
+			return;
+		}
+
+		foreach (StatescriptGraphNode sgn in selectedNodes)
+		{
+			sgn.Selected = false;
+		}
+
+		var duplicatedIds = new Dictionary<string, string>();
+		const float offset = 40f;
+
+		foreach (StatescriptGraphNode sgn in selectedNodes)
+		{
+			StatescriptNode original = sgn.NodeResource!;
+			var newNodeId = $"node_{_nextNodeId++}";
+			duplicatedIds[original.NodeId] = newNodeId;
+
+			var duplicated = new StatescriptNode
+			{
+				NodeId = newNodeId,
+				Title = original.Title,
+				NodeType = original.NodeType,
+				RuntimeTypeName = original.RuntimeTypeName,
+				PositionOffset = original.PositionOffset + new Vector2(offset, offset),
+			};
+
+			foreach (KeyValuePair<string, Variant> kvp in original.CustomData)
+			{
+				duplicated.CustomData[kvp.Key] = kvp.Value;
+			}
+
+			foreach (StatescriptNodeProperty binding in original.PropertyBindings)
+			{
+				var newBinding = new StatescriptNodeProperty
+				{
+					Direction = binding.Direction,
+					PropertyIndex = binding.PropertyIndex,
+					Resolver = binding.Resolver is not null
+						? (StatescriptResolverResource)binding.Resolver.Duplicate(true)
+						: null,
+				};
+
+				duplicated.PropertyBindings.Add(newBinding);
+			}
+
+			graph.Nodes.Add(duplicated);
+
+			var graphNode = new StatescriptGraphNode();
+			_graphEdit.AddChild(graphNode);
+			graphNode.Initialize(duplicated, graph);
+			graphNode.Selected = true;
+		}
+
+		foreach (StatescriptConnection connection in graph.Connections)
+		{
+			if (duplicatedIds.TryGetValue(connection.FromNode, out var newFrom)
+				&& duplicatedIds.TryGetValue(connection.ToNode, out var newTo))
+			{
+				_graphEdit.ConnectNode(newFrom, connection.OutputPort, newTo, connection.InputPort);
+			}
+		}
+
+		SyncConnectionsToCurrentGraph();
 	}
 
 	private void OnConnectionRequest(StringName fromNode, long fromPort, StringName toNode, long toPort)
@@ -1015,7 +1074,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				continue;
 			}
 
-			// Prevent deleting the Entry node.
 			if (graphNode.NodeResource?.NodeType == StatescriptNodeType.Entry)
 			{
 				GD.PushWarning("Cannot delete the Entry node.");
@@ -1027,7 +1085,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				continue;
 			}
 
-			// Collect connections involving this node.
 			var affectedConnections = new List<StatescriptConnection>();
 			foreach (GodotCollections.Dictionary connection in _graphEdit.GetConnectionList())
 			{
@@ -1080,7 +1137,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	{
 		if (_graphEdit is not null && CurrentGraph == graph)
 		{
-			// Remove connections in the visual editor.
 			foreach (StatescriptConnection connection in affectedConnections)
 			{
 				_graphEdit.DisconnectNode(
@@ -1105,7 +1161,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	{
 		graph.Nodes.Add(nodeResource);
 
-		// Re-add the connections to the resource.
 		graph.Connections.AddRange(affectedConnections);
 
 		if (CurrentGraph == graph)
@@ -1135,10 +1190,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		ClearPendingConnection();
 
-		// Position the dialog near the Add Node button.
 		var screenPosition = (Vector2I)(_addNodeButton.GetScreenPosition() + new Vector2(0, _addNodeButton.Size.Y));
 
-		// Nodes created via the button are placed at the center of the current view.
 		Vector2 centerPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
 
 		_addNodeDialog.ShowAtPosition(centerPosition, screenPosition);
@@ -1151,7 +1204,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Place the new node near the center of the current view.
 		Vector2 spawnPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
 		AddNodeAtPosition(nodeType, title, runtimeTypeName, spawnPosition);
 	}
@@ -1214,7 +1266,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
-		// Save the current tab's state directly.
 		graph.ScrollOffset = _graphEdit.ScrollOffset;
 		graph.Zoom = _graphEdit.Zoom;
 		SyncVisualNodePositionsToGraph();
@@ -1232,6 +1283,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 	private void SaveOpenTabs()
 	{
+		if (_isLoadingGraph)
+		{
+			return;
+		}
+
 		EditorSettings settings = EditorInterface.Singleton.GetEditorSettings();
 
 		var paths = new string[_openTabs.Count];
@@ -1257,6 +1313,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			return;
 		}
 
+		_isLoadingGraph = true;
+
 		foreach (var path in tabsValue.Split(';', System.StringSplitOptions.RemoveEmptyEntries))
 		{
 			if (!ResourceLoader.Exists(path))
@@ -1271,10 +1329,18 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			}
 		}
 
+		_isLoadingGraph = false;
+
 		var activeTab = settings.GetProjectMetadata("statescript", "active_tab", 0).AsInt32();
 		if (_tabBar is not null && activeTab >= 0 && activeTab < _openTabs.Count)
 		{
 			_tabBar.CurrentTab = activeTab;
+			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
+
+			if (_variablePanel?.Visible == true)
+			{
+				_variablePanel.SetGraph(_openTabs[activeTab].GraphResource);
+			}
 		}
 	}
 

@@ -50,6 +50,8 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 		Action onChanged)
 	{
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
+		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		AddChild(vBox);
 
 		// Restore from existing binding.
 		if (property?.Resolver is TagResolverResource tagRes)
@@ -77,10 +79,11 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 			if (_scroll is not null)
 			{
 				_scroll.Visible = x;
+				RaiseLayoutSizeChanged();
 			}
 		};
 
-		AddChild(_tagButton);
+		vBox.AddChild(_tagButton);
 
 		_scroll = new ScrollContainer
 		{
@@ -98,7 +101,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 		};
 
 		_scroll.AddChild(_tree);
-		AddChild(_scroll);
+		vBox.AddChild(_scroll);
 
 		_tree.ButtonClicked += (item, _, id, mouseButton) =>
 		{

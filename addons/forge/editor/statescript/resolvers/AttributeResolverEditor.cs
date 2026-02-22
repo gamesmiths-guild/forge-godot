@@ -51,28 +51,35 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
 
-		// Restore from existing binding.
 		if (property?.Resolver is AttributeResolverResource attrRes)
 		{
 			_selectedSetClass = attrRes.AttributeSetClass;
 			_selectedAttribute = attrRes.AttributeName;
 		}
 
-		// Row 1: Attribute Set dropdown.
 		var setRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(setRow);
 
-		setRow.AddChild(new Label { Text = "Set:" });
+		setRow.AddChild(new Label
+		{
+			Text = "Set:",
+			CustomMinimumSize = new Vector2(45, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+		});
 
 		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateSetDropdown();
 		setRow.AddChild(_setDropdown);
 
-		// Row 2: Attribute dropdown.
 		var attrRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(attrRow);
 
-		attrRow.AddChild(new Label { Text = "Attr:" });
+		attrRow.AddChild(new Label
+		{
+			Text = "Attr:",
+			CustomMinimumSize = new Vector2(45, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+		});
 
 		_attributeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateAttributeDropdown();
