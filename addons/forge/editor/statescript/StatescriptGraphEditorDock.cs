@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -25,11 +26,17 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private GraphEdit? _graphEdit;
 	private Label? _emptyLabel;
 	private Button? _addNodeButton;
-	private Button? _saveButton;
-	private Button? _variablesToggleButton;
 	private StatescriptAddNodeDialog? _addNodeDialog;
 	private StatescriptVariablePanel? _variablePanel;
 	private HSplitContainer? _splitContainer;
+
+	private MenuButton? _fileMenuButton;
+	private Button? _variablesToggleButton;
+	private Button? _onlineDocsButton;
+
+	private AcceptDialog? _newStatescriptDialog;
+	private LineEdit? _newStatescriptNameEdit;
+	private LineEdit? _newStatescriptPathEdit;
 
 	private EditorUndoRedoManager? _undoRedo;
 
@@ -72,15 +79,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		UpdateVisibility();
 
 		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged += OnFilesystemChanged;
-
-		RestoreOpenTabs();
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
 
-		SaveOpenTabs();
 		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged -= OnFilesystemChanged;
 	}
 
@@ -134,7 +138,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		LoadGraphIntoEditor(graph);
 		UpdateVisibility();
-		SaveOpenTabs();
+		// EditorPlugin.QueueSaveLayout();
 	}
 
 	/// <summary>
@@ -154,6 +158,93 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		CloseTabByIndex(currentTab);
+	}
+
+	/// <summary>
+	/// Returns the resource paths of all open tabs for state persistence.
+	/// </summary>
+	/// <returns>An array of resource paths.</returns>
+	public string[] GetOpenResourcePaths()
+	{
+		return [.. _openTabs.Select(x => x.ResourcePath)];
+	}
+
+	/// <summary>
+	/// Returns the currently active tab index.
+	/// </summary>
+	/// <returns>>The active tab index, or 1 if no tabs are open.</returns>
+	public int GetActiveTabIndex()
+	{
+		return _tabBar?.CurrentTab ?? -1;
+	}
+
+	/// <summary>
+	/// Returns per-tab variables panel visibility states.
+	/// </summary>
+	/// <returns><see langword="true"/> for tabs with the variables panel open, <see langword="false"/> otherwise.
+	/// </returns>
+	public bool[] GetVariablesPanelStates()
+	{
+		return [.. _openTabs.Select(x => x.VariablesPanelOpen)];
+	}
+
+	/// <summary>
+	/// Restores tabs from paths and active index, used by EditorPlugin _SetState.
+	/// </summary>
+	/// <param name="paths">The resource paths of the tabs to restore.</param>
+	/// <param name="activeIndex">The index of the tab to make active.</param>
+	/// <param name="variablesStates">The visibility states of the variables panel for each tab.</param>
+	public void RestoreFromPaths(string[] paths, int activeIndex, bool[]? variablesStates = null)
+	{
+		GD.Print("Restaurando abas...");
+
+		_isLoadingGraph = true;
+
+		_openTabs.Clear();
+		if (_tabBar is not null)
+		{
+			while (_tabBar.GetTabCount() > 0)
+			{
+				_tabBar.RemoveTab(0);
+			}
+		}
+
+		for (var i = 0; i < paths.Length; i++)
+		{
+			var path = paths[i];
+			if (!ResourceLoader.Exists(path))
+			{
+				continue;
+			}
+
+			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
+			if (graph is null)
+			{
+				continue;
+			}
+
+			graph.EnsureEntryNode();
+			var tab = new GraphTab(graph);
+
+			if (variablesStates is not null && i < variablesStates.Length)
+			{
+				tab.VariablesPanelOpen = variablesStates[i];
+			}
+
+			_openTabs.Add(tab);
+			_tabBar?.AddTab(graph.StatescriptName);
+		}
+
+		_isLoadingGraph = false;
+
+		if (_tabBar is not null && activeIndex >= 0 && activeIndex < _openTabs.Count)
+		{
+			_tabBar.CurrentTab = activeIndex;
+			LoadGraphIntoEditor(_openTabs[activeIndex].GraphResource);
+			ApplyVariablesPanelState(activeIndex);
+		}
+
+		UpdateVisibility();
 	}
 
 	private static void SyncNodePositionsToResource(
@@ -184,6 +275,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			var newTab = Mathf.Min(tabIndex, _openTabs.Count - 1);
 			_tabBar.CurrentTab = newTab;
 			LoadGraphIntoEditor(_openTabs[newTab].GraphResource);
+			ApplyVariablesPanelState(newTab);
 		}
 		else
 		{
@@ -191,7 +283,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		UpdateVisibility();
-		SaveOpenTabs();
+		// EditorPlugin.QueueSaveLayout();
 	}
 
 	private void BuildUI()
@@ -225,25 +317,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_tabBar.TabClosePressed += OnTabClosePressed;
 		tabBarHBox.AddChild(_tabBar);
 
-		_saveButton = new Button
-		{
-			Text = "Save",
-			Flat = true,
-		};
-
-		_saveButton.Pressed += OnSavePressed;
-		tabBarHBox.AddChild(_saveButton);
-
-		_variablesToggleButton = new Button
-		{
-			Text = "Variables",
-			ToggleMode = true,
-			Flat = true,
-		};
-
-		_variablesToggleButton.Toggled += OnVariablesToggled;
-		tabBarHBox.AddChild(_variablesToggleButton);
-
 		_contentPanel = new PanelContainer
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
@@ -264,6 +337,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			SizeFlagsVertical = SizeFlags.ExpandFill,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			ShowZoomLabel = true,
 			RightDisconnects = true,
 		};
 
@@ -280,7 +354,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		_variablePanel = new StatescriptVariablePanel
 		{
-			Visible = false,
+			Visible = true,
 		};
 
 		_variablePanel.VariablesChanged += OnGraphVariablesChanged;
@@ -288,9 +362,34 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		HBoxContainer menuHBox = _graphEdit.GetMenuHBox();
 
-		var separator = new VSeparator();
-		menuHBox.AddChild(separator);
-		menuHBox.MoveChild(separator, 0);
+		menuHBox.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+		//menuHBox.CustomMinimumSize = new Vector2(10000, 0);
+
+		_fileMenuButton = new MenuButton
+		{
+			Text = "File",
+			Flat = true,
+			SwitchOnHover = true,
+		};
+
+		PopupMenu filePopup = _fileMenuButton.GetPopup();
+#pragma warning disable RCS1130, S3265 // Bitwise operation on enum without Flags attribute
+		filePopup.AddItem("New Statescript...", 0, Key.N | (Key)KeyModifierMask.MaskCtrl);
+		filePopup.AddItem("Load Statescript File...", 1, Key.O | (Key)KeyModifierMask.MaskCtrl);
+		filePopup.AddSeparator();
+		filePopup.AddItem("Save", 2, Key.S | (Key)KeyModifierMask.MaskCtrl | (Key)KeyModifierMask.MaskAlt);
+		filePopup.AddItem("Save As...", 3);
+		filePopup.AddSeparator();
+		filePopup.AddItem("Close", 4, Key.W | (Key)KeyModifierMask.MaskCtrl);
+#pragma warning restore RCS1130, S3265 // Bitwise operation on enum without Flags attribute
+		filePopup.IdPressed += OnFileMenuIdPressed;
+
+		menuHBox.AddChild(_fileMenuButton);
+		menuHBox.MoveChild(_fileMenuButton, 0);
+
+		var separator1 = new VSeparator();
+		menuHBox.AddChild(separator1);
+		menuHBox.MoveChild(separator1, 1);
 
 		_addNodeButton = new Button
 		{
@@ -301,7 +400,37 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_addNodeButton.Pressed += OnAddNodeButtonPressed;
 
 		menuHBox.AddChild(_addNodeButton);
-		menuHBox.MoveChild(_addNodeButton, 0);
+		menuHBox.MoveChild(_addNodeButton, 2);
+
+		var separator2 = new VSeparator();
+		menuHBox.AddChild(separator2);
+
+		_variablesToggleButton = new Button
+		{
+			Text = "Variables",
+			ToggleMode = true,
+			Flat = true,
+		};
+
+		_variablesToggleButton.Toggled += OnVariablesToggled;
+		menuHBox.AddChild(_variablesToggleButton);
+
+		var separator3 = new VSeparator();
+		menuHBox.AddChild(separator3);
+
+		_onlineDocsButton = new Button
+		{
+			Text = "Online Docs",
+			Flat = true,
+			//Alignment = HorizontalAlignment.Right,
+		};
+
+		_onlineDocsButton.Pressed += () =>
+		{
+			OS.ShellOpen("https://github.com/gamesmiths-guild/forge-godot/tree/main/docs");
+		};
+
+		menuHBox.AddChild(_onlineDocsButton);
 
 		_emptyLabel = new Label
 		{
@@ -321,6 +450,177 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		AddChild(_addNodeDialog);
 
 		UpdateTheme();
+	}
+
+	private void OnFileMenuIdPressed(long id)
+	{
+		switch ((int)id)
+		{
+			case 0:
+				ShowNewStatescriptDialog();
+				break;
+
+			case 1:
+				ShowLoadStatescriptDialog();
+				break;
+
+			case 2:
+				OnSavePressed();
+				break;
+
+			case 3:
+				ShowSaveAsDialog();
+				break;
+
+			case 4:
+				CloseCurrentTab();
+				break;
+		}
+	}
+
+	private void ShowNewStatescriptDialog()
+	{
+		_newStatescriptDialog?.QueueFree();
+
+		_newStatescriptDialog = new AcceptDialog
+		{
+			Title = "Create Statescript",
+			Size = new Vector2I(400, 140),
+			Exclusive = true,
+		};
+
+		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		var pathRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		vBox.AddChild(pathRow);
+
+		pathRow.AddChild(new Label { Text = "Path:", CustomMinimumSize = new Vector2(50, 0) });
+
+		_newStatescriptPathEdit = new LineEdit
+		{
+			Text = "res://new_statescript.tres",
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		pathRow.AddChild(_newStatescriptPathEdit);
+
+		_newStatescriptDialog.AddChild(vBox);
+		_newStatescriptDialog.Confirmed += OnNewStatescriptConfirmed;
+
+		AddChild(_newStatescriptDialog);
+		_newStatescriptDialog.PopupCentered();
+	}
+
+	private void OnNewStatescriptConfirmed()
+	{
+		if (_newStatescriptPathEdit is null)
+		{
+			return;
+		}
+
+		var path = _newStatescriptPathEdit.Text.Trim();
+		if (string.IsNullOrEmpty(path))
+		{
+			return;
+		}
+
+		if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
+		{
+			path += ".tres";
+		}
+
+		var graph = new StatescriptGraph();
+		graph.EnsureEntryNode();
+
+		graph.StatescriptName = path.GetFile().GetBaseName();
+
+		ResourceSaver.Save(graph, path);
+		EditorInterface.Singleton.GetResourceFilesystem().Scan();
+
+		graph = ResourceLoader.Load<StatescriptGraph>(path);
+		if (graph is not null)
+		{
+			OpenGraph(graph);
+		}
+
+		_newStatescriptDialog?.QueueFree();
+		_newStatescriptDialog = null;
+	}
+
+	private void ShowLoadStatescriptDialog()
+	{
+		var dialog = new EditorFileDialog
+		{
+			FileMode = FileDialog.FileModeEnum.OpenFile,
+			Title = "Load Statescript File",
+			Access = FileDialog.AccessEnum.Resources,
+		};
+
+		dialog.AddFilter("*.tres", "Godot Resource");
+		dialog.FileSelected += path =>
+		{
+			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
+			if (graph is not null)
+			{
+				OpenGraph(graph);
+			}
+			else
+			{
+				GD.PushWarning($"Failed to load StatescriptGraph from: {path}");
+			}
+
+			dialog.QueueFree();
+		};
+
+		dialog.Canceled += dialog.QueueFree;
+
+		AddChild(dialog);
+		dialog.PopupCentered(new Vector2I(700, 500));
+	}
+
+	private void ShowSaveAsDialog()
+	{
+		StatescriptGraph? graph = CurrentGraph;
+		if (graph is null)
+		{
+			return;
+		}
+
+		var dialog = new EditorFileDialog
+		{
+			FileMode = FileDialog.FileModeEnum.SaveFile,
+			Title = "Save Statescript As",
+			Access = FileDialog.AccessEnum.Resources,
+		};
+
+		dialog.AddFilter("*.tres", "Godot Resource");
+		dialog.FileSelected += path =>
+		{
+			if (_graphEdit is not null)
+			{
+				graph.ScrollOffset = _graphEdit.ScrollOffset;
+				graph.Zoom = _graphEdit.Zoom;
+				SyncVisualNodePositionsToGraph();
+				SyncConnectionsToCurrentGraph();
+			}
+
+			ResourceSaver.Save(graph, path);
+			EditorInterface.Singleton.GetResourceFilesystem().Scan();
+			GD.Print($"Statescript graph saved as: {path}");
+
+			StatescriptGraph? savedGraph = ResourceLoader.Load<StatescriptGraph>(path);
+			if (savedGraph is not null)
+			{
+				OpenGraph(savedGraph);
+			}
+
+			dialog.QueueFree();
+		};
+
+		dialog.Canceled += dialog.QueueFree;
+
+		AddChild(dialog);
+		dialog.PopupCentered(new Vector2I(700, 500));
 	}
 
 	private void UpdateTheme()
@@ -429,7 +729,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		var maxId = 0;
 		foreach (var nodeId in graph.Nodes.Select(x => x.NodeId))
 		{
-			if (nodeId.StartsWith("node_", System.StringComparison.InvariantCultureIgnoreCase)
+			if (nodeId.StartsWith("node_", StringComparison.InvariantCultureIgnoreCase)
 				&& int.TryParse(nodeId["node_".Length..], out var id)
 				&& id >= maxId)
 			{
@@ -482,9 +782,9 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		StatescriptGraphNode? firstNode = null;
 		foreach (Node child in _graphEdit.GetChildren())
 		{
-			if (child is StatescriptGraphNode sgn)
+			if (child is StatescriptGraphNode statescriptNode)
 			{
-				firstNode = sgn;
+				firstNode = statescriptNode;
 				break;
 			}
 		}
@@ -507,9 +807,40 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				if (node == firstNode.NodeResource)
 				{
 					SaveGraphStateByIndex(i);
+
+					if (_variablePanel is not null)
+					{
+						_openTabs[i].VariablesPanelOpen = _variablePanel.Visible;
+					}
+
 					return;
 				}
 			}
+		}
+	}
+
+	private void OnTabChanged(long tab)
+	{
+		if (_isLoadingGraph)
+		{
+			return;
+		}
+
+		if (tab >= 0 && tab < _openTabs.Count)
+		{
+			SaveOutgoingTabState((int)tab);
+			LoadGraphIntoEditor(_openTabs[(int)tab].GraphResource);
+
+			ApplyVariablesPanelState((int)tab);
+		}
+	}
+
+	private void OnTabClosePressed(long tab)
+	{
+		if (tab >= 0 && tab < _openTabs.Count)
+		{
+			SaveOutgoingTabState(-1);
+			CloseTabByIndex((int)tab);
 		}
 	}
 
@@ -564,12 +895,18 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 	private void OnVariablesToggled(bool pressed)
 	{
-		if (_variablePanel is null)
+		if (_variablePanel is null || _tabBar is null || _openTabs.Count == 0)
 		{
 			return;
 		}
 
 		_variablePanel.Visible = pressed;
+
+		var current = _tabBar.CurrentTab;
+		if (current >= 0 && current < _openTabs.Count)
+		{
+			_openTabs[current].VariablesPanelOpen = pressed;
+		}
 
 		if (pressed)
 		{
@@ -614,31 +951,21 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		RefreshTabTitles();
 	}
 
-	private void OnTabChanged(long tab)
+	private void ApplyVariablesPanelState(int tabIndex)
 	{
-		if (_isLoadingGraph)
+		if (_variablePanel is null || _variablesToggleButton is null
+			|| tabIndex < 0 || tabIndex >= _openTabs.Count)
 		{
 			return;
 		}
 
-		if (tab >= 0 && tab < _openTabs.Count)
-		{
-			SaveOutgoingTabState((int)tab);
-			LoadGraphIntoEditor(_openTabs[(int)tab].GraphResource);
+		var shouldShow = _openTabs[tabIndex].VariablesPanelOpen;
+		_variablePanel.Visible = shouldShow;
+		_variablesToggleButton.SetPressedNoSignal(shouldShow);
 
-			if (_variablePanel?.Visible == true)
-			{
-				_variablePanel.SetGraph(_openTabs[(int)tab].GraphResource);
-			}
-		}
-	}
-
-	private void OnTabClosePressed(long tab)
-	{
-		if (tab >= 0 && tab < _openTabs.Count)
+		if (shouldShow)
 		{
-			SaveOutgoingTabState(-1);
-			CloseTabByIndex((int)tab);
+			_variablePanel.SetGraph(_openTabs[tabIndex].GraphResource);
 		}
 	}
 
@@ -737,7 +1064,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		ClearPendingConnection();
 
 		Vector2 graphPosition = (_graphEdit.ScrollOffset + atPosition) / _graphEdit.Zoom;
-
 		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + atPosition);
 
 		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
@@ -903,11 +1229,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		foreach (Node child in _graphEdit.GetChildren())
 		{
-			if (child is StatescriptGraphNode { Selected: true } sgn
-				&& sgn.NodeResource is not null
-				&& sgn.NodeResource.NodeType != StatescriptNodeType.Entry)
+			if (child is StatescriptGraphNode { Selected: true } statescriptNode
+				&& statescriptNode.NodeResource is not null
+				&& statescriptNode.NodeResource.NodeType != StatescriptNodeType.Entry)
 			{
-				selectedNodes.Add(sgn);
+				selectedNodes.Add(statescriptNode);
 			}
 		}
 
@@ -1042,12 +1368,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				toNode.ToString(),
 				(int)toPort);
 			_undoRedo.AddUndoMethod(
-			this,
-			MethodName.DoConnect,
-			fromNode.ToString(),
-			(int)fromPort,
-			toNode.ToString(),
-			(int)toPort);
+				this,
+				MethodName.DoConnect,
+				fromNode.ToString(),
+				(int)fromPort,
+				toNode.ToString(),
+				(int)toPort);
 			_undoRedo.CommitAction();
 		}
 		else
@@ -1076,7 +1402,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 			if (graphNode.NodeResource?.NodeType == StatescriptNodeType.Entry)
 			{
-				GD.PushWarning("Cannot delete the Entry node.");
+				GD.PushWarning("Cannot delete the Entry statescriptNode.");
 				continue;
 			}
 
@@ -1197,17 +1523,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_addNodeDialog.ShowAtPosition(centerPosition, screenPosition);
 	}
 
-	private void AddNodeAtCenter(StatescriptNodeType nodeType, string title, string runtimeTypeName)
-	{
-		if (_graphEdit is null)
-		{
-			return;
-		}
-
-		Vector2 spawnPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
-		AddNodeAtPosition(nodeType, title, runtimeTypeName, spawnPosition);
-	}
-
 	private string AddNodeAtPosition(
 		StatescriptNodeType nodeType,
 		string title,
@@ -1273,75 +1588,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		if (string.IsNullOrEmpty(graph.ResourcePath))
 		{
-			GD.PushWarning("Statescript resource has no path. Save it as a resource file first.");
+			ShowSaveAsDialog();
 			return;
 		}
 
 		ResourceSaver.Save(graph);
 		GD.Print($"Statescript graph saved: {graph.ResourcePath}");
-	}
-
-	private void SaveOpenTabs()
-	{
-		if (_isLoadingGraph)
-		{
-			return;
-		}
-
-		EditorSettings settings = EditorInterface.Singleton.GetEditorSettings();
-
-		var paths = new string[_openTabs.Count];
-		for (var i = 0; i < _openTabs.Count; i++)
-		{
-			paths[i] = _openTabs[i].ResourcePath;
-		}
-
-		settings.SetProjectMetadata("statescript", "open_tabs", string.Join(";", paths));
-		settings.SetProjectMetadata(
-			"statescript",
-			"active_tab",
-			_tabBar is not null && _openTabs.Count > 0 ? _tabBar.CurrentTab : 0);
-	}
-
-	private void RestoreOpenTabs()
-	{
-		EditorSettings settings = EditorInterface.Singleton.GetEditorSettings();
-
-		var tabsValue = settings.GetProjectMetadata("statescript", "open_tabs", string.Empty).AsString();
-		if (string.IsNullOrEmpty(tabsValue))
-		{
-			return;
-		}
-
-		_isLoadingGraph = true;
-
-		foreach (var path in tabsValue.Split(';', System.StringSplitOptions.RemoveEmptyEntries))
-		{
-			if (!ResourceLoader.Exists(path))
-			{
-				continue;
-			}
-
-			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
-			if (graph is not null)
-			{
-				OpenGraph(graph);
-			}
-		}
-
-		_isLoadingGraph = false;
-
-		var activeTab = settings.GetProjectMetadata("statescript", "active_tab", 0).AsInt32();
-		if (_tabBar is not null && activeTab >= 0 && activeTab < _openTabs.Count)
-		{
-			_tabBar.CurrentTab = activeTab;
-			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
-
-			if (_variablePanel?.Visible == true)
-			{
-				_variablePanel.SetGraph(_openTabs[activeTab].GraphResource);
-			}
-		}
 	}
 
 	/// <summary>
@@ -1352,6 +1604,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		public StatescriptGraph GraphResource { get; }
 
 		public string ResourcePath { get; }
+
+		public bool VariablesPanelOpen { get; set; }
 
 		public GraphTab(StatescriptGraph graphResource)
 		{

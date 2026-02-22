@@ -22,7 +22,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 	private Window? _creationDialog;
 	private LineEdit? _newNameEdit;
 	private OptionButton? _newTypeDropdown;
-	private CheckButton? _newArrayToggle;
+	private CheckBox? _newArrayToggle;
 
 	/// <summary>
 	/// Raised when any variable is added, removed, or its value changes.
@@ -112,27 +112,24 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		}
 	}
 
-	private static HBoxContainer? CreateScalarValueEditor(StatescriptGraphVariable variable)
+	private static Control CreateScalarValueEditor(StatescriptGraphVariable variable)
 	{
-		var hBox = new HBoxContainer
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		hBox.AddChild(new Label { Text = "Value:" });
-
 		switch (variable.VariableType)
 		{
 			case StatescriptVariableType.Bool:
-				var checkBox = new CheckButton { ButtonPressed = variable.InitialValue.AsBool() };
-				checkBox.Toggled += x =>
 				{
-					variable.InitialValue = Variant.From(x);
-					variable.EmitChanged();
-				};
+					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+					hBox.AddChild(new Label { Text = "Value:" });
+					var checkBox = new CheckBox { ButtonPressed = variable.InitialValue.AsBool() };
+					checkBox.Toggled += x =>
+					{
+						variable.InitialValue = Variant.From(x);
+						variable.EmitChanged();
+					};
 
-				hBox.AddChild(checkBox);
-				break;
+					hBox.AddChild(checkBox);
+					return hBox;
+				}
 
 			case StatescriptVariableType.Int:
 			case StatescriptVariableType.Short:
@@ -140,87 +137,101 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			case StatescriptVariableType.SByte:
 			case StatescriptVariableType.UShort:
 			case StatescriptVariableType.Char:
-				var intSpin = new SpinBox
 				{
-					Value = variable.InitialValue.AsInt32(),
-					Step = 1,
-					Rounded = true,
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				};
+					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+					hBox.AddChild(new Label { Text = "Value:" });
+					var intSpin = new SpinBox
+					{
+						Value = variable.InitialValue.AsInt32(),
+						Step = 1,
+						Rounded = true,
+						SizeFlagsHorizontal = SizeFlags.ExpandFill,
+					};
 
-				intSpin.ValueChanged += value =>
-				{
-					variable.InitialValue = Variant.From((int)value);
-					variable.EmitChanged();
-				};
+					intSpin.ValueChanged += value =>
+					{
+						variable.InitialValue = Variant.From((int)value);
+						variable.EmitChanged();
+					};
 
-				hBox.AddChild(intSpin);
-				break;
+					hBox.AddChild(intSpin);
+					return hBox;
+				}
 
 			case StatescriptVariableType.UInt:
 			case StatescriptVariableType.Long:
 			case StatescriptVariableType.ULong:
-				var longSpin = new SpinBox
 				{
-					Value = variable.InitialValue.AsInt64(),
-					Step = 1,
-					Rounded = true,
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				};
+					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+					hBox.AddChild(new Label { Text = "Value:" });
+					var longSpin = new SpinBox
+					{
+						Value = variable.InitialValue.AsInt64(),
+						Step = 1,
+						Rounded = true,
+						SizeFlagsHorizontal = SizeFlags.ExpandFill,
+					};
 
-				longSpin.ValueChanged += value =>
-				{
-					variable.InitialValue = Variant.From((long)value);
-					variable.EmitChanged();
-				};
+					longSpin.ValueChanged += value =>
+					{
+						variable.InitialValue = Variant.From((long)value);
+						variable.EmitChanged();
+					};
 
-				hBox.AddChild(longSpin);
-				break;
+					hBox.AddChild(longSpin);
+					return hBox;
+				}
 
 			case StatescriptVariableType.Float:
 			case StatescriptVariableType.Double:
 			case StatescriptVariableType.Decimal:
-				var floatSpin = new SpinBox
 				{
-					Value = variable.InitialValue.AsDouble(),
-					Step = 0.01,
-					Rounded = false,
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				};
+					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+					hBox.AddChild(new Label { Text = "Value:" });
+					var floatSpin = new SpinBox
+					{
+						Value = variable.InitialValue.AsDouble(),
+						Step = 0.01,
+						Rounded = false,
+						SizeFlagsHorizontal = SizeFlags.ExpandFill,
+					};
 
-				floatSpin.ValueChanged += value =>
-				{
-					variable.InitialValue = Variant.From(value);
-					variable.EmitChanged();
-				};
+					floatSpin.ValueChanged += value =>
+					{
+						variable.InitialValue = Variant.From(value);
+						variable.EmitChanged();
+					};
 
-				hBox.AddChild(floatSpin);
-				break;
+					hBox.AddChild(floatSpin);
+					return hBox;
+				}
 
 			case StatescriptVariableType.Vector2:
-				CreateVectorSpins(hBox, variable, 2);
-				break;
+				return CreateVectorEditor(variable, 2);
 
 			case StatescriptVariableType.Vector3:
-				CreateVectorSpins(hBox, variable, 3);
-				break;
+				return CreateVectorEditor(variable, 3);
 
 			case StatescriptVariableType.Vector4:
 			case StatescriptVariableType.Plane:
 			case StatescriptVariableType.Quaternion:
-				CreateVectorSpins(hBox, variable, 4);
-				break;
+				return CreateVectorEditor(variable, 4);
 
 			default:
-				hBox.AddChild(new Label { Text = variable.VariableType.ToString() });
-				break;
+				{
+					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+					hBox.AddChild(new Label { Text = variable.VariableType.ToString() });
+					return hBox;
+				}
 		}
-
-		return hBox;
 	}
 
-	private static void CreateVectorSpins(HBoxContainer parent, StatescriptGraphVariable variable, int components)
+	private static VBoxContainer CreateVectorEditor(StatescriptGraphVariable variable, int components)
 	{
+		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		vBox.AddChild(new Label { Text = "Value:" });
+
 		string[] labels = components switch
 		{
 			2 => ["X", "Y"],
@@ -232,7 +243,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		for (var i = 0; i < components; i++)
 		{
-			parent.AddChild(new Label { Text = labels[i] });
+			var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			row.AddChild(new Label { Text = labels[i], CustomMinimumSize = new Vector2(20, 0) });
 
 			var spin = new SpinBox
 			{
@@ -240,27 +252,52 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				Step = 0.01,
 				Rounded = false,
 				SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				CustomMinimumSize = new Vector2(50, 0),
 			};
 
 			spins[i] = spin;
 			spin.ValueChanged += _ => UpdateVectorValue(variable, spins);
-			parent.AddChild(spin);
+			row.AddChild(spin);
+			vBox.AddChild(row);
 		}
+
+		return vBox;
 	}
 
 	private static double GetVectorComponent(StatescriptGraphVariable variable, int index)
 	{
 		return variable.VariableType switch
 		{
-			StatescriptVariableType.Vector2 => index == 0
-				? variable.InitialValue.AsVector2().X
-				: variable.InitialValue.AsVector2().Y,
+			StatescriptVariableType.Vector2 => index switch
+			{
+				0 => variable.InitialValue.AsVector2().X,
+				_ => variable.InitialValue.AsVector2().Y,
+			},
 			StatescriptVariableType.Vector3 => index switch
 			{
 				0 => variable.InitialValue.AsVector3().X,
 				1 => variable.InitialValue.AsVector3().Y,
 				_ => variable.InitialValue.AsVector3().Z,
+			},
+			StatescriptVariableType.Vector4 => index switch
+			{
+				0 => variable.InitialValue.AsVector4().X,
+				1 => variable.InitialValue.AsVector4().Y,
+				2 => variable.InitialValue.AsVector4().Z,
+				_ => variable.InitialValue.AsVector4().W,
+			},
+			StatescriptVariableType.Plane => index switch
+			{
+				0 => variable.InitialValue.AsPlane().Normal.X,
+				1 => variable.InitialValue.AsPlane().Normal.Y,
+				2 => variable.InitialValue.AsPlane().Normal.Z,
+				_ => variable.InitialValue.AsPlane().D,
+			},
+			StatescriptVariableType.Quaternion => index switch
+			{
+				0 => variable.InitialValue.AsQuaternion().X,
+				1 => variable.InitialValue.AsQuaternion().Y,
+				2 => variable.InitialValue.AsQuaternion().Z,
+				_ => variable.InitialValue.AsQuaternion().W,
 			},
 			StatescriptVariableType.Bool => throw new NotImplementedException(),
 			StatescriptVariableType.Byte => throw new NotImplementedException(),
@@ -275,16 +312,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			StatescriptVariableType.ULong => throw new NotImplementedException(),
 			StatescriptVariableType.Short => throw new NotImplementedException(),
 			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			StatescriptVariableType.Vector4 => throw new NotImplementedException(),
-			StatescriptVariableType.Plane => throw new NotImplementedException(),
-			StatescriptVariableType.Quaternion => throw new NotImplementedException(),
-			_ => index switch
-			{
-				0 => variable.InitialValue.AsVector4().X,
-				1 => variable.InitialValue.AsVector4().Y,
-				2 => variable.InitialValue.AsVector4().Z,
-				_ => variable.InitialValue.AsVector4().W,
-			},
+			_ => 0,
 		};
 	}
 
@@ -348,6 +376,147 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			or StatescriptVariableType.Char;
 	}
 
+	private static bool IsFloatType(StatescriptVariableType type)
+	{
+		return type is StatescriptVariableType.Float or StatescriptVariableType.Double
+			or StatescriptVariableType.Decimal;
+	}
+
+	private static bool IsVectorType(StatescriptVariableType type)
+	{
+		return type is StatescriptVariableType.Vector2 or StatescriptVariableType.Vector3
+			or StatescriptVariableType.Vector4 or StatescriptVariableType.Plane
+			or StatescriptVariableType.Quaternion;
+	}
+
+	private static int GetVectorComponentCount(StatescriptVariableType type)
+	{
+		return type switch
+		{
+			StatescriptVariableType.Vector2 => 2,
+			StatescriptVariableType.Vector3 => 3,
+			StatescriptVariableType.Bool => throw new NotImplementedException(),
+			StatescriptVariableType.Byte => throw new NotImplementedException(),
+			StatescriptVariableType.SByte => throw new NotImplementedException(),
+			StatescriptVariableType.Char => throw new NotImplementedException(),
+			StatescriptVariableType.Decimal => throw new NotImplementedException(),
+			StatescriptVariableType.Double => throw new NotImplementedException(),
+			StatescriptVariableType.Float => throw new NotImplementedException(),
+			StatescriptVariableType.Int => throw new NotImplementedException(),
+			StatescriptVariableType.UInt => throw new NotImplementedException(),
+			StatescriptVariableType.Long => throw new NotImplementedException(),
+			StatescriptVariableType.ULong => throw new NotImplementedException(),
+			StatescriptVariableType.Short => throw new NotImplementedException(),
+			StatescriptVariableType.UShort => throw new NotImplementedException(),
+			StatescriptVariableType.Vector4 => throw new NotImplementedException(),
+			StatescriptVariableType.Plane => throw new NotImplementedException(),
+			StatescriptVariableType.Quaternion => throw new NotImplementedException(),
+			_ => 4,
+		};
+	}
+
+	private static double GetArrayVectorComponent(
+		StatescriptGraphVariable variable,
+		int arrayIndex,
+		int componentIndex)
+	{
+		Variant val = variable.InitialArrayValues[arrayIndex];
+
+		return variable.VariableType switch
+		{
+			StatescriptVariableType.Vector2 => componentIndex == 0
+				? val.AsVector2().X
+				: val.AsVector2().Y,
+			StatescriptVariableType.Vector3 => componentIndex switch
+			{
+				0 => val.AsVector3().X,
+				1 => val.AsVector3().Y,
+				_ => val.AsVector3().Z,
+			},
+			StatescriptVariableType.Vector4 => componentIndex switch
+			{
+				0 => val.AsVector4().X,
+				1 => val.AsVector4().Y,
+				2 => val.AsVector4().Z,
+				_ => val.AsVector4().W,
+			},
+			StatescriptVariableType.Plane => componentIndex switch
+			{
+				0 => val.AsPlane().Normal.X,
+				1 => val.AsPlane().Normal.Y,
+				2 => val.AsPlane().Normal.Z,
+				_ => val.AsPlane().D,
+			},
+			StatescriptVariableType.Quaternion => componentIndex switch
+			{
+				0 => val.AsQuaternion().X,
+				1 => val.AsQuaternion().Y,
+				2 => val.AsQuaternion().Z,
+				_ => val.AsQuaternion().W,
+			},
+			StatescriptVariableType.Bool => throw new NotImplementedException(),
+			StatescriptVariableType.Byte => throw new NotImplementedException(),
+			StatescriptVariableType.SByte => throw new NotImplementedException(),
+			StatescriptVariableType.Char => throw new NotImplementedException(),
+			StatescriptVariableType.Decimal => throw new NotImplementedException(),
+			StatescriptVariableType.Double => throw new NotImplementedException(),
+			StatescriptVariableType.Float => throw new NotImplementedException(),
+			StatescriptVariableType.Int => throw new NotImplementedException(),
+			StatescriptVariableType.UInt => throw new NotImplementedException(),
+			StatescriptVariableType.Long => throw new NotImplementedException(),
+			StatescriptVariableType.ULong => throw new NotImplementedException(),
+			StatescriptVariableType.Short => throw new NotImplementedException(),
+			StatescriptVariableType.UShort => throw new NotImplementedException(),
+			_ => 0,
+		};
+	}
+
+	private static void UpdateArrayVectorValue(
+		StatescriptGraphVariable variable,
+		int arrayIndex,
+		SpinBox[] spins)
+	{
+		variable.InitialArrayValues[arrayIndex] = variable.VariableType switch
+		{
+			StatescriptVariableType.Vector2 => Variant.From(
+				new Vector2((float)spins[0].Value, (float)spins[1].Value)),
+			StatescriptVariableType.Vector3 => Variant.From(
+				new Vector3((float)spins[0].Value, (float)spins[1].Value, (float)spins[2].Value)),
+			StatescriptVariableType.Vector4 => Variant.From(
+				new Vector4(
+					(float)spins[0].Value,
+					(float)spins[1].Value,
+					(float)spins[2].Value,
+					(float)spins[3].Value)),
+			StatescriptVariableType.Plane => Variant.From(
+				new Plane(
+					new Vector3((float)spins[0].Value, (float)spins[1].Value, (float)spins[2].Value),
+					(float)spins[3].Value)),
+			StatescriptVariableType.Quaternion => Variant.From(
+				new Quaternion(
+					(float)spins[0].Value,
+					(float)spins[1].Value,
+					(float)spins[2].Value,
+					(float)spins[3].Value)),
+			StatescriptVariableType.Bool => throw new NotImplementedException(),
+			StatescriptVariableType.Byte => throw new NotImplementedException(),
+			StatescriptVariableType.SByte => throw new NotImplementedException(),
+			StatescriptVariableType.Char => throw new NotImplementedException(),
+			StatescriptVariableType.Decimal => throw new NotImplementedException(),
+			StatescriptVariableType.Double => throw new NotImplementedException(),
+			StatescriptVariableType.Float => throw new NotImplementedException(),
+			StatescriptVariableType.Int => throw new NotImplementedException(),
+			StatescriptVariableType.UInt => throw new NotImplementedException(),
+			StatescriptVariableType.Long => throw new NotImplementedException(),
+			StatescriptVariableType.ULong => throw new NotImplementedException(),
+			StatescriptVariableType.Short => throw new NotImplementedException(),
+			StatescriptVariableType.UShort => throw new NotImplementedException(),
+			_ => variable.InitialArrayValues[arrayIndex],
+		};
+
+		variable.EmitChanged();
+	}
+
 	private void AddVariableRow(StatescriptGraphVariable variable, int index)
 	{
 		if (_variableList is null)
@@ -400,12 +569,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		if (!variable.IsArray)
 		{
-			HBoxContainer? valueEditor = CreateScalarValueEditor(variable);
-
-			if (valueEditor is not null)
-			{
-				rowContainer.AddChild(valueEditor);
-			}
+			Control valueEditor = CreateScalarValueEditor(variable);
+			rowContainer.AddChild(valueEditor);
 		}
 		else
 		{
@@ -446,57 +611,132 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		for (var i = 0; i < variable.InitialArrayValues.Count; i++)
 		{
-			var elementRow = new HBoxContainer
-			{
-				SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			};
-
-			vBox.AddChild(elementRow);
-
-			elementRow.AddChild(new Label { Text = $"[{i}]" });
-
 			var capturedIndex = i;
-			var elementSpin = new SpinBox
-			{
-				Value = variable.InitialArrayValues[i].AsDouble(),
-				Step = IsIntegerType(variable.VariableType) ? 1 : 0.01,
-				Rounded = IsIntegerType(variable.VariableType),
-				SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				CustomMinimumSize = new Vector2(60, 0),
-			};
 
-			elementSpin.ValueChanged += value =>
+			if (variable.VariableType == StatescriptVariableType.Bool)
 			{
-				if (IsIntegerType(variable.VariableType))
+				var elementRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				vBox.AddChild(elementRow);
+				elementRow.AddChild(new Label { Text = $"[{i}]" });
+
+				var toggle = new CheckBox
 				{
-					variable.InitialArrayValues[capturedIndex] = Variant.From((int)value);
-				}
-				else
+					ButtonPressed = variable.InitialArrayValues[i].AsBool(),
+				};
+
+				toggle.Toggled += x =>
 				{
-					variable.InitialArrayValues[capturedIndex] = Variant.From(value);
+					variable.InitialArrayValues[capturedIndex] = Variant.From(x);
+					variable.EmitChanged();
+				};
+
+				elementRow.AddChild(toggle);
+				AddArrayElementRemoveButton(elementRow, variable, capturedIndex);
+			}
+			else if (IsVectorType(variable.VariableType))
+			{
+				var elementVBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				vBox.AddChild(elementVBox);
+
+				var labelRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				elementVBox.AddChild(labelRow);
+				labelRow.AddChild(new Label
+				{
+					Text = $"[{i}]",
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
+				});
+
+				AddArrayElementRemoveButton(labelRow, variable, capturedIndex);
+
+				var componentCount = GetVectorComponentCount(variable.VariableType);
+				string[] labels = componentCount switch
+				{
+					2 => ["X", "Y"],
+					3 => ["X", "Y", "Z"],
+					_ => ["X", "Y", "Z", "W"],
+				};
+
+				var spins = new SpinBox[componentCount];
+
+				for (var c = 0; c < componentCount; c++)
+				{
+					var compRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+					compRow.AddChild(new Label
+					{
+						Text = $"  {labels[c]}",
+						CustomMinimumSize = new Vector2(30, 0),
+					});
+
+					var spin = new SpinBox
+					{
+						Value = GetArrayVectorComponent(variable, capturedIndex, c),
+						Step = 0.01,
+						Rounded = false,
+						SizeFlagsHorizontal = SizeFlags.ExpandFill,
+					};
+
+					spins[c] = spin;
+					spin.ValueChanged += _ =>
+						UpdateArrayVectorValue(variable, capturedIndex, spins);
+					compRow.AddChild(spin);
+					elementVBox.AddChild(compRow);
 				}
-
-				variable.EmitChanged();
-			};
-
-			elementRow.AddChild(elementSpin);
-
-			var removeElementButton = new Button
+			}
+			else
 			{
-				Text = "✕",
-				CustomMinimumSize = new Vector2(24, 24),
-			};
+				var elementRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				vBox.AddChild(elementRow);
+				elementRow.AddChild(new Label { Text = $"[{i}]" });
 
-			removeElementButton.Pressed += () =>
-			{
-				variable.InitialArrayValues.RemoveAt(capturedIndex);
-				RebuildList();
-			};
+				var elementSpin = new SpinBox
+				{
+					Value = variable.InitialArrayValues[i].AsDouble(),
+					Step = IsIntegerType(variable.VariableType) ? 1 : 0.01,
+					Rounded = IsIntegerType(variable.VariableType),
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
+					CustomMinimumSize = new Vector2(60, 0),
+				};
 
-			elementRow.AddChild(removeElementButton);
+				elementSpin.ValueChanged += value =>
+				{
+					if (IsIntegerType(variable.VariableType))
+					{
+						variable.InitialArrayValues[capturedIndex] = Variant.From((int)value);
+					}
+					else
+					{
+						variable.InitialArrayValues[capturedIndex] = Variant.From(value);
+					}
+
+					variable.EmitChanged();
+				};
+
+				elementRow.AddChild(elementSpin);
+				AddArrayElementRemoveButton(elementRow, variable, capturedIndex);
+			}
 		}
 
 		return vBox;
+	}
+
+	private void AddArrayElementRemoveButton(
+		HBoxContainer row,
+		StatescriptGraphVariable variable,
+		int elementIndex)
+	{
+		var removeElementButton = new Button
+		{
+			Text = "✕",
+			CustomMinimumSize = new Vector2(24, 24),
+		};
+
+		removeElementButton.Pressed += () =>
+		{
+			variable.InitialArrayValues.RemoveAt(elementIndex);
+			RebuildList();
+		};
+
+		row.AddChild(removeElementButton);
 	}
 
 	private void OnAddPressed()
@@ -557,7 +797,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		arrayRow.AddChild(new Label { Text = "Array:", CustomMinimumSize = new Vector2(60, 0) });
 
-		_newArrayToggle = new CheckButton();
+		_newArrayToggle = new CheckBox();
 		arrayRow.AddChild(_newArrayToggle);
 
 		_creationDialog.AddChild(vBox);

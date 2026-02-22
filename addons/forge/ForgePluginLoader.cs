@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System.Diagnostics;
+using System.Reflection;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
@@ -46,6 +47,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddDock(_statescriptGraphEditorDock);
 
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
+
+		EditorInterface.Singleton.GetResourceFilesystem().ResourcesReimported += OnResourcesReimported;
 	}
 
 	public override void _ExitTree()
@@ -56,6 +59,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		Debug.Assert(
 			_statescriptGraphEditorDock is not null,
 			$"{nameof(_statescriptGraphEditorDock)} should have been initialized on _Ready().");
+
+		EditorInterface.Singleton.GetResourceFilesystem().ResourcesReimported -= OnResourcesReimported;
 
 		RemoveDock(_tagsEditorDock);
 		_tagsEditorDock.QueueFree();
@@ -128,9 +133,91 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 	}
 
+	public override string _GetPluginName()
+	{
+		return "Forge";
+	}
+
+	public override void _GetWindowLayout(ConfigFile configuration)
+	{
+		GD.Print("GetWindowLayout chamado");
+		GD.Print(configuration.GetValue("Forge", "open_tabs", string.Empty));
+
+		if (_statescriptGraphEditorDock is not null)
+		{
+			var paths = _statescriptGraphEditorDock.GetOpenResourcePaths();
+			configuration.SetValue("Forge", "open_tabs", string.Join(";", paths));
+			configuration.SetValue("Forge", "active_tab", _statescriptGraphEditorDock.GetActiveTabIndex());
+
+			var varStates = _statescriptGraphEditorDock.GetVariablesPanelStates();
+			configuration.SetValue("Forge", "variables_states", string.Join(";", varStates));
+		}
+	}
+
+	public override void _SetWindowLayout(ConfigFile configuration)
+	{
+		GD.Print("SetWindowLayout chamado");
+		GD.Print(configuration);
+
+		if (_statescriptGraphEditorDock is null)
+		{
+			return;
+		}
+
+		Variant tabsValue = configuration.GetValue("Forge", "open_tabs", string.Empty);
+		Variant active = configuration.GetValue("Forge", "active_tab", -1);
+
+		var tabsString = tabsValue.AsString();
+		if (string.IsNullOrEmpty(tabsString))
+		{
+			return;
+		}
+
+		var paths = tabsString.Split(';', System.StringSplitOptions.RemoveEmptyEntries);
+		var activeIndex = active.AsInt32();
+
+		bool[]? variablesStates = null;
+		Variant varStatesValue = configuration.GetValue("Forge", "variables_states", string.Empty);
+		var varString = varStatesValue.AsString();
+
+		if (!string.IsNullOrEmpty(varString))
+		{
+			var parts = varString.Split(';');
+			variablesStates = new bool[parts.Length];
+			for (var i = 0; i < parts.Length; i++)
+			{
+				variablesStates[i] = bool.TryParse(parts[i], out var v) && v;
+			}
+		}
+
+		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);	}
+
 	private static void CallAssetRepairTool()
 	{
 		AssetRepairTool.RepairAllAssetsTags();
+	}
+
+	private void OnResourcesReimported(string[] resources)
+	{
+		foreach (var path in resources)
+		{
+			if (!ResourceLoader.Exists(path))
+			{
+				continue;
+			}
+
+			var fileType = EditorInterface.Singleton.GetResourceFilesystem().GetFileType(path);
+			if (fileType != "StatescriptGraph" && fileType != "Resource")
+			{
+				continue;
+			}
+
+			Resource resource = ResourceLoader.Load(path);
+			if (resource is StatescriptGraph graph)
+			{
+				_statescriptGraphEditorDock?.OpenGraph(graph);
+			}
+		}
 	}
 }
 #endif
