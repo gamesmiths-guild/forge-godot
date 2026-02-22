@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System.Diagnostics;
-using System.Reflection;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
@@ -140,25 +139,27 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _GetWindowLayout(ConfigFile configuration)
 	{
-		GD.Print("GetWindowLayout chamado");
-		GD.Print(configuration.GetValue("Forge", "open_tabs", string.Empty));
-
-		if (_statescriptGraphEditorDock is not null)
+		if (_statescriptGraphEditorDock is null)
 		{
-			var paths = _statescriptGraphEditorDock.GetOpenResourcePaths();
-			configuration.SetValue("Forge", "open_tabs", string.Join(";", paths));
-			configuration.SetValue("Forge", "active_tab", _statescriptGraphEditorDock.GetActiveTabIndex());
-
-			var varStates = _statescriptGraphEditorDock.GetVariablesPanelStates();
-			configuration.SetValue("Forge", "variables_states", string.Join(";", varStates));
+			return;
 		}
+
+		var paths = _statescriptGraphEditorDock.GetOpenResourcePaths();
+
+		if (paths.Length == 0)
+		{
+			return;
+		}
+
+		configuration.SetValue("Forge", "open_tabs", string.Join(";", paths));
+		configuration.SetValue("Forge", "active_tab", _statescriptGraphEditorDock.GetActiveTabIndex());
+
+		var varStates = _statescriptGraphEditorDock.GetVariablesPanelStates();
+		configuration.SetValue("Forge", "variables_states", string.Join(";", varStates));
 	}
 
 	public override void _SetWindowLayout(ConfigFile configuration)
 	{
-		GD.Print("SetWindowLayout chamado");
-		GD.Print(configuration);
-
 		if (_statescriptGraphEditorDock is null)
 		{
 			return;
@@ -190,7 +191,8 @@ public partial class ForgePluginLoader : EditorPlugin
 			}
 		}
 
-		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);	}
+		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);
+	}
 
 	private static void CallAssetRepairTool()
 	{

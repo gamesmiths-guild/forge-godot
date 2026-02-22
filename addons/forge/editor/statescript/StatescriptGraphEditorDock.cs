@@ -138,7 +138,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		LoadGraphIntoEditor(graph);
 		UpdateVisibility();
-		// EditorPlugin.QueueSaveLayout();
 	}
 
 	/// <summary>
@@ -189,24 +188,24 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	}
 
 	/// <summary>
-	/// Restores tabs from paths and active index, used by EditorPlugin _SetState.
+	/// Restores tabs from paths and active index, used by EditorPlugin _SetWindowLayout.
 	/// </summary>
 	/// <param name="paths">The resource paths of the tabs to restore.</param>
 	/// <param name="activeIndex">The index of the tab to make active.</param>
 	/// <param name="variablesStates">The visibility states of the variables panel for each tab.</param>
 	public void RestoreFromPaths(string[] paths, int activeIndex, bool[]? variablesStates = null)
 	{
-		GD.Print("Restaurando abas...");
+		if (_tabBar is null || _graphEdit is null)
+		{
+			return;
+		}
 
 		_isLoadingGraph = true;
 
 		_openTabs.Clear();
-		if (_tabBar is not null)
+		while (_tabBar.GetTabCount() > 0)
 		{
-			while (_tabBar.GetTabCount() > 0)
-			{
-				_tabBar.RemoveTab(0);
-			}
+			_tabBar.RemoveTab(0);
 		}
 
 		for (var i = 0; i < paths.Length; i++)
@@ -232,12 +231,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			}
 
 			_openTabs.Add(tab);
-			_tabBar?.AddTab(graph.StatescriptName);
+			_tabBar.AddTab(graph.StatescriptName);
 		}
 
 		_isLoadingGraph = false;
 
-		if (_tabBar is not null && activeIndex >= 0 && activeIndex < _openTabs.Count)
+		if (activeIndex >= 0 && activeIndex < _openTabs.Count)
 		{
 			_tabBar.CurrentTab = activeIndex;
 			LoadGraphIntoEditor(_openTabs[activeIndex].GraphResource);
@@ -283,7 +282,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		UpdateVisibility();
-		// EditorPlugin.QueueSaveLayout();
 	}
 
 	private void BuildUI()
