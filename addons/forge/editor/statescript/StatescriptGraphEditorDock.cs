@@ -361,13 +361,15 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		HBoxContainer menuHBox = _graphEdit.GetMenuHBox();
 
 		menuHBox.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-		//menuHBox.CustomMinimumSize = new Vector2(10000, 0);
+		var parent = (PanelContainer)menuHBox.GetParent();
+		parent.SetAnchorsAndOffsetsPreset(LayoutPreset.TopWide, LayoutPresetMode.Minsize, 10);
 
 		_fileMenuButton = new MenuButton
 		{
 			Text = "File",
-			Flat = true,
+			Flat = false,
 			SwitchOnHover = true,
+			ThemeTypeVariation = "FlatMenuButton",
 		};
 
 		PopupMenu filePopup = _fileMenuButton.GetPopup();
@@ -392,7 +394,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_addNodeButton = new Button
 		{
 			Text = "Add Node...",
-			Flat = true,
+			ThemeTypeVariation = "FlatButton",
 		};
 
 		_addNodeButton.Pressed += OnAddNodeButtonPressed;
@@ -407,20 +409,25 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			Text = "Variables",
 			ToggleMode = true,
-			Flat = true,
+			ThemeTypeVariation = "FlatButton",
+			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("SubViewport", "EditorIcons"),
 		};
 
 		_variablesToggleButton.Toggled += OnVariablesToggled;
 		menuHBox.AddChild(_variablesToggleButton);
 
-		var separator3 = new VSeparator();
-		menuHBox.AddChild(separator3);
+		var spacer = new Control
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		menuHBox.AddChild(spacer);
 
 		_onlineDocsButton = new Button
 		{
 			Text = "Online Docs",
-			Flat = true,
-			//Alignment = HorizontalAlignment.Right,
+			ThemeTypeVariation = "FlatButton",
+			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("ExternalLink", "EditorIcons"),
 		};
 
 		_onlineDocsButton.Pressed += () =>
