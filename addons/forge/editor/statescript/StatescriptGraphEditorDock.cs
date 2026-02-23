@@ -496,7 +496,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		};
 
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
 		var pathRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(pathRow);
 
@@ -562,13 +561,13 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			Access = FileDialog.AccessEnum.Resources,
 		};
 
-		dialog.AddFilter("*.tres", "Godot Resource");
+		dialog.AddFilter("*.tres;StatescriptGraph");
 		dialog.FileSelected += path =>
 		{
-			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
-			if (graph is not null)
+			Resource? graph = ResourceLoader.Load(path);
+			if (graph is StatescriptGraph statescriptGraph)
 			{
-				OpenGraph(graph);
+				OpenGraph(statescriptGraph);
 			}
 			else
 			{
@@ -937,7 +936,10 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 	private void OnFilesystemChanged()
 	{
-		EditorFileSystem filesystem = EditorInterface.Singleton.GetResourceFilesystem();
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			_openTabs[i].UpdateCachedPathIfMissing();
+		}
 
 		for (var i = _openTabs.Count - 1; i >= 0; i--)
 		{
@@ -948,7 +950,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				continue;
 			}
 
-			if (string.IsNullOrEmpty(filesystem.GetFileType(path)))
+			if (!FileAccess.FileExists(path))
 			{
 				CloseTabByIndex(i);
 			}
@@ -1607,16 +1609,33 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	/// </summary>
 	private sealed class GraphTab
 	{
+		private string _cachedPath;
+
 		public StatescriptGraph GraphResource { get; }
 
-		public string ResourcePath { get; }
+		public string ResourcePath => !string.IsNullOrEmpty(GraphResource?.ResourcePath)
+			? GraphResource.ResourcePath
+			: _cachedPath;
 
 		public bool VariablesPanelOpen { get; set; }
 
 		public GraphTab(StatescriptGraph graphResource)
 		{
 			GraphResource = graphResource;
-			ResourcePath = graphResource.ResourcePath;
+			_cachedPath = graphResource?.ResourcePath ?? string.Empty;
+		}
+
+		public void UpdateCachedPathIfMissing()
+		{
+			if (GraphResource is null)
+			{
+				return;
+			}
+
+			if (!string.IsNullOrEmpty(GraphResource.ResourcePath))
+			{
+				_cachedPath = GraphResource.ResourcePath;
+			}
 		}
 	}
 }
