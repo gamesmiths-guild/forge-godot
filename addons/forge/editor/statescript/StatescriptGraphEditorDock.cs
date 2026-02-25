@@ -47,6 +47,9 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private int _pendingConnectionPort;
 	private bool _pendingConnectionIsOutput;
 
+	private EditorFileSystem? _fileSystem;
+	private Callable _filesystemChangedCallable;
+
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
 	/// </summary>
@@ -78,14 +81,20 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		BuildUI();
 		UpdateVisibility();
 
-		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged += OnFilesystemChanged;
+		_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
+		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
+
+		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
-
-		EditorInterface.Singleton.GetResourceFilesystem().FilesystemChanged -= OnFilesystemChanged;
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			== true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
 	}
 
 	public override void _Notification(int what)

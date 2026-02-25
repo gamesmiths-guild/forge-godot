@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using System.Diagnostics;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
@@ -25,6 +26,9 @@ public partial class ForgePluginLoader : EditorPlugin
 	private AttributeEditorPlugin? _attributeEditorPlugin;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
+	private EditorFileSystem? _fileSystem;
+	private Callable _resourcesReimportedCallable;
+
 	public override void _EnterTree()
 	{
 		_tagsEditorDock = new TagsEditorDock();
@@ -47,7 +51,10 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
 
-		EditorInterface.Singleton.GetResourceFilesystem().ResourcesReimported += OnResourcesReimported;
+		_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
+		_resourcesReimportedCallable = new Callable(this, nameof(OnResourcesReimported));
+
+		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
 	}
 
 	public override void _ExitTree()
@@ -59,7 +66,11 @@ public partial class ForgePluginLoader : EditorPlugin
 			_statescriptGraphEditorDock is not null,
 			$"{nameof(_statescriptGraphEditorDock)} should have been initialized on _Ready().");
 
-		EditorInterface.Singleton.GetResourceFilesystem().ResourcesReimported -= OnResourcesReimported;
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable)
+			== true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
+		}
 
 		RemoveDock(_tagsEditorDock);
 		_tagsEditorDock.QueueFree();
@@ -174,7 +185,7 @@ public partial class ForgePluginLoader : EditorPlugin
 			return;
 		}
 
-		var paths = tabsString.Split(';', System.StringSplitOptions.RemoveEmptyEntries);
+		var paths = tabsString.Split(';', StringSplitOptions.RemoveEmptyEntries);
 		var activeIndex = active.AsInt32();
 
 		bool[]? variablesStates = null;
