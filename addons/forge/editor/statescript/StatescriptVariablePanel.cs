@@ -13,8 +13,13 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// Once created, only the initial value can be edited. To change name or type, delete and recreate the variable.
 /// </summary>
 [Tool]
-internal sealed partial class StatescriptVariablePanel : VBoxContainer
+internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISerializationListener
 {
+	private static readonly Color _axisXColor = new(0.96f, 0.37f, 0.37f);
+	private static readonly Color _axisYColor = new(0.54f, 0.83f, 0.01f);
+	private static readonly Color _axisZColor = new(0.33f, 0.55f, 0.96f);
+	private static readonly Color _axisWColor = new(0.66f, 0.66f, 0.66f);
+
 	private StatescriptGraph? _graph;
 	private VBoxContainer? _variableList;
 	private Button? _addButton;
@@ -34,7 +39,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		base._Ready();
 
 		SizeFlagsVertical = SizeFlags.ExpandFill;
-		CustomMinimumSize = new Vector2(250, 0);
+		CustomMinimumSize = new Vector2(260, 0);
 
 		var headerHBox = new HBoxContainer();
 		AddChild(headerHBox);
@@ -76,6 +81,30 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		scrollContainer.AddChild(_variableList);
 	}
 
+	public override void _ExitTree()
+	{
+		base._ExitTree();
+
+		_creationDialog?.QueueFree();
+		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
+	}
+
+	public void OnBeforeSerialize()
+	{
+		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
+	}
+
+	public void OnAfterDeserialize()
+	{
+		// Nothing to restore — dialog fields are transient.
+	}
+
 	/// <summary>
 	/// Sets the graph to display variables for.
 	/// </summary>
@@ -112,261 +141,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		}
 	}
 
-	private static Control CreateScalarValueEditor(StatescriptGraphVariable variable)
-	{
-		switch (variable.VariableType)
-		{
-			case StatescriptVariableType.Bool:
-				{
-					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-					hBox.AddChild(new Label { Text = "Value:" });
-					var checkBox = new CheckBox { ButtonPressed = variable.InitialValue.AsBool() };
-					checkBox.Toggled += x =>
-					{
-						variable.InitialValue = Variant.From(x);
-						variable.EmitChanged();
-					};
-
-					hBox.AddChild(checkBox);
-					return hBox;
-				}
-
-			case StatescriptVariableType.Int:
-			case StatescriptVariableType.Short:
-			case StatescriptVariableType.Byte:
-			case StatescriptVariableType.SByte:
-			case StatescriptVariableType.UShort:
-			case StatescriptVariableType.Char:
-				{
-					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-					hBox.AddChild(new Label { Text = "Value:" });
-					var intSpin = new SpinBox
-					{
-						Value = variable.InitialValue.AsInt32(),
-						Step = 1,
-						Rounded = true,
-						SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					};
-
-					intSpin.ValueChanged += value =>
-					{
-						variable.InitialValue = Variant.From((int)value);
-						variable.EmitChanged();
-					};
-
-					hBox.AddChild(intSpin);
-					return hBox;
-				}
-
-			case StatescriptVariableType.UInt:
-			case StatescriptVariableType.Long:
-			case StatescriptVariableType.ULong:
-				{
-					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-					hBox.AddChild(new Label { Text = "Value:" });
-					var longSpin = new SpinBox
-					{
-						Value = variable.InitialValue.AsInt64(),
-						Step = 1,
-						Rounded = true,
-						SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					};
-
-					longSpin.ValueChanged += value =>
-					{
-						variable.InitialValue = Variant.From((long)value);
-						variable.EmitChanged();
-					};
-
-					hBox.AddChild(longSpin);
-					return hBox;
-				}
-
-			case StatescriptVariableType.Float:
-			case StatescriptVariableType.Double:
-			case StatescriptVariableType.Decimal:
-				{
-					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-					hBox.AddChild(new Label { Text = "Value:" });
-					var floatSpin = new SpinBox
-					{
-						Value = variable.InitialValue.AsDouble(),
-						Step = 0.01,
-						Rounded = false,
-						SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					};
-
-					floatSpin.ValueChanged += value =>
-					{
-						variable.InitialValue = Variant.From(value);
-						variable.EmitChanged();
-					};
-
-					hBox.AddChild(floatSpin);
-					return hBox;
-				}
-
-			case StatescriptVariableType.Vector2:
-				return CreateVectorEditor(variable, 2);
-
-			case StatescriptVariableType.Vector3:
-				return CreateVectorEditor(variable, 3);
-
-			case StatescriptVariableType.Vector4:
-			case StatescriptVariableType.Plane:
-			case StatescriptVariableType.Quaternion:
-				return CreateVectorEditor(variable, 4);
-
-			default:
-				{
-					var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-					hBox.AddChild(new Label { Text = variable.VariableType.ToString() });
-					return hBox;
-				}
-		}
-	}
-
-	private static VBoxContainer CreateVectorEditor(StatescriptGraphVariable variable, int components)
-	{
-		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		vBox.AddChild(new Label { Text = "Value:" });
-
-		string[] labels = components switch
-		{
-			2 => ["X", "Y"],
-			3 => ["X", "Y", "Z"],
-			_ => ["X", "Y", "Z", "W"],
-		};
-
-		var spins = new SpinBox[components];
-
-		for (var i = 0; i < components; i++)
-		{
-			var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			row.AddChild(new Label { Text = labels[i], CustomMinimumSize = new Vector2(20, 0) });
-
-			var spin = new SpinBox
-			{
-				Value = GetVectorComponent(variable, i),
-				Step = 0.01,
-				Rounded = false,
-				SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			};
-
-			spins[i] = spin;
-			spin.ValueChanged += _ => UpdateVectorValue(variable, spins);
-			row.AddChild(spin);
-			vBox.AddChild(row);
-		}
-
-		return vBox;
-	}
-
-	private static double GetVectorComponent(StatescriptGraphVariable variable, int index)
-	{
-		return variable.VariableType switch
-		{
-			StatescriptVariableType.Vector2 => index switch
-			{
-				0 => variable.InitialValue.AsVector2().X,
-				_ => variable.InitialValue.AsVector2().Y,
-			},
-			StatescriptVariableType.Vector3 => index switch
-			{
-				0 => variable.InitialValue.AsVector3().X,
-				1 => variable.InitialValue.AsVector3().Y,
-				_ => variable.InitialValue.AsVector3().Z,
-			},
-			StatescriptVariableType.Vector4 => index switch
-			{
-				0 => variable.InitialValue.AsVector4().X,
-				1 => variable.InitialValue.AsVector4().Y,
-				2 => variable.InitialValue.AsVector4().Z,
-				_ => variable.InitialValue.AsVector4().W,
-			},
-			StatescriptVariableType.Plane => index switch
-			{
-				0 => variable.InitialValue.AsPlane().Normal.X,
-				1 => variable.InitialValue.AsPlane().Normal.Y,
-				2 => variable.InitialValue.AsPlane().Normal.Z,
-				_ => variable.InitialValue.AsPlane().D,
-			},
-			StatescriptVariableType.Quaternion => index switch
-			{
-				0 => variable.InitialValue.AsQuaternion().X,
-				1 => variable.InitialValue.AsQuaternion().Y,
-				2 => variable.InitialValue.AsQuaternion().Z,
-				_ => variable.InitialValue.AsQuaternion().W,
-			},
-			StatescriptVariableType.Bool => throw new NotImplementedException(),
-			StatescriptVariableType.Byte => throw new NotImplementedException(),
-			StatescriptVariableType.SByte => throw new NotImplementedException(),
-			StatescriptVariableType.Char => throw new NotImplementedException(),
-			StatescriptVariableType.Decimal => throw new NotImplementedException(),
-			StatescriptVariableType.Double => throw new NotImplementedException(),
-			StatescriptVariableType.Float => throw new NotImplementedException(),
-			StatescriptVariableType.Int => throw new NotImplementedException(),
-			StatescriptVariableType.UInt => throw new NotImplementedException(),
-			StatescriptVariableType.Long => throw new NotImplementedException(),
-			StatescriptVariableType.ULong => throw new NotImplementedException(),
-			StatescriptVariableType.Short => throw new NotImplementedException(),
-			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			_ => 0,
-		};
-	}
-
-	private static void UpdateVectorValue(StatescriptGraphVariable variable, SpinBox[] spins)
-	{
-		variable.InitialValue = variable.VariableType switch
-		{
-			StatescriptVariableType.Vector2 => Variant.From(
-				new Vector2(
-					(float)spins[0].Value,
-					(float)spins[1].Value)),
-			StatescriptVariableType.Vector3 => Variant.From(
-				new Vector3(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value)),
-			StatescriptVariableType.Vector4 => Variant.From(
-				new Vector4(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value,
-					(float)spins[3].Value)),
-			StatescriptVariableType.Plane => Variant.From(
-				new Plane(
-					new Vector3(
-						(float)spins[0].Value,
-						(float)spins[1].Value,
-						(float)spins[2].Value),
-					(float)spins[3].Value)),
-			StatescriptVariableType.Quaternion => Variant.From(
-				new Quaternion(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value,
-					(float)spins[3].Value)),
-			StatescriptVariableType.Bool => throw new NotImplementedException(),
-			StatescriptVariableType.Byte => throw new NotImplementedException(),
-			StatescriptVariableType.SByte => throw new NotImplementedException(),
-			StatescriptVariableType.Char => throw new NotImplementedException(),
-			StatescriptVariableType.Decimal => throw new NotImplementedException(),
-			StatescriptVariableType.Double => throw new NotImplementedException(),
-			StatescriptVariableType.Float => throw new NotImplementedException(),
-			StatescriptVariableType.Int => throw new NotImplementedException(),
-			StatescriptVariableType.UInt => throw new NotImplementedException(),
-			StatescriptVariableType.Long => throw new NotImplementedException(),
-			StatescriptVariableType.ULong => throw new NotImplementedException(),
-			StatescriptVariableType.Short => throw new NotImplementedException(),
-			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			_ => variable.InitialValue,
-		};
-
-		variable.EmitChanged();
-	}
-
 	private static bool IsIntegerType(StatescriptVariableType type)
 	{
 		return type is StatescriptVariableType.Int or StatescriptVariableType.UInt
@@ -395,6 +169,9 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		{
 			StatescriptVariableType.Vector2 => 2,
 			StatescriptVariableType.Vector3 => 3,
+			StatescriptVariableType.Vector4 => 4,
+			StatescriptVariableType.Plane => 4,
+			StatescriptVariableType.Quaternion => 4,
 			StatescriptVariableType.Bool => throw new NotImplementedException(),
 			StatescriptVariableType.Byte => throw new NotImplementedException(),
 			StatescriptVariableType.SByte => throw new NotImplementedException(),
@@ -408,51 +185,293 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			StatescriptVariableType.ULong => throw new NotImplementedException(),
 			StatescriptVariableType.Short => throw new NotImplementedException(),
 			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			StatescriptVariableType.Vector4 => throw new NotImplementedException(),
-			StatescriptVariableType.Plane => throw new NotImplementedException(),
-			StatescriptVariableType.Quaternion => throw new NotImplementedException(),
 			_ => 4,
 		};
 	}
 
-	private static double GetArrayVectorComponent(
-		StatescriptGraphVariable variable,
-		int arrayIndex,
-		int componentIndex)
+	private static string[] GetVectorComponentLabels(StatescriptVariableType type)
 	{
-		Variant val = variable.InitialArrayValues[arrayIndex];
-
-		return variable.VariableType switch
+		return type switch
 		{
-			StatescriptVariableType.Vector2 => componentIndex == 0
-				? val.AsVector2().X
-				: val.AsVector2().Y,
-			StatescriptVariableType.Vector3 => componentIndex switch
+			StatescriptVariableType.Vector2 => ["x", "y"],
+			StatescriptVariableType.Vector3 => ["x", "y", "z"],
+			StatescriptVariableType.Plane => ["x", "y", "z", "d"],
+			StatescriptVariableType.Vector4 => ["x", "y", "z", "w"],
+			StatescriptVariableType.Quaternion => ["x", "y", "z", "w"],
+			StatescriptVariableType.Bool => throw new NotImplementedException(),
+			StatescriptVariableType.Byte => throw new NotImplementedException(),
+			StatescriptVariableType.SByte => throw new NotImplementedException(),
+			StatescriptVariableType.Char => throw new NotImplementedException(),
+			StatescriptVariableType.Decimal => throw new NotImplementedException(),
+			StatescriptVariableType.Double => throw new NotImplementedException(),
+			StatescriptVariableType.Float => throw new NotImplementedException(),
+			StatescriptVariableType.Int => throw new NotImplementedException(),
+			StatescriptVariableType.UInt => throw new NotImplementedException(),
+			StatescriptVariableType.Long => throw new NotImplementedException(),
+			StatescriptVariableType.ULong => throw new NotImplementedException(),
+			StatescriptVariableType.Short => throw new NotImplementedException(),
+			StatescriptVariableType.UShort => throw new NotImplementedException(),
+			_ => ["x", "y", "z", "w"],
+		};
+	}
+
+	private static Color GetComponentColor(int index)
+	{
+		return index switch
+		{
+			0 => _axisXColor,
+			1 => _axisYColor,
+			2 => _axisZColor,
+			_ => _axisWColor,
+		};
+	}
+
+	private static NumericConfig GetNumericConfig(StatescriptVariableType type)
+	{
+		// Types whose full range fits comfortably in a double can use exact min/max with clamping.
+		// Types with extreme ranges (long, ulong, float, double, decimal) use a reasonable default
+		// range and rely on AllowGreater/AllowLesser to permit values outside the slider range.
+		return type switch
+		{
+			StatescriptVariableType.Byte => new NumericConfig(byte.MinValue, byte.MaxValue, 1, true, false),
+			StatescriptVariableType.SByte => new NumericConfig(sbyte.MinValue, sbyte.MaxValue, 1, true, false),
+			StatescriptVariableType.Char => new NumericConfig(char.MinValue, char.MaxValue, 1, true, false),
+			StatescriptVariableType.Short => new NumericConfig(short.MinValue, short.MaxValue, 1, true, false),
+			StatescriptVariableType.UShort => new NumericConfig(ushort.MinValue, ushort.MaxValue, 1, true, false),
+			StatescriptVariableType.Int => new NumericConfig(int.MinValue, int.MaxValue, 1, true, false),
+			StatescriptVariableType.UInt => new NumericConfig(uint.MinValue, uint.MaxValue, 1, true, false),
+			StatescriptVariableType.Long => new NumericConfig(-1e15, 1e15, 1, true, true),
+			StatescriptVariableType.ULong => new NumericConfig(0, 1e15, 1, true, true),
+			StatescriptVariableType.Float => new NumericConfig(-1e10, 1e10, 0.001, false, true),
+			StatescriptVariableType.Double => new NumericConfig(-1e10, 1e10, 0.001, false, true),
+			StatescriptVariableType.Decimal => new NumericConfig(-1e10, 1e10, 0.001, false, true),
+			StatescriptVariableType.Bool => throw new NotImplementedException(),
+			StatescriptVariableType.Vector2 => throw new NotImplementedException(),
+			StatescriptVariableType.Vector3 => throw new NotImplementedException(),
+			StatescriptVariableType.Vector4 => throw new NotImplementedException(),
+			StatescriptVariableType.Plane => throw new NotImplementedException(),
+			StatescriptVariableType.Quaternion => throw new NotImplementedException(),
+			_ => new NumericConfig(-1e10, 1e10, 0.001, false, true),
+		};
+	}
+
+	private record struct NumericConfig(double MinValue, double MaxValue, double Step, bool IsInteger, bool AllowBeyondRange);
+
+	private static EditorSpinSlider CreateNumericSpinSlider(
+		StatescriptVariableType type,
+		double value)
+	{
+		NumericConfig config = GetNumericConfig(type);
+
+		return new EditorSpinSlider
+		{
+			Value = value,
+			Step = config.Step,
+			Rounded = config.IsInteger,
+			EditingInteger = config.IsInteger,
+			MinValue = config.MinValue,
+			MaxValue = config.MaxValue,
+			AllowGreater = config.AllowBeyondRange,
+			AllowLesser = config.AllowBeyondRange,
+			ControlState = config.IsInteger
+				? EditorSpinSlider.ControlStateEnum.Default
+				: EditorSpinSlider.ControlStateEnum.Hide,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+	}
+
+	private static EditorSpinSlider CreateVectorComponentSpinSlider(
+		string label,
+		Color labelColor,
+		double value)
+	{
+		var spin = new EditorSpinSlider
+		{
+			Label = label,
+			Value = value,
+			Step = 0.001,
+			Rounded = false,
+			EditingInteger = false,
+			AllowGreater = true,
+			AllowLesser = true,
+			Flat = false,
+			ControlState = EditorSpinSlider.ControlStateEnum.Hide,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			SizeFlagsStretchRatio = 1,
+		};
+
+		spin.AddThemeColorOverride("label_color", labelColor);
+
+		return spin;
+	}
+
+	private static PanelContainer CreateBoolEditor(bool value, Action<bool> onChanged)
+	{
+		var container = new PanelContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		Control baseControl = EditorInterface.Singleton.GetBaseControl();
+		var tabBarStyle = baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate() as StyleBox;
+		tabBarStyle!.SetContentMarginAll(0);
+		container.AddThemeStyleboxOverride("panel", tabBarStyle);
+
+		var checkButton = new CheckBox
+		{
+			Text = "On",
+			ButtonPressed = value,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		checkButton.Toggled += x =>
+		{
+			onChanged(x);
+		};
+
+		container.AddChild(checkButton);
+		return container;
+	}
+
+	private static Control CreateScalarValueEditor(StatescriptGraphVariable variable)
+	{
+		if (variable.VariableType == StatescriptVariableType.Bool)
+		{
+			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			hBox.AddChild(new Label { Text = "Value:" });
+
+			hBox.AddChild(CreateBoolEditor(
+				variable.InitialValue.AsBool(),
+				x =>
+				{
+					variable.InitialValue = Variant.From(x);
+					variable.EmitChanged();
+				}));
+
+			return hBox;
+		}
+
+		if (IsIntegerType(variable.VariableType) || IsFloatType(variable.VariableType))
+		{
+			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			hBox.AddChild(new Label { Text = "Value:" });
+
+			EditorSpinSlider spin = CreateNumericSpinSlider(
+				variable.VariableType,
+				variable.InitialValue.AsDouble());
+
+			spin.ValueChanged += value =>
 			{
-				0 => val.AsVector3().X,
-				1 => val.AsVector3().Y,
-				_ => val.AsVector3().Z,
+				variable.InitialValue = IsIntegerType(variable.VariableType)
+					? Variant.From((long)value)
+					: Variant.From(value);
+				variable.EmitChanged();
+			};
+
+			hBox.AddChild(spin);
+			return hBox;
+		}
+
+		if (IsVectorType(variable.VariableType))
+		{
+			return CreateVectorEditor(
+				variable.VariableType,
+				x => GetVectorComponent(variable.InitialValue, variable.VariableType, x),
+				x => SetVectorValue(variable, x));
+		}
+
+		var fallback = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		fallback.AddChild(new Label { Text = variable.VariableType.ToString() });
+		return fallback;
+	}
+
+	private static VBoxContainer CreateVectorEditor(
+		StatescriptVariableType type,
+		Func<int, double> getComponent,
+		Action<double[]> onChanged)
+	{
+		var componentCount = GetVectorComponentCount(type);
+		var labels = GetVectorComponentLabels(type);
+		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		var row = new HBoxContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		row.AddThemeConstantOverride("separation", 0);
+
+		var panelContainer = new PanelContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		Control baseControl = EditorInterface.Singleton.GetBaseControl();
+		var tabBarStyle = baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate() as StyleBox;
+		tabBarStyle!.SetContentMarginAll(0);
+		panelContainer.AddThemeStyleboxOverride("panel", tabBarStyle);
+
+		vBox.AddChild(panelContainer);
+		panelContainer.AddChild(row);
+
+		var values = new double[componentCount];
+
+		for (var i = 0; i < componentCount; i++)
+		{
+			values[i] = getComponent(i);
+
+			EditorSpinSlider spin = CreateVectorComponentSpinSlider(
+				labels[i],
+				GetComponentColor(i),
+				values[i]);
+
+			var capturedI = i;
+
+			spin.ValueChanged += x =>
+			{
+				values[capturedI] = x;
+				onChanged(values);
+			};
+
+			row.AddChild(spin);
+		}
+
+		return vBox;
+	}
+
+	private static double GetVectorComponent(Variant value, StatescriptVariableType type, int index)
+	{
+		return type switch
+		{
+			StatescriptVariableType.Vector2 => index == 0
+				? value.AsVector2().X
+				: value.AsVector2().Y,
+			StatescriptVariableType.Vector3 => index switch
+			{
+				0 => value.AsVector3().X,
+				1 => value.AsVector3().Y,
+				_ => value.AsVector3().Z,
 			},
-			StatescriptVariableType.Vector4 => componentIndex switch
+			StatescriptVariableType.Vector4 => index switch
 			{
-				0 => val.AsVector4().X,
-				1 => val.AsVector4().Y,
-				2 => val.AsVector4().Z,
-				_ => val.AsVector4().W,
+				0 => value.AsVector4().X,
+				1 => value.AsVector4().Y,
+				2 => value.AsVector4().Z,
+				_ => value.AsVector4().W,
 			},
-			StatescriptVariableType.Plane => componentIndex switch
+			StatescriptVariableType.Plane => index switch
 			{
-				0 => val.AsPlane().Normal.X,
-				1 => val.AsPlane().Normal.Y,
-				2 => val.AsPlane().Normal.Z,
-				_ => val.AsPlane().D,
+				0 => value.AsPlane().Normal.X,
+				1 => value.AsPlane().Normal.Y,
+				2 => value.AsPlane().Normal.Z,
+				_ => value.AsPlane().D,
 			},
-			StatescriptVariableType.Quaternion => componentIndex switch
+			StatescriptVariableType.Quaternion => index switch
 			{
-				0 => val.AsQuaternion().X,
-				1 => val.AsQuaternion().Y,
-				2 => val.AsQuaternion().Z,
-				_ => val.AsQuaternion().W,
+				0 => value.AsQuaternion().X,
+				1 => value.AsQuaternion().Y,
+				2 => value.AsQuaternion().Z,
+				_ => value.AsQuaternion().W,
 			},
 			StatescriptVariableType.Bool => throw new NotImplementedException(),
 			StatescriptVariableType.Byte => throw new NotImplementedException(),
@@ -471,33 +490,36 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 		};
 	}
 
-	private static void UpdateArrayVectorValue(
-		StatescriptGraphVariable variable,
-		int arrayIndex,
-		SpinBox[] spins)
+	private static Variant BuildVectorVariant(StatescriptVariableType type, double[] values)
 	{
-		variable.InitialArrayValues[arrayIndex] = variable.VariableType switch
+		return type switch
 		{
 			StatescriptVariableType.Vector2 => Variant.From(
-				new Vector2((float)spins[0].Value, (float)spins[1].Value)),
+				new Vector2((float)values[0], (float)values[1])),
 			StatescriptVariableType.Vector3 => Variant.From(
-				new Vector3((float)spins[0].Value, (float)spins[1].Value, (float)spins[2].Value)),
+				new Vector3(
+					(float)values[0],
+					(float)values[1],
+					(float)values[2])),
 			StatescriptVariableType.Vector4 => Variant.From(
 				new Vector4(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value,
-					(float)spins[3].Value)),
+					(float)values[0],
+					(float)values[1],
+					(float)values[2],
+					(float)values[3])),
 			StatescriptVariableType.Plane => Variant.From(
 				new Plane(
-					new Vector3((float)spins[0].Value, (float)spins[1].Value, (float)spins[2].Value),
-					(float)spins[3].Value)),
+					new Vector3(
+						(float)values[0],
+						(float)values[1],
+						(float)values[2]),
+					(float)values[3])),
 			StatescriptVariableType.Quaternion => Variant.From(
 				new Quaternion(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value,
-					(float)spins[3].Value)),
+					(float)values[0],
+					(float)values[1],
+					(float)values[2],
+					(float)values[3])),
 			StatescriptVariableType.Bool => throw new NotImplementedException(),
 			StatescriptVariableType.Byte => throw new NotImplementedException(),
 			StatescriptVariableType.SByte => throw new NotImplementedException(),
@@ -511,9 +533,24 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 			StatescriptVariableType.ULong => throw new NotImplementedException(),
 			StatescriptVariableType.Short => throw new NotImplementedException(),
 			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			_ => variable.InitialArrayValues[arrayIndex],
+			_ => Variant.From(0),
 		};
+	}
 
+	private static void SetVectorValue(StatescriptGraphVariable variable, double[] values)
+	{
+		variable.InitialValue = BuildVectorVariant(variable.VariableType, values);
+		variable.EmitChanged();
+	}
+
+	private static void SetArrayVectorValue(
+		StatescriptGraphVariable variable,
+		int arrayIndex,
+		double[] values)
+	{
+		variable.InitialArrayValues[arrayIndex] = BuildVectorVariant(
+			variable.VariableType,
+			values);
 		variable.EmitChanged();
 	}
 
@@ -619,18 +656,14 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				vBox.AddChild(elementRow);
 				elementRow.AddChild(new Label { Text = $"[{i}]" });
 
-				var toggle = new CheckBox
-				{
-					ButtonPressed = variable.InitialArrayValues[i].AsBool(),
-				};
+				elementRow.AddChild(CreateBoolEditor(
+					variable.InitialArrayValues[i].AsBool(),
+					x =>
+					{
+						variable.InitialArrayValues[capturedIndex] = Variant.From(x);
+						variable.EmitChanged();
+					}));
 
-				toggle.Toggled += x =>
-				{
-					variable.InitialArrayValues[capturedIndex] = Variant.From(x);
-					variable.EmitChanged();
-				};
-
-				elementRow.AddChild(toggle);
 				AddArrayElementRemoveButton(elementRow, variable, capturedIndex);
 			}
 			else if (IsVectorType(variable.VariableType))
@@ -649,37 +682,49 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				AddArrayElementRemoveButton(labelRow, variable, capturedIndex);
 
 				var componentCount = GetVectorComponentCount(variable.VariableType);
-				string[] labels = componentCount switch
+				var labels = GetVectorComponentLabels(variable.VariableType);
+				var values = new double[componentCount];
+
+				var panelContainer = new PanelContainer
 				{
-					2 => ["X", "Y"],
-					3 => ["X", "Y", "Z"],
-					_ => ["X", "Y", "Z", "W"],
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
 
-				var spins = new SpinBox[componentCount];
+				Control baseControl = EditorInterface.Singleton.GetBaseControl();
+				var tabBarStyle = baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate() as StyleBox;
+				tabBarStyle!.SetContentMarginAll(0);
+				panelContainer.AddThemeStyleboxOverride("panel", tabBarStyle);
 
-				for (var c = 0; c < componentCount; c++)
+				elementVBox.AddChild(panelContainer);
+
+				var row = new HBoxContainer
 				{
-					var compRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-					compRow.AddChild(new Label
-					{
-						Text = $"  {labels[c]}",
-						CustomMinimumSize = new Vector2(30, 0),
-					});
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
+				};
 
-					var spin = new SpinBox
+				row.AddThemeConstantOverride("separation", 0);
+				panelContainer.AddChild(row);
+
+				for (var j = 0; j < componentCount; j++)
+				{
+					values[j] = GetVectorComponent(
+						variable.InitialArrayValues[capturedIndex],
+						variable.VariableType,
+						j);
+
+					EditorSpinSlider spin = CreateVectorComponentSpinSlider(
+						labels[j],
+						GetComponentColor(j),
+						values[j]);
+
+					var capturedJ = j;
+					spin.ValueChanged += x =>
 					{
-						Value = GetArrayVectorComponent(variable, capturedIndex, c),
-						Step = 0.01,
-						Rounded = false,
-						SizeFlagsHorizontal = SizeFlags.ExpandFill,
+						values[capturedJ] = x;
+						SetArrayVectorValue(variable, capturedIndex, values);
 					};
 
-					spins[c] = spin;
-					spin.ValueChanged += _ =>
-						UpdateArrayVectorValue(variable, capturedIndex, spins);
-					compRow.AddChild(spin);
-					elementVBox.AddChild(compRow);
+					row.AddChild(spin);
 				}
 			}
 			else
@@ -688,26 +733,15 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 				vBox.AddChild(elementRow);
 				elementRow.AddChild(new Label { Text = $"[{i}]" });
 
-				var elementSpin = new SpinBox
-				{
-					Value = variable.InitialArrayValues[i].AsDouble(),
-					Step = IsIntegerType(variable.VariableType) ? 1 : 0.01,
-					Rounded = IsIntegerType(variable.VariableType),
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					CustomMinimumSize = new Vector2(60, 0),
-				};
+				EditorSpinSlider elementSpin = CreateNumericSpinSlider(
+					variable.VariableType,
+					variable.InitialArrayValues[i].AsDouble());
 
 				elementSpin.ValueChanged += value =>
 				{
-					if (IsIntegerType(variable.VariableType))
-					{
-						variable.InitialArrayValues[capturedIndex] = Variant.From((int)value);
-					}
-					else
-					{
-						variable.InitialArrayValues[capturedIndex] = Variant.From(value);
-					}
-
+					variable.InitialArrayValues[capturedIndex] = IsIntegerType(variable.VariableType)
+						? Variant.From((long)value)
+						: Variant.From(value);
 					variable.EmitChanged();
 				};
 
@@ -838,6 +872,9 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 
 		_creationDialog?.QueueFree();
 		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
 	}
 
 	private void OnDeletePressed(int index)
@@ -880,10 +917,10 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer
 	{
 		if (_graph is null)
 		{
-			return "Variable";
+			return "variable";
 		}
 
-		const string baseName = "Variable";
+		const string baseName = "variable";
 		var counter = 1;
 		var name = baseName;
 
