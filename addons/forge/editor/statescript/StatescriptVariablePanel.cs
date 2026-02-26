@@ -29,6 +29,9 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	private OptionButton? _newTypeDropdown;
 	private CheckBox? _newArrayToggle;
 
+	private Texture2D? _addIcon;
+	private Texture2D? _removeIcon;
+
 	/// <summary>
 	/// Raised when any variable is added, removed, or its value changes.
 	/// </summary>
@@ -38,8 +41,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	{
 		base._Ready();
 
+		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
+		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
+
 		SizeFlagsVertical = SizeFlags.ExpandFill;
-		CustomMinimumSize = new Vector2(260, 0);
+		CustomMinimumSize = new Vector2(360, 0);
 
 		var headerHBox = new HBoxContainer();
 		AddChild(headerHBox);
@@ -54,7 +60,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		_addButton = new Button
 		{
-			Text = "+",
+			Icon = _addIcon,
+			Flat = true,
 			TooltipText = "Add Variable",
 			CustomMinimumSize = new Vector2(28, 28),
 		};
@@ -102,7 +109,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	public void OnAfterDeserialize()
 	{
-		// Nothing to restore — dialog fields are transient.
+		// Nothing to restore, dialog fields are transient.
 	}
 
 	/// <summary>
@@ -338,7 +345,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		if (variable.VariableType == StatescriptVariableType.Bool)
 		{
 			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			hBox.AddChild(new Label { Text = "Value:" });
 
 			hBox.AddChild(CreateBoolEditor(
 				variable.InitialValue.AsBool(),
@@ -354,7 +360,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		if (IsIntegerType(variable.VariableType) || IsFloatType(variable.VariableType))
 		{
 			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			hBox.AddChild(new Label { Text = "Value:" });
 
 			EditorSpinSlider spin = CreateNumericSpinSlider(
 				variable.VariableType,
@@ -581,6 +586,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
+		nameLabel.AddThemeColorOverride("font_color", new(0xe5c07bff));
+		nameLabel.AddThemeFontOverride(
+			"font",
+			EditorInterface.Singleton.GetEditorTheme().GetFont("bold", "EditorFonts"));
+
 		headerRow.AddChild(nameLabel);
 
 		var typeLabel = new Label
@@ -596,7 +606,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		var deleteButton = new Button
 		{
-			Text = "✕",
+			Icon = _removeIcon,
+			Flat = true,
 			TooltipText = "Remove Variable",
 			CustomMinimumSize = new Vector2(28, 28),
 		};
@@ -628,11 +639,17 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		var headerRow = new HBoxContainer();
 		vBox.AddChild(headerRow);
 
-		headerRow.AddChild(new Label { Text = $"Array ({variable.InitialArrayValues.Count} elements)" });
+		headerRow.AddChild(new Button
+		{
+			Text = $"Array (size {variable.InitialArrayValues.Count})",
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			ToggleMode = true,
+		});
 
 		var addElementButton = new Button
 		{
-			Text = "+",
+			Icon = _addIcon,
+			Flat = true,
 			TooltipText = "Add Element",
 			CustomMinimumSize = new Vector2(24, 24),
 		};
@@ -760,7 +777,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	{
 		var removeElementButton = new Button
 		{
-			Text = "✕",
+			Icon = _removeIcon,
+			Flat = true,
 			CustomMinimumSize = new Vector2(24, 24),
 		};
 
