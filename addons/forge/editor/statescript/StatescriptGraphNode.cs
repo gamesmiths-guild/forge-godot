@@ -1,7 +1,10 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
+using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -13,14 +16,28 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 public partial class StatescriptGraphNode : GraphNode
 {
-	// Node type colors.
-	private static readonly Color _entryExitColor = new(0x2a4a8dff);
+	private const string FoldInputKey = "_fold_input";
+	private const string FoldOutputKey = "_fold_output";
+
+	private static readonly Color _entryColor = new(0x2a4a8dff);
+	private static readonly Color _exitColor = new(0x8a549aff);
 	private static readonly Color _actionColor = new(0x3a7856ff);
 	private static readonly Color _conditionColor = new(0x99811fff);
 	private static readonly Color _stateColor = new(0xa52c38ff);
-
 	private static readonly Color _eventColor = new(0xabb2bfff);
 	private static readonly Color _subgraphColor = new(0xc678ddff);
+	private static readonly Color _inputPropertyColor = new(0x61afefff);
+	private static readonly Color _outputVariableColor = new(0xe5c07bff);
+
+	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
+
+	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
+	private StatescriptGraph? _graph;
+
+	/// <summary>
+	/// Raised when a property binding has been modified in the UI.
+	/// </summary>
+	public event Action? PropertyBindingChanged;
 
 	/// <summary>
 	/// Gets the underlying node resource.
@@ -28,44 +45,69 @@ public partial class StatescriptGraphNode : GraphNode
 	public StatescriptNode? NodeResource { get; private set; }
 
 	/// <summary>
-	/// Initializes this graph node from a <see cref="StatescriptNode"/>.
+	/// Initializes this visual node from a resource, optionally within the context of a graph.
 	/// </summary>
-	/// <param name="resource">The node resource to visualize.</param>
-	public void Initialize(StatescriptNode resource)
+	/// <param name="resource">The node resource to display.</param>
+	/// <param name="graph">The owning graph resource (needed for variable dropdowns).</param>
+	public void Initialize(StatescriptNode resource, StatescriptGraph? graph = null)
 	{
 		NodeResource = resource;
+		_graph = graph;
+		_activeResolverEditors.Clear();
+
 		Name = resource.NodeId;
 		Title = resource.Title;
 		PositionOffset = resource.PositionOffset;
+		CustomMinimumSize = new Vector2(240, 0);
 
 		ClearSlots();
 
-		// For Entry/Exit nodes or nodes without a runtime type, use the fixed layout.
 		if (resource.NodeType is StatescriptNodeType.Entry or StatescriptNodeType.Exit
 			|| string.IsNullOrEmpty(resource.RuntimeTypeName))
 		{
 			SetupNodeByType(resource.NodeType);
+			ApplyBottomPadding();
 			return;
 		}
 
-		// For concrete types, use reflection-based port discovery.
-		StatescriptNodeDiscovery.NodeTypeInfo? typeInfo =
-			StatescriptNodeDiscovery.FindByRuntimeTypeName(resource.RuntimeTypeName);
-
-		if (typeInfo is not null)
+		_typeInfo = StatescriptNodeDiscovery.FindByRuntimeTypeName(resource.RuntimeTypeName);
+		if (_typeInfo is not null)
 		{
-			SetupFromTypeInfo(typeInfo);
+			SetupFromTypeInfo(_typeInfo);
 		}
 		else
 		{
-			// Fallback to default layout if the type can't be resolved.
 			SetupNodeByType(resource.NodeType);
+		}
+
+		ApplyBottomPadding();
+	}
+
+	private static string GetResolverTypeId(StatescriptResolverResource resolver)
+	{
+		return resolver switch
+		{
+			VariableResolverResource => "Variable",
+			VariantResolverResource => "Variant",
+			AttributeResolverResource => "Attribute",
+			TagResolverResource => "Tag",
+			ComparisonResolverResource => "Comparison",
+			_ => string.Empty,
+		};
+	}
+
+	private static void ClearContainer(Control container)
+	{
+		foreach (Node child in container.GetChildren())
+		{
+			container.RemoveChild(child);
+			child.QueueFree();
 		}
 	}
 
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		var maxSlots = System.Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
+		var maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
 
 		for (var slot = 0; slot < maxSlots; slot++)
 		{
@@ -73,22 +115,23 @@ public partial class StatescriptGraphNode : GraphNode
 			hBox.AddThemeConstantOverride("separation", 16);
 			AddChild(hBox);
 
-			// Left side: input port label.
 			if (slot < typeInfo.InputPortLabels.Length)
 			{
-				var inputLabel = new Label { Text = typeInfo.InputPortLabels[slot] };
+				var inputLabel = new Label
+				{
+					Text = typeInfo.InputPortLabels[slot],
+				};
+
 				hBox.AddChild(inputLabel);
 				SetSlotEnabledLeft(slot, true);
 				SetSlotColorLeft(slot, _eventColor);
 			}
 			else
 			{
-				// Spacer to keep alignment.
 				var spacer = new Control();
 				hBox.AddChild(spacer);
 			}
 
-			// Right side: output port label.
 			if (slot < typeInfo.OutputPortLabels.Length)
 			{
 				var outputLabel = new Label
@@ -97,26 +140,411 @@ public partial class StatescriptGraphNode : GraphNode
 					HorizontalAlignment = HorizontalAlignment.Right,
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
+
 				hBox.AddChild(outputLabel);
 				SetSlotEnabledRight(slot, true);
-
 				Color portColor = typeInfo.IsSubgraphPort[slot] ? _subgraphColor : _eventColor;
 				SetSlotColorRight(slot, portColor);
 			}
 		}
 
-		// Apply title bar color based on category.
+		if (typeInfo.InputPropertiesInfo.Length > 0)
+		{
+			var folded = GetFoldState(FoldInputKey);
+			FoldableContainer inputContainer = AddPropertySectionDivider(
+				"Input Properties",
+				_inputPropertyColor,
+				FoldInputKey,
+				folded);
+
+			for (var i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+			{
+				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
+			}
+		}
+
+		if (typeInfo.OutputVariablesInfo.Length > 0)
+		{
+			var folded = GetFoldState(FoldOutputKey);
+			FoldableContainer outputContainer = AddPropertySectionDivider(
+				"Output Variables",
+				_outputVariableColor,
+				FoldOutputKey,
+				folded);
+
+			for (var i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
+			{
+				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
+			}
+		}
+
 		Color titleColor = typeInfo.NodeType switch
 		{
 			StatescriptNodeType.Action => _actionColor,
 			StatescriptNodeType.Condition => _conditionColor,
 			StatescriptNodeType.State => _stateColor,
-			StatescriptNodeType.Entry => throw new System.NotImplementedException(),
-			StatescriptNodeType.Exit => throw new System.NotImplementedException(),
-			_ => _entryExitColor,
+			StatescriptNodeType.Entry => _entryColor,
+			StatescriptNodeType.Exit => _exitColor,
+			_ => _entryColor,
 		};
 
 		ApplyTitleBarColor(titleColor);
+	}
+
+	private FoldableContainer AddPropertySectionDivider(
+		string sectionTitle,
+		Color color,
+		string foldKey,
+		bool folded)
+	{
+		var divider = new HSeparator { CustomMinimumSize = new Vector2(0, 4) };
+		AddChild(divider);
+
+		var sectionContainer = new FoldableContainer
+		{
+			Title = sectionTitle,
+			Folded = folded,
+		};
+
+		sectionContainer.AddThemeColorOverride("font_color", color);
+		sectionContainer.FoldingChanged += isFolded =>
+		{
+			SetFoldState(foldKey, isFolded);
+			ResetSize();
+		};
+
+		AddChild(sectionContainer);
+
+		return sectionContainer;
+	}
+
+	private bool GetFoldState(string key)
+	{
+		if (NodeResource is not null && NodeResource.CustomData.TryGetValue(key, out Variant value))
+		{
+			return value.AsBool();
+		}
+
+		return false;
+	}
+
+	private void SetFoldState(string key, bool folded)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		NodeResource.CustomData[key] = Variant.From(folded);
+	}
+
+	private void AddInputPropertyRow(
+		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
+		int index,
+		FoldableContainer sectionContainer)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		sectionContainer.AddChild(container);
+
+		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		container.AddChild(headerRow);
+
+		var nameLabel = new Label
+		{
+			Text = propInfo.Label,
+			CustomMinimumSize = new Vector2(60, 0),
+		};
+
+		nameLabel.AddThemeColorOverride("font_color", _inputPropertyColor);
+		headerRow.AddChild(nameLabel);
+
+		List<Func<NodeEditorProperty>> resolverFactories =
+			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
+
+		if (resolverFactories.Count == 0)
+		{
+			var errorLabel = new Label
+			{
+				Text = "No compatible resolvers.",
+			};
+
+			errorLabel.AddThemeColorOverride("font_color", Colors.Red);
+			headerRow.AddChild(errorLabel);
+			return;
+		}
+
+		var resolverDropdown = new OptionButton
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			CustomMinimumSize = new Vector2(80, 0),
+		};
+
+		foreach (Func<NodeEditorProperty> factory in resolverFactories)
+		{
+			using NodeEditorProperty temp = factory();
+			resolverDropdown.AddItem(temp.DisplayName);
+		}
+
+		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Input, index);
+		var selectedIndex = 0;
+
+		if (binding?.Resolver is not null)
+		{
+			for (var i = 0; i < resolverFactories.Count; i++)
+			{
+				using NodeEditorProperty temp = resolverFactories[i]();
+
+				if (temp.ResolverTypeId == GetResolverTypeId(binding.Resolver))
+				{
+					selectedIndex = i;
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (var i = 0; i < resolverFactories.Count; i++)
+			{
+				using NodeEditorProperty temp = resolverFactories[i]();
+
+				if (temp.ResolverTypeId == "Variant")
+				{
+					selectedIndex = i;
+					break;
+				}
+			}
+		}
+
+		resolverDropdown.Selected = selectedIndex;
+		headerRow.AddChild(resolverDropdown);
+
+		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		container.AddChild(editorContainer);
+
+		ShowResolverEditorUI(
+			resolverFactories[selectedIndex],
+			binding,
+			propInfo.ExpectedType,
+			editorContainer,
+			StatescriptPropertyDirection.Input,
+			index);
+
+		resolverDropdown.ItemSelected += x =>
+		{
+			var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
+
+			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? old))
+			{
+				_activeResolverEditors.Remove(key);
+			}
+
+			ClearContainer(editorContainer);
+
+			if (NodeResource is null)
+			{
+				return;
+			}
+
+			ShowResolverEditorUI(
+				resolverFactories[(int)x],
+				null,
+				propInfo.ExpectedType,
+				editorContainer,
+				StatescriptPropertyDirection.Input,
+				index);
+
+			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
+			{
+				SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+			}
+
+			PropertyBindingChanged?.Invoke();
+			ResetSize();
+		};
+	}
+
+	private void AddOutputVariableRow(
+		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
+		int index,
+		FoldableContainer sectionContainer)
+	{
+		if (NodeResource is null || _graph is null)
+		{
+			return;
+		}
+
+		var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		sectionContainer.AddChild(hBox);
+
+		var nameLabel = new Label
+		{
+			Text = varInfo.Label,
+			CustomMinimumSize = new Vector2(60, 0),
+		};
+
+		nameLabel.AddThemeColorOverride("font_color", _outputVariableColor);
+		hBox.AddChild(nameLabel);
+
+		var variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		foreach (StatescriptGraphVariable v in _graph.Variables)
+		{
+			variableDropdown.AddItem(v.VariableName);
+		}
+
+		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Output, index);
+		var selectedIndex = 0;
+
+		if (binding?.Resolver is VariableResolverResource varRes
+			&& !string.IsNullOrEmpty(varRes.VariableName))
+		{
+			for (var i = 0; i < _graph.Variables.Count; i++)
+			{
+				if (_graph.Variables[i].VariableName == varRes.VariableName)
+				{
+					selectedIndex = i;
+					break;
+				}
+			}
+		}
+
+		if (_graph.Variables.Count > 0)
+		{
+			variableDropdown.Selected = selectedIndex;
+
+			if (binding is null)
+			{
+				var variableName = _graph.Variables[selectedIndex].VariableName;
+				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
+					new VariableResolverResource { VariableName = variableName };
+			}
+		}
+
+		variableDropdown.ItemSelected += x =>
+		{
+			if (NodeResource is null || _graph is null)
+			{
+				return;
+			}
+
+			var variableName = _graph.Variables[(int)x].VariableName;
+			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
+				new VariableResolverResource { VariableName = variableName };
+
+			PropertyBindingChanged?.Invoke();
+		};
+
+		hBox.AddChild(variableDropdown);
+	}
+
+	private void ShowResolverEditorUI(
+		Func<NodeEditorProperty> factory,
+		StatescriptNodeProperty? existingBinding,
+		Type expectedType,
+		VBoxContainer container,
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		if (_graph is null)
+		{
+			return;
+		}
+
+		NodeEditorProperty resolverEditor = factory();
+
+		resolverEditor.Setup(
+			_graph,
+			existingBinding,
+			expectedType,
+			() =>
+			{
+				SaveResolverEditor(resolverEditor, direction, propertyIndex);
+				PropertyBindingChanged?.Invoke();
+			});
+
+		resolverEditor.LayoutSizeChanged += ResetSize;
+
+		container.AddChild(resolverEditor);
+
+		var key = new PropertySlotKey(direction, propertyIndex);
+		_activeResolverEditors[key] = resolverEditor;
+	}
+
+	private void SaveResolverEditor(
+		NodeEditorProperty resolverEditor,
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
+		resolverEditor.SaveTo(binding);
+	}
+
+	private StatescriptNodeProperty? FindBinding(
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		if (NodeResource is null)
+		{
+			return null;
+		}
+
+		foreach (StatescriptNodeProperty binding in NodeResource.PropertyBindings)
+		{
+			if (binding.Direction == direction && binding.PropertyIndex == propertyIndex)
+			{
+				return binding;
+			}
+		}
+
+		return null;
+	}
+
+	private StatescriptNodeProperty EnsureBinding(
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		StatescriptNodeProperty? binding = FindBinding(direction, propertyIndex);
+
+		if (binding is null)
+		{
+			binding = new StatescriptNodeProperty
+			{
+				Direction = direction,
+				PropertyIndex = propertyIndex,
+			};
+
+			NodeResource!.PropertyBindings.Add(binding);
+		}
+
+		return binding;
+	}
+
+	private void RemoveBinding(StatescriptPropertyDirection direction, int propertyIndex)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		for (var i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
+		{
+			StatescriptNodeProperty binding = NodeResource.PropertyBindings[i];
+
+			if (binding.Direction == direction && binding.PropertyIndex == propertyIndex)
+			{
+				NodeResource.PropertyBindings.RemoveAt(i);
+			}
+		}
 	}
 
 	private void SetupNodeByType(StatescriptNodeType nodeType)
@@ -143,22 +571,26 @@ public partial class StatescriptGraphNode : GraphNode
 
 	private void SetupEntryNode()
 	{
+		CustomMinimumSize = new Vector2(100, 0);
+
 		var label = new Label { Text = "Start" };
 		AddChild(label);
 		SetSlotEnabledRight(0, true);
 		SetSlotColorRight(0, _eventColor);
 
-		ApplyTitleBarColor(_entryExitColor);
+		ApplyTitleBarColor(_entryColor);
 	}
 
 	private void SetupExitNode()
 	{
+		CustomMinimumSize = new Vector2(100, 0);
+
 		var label = new Label { Text = "End" };
 		AddChild(label);
 		SetSlotEnabledLeft(0, true);
 		SetSlotColorLeft(0, _eventColor);
 
-		ApplyTitleBarColor(_entryExitColor);
+		ApplyTitleBarColor(_exitColor);
 	}
 
 	private void SetupActionNode()
@@ -179,34 +611,32 @@ public partial class StatescriptGraphNode : GraphNode
 		hBox.AddThemeConstantOverride("separation", 16);
 		AddChild(hBox);
 
-		// Input port.
 		var inputLabel = new Label { Text = "Condition" };
 		hBox.AddChild(inputLabel);
 		SetSlotEnabledLeft(0, true);
 		SetSlotColorLeft(0, _eventColor);
 
-		// True output port.
 		var trueLabel = new Label
 		{
 			Text = "True",
 			HorizontalAlignment = HorizontalAlignment.Right,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
+
 		hBox.AddChild(trueLabel);
 		SetSlotEnabledRight(0, true);
 		SetSlotColorRight(0, _eventColor);
 
-		// False output port.
 		var falseLabel = new Label
 		{
 			Text = "False",
 			HorizontalAlignment = HorizontalAlignment.Right,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
+
 		AddChild(falseLabel);
 		SetSlotEnabledRight(1, true);
 		SetSlotColorRight(1, _eventColor);
-
 		ApplyTitleBarColor(_conditionColor);
 	}
 
@@ -216,62 +646,60 @@ public partial class StatescriptGraphNode : GraphNode
 		hBox1.AddThemeConstantOverride("separation", 16);
 		AddChild(hBox1);
 
-		// Input port.
 		var inputLabel = new Label { Text = "Begin" };
 		hBox1.AddChild(inputLabel);
 		SetSlotEnabledLeft(0, true);
 		SetSlotColorLeft(0, _eventColor);
 
-		var hBox2 = new HBoxContainer();
-		AddChild(hBox2);
-
-		// Abort port.
-		var abortLabel = new Label { Text = "Abort" };
-		hBox2.AddThemeConstantOverride("separation", 16);
-		hBox2.AddChild(abortLabel);
-		SetSlotEnabledLeft(1, true);
-		SetSlotColorLeft(1, _eventColor);
-
-		// OnActivate output port.
 		var activateLabel = new Label
 		{
 			Text = "OnActivate",
 			HorizontalAlignment = HorizontalAlignment.Right,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
+
 		hBox1.AddChild(activateLabel);
 		SetSlotEnabledRight(0, true);
 		SetSlotColorRight(0, _eventColor);
 
-		// OnDeactivate output port.
+		var hBox2 = new HBoxContainer();
+		hBox2.AddThemeConstantOverride("separation", 16);
+		AddChild(hBox2);
+
+		var abortLabel = new Label { Text = "Abort" };
+		hBox2.AddChild(abortLabel);
+		SetSlotEnabledLeft(1, true);
+		SetSlotColorLeft(1, _eventColor);
+
 		var deactivateLabel = new Label
 		{
 			Text = "OnDeactivate",
 			HorizontalAlignment = HorizontalAlignment.Right,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
+
 		hBox2.AddChild(deactivateLabel);
 		SetSlotEnabledRight(1, true);
 		SetSlotColorRight(1, _eventColor);
 
-		// OnAbort output port.
 		var abortOutputLabel = new Label
 		{
 			Text = "OnAbort",
 			HorizontalAlignment = HorizontalAlignment.Right,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
+
 		AddChild(abortOutputLabel);
 		SetSlotEnabledRight(2, true);
 		SetSlotColorRight(2, _eventColor);
 
-		// Subgraph output port.
 		var subgraphLabel = new Label
 		{
 			Text = "Subgraph",
 			HorizontalAlignment = HorizontalAlignment.Right,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
+
 		AddChild(subgraphLabel);
 		SetSlotEnabledRight(3, true);
 		SetSlotColorRight(3, _subgraphColor);
@@ -306,5 +734,33 @@ public partial class StatescriptGraphNode : GraphNode
 		selectedTitleBarStyleBox.BgColor = color.Lightened(0.2f);
 		AddThemeStyleboxOverride("titlebar_selected", selectedTitleBarStyleBox);
 	}
+
+	private void ApplyBottomPadding()
+	{
+		StyleBox? existing = GetThemeStylebox("panel");
+
+		if (existing is not null)
+		{
+			var panelStyle = (StyleBox)existing.Duplicate();
+			panelStyle.ContentMarginBottom = 8;
+			AddThemeStyleboxOverride("panel", panelStyle);
+		}
+
+		StyleBox? selectedExisting = GetThemeStylebox("panel_selected");
+
+		if (selectedExisting is not null)
+		{
+			var selectedPanelStyle = (StyleBox)selectedExisting.Duplicate();
+			selectedPanelStyle.ContentMarginBottom = 8;
+			AddThemeStyleboxOverride("panel_selected", selectedPanelStyle);
+		}
+	}
 }
+
+/// <summary>
+/// Identifies a property binding slot by direction and index.
+/// </summary>
+/// <param name="Direction">The direction of the property (input or output).</param>
+/// <param name="PropertyIndex">The index of the property within its direction.</param>
+internal readonly record struct PropertySlotKey(StatescriptPropertyDirection Direction, int PropertyIndex);
 #endif

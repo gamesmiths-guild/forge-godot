@@ -82,4 +82,10 @@ public partial class StatescriptNode : Resource
 	/// </remarks>
 	[Export]
 	public Dictionary<string, Variant> CustomData { get; set; } = [];
+
+	/// <summary>
+	/// Gets or sets the property bindings for this node's input properties and output variables.
+	/// </summary>
+	[Export]
+	public Array<StatescriptNodeProperty> PropertyBindings { get; set; } = [];
 }

@@ -32,6 +32,12 @@ public partial class StatescriptGraph : Resource
 	public Array<StatescriptConnection> Connections { get; set; } = [];
 
 	/// <summary>
+	/// Gets or sets the graph variable definitions.
+	/// </summary>
+	[Export]
+	public Array<StatescriptGraphVariable> Variables { get; set; } = [];
+
+	/// <summary>
 	/// Gets or sets the scroll offset of the graph editor when this graph was last saved.
 	/// </summary>
 	[Export]

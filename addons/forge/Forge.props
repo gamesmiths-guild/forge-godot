@@ -3,6 +3,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Gamesmiths.Forge" Version="0.2.0" />
+    <Reference Include="Gamesmiths.Forge">
+      <HintPath>./addons/forge/Gamesmiths.Forge.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

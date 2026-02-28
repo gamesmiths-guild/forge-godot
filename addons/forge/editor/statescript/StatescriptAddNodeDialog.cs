@@ -55,7 +55,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 	{
 		base._Ready();
 
-		// Make the dialog a transient child of the editor window so it stays on top.
 		Transient = true;
 		TransientToFocused = true;
 
@@ -77,10 +76,8 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 	{
 		SpawnPosition = spawnPosition;
 
-		// Clear transient state without rebuilding the tree.
 		if (_isFiltering)
 		{
-			// Search was active last time, rebuild to restore the full unfiltered tree.
 			_searchBar?.Clear();
 			PopulateTree();
 		}
@@ -121,7 +118,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 		AddChild(vBox);
 
-		// Top row: search bar + expand/collapse menu button.
 		var searchHBox = new HBoxContainer();
 		vBox.AddChild(searchHBox);
 
@@ -149,7 +145,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 		expandMenu.IdPressed += OnExpandCollapseMenuPressed;
 		searchHBox.AddChild(_expandCollapseButton);
 
-		// Tree view for node categories and items.
 		_tree = new Tree
 		{
 			SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -162,7 +157,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 		_tree.ItemActivated += OnTreeItemActivated;
 		vBox.AddChild(_tree);
 
-		// Description area.
 		_descriptionHeader = new Label
 		{
 			Text = "Description:",
@@ -232,7 +226,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			item.SetMetadata(0, typeInfo.RuntimeTypeName);
 		}
 
-		// Add Exit node at the end.
 		if (!_isFiltering || "exit".Contains(filterLower, StringComparison.OrdinalIgnoreCase)
 			|| "exit node".Contains(filterLower, StringComparison.OrdinalIgnoreCase))
 		{
@@ -241,7 +234,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			exitItem.SetMetadata(0, "__exit__");
 		}
 
-		// Filters expand everything; default tree starts collapsed.
 		SetAllCollapsed(root, !_isFiltering);
 
 		UpdateDescription(null);

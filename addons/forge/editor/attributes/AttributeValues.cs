@@ -5,7 +5,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
-public partial class AttributeValues : Resource
+public partial class AttributeValues : RefCounted
 {
 	[Export]
 	public int Default { get; set; }

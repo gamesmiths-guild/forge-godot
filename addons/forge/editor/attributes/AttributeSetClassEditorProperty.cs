@@ -32,26 +32,40 @@ public partial class AttributeSetClassEditorProperty : EditorProperty
 			var className = _optionButton.GetItemText((int)x);
 			EmitChanged(GetEditedProperty(), className);
 
-			GodotObject obj = GetEditedObject();
-			if (obj is not null)
+			GodotObject @object = GetEditedObject();
+			if (@object is not null)
 			{
-				var dict = new Dictionary<string, AttributeValues>();
+				var dictionary = new Dictionary<string, AttributeValues>();
 
 				var assembly = Assembly.GetAssembly(typeof(ForgeAttributeSet));
 				Type? targetType = System.Array.Find(assembly?.GetTypes() ?? [], x => x.Name == className);
 				if (targetType is not null)
 				{
-					System.Collections.Generic.IEnumerable<PropertyInfo> attrProps = targetType
+					System.Collections.Generic.IEnumerable<PropertyInfo> attributeProperties = targetType
 						.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 						.Where(x => x.PropertyType == typeof(EntityAttribute));
 
-					foreach (PropertyInfo? pi in attrProps)
+					foreach (var propertyName in attributeProperties.Select(x => x.Name))
 					{
-						dict[pi.Name] = new AttributeValues(0, 0, int.MaxValue);
+						if (@object is not ForgeAttributeSet forgeAttributeSet)
+						{
+							dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);
+							continue;
+						}
+
+						AttributeSet? attributeSet = forgeAttributeSet.GetAttributeSet();
+						if (attributeSet is null)
+						{
+							dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);
+							continue;
+						}
+
+						EntityAttribute key = attributeSet.AttributesMap[className + "." + propertyName];
+						dictionary[propertyName] = new AttributeValues(key.CurrentValue, key.Min, key.Max);
 					}
 				}
 
-				EmitChanged("InitialAttributeValues", dict);
+				EmitChanged("InitialAttributeValues", dictionary);
 			}
 		};
 	}

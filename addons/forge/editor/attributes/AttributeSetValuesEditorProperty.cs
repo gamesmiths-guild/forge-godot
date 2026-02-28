@@ -143,8 +143,9 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty
 		{
 			MinValue = min,
 			MaxValue = max,
-			Value = value,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			SelectAllOnFocus = true,
+			Value = value,
 		};
 	}
 
