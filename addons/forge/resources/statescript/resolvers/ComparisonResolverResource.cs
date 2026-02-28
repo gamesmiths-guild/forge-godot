@@ -1,3 +1,5 @@
+// Copyright © Gamesmiths Guild.
+
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;

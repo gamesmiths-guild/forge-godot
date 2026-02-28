@@ -241,16 +241,16 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			StatescriptVariableType.ULong => throw new NotImplementedException(),
 			StatescriptVariableType.Short => throw new NotImplementedException(),
 			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			StatescriptVariableType.Vector4 => throw new NotImplementedException(),
-			StatescriptVariableType.Plane => throw new NotImplementedException(),
-			StatescriptVariableType.Quaternion => throw new NotImplementedException(),
-			_ => index switch
-			{
-				0 => _currentValue.AsVector4().X,
-				1 => _currentValue.AsVector4().Y,
-				2 => _currentValue.AsVector4().Z,
-				_ => _currentValue.AsVector4().W,
-			},
+			StatescriptVariableType.Vector4
+				or StatescriptVariableType.Plane
+				or StatescriptVariableType.Quaternion => index switch
+				{
+					0 => _currentValue.AsVector4().X,
+					1 => _currentValue.AsVector4().Y,
+					2 => _currentValue.AsVector4().Z,
+					_ => _currentValue.AsVector4().W,
+				},
+			_ => throw new NotImplementedException(),
 		};
 	}
 

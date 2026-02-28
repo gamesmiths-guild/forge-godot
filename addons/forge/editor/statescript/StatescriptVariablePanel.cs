@@ -603,7 +603,14 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			return;
 		}
 
-		var varType = (StatescriptVariableType)_newTypeDropdown.Selected;
+		var selectedIndex = _newTypeDropdown.Selected;
+		if (selectedIndex < 0)
+		{
+			return;
+		}
+
+		var selectedId = _newTypeDropdown.GetItemId(selectedIndex);
+		var varType = (StatescriptVariableType)selectedId;
 
 		var newVariable = new StatescriptGraphVariable
 		{

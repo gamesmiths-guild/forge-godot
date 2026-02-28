@@ -35,7 +35,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private Button? _onlineDocsButton;
 
 	private AcceptDialog? _newStatescriptDialog;
-	private LineEdit? _newStatescriptNameEdit;
 	private LineEdit? _newStatescriptPathEdit;
 
 	private EditorUndoRedoManager? _undoRedo;
@@ -180,7 +179,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	/// <summary>
 	/// Returns the currently active tab index.
 	/// </summary>
-	/// <returns>>The active tab index, or 1 if no tabs are open.</returns>
+	/// <returns>The active tab index, or -1 if no tabs are open.</returns>
 	public int GetActiveTabIndex()
 	{
 		return _tabBar?.CurrentTab ?? -1;
@@ -248,26 +247,30 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			_tabBar.RemoveTab(0);
 		}
 
+		var skippedTabs = 0;
 		for (var i = 0; i < paths.Length; i++)
 		{
 			var path = paths[i];
 			if (!ResourceLoader.Exists(path))
 			{
+				skippedTabs++;
 				continue;
 			}
 
 			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
 			if (graph is null)
 			{
+				skippedTabs++;
 				continue;
 			}
 
 			graph.EnsureEntryNode();
 			var tab = new GraphTab(graph);
 
-			if (variablesStates is not null && i < variablesStates.Length)
+			var currentTab = i - skippedTabs;
+			if (variablesStates is not null && currentTab < variablesStates.Length)
 			{
-				tab.VariablesPanelOpen = variablesStates[i];
+				tab.VariablesPanelOpen = variablesStates[currentTab];
 			}
 
 			_openTabs.Add(tab);

@@ -1,3 +1,4 @@
+// Copyright © Gamesmiths Guild.
 
 using Godot;
 

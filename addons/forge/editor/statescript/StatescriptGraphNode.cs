@@ -266,6 +266,18 @@ public partial class StatescriptGraphNode : GraphNode
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
 
+		if (resolverFactories.Count == 0)
+		{
+			var errorLabel = new Label
+			{
+				Text = "No compatible resolvers.",
+			};
+
+			errorLabel.AddThemeColorOverride("font_color", Colors.Red);
+			headerRow.AddChild(errorLabel);
+			return;
+		}
+
 		var resolverDropdown = new OptionButton
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
