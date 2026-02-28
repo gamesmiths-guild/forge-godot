@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -83,6 +84,73 @@ public partial class StatescriptGraphNode : GraphNode
 		ApplyBottomPadding();
 	}
 
+	internal FoldableContainer AddPropertySectionDividerInternal(
+		string sectionTitle,
+		Color color,
+		string foldKey,
+		bool folded)
+	{
+		return AddPropertySectionDivider(sectionTitle, color, foldKey, folded);
+	}
+
+	internal void AddInputPropertyRowInternal(
+		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
+		int index,
+		Control container)
+	{
+		AddInputPropertyRow(propInfo, index, container);
+	}
+
+	internal void AddOutputVariableRowInternal(
+		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
+		int index,
+		FoldableContainer container)
+	{
+		AddOutputVariableRow(varInfo, index, container);
+	}
+
+	internal bool GetFoldStateInternal(string key)
+	{
+		return GetFoldState(key);
+	}
+
+	internal StatescriptNodeProperty? FindBindingInternal(
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		return FindBinding(direction, propertyIndex);
+	}
+
+	internal StatescriptNodeProperty EnsureBindingInternal(
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		return EnsureBinding(direction, propertyIndex);
+	}
+
+	internal void RemoveBindingInternal(
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		RemoveBinding(direction, propertyIndex);
+	}
+
+	internal void ShowResolverEditorUIInternal(
+		Func<NodeEditorProperty> factory,
+		StatescriptNodeProperty? existingBinding,
+		Type expectedType,
+		VBoxContainer container,
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		ShowResolverEditorUI(factory, existingBinding, expectedType, container, direction, propertyIndex);
+	}
+
+	internal void RaisePropertyBindingChangedInternal()
+	{
+		PropertyBindingChanged?.Invoke();
+	}
+
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
 	{
 		return resolver switch
@@ -148,6 +216,34 @@ public partial class StatescriptGraphNode : GraphNode
 			}
 		}
 
+		if (CustomNodeEditorRegistry.TryGet(typeInfo.RuntimeTypeName, out CustomNodeEditor? customEditor))
+		{
+			Debug.Assert(_graph is not null, "Graph context is required for custom node editors.");
+			Debug.Assert(NodeResource is not null, "Node resource is required for custom node editors.");
+
+			customEditor.Bind(this, _graph, NodeResource, _activeResolverEditors);
+			customEditor.BuildPropertySections(typeInfo);
+		}
+		else
+		{
+			BuildDefaultPropertySections(typeInfo);
+		}
+
+		Color titleColor = typeInfo.NodeType switch
+		{
+			StatescriptNodeType.Action => _actionColor,
+			StatescriptNodeType.Condition => _conditionColor,
+			StatescriptNodeType.State => _stateColor,
+			StatescriptNodeType.Entry => _entryColor,
+			StatescriptNodeType.Exit => _exitColor,
+			_ => _entryColor,
+		};
+
+		ApplyTitleBarColor(titleColor);
+	}
+
+	private void BuildDefaultPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
 		if (typeInfo.InputPropertiesInfo.Length > 0)
 		{
 			var folded = GetFoldState(FoldInputKey);
@@ -177,18 +273,6 @@ public partial class StatescriptGraphNode : GraphNode
 				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
 			}
 		}
-
-		Color titleColor = typeInfo.NodeType switch
-		{
-			StatescriptNodeType.Action => _actionColor,
-			StatescriptNodeType.Condition => _conditionColor,
-			StatescriptNodeType.State => _stateColor,
-			StatescriptNodeType.Entry => _entryColor,
-			StatescriptNodeType.Exit => _exitColor,
-			_ => _entryColor,
-		};
-
-		ApplyTitleBarColor(titleColor);
 	}
 
 	private FoldableContainer AddPropertySectionDivider(
@@ -241,7 +325,7 @@ public partial class StatescriptGraphNode : GraphNode
 	private void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		FoldableContainer sectionContainer)
+		Control sectionContainer)
 	{
 		if (NodeResource is null)
 		{
