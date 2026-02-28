@@ -32,7 +32,6 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		// Attributes produce numeric values, compatible with numeric types and Variant128.
 		return expectedType == typeof(Variant128)
 			|| expectedType == typeof(int)
 			|| expectedType == typeof(float)
