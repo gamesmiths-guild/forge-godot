@@ -143,6 +143,11 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 	}
 
+	public override void _SaveExternalData()
+	{
+		_statescriptGraphEditorDock?.SaveAllOpenGraphs();
+	}
+
 	public override string _GetPluginName()
 	{
 		return "Forge";

@@ -197,6 +197,37 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	}
 
 	/// <summary>
+	/// Saves all open graphs that have a resource path. Called by the plugin's _SaveExternalData
+	/// so that Ctrl+S persists statescript graphs alongside scenes.
+	/// </summary>
+	public void SaveAllOpenGraphs()
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		SyncVisualNodePositionsToGraph();
+		SyncConnectionsToCurrentGraph();
+
+		if (CurrentGraph is not null)
+		{
+			CurrentGraph.ScrollOffset = _graphEdit.ScrollOffset;
+			CurrentGraph.Zoom = _graphEdit.Zoom;
+		}
+
+		foreach (StatescriptGraph graph in _openTabs.Select(x => x.GraphResource))
+		{
+			if (string.IsNullOrEmpty(graph.ResourcePath))
+			{
+				continue;
+			}
+
+			ResourceSaver.Save(graph);
+		}
+	}
+
+	/// <summary>
 	/// Restores tabs from paths and active index, used by EditorPlugin _SetWindowLayout.
 	/// </summary>
 	/// <param name="paths">The resource paths of the tabs to restore.</param>
