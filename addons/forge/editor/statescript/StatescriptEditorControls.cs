@@ -191,6 +191,7 @@ internal static class StatescriptEditorControls
 				ControlState = EditorSpinSlider.ControlStateEnum.Hide,
 				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 				SizeFlagsStretchRatio = 1,
+				CustomMinimumSize = new Vector2(71, 0),
 				Value = values[i],
 			};
 
