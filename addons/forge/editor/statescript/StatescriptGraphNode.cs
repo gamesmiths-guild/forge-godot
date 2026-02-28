@@ -60,6 +60,7 @@ public partial class StatescriptGraphNode : GraphNode
 		Title = resource.Title;
 		PositionOffset = resource.PositionOffset;
 		CustomMinimumSize = new Vector2(240, 0);
+		Resizable = true;
 
 		ClearSlots();
 
@@ -826,7 +827,7 @@ public partial class StatescriptGraphNode : GraphNode
 		if (existing is not null)
 		{
 			var panelStyle = (StyleBox)existing.Duplicate();
-			panelStyle.ContentMarginBottom = 8;
+			panelStyle.ContentMarginBottom = 10;
 			AddThemeStyleboxOverride("panel", panelStyle);
 		}
 
@@ -835,7 +836,7 @@ public partial class StatescriptGraphNode : GraphNode
 		if (selectedExisting is not null)
 		{
 			var selectedPanelStyle = (StyleBox)selectedExisting.Duplicate();
-			selectedPanelStyle.ContentMarginBottom = 8;
+			selectedPanelStyle.ContentMarginBottom = 10;
 			AddThemeStyleboxOverride("panel_selected", selectedPanelStyle);
 		}
 	}
