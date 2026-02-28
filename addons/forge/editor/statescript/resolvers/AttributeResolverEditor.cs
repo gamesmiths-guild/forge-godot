@@ -32,7 +32,7 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		// Attributes produce numeric values — compatible with numeric types and Variant128.
+		// Attributes produce numeric values, compatible with numeric types and Variant128.
 		return expectedType == typeof(Variant128)
 			|| expectedType == typeof(int)
 			|| expectedType == typeof(float)
@@ -169,7 +169,6 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 			_attributeDropdown.AddItem(option);
 		}
 
-		// Restore selection.
 		if (!string.IsNullOrEmpty(_selectedAttribute))
 		{
 			for (var i = 0; i < _attributeDropdown.GetItemCount(); i++)
@@ -182,7 +181,6 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 			}
 		}
 
-		// Default to first if available.
 		if (_attributeDropdown.GetItemCount() > 0)
 		{
 			_attributeDropdown.Selected = 0;
