@@ -399,6 +399,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		_variablePanel.VariablesChanged += OnGraphVariablesChanged;
 		_splitContainer.AddChild(_variablePanel);
 
+		if (_undoRedo is not null)
+		{
+			_variablePanel.SetUndoRedo(_undoRedo);
+		}
+
 		HBoxContainer menuHBox = _graphEdit.GetMenuHBox();
 
 		menuHBox.SizeFlagsHorizontal = SizeFlags.ExpandFill;
