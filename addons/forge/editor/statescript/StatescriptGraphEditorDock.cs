@@ -734,7 +734,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		ClearGraphEditor();
 
-		_graphEdit.ScrollOffset = graph.ScrollOffset;
 		_graphEdit.Zoom = graph.Zoom;
 
 		UpdateNextNodeId(graph);
@@ -757,6 +756,18 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		_isLoadingGraph = wasLoading;
+
+		_ = ApplyScrollNextFrame(graph.ScrollOffset);
+	}
+
+	private async Task ApplyScrollNextFrame(Vector2 offset)
+	{
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+		if (_graphEdit is not null)
+		{
+			_graphEdit.ScrollOffset = offset;
+		}
 	}
 
 	private void ClearGraphEditor()
