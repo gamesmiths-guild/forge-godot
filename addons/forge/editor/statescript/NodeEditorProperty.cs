@@ -43,11 +43,13 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	/// <param name="property">The existing property binding to restore state from, or null for a new binding.</param>
 	/// <param name="expectedType">The type expected by the node's input property.</param>
 	/// <param name="onChanged">Callback invoked when the resolver configuration changes.</param>
+	/// <param name="isArray">Whether the input expects an array of values.</param>
 	public abstract void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
-		Action onChanged);
+		Action onChanged,
+		bool isArray);
 
 	/// <summary>
 	/// Writes the current resolver configuration to the given property binding resource.

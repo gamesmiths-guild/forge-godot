@@ -18,6 +18,7 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 	private const string FoldOutputKey = "_fold_output";
 
 	private StatescriptVariableType? _resolvedType;
+	private bool _resolvedIsArray;
 
 	/// <inheritdoc/>
 	public override string HandledRuntimeTypeName => "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode";
@@ -47,6 +48,7 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			outputFolded);
 
 		_resolvedType = null;
+		_resolvedIsArray = false;
 		StatescriptNodeProperty? outputBinding = FindBinding(StatescriptPropertyDirection.Output, 0);
 
 		if (outputBinding?.Resolver is VariableResolverResource varRes
@@ -57,6 +59,7 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 				if (v.VariableName == varRes.VariableName)
 				{
 					_resolvedType = v.VariableType;
+					_resolvedIsArray = v.IsArray;
 					break;
 				}
 			}
@@ -141,11 +144,13 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			var variableIndex = (int)x - 1;
 
 			StatescriptVariableType? previousType = _resolvedType;
+			var previousIsArray = _resolvedIsArray;
 
 			if (variableIndex < 0)
 			{
 				RemoveBinding(StatescriptPropertyDirection.Output, index);
 				_resolvedType = null;
+				_resolvedIsArray = false;
 			}
 			else
 			{
@@ -154,9 +159,10 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 					new VariableResolverResource { VariableName = variableName };
 
 				_resolvedType = Graph.Variables[variableIndex].VariableType;
+				_resolvedIsArray = Graph.Variables[variableIndex].IsArray;
 			}
 
-			if (previousType != _resolvedType)
+			if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
 			{
 				RemoveBinding(StatescriptPropertyDirection.Input, 0);
 
@@ -201,7 +207,7 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 		Type resolvedClrType = StatescriptVariableTypeConverter.ToSystemType(_resolvedType.Value);
 
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(propInfo.Label, resolvedClrType),
+			new StatescriptNodeDiscovery.InputPropertyInfo(propInfo.Label, resolvedClrType, _resolvedIsArray),
 			0,
 			container);
 

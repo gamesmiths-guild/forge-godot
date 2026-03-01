@@ -52,7 +52,8 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
-		Action onChanged)
+		Action onChanged,
+		bool isArray)
 	{
 		_graph = graph;
 		_onChanged = onChanged;
@@ -234,7 +235,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			tempProperty = new StatescriptNodeProperty { Resolver = existingResolver };
 		}
 
-		editor.Setup(_graph, tempProperty, typeof(ForgeVariant128), () => _onChanged?.Invoke());
+		editor.Setup(_graph, tempProperty, typeof(ForgeVariant128), () => _onChanged?.Invoke(), false);
 
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 

@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Godot;
+using Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
@@ -12,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 public partial class VariantResolverResource : StatescriptResolverResource
 {
 	/// <summary>
-	/// Gets or sets the constant value.
+	/// Gets or sets the constant value. Used when <see cref="IsArray"/> is <see langword="false"/>.
 	/// </summary>
 	[Export]
 	public Variant Value { get; set; }
@@ -22,4 +23,16 @@ public partial class VariantResolverResource : StatescriptResolverResource
 	/// </summary>
 	[Export]
 	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Int;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether this resolver holds an array of values.
+	/// </summary>
+	[Export]
+	public bool IsArray { get; set; }
+
+	/// <summary>
+	/// Gets or sets the array values. Used when <see cref="IsArray"/> is <see langword="true"/>.
+	/// </summary>
+	[Export]
+	public Array<Variant> ArrayValues { get; set; } = [];
 }

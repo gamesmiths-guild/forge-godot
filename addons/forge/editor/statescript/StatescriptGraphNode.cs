@@ -142,9 +142,10 @@ public partial class StatescriptGraphNode : GraphNode
 		Type expectedType,
 		VBoxContainer container,
 		StatescriptPropertyDirection direction,
-		int propertyIndex)
+		int propertyIndex,
+		bool isArray = false)
 	{
-		ShowResolverEditorUI(factory, existingBinding, expectedType, container, direction, propertyIndex);
+		ShowResolverEditorUI(factory, existingBinding, expectedType, container, direction, propertyIndex, isArray);
 	}
 
 	internal void RaisePropertyBindingChangedInternal()
@@ -417,7 +418,8 @@ public partial class StatescriptGraphNode : GraphNode
 			propInfo.ExpectedType,
 			editorContainer,
 			StatescriptPropertyDirection.Input,
-			index);
+			index,
+			propInfo.IsArray);
 
 		resolverDropdown.ItemSelected += x =>
 		{
@@ -441,7 +443,8 @@ public partial class StatescriptGraphNode : GraphNode
 				propInfo.ExpectedType,
 				editorContainer,
 				StatescriptPropertyDirection.Input,
-				index);
+				index,
+				propInfo.IsArray);
 
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
 			{
@@ -533,7 +536,8 @@ public partial class StatescriptGraphNode : GraphNode
 		Type expectedType,
 		VBoxContainer container,
 		StatescriptPropertyDirection direction,
-		int propertyIndex)
+		int propertyIndex,
+		bool isArray = false)
 	{
 		if (_graph is null)
 		{
@@ -550,7 +554,8 @@ public partial class StatescriptGraphNode : GraphNode
 			{
 				SaveResolverEditor(resolverEditor, direction, propertyIndex);
 				PropertyBindingChanged?.Invoke();
-			});
+			},
+			isArray);
 
 		resolverEditor.LayoutSizeChanged += ResetSize;
 

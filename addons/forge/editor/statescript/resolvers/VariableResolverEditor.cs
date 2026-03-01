@@ -42,7 +42,8 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
-		Action onChanged)
+		Action onChanged,
+		bool isArray)
 	{
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		CustomMinimumSize = new Vector2(200, 25);

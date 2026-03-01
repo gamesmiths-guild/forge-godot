@@ -192,13 +192,15 @@ internal abstract class CustomNodeEditor
 	/// <param name="container">The container to add the resolver editor to.</param>
 	/// <param name="direction">The direction of the property (input or output).</param>
 	/// <param name="propertyIndex">The index of the property.</param>
+	/// <param name="isArray">Whether the input expects an array of values.</param>
 	protected void ShowResolverEditorUI(
 		Func<NodeEditorProperty> factory,
 		StatescriptNodeProperty? existingBinding,
 		Type expectedType,
 		VBoxContainer container,
 		StatescriptPropertyDirection direction,
-		int propertyIndex)
+		int propertyIndex,
+		bool isArray = false)
 	{
 		_graphNode!.ShowResolverEditorUIInternal(
 			factory,
@@ -206,7 +208,8 @@ internal abstract class CustomNodeEditor
 			expectedType,
 			container,
 			direction,
-			propertyIndex);
+			propertyIndex,
+			isArray);
 	}
 
 	/// <summary>
