@@ -54,6 +54,8 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			CustomMinimumSize = new Vector2(100, 0),
 		};
 
+		_dropdown.SetMeta("is_variable_dropdown", true);
+
 		PopulateDropdown(graph, expectedType);
 
 		if (property?.Resolver is VariableResolverResource varRes

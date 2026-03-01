@@ -109,6 +109,8 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 
+		dropdown.SetMeta("is_variable_dropdown", true);
+
 		dropdown.AddItem("(None)");
 
 		foreach (StatescriptGraphVariable v in Graph.Variables)

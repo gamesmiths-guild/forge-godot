@@ -415,3 +415,6 @@ dotnet_diagnostic.RCS1170.severity = none
 
 # IDE0270: Use coalesce expression
 dotnet_diagnostic.IDE0270.severity = suggestion
+
+# T0010: Internal Styling Rule T0010
+dotnet_diagnostic.T0010.severity = none
