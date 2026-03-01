@@ -146,6 +146,11 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			StatescriptVariableType? previousType = _resolvedType;
 			var previousIsArray = _resolvedIsArray;
 
+			var oldOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
+				as StatescriptResolverResource;
+			var oldInputResolver = FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver?.Duplicate()
+				as StatescriptResolverResource;
+
 			if (variableIndex < 0)
 			{
 				RemoveBinding(StatescriptPropertyDirection.Output, index);
@@ -174,6 +179,28 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			if (typeInfo.InputPropertiesInfo.Length > 0)
 			{
 				RebuildInputUI(typeInfo.InputPropertiesInfo[0], inputEditorContainer);
+			}
+
+			var newOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
+				as StatescriptResolverResource;
+			var newInputResolver = FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver?.Duplicate()
+				as StatescriptResolverResource;
+
+			RecordResolverBindingChange(
+				StatescriptPropertyDirection.Output,
+				index,
+				oldOutputResolver,
+				newOutputResolver,
+				"Change Target Variable");
+
+			if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+			{
+				RecordResolverBindingChange(
+					StatescriptPropertyDirection.Input,
+					0,
+					oldInputResolver,
+					newInputResolver,
+					"Change Target Variable Input");
 			}
 
 			RaisePropertyBindingChanged();

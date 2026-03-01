@@ -744,6 +744,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			var graphNode = new StatescriptGraphNode();
 			_graphEdit.AddChild(graphNode);
 			graphNode.Initialize(nodeResource, graph);
+			graphNode.SetUndoRedo(_undoRedo);
 		}
 
 		foreach (StatescriptConnection connection in graph.Connections)
@@ -1626,6 +1627,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			var graphNode = new StatescriptGraphNode();
 			_graphEdit.AddChild(graphNode);
 			graphNode.Initialize(nodeResource, graph);
+			graphNode.SetUndoRedo(_undoRedo);
 		}
 	}
 

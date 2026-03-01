@@ -353,6 +353,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		{
 			elementsContainer.Visible = x;
 
+			var wasExpanded = !x;
+
 			if (x)
 			{
 				_expandedArrays.Add(variable.VariableName);
@@ -363,6 +365,22 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			}
 
 			SaveExpandedArrayState();
+
+			if (_undoRedo is not null)
+			{
+				_undoRedo.CreateAction("Toggle Array Expand", customContext: _graph);
+				_undoRedo.AddDoMethod(
+					this,
+					MethodName.DoSetArrayExpanded,
+					variable.VariableName,
+					x);
+				_undoRedo.AddUndoMethod(
+					this,
+					MethodName.DoSetArrayExpanded,
+					variable.VariableName,
+					wasExpanded);
+				_undoRedo.CommitAction(false);
+			}
 		};
 
 		headerRow.AddChild(toggleButton);
@@ -831,6 +849,21 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 			_undoRedo.CommitAction(false);
 		}
+	}
+
+	private void DoSetArrayExpanded(string variableName, bool expanded)
+	{
+		if (expanded)
+		{
+			_expandedArrays.Add(variableName);
+		}
+		else
+		{
+			_expandedArrays.Remove(variableName);
+		}
+
+		SaveExpandedArrayState();
+		RebuildList();
 	}
 }
 #endif

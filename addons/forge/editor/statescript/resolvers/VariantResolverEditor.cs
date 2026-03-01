@@ -20,8 +20,12 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 {
 	private StatescriptVariableType _valueType;
 	private bool _isArray;
+	private bool _isArrayExpanded;
 	private GodotVariant _currentValue;
 	private Array<GodotVariant> _arrayValues = [];
+
+	private Button? _toggleButton;
+	private VBoxContainer? _elementsContainer;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Constant";
@@ -60,6 +64,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			if (_isArray)
 			{
 				_arrayValues = [.. variantRes.ArrayValues];
+				_isArrayExpanded = variantRes.IsArrayExpanded;
 			}
 			else
 			{
@@ -99,6 +104,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 				ValueType = _valueType,
 				IsArray = true,
 				ArrayValues = [.. _arrayValues],
+				IsArrayExpanded = _isArrayExpanded,
 			};
 		}
 		else
@@ -151,18 +157,32 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	{
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
-		var elementsContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_elementsContainer = new VBoxContainer
+		{
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			Visible = _isArrayExpanded,
+		};
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(headerRow);
 
-		var sizeLabel = new Label
+		_toggleButton = new Button
 		{
-			Text = $"Size: {_arrayValues.Count}",
+			Text = $"Array (size {_arrayValues.Count})",
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			ToggleMode = true,
+			ButtonPressed = _isArrayExpanded,
 		};
 
-		headerRow.AddChild(sizeLabel);
+		_toggleButton.Toggled += x =>
+		{
+			_elementsContainer.Visible = x;
+			_isArrayExpanded = x;
+			onChanged();
+			RaiseLayoutSizeChanged();
+		};
+
+		headerRow.AddChild(_toggleButton);
 
 		Texture2D addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 
@@ -179,28 +199,35 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			GodotVariant defaultValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(_valueType);
 			_arrayValues.Add(defaultValue);
 			onChanged();
-			RebuildArrayElements(elementsContainer, sizeLabel, onChanged);
+			_elementsContainer.Visible = true;
+			_isArrayExpanded = true;
+			RebuildArrayElements(onChanged);
 			RaiseLayoutSizeChanged();
 		};
 
 		headerRow.AddChild(addButton);
 
-		vBox.AddChild(elementsContainer);
+		vBox.AddChild(_elementsContainer);
 
-		RebuildArrayElements(elementsContainer, sizeLabel, onChanged);
+		RebuildArrayElements(onChanged);
 
 		return vBox;
 	}
 
-	private void RebuildArrayElements(VBoxContainer container, Label sizeLabel, Action onChanged)
+	private void RebuildArrayElements(Action onChanged)
 	{
-		foreach (global::Godot.Node child in container.GetChildren())
+		if (_elementsContainer is null || _toggleButton is null)
 		{
-			container.RemoveChild(child);
+			return;
+		}
+
+		foreach (global::Godot.Node child in _elementsContainer.GetChildren())
+		{
+			_elementsContainer.RemoveChild(child);
 			child.QueueFree();
 		}
 
-		sizeLabel.Text = $"Size: {_arrayValues.Count}";
+		_toggleButton.Text = $"Array (size {_arrayValues.Count})";
 
 		Texture2D removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
 
@@ -211,7 +238,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			if (StatescriptEditorControls.IsVectorType(_valueType))
 			{
 				var elementVBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-				container.AddChild(elementVBox);
+				_elementsContainer.AddChild(elementVBox);
 
 				var labelRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 				elementVBox.AddChild(labelRow);
@@ -221,14 +248,17 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				});
 
-				AddArrayRemoveButton(labelRow, removeIcon, capturedIndex, container, sizeLabel, onChanged);
+				AddArrayRemoveButton(labelRow, removeIcon, capturedIndex, onChanged);
 
 				VBoxContainer vectorEditor = StatescriptEditorControls.CreateVectorEditor(
 					_valueType,
-					x => StatescriptEditorControls.GetVectorComponent(
-						_arrayValues[capturedIndex],
-						_valueType,
-						x),
+					x =>
+					{
+						return StatescriptEditorControls.GetVectorComponent(
+							_arrayValues[capturedIndex],
+							_valueType,
+							x);
+					},
 					x =>
 					{
 						_arrayValues[capturedIndex] =
@@ -241,7 +271,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			else
 			{
 				var elementRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-				container.AddChild(elementRow);
+				_elementsContainer.AddChild(elementRow);
 				elementRow.AddChild(new Label { Text = $"[{i}]" });
 
 				if (_valueType == StatescriptVariableType.Bool)
@@ -268,7 +298,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 					elementRow.AddChild(spin);
 				}
 
-				AddArrayRemoveButton(elementRow, removeIcon, capturedIndex, container, sizeLabel, onChanged);
+				AddArrayRemoveButton(elementRow, removeIcon, capturedIndex, onChanged);
 			}
 		}
 	}
@@ -277,8 +307,6 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		HBoxContainer row,
 		Texture2D removeIcon,
 		int elementIndex,
-		VBoxContainer elementsContainer,
-		Label sizeLabel,
 		Action onChanged)
 	{
 		var removeButton = new Button
@@ -293,7 +321,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		{
 			_arrayValues.RemoveAt(elementIndex);
 			onChanged();
-			RebuildArrayElements(elementsContainer, sizeLabel, onChanged);
+			RebuildArrayElements(onChanged);
 			RaiseLayoutSizeChanged();
 		};
 

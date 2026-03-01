@@ -35,4 +35,10 @@ public partial class VariantResolverResource : StatescriptResolverResource
 	/// </summary>
 	[Export]
 	public Array<Variant> ArrayValues { get; set; } = [];
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the array section is expanded in the editor.
+	/// </summary>
+	[Export]
+	public bool IsArrayExpanded { get; set; }
 }

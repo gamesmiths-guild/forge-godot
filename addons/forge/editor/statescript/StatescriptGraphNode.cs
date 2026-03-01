@@ -19,6 +19,7 @@ public partial class StatescriptGraphNode : GraphNode
 {
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
+	private const string CustomWidthKey = "_custom_width";
 
 	private static readonly Color _entryColor = new(0x2a4a8dff);
 	private static readonly Color _exitColor = new(0x8a549aff);
@@ -34,6 +35,9 @@ public partial class StatescriptGraphNode : GraphNode
 
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
+	private EditorUndoRedoManager? _undoRedo;
+	private bool _resizeConnected;
+	private float _widthBeforeResize;
 
 	/// <summary>
 	/// Raised when a property binding has been modified in the UI.
@@ -44,6 +48,24 @@ public partial class StatescriptGraphNode : GraphNode
 	/// Gets the underlying node resource.
 	/// </summary>
 	public StatescriptNode? NodeResource { get; private set; }
+
+	/// <summary>
+	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
+	/// </summary>
+	/// <param name="undoRedo">The undo/redo manager from the editor plugin.</param>
+	public void SetUndoRedo(EditorUndoRedoManager? undoRedo)
+	{
+		_undoRedo = undoRedo;
+	}
+
+	/// <summary>
+	/// Gets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
+	/// </summary>
+	/// <returns>The undo/redo manager, or null if not set.</returns>
+	public EditorUndoRedoManager? GetUndoRedo()
+	{
+		return _undoRedo;
+	}
 
 	/// <summary>
 	/// Initializes this visual node from a resource, optionally within the context of a graph.
@@ -61,6 +83,16 @@ public partial class StatescriptGraphNode : GraphNode
 		PositionOffset = resource.PositionOffset;
 		CustomMinimumSize = new Vector2(240, 0);
 		Resizable = true;
+
+		RestoreCustomWidth();
+
+		if (!_resizeConnected)
+		{
+			_widthBeforeResize = CustomMinimumSize.X;
+			ResizeRequest += OnResizeRequest;
+			ResizeEnd += OnResizeEnd;
+			_resizeConnected = true;
+		}
 
 		ClearSlots();
 
@@ -134,6 +166,34 @@ public partial class StatescriptGraphNode : GraphNode
 		int propertyIndex)
 	{
 		RemoveBinding(direction, propertyIndex);
+	}
+
+	internal void RecordResolverBindingChangeInternal(
+		StatescriptPropertyDirection direction,
+		int propertyIndex,
+		StatescriptResolverResource? oldResolver,
+		StatescriptResolverResource? newResolver,
+		string actionName)
+	{
+		if (_undoRedo is null)
+		{
+			return;
+		}
+
+		_undoRedo.CreateAction(actionName, customContext: _graph);
+		_undoRedo.AddDoMethod(
+			this,
+			MethodName.ApplyResolverBinding,
+			(int)direction,
+			propertyIndex,
+			newResolver ?? new StatescriptResolverResource());
+		_undoRedo.AddUndoMethod(
+			this,
+			MethodName.ApplyResolverBinding,
+			(int)direction,
+			propertyIndex,
+			oldResolver ?? new StatescriptResolverResource());
+		_undoRedo.CommitAction(false);
 	}
 
 	internal void ShowResolverEditorUIInternal(
@@ -295,7 +355,7 @@ public partial class StatescriptGraphNode : GraphNode
 		sectionContainer.AddThemeColorOverride("font_color", color);
 		sectionContainer.FoldingChanged += isFolded =>
 		{
-			SetFoldState(foldKey, isFolded);
+			SetFoldStateWithUndo(foldKey, isFolded);
 			ResetSize();
 		};
 
@@ -322,6 +382,107 @@ public partial class StatescriptGraphNode : GraphNode
 		}
 
 		NodeResource.CustomData[key] = Variant.From(folded);
+	}
+
+	private void SetFoldStateWithUndo(string key, bool folded)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		var oldFolded = GetFoldState(key);
+
+		if (oldFolded == folded)
+		{
+			return;
+		}
+
+		SetFoldState(key, folded);
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Toggle Fold", customContext: _graph);
+			_undoRedo.AddDoMethod(
+				this,
+				MethodName.ApplyFoldState,
+				key,
+				folded);
+			_undoRedo.AddUndoMethod(
+				this,
+				MethodName.ApplyFoldState,
+				key,
+				oldFolded);
+			_undoRedo.CommitAction(false);
+		}
+	}
+
+	private void ApplyFoldState(string key, bool folded)
+	{
+		SetFoldState(key, folded);
+		RebuildNode();
+	}
+
+	private void OnResizeRequest(Vector2 newMinSize)
+	{
+		CustomMinimumSize = new Vector2(newMinSize.X, 0);
+		Size = new Vector2(newMinSize.X, 0);
+		SaveCustomWidth(newMinSize.X);
+	}
+
+	private void OnResizeEnd(Vector2 newSize)
+	{
+		var newWidth = CustomMinimumSize.X;
+
+		if (_undoRedo is not null && NodeResource is not null
+			&& !Mathf.IsEqualApprox(_widthBeforeResize, newWidth))
+		{
+			var oldWidth = _widthBeforeResize;
+
+			_undoRedo.CreateAction("Resize Node", customContext: _graph);
+			_undoRedo.AddDoMethod(
+				this,
+				MethodName.ApplyCustomWidth,
+				newWidth);
+			_undoRedo.AddUndoMethod(
+				this,
+				MethodName.ApplyCustomWidth,
+				oldWidth);
+			_undoRedo.CommitAction(false);
+		}
+
+		_widthBeforeResize = newWidth;
+	}
+
+	private void ApplyCustomWidth(float width)
+	{
+		CustomMinimumSize = new Vector2(width, 0);
+		Size = new Vector2(width, 0);
+		SaveCustomWidth(width);
+	}
+
+	private void RestoreCustomWidth()
+	{
+		if (NodeResource is not null
+			&& NodeResource.CustomData.TryGetValue(CustomWidthKey, out Variant value))
+		{
+			var width = (float)value.AsDouble();
+
+			if (width > 0)
+			{
+				CustomMinimumSize = new Vector2(width, 0);
+			}
+		}
+	}
+
+	private void SaveCustomWidth(float width)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		NodeResource.CustomData[CustomWidthKey] = Variant.From(width);
 	}
 
 	private void AddInputPropertyRow(
@@ -425,6 +586,9 @@ public partial class StatescriptGraphNode : GraphNode
 		{
 			var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
 
+			var oldResolver = FindBinding(StatescriptPropertyDirection.Input, index)?.Resolver?.Duplicate()
+				as StatescriptResolverResource;
+
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? old))
 			{
 				_activeResolverEditors.Remove(key);
@@ -449,6 +613,27 @@ public partial class StatescriptGraphNode : GraphNode
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
 			{
 				SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+			}
+
+			StatescriptNodeProperty? updated = FindBinding(StatescriptPropertyDirection.Input, index);
+			var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
+
+			if (_undoRedo is not null)
+			{
+				_undoRedo.CreateAction("Change Resolver Type", customContext: _graph);
+				_undoRedo.AddDoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Input,
+					index,
+					newResolver ?? new StatescriptResolverResource());
+				_undoRedo.AddUndoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Input,
+					index,
+					oldResolver ?? new StatescriptResolverResource());
+				_undoRedo.CommitAction(false);
 			}
 
 			PropertyBindingChanged?.Invoke();
@@ -520,9 +705,30 @@ public partial class StatescriptGraphNode : GraphNode
 				return;
 			}
 
+			var oldResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
+				as StatescriptResolverResource;
+
 			var variableName = _graph.Variables[(int)x].VariableName;
-			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
-				new VariableResolverResource { VariableName = variableName };
+			var newResolver = new VariableResolverResource { VariableName = variableName };
+			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
+
+			if (_undoRedo is not null)
+			{
+				_undoRedo.CreateAction("Change Output Variable", customContext: _graph);
+				_undoRedo.AddDoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Output,
+					index,
+					(StatescriptResolverResource)newResolver.Duplicate());
+				_undoRedo.AddUndoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Output,
+					index,
+					oldResolver ?? new StatescriptResolverResource());
+				_undoRedo.CommitAction(false);
+			}
 
 			PropertyBindingChanged?.Invoke();
 		};
@@ -552,8 +758,7 @@ public partial class StatescriptGraphNode : GraphNode
 			expectedType,
 			() =>
 			{
-				SaveResolverEditor(resolverEditor, direction, propertyIndex);
-				PropertyBindingChanged?.Invoke();
+				SaveResolverEditorWithUndo(resolverEditor, direction, propertyIndex);
 			},
 			isArray);
 
@@ -563,6 +768,45 @@ public partial class StatescriptGraphNode : GraphNode
 
 		var key = new PropertySlotKey(direction, propertyIndex);
 		_activeResolverEditors[key] = resolverEditor;
+	}
+
+	private void SaveResolverEditorWithUndo(
+		NodeEditorProperty resolverEditor,
+		StatescriptPropertyDirection direction,
+		int propertyIndex)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		StatescriptNodeProperty? existing = FindBinding(direction, propertyIndex);
+		var oldResolver = existing?.Resolver?.Duplicate() as StatescriptResolverResource;
+
+		SaveResolverEditor(resolverEditor, direction, propertyIndex);
+
+		StatescriptNodeProperty? updated = FindBinding(direction, propertyIndex);
+		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Change Node Property", customContext: _graph);
+			_undoRedo.AddDoMethod(
+				this,
+				MethodName.ApplyResolverBinding,
+				(int)direction,
+				propertyIndex,
+				newResolver ?? new StatescriptResolverResource());
+			_undoRedo.AddUndoMethod(
+				this,
+				MethodName.ApplyResolverBinding,
+				(int)direction,
+				propertyIndex,
+				oldResolver ?? new StatescriptResolverResource());
+			_undoRedo.CommitAction(false);
+		}
+
+		PropertyBindingChanged?.Invoke();
 	}
 
 	private void SaveResolverEditor(
@@ -577,6 +821,35 @@ public partial class StatescriptGraphNode : GraphNode
 
 		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
 		resolverEditor.SaveTo(binding);
+	}
+
+	private void ApplyResolverBinding(
+		int directionInt,
+		int propertyIndex,
+		StatescriptResolverResource resolver)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		var direction = (StatescriptPropertyDirection)directionInt;
+		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
+		binding.Resolver = resolver;
+		RebuildNode();
+	}
+
+	private void RebuildNode()
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		EditorUndoRedoManager? savedUndoRedo = _undoRedo;
+		Initialize(NodeResource, _graph);
+		_undoRedo = savedUndoRedo;
+		Size = new Vector2(Size.X, 0);
 	}
 
 	private StatescriptNodeProperty? FindBinding(
@@ -801,6 +1074,7 @@ public partial class StatescriptGraphNode : GraphNode
 	{
 		foreach (Node child in GetChildren())
 		{
+			RemoveChild(child);
 			child.QueueFree();
 		}
 	}

@@ -63,6 +63,11 @@ internal abstract class CustomNodeEditor
 	protected StatescriptNode NodeResource => _nodeResource!;
 
 	/// <summary>
+	/// Gets the undo/redo manager, if available.
+	/// </summary>
+	protected EditorUndoRedoManager? UndoRedo => _graphNode?.GetUndoRedo();
+
+	/// <summary>
 	/// Stores references needed by helper methods. Called once before <see cref="BuildPropertySections"/>.
 	/// </summary>
 	/// <param name="graphNode">The graph node this editor is bound to.</param>
@@ -226,6 +231,29 @@ internal abstract class CustomNodeEditor
 	protected void RaisePropertyBindingChanged()
 	{
 		_graphNode!.RaisePropertyBindingChangedInternal();
+	}
+
+	/// <summary>
+	/// Records an undo/redo action for changing a resolver binding, then rebuilds the node.
+	/// </summary>
+	/// <param name="direction">The direction of the property.</param>
+	/// <param name="propertyIndex">The index of the property.</param>
+	/// <param name="oldResolver">The previous resolver resource.</param>
+	/// <param name="newResolver">The new resolver resource.</param>
+	/// <param name="actionName">The name for the undo/redo action.</param>
+	protected void RecordResolverBindingChange(
+		StatescriptPropertyDirection direction,
+		int propertyIndex,
+		StatescriptResolverResource? oldResolver,
+		StatescriptResolverResource? newResolver,
+		string actionName = "Change Node Property")
+	{
+		_graphNode!.RecordResolverBindingChangeInternal(
+			direction,
+			propertyIndex,
+			oldResolver,
+			newResolver,
+			actionName);
 	}
 }
 #endif
