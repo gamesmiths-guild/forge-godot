@@ -419,8 +419,13 @@ internal static class StatescriptEditorControls
 			StatescriptVariableType.UShort => new NumericConfig(ushort.MinValue, ushort.MaxValue, 1, true, false),
 			StatescriptVariableType.Int => new NumericConfig(int.MinValue, int.MaxValue, 1, true, false),
 			StatescriptVariableType.UInt => new NumericConfig(uint.MinValue, uint.MaxValue, 1, true, false),
-			StatescriptVariableType.Long => new NumericConfig(-1e15, 1e15, 1, true, true),
-			StatescriptVariableType.ULong => new NumericConfig(0, 1e15, 1, true, true),
+
+			// Godot's interface starts acting weird if we try to use the full range of long/ulong, so we clamp to +/-
+			// 1e18 which should be sufficient for most use cases.
+			StatescriptVariableType.Long =>
+				new NumericConfig(-1000000000000000000, 1000000000000000000, 1, true, false),
+			StatescriptVariableType.ULong =>
+				new NumericConfig(0, 1000000000000000000, 1, true, false),
 			StatescriptVariableType.Float => new NumericConfig(-1e10, 1e10, 0.001, false, true),
 			StatescriptVariableType.Double => new NumericConfig(-1e10, 1e10, 0.001, false, true),
 			StatescriptVariableType.Decimal => new NumericConfig(-1e10, 1e10, 0.001, false, true),
