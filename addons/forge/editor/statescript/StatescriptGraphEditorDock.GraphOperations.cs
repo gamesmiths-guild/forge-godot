@@ -2,6 +2,8 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using GodotCollections = Godot.Collections;
@@ -10,11 +12,50 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 public partial class StatescriptGraphEditorDock
 {
+	private static bool WouldCreateLoop(
+		StatescriptGraph graphResource,
+		string fromNodeId,
+		int fromPort,
+		string toNodeId,
+		int toPort)
+	{
+		var tempConnection = new StatescriptConnection
+		{
+			FromNode = fromNodeId,
+			OutputPort = fromPort,
+			ToNode = toNodeId,
+			InputPort = toPort,
+		};
+
+		graphResource.Connections.Add(tempConnection);
+
+		try
+		{
+			StatescriptGraphBuilder.Build(graphResource);
+		}
+		catch (ValidationException)
+		{
+			return true;
+		}
+		finally
+		{
+			graphResource.Connections.Remove(tempConnection);
+		}
+
+		return false;
+	}
+
 	private void OnConnectionRequest(StringName fromNode, long fromPort, StringName toNode, long toPort)
 	{
 		StatescriptGraph? graph = CurrentGraph;
 		if (graph is null || _graphEdit is null)
 		{
+			return;
+		}
+
+		if (WouldCreateLoop(graph, fromNode.ToString(), (int)fromPort, toNode.ToString(), (int)toPort))
+		{
+			ShowLoopWarningDialog();
 			return;
 		}
 
@@ -432,6 +473,21 @@ public partial class StatescriptGraphEditorDock
 		}
 
 		SyncConnectionsToCurrentGraph();
+	}
+
+	private void ShowLoopWarningDialog()
+	{
+		var dialog = new AcceptDialog
+		{
+			Title = "Connection Rejected",
+			DialogText = "This connection would create a loop in the graph, which is not allowed.",
+			Exclusive = true,
+		};
+
+		dialog.Confirmed += dialog.QueueFree;
+		dialog.Canceled += dialog.QueueFree;
+		AddChild(dialog);
+		dialog.PopupCentered();
 	}
 }
 #endif

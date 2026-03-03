@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Diagnostics;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
@@ -55,6 +56,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		_resourcesReimportedCallable = new Callable(this, nameof(OnResourcesReimported));
 
 		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
+
+		Validation.Enabled = true;
 	}
 
 	public override void _ExitTree()

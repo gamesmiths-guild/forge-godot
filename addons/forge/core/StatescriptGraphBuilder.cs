@@ -32,16 +32,13 @@ public static class StatescriptGraphBuilder
 	{
 		var graph = new Graph();
 
-		// Map from serialized NodeId to runtime node instance.
 		var nodeMap = new Dictionary<string, ForgeNode>();
 
-		// Instantiate all nodes.
 		foreach (StatescriptNode nodeResource in graphResource.Nodes)
 		{
 			switch (nodeResource.NodeType)
 			{
 				case StatescriptNodeType.Entry:
-					// The entry node is always present in the runtime graph.
 					nodeMap[nodeResource.NodeId] = graph.EntryNode;
 					break;
 
@@ -59,7 +56,6 @@ public static class StatescriptGraphBuilder
 			}
 		}
 
-		// Create connections.
 		foreach (StatescriptConnection connectionResource in graphResource.Connections)
 		{
 			if (!nodeMap.TryGetValue(connectionResource.FromNode, out ForgeNode? fromNode))
@@ -129,7 +125,6 @@ public static class StatescriptGraphBuilder
 			return (ForgeNode)Activator.CreateInstance(nodeType)!;
 		}
 
-		// Prefer the constructor with the most parameters (primary constructor for records/positional types).
 		ConstructorInfo constructor = constructors.OrderByDescending(x => x.GetParameters().Length).First();
 		ParameterInfo[] parameters = constructor.GetParameters();
 
@@ -145,7 +140,6 @@ public static class StatescriptGraphBuilder
 			}
 			else
 			{
-				// Use a sensible default if the parameter isn't in CustomData.
 				args[i] = GetDefaultValue(param.ParameterType);
 			}
 		}
@@ -155,14 +149,12 @@ public static class StatescriptGraphBuilder
 
 	private static Type? ResolveType(string typeName)
 	{
-		// Try direct resolution first.
 		var type = Type.GetType(typeName);
 		if (type is not null)
 		{
 			return type;
 		}
 
-		// Search all loaded assemblies.
 		foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
 		{
 			type = assembly.GetType(typeName);
@@ -212,7 +204,6 @@ public static class StatescriptGraphBuilder
 			return value.AsInt64();
 		}
 
-		// Fallback: try string conversion.
 		return Convert.ChangeType(value.AsString(), targetType, CultureInfo.InvariantCulture);
 	}
 
