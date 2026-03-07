@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 

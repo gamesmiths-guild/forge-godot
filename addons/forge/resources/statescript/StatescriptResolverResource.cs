@@ -15,7 +15,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript;
 /// </summary>
 [Tool]
 [GlobalClass]
-public abstract partial class StatescriptResolverResource : Resource
+public partial class StatescriptResolverResource : Resource
 {
 	/// <summary>
 	/// Binds this resolver as an input property on a runtime node. Implementations should register any necessary
