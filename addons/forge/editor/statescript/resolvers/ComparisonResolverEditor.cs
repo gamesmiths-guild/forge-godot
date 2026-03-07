@@ -36,9 +36,6 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	public override string DisplayName => "Comparison";
 
 	/// <inheritdoc/>
-	public override Type ValueType => typeof(bool);
-
-	/// <inheritdoc/>
 	public override string ResolverTypeId => "Comparison";
 
 	/// <inheritdoc/>

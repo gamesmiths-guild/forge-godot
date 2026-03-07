@@ -20,11 +20,6 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public abstract string DisplayName { get; }
 
 	/// <summary>
-	/// Gets the CLR type that this resolver produces.
-	/// </summary>
-	public abstract Type ValueType { get; }
-
-	/// <summary>
 	/// Gets the resolver type identifier string used for matching against serialized resources.
 	/// </summary>
 	public abstract string ResolverTypeId { get; }

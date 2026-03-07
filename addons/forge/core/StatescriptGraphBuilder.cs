@@ -98,7 +98,101 @@ public static class StatescriptGraphBuilder
 			graph.AddConnection(connection);
 		}
 
+		RegisterGraphVariables(graph, graphResource);
+		BindNodeProperties(graph, graphResource, nodeMap);
+
 		return graph;
+	}
+
+	private static void RegisterGraphVariables(Graph graph, StatescriptGraph graphResource)
+	{
+		foreach (StatescriptGraphVariable variable in graphResource.Variables)
+		{
+			if (string.IsNullOrEmpty(variable.VariableName))
+			{
+				continue;
+			}
+
+			Type clrType = StatescriptVariableTypeConverter.ToSystemType(variable.VariableType);
+
+			if (variable.IsArray)
+			{
+				var initialValues = new Variant128[variable.InitialArrayValues.Count];
+				for (var i = 0; i < variable.InitialArrayValues.Count; i++)
+				{
+					initialValues[i] = StatescriptVariableTypeConverter.GodotVariantToForge(
+						variable.InitialArrayValues[i],
+						variable.VariableType);
+				}
+
+				graph.VariableDefinitions.ArrayVariableDefinitions.Add(
+					new ArrayVariableDefinition(
+						new StringKey(variable.VariableName),
+						initialValues,
+						clrType));
+			}
+			else
+			{
+				Variant128 initialValue = StatescriptVariableTypeConverter.GodotVariantToForge(
+					variable.InitialValue,
+					variable.VariableType);
+
+				graph.VariableDefinitions.VariableDefinitions.Add(
+					new VariableDefinition(
+						new StringKey(variable.VariableName),
+						initialValue,
+						clrType));
+			}
+		}
+	}
+
+	private static void BindNodeProperties(
+		Graph graph,
+		StatescriptGraph graphResource,
+		Dictionary<string, ForgeNode> nodeMap)
+	{
+		foreach (StatescriptNode nodeResource in graphResource.Nodes)
+		{
+			if (!nodeMap.TryGetValue(nodeResource.NodeId, out ForgeNode? runtimeNode))
+			{
+				continue;
+			}
+
+			foreach (StatescriptNodeProperty binding in nodeResource.PropertyBindings)
+			{
+				if (binding.Resolver is null)
+				{
+					continue;
+				}
+
+				var index = (byte)binding.PropertyIndex;
+
+				if (binding.Direction == StatescriptPropertyDirection.Input)
+				{
+					if (index >= runtimeNode.InputProperties.Length)
+					{
+						GD.PushWarning(
+							$"Statescript: Input property index {index} out of range on node " +
+							$"'{nodeResource.NodeId}'.");
+						continue;
+					}
+
+					binding.Resolver.BindInput(graph, runtimeNode, nodeResource.NodeId, index);
+				}
+				else
+				{
+					if (index >= runtimeNode.OutputVariables.Length)
+					{
+						GD.PushWarning(
+							$"Statescript: Output variable index {index} out of range on node " +
+							$"'{nodeResource.NodeId}'.");
+						continue;
+					}
+
+					binding.Resolver.BindOutput(runtimeNode, index);
+				}
+			}
+		}
 	}
 
 	private static ForgeNode InstantiateNode(StatescriptNode nodeResource)

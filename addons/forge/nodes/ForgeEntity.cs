@@ -68,5 +68,6 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._Process(delta);
 
 		EffectsManager.UpdateEffects(delta);
+		Abilities.UpdateAbilities(delta);
 	}
 }

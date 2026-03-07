@@ -24,19 +24,12 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 	public override string DisplayName => "Attribute";
 
 	/// <inheritdoc/>
-	public override Type ValueType => typeof(Variant128);
-
-	/// <inheritdoc/>
 	public override string ResolverTypeId => "Attribute";
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return expectedType == typeof(Variant128)
-			|| expectedType == typeof(int)
-			|| expectedType == typeof(float)
-			|| expectedType == typeof(double)
-			|| expectedType == typeof(long);
+		return expectedType == typeof(int) || expectedType == typeof(Variant128);
 	}
 
 	/// <inheritdoc/>

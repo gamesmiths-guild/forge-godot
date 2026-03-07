@@ -31,9 +31,6 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 	public override string DisplayName => "Tag";
 
 	/// <inheritdoc/>
-	public override Type ValueType => typeof(bool);
-
-	/// <inheritdoc/>
 	public override string ResolverTypeId => "Tag";
 
 	/// <inheritdoc/>

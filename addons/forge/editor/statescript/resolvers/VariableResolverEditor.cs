@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-using Gamesmiths.Forge.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
@@ -24,9 +23,6 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Variable";
-
-	/// <inheritdoc/>
-	public override Type ValueType => typeof(Variant128);
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Variable";

@@ -1,6 +1,12 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
+
+using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
@@ -16,4 +22,32 @@ public partial class TagResolverResource : StatescriptResolverResource
 	/// </summary>
 	[Export]
 	public string Tag { get; set; } = string.Empty;
+
+	/// <inheritdoc/>
+	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
+	{
+		if (string.IsNullOrEmpty(Tag))
+		{
+			return;
+		}
+
+		var tag = Tags.Tag.RequestTag(ForgeManagers.Instance.TagsManager, Tag);
+		var propertyName = new StringKey($"__tag_{nodeId}_{index}");
+
+		graph.VariableDefinitions.DefineProperty(propertyName, new TagResolver(tag));
+
+		runtimeNode.BindInput(index, propertyName);
+	}
+
+	/// <inheritdoc/>
+	public override IPropertyResolver BuildResolver(Graph graph)
+	{
+		if (string.IsNullOrEmpty(Tag))
+		{
+			return new VariantResolver(new Variant128(false), typeof(bool));
+		}
+
+		var tag = Tags.Tag.RequestTag(ForgeManagers.Instance.TagsManager, Tag);
+		return new TagResolver(tag);
+	}
 }

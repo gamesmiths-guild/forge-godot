@@ -4,7 +4,6 @@
 using System;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-using Gamesmiths.Forge.Statescript;
 using Godot;
 using Godot.Collections;
 using GodotVariant = Godot.Variant;
@@ -29,9 +28,6 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Constant";
-
-	/// <inheritdoc/>
-	public override Type ValueType => typeof(Variant128);
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Variant";
