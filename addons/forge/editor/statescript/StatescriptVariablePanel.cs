@@ -109,6 +109,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	{
 		base._ExitTree();
 
+		if (_addButton is not null)
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
 		_creationDialog?.QueueFree();
 		_creationDialog = null;
 		_newNameEdit = null;
@@ -118,6 +123,21 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	public void OnBeforeSerialize()
 	{
+		if (_addButton is not null)
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		if (_variableList is not null)
+		{
+			foreach (Node child in _variableList.GetChildren())
+			{
+				_variableList.RemoveChild(child);
+				child.Free();
+			}
+		}
+
+		_creationDialog?.Free();
 		_creationDialog = null;
 		_newNameEdit = null;
 		_newTypeDropdown = null;
@@ -126,7 +146,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	public void OnAfterDeserialize()
 	{
-		// Nothing to restore, dialog fields are transient.
+		if (_addButton is not null)
+		{
+			_addButton.Pressed += OnAddPressed;
+		}
+
+		RebuildList();
 	}
 
 	/// <summary>

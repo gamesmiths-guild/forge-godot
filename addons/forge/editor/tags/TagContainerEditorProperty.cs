@@ -11,7 +11,7 @@ using GodotStringArray = Godot.Collections.Array<string>;
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
-public partial class TagContainerEditorProperty : EditorProperty
+public partial class TagContainerEditorProperty : EditorProperty, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
@@ -82,6 +82,20 @@ public partial class TagContainerEditorProperty : EditorProperty
 			obj.Get(propertyName).AsGodotArray<string>() ?? [];
 
 		RebuildTree();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	public void OnAfterDeserialize()
+	{
 	}
 
 	private void RebuildTree()

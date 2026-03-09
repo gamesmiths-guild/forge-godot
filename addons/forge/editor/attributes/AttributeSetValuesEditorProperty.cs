@@ -13,7 +13,7 @@ using Godot.Collections;
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
-public partial class AttributeSetValuesEditorProperty : EditorProperty
+public partial class AttributeSetValuesEditorProperty : EditorProperty, ISerializationListener
 {
 	public override void _Ready()
 	{
@@ -94,6 +94,24 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty
 		}
 	}
 
+	public void OnBeforeSerialize()
+	{
+		VBoxContainer? attributesRoot = GetNodeOrNull<VBoxContainer>("AttributesRoot");
+		if (attributesRoot is not null)
+		{
+			for (var i = attributesRoot.GetChildCount() - 1; i >= 0; i--)
+			{
+				Node child = attributesRoot.GetChild(i);
+				attributesRoot.RemoveChild(child);
+				child.Free();
+			}
+		}
+	}
+
+	public void OnAfterDeserialize()
+	{
+	}
+
 	private static PanelContainer AttributeHeader(string text)
 	{
 		var headerPanel = new PanelContainer
@@ -124,17 +142,17 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty
 
 	private static HBoxContainer AttributeFieldRow(string label, SpinBox spinBox)
 	{
-		var hbox = new HBoxContainer();
+		var hBox = new HBoxContainer();
 
-		hbox.AddChild(new Label
+		hBox.AddChild(new Label
 		{
 			Text = label,
 			CustomMinimumSize = new Vector2(80, 0),
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		});
 
-		hbox.AddChild(spinBox);
-		return hbox;
+		hBox.AddChild(spinBox);
+		return hBox;
 	}
 
 	private static SpinBox CreateSpinBox(int min, int max, int value)

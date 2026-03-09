@@ -9,7 +9,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
-public partial class TagEditorProperty : EditorProperty
+public partial class TagEditorProperty : EditorProperty, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
@@ -78,6 +78,20 @@ public partial class TagEditorProperty : EditorProperty
 
 		_currentValue = obj.Get(propertyName).AsString();
 		RebuildTree();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	public void OnAfterDeserialize()
+	{
 	}
 
 	private void RebuildTree()

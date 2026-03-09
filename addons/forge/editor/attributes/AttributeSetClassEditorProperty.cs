@@ -12,7 +12,7 @@ using Godot.Collections;
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
-public partial class AttributeSetClassEditorProperty : EditorProperty
+public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializationListener
 {
 	private OptionButton _optionButton = null!;
 
@@ -83,6 +83,20 @@ public partial class AttributeSetClassEditorProperty : EditorProperty
 				break;
 			}
 		}
+	}
+
+	public void OnBeforeSerialize()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	public void OnAfterDeserialize()
+	{
 	}
 }
 #endif

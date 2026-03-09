@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// Designed to be shown in the bottom panel area of the Godot editor.
 /// </summary>
 [Tool]
-public partial class StatescriptGraphEditorDock : EditorDock
+public partial class StatescriptGraphEditorDock : EditorDock, ISerializationListener
 {
 	private readonly List<GraphTab> _openTabs = [];
 	private readonly Dictionary<StringName, Vector2> _preMovePositions = [];
@@ -32,6 +32,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private HSplitContainer? _splitContainer;
 
 	private MenuButton? _fileMenuButton;
+	private PopupMenu? _fileMenuPopup;
 	private Button? _variablesToggleButton;
 	private Button? _onlineDocsButton;
 
@@ -49,6 +50,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 	private EditorFileSystem? _fileSystem;
 	private Callable _filesystemChangedCallable;
+
+	private string[]? _serializedTabPaths;
+	private int _serializedActiveTab = -1;
+	private bool[]? _serializedVariablesStates;
+	private string[]? _serializedConnections;
+	private int[]? _serializedConnectionCounts;
 
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
@@ -94,6 +101,78 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			== true)
 		{
 			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		DisconnectUISignals();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			== true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		_serializedTabPaths = GetOpenResourcePaths();
+		_serializedActiveTab = GetActiveTabIndex();
+		_serializedVariablesStates = GetVariablesPanelStates();
+
+		SyncVisualNodePositionsToGraph();
+		SyncConnectionsToCurrentGraph();
+
+		if (CurrentGraph is not null && _graphEdit is not null)
+		{
+			CurrentGraph.ScrollOffset = _graphEdit.ScrollOffset;
+			CurrentGraph.Zoom = _graphEdit.Zoom;
+		}
+
+		var allConnections = new List<string>();
+		_serializedConnectionCounts = new int[_openTabs.Count];
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			StatescriptGraph graph = _openTabs[i].GraphResource;
+			var count = 0;
+			foreach (StatescriptConnection c in graph.Connections)
+			{
+				allConnections.Add($"{c.FromNode},{c.OutputPort},{c.ToNode},{c.InputPort}");
+				count++;
+			}
+
+			_serializedConnectionCounts[i] = count;
+		}
+
+		_serializedConnections = [.. allConnections];
+
+		DisconnectUISignals();
+		ClearGraphEditor();
+
+		if (_tabBar is not null)
+		{
+			while (_tabBar.GetTabCount() > 0)
+			{
+				_tabBar.RemoveTab(0);
+			}
+		}
+
+		_openTabs.Clear();
+	}
+
+	public void OnAfterDeserialize()
+	{
+		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
+
+		if (_fileSystem?.
+			IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable) == false)
+		{
+			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		ConnectUISignals();
+
+		if (_serializedTabPaths?.Length > 0)
+		{
+			_ = RestoreTabsDeferred();
 		}
 	}
 
@@ -303,6 +382,115 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 	}
 
+	private static void OnOnlineDocsPressed()
+	{
+		OS.ShellOpen("https://github.com/gamesmiths-guild/forge-godot/tree/main/docs");
+	}
+
+	private async Task RestoreTabsDeferred()
+	{
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+		if (_serializedTabPaths is null || _serializedTabPaths.Length == 0)
+		{
+			return;
+		}
+
+		var paths = _serializedTabPaths;
+		var activeTab = _serializedActiveTab;
+		var varStates = _serializedVariablesStates;
+		var savedConnections = _serializedConnections;
+		var connectionCounts = _serializedConnectionCounts;
+
+		_serializedTabPaths = null;
+		_serializedActiveTab = -1;
+		_serializedVariablesStates = null;
+		_serializedConnections = null;
+		_serializedConnectionCounts = null;
+
+		if (_tabBar is null || _graphEdit is null)
+		{
+			return;
+		}
+
+		_isLoadingGraph = true;
+
+		_openTabs.Clear();
+		while (_tabBar.GetTabCount() > 0)
+		{
+			_tabBar.RemoveTab(0);
+		}
+
+		var skippedTabs = 0;
+		for (var i = 0; i < paths.Length; i++)
+		{
+			if (!ResourceLoader.Exists(paths[i]))
+			{
+				skippedTabs++;
+				continue;
+			}
+
+			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(paths[i]);
+			if (graph is null)
+			{
+				skippedTabs++;
+				continue;
+			}
+
+			graph.EnsureEntryNode();
+			var tab = new GraphTab(graph);
+
+			var currentTab = i - skippedTabs;
+			if (varStates is not null && currentTab < varStates.Length)
+			{
+				tab.VariablesPanelOpen = varStates[currentTab];
+			}
+
+			_openTabs.Add(tab);
+			_tabBar.AddTab(graph.StatescriptName);
+		}
+
+		_isLoadingGraph = false;
+
+		if (savedConnections is not null && connectionCounts is not null)
+		{
+			var offset = 0;
+			for (var i = 0; i < _openTabs.Count && i < connectionCounts.Length; i++)
+			{
+				StatescriptGraph graph = _openTabs[i].GraphResource;
+				graph.Connections.Clear();
+
+				for (var j = 0; j < connectionCounts[i] && offset < savedConnections.Length; j++, offset++)
+				{
+					var parts = savedConnections[offset].Split(',');
+					if (parts.Length != 4
+						|| !int.TryParse(parts[1], out var outPort)
+						|| !int.TryParse(parts[3], out var inPort))
+					{
+						continue;
+					}
+
+					graph.Connections.Add(new StatescriptConnection
+					{
+						FromNode = parts[0],
+						OutputPort = outPort,
+						ToNode = parts[2],
+						InputPort = inPort,
+					});
+				}
+			}
+		}
+
+		if (activeTab >= 0 && activeTab < _openTabs.Count)
+		{
+			_tabBar.CurrentTab = activeTab;
+			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
+			ApplyVariablesPanelState(activeTab);
+		}
+
+		UpdateVisibility();
+	}
+
 	private void CloseTabByIndex(int tabIndex)
 	{
 		if (_tabBar is null || tabIndex < 0 || tabIndex >= _openTabs.Count)
@@ -424,17 +612,17 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			ThemeTypeVariation = "FlatMenuButton",
 		};
 
-		PopupMenu filePopup = _fileMenuButton.GetPopup();
+		_fileMenuPopup = _fileMenuButton.GetPopup();
 #pragma warning disable RCS1130, S3265 // Bitwise operation on enum without Flags attribute
-		filePopup.AddItem("New Statescript...", 0, Key.N | (Key)KeyModifierMask.MaskCtrl);
-		filePopup.AddItem("Load Statescript File...", 1, Key.O | (Key)KeyModifierMask.MaskCtrl);
-		filePopup.AddSeparator();
-		filePopup.AddItem("Save", 2, Key.S | (Key)KeyModifierMask.MaskCtrl | (Key)KeyModifierMask.MaskAlt);
-		filePopup.AddItem("Save As...", 3);
-		filePopup.AddSeparator();
-		filePopup.AddItem("Close", 4, Key.W | (Key)KeyModifierMask.MaskCtrl);
+		_fileMenuPopup.AddItem("New Statescript...", 0, Key.N | (Key)KeyModifierMask.MaskCtrl);
+		_fileMenuPopup.AddItem("Load Statescript File...", 1, Key.O | (Key)KeyModifierMask.MaskCtrl);
+		_fileMenuPopup.AddSeparator();
+		_fileMenuPopup.AddItem("Save", 2, Key.S | (Key)KeyModifierMask.MaskCtrl | (Key)KeyModifierMask.MaskAlt);
+		_fileMenuPopup.AddItem("Save As...", 3);
+		_fileMenuPopup.AddSeparator();
+		_fileMenuPopup.AddItem("Close", 4, Key.W | (Key)KeyModifierMask.MaskCtrl);
 #pragma warning restore RCS1130, S3265 // Bitwise operation on enum without Flags attribute
-		filePopup.IdPressed += OnFileMenuIdPressed;
+		_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
 
 		menuHBox.AddChild(_fileMenuButton);
 		menuHBox.MoveChild(_fileMenuButton, 0);
@@ -482,11 +670,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("ExternalLink", "EditorIcons"),
 		};
 
-		_onlineDocsButton.Pressed += () =>
-		{
-			OS.ShellOpen("https://github.com/gamesmiths-guild/forge-godot/tree/main/docs");
-		};
-
+		_onlineDocsButton.Pressed += OnOnlineDocsPressed;
 		menuHBox.AddChild(_onlineDocsButton);
 
 		_emptyLabel = new Label
@@ -925,6 +1109,100 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		{
 			DuplicateSelectedNodes();
 			GetViewport().SetInputAsHandled();
+		}
+	}
+
+	private void DisconnectUISignals()
+	{
+		if (_tabBar is not null)
+		{
+			_tabBar.TabChanged -= OnTabChanged;
+			_tabBar.TabClosePressed -= OnTabClosePressed;
+		}
+
+		if (_graphEdit is not null)
+		{
+			_graphEdit.ConnectionRequest -= OnConnectionRequest;
+			_graphEdit.DisconnectionRequest -= OnDisconnectionRequest;
+			_graphEdit.DeleteNodesRequest -= OnDeleteNodesRequest;
+			_graphEdit.BeginNodeMove -= OnBeginNodeMove;
+			_graphEdit.EndNodeMove -= OnEndNodeMove;
+			_graphEdit.PopupRequest -= OnGraphEditPopupRequest;
+			_graphEdit.ConnectionToEmpty -= OnConnectionToEmpty;
+			_graphEdit.ConnectionFromEmpty -= OnConnectionFromEmpty;
+			_graphEdit.GuiInput -= OnGraphEditGuiInput;
+		}
+
+		if (_fileMenuPopup is not null)
+		{
+			_fileMenuPopup.IdPressed -= OnFileMenuIdPressed;
+		}
+
+		if (_addNodeButton is not null)
+		{
+			_addNodeButton.Pressed -= OnAddNodeButtonPressed;
+		}
+
+		if (_variablesToggleButton is not null)
+		{
+			_variablesToggleButton.Toggled -= OnVariablesToggled;
+		}
+
+		if (_onlineDocsButton is not null)
+		{
+			_onlineDocsButton.Pressed -= OnOnlineDocsPressed;
+		}
+
+		if (_addNodeDialog is not null)
+		{
+			_addNodeDialog.Canceled -= OnDialogCanceled;
+		}
+	}
+
+	private void ConnectUISignals()
+	{
+		if (_tabBar is not null)
+		{
+			_tabBar.TabChanged += OnTabChanged;
+			_tabBar.TabClosePressed += OnTabClosePressed;
+		}
+
+		if (_graphEdit is not null)
+		{
+			_graphEdit.ConnectionRequest += OnConnectionRequest;
+			_graphEdit.DisconnectionRequest += OnDisconnectionRequest;
+			_graphEdit.DeleteNodesRequest += OnDeleteNodesRequest;
+			_graphEdit.BeginNodeMove += OnBeginNodeMove;
+			_graphEdit.EndNodeMove += OnEndNodeMove;
+			_graphEdit.PopupRequest += OnGraphEditPopupRequest;
+			_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
+			_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
+			_graphEdit.GuiInput += OnGraphEditGuiInput;
+		}
+
+		if (_fileMenuPopup is not null)
+		{
+			_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
+		}
+
+		if (_addNodeButton is not null)
+		{
+			_addNodeButton.Pressed += OnAddNodeButtonPressed;
+		}
+
+		if (_variablesToggleButton is not null)
+		{
+			_variablesToggleButton.Toggled += OnVariablesToggled;
+		}
+
+		if (_onlineDocsButton is not null)
+		{
+			_onlineDocsButton.Pressed += OnOnlineDocsPressed;
+		}
+
+		if (_addNodeDialog is not null)
+		{
+			_addNodeDialog.Canceled += OnDialogCanceled;
 		}
 	}
 
