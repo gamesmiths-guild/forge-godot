@@ -197,7 +197,7 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		ResourceSaver.Save(graph);
+		SaveGraphResource(graph);
 		GD.Print($"Statescript graph saved: {graph.ResourcePath}");
 	}
 

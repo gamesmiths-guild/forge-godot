@@ -97,6 +97,10 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+
+		ClearGraphEditor();
+		_openTabs.Clear();
+
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
 			== true)
 		{
@@ -302,7 +306,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				continue;
 			}
 
-			ResourceSaver.Save(graph);
+			SaveGraphResource(graph);
 		}
 	}
 
@@ -331,13 +335,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		for (var i = 0; i < paths.Length; i++)
 		{
 			var path = paths[i];
-			if (!ResourceLoader.Exists(path))
-			{
-				skippedTabs++;
-				continue;
-			}
 
-			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
+			StatescriptGraph? graph = LoadGraphFromPath(path);
 			if (graph is null)
 			{
 				skippedTabs++;
@@ -385,6 +384,116 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private static void OnOnlineDocsPressed()
 	{
 		OS.ShellOpen("https://github.com/gamesmiths-guild/forge-godot/tree/main/docs");
+	}
+
+	private static string GetBaseFilePath(string resourcePath)
+	{
+		var separatorIndex = resourcePath.IndexOf("::", StringComparison.Ordinal);
+		return separatorIndex >= 0 ? resourcePath[..separatorIndex] : resourcePath;
+	}
+
+	private static bool IsSubResourcePath(string resourcePath)
+	{
+		return resourcePath.Contains("::", StringComparison.Ordinal);
+	}
+
+	private static StatescriptGraph? LoadGraphFromPath(string path)
+	{
+		if (IsSubResourcePath(path))
+		{
+			var basePath = GetBaseFilePath(path);
+			if (!ResourceLoader.Exists(basePath))
+			{
+				return null;
+			}
+
+			Resource? parentResource = ResourceLoader.Load(basePath);
+			if (parentResource is null)
+			{
+				return null;
+			}
+
+			return FindSubResourceGraph(parentResource, path);
+		}
+
+		if (!ResourceLoader.Exists(path))
+		{
+			return null;
+		}
+
+		return ResourceLoader.Load<StatescriptGraph>(path);
+	}
+
+	private static StatescriptGraph? FindSubResourceGraph(Resource parentResource, string subResourcePath)
+	{
+		foreach (var propertyName in parentResource.GetPropertyList()
+			.Select(p => p["name"].AsString()))
+		{
+			Variant value = parentResource.Get(propertyName);
+			if (value.Obj is StatescriptGraph graph && graph.ResourcePath == subResourcePath)
+			{
+				return graph;
+			}
+
+			if (value.Obj is Resource nestedResource)
+			{
+				StatescriptGraph? found = FindSubResourceInNested(nestedResource, subResourcePath);
+				if (found is not null)
+				{
+					return found;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private static StatescriptGraph? FindSubResourceInNested(Resource resource, string subResourcePath)
+	{
+		if (resource is StatescriptGraph graph && graph.ResourcePath == subResourcePath)
+		{
+			return graph;
+		}
+
+		foreach (var propertyName in resource.GetPropertyList()
+			.Select(p => p["name"].AsString()))
+		{
+			Variant value = resource.Get(propertyName);
+			if (value.Obj is StatescriptGraph nestedGraph && nestedGraph.ResourcePath == subResourcePath)
+			{
+				return nestedGraph;
+			}
+
+			if (value.Obj is Resource nestedResource && nestedResource != resource)
+			{
+				StatescriptGraph? found = FindSubResourceInNested(nestedResource, subResourcePath);
+				if (found is not null)
+				{
+					return found;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private static void SaveGraphResource(StatescriptGraph graph)
+	{
+		var path = graph.ResourcePath;
+
+		if (IsSubResourcePath(path))
+		{
+			var basePath = GetBaseFilePath(path);
+			Resource? parentResource = ResourceLoader.Load(basePath);
+			if (parentResource is not null)
+			{
+				ResourceSaver.Save(parentResource);
+			}
+		}
+		else
+		{
+			ResourceSaver.Save(graph);
+		}
 	}
 
 	private async Task RestoreTabsDeferred()
@@ -1076,7 +1185,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				continue;
 			}
 
-			if (!FileAccess.FileExists(path))
+			var filePath = GetBaseFilePath(path);
+			if (!FileAccess.FileExists(filePath))
 			{
 				CloseTabByIndex(i);
 			}
