@@ -22,6 +22,7 @@ internal static class StatescriptResolverRegistry
 		Register(() => new AttributeResolverEditor());
 		Register(() => new TagResolverEditor());
 		Register(() => new ComparisonResolverEditor());
+		Register(() => new MagnitudeResolverEditor());
 	}
 
 	/// <summary>
