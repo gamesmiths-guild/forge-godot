@@ -33,6 +33,9 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	private List<Func<NodeEditorProperty>> _numericFactories = [];
 	private ComparisonOperation _operation;
 
+	private VBoxContainer? _leftEditorContainer;
+	private VBoxContainer? _rightEditorContainer;
+
 	/// <inheritdoc/>
 	public override string DisplayName => "Comparison";
 
@@ -76,16 +79,23 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		}
 
 		var leftFoldable = new FoldableContainer { Title = "Left:" };
-		leftFoldable.FoldingChanged += _ => RaiseLayoutSizeChanged();
+		leftFoldable.FoldingChanged += OnFoldingChanged;
 		vBox.AddChild(leftFoldable);
 
 		_leftContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		leftFoldable.AddChild(_leftContainer);
 
-		_leftResolverDropdown = CreateResolverDropdown(
+		_leftEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_leftResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Left);
+		_leftContainer.AddChild(_leftResolverDropdown);
+		_leftContainer.AddChild(_leftEditorContainer);
+		ShowNestedEditor(
+			GetSelectedIndex(comparisonResolver?.Left),
 			comparisonResolver?.Left,
-			_leftContainer,
+			_leftEditorContainer,
 			x => _leftEditor = x);
+
+		_leftResolverDropdown.ItemSelected += OnLeftResolverDropdownItemSelected;
 
 		var opRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(opRow);
@@ -103,25 +113,28 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		_operationDropdown.Selected = (int)_operation;
 
-		_operationDropdown.ItemSelected += x =>
-		{
-			_operation = (ComparisonOperation)(int)x;
-			_onChanged?.Invoke();
-		};
+		_operationDropdown.ItemSelected += OnOperationDropdownItemSelected;
 
 		opRow.AddChild(_operationDropdown);
 
 		var rightFoldable = new FoldableContainer { Title = "Right:" };
-		rightFoldable.FoldingChanged += _ => RaiseLayoutSizeChanged();
+		rightFoldable.FoldingChanged += OnFoldingChanged;
 		vBox.AddChild(rightFoldable);
 
 		_rightContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		rightFoldable.AddChild(_rightContainer);
 
-		_rightResolverDropdown = CreateResolverDropdown(
+		_rightEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_rightResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Right);
+		_rightContainer.AddChild(_rightResolverDropdown);
+		_rightContainer.AddChild(_rightEditorContainer);
+		ShowNestedEditor(
+			GetSelectedIndex(comparisonResolver?.Right),
 			comparisonResolver?.Right,
-			_rightContainer,
+			_rightEditorContainer,
 			x => _rightEditor = x);
+
+		_rightResolverDropdown.ItemSelected += OnRightResolverDropdownItemSelected;
 	}
 
 	/// <inheritdoc/>
@@ -146,6 +159,16 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		property.Resolver = comparisonResolver;
 	}
 
+	/// <inheritdoc/>
+	public override void ClearCallbacks()
+	{
+		base.ClearCallbacks();
+		_onChanged = null;
+
+		_leftEditor?.ClearCallbacks();
+		_rightEditor?.ClearCallbacks();
+	}
+
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
 	{
 		return resolver switch
@@ -157,20 +180,51 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		};
 	}
 
-	private OptionButton CreateResolverDropdown(
-		StatescriptResolverResource? existingResolver,
-		VBoxContainer container,
+	private void OnFoldingChanged(bool isFolded)
+	{
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnOperationDropdownItemSelected(long x)
+	{
+		_operation = (ComparisonOperation)(int)x;
+		_onChanged?.Invoke();
+	}
+
+	private void OnLeftResolverDropdownItemSelected(long x)
+	{
+		HandleResolverDropdownChanged((int)x, _leftEditorContainer, editor => _leftEditor = editor);
+	}
+
+	private void OnRightResolverDropdownItemSelected(long x)
+	{
+		HandleResolverDropdownChanged((int)x, _rightEditorContainer, editor => _rightEditor = editor);
+	}
+
+	private void HandleResolverDropdownChanged(
+		int selectedIndex,
+		VBoxContainer? editorContainer,
 		Action<NodeEditorProperty?> setEditor)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		container.AddChild(dropdown);
-
-		foreach (Func<NodeEditorProperty> factory in _numericFactories)
+		if (editorContainer is null)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			return;
 		}
 
+		foreach (Node child in editorContainer.GetChildren())
+		{
+			editorContainer.RemoveChild(child);
+			child.QueueFree();
+		}
+
+		setEditor(null);
+		ShowNestedEditor(selectedIndex, null, editorContainer, setEditor);
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
+	{
 		var selectedIndex = 0;
 
 		if (existingResolver is not null)
@@ -189,26 +243,20 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			}
 		}
 
-		dropdown.Selected = selectedIndex;
+		return selectedIndex;
+	}
 
-		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		container.AddChild(editorContainer);
+	private OptionButton CreateResolverDropdownControl(StatescriptResolverResource? existingResolver)
+	{
+		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
-		ShowNestedEditor(selectedIndex, existingResolver, editorContainer, setEditor);
-
-		dropdown.ItemSelected += x =>
+		foreach (Func<NodeEditorProperty> factory in _numericFactories)
 		{
-			foreach (Node child in editorContainer.GetChildren())
-			{
-				editorContainer.RemoveChild(child);
-				child.QueueFree();
-			}
+			using NodeEditorProperty temp = factory();
+			dropdown.AddItem(temp.DisplayName);
+		}
 
-			setEditor(null);
-			ShowNestedEditor((int)x, null, editorContainer, setEditor);
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
-		};
+		dropdown.Selected = GetSelectedIndex(existingResolver);
 
 		return dropdown;
 	}
@@ -233,12 +281,17 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			tempProperty = new StatescriptNodeProperty { Resolver = existingResolver };
 		}
 
-		editor.Setup(_graph, tempProperty, typeof(ForgeVariant128), () => _onChanged?.Invoke(), false);
+		editor.Setup(_graph, tempProperty, typeof(ForgeVariant128), OnNestedEditorChanged, false);
 
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 
 		container.AddChild(editor);
 		setEditor(editor);
+	}
+
+	private void OnNestedEditorChanged()
+	{
+		_onChanged?.Invoke();
 	}
 }
 #endif

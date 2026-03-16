@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -15,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// Supports both built-in node types (Entry/Exit) and dynamically discovered concrete types.
 /// </summary>
 [Tool]
-public partial class StatescriptGraphNode : GraphNode
+public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 {
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
@@ -33,10 +34,12 @@ public partial class StatescriptGraphNode : GraphNode
 	private static readonly Color _highlightColor = new(0x56b6c2ff);
 
 	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
+	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
 
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
 	private EditorUndoRedoManager? _undoRedo;
+	private CustomNodeEditor? _activeCustomEditor;
 	private bool _resizeConnected;
 	private float _widthBeforeResize;
 	private string? _highlightedVariableName;
@@ -92,6 +95,7 @@ public partial class StatescriptGraphNode : GraphNode
 		NodeResource = resource;
 		_graph = graph;
 		_activeResolverEditors.Clear();
+		_foldableKeys.Clear();
 
 		Name = resource.NodeId;
 		Title = resource.Title;
@@ -130,6 +134,27 @@ public partial class StatescriptGraphNode : GraphNode
 		}
 
 		ApplyBottomPadding();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		_inputPropertyContexts.Clear();
+		_foldableKeys.Clear();
+
+		_activeCustomEditor = null;
+
+		foreach (KeyValuePair<PropertySlotKey, NodeEditorProperty> kvp in
+			_activeResolverEditors.Where(kvp => IsInstanceValid(kvp.Value)))
+		{
+			kvp.Value.ClearCallbacks();
+		}
+
+		_activeResolverEditors.Clear();
+		PropertyBindingChanged = null;
+	}
+
+	public void OnAfterDeserialize()
+	{
 	}
 
 	internal FoldableContainer AddPropertySectionDividerInternal(
@@ -293,16 +318,18 @@ public partial class StatescriptGraphNode : GraphNode
 			}
 		}
 
-		if (CustomNodeEditorRegistry.TryGet(typeInfo.RuntimeTypeName, out CustomNodeEditor? customEditor))
+		if (CustomNodeEditorRegistry.TryCreate(typeInfo.RuntimeTypeName, out CustomNodeEditor? customEditor))
 		{
 			Debug.Assert(_graph is not null, "Graph context is required for custom node editors.");
 			Debug.Assert(NodeResource is not null, "Node resource is required for custom node editors.");
 
+			_activeCustomEditor = customEditor;
 			customEditor.Bind(this, _graph, NodeResource, _activeResolverEditors);
 			customEditor.BuildPropertySections(typeInfo);
 		}
 		else
 		{
+			_activeCustomEditor = null;
 			BuildDefaultPropertySections(typeInfo);
 		}
 
@@ -369,15 +396,26 @@ public partial class StatescriptGraphNode : GraphNode
 
 		sectionContainer.AddThemeColorOverride("font_color", color);
 
-		sectionContainer.FoldingChanged += isFolded =>
-		{
-			SetFoldStateWithUndo(foldKey, isFolded);
-			ResetSize();
-		};
+		_foldableKeys[sectionContainer] = foldKey;
+		sectionContainer.FoldingChanged += OnSectionFoldingChanged;
 
 		AddChild(sectionContainer);
 
 		return sectionContainer;
+	}
+
+	private void OnSectionFoldingChanged(bool isFolded)
+	{
+		foreach (KeyValuePair<FoldableContainer, string> kvp in _foldableKeys.Where(kvp => IsInstanceValid(kvp.Key)))
+		{
+			var stored = GetFoldState(kvp.Value);
+			if (kvp.Key.Folded != stored)
+			{
+				SetFoldStateWithUndo(kvp.Value, kvp.Key.Folded);
+			}
+		}
+
+		ResetSize();
 	}
 
 	private bool GetFoldState(string key)

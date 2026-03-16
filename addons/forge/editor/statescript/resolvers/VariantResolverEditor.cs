@@ -22,6 +22,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	private bool _isArrayExpanded;
 	private GodotVariant _currentValue;
 	private Array<GodotVariant> _arrayValues = [];
+	private Action? _onChanged;
 
 	private Button? _toggleButton;
 	private VBoxContainer? _elementsContainer;
@@ -47,6 +48,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		bool isArray)
 	{
 		_isArray = isArray;
+		_onChanged = onChanged;
 
 		if (!StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _valueType))
 		{
@@ -80,12 +82,12 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 		if (_isArray)
 		{
-			VBoxContainer arrayEditor = CreateArrayEditor(onChanged);
+			VBoxContainer arrayEditor = CreateArrayEditor();
 			AddChild(arrayEditor);
 		}
 		else
 		{
-			Control valueEditor = CreateValueEditor(onChanged);
+			Control valueEditor = CreateValueEditor();
 			AddChild(valueEditor);
 		}
 	}
@@ -113,25 +115,27 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		}
 	}
 
-	private Control CreateValueEditor(Action onChanged)
+	/// <inheritdoc/>
+	public override void ClearCallbacks()
+	{
+		base.ClearCallbacks();
+		_onChanged = null;
+	}
+
+	private Control CreateValueEditor()
 	{
 		if (_valueType == StatescriptVariableType.Bool)
 		{
-			return StatescriptEditorControls.CreateBoolEditor(_currentValue.AsBool(), x =>
-			{
-				_currentValue = GodotVariant.From(x);
-				onChanged();
-			});
+			return StatescriptEditorControls.CreateBoolEditor(_currentValue.AsBool(), OnBoolValueChanged);
 		}
 
 		if (StatescriptEditorControls.IsIntegerType(_valueType)
 			|| StatescriptEditorControls.IsFloatType(_valueType))
 		{
-			return StatescriptEditorControls.CreateNumericSpinSlider(_valueType, _currentValue.AsDouble(), x =>
-			{
-				_currentValue = GodotVariant.From(x);
-				onChanged();
-			});
+			return StatescriptEditorControls.CreateNumericSpinSlider(
+				_valueType,
+				_currentValue.AsDouble(),
+				OnNumericValueChanged);
 		}
 
 		if (StatescriptEditorControls.IsVectorType(_valueType))
@@ -139,17 +143,31 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			return StatescriptEditorControls.CreateVectorEditor(
 				_valueType,
 				x => StatescriptEditorControls.GetVectorComponent(_currentValue, _valueType, x),
-				x =>
-				{
-					_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, x);
-					onChanged();
-				});
+				OnVectorValueChanged);
 		}
 
 		return new Label { Text = _valueType.ToString() };
 	}
 
-	private VBoxContainer CreateArrayEditor(Action onChanged)
+	private void OnBoolValueChanged(bool x)
+	{
+		_currentValue = GodotVariant.From(x);
+		_onChanged?.Invoke();
+	}
+
+	private void OnNumericValueChanged(double x)
+	{
+		_currentValue = GodotVariant.From(x);
+		_onChanged?.Invoke();
+	}
+
+	private void OnVectorValueChanged(double[] x)
+	{
+		_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, x);
+		_onChanged?.Invoke();
+	}
+
+	private VBoxContainer CreateArrayEditor()
 	{
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
@@ -170,13 +188,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			ButtonPressed = _isArrayExpanded,
 		};
 
-		_toggleButton.Toggled += x =>
-		{
-			_elementsContainer.Visible = x;
-			_isArrayExpanded = x;
-			onChanged();
-			RaiseLayoutSizeChanged();
-		};
+		_toggleButton.Toggled += OnArrayToggled;
 
 		headerRow.AddChild(_toggleButton);
 
@@ -190,34 +202,53 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			CustomMinimumSize = new GodotVector2(24, 24),
 		};
 
-		addButton.Pressed += () =>
-		{
-			GodotVariant defaultValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(_valueType);
-			_arrayValues.Add(defaultValue);
-			onChanged();
-			_elementsContainer.Visible = true;
-			_isArrayExpanded = true;
-			RebuildArrayElements(onChanged);
-			RaiseLayoutSizeChanged();
-		};
+		addButton.Pressed += OnAddElementPressed;
 
 		headerRow.AddChild(addButton);
 
 		vBox.AddChild(_elementsContainer);
 
-		RebuildArrayElements(onChanged);
+		RebuildArrayElements();
 
 		return vBox;
 	}
 
-	private void RebuildArrayElements(Action onChanged)
+	private void OnArrayToggled(bool toggled)
+	{
+		if (_elementsContainer is not null)
+		{
+			_elementsContainer.Visible = toggled;
+		}
+
+		_isArrayExpanded = toggled;
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnAddElementPressed()
+	{
+		GodotVariant defaultValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(_valueType);
+		_arrayValues.Add(defaultValue);
+		_onChanged?.Invoke();
+
+		if (_elementsContainer is not null)
+		{
+			_elementsContainer.Visible = true;
+		}
+
+		_isArrayExpanded = true;
+		RebuildArrayElements();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void RebuildArrayElements()
 	{
 		if (_elementsContainer is null || _toggleButton is null)
 		{
 			return;
 		}
 
-		foreach (global::Godot.Node child in _elementsContainer.GetChildren())
+		foreach (Node child in _elementsContainer.GetChildren())
 		{
 			_elementsContainer.RemoveChild(child);
 			child.QueueFree();
@@ -244,7 +275,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				});
 
-				AddArrayRemoveButton(labelRow, removeIcon, capturedIndex, onChanged);
+				AddArrayRemoveButton(labelRow, removeIcon, capturedIndex);
 
 				VBoxContainer vectorEditor = StatescriptEditorControls.CreateVectorEditor(
 					_valueType,
@@ -259,7 +290,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 					{
 						_arrayValues[capturedIndex] =
 							StatescriptEditorControls.BuildVectorVariant(_valueType, x);
-						onChanged();
+						_onChanged?.Invoke();
 					});
 
 				elementVBox.AddChild(vectorEditor);
@@ -277,7 +308,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 						x =>
 						{
 							_arrayValues[capturedIndex] = GodotVariant.From(x);
-							onChanged();
+							_onChanged?.Invoke();
 						}));
 				}
 				else
@@ -288,13 +319,13 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 						x =>
 						{
 							_arrayValues[capturedIndex] = GodotVariant.From(x);
-							onChanged();
+							_onChanged?.Invoke();
 						});
 
 					elementRow.AddChild(spin);
 				}
 
-				AddArrayRemoveButton(elementRow, removeIcon, capturedIndex, onChanged);
+				AddArrayRemoveButton(elementRow, removeIcon, capturedIndex);
 			}
 		}
 	}
@@ -302,8 +333,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	private void AddArrayRemoveButton(
 		HBoxContainer row,
 		Texture2D removeIcon,
-		int elementIndex,
-		Action onChanged)
+		int elementIndex)
 	{
 		var removeButton = new Button
 		{
@@ -313,15 +343,46 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			CustomMinimumSize = new GodotVector2(24, 24),
 		};
 
-		removeButton.Pressed += () =>
-		{
-			_arrayValues.RemoveAt(elementIndex);
-			onChanged();
-			RebuildArrayElements(onChanged);
-			RaiseLayoutSizeChanged();
-		};
+		var handler = new ArrayRemoveHandler(this, elementIndex);
+		removeButton.AddChild(handler);
+		removeButton.Pressed += handler.HandlePressed;
 
 		row.AddChild(removeButton);
+	}
+
+	private void OnRemoveElement(int elementIndex)
+	{
+		_arrayValues.RemoveAt(elementIndex);
+		_onChanged?.Invoke();
+		RebuildArrayElements();
+		RaiseLayoutSizeChanged();
+	}
+
+	/// <summary>
+	/// Godot-compatible signal handler for array element remove buttons. Holds the element index and a reference to the
+	/// owning editor so the <c>Pressed</c> signal can be handled without a lambda.
+	/// </summary>
+	[Tool]
+	private sealed partial class ArrayRemoveHandler : Node
+	{
+		private readonly VariantResolverEditor _editor;
+		private readonly int _elementIndex;
+
+		public ArrayRemoveHandler()
+		{
+			_editor = null!;
+		}
+
+		public ArrayRemoveHandler(VariantResolverEditor editor, int elementIndex)
+		{
+			_editor = editor;
+			_elementIndex = elementIndex;
+		}
+
+		public void HandlePressed()
+		{
+			_editor.OnRemoveElement(_elementIndex);
+		}
 	}
 }
 #endif

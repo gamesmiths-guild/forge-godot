@@ -20,6 +20,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 	private OptionButton? _dropdown;
 	private string _selectedVariableName = string.Empty;
+	private Action? _onChanged;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Variable";
@@ -41,6 +42,8 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		Action onChanged,
 		bool isArray)
 	{
+		_onChanged = onChanged;
+
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		CustomMinimumSize = new Vector2(200, 25);
 
@@ -61,12 +64,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			SelectByName(varRes.VariableName);
 		}
 
-		_dropdown.ItemSelected += _ =>
-		{
-			var idx = _dropdown.Selected;
-			_selectedVariableName = idx >= 0 && idx < _variableNames.Count ? _variableNames[idx] : string.Empty;
-			onChanged();
-		};
+		_dropdown.ItemSelected += OnDropdownItemSelected;
 
 		AddChild(_dropdown);
 	}
@@ -78,6 +76,25 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		{
 			VariableName = _selectedVariableName,
 		};
+	}
+
+	/// <inheritdoc/>
+	public override void ClearCallbacks()
+	{
+		base.ClearCallbacks();
+		_onChanged = null;
+	}
+
+	private void OnDropdownItemSelected(long index)
+	{
+		if (_dropdown is null)
+		{
+			return;
+		}
+
+		var idx = _dropdown.Selected;
+		_selectedVariableName = idx >= 0 && idx < _variableNames.Count ? _variableNames[idx] : string.Empty;
+		_onChanged?.Invoke();
 	}
 
 	private void PopulateDropdown(StatescriptGraph graph, Type expectedType)

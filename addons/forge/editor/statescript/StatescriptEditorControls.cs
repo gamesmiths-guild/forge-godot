@@ -10,7 +10,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// <summary>
 /// Shared factory methods for creating value-editor controls used by both the variable panel and resolver editors.
 /// </summary>
-internal static class StatescriptEditorControls
+internal static partial class StatescriptEditorControls
 {
 	private static readonly Color _axisXColor = new(0.96f, 0.37f, 0.37f);
 	private static readonly Color _axisYColor = new(0.54f, 0.83f, 0.01f);
@@ -54,9 +54,9 @@ internal static class StatescriptEditorControls
 	/// <summary>
 	/// Creates a <see cref="PanelContainer"/> wrapping a <see cref="CheckBox"/> for boolean editing.
 	/// </summary>
-	/// <param name="value">The initial value of the boolean variable.</param>
-	/// <param name="onChanged">An action to invoke when the boolean value changes.</param>
-	/// <returns>A <see cref="PanelContainer"/> containing the boolean editor control.</returns>
+	/// <param name="value">The initial value of the boolean.</param>
+	/// <param name="onChanged">An action invoked on value change.</param>
+	/// <returns>A <see cref="PanelContainer"/> containing a <see cref="CheckBox"/>.</returns>
 	public static PanelContainer CreateBoolEditor(bool value, Action<bool> onChanged)
 	{
 		var container = new PanelContainer
@@ -76,7 +76,9 @@ internal static class StatescriptEditorControls
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 
-		checkButton.Toggled += x => onChanged(x);
+		var handler = new BoolSignalHandler { OnChanged = onChanged };
+		checkButton.AddChild(handler);
+		checkButton.Toggled += handler.HandleToggled;
 		container.AddChild(checkButton);
 		return container;
 	}
@@ -111,34 +113,17 @@ internal static class StatescriptEditorControls
 			Value = value,
 		};
 
-		var isDragging = false;
+		var handler = new NumericSpinHandler(spin) { OnChanged = onChanged };
+		spin.AddChild(handler);
 
 		if (onChanged is not null)
 		{
-			spin.ValueChanged += x =>
-			{
-				if (!isDragging)
-				{
-					onChanged?.Invoke(x);
-				}
-			};
+			spin.ValueChanged += handler.HandleValueChanged;
 		}
 
-		spin.Grabbed += () =>
-		{
-			isDragging = true;
-		};
-
-		spin.Ungrabbed += () =>
-		{
-			isDragging = false;
-			onChanged?.Invoke(spin.Value);
-		};
-
-		spin.FocusExited += () =>
-		{
-			isDragging = false;
-		};
+		spin.Grabbed += handler.HandleGrabbed;
+		spin.Ungrabbed += handler.HandleUngrabbed;
+		spin.FocusExited += handler.HandleFocusExited;
 
 		return spin;
 	}
@@ -173,7 +158,8 @@ internal static class StatescriptEditorControls
 		panelContainer.AddChild(row);
 
 		var values = new double[componentCount];
-		var isDragging = false;
+		var handler = new VectorComponentHandler(values) { OnChanged = onChanged };
+		vBox.AddChild(handler);
 
 		for (var i = 0; i < componentCount; i++)
 		{
@@ -197,33 +183,13 @@ internal static class StatescriptEditorControls
 
 			spin.AddThemeColorOverride("label_color", GetComponentColor(i));
 
-			var capturedI = i;
+			var componentHandler = new VectorSpinHandler(handler, i);
+			spin.AddChild(componentHandler);
 
-			spin.ValueChanged += x =>
-			{
-				values[capturedI] = x;
-
-				if (!isDragging)
-				{
-					onChanged?.Invoke(values);
-				}
-			};
-
-			spin.Grabbed += () =>
-			{
-				isDragging = true;
-			};
-
-			spin.Ungrabbed += () =>
-			{
-				isDragging = false;
-				onChanged?.Invoke(values);
-			};
-
-			spin.FocusExited += () =>
-			{
-				isDragging = false;
-			};
+			spin.ValueChanged += componentHandler.HandleValueChanged;
+			spin.Grabbed += componentHandler.HandleGrabbed;
+			spin.Ungrabbed += componentHandler.HandleUngrabbed;
+			spin.FocusExited += componentHandler.HandleFocusExited;
 
 			row.AddChild(spin);
 		}

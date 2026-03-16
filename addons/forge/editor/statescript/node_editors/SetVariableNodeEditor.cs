@@ -12,7 +12,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// Custom node editor for the <c>SetVariableNode</c>. Dynamically filters the Input (value resolver) based on the
 /// selected target variable's type.
 /// </summary>
-internal sealed class SetVariableNodeEditor : CustomNodeEditor
+[Tool]
+internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 {
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
@@ -20,12 +21,18 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 	private StatescriptVariableType? _resolvedType;
 	private bool _resolvedIsArray;
 
+	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
+	private VBoxContainer? _cachedInputEditorContainer;
+	private int _cachedOutputIndex;
+
 	/// <inheritdoc/>
 	public override string HandledRuntimeTypeName => "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode";
 
 	/// <inheritdoc/>
 	public override void BuildPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
+		_cachedTypeInfo = typeInfo;
+
 		var inputFolded = GetFoldState(FoldInputKey);
 		FoldableContainer inputContainer = AddPropertySectionDivider(
 			"Input Properties",
@@ -37,6 +44,8 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
+
+		_cachedInputEditorContainer = inputEditorContainer;
 
 		inputContainer.AddChild(inputEditorContainer);
 
@@ -75,19 +84,17 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			AddTargetVariableRow(
 				typeInfo.OutputVariablesInfo[0],
 				0,
-				outputContainer,
-				typeInfo,
-				inputEditorContainer);
+				outputContainer);
 		}
 	}
 
 	private void AddTargetVariableRow(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
-		FoldableContainer sectionContainer,
-		StatescriptNodeDiscovery.NodeTypeInfo typeInfo,
-		VBoxContainer inputEditorContainer)
+		FoldableContainer sectionContainer)
 	{
+		_cachedOutputIndex = index;
+
 		var hBox = new HBoxContainer
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -141,75 +148,83 @@ internal sealed class SetVariableNodeEditor : CustomNodeEditor
 			RemoveBinding(StatescriptPropertyDirection.Output, index);
 		}
 
-		dropdown.ItemSelected += x =>
-		{
-			var variableIndex = (int)x - 1;
-
-			StatescriptVariableType? previousType = _resolvedType;
-			var previousIsArray = _resolvedIsArray;
-
-			var oldOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
-				as StatescriptResolverResource;
-			var oldInputResolver = FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver?.Duplicate()
-				as StatescriptResolverResource;
-
-			if (variableIndex < 0)
-			{
-				RemoveBinding(StatescriptPropertyDirection.Output, index);
-				_resolvedType = null;
-				_resolvedIsArray = false;
-			}
-			else
-			{
-				var variableName = Graph.Variables[variableIndex].VariableName;
-				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
-					new VariableResolverResource { VariableName = variableName };
-
-				_resolvedType = Graph.Variables[variableIndex].VariableType;
-				_resolvedIsArray = Graph.Variables[variableIndex].IsArray;
-			}
-
-			if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
-			{
-				RemoveBinding(StatescriptPropertyDirection.Input, 0);
-
-				var inputKey = new PropertySlotKey(StatescriptPropertyDirection.Input, 0);
-
-				ActiveResolverEditors.Remove(inputKey);
-			}
-
-			if (typeInfo.InputPropertiesInfo.Length > 0)
-			{
-				RebuildInputUI(typeInfo.InputPropertiesInfo[0], inputEditorContainer);
-			}
-
-			var newOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
-				as StatescriptResolverResource;
-			var newInputResolver = FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver?.Duplicate()
-				as StatescriptResolverResource;
-
-			RecordResolverBindingChange(
-				StatescriptPropertyDirection.Output,
-				index,
-				oldOutputResolver,
-				newOutputResolver,
-				"Change Target Variable");
-
-			if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
-			{
-				RecordResolverBindingChange(
-					StatescriptPropertyDirection.Input,
-					0,
-					oldInputResolver,
-					newInputResolver,
-					"Change Target Variable Input");
-			}
-
-			RaisePropertyBindingChanged();
-			ResetSize();
-		};
+		dropdown.ItemSelected += OnTargetVariableDropdownItemSelected;
 
 		hBox.AddChild(dropdown);
+	}
+
+	private void OnTargetVariableDropdownItemSelected(long x)
+	{
+		if (_cachedTypeInfo is null || _cachedInputEditorContainer is null)
+		{
+			return;
+		}
+
+		var index = _cachedOutputIndex;
+		var variableIndex = (int)x - 1;
+
+		StatescriptVariableType? previousType = _resolvedType;
+		var previousIsArray = _resolvedIsArray;
+
+		var oldOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
+		var oldInputResolver = FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
+
+		if (variableIndex < 0)
+		{
+			RemoveBinding(StatescriptPropertyDirection.Output, index);
+			_resolvedType = null;
+			_resolvedIsArray = false;
+		}
+		else
+		{
+			var variableName = Graph.Variables[variableIndex].VariableName;
+			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
+				new VariableResolverResource { VariableName = variableName };
+
+			_resolvedType = Graph.Variables[variableIndex].VariableType;
+			_resolvedIsArray = Graph.Variables[variableIndex].IsArray;
+		}
+
+		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+		{
+			RemoveBinding(StatescriptPropertyDirection.Input, 0);
+
+			var inputKey = new PropertySlotKey(StatescriptPropertyDirection.Input, 0);
+
+			ActiveResolverEditors.Remove(inputKey);
+		}
+
+		if (_cachedTypeInfo.InputPropertiesInfo.Length > 0)
+		{
+			RebuildInputUI(_cachedTypeInfo.InputPropertiesInfo[0], _cachedInputEditorContainer);
+		}
+
+		var newOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
+		var newInputResolver = FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
+
+		RecordResolverBindingChange(
+			StatescriptPropertyDirection.Output,
+			index,
+			oldOutputResolver,
+			newOutputResolver,
+			"Change Target Variable");
+
+		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+		{
+			RecordResolverBindingChange(
+				StatescriptPropertyDirection.Input,
+				0,
+				oldInputResolver,
+				newInputResolver,
+				"Change Target Variable Input");
+		}
+
+		RaisePropertyBindingChanged();
+		ResetSize();
 	}
 
 	private void RebuildInputUI(

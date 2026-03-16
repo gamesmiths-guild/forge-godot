@@ -11,6 +11,48 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 public partial class StatescriptGraphNode
 {
+	private readonly Dictionary<PropertySlotKey, InputPropertyContext> _inputPropertyContexts = [];
+
+	private static OptionButton? FindOptionButtonWithMeta(Node node, long selectedValue)
+	{
+		if (node is OptionButton ob && ob.HasMeta("property_index") && ob.Selected == (int)selectedValue)
+		{
+			return ob;
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			OptionButton? found = FindOptionButtonWithMeta(child, selectedValue);
+			if (found is not null)
+			{
+				return found;
+			}
+		}
+
+		return null;
+	}
+
+	private static OptionButton? FindOutputVarDropdownRecursive(Node node, long selectedValue)
+	{
+		if (node is OptionButton ob
+			&& ob.HasMeta("output_index")
+			&& ob.Selected == (int)selectedValue)
+		{
+			return ob;
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			OptionButton? found = FindOutputVarDropdownRecursive(child, selectedValue);
+			if (found is not null)
+			{
+				return found;
+			}
+		}
+
+		return null;
+	}
+
 	private void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
@@ -99,6 +141,9 @@ public partial class StatescriptGraphNode
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(editorContainer);
 
+		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
+		_inputPropertyContexts[key] = new InputPropertyContext(resolverFactories, propInfo, editorContainer);
+
 		ShowResolverEditorUI(
 			resolverFactories[selectedIndex],
 			binding,
@@ -108,63 +153,92 @@ public partial class StatescriptGraphNode
 			index,
 			propInfo.IsArray);
 
-		resolverDropdown.ItemSelected += x =>
+		resolverDropdown.SetMeta("property_index", index);
+		resolverDropdown.ItemSelected += OnInputResolverDropdownItemSelected;
+	}
+
+	private void OnInputResolverDropdownItemSelected(long x)
+	{
+		OptionButton? senderDropdown = FindSenderDropdown(x);
+		if (senderDropdown is null)
 		{
-			var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
+			return;
+		}
 
-			var oldResolver = FindBinding(StatescriptPropertyDirection.Input, index)?.Resolver?.Duplicate()
-				as StatescriptResolverResource;
+		var index = senderDropdown.GetMeta("property_index").AsInt32();
+		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
 
-			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? old))
-			{
-				_activeResolverEditors.Remove(key);
-			}
+		if (!_inputPropertyContexts.TryGetValue(key, out InputPropertyContext? ctx))
+		{
+			return;
+		}
 
-			ClearContainer(editorContainer);
+		var oldResolver = FindBinding(StatescriptPropertyDirection.Input, index)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
 
-			if (NodeResource is null)
-			{
-				return;
-			}
+		if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? old))
+		{
+			_activeResolverEditors.Remove(key);
+		}
 
-			ShowResolverEditorUI(
-				resolverFactories[(int)x],
-				null,
-				propInfo.ExpectedType,
-				editorContainer,
-				StatescriptPropertyDirection.Input,
+		ClearContainer(ctx.EditorContainer);
+
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		ShowResolverEditorUI(
+			ctx.ResolverFactories[(int)x],
+			null,
+			ctx.PropInfo.ExpectedType,
+			ctx.EditorContainer,
+			StatescriptPropertyDirection.Input,
+			index,
+			ctx.PropInfo.IsArray);
+
+		if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
+		{
+			SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+		}
+
+		StatescriptNodeProperty? updated = FindBinding(StatescriptPropertyDirection.Input, index);
+		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Change Resolver Type", customContext: _graph);
+			_undoRedo.AddDoMethod(
+				this,
+				MethodName.ApplyResolverBinding,
+				(int)StatescriptPropertyDirection.Input,
 				index,
-				propInfo.IsArray);
+				newResolver ?? new StatescriptResolverResource());
+			_undoRedo.AddUndoMethod(
+				this,
+				MethodName.ApplyResolverBinding,
+				(int)StatescriptPropertyDirection.Input,
+				index,
+				oldResolver ?? new StatescriptResolverResource());
+			_undoRedo.CommitAction(false);
+		}
 
-			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
+		PropertyBindingChanged?.Invoke();
+		ResetSize();
+	}
+
+	private OptionButton? FindSenderDropdown(long selectedValue)
+	{
+		foreach (Node child in GetChildren())
+		{
+			OptionButton? found = FindOptionButtonWithMeta(child, selectedValue);
+			if (found is not null)
 			{
-				SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+				return found;
 			}
+		}
 
-			StatescriptNodeProperty? updated = FindBinding(StatescriptPropertyDirection.Input, index);
-			var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
-
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Change Resolver Type", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Input,
-					index,
-					newResolver ?? new StatescriptResolverResource());
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Input,
-					index,
-					oldResolver ?? new StatescriptResolverResource());
-				_undoRedo.CommitAction(false);
-			}
-
-			PropertyBindingChanged?.Invoke();
-			ResetSize();
-		};
+		return null;
 	}
 
 	private void AddOutputVariableRow(
@@ -191,6 +265,7 @@ public partial class StatescriptGraphNode
 
 		var variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		variableDropdown.SetMeta("is_variable_dropdown", true);
+		variableDropdown.SetMeta("output_index", index);
 
 		foreach (StatescriptGraphVariable v in _graph.Variables)
 		{
@@ -225,42 +300,66 @@ public partial class StatescriptGraphNode
 			}
 		}
 
-		variableDropdown.ItemSelected += x =>
-		{
-			if (NodeResource is null || _graph is null)
-			{
-				return;
-			}
-
-			var oldResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
-				as StatescriptResolverResource;
-
-			var variableName = _graph.Variables[(int)x].VariableName;
-			var newResolver = new VariableResolverResource { VariableName = variableName };
-			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
-
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Change Output Variable", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Output,
-					index,
-					(StatescriptResolverResource)newResolver.Duplicate());
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Output,
-					index,
-					oldResolver ?? new StatescriptResolverResource());
-				_undoRedo.CommitAction(false);
-			}
-
-			PropertyBindingChanged?.Invoke();
-		};
+		variableDropdown.ItemSelected += OnOutputVariableDropdownItemSelected;
 
 		hBox.AddChild(variableDropdown);
+	}
+
+	private void OnOutputVariableDropdownItemSelected(long x)
+	{
+		if (NodeResource is null || _graph is null)
+		{
+			return;
+		}
+
+		OptionButton? senderDropdown = FindOutputVariableDropdown(x);
+		if (senderDropdown is null)
+		{
+			return;
+		}
+
+		var index = senderDropdown.GetMeta("output_index").AsInt32();
+
+		var oldResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
+
+		var variableName = _graph.Variables[(int)x].VariableName;
+		var newResolver = new VariableResolverResource { VariableName = variableName };
+		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Change Output Variable", customContext: _graph);
+			_undoRedo.AddDoMethod(
+				this,
+				MethodName.ApplyResolverBinding,
+				(int)StatescriptPropertyDirection.Output,
+				index,
+				(StatescriptResolverResource)newResolver.Duplicate());
+			_undoRedo.AddUndoMethod(
+				this,
+				MethodName.ApplyResolverBinding,
+				(int)StatescriptPropertyDirection.Output,
+				index,
+				oldResolver ?? new StatescriptResolverResource());
+			_undoRedo.CommitAction(false);
+		}
+
+		PropertyBindingChanged?.Invoke();
+	}
+
+	private OptionButton? FindOutputVariableDropdown(long selectedValue)
+	{
+		foreach (Node child in GetChildren())
+		{
+			OptionButton? found = FindOutputVarDropdownRecursive(child, selectedValue);
+			if (found is not null)
+			{
+				return found;
+			}
+		}
+
+		return null;
 	}
 
 	private void ShowResolverEditorUI(
@@ -279,21 +378,19 @@ public partial class StatescriptGraphNode
 
 		NodeEditorProperty resolverEditor = factory();
 
+		var key = new PropertySlotKey(direction, propertyIndex);
+
 		resolverEditor.Setup(
 			_graph,
 			existingBinding,
 			expectedType,
-			() =>
-			{
-				SaveResolverEditorWithUndo(resolverEditor, direction, propertyIndex);
-			},
+			() => SaveResolverEditorWithUndo(resolverEditor, direction, propertyIndex),
 			isArray);
 
 		resolverEditor.LayoutSizeChanged += ResetSize;
 
 		container.AddChild(resolverEditor);
 
-		var key = new PropertySlotKey(direction, propertyIndex);
 		_activeResolverEditors[key] = resolverEditor;
 	}
 
@@ -348,6 +445,18 @@ public partial class StatescriptGraphNode
 
 		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
 		resolverEditor.SaveTo(binding);
+	}
+
+	private sealed class InputPropertyContext(
+		List<Func<NodeEditorProperty>> resolverFactories,
+		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
+		VBoxContainer editorContainer)
+	{
+		public List<Func<NodeEditorProperty>> ResolverFactories { get; } = resolverFactories;
+
+		public StatescriptNodeDiscovery.InputPropertyInfo PropInfo { get; } = propInfo;
+
+		public VBoxContainer EditorContainer { get; } = editorContainer;
 	}
 }
 #endif

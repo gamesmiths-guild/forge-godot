@@ -77,6 +77,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 	public void OnBeforeSerialize()
 	{
 		DisconnectSignals();
+		NodeCreationRequested = null;
 	}
 
 	public void OnAfterDeserialize()

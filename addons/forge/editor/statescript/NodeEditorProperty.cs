@@ -53,10 +53,19 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public abstract void SaveTo(StatescriptNodeProperty property);
 
 	/// <summary>
-	/// Raised when the editor's layout size has changed (e.g. nested resolver swap, foldable toggle)
-	/// so that the owning <see cref="GraphNode"/> can call <see cref="Control.ResetSize"/>.
+	/// Raised when the editor's layout size has changed (e.g. nested resolver swap, foldable toggle) so that the owning
+	/// <see cref="GraphNode"/> can call <see cref="Control.ResetSize"/>.
 	/// </summary>
 	public event Action? LayoutSizeChanged;
+
+	/// <summary>
+	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
+	/// serialized or freed.
+	/// </summary>
+	public virtual void ClearCallbacks()
+	{
+		LayoutSizeChanged = null;
+	}
 
 	/// <summary>
 	/// Notifies listeners that the editor layout has changed size.

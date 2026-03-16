@@ -910,6 +910,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		foreach (Node node in toRemove)
 		{
+			if (node is StatescriptGraphNode graphNode)
+			{
+				graphNode.OnBeforeSerialize();
+			}
+
 			_graphEdit.RemoveChild(node);
 			node.Free();
 		}
@@ -1266,6 +1271,14 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		if (_addNodeDialog is not null)
 		{
 			_addNodeDialog.Canceled -= OnDialogCanceled;
+			_addNodeDialog.NodeCreationRequested -= OnDialogNodeCreationRequested;
+		}
+
+		if (_variablePanel is not null)
+		{
+			_variablePanel.VariablesChanged -= OnGraphVariablesChanged;
+			_variablePanel.VariableUndoRedoPerformed -= OnVariableUndoRedoPerformed;
+			_variablePanel.VariableHighlightChanged -= OnVariableHighlightChanged;
 		}
 	}
 
@@ -1313,6 +1326,14 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		if (_addNodeDialog is not null)
 		{
 			_addNodeDialog.Canceled += OnDialogCanceled;
+			_addNodeDialog.NodeCreationRequested += OnDialogNodeCreationRequested;
+		}
+
+		if (_variablePanel is not null)
+		{
+			_variablePanel.VariablesChanged += OnGraphVariablesChanged;
+			_variablePanel.VariableUndoRedoPerformed += OnVariableUndoRedoPerformed;
+			_variablePanel.VariableHighlightChanged += OnVariableHighlightChanged;
 		}
 	}
 

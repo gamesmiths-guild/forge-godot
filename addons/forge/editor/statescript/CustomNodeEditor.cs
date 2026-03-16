@@ -14,11 +14,19 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// <c>EditorInspectorPlugin</c> pattern.
 /// </summary>
 /// <remarks>
+/// <para>
 /// If a <see cref="CustomNodeEditor"/> is registered for a node's <c>RuntimeTypeName</c>, its
 /// <see cref="BuildPropertySections"/> method is called instead of the default property rendering. The base class
 /// provides helper methods that mirror the default behavior so that custom editors can reuse them selectively.
+/// </para>
+/// <para>
+/// Because this class extends <see cref="RefCounted"/>, signal handlers defined on subclasses can be connected
+/// directly to Godot signals (e.g. <c>dropdown.ItemSelected += OnItemSelected</c>) without needing wrapper nodes
+/// or workarounds for serialization.
+/// </para>
 /// </remarks>
-internal abstract class CustomNodeEditor
+[Tool]
+internal abstract partial class CustomNodeEditor : RefCounted
 {
 	private StatescriptGraphNode? _graphNode;
 	private StatescriptGraph? _graph;
@@ -68,7 +76,7 @@ internal abstract class CustomNodeEditor
 	protected EditorUndoRedoManager? UndoRedo => _graphNode?.GetUndoRedo();
 
 	/// <summary>
-	/// Stores references needed by helper methods. Called once before <see cref="BuildPropertySections"/>.
+	/// Stores references needed by helper methods. Called once after the instance is created.
 	/// </summary>
 	/// <param name="graphNode">The graph node this editor is bound to.</param>
 	/// <param name="graph">The graph resource this node belongs to.</param>

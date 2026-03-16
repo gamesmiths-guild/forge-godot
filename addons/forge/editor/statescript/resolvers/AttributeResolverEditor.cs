@@ -19,6 +19,7 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 	private OptionButton? _attributeDropdown;
 	private string _selectedSetClass = string.Empty;
 	private string _selectedAttribute = string.Empty;
+	private Action? _onChanged;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Attribute";
@@ -40,6 +41,8 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		Action onChanged,
 		bool isArray)
 	{
+		_onChanged = onChanged;
+
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
@@ -78,29 +81,8 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		PopulateAttributeDropdown();
 		attrRow.AddChild(_attributeDropdown);
 
-		_setDropdown.ItemSelected += _ =>
-		{
-			if (_setDropdown is null)
-			{
-				return;
-			}
-
-			_selectedSetClass = _setDropdown.GetItemText(_setDropdown.Selected);
-			_selectedAttribute = string.Empty;
-			PopulateAttributeDropdown();
-			onChanged();
-		};
-
-		_attributeDropdown.ItemSelected += _ =>
-		{
-			if (_attributeDropdown is null)
-			{
-				return;
-			}
-
-			_selectedAttribute = _attributeDropdown.GetItemText(_attributeDropdown.Selected);
-			onChanged();
-		};
+		_setDropdown.ItemSelected += OnSetDropdownItemSelected;
+		_attributeDropdown.ItemSelected += OnAttributeDropdownItemSelected;
 	}
 
 	/// <inheritdoc/>
@@ -111,6 +93,37 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 			AttributeSetClass = _selectedSetClass,
 			AttributeName = _selectedAttribute,
 		};
+	}
+
+	/// <inheritdoc/>
+	public override void ClearCallbacks()
+	{
+		base.ClearCallbacks();
+		_onChanged = null;
+	}
+
+	private void OnSetDropdownItemSelected(long index)
+	{
+		if (_setDropdown is null)
+		{
+			return;
+		}
+
+		_selectedSetClass = _setDropdown.GetItemText(_setDropdown.Selected);
+		_selectedAttribute = string.Empty;
+		PopulateAttributeDropdown();
+		_onChanged?.Invoke();
+	}
+
+	private void OnAttributeDropdownItemSelected(long index)
+	{
+		if (_attributeDropdown is null)
+		{
+			return;
+		}
+
+		_selectedAttribute = _attributeDropdown.GetItemText(_attributeDropdown.Selected);
+		_onChanged?.Invoke();
 	}
 
 	private void PopulateSetDropdown()
