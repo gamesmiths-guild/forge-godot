@@ -88,6 +88,14 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 	}
 
+	/// <inheritdoc/>
+	internal override void Unbind()
+	{
+		base.Unbind();
+		_cachedTypeInfo = null;
+		_cachedInputEditorContainer = null;
+	}
+
 	private void AddTargetVariableRow(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,

@@ -251,7 +251,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		foreach (Node child in _elementsContainer.GetChildren())
 		{
 			_elementsContainer.RemoveChild(child);
-			child.QueueFree();
+			child.Free();
 		}
 
 		_toggleButton.Text = $"Array (size {_arrayValues.Count})";

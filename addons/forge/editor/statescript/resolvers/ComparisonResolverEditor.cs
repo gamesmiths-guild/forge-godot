@@ -215,7 +215,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		foreach (Node child in editorContainer.GetChildren())
 		{
 			editorContainer.RemoveChild(child);
-			child.QueueFree();
+			child.Free();
 		}
 
 		setEditor(null);

@@ -141,6 +141,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		_inputPropertyContexts.Clear();
 		_foldableKeys.Clear();
 
+		_activeCustomEditor?.Unbind();
 		_activeCustomEditor = null;
 
 		foreach (KeyValuePair<PropertySlotKey, NodeEditorProperty> kvp in
@@ -272,7 +273,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		foreach (Node child in container.GetChildren())
 		{
 			container.RemoveChild(child);
-			child.QueueFree();
+			child.Free();
 		}
 	}
 

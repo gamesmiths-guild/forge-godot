@@ -76,7 +76,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 
 		RemoveDock(_tagsEditorDock);
-		_tagsEditorDock.QueueFree();
+		_tagsEditorDock.Free();
 
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
 		RemoveInspectorPlugin(_tagInspectorPlugin);
@@ -85,7 +85,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveInspectorPlugin(_attributeEditorPlugin);
 
 		RemoveDock(_statescriptGraphEditorDock);
-		_statescriptGraphEditorDock.QueueFree();
+		_statescriptGraphEditorDock.Free();
 
 		RemoveToolMenuItem("Repair assets tags");
 	}

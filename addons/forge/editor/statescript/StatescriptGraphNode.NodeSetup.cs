@@ -173,7 +173,7 @@ public partial class StatescriptGraphNode
 		foreach (Node child in GetChildren())
 		{
 			RemoveChild(child);
-			child.QueueFree();
+			child.Free();
 		}
 	}
 

@@ -95,6 +95,18 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	}
 
 	/// <summary>
+	/// Clears all references stored by <see cref="Bind"/>. Called before the owning graph node is freed or serialized
+	/// to prevent accessing disposed objects.
+	/// </summary>
+	internal virtual void Unbind()
+	{
+		_graphNode = null;
+		_graph = null;
+		_nodeResource = null;
+		_activeResolverEditors = null;
+	}
+
+	/// <summary>
 	/// Clears all children from a container control.
 	/// </summary>
 	/// <param name="container">The container control to clear.</param>
@@ -103,7 +115,7 @@ internal abstract partial class CustomNodeEditor : RefCounted
 		foreach (Node child in container.GetChildren())
 		{
 			container.RemoveChild(child);
-			child.QueueFree();
+			child.Free();
 		}
 	}
 

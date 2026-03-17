@@ -186,7 +186,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		foreach (Node child in _variableList.GetChildren())
 		{
-			child.QueueFree();
+			_variableList.RemoveChild(child);
+			child.Free();
 		}
 
 		if (_graph is null)
