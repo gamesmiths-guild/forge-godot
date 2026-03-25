@@ -176,6 +176,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			VariableResolverResource => "Variable",
 			VariantResolverResource => "Variant",
 			AttributeResolverResource => "Attribute",
+			SharedVariableResolverResource => "SharedVariable",
 			MagnitudeResolverResource => "Magnitude",
 			_ => string.Empty,
 		};

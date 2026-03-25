@@ -25,6 +25,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
+	private SharedVariableSetInspectorPlugin? _sharedVariableSetInspectorPlugin;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
 	private EditorFileSystem? _fileSystem;
@@ -45,6 +46,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddInspectorPlugin(_cueHandlerInspectorPlugin);
 		_attributeEditorPlugin = new AttributeEditorPlugin();
 		AddInspectorPlugin(_attributeEditorPlugin);
+		_sharedVariableSetInspectorPlugin = new SharedVariableSetInspectorPlugin();
+		AddInspectorPlugin(_sharedVariableSetInspectorPlugin);
 
 		_statescriptGraphEditorDock = new StatescriptGraphEditorDock();
 		_statescriptGraphEditorDock.SetUndoRedo(GetUndoRedo());
@@ -83,6 +86,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeEditorPlugin);
+		RemoveInspectorPlugin(_sharedVariableSetInspectorPlugin);
 
 		RemoveDock(_statescriptGraphEditorDock);
 		_statescriptGraphEditorDock.Free();

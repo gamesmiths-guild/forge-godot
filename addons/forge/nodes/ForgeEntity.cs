@@ -20,6 +20,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 	[Export]
 	public ForgeTagContainer BaseTags { get; set; } = new();
 
+	[Export]
+	public ForgeSharedVariableSet? SharedVariableDefinitions { get; set; }
+
 	public EntityAttributes Attributes { get; set; } = null!;
 
 	public EntityTags Tags { get; set; } = null!;
@@ -41,6 +44,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 		Abilities = new EntityAbilities(this);
 		Events = new EventManager();
 		SharedVariables = new Variables();
+
+		SharedVariableDefinitions?.PopulateVariables(SharedVariables);
 
 		List<AttributeSet> attributeSetList = [];
 

@@ -263,6 +263,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			AttributeResolverResource => "Attribute",
 			TagResolverResource => "Tag",
 			ComparisonResolverResource => "Comparison",
+			SharedVariableResolverResource => "SharedVariable",
 			MagnitudeResolverResource => "Magnitude",
 			_ => string.Empty,
 		};
