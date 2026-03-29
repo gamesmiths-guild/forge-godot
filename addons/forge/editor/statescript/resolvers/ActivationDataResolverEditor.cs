@@ -19,15 +19,18 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Providers are discovered via reflection.
 /// </summary>
 /// <remarks>
-/// A graph supports only one activation data provider. Once any node in the graph references a provider, the provider
-/// dropdown is locked to that provider for all subsequent nodes. The user must remove all existing activation data
-/// bindings before switching to a different provider.
+/// A graph supports only one activation data provider. Once any other node in the graph references a provider, the
+/// provider dropdown is locked to that provider. The user only needs to clear the bindings on other nodes to unlock
+/// the dropdown.
 /// </remarks>
 [Tool]
 internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 {
 	private readonly List<string> _providerClassNames = [];
 	private readonly List<string> _fieldNames = [];
+
+	private StatescriptGraph? _graph;
+	private StatescriptNodeProperty? _currentProperty;
 
 	private OptionButton? _providerDropdown;
 	private OptionButton? _fieldDropdown;
@@ -37,8 +40,6 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 	private string _selectedProviderClassName = string.Empty;
 	private string _selectedFieldName = string.Empty;
 	private StatescriptVariableType _selectedFieldType = StatescriptVariableType.Int;
-
-	private string _graphLockedProvider = string.Empty;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Activation Data";
@@ -62,6 +63,8 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 	{
 		_onChanged = onChanged;
 		_expectedType = expectedType;
+		_graph = graph;
+		_currentProperty = property;
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -73,8 +76,6 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			_selectedFieldName = activationRes.FieldName;
 			_selectedFieldType = activationRes.FieldType;
 		}
-
-		_graphLockedProvider = FindExistingProvider(graph, property);
 
 		var providerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(providerRow);
@@ -89,6 +90,9 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		_providerDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateProviderDropdown();
 		providerRow.AddChild(_providerDropdown);
+
+		// Re-scan the graph each time the dropdown opens to pick up changes from other editors.
+		_providerDropdown.GetPopup().AboutToPopup += PopulateProviderDropdown;
 
 		var fieldRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		vBox.AddChild(fieldRow);
@@ -132,7 +136,8 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		{
 			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
 			{
-				if (binding == currentProperty)
+				// Skip the property we're currently editing — the user should be free to change it.
+				if (ReferenceEquals(binding, currentProperty))
 				{
 					continue;
 				}
@@ -176,7 +181,10 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		_selectedProviderClassName = _providerDropdown.GetItemText(_providerDropdown.Selected);
+		var idx = _providerDropdown.Selected;
+		_selectedProviderClassName = idx >= 0 && idx < _providerClassNames.Count
+			? _providerClassNames[idx]
+			: string.Empty;
 		_selectedFieldName = string.Empty;
 		_selectedFieldType = StatescriptVariableType.Int;
 
@@ -192,12 +200,20 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var idx = _fieldDropdown.Selected;
+		var index = _fieldDropdown.Selected;
 
-		if (idx >= 0 && idx < _fieldNames.Count)
+		if (index >= 0 && index < _fieldNames.Count)
 		{
-			_selectedFieldName = _fieldNames[idx];
-			ResolveFieldType();
+			_selectedFieldName = _fieldNames[index];
+
+			if (!string.IsNullOrEmpty(_selectedFieldName))
+			{
+				ResolveFieldType();
+			}
+			else
+			{
+				_selectedFieldType = StatescriptVariableType.Int;
+			}
 		}
 		else
 		{
@@ -218,32 +234,42 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		_providerDropdown.Clear();
 		_providerClassNames.Clear();
 
-		if (!string.IsNullOrEmpty(_graphLockedProvider))
+		// Always add a (None) option to allow deselecting.
+		_providerDropdown.AddItem("(None)");
+		_providerClassNames.Add(string.Empty);
+
+		// Re-scan the graph each time to pick up changes from other editors.
+		var graphLockedProvider = _graph is not null
+			? FindExistingProvider(_graph, _currentProperty)
+			: string.Empty;
+
+		if (!string.IsNullOrEmpty(graphLockedProvider))
 		{
-			// Another node already uses a provider, lock to that one.
-			_providerDropdown.AddItem(_graphLockedProvider);
-			_providerClassNames.Add(_graphLockedProvider);
-			_providerDropdown.Selected = 0;
-			_selectedProviderClassName = _graphLockedProvider;
-			return;
+			// Another node already uses a provider: only show that one (plus None).
+			_providerDropdown.AddItem(graphLockedProvider);
+			_providerClassNames.Add(graphLockedProvider);
 		}
-
-		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-		foreach (var name in allTypes
-			.Where(x => typeof(IActivationDataProvider).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
-			.Select(x => x.Name))
+		else
 		{
-			_providerDropdown.AddItem(name);
-			_providerClassNames.Add(name);
+			Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
+
+			foreach (var name in allTypes
+				.Where(x => typeof(IActivationDataProvider).IsAssignableFrom(x)
+					&& !x.IsAbstract
+					&& !x.IsInterface)
+				.Select(x => x.Name))
+			{
+				_providerDropdown.AddItem(name);
+				_providerClassNames.Add(name);
+			}
 		}
 
 		// Restore selection.
 		if (!string.IsNullOrEmpty(_selectedProviderClassName))
 		{
-			for (var i = 0; i < _providerDropdown.GetItemCount(); i++)
+			for (var i = 0; i < _providerClassNames.Count; i++)
 			{
-				if (_providerDropdown.GetItemText(i) == _selectedProviderClassName)
+				if (_providerClassNames[i] == _selectedProviderClassName)
 				{
 					_providerDropdown.Selected = i;
 					return;
@@ -251,12 +277,9 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			}
 		}
 
-		// Default to first if available.
-		if (_providerDropdown.GetItemCount() > 0)
-		{
-			_providerDropdown.Selected = 0;
-			_selectedProviderClassName = _providerDropdown.GetItemText(0);
-		}
+		// Default to (None).
+		_providerDropdown.Selected = 0;
+		_selectedProviderClassName = string.Empty;
 	}
 
 	private void PopulateFieldDropdown()
@@ -268,6 +291,10 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 
 		_fieldDropdown.Clear();
 		_fieldNames.Clear();
+
+		// Always add a (None) option.
+		_fieldDropdown.AddItem("(None)");
+		_fieldNames.Add(string.Empty);
 
 		IActivationDataProvider? provider = InstantiateProvider(_selectedProviderClassName);
 
@@ -304,12 +331,9 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			}
 		}
 
-		// Default to first if available.
-		if (_fieldDropdown.GetItemCount() > 0)
-		{
-			_fieldDropdown.Selected = 0;
-			_selectedFieldName = _fieldDropdown.GetItemText(0);
-		}
+		// Default to (None).
+		_fieldDropdown.Selected = 0;
+		_selectedFieldName = string.Empty;
 	}
 
 	private void ResolveFieldType()

@@ -43,8 +43,20 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
+		if (string.IsNullOrEmpty(ProviderClassName))
+		{
+			GD.PushError(
+				$"Statescript: Activation Data resolver on node '{nodeId}' (input {index}) " +
+				"has no provider selected. Select a provider and field in the graph editor.");
+			return;
+		}
+
 		if (string.IsNullOrEmpty(FieldName))
 		{
+			GD.PushError(
+				$"Statescript: Activation Data resolver on node '{nodeId}' (input {index}) " +
+				$"has provider '{ProviderClassName}' but no field selected. " +
+				"Select a field in the graph editor.");
 			return;
 		}
 
@@ -75,8 +87,12 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 	/// <inheritdoc/>
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		if (string.IsNullOrEmpty(FieldName))
+		if (string.IsNullOrEmpty(ProviderClassName) || string.IsNullOrEmpty(FieldName))
 		{
+			GD.PushError(
+				"Statescript: Activation Data resolver has incomplete configuration " +
+				$"(provider: '{ProviderClassName}', field: '{FieldName}'). " +
+				"The resolver will return a default value.");
 			return new VariantResolver(default, typeof(int));
 		}
 
