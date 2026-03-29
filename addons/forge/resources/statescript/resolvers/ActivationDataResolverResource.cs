@@ -22,6 +22,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class ActivationDataResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "ActivationData";
+
 	/// <summary>
 	/// Gets or sets the class name of the <see cref="IActivationDataProvider"/> implementation that declares the field.
 	/// </summary>

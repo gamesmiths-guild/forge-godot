@@ -16,6 +16,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class AttributeResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "Attribute";
+
 	/// <summary>
 	/// Gets or sets the attribute set class name.
 	/// </summary>

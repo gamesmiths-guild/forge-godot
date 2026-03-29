@@ -13,10 +13,21 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript;
 /// Base resource for all Statescript property resolvers. Each resolver type derives from this and implements the
 /// binding methods to wire serialized editor data into the core runtime graph.
 /// </summary>
+/// <remarks>
+/// Subclasses must override <see cref="ResolverTypeId"/> to return a unique string that matches the corresponding
+/// editor's <c>ResolverTypeId</c>. This enables automatic discovery and matching without hardcoded registrations.
+/// </remarks>
 [Tool]
 [GlobalClass]
 public partial class StatescriptResolverResource : Resource
 {
+	/// <summary>
+	/// Gets the unique type identifier for this resolver, used to match serialized resources to their corresponding
+	/// editor. Subclasses must override this to return a non-empty string that matches their editor's
+	/// <c>ResolverTypeId</c>.
+	/// </summary>
+	public virtual string ResolverTypeId => string.Empty;
+
 	/// <summary>
 	/// Binds this resolver as an input property on a runtime node. Implementations should register any necessary
 	/// variable or property definitions on the graph and call <see cref="ForgeNode.BindInput"/> with the appropriate

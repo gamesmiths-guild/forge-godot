@@ -17,6 +17,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class VariableResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "Variable";
+
 	/// <summary>
 	/// Gets or sets the name of the graph variable to bind to.
 	/// </summary>

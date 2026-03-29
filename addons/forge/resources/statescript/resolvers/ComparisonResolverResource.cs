@@ -16,6 +16,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class ComparisonResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "Comparison";
+
 	/// <summary>
 	/// Gets or sets the left-hand operand resolver.
 	/// </summary>

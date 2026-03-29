@@ -200,11 +200,11 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var index = _fieldDropdown.Selected;
+		var dropdownIndex = _fieldDropdown.Selected;
 
-		if (index >= 0 && index < _fieldNames.Count)
+		if (dropdownIndex >= 0 && dropdownIndex < _fieldNames.Count)
 		{
-			_selectedFieldName = _fieldNames[index];
+			_selectedFieldName = _fieldNames[dropdownIndex];
 
 			if (!string.IsNullOrEmpty(_selectedFieldName))
 			{

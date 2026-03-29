@@ -169,19 +169,6 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		_rightEditor?.ClearCallbacks();
 	}
 
-	private static string GetResolverTypeId(StatescriptResolverResource resolver)
-	{
-		return resolver switch
-		{
-			VariableResolverResource => "Variable",
-			VariantResolverResource => "Variant",
-			AttributeResolverResource => "Attribute",
-			SharedVariableResolverResource => "SharedVariable",
-			MagnitudeResolverResource => "Magnitude",
-			_ => string.Empty,
-		};
-	}
-
 	private void OnFoldingChanged(bool isFolded)
 	{
 		RaiseLayoutSizeChanged();
@@ -231,7 +218,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		if (existingResolver is not null)
 		{
-			var existingTypeId = GetResolverTypeId(existingResolver);
+			var existingTypeId = existingResolver.ResolverTypeId;
 
 			for (var i = 0; i < _numericFactories.Count; i++)
 			{

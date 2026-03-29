@@ -19,6 +19,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class SharedVariableResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "SharedVariable";
+
 	/// <summary>
 	/// Gets or sets the resource path of the <see cref="ForgeSharedVariableSet"/> that defines the variable.
 	/// </summary>

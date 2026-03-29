@@ -17,6 +17,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class TagResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "Tag";
+
 	/// <summary>
 	/// Gets or sets the tag string to check for (e.g., "Status.Burning").
 	/// </summary>

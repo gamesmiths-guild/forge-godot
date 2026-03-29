@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
-using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -256,18 +255,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
 	{
-		return resolver switch
-		{
-			VariableResolverResource => "Variable",
-			VariantResolverResource => "Variant",
-			AttributeResolverResource => "Attribute",
-			TagResolverResource => "Tag",
-			ComparisonResolverResource => "Comparison",
-			SharedVariableResolverResource => "SharedVariable",
-			MagnitudeResolverResource => "Magnitude",
-			ActivationDataResolverResource => "ActivationData",
-			_ => string.Empty,
-		};
+		return resolver.ResolverTypeId;
 	}
 
 	private static void ClearContainer(Control container)

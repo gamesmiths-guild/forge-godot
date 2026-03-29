@@ -18,6 +18,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 [GlobalClass]
 public partial class VariantResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "Variant";
+
 	/// <summary>
 	/// Gets or sets the constant value. Used when <see cref="IsArray"/> is <see langword="false"/>.
 	/// </summary>

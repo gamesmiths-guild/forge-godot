@@ -4,36 +4,31 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
+using System.Linq;
+using System.Reflection;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 /// <summary>
-/// Registry of <see cref="CustomNodeEditor"/> implementations. When a custom editor is registered for a node's
-/// <c>RuntimeTypeName</c>, it overrides the default property rendering in <see cref="StatescriptGraphNode"/>.
+/// Registry of <see cref="CustomNodeEditor"/> implementations. Custom node editors are discovered automatically via
+/// reflection. Any concrete subclass of <see cref="CustomNodeEditor"/> in the executing assembly is registered and
+/// overrides the default property rendering for its handled node type.
 /// </summary>
-/// <remarks>
-/// Follows the same factory-based pattern as <see cref="StatescriptResolverRegistry"/>. Each graph node gets its own
-/// <see cref="CustomNodeEditor"/> instance, so subclasses can freely store per-node state.
-/// </remarks>
 internal static class CustomNodeEditorRegistry
 {
 	private static readonly Dictionary<string, Func<CustomNodeEditor>> _factories = [];
 
 	static CustomNodeEditorRegistry()
 	{
-		Register(() => new SetVariableNodeEditor());
-	}
+		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
-	/// <summary>
-	/// Registers a custom node editor factory. If a factory for the same
-	/// <see cref="CustomNodeEditor.HandledRuntimeTypeName"/> is already registered, it is replaced.
-	/// </summary>
-	/// <param name="factory">A factory function that creates a new custom node editor instance.</param>
-	public static void Register(Func<CustomNodeEditor> factory)
-	{
-		using CustomNodeEditor temp = factory();
-		_factories[temp.HandledRuntimeTypeName] = factory;
+		foreach (Type type in allTypes.Where(
+			x => x.IsSubclassOf(typeof(CustomNodeEditor)) && !x.IsAbstract))
+		{
+			Type captured = type;
+			using var temp = (CustomNodeEditor)Activator.CreateInstance(captured)!;
+			_factories[temp.HandledRuntimeTypeName] = () => (CustomNodeEditor)Activator.CreateInstance(captured)!;
+		}
 	}
 
 	/// <summary>
