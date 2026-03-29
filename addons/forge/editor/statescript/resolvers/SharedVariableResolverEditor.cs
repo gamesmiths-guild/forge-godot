@@ -140,7 +140,6 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 
 			if (resource is ForgeSharedVariableSet)
 			{
-				GD.Print($"Found ForgeSharedVariableSet: {path}");
 				results.Add(path);
 			}
 		}
