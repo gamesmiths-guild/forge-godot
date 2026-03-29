@@ -20,6 +20,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private readonly HashSet<string> _expandedArrays = [];
 
+	private EditorUndoRedoManager? _undoRedo;
+
 	private VBoxContainer? _root;
 	private VBoxContainer? _variableList;
 	private Button? _addButton;
@@ -31,6 +33,15 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private Texture2D? _addIcon;
 	private Texture2D? _removeIcon;
+
+	/// <summary>
+	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
+	/// </summary>
+	/// <param name="undoRedo">The undo/redo manager from the editor plugin.</param>
+	public void SetUndoRedo(EditorUndoRedoManager? undoRedo)
+	{
+		_undoRedo = undoRedo;
+	}
 
 	public override void _Ready()
 	{
@@ -120,12 +131,27 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		return value.AsGodotArray<ForgeSharedVariableDefinition>() ?? [];
 	}
 
-	private void SetDefinitions(Array<ForgeSharedVariableDefinition> definitions)
+	private void NotifyChanged()
 	{
-		EmitChanged(GetEditedProperty(), definitions);
+		if (GetEditedObject() is Resource resource)
+		{
+			resource.EmitChanged();
+		}
 	}
 
 	private void RebuildList()
+	{
+		if (_variableList is null)
+		{
+			return;
+		}
+
+		// Defer the actual rebuild so that any in-progress signal emission (e.g. a button Pressed handler that
+		// triggered an add/remove) finishes before we free the emitting nodes.
+		CallDeferred(MethodName.RebuildListDeferred);
+	}
+
+	private void RebuildListDeferred()
 	{
 		if (_variableList is null)
 		{
@@ -304,6 +330,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			elementsContainer.Visible = x;
 
+			var wasExpanded = !x;
+
 			if (x)
 			{
 				_expandedArrays.Add(def.VariableName);
@@ -311,6 +339,22 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			else
 			{
 				_expandedArrays.Remove(def.VariableName);
+			}
+
+			if (_undoRedo is not null)
+			{
+				_undoRedo.CreateAction("Toggle Array Expand");
+				_undoRedo.AddDoMethod(
+					this,
+					MethodName.DoSetArrayExpanded,
+					def.VariableName,
+					x);
+				_undoRedo.AddUndoMethod(
+					this,
+					MethodName.DoSetArrayExpanded,
+					def.VariableName,
+					wasExpanded);
+				_undoRedo.CommitAction(false);
 			}
 		};
 
@@ -328,10 +372,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			Variant defaultValue =
 				StatescriptVariableTypeConverter.CreateDefaultGodotVariant(def.VariableType);
-			def.InitialArrayValues.Add(defaultValue);
-
-			Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
-			SetDefinitions(definitions);
+			AddArrayElement(def, defaultValue);
 		};
 
 		headerRow.AddChild(addElementButton);
@@ -422,34 +463,80 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			CustomMinimumSize = new Vector2(24, 24),
 		};
 
-		removeElementButton.Pressed += () =>
-		{
-			if (elementIndex >= 0 && elementIndex < def.InitialArrayValues.Count)
-			{
-				def.InitialArrayValues.RemoveAt(elementIndex);
-
-				Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
-				SetDefinitions(definitions);
-			}
-		};
+		removeElementButton.Pressed += () => RemoveArrayElement(def, elementIndex);
 
 		row.AddChild(removeElementButton);
 	}
 
 	private void SetVariableValue(ForgeSharedVariableDefinition def, Variant newValue)
 	{
-		def.InitialValue = newValue;
+		Variant oldValue = def.InitialValue;
 
-		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
-		SetDefinitions(definitions);
+		def.InitialValue = newValue;
+		NotifyChanged();
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction($"Change Shared Variable '{def.VariableName}'");
+			_undoRedo.AddDoMethod(this, MethodName.ApplyVariableValue, def, newValue);
+			_undoRedo.AddUndoMethod(this, MethodName.ApplyVariableValue, def, oldValue);
+			_undoRedo.CommitAction(false);
+		}
 	}
 
 	private void SetArrayElementValue(ForgeSharedVariableDefinition def, int index, Variant newValue)
 	{
-		def.InitialArrayValues[index] = newValue;
+		Variant oldValue = def.InitialArrayValues[index];
 
-		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
-		SetDefinitions(definitions);
+		def.InitialArrayValues[index] = newValue;
+		NotifyChanged();
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction($"Change Shared Variable '{def.VariableName}' Element [{index}]");
+			_undoRedo.AddDoMethod(this, MethodName.ApplyArrayElementValue, def, index, newValue);
+			_undoRedo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, def, index, oldValue);
+			_undoRedo.CommitAction(false);
+		}
+	}
+
+	private void AddArrayElement(ForgeSharedVariableDefinition def, Variant value)
+	{
+		var wasExpanded = _expandedArrays.Contains(def.VariableName);
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction($"Add Element to '{def.VariableName}'");
+			_undoRedo.AddDoMethod(this, MethodName.DoAddArrayElement, def, value);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoAddArrayElement, def, wasExpanded);
+			_undoRedo.CommitAction();
+		}
+		else
+		{
+			DoAddArrayElement(def, value);
+		}
+	}
+
+	private void RemoveArrayElement(ForgeSharedVariableDefinition def, int index)
+	{
+		if (index < 0 || index >= def.InitialArrayValues.Count)
+		{
+			return;
+		}
+
+		Variant oldValue = def.InitialArrayValues[index];
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction($"Remove Element [{index}] from '{def.VariableName}'");
+			_undoRedo.AddDoMethod(this, MethodName.DoRemoveArrayElement, def, index);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveArrayElement, def, index, oldValue);
+			_undoRedo.CommitAction();
+		}
+		else
+		{
+			DoRemoveArrayElement(def, index);
+		}
 	}
 
 	private void OnAddPressed()
@@ -536,8 +623,18 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		};
 
 		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
-		definitions.Add(newDef);
-		SetDefinitions(definitions);
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Add Shared Variable");
+			_undoRedo.AddDoMethod(this, MethodName.DoAddVariable, definitions, newDef);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoAddVariable, definitions, newDef);
+			_undoRedo.CommitAction();
+		}
+		else
+		{
+			DoAddVariable(definitions, newDef);
+		}
 
 		CleanupCreationDialog();
 	}
@@ -565,8 +662,137 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			return;
 		}
 
+		ForgeSharedVariableDefinition variable = definitions[index];
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction("Remove Shared Variable");
+			_undoRedo.AddDoMethod(this, MethodName.DoRemoveVariable, definitions, variable, index);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveVariable, definitions, variable, index);
+			_undoRedo.CommitAction();
+		}
+		else
+		{
+			DoRemoveVariable(definitions, index);
+		}
+	}
+
+	private void ApplyVariableValue(ForgeSharedVariableDefinition def, Variant value)
+	{
+		def.InitialValue = value;
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void ApplyArrayElementValue(ForgeSharedVariableDefinition def, int index, Variant value)
+	{
+		def.InitialArrayValues[index] = value;
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void DoAddVariable(Array<ForgeSharedVariableDefinition> definitions, ForgeSharedVariableDefinition def)
+	{
+		definitions.Add(def);
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void UndoAddVariable(Array<ForgeSharedVariableDefinition> definitions, ForgeSharedVariableDefinition def)
+	{
+		definitions.Remove(def);
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void DoRemoveVariable(
+		Array<ForgeSharedVariableDefinition> definitions,
+		int index)
+	{
 		definitions.RemoveAt(index);
-		SetDefinitions(definitions);
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void UndoRemoveVariable(
+		Array<ForgeSharedVariableDefinition> definitions,
+		ForgeSharedVariableDefinition sharedVariableDefinition,
+		int index)
+	{
+		if (index >= definitions.Count)
+		{
+			definitions.Add(sharedVariableDefinition);
+		}
+		else
+		{
+			definitions.Insert(index, sharedVariableDefinition);
+		}
+
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void DoAddArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, Variant value)
+	{
+		sharedVariableDefinition.InitialArrayValues.Add(value);
+		_expandedArrays.Add(sharedVariableDefinition.VariableName);
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void UndoAddArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, bool wasExpanded)
+	{
+		if (sharedVariableDefinition.InitialArrayValues.Count > 0)
+		{
+			sharedVariableDefinition.InitialArrayValues.RemoveAt(sharedVariableDefinition.InitialArrayValues.Count - 1);
+		}
+
+		if (!wasExpanded)
+		{
+			_expandedArrays.Remove(sharedVariableDefinition.VariableName);
+		}
+
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void DoRemoveArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, int index)
+	{
+		sharedVariableDefinition.InitialArrayValues.RemoveAt(index);
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void UndoRemoveArrayElement(
+		ForgeSharedVariableDefinition sharedVariableDefinition,
+		int index,
+		Variant value)
+	{
+		if (index >= sharedVariableDefinition.InitialArrayValues.Count)
+		{
+			sharedVariableDefinition.InitialArrayValues.Add(value);
+		}
+		else
+		{
+			sharedVariableDefinition.InitialArrayValues.Insert(index, value);
+		}
+
+		NotifyChanged();
+		RebuildList();
+	}
+
+	private void DoSetArrayExpanded(string variableName, bool expanded)
+	{
+		if (expanded)
+		{
+			_expandedArrays.Add(variableName);
+		}
+		else
+		{
+			_expandedArrays.Remove(variableName);
+		}
+
+		RebuildList();
 	}
 }
 #endif

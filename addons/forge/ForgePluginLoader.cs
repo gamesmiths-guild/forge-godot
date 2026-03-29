@@ -47,6 +47,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		_attributeEditorPlugin = new AttributeEditorPlugin();
 		AddInspectorPlugin(_attributeEditorPlugin);
 		_sharedVariableSetInspectorPlugin = new SharedVariableSetInspectorPlugin();
+		_sharedVariableSetInspectorPlugin.SetUndoRedo(GetUndoRedo());
 		AddInspectorPlugin(_sharedVariableSetInspectorPlugin);
 
 		_statescriptGraphEditorDock = new StatescriptGraphEditorDock();

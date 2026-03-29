@@ -12,6 +12,17 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// </summary>
 public partial class SharedVariableSetInspectorPlugin : EditorInspectorPlugin
 {
+	private EditorUndoRedoManager? _undoRedo;
+
+	/// <summary>
+	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
+	/// </summary>
+	/// <param name="undoRedo">The undo/redo manager from the editor plugin.</param>
+	public void SetUndoRedo(EditorUndoRedoManager undoRedo)
+	{
+		_undoRedo = undoRedo;
+	}
+
 	/// <inheritdoc/>
 	public override bool _CanHandle(GodotObject @object)
 	{
@@ -34,6 +45,7 @@ public partial class SharedVariableSetInspectorPlugin : EditorInspectorPlugin
 		}
 
 		var editorProperty = new SharedVariableSetEditorProperty();
+		editorProperty.SetUndoRedo(_undoRedo);
 		AddPropertyEditor(name, editorProperty);
 		return true;
 	}
