@@ -265,6 +265,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			ComparisonResolverResource => "Comparison",
 			SharedVariableResolverResource => "SharedVariable",
 			MagnitudeResolverResource => "Magnitude",
+			ActivationDataResolverResource => "ActivationData",
 			_ => string.Empty,
 		};
 	}

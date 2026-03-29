@@ -24,6 +24,7 @@ internal static class StatescriptResolverRegistry
 		Register(() => new ComparisonResolverEditor());
 		Register(() => new SharedVariableResolverEditor());
 		Register(() => new MagnitudeResolverEditor());
+		Register(() => new ActivationDataResolverEditor());
 	}
 
 	/// <summary>

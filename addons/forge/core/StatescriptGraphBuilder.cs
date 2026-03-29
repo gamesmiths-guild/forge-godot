@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
@@ -100,6 +101,7 @@ public static class StatescriptGraphBuilder
 
 		RegisterGraphVariables(graph, graphResource);
 		BindNodeProperties(graph, graphResource, nodeMap);
+		ValidateActivationDataProviders(graphResource);
 
 		return graph;
 	}
@@ -190,6 +192,33 @@ public static class StatescriptGraphBuilder
 					}
 
 					binding.Resolver.BindOutput(runtimeNode, index);
+				}
+			}
+		}
+	}
+
+	private static void ValidateActivationDataProviders(StatescriptGraph graphResource)
+	{
+		string? firstProvider = null;
+
+		foreach (StatescriptNode node in graphResource.Nodes)
+		{
+			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
+			{
+				if (binding.Resolver is ActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				{
+					if (firstProvider is null)
+					{
+						firstProvider = resolver.ProviderClassName;
+					}
+					else if (resolver.ProviderClassName != firstProvider)
+					{
+						GD.PushError(
+							"Statescript: Graph uses multiple activation data providers " +
+							$"('{firstProvider}' and '{resolver.ProviderClassName}'). " +
+							"A graph supports only one activation data provider at a time. " +
+							"Combine the data into a single provider.");
+					}
 				}
 			}
 		}
