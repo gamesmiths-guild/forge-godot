@@ -193,6 +193,60 @@ public partial class MyDashBehavior : ForgeAbilityBehavior
 
 Assign in a ForgeAbilityData resource for custom behavior.
 
+### StatescriptAbilityBehavior
+
+A built-in `ForgeAbilityBehavior` implementation that drives an ability's lifecycle through a Statescript graph.
+
+**Properties:**
+
+- `Statescript` (StatescriptGraph): The Statescript graph resource defining the ability's behavior.
+
+**Description:**
+
+`StatescriptAbilityBehavior` allows you to use a visual Statescript graph as the behavior for an ability, replacing the need to write a custom `IAbilityBehavior` in C#. Assign a `StatescriptGraph` resource to this behavior and set it as the `AbilityBehavior` on a `ForgeAbilityData`. At runtime, the graph is built once and cached, then each ability activation creates a new `GraphProcessor` with independent state.
+
+If any node in the graph uses an `ActivationDataResolverResource`, the behavior automatically detects the associated `IActivationDataProvider` and maps activation data fields into graph variables.
+
+**Usage:**
+
+1. Create a `StatescriptGraph` resource in the Statescript editor.
+2. Create a `ForgeAbilityData` resource.
+3. Set `AbilityBehavior` to a new `StatescriptAbilityBehavior`.
+4. Assign your `StatescriptGraph` to the `Statescript` property.
+
+## Statescript Resources
+
+For detailed documentation on Statescript concepts, see the [Statescript documentation](statescript/README.md).
+
+### StatescriptGraph
+
+Resource representing a complete Statescript graph definition.
+
+**Properties:**
+
+- `StatescriptName` (string): Display name for the graph.
+- `Nodes` (Array\<StatescriptNode\>): The nodes in the graph.
+- `Connections` (Array\<StatescriptConnection\>): The connections between nodes.
+- `Variables` (Array\<StatescriptGraphVariable\>): Graph variable definitions.
+- `ScrollOffset` (Vector2): Editor scroll position (persisted for convenience).
+- `Zoom` (float): Editor zoom level (persisted for convenience).
+
+**Usage:**
+
+Create via the Statescript graph editor (accessible from the Forge tab) or programmatically. Assign to a `StatescriptAbilityBehavior` in a `ForgeAbilityData`.
+
+### ForgeSharedVariableSet
+
+Resource containing shared variable definitions for an entity. Assign to a `ForgeEntity` to define which shared variables the entity exposes at runtime.
+
+**Properties:**
+
+- `Variables` (Array\<ForgeSharedVariableDefinition\>): The shared variable definitions.
+
+**Description:**
+
+Shared variables live on the entity and are accessible by all Statescript graph instances running on that entity, providing a communication channel between abilities. For example, a "combo counter" shared variable can be read and written by multiple ability graphs on the same character.
+
 ## Advanced / Extensible API Resources
 
 ### ForgeCustomCalculator (Abstract)

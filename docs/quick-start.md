@@ -10,7 +10,7 @@ If you'd like to see sample scenes demonstrating the system in action, you can c
 
 ### Requirements
 
-- Godot 4.5 or later with .NET support.
+- Godot 4.6 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps
@@ -453,6 +453,7 @@ public partial class DamageCueHandler : ForgeCueHandler
 
 - Learn more about the [custom nodes](nodes.md) provided by the plugin.
 - Browse all available [Forge resources](resources.md) for configuring effects, abilities, tags, and more.
+- Build ability behaviors visually with [Statescript](statescript/README.md).
 - Discover [helper classes](helper-classes.md) for streamlining common Forge workflows in Godot.
 - Clone and explore the examples in the repository.
 - Check out the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) for advanced topics and reference.

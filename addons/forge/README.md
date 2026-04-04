@@ -2,7 +2,7 @@
 
 Forge for Godot is an Unreal GAS-like gameplay framework for the Godot Engine.
 
-It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for gameplay features such as attributes, effects, gameplay tags, abilities, events, and cues, fully aligned with Godot’s node, resource, and editor workflows.
+It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for gameplay features such as attributes, effects, gameplay tags, abilities, events, cues, and visual ability scripting through Statescript, fully aligned with Godot’s node, resource, and editor workflows.
 
 This plugin enables you to:
 
@@ -12,6 +12,7 @@ This plugin enables you to:
 - Create hierarchical gameplay tags using the built-in Tags Editor.
 - Trigger visual and audio feedback with the Cues system.
 - Create player skills, attacks, or behaviors, with support for custom logic, costs, cooldowns, and triggers.
+- Build ability behaviors visually with the Statescript graph editor, or implement custom behaviors in C#.
 
 ## Features
 
@@ -21,7 +22,8 @@ This plugin enables you to:
 - **Abilities System**: Feature-complete ability system, supporting grant/removal, custom behaviors, triggers, cooldowns, and costs.
 - **Events System**: Gameplay event bus supporting event-driven logic, subscriptions, and triggers.
 - **Cues System**: Visual/audio feedback layer; decouples presentation from game logic.
-- **Editor Extensions**: Custom inspector elements and tag editor with Godot integration.
+- **Statescript**: Visual state-based scripting system for implementing ability behaviors with a built-in graph editor.
+- **Editor Extensions**: Custom inspector elements, tag editor, and Statescript graph editor with Godot integration.
 - **Custom Nodes**: Includes nodes like `ForgeEntity`, `ForgeAttributeSet`, `EffectArea2D`, and more.
 
 ## Installation
@@ -51,6 +53,7 @@ This plugin enables you to:
 ## Documentation
 
 Full documentation, examples, and advanced usage are available in the [Forge for Godot GitHub repository](https://github.com/gamesmiths-guild/forge-godot).
+For Statescript documentation, see the [Statescript guide](https://github.com/gamesmiths-guild/forge-godot/blob/main/docs/statescript/README.md).
 For technical details about core systems, see the [Forge Gameplay System documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
 ## License
