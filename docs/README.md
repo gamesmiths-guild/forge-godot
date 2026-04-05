@@ -119,6 +119,18 @@ Apply effects and activate abilities via:
 - Dedicated scene nodes (e.g., EffectArea2D) for area/raycast interactions.
 - The EffectApplier helper for flexible, reusable logic.
 
+## Debugging
+
+The Forge NuGet package includes [Source Link](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink) support and publishes a symbol package (`.snupkg`) to the [NuGet symbol server](https://learn.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg#nugetorg-symbol-server). This allows you to step into Forge's source code during debugging, just as if it were part of your own project.
+
+To enable this, configure your IDE/debugger to:
+
+1. **Enable Source Link support** so the debugger can download source files from GitHub.
+2. **Disable "Just My Code"** (or equivalent) so the debugger allows stepping into external library code.
+3. **Enable the NuGet.org symbol server** (`https://symbols.nuget.org/download/symbols`) so the debugger can download the necessary debug symbols.
+
+Refer to your IDE's documentation for the specific settings locations. Most modern .NET IDEs and debuggers (Visual Studio, Visual Studio Code, Rider, etc.) support Source Link and NuGet symbol servers.
+
 ## Next Steps
 
 - [Quick Start Guide](quick-start.md): Get started with Forge for Godot in minutes.

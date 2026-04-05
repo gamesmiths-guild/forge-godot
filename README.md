@@ -79,6 +79,7 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 
 - **Multiplayer Support**: Network replication for all systems, deterministic/authoritative support.
 - **More Built-in Content**: More built-in components, nodes and resolvers.
+- **More sample scenes**: Sample scenes for statescript and multiplayer integration.
 
 ## Installation
 
@@ -108,6 +109,10 @@ For comprehensive documentation, explore the [docs](docs) directory:
 - [Forge Nodes](docs/nodes.md)
 - [Forge Resources](docs/resources.md)
 - [Helper Classes](docs/helper-classes.md)
+
+## Debugging
+
+The Forge NuGet package ships with [Source Link](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink) and a symbol package (`.snupkg`) published to the [NuGet symbol server](https://learn.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg#nugetorg-symbol-server). This means you can step into Forge's source code while debugging your project. For setup instructions, see the [Debugging section](docs/README.md#debugging) in the documentation.
 
 ## Contributing
 
