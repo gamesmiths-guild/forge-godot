@@ -41,7 +41,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	{
 		base._Ready();
 
-		_forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		_forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
@@ -56,12 +56,30 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 
 	public void OnBeforeSerialize()
 	{
-		// This method was intentionally left empty.
+		if (_tree is not null)
+		{
+			_tree.ButtonClicked -= TreeButtonClicked;
+		}
+
+		if (_addTagButton is not null)
+		{
+			_addTagButton.Pressed -= AddTagButton_Pressed;
+		}
 	}
 
 	public void OnAfterDeserialize()
 	{
 		EnsureInitialized();
+
+		if (_tree is not null)
+		{
+			_tree.ButtonClicked += TreeButtonClicked;
+		}
+
+		if (_addTagButton is not null)
+		{
+			_addTagButton.Pressed += AddTagButton_Pressed;
+		}
 
 		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 		ReconstructTreeNode();

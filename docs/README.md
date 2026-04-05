@@ -4,7 +4,7 @@ This documentation covers the integration of the Forge Gameplay System into the 
 
 ## What is Forge?
 
-Forge is an engine-agnostic gameplay framework that provides a robust foundation for building complex and maintainable game systems in C#. It is inspired by Unreal Engine's Gameplay Ability System (GAS), offering a structured approach to key gameplay features such as attributes, effects, abilities, events, tagging, and cues.
+Forge is an engine-agnostic gameplay framework that provides a robust foundation for building complex and maintainable game systems in C#. It is inspired by Unreal Engine's Gameplay Ability System (GAS), offering a structured approach to key gameplay features such as attributes, effects, abilities, events, tagging, cues, and state-based ability scripting through Statescript.
 
 For detailed documentation on the core framework concepts, see the [main Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
@@ -22,7 +22,7 @@ Forge for Godot connects the Forge system to Godot's node architecture through:
 
 - **Custom Nodes**: Godot nodes that implement or integrate Forge features.
 - **Custom Resources**: Godot resources for configuring Forge elements in the Inspector.
-- **Editor Extensions**: UI tools to manage tags and Forge data (e.g., the Tags Editor).
+- **Editor Extensions**: UI tools to manage tags, Statescript graphs, and Forge data (e.g., the Tags Editor, Statescript Graph Editor).
 
 ### Data Flow
 
@@ -82,6 +82,18 @@ Cues connect the gameplay simulation layer with the presentation layer, translat
 - Organizes cues and handlers using tags for flexible assignment.
 - Passes custom parameters for feedback intensity, color, sound, and more.
 
+### Statescript System
+
+Statescript is a state-based scripting system for defining ability behaviors:
+
+- **Node Graph**: Graphs composed of Entry, Exit, Action, Condition, and State nodes define execution flow.
+- **Hybrid Execution**: Combines declarative state management with imperative message propagation.
+- **Subgraphs**: State nodes own downstream subgraphs, providing automatic lifetime management and cleanup.
+- **Variables**: Mutable graph variables and entity-level shared variables connect graph logic to runtime data.
+- **Property Resolvers**: Data-driven inputs from attributes, tags, comparisons, and activation context.
+- **Ability Integration**: Graphs plug directly into the Abilities system as `IAbilityBehavior` implementations.
+- **Visual Editor**: Built-in Statescript graph editor integrated into the Godot editor for visual authoring.
+
 ## Using Forge in Godot
 
 ### Plugin Initialization
@@ -107,10 +119,23 @@ Apply effects and activate abilities via:
 - Dedicated scene nodes (e.g., EffectArea2D) for area/raycast interactions.
 - The EffectApplier helper for flexible, reusable logic.
 
+## Debugging
+
+The Forge NuGet package includes [Source Link](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink) support and publishes a symbol package (`.snupkg`) to the [NuGet symbol server](https://learn.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg#nugetorg-symbol-server). This allows you to step into Forge's source code during debugging, just as if it were part of your own project.
+
+To enable this, configure your IDE/debugger to:
+
+1. **Enable Source Link support** so the debugger can download source files from GitHub.
+2. **Disable "Just My Code"** (or equivalent) so the debugger allows stepping into external library code.
+3. **Enable the NuGet.org symbol server** (`https://symbols.nuget.org/download/symbols`) so the debugger can download the necessary debug symbols.
+
+Refer to your IDE's documentation for the specific settings locations. Most modern .NET IDEs and debuggers (Visual Studio, Visual Studio Code, Rider, etc.) support Source Link and NuGet symbol servers.
+
 ## Next Steps
 
 - [Quick Start Guide](quick-start.md): Get started with Forge for Godot in minutes.
 - [Nodes Documentation](nodes.md): Learn about the custom nodes provided by the plugin.
 - [Resources Documentation](resources.md): Explore all configurable resource types—effects, abilities, tags, cues, and more.
+- [Statescript Documentation](statescript/README.md): Learn how to build ability behaviors visually with Statescript graphs.
 - [Helper Classes](helper-classes.md): Find utility classes to streamline effect application, manager access, and integration patterns.
 - For gameplay programming API and advanced usage, see the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).

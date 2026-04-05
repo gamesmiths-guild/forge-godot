@@ -4,14 +4,10 @@
 using System;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-using Gamesmiths.Forge.Statescript;
 using Godot;
-using GodotPlane = Godot.Plane;
-using GodotQuaternion = Godot.Quaternion;
+using Godot.Collections;
 using GodotVariant = Godot.Variant;
 using GodotVector2 = Godot.Vector2;
-using GodotVector3 = Godot.Vector3;
-using GodotVector4 = Godot.Vector4;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
@@ -22,13 +18,17 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 internal sealed partial class VariantResolverEditor : NodeEditorProperty
 {
 	private StatescriptVariableType _valueType;
+	private bool _isArray;
+	private bool _isArrayExpanded;
 	private GodotVariant _currentValue;
+	private Array<GodotVariant> _arrayValues = [];
+	private Action? _onChanged;
+
+	private Button? _toggleButton;
+	private VBoxContainer? _elementsContainer;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Constant";
-
-	/// <inheritdoc/>
-	public override Type ValueType => typeof(Variant128);
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Variant";
@@ -36,7 +36,6 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		// Constants can match any supported type.
 		return true;
 	}
 
@@ -45,8 +44,12 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
-		Action onChanged)
+		Action onChanged,
+		bool isArray)
 	{
+		_isArray = isArray;
+		_onChanged = onChanged;
+
 		if (!StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _valueType))
 		{
 			_valueType = StatescriptVariableType.Int;
@@ -54,8 +57,21 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 		if (property?.Resolver is VariantResolverResource variantRes)
 		{
-			_currentValue = variantRes.Value;
 			_valueType = variantRes.ValueType;
+
+			if (_isArray)
+			{
+				_arrayValues = [.. variantRes.ArrayValues];
+				_isArrayExpanded = variantRes.IsArrayExpanded;
+			}
+			else
+			{
+				_currentValue = variantRes.Value;
+			}
+		}
+		else if (_isArray)
+		{
+			_arrayValues = [];
 		}
 		else
 		{
@@ -64,245 +80,309 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 		CustomMinimumSize = new GodotVector2(200, 40);
 
-		HBoxContainer valueEditor = CreateValueEditor(onChanged);
-		AddChild(valueEditor);
+		if (_isArray)
+		{
+			VBoxContainer arrayEditor = CreateArrayEditor();
+			AddChild(arrayEditor);
+		}
+		else
+		{
+			Control valueEditor = CreateValueEditor();
+			AddChild(valueEditor);
+		}
 	}
 
 	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new VariantResolverResource
+		if (_isArray)
 		{
-			Value = _currentValue,
-			ValueType = _valueType,
-		};
+			property.Resolver = new VariantResolverResource
+			{
+				ValueType = _valueType,
+				IsArray = true,
+				ArrayValues = [.. _arrayValues],
+				IsArrayExpanded = _isArrayExpanded,
+			};
+		}
+		else
+		{
+			property.Resolver = new VariantResolverResource
+			{
+				Value = _currentValue,
+				ValueType = _valueType,
+			};
+		}
 	}
 
-	private HBoxContainer CreateValueEditor(Action onChanged)
+	/// <inheritdoc/>
+	public override void ClearCallbacks()
 	{
-		var hBox = new HBoxContainer
+		base.ClearCallbacks();
+		_onChanged = null;
+	}
+
+	private Control CreateValueEditor()
+	{
+		if (_valueType == StatescriptVariableType.Bool)
+		{
+			return StatescriptEditorControls.CreateBoolEditor(_currentValue.AsBool(), OnBoolValueChanged);
+		}
+
+		if (StatescriptEditorControls.IsIntegerType(_valueType)
+			|| StatescriptEditorControls.IsFloatType(_valueType))
+		{
+			return StatescriptEditorControls.CreateNumericSpinSlider(
+				_valueType,
+				_currentValue.AsDouble(),
+				OnNumericValueChanged);
+		}
+
+		if (StatescriptEditorControls.IsVectorType(_valueType))
+		{
+			return StatescriptEditorControls.CreateVectorEditor(
+				_valueType,
+				x => StatescriptEditorControls.GetVectorComponent(_currentValue, _valueType, x),
+				OnVectorValueChanged);
+		}
+
+		return new Label { Text = _valueType.ToString() };
+	}
+
+	private void OnBoolValueChanged(bool x)
+	{
+		_currentValue = GodotVariant.From(x);
+		_onChanged?.Invoke();
+	}
+
+	private void OnNumericValueChanged(double x)
+	{
+		_currentValue = GodotVariant.From(x);
+		_onChanged?.Invoke();
+	}
+
+	private void OnVectorValueChanged(double[] x)
+	{
+		_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, x);
+		_onChanged?.Invoke();
+	}
+
+	private VBoxContainer CreateArrayEditor()
+	{
+		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		_elementsContainer = new VBoxContainer
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			Visible = _isArrayExpanded,
 		};
 
-		switch (_valueType)
+		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		vBox.AddChild(headerRow);
+
+		_toggleButton = new Button
 		{
-			case StatescriptVariableType.Bool:
-				var checkBox = new CheckButton { ButtonPressed = _currentValue.AsBool() };
-				checkBox.Toggled += x =>
-				{
-					_currentValue = GodotVariant.From(x);
-					onChanged();
-				};
-				hBox.AddChild(checkBox);
-				break;
+			Text = $"Array (size {_arrayValues.Count})",
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			ToggleMode = true,
+			ButtonPressed = _isArrayExpanded,
+		};
 
-			case StatescriptVariableType.Int:
-			case StatescriptVariableType.Short:
-			case StatescriptVariableType.Byte:
-			case StatescriptVariableType.SByte:
-			case StatescriptVariableType.UShort:
-			case StatescriptVariableType.Char:
-				var intSpin = new SpinBox
-				{
-					Value = _currentValue.AsInt32(),
-					Step = 1,
-					Rounded = true,
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					CustomMinimumSize = new GodotVector2(80, 0),
-				};
+		_toggleButton.Toggled += OnArrayToggled;
 
-				intSpin.ValueChanged += value =>
-				{
-					_currentValue = GodotVariant.From((int)value);
-					onChanged();
-				};
+		headerRow.AddChild(_toggleButton);
 
-				hBox.AddChild(intSpin);
-				break;
+		Texture2D addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 
-			case StatescriptVariableType.UInt:
-			case StatescriptVariableType.Long:
-			case StatescriptVariableType.ULong:
-				var longSpin = new SpinBox
-				{
-					Value = _currentValue.AsInt64(),
-					Step = 1,
-					Rounded = true,
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					CustomMinimumSize = new GodotVector2(80, 0),
-				};
+		var addButton = new Button
+		{
+			Icon = addIcon,
+			Flat = true,
+			TooltipText = "Add Element",
+			CustomMinimumSize = new GodotVector2(24, 24),
+		};
 
-				longSpin.ValueChanged += value =>
-				{
-					_currentValue = GodotVariant.From((long)value);
-					onChanged();
-				};
+		addButton.Pressed += OnAddElementPressed;
 
-				hBox.AddChild(longSpin);
-				break;
+		headerRow.AddChild(addButton);
 
-			case StatescriptVariableType.Float:
-			case StatescriptVariableType.Double:
-			case StatescriptVariableType.Decimal:
-				var floatSpin = new SpinBox
-				{
-					Value = _currentValue.AsDouble(),
-					Step = 0.01,
-					Rounded = false,
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-					CustomMinimumSize = new GodotVector2(80, 0),
-				};
+		vBox.AddChild(_elementsContainer);
 
-				floatSpin.ValueChanged += value =>
-				{
-					_currentValue = GodotVariant.From(value);
-					onChanged();
-				};
+		RebuildArrayElements();
 
-				hBox.AddChild(floatSpin);
-				break;
+		return vBox;
+	}
 
-			case StatescriptVariableType.Vector2:
-				CreateVectorEditor(hBox, 2, onChanged);
-				break;
-
-			case StatescriptVariableType.Vector3:
-				CreateVectorEditor(hBox, 3, onChanged);
-				break;
-
-			case StatescriptVariableType.Vector4:
-			case StatescriptVariableType.Plane:
-			case StatescriptVariableType.Quaternion:
-				CreateVectorEditor(hBox, 4, onChanged);
-				break;
-
-			default:
-				hBox.AddChild(new Label { Text = _valueType.ToString() });
-				break;
+	private void OnArrayToggled(bool toggled)
+	{
+		if (_elementsContainer is not null)
+		{
+			_elementsContainer.Visible = toggled;
 		}
 
-		return hBox;
+		_isArrayExpanded = toggled;
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
 	}
 
-	private void CreateVectorEditor(HBoxContainer parent, int components, Action onChanged)
+	private void OnAddElementPressed()
 	{
-		string[] labels = components switch
+		GodotVariant defaultValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(_valueType);
+		_arrayValues.Add(defaultValue);
+		_onChanged?.Invoke();
+
+		if (_elementsContainer is not null)
 		{
-			2 => ["X", "Y"],
-			3 => ["X", "Y", "Z"],
-			_ => ["X", "Y", "Z", "W"],
-		};
+			_elementsContainer.Visible = true;
+		}
 
-		var spins = new SpinBox[components];
+		_isArrayExpanded = true;
+		RebuildArrayElements();
+		RaiseLayoutSizeChanged();
+	}
 
-		for (var i = 0; i < components; i++)
+	private void RebuildArrayElements()
+	{
+		if (_elementsContainer is null || _toggleButton is null)
 		{
-			parent.AddChild(new Label { Text = labels[i] });
+			return;
+		}
 
-			var spin = new SpinBox
+		foreach (Node child in _elementsContainer.GetChildren())
+		{
+			_elementsContainer.RemoveChild(child);
+			child.Free();
+		}
+
+		_toggleButton.Text = $"Array (size {_arrayValues.Count})";
+
+		Texture2D removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
+
+		for (var i = 0; i < _arrayValues.Count; i++)
+		{
+			var capturedIndex = i;
+
+			if (StatescriptEditorControls.IsVectorType(_valueType))
 			{
-				Value = GetVectorComponent(i),
-				Step = 0.01,
-				Rounded = false,
-				SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				CustomMinimumSize = new GodotVector2(50, 0),
-			};
+				var elementVBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				_elementsContainer.AddChild(elementVBox);
 
-			spins[i] = spin;
-			spin.ValueChanged += _ => OnVectorComponentChanged(spins, onChanged);
-			parent.AddChild(spin);
+				var labelRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				elementVBox.AddChild(labelRow);
+				labelRow.AddChild(new Label
+				{
+					Text = $"[{i}]",
+					SizeFlagsHorizontal = SizeFlags.ExpandFill,
+				});
+
+				AddArrayRemoveButton(labelRow, removeIcon, capturedIndex);
+
+				VBoxContainer vectorEditor = StatescriptEditorControls.CreateVectorEditor(
+					_valueType,
+					x =>
+					{
+						return StatescriptEditorControls.GetVectorComponent(
+							_arrayValues[capturedIndex],
+							_valueType,
+							x);
+					},
+					x =>
+					{
+						_arrayValues[capturedIndex] =
+							StatescriptEditorControls.BuildVectorVariant(_valueType, x);
+						_onChanged?.Invoke();
+					});
+
+				elementVBox.AddChild(vectorEditor);
+			}
+			else
+			{
+				var elementRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+				_elementsContainer.AddChild(elementRow);
+				elementRow.AddChild(new Label { Text = $"[{i}]" });
+
+				if (_valueType == StatescriptVariableType.Bool)
+				{
+					elementRow.AddChild(StatescriptEditorControls.CreateBoolEditor(
+						_arrayValues[capturedIndex].AsBool(),
+						x =>
+						{
+							_arrayValues[capturedIndex] = GodotVariant.From(x);
+							_onChanged?.Invoke();
+						}));
+				}
+				else
+				{
+					EditorSpinSlider spin = StatescriptEditorControls.CreateNumericSpinSlider(
+						_valueType,
+						_arrayValues[capturedIndex].AsDouble(),
+						x =>
+						{
+							_arrayValues[capturedIndex] = GodotVariant.From(x);
+							_onChanged?.Invoke();
+						});
+
+					elementRow.AddChild(spin);
+				}
+
+				AddArrayRemoveButton(elementRow, removeIcon, capturedIndex);
+			}
 		}
 	}
 
-	private double GetVectorComponent(int index)
+	private void AddArrayRemoveButton(
+		HBoxContainer row,
+		Texture2D removeIcon,
+		int elementIndex)
 	{
-		return _valueType switch
+		var removeButton = new Button
 		{
-			StatescriptVariableType.Vector2 => index == 0
-				? _currentValue.AsVector2().X
-				: _currentValue.AsVector2().Y,
-			StatescriptVariableType.Vector3 => index switch
-			{
-				0 => _currentValue.AsVector3().X,
-				1 => _currentValue.AsVector3().Y,
-				_ => _currentValue.AsVector3().Z,
-			},
-			StatescriptVariableType.Bool => throw new NotImplementedException(),
-			StatescriptVariableType.Byte => throw new NotImplementedException(),
-			StatescriptVariableType.SByte => throw new NotImplementedException(),
-			StatescriptVariableType.Char => throw new NotImplementedException(),
-			StatescriptVariableType.Decimal => throw new NotImplementedException(),
-			StatescriptVariableType.Double => throw new NotImplementedException(),
-			StatescriptVariableType.Float => throw new NotImplementedException(),
-			StatescriptVariableType.Int => throw new NotImplementedException(),
-			StatescriptVariableType.UInt => throw new NotImplementedException(),
-			StatescriptVariableType.Long => throw new NotImplementedException(),
-			StatescriptVariableType.ULong => throw new NotImplementedException(),
-			StatescriptVariableType.Short => throw new NotImplementedException(),
-			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			StatescriptVariableType.Vector4
-				or StatescriptVariableType.Plane
-				or StatescriptVariableType.Quaternion => index switch
-				{
-					0 => _currentValue.AsVector4().X,
-					1 => _currentValue.AsVector4().Y,
-					2 => _currentValue.AsVector4().Z,
-					_ => _currentValue.AsVector4().W,
-				},
-			_ => throw new NotImplementedException(),
+			Icon = removeIcon,
+			Flat = true,
+			TooltipText = "Remove Element",
+			CustomMinimumSize = new GodotVector2(24, 24),
 		};
+
+		var handler = new ArrayRemoveHandler(this, elementIndex);
+		removeButton.AddChild(handler);
+		removeButton.Pressed += handler.HandlePressed;
+
+		row.AddChild(removeButton);
 	}
 
-	private void OnVectorComponentChanged(SpinBox[] spins, Action onChanged)
+	private void OnRemoveElement(int elementIndex)
 	{
-		_currentValue = _valueType switch
-		{
-			StatescriptVariableType.Vector2 => GodotVariant.From(
-				new GodotVector2(
-					(float)spins[0].Value,
-					(float)spins[1].Value)),
-			StatescriptVariableType.Vector3 => GodotVariant.From(
-				new GodotVector3(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value)),
-			StatescriptVariableType.Vector4 => GodotVariant.From(
-				new GodotVector4(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value,
-					(float)spins[3].Value)),
-			StatescriptVariableType.Plane => GodotVariant.From(
-				new GodotPlane(
-					new GodotVector3(
-						(float)spins[0].Value,
-						(float)spins[1].Value,
-						(float)spins[2].Value),
-					(float)spins[3].Value)),
-			StatescriptVariableType.Quaternion => GodotVariant.From(
-				new GodotQuaternion(
-					(float)spins[0].Value,
-					(float)spins[1].Value,
-					(float)spins[2].Value,
-					(float)spins[3].Value)),
-			StatescriptVariableType.Bool => throw new NotImplementedException(),
-			StatescriptVariableType.Byte => throw new NotImplementedException(),
-			StatescriptVariableType.SByte => throw new NotImplementedException(),
-			StatescriptVariableType.Char => throw new NotImplementedException(),
-			StatescriptVariableType.Decimal => throw new NotImplementedException(),
-			StatescriptVariableType.Double => throw new NotImplementedException(),
-			StatescriptVariableType.Float => throw new NotImplementedException(),
-			StatescriptVariableType.Int => throw new NotImplementedException(),
-			StatescriptVariableType.UInt => throw new NotImplementedException(),
-			StatescriptVariableType.Long => throw new NotImplementedException(),
-			StatescriptVariableType.ULong => throw new NotImplementedException(),
-			StatescriptVariableType.Short => throw new NotImplementedException(),
-			StatescriptVariableType.UShort => throw new NotImplementedException(),
-			_ => _currentValue,
-		};
+		_arrayValues.RemoveAt(elementIndex);
+		_onChanged?.Invoke();
+		RebuildArrayElements();
+		RaiseLayoutSizeChanged();
+	}
 
-		onChanged();
+	/// <summary>
+	/// Godot-compatible signal handler for array element remove buttons. Holds the element index and a reference to the
+	/// owning editor so the <c>Pressed</c> signal can be handled without a lambda.
+	/// </summary>
+	[Tool]
+	private sealed partial class ArrayRemoveHandler : Node
+	{
+		private readonly VariantResolverEditor _editor;
+		private readonly int _elementIndex;
+
+		public ArrayRemoveHandler()
+		{
+			_editor = null!;
+		}
+
+		public ArrayRemoveHandler(VariantResolverEditor editor, int elementIndex)
+		{
+			_editor = editor;
+			_elementIndex = elementIndex;
+		}
+
+		public void HandlePressed()
+		{
+			_editor.OnRemoveElement(_elementIndex);
+		}
 	}
 }
 #endif

@@ -72,25 +72,30 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 		{
 			MoveAndCollide(new Vector2(1, 0) * Speed * 20);
 			EffectsManager.UpdateEffects(1f);
+			Abilities.UpdateAbilities(1f);
 		}
 		else if (Input.IsActionJustPressed("move_left"))
 		{
 			MoveAndCollide(new Vector2(-1, 0) * Speed * 20);
 			EffectsManager.UpdateEffects(1f);
+			Abilities.UpdateAbilities(1f);
 		}
 		else if (Input.IsActionJustPressed("move_up"))
 		{
 			MoveAndCollide(new Vector2(0, -1) * Speed * 20);
 			EffectsManager.UpdateEffects(1f);
+			Abilities.UpdateAbilities(1f);
 		}
 		else if (Input.IsActionJustPressed("move_down"))
 		{
 			MoveAndCollide(new Vector2(0, 1) * Speed * 20);
 			EffectsManager.UpdateEffects(1f);
+			Abilities.UpdateAbilities(1f);
 		}
 		else if (Input.IsActionJustPressed("wait"))
 		{
 			EffectsManager.UpdateEffects(1f);
+			Abilities.UpdateAbilities(1f);
 		}
 	}
 }

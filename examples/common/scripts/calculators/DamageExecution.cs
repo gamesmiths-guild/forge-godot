@@ -1,6 +1,5 @@
 // Copyright © Gamesmiths Guild.
 
-using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;

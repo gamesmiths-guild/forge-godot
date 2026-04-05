@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using GodotCollections = Godot.Collections;
@@ -15,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// Designed to be shown in the bottom panel area of the Godot editor.
 /// </summary>
 [Tool]
-public partial class StatescriptGraphEditorDock : EditorDock
+public partial class StatescriptGraphEditorDock : EditorDock, ISerializationListener
 {
 	private readonly List<GraphTab> _openTabs = [];
 	private readonly Dictionary<StringName, Vector2> _preMovePositions = [];
@@ -31,6 +32,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	private HSplitContainer? _splitContainer;
 
 	private MenuButton? _fileMenuButton;
+	private PopupMenu? _fileMenuPopup;
 	private Button? _variablesToggleButton;
 	private Button? _onlineDocsButton;
 
@@ -48,6 +50,12 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 	private EditorFileSystem? _fileSystem;
 	private Callable _filesystemChangedCallable;
+
+	private string[]? _serializedTabPaths;
+	private int _serializedActiveTab = -1;
+	private bool[]? _serializedVariablesStates;
+	private string[]? _serializedConnections;
+	private int[]? _serializedConnectionCounts;
 
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
@@ -89,10 +97,86 @@ public partial class StatescriptGraphEditorDock : EditorDock
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+
+		ClearGraphEditor();
+		_openTabs.Clear();
+
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
 			== true)
 		{
 			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		DisconnectUISignals();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			== true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		_serializedTabPaths = GetOpenResourcePaths();
+		_serializedActiveTab = GetActiveTabIndex();
+		_serializedVariablesStates = GetVariablesPanelStates();
+
+		SyncVisualNodePositionsToGraph();
+		SyncConnectionsToCurrentGraph();
+
+		if (CurrentGraph is not null && _graphEdit is not null)
+		{
+			CurrentGraph.ScrollOffset = _graphEdit.ScrollOffset;
+			CurrentGraph.Zoom = _graphEdit.Zoom;
+		}
+
+		var allConnections = new List<string>();
+		_serializedConnectionCounts = new int[_openTabs.Count];
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			StatescriptGraph graph = _openTabs[i].GraphResource;
+			var count = 0;
+			foreach (StatescriptConnection c in graph.Connections)
+			{
+				allConnections.Add($"{c.FromNode},{c.OutputPort},{c.ToNode},{c.InputPort}");
+				count++;
+			}
+
+			_serializedConnectionCounts[i] = count;
+		}
+
+		_serializedConnections = [.. allConnections];
+
+		DisconnectUISignals();
+		ClearGraphEditor();
+
+		if (_tabBar is not null)
+		{
+			while (_tabBar.GetTabCount() > 0)
+			{
+				_tabBar.RemoveTab(0);
+			}
+		}
+
+		_openTabs.Clear();
+	}
+
+	public void OnAfterDeserialize()
+	{
+		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
+
+		if (_fileSystem?.
+			IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable) == false)
+		{
+			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		ConnectUISignals();
+
+		if (_serializedTabPaths?.Length > 0)
+		{
+			_ = RestoreTabsDeferred();
 		}
 	}
 
@@ -222,7 +306,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				continue;
 			}
 
-			ResourceSaver.Save(graph);
+			SaveGraphResource(graph);
 		}
 	}
 
@@ -251,13 +335,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		for (var i = 0; i < paths.Length; i++)
 		{
 			var path = paths[i];
-			if (!ResourceLoader.Exists(path))
-			{
-				skippedTabs++;
-				continue;
-			}
 
-			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(path);
+			StatescriptGraph? graph = LoadGraphFromPath(path);
 			if (graph is null)
 			{
 				skippedTabs++;
@@ -300,6 +379,225 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				node.PositionOffset = pos;
 			}
 		}
+	}
+
+	private static void OnOnlineDocsPressed()
+	{
+		OS.ShellOpen("https://github.com/gamesmiths-guild/forge-godot/tree/main/docs");
+	}
+
+	private static string GetBaseFilePath(string resourcePath)
+	{
+		var separatorIndex = resourcePath.IndexOf("::", StringComparison.Ordinal);
+		return separatorIndex >= 0 ? resourcePath[..separatorIndex] : resourcePath;
+	}
+
+	private static bool IsSubResourcePath(string resourcePath)
+	{
+		return resourcePath.Contains("::", StringComparison.Ordinal);
+	}
+
+	private static StatescriptGraph? LoadGraphFromPath(string path)
+	{
+		if (IsSubResourcePath(path))
+		{
+			var basePath = GetBaseFilePath(path);
+			if (!ResourceLoader.Exists(basePath))
+			{
+				return null;
+			}
+
+			Resource? parentResource = ResourceLoader.Load(basePath);
+			if (parentResource is null)
+			{
+				return null;
+			}
+
+			return FindSubResourceGraph(parentResource, path);
+		}
+
+		if (!ResourceLoader.Exists(path))
+		{
+			return null;
+		}
+
+		return ResourceLoader.Load<StatescriptGraph>(path);
+	}
+
+	private static StatescriptGraph? FindSubResourceGraph(Resource parentResource, string subResourcePath)
+	{
+		foreach (var propertyName in parentResource.GetPropertyList()
+			.Select(p => p["name"].AsString()))
+		{
+			Variant value = parentResource.Get(propertyName);
+			if (value.Obj is StatescriptGraph graph && graph.ResourcePath == subResourcePath)
+			{
+				return graph;
+			}
+
+			if (value.Obj is Resource nestedResource)
+			{
+				StatescriptGraph? found = FindSubResourceInNested(nestedResource, subResourcePath);
+				if (found is not null)
+				{
+					return found;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private static StatescriptGraph? FindSubResourceInNested(Resource resource, string subResourcePath)
+	{
+		if (resource is StatescriptGraph graph && graph.ResourcePath == subResourcePath)
+		{
+			return graph;
+		}
+
+		foreach (var propertyName in resource.GetPropertyList()
+			.Select(p => p["name"].AsString()))
+		{
+			Variant value = resource.Get(propertyName);
+			if (value.Obj is StatescriptGraph nestedGraph && nestedGraph.ResourcePath == subResourcePath)
+			{
+				return nestedGraph;
+			}
+
+			if (value.Obj is Resource nestedResource && nestedResource != resource)
+			{
+				StatescriptGraph? found = FindSubResourceInNested(nestedResource, subResourcePath);
+				if (found is not null)
+				{
+					return found;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private static void SaveGraphResource(StatescriptGraph graph)
+	{
+		var path = graph.ResourcePath;
+
+		if (IsSubResourcePath(path))
+		{
+			var basePath = GetBaseFilePath(path);
+			Resource? parentResource = ResourceLoader.Load(basePath);
+			if (parentResource is not null)
+			{
+				ResourceSaver.Save(parentResource);
+			}
+		}
+		else
+		{
+			ResourceSaver.Save(graph);
+		}
+	}
+
+	private async Task RestoreTabsDeferred()
+	{
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+		if (_serializedTabPaths is null || _serializedTabPaths.Length == 0)
+		{
+			return;
+		}
+
+		var paths = _serializedTabPaths;
+		var activeTab = _serializedActiveTab;
+		var varStates = _serializedVariablesStates;
+		var savedConnections = _serializedConnections;
+		var connectionCounts = _serializedConnectionCounts;
+
+		_serializedTabPaths = null;
+		_serializedActiveTab = -1;
+		_serializedVariablesStates = null;
+		_serializedConnections = null;
+		_serializedConnectionCounts = null;
+
+		if (_tabBar is null || _graphEdit is null)
+		{
+			return;
+		}
+
+		_isLoadingGraph = true;
+
+		_openTabs.Clear();
+		while (_tabBar.GetTabCount() > 0)
+		{
+			_tabBar.RemoveTab(0);
+		}
+
+		var skippedTabs = 0;
+		for (var i = 0; i < paths.Length; i++)
+		{
+			if (!ResourceLoader.Exists(paths[i]))
+			{
+				skippedTabs++;
+				continue;
+			}
+
+			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(paths[i]);
+			if (graph is null)
+			{
+				skippedTabs++;
+				continue;
+			}
+
+			graph.EnsureEntryNode();
+			var tab = new GraphTab(graph);
+
+			var currentTab = i - skippedTabs;
+			if (varStates is not null && currentTab < varStates.Length)
+			{
+				tab.VariablesPanelOpen = varStates[currentTab];
+			}
+
+			_openTabs.Add(tab);
+			_tabBar.AddTab(graph.StatescriptName);
+		}
+
+		_isLoadingGraph = false;
+
+		if (savedConnections is not null && connectionCounts is not null)
+		{
+			var offset = 0;
+			for (var i = 0; i < _openTabs.Count && i < connectionCounts.Length; i++)
+			{
+				StatescriptGraph graph = _openTabs[i].GraphResource;
+				graph.Connections.Clear();
+
+				for (var j = 0; j < connectionCounts[i] && offset < savedConnections.Length; j++, offset++)
+				{
+					var parts = savedConnections[offset].Split(',');
+					if (parts.Length != 4
+						|| !int.TryParse(parts[1], out var outPort)
+						|| !int.TryParse(parts[3], out var inPort))
+					{
+						continue;
+					}
+
+					graph.Connections.Add(new StatescriptConnection
+					{
+						FromNode = parts[0],
+						OutputPort = outPort,
+						ToNode = parts[2],
+						InputPort = inPort,
+					});
+				}
+			}
+		}
+
+		if (activeTab >= 0 && activeTab < _openTabs.Count)
+		{
+			_tabBar.CurrentTab = activeTab;
+			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
+			ApplyVariablesPanelState(activeTab);
+		}
+
+		UpdateVisibility();
 	}
 
 	private void CloseTabByIndex(int tabIndex)
@@ -400,6 +698,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		};
 
 		_variablePanel.VariablesChanged += OnGraphVariablesChanged;
+		_variablePanel.VariableUndoRedoPerformed += OnVariableUndoRedoPerformed;
+		_variablePanel.VariableHighlightChanged += OnVariableHighlightChanged;
 		_splitContainer.AddChild(_variablePanel);
 
 		if (_undoRedo is not null)
@@ -421,17 +721,17 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			ThemeTypeVariation = "FlatMenuButton",
 		};
 
-		PopupMenu filePopup = _fileMenuButton.GetPopup();
+		_fileMenuPopup = _fileMenuButton.GetPopup();
 #pragma warning disable RCS1130, S3265 // Bitwise operation on enum without Flags attribute
-		filePopup.AddItem("New Statescript...", 0, Key.N | (Key)KeyModifierMask.MaskCtrl);
-		filePopup.AddItem("Load Statescript File...", 1, Key.O | (Key)KeyModifierMask.MaskCtrl);
-		filePopup.AddSeparator();
-		filePopup.AddItem("Save", 2, Key.S | (Key)KeyModifierMask.MaskCtrl | (Key)KeyModifierMask.MaskAlt);
-		filePopup.AddItem("Save As...", 3);
-		filePopup.AddSeparator();
-		filePopup.AddItem("Close", 4, Key.W | (Key)KeyModifierMask.MaskCtrl);
+		_fileMenuPopup.AddItem("New Statescript...", 0, Key.N | (Key)KeyModifierMask.MaskCtrl);
+		_fileMenuPopup.AddItem("Load Statescript File...", 1, Key.O | (Key)KeyModifierMask.MaskCtrl);
+		_fileMenuPopup.AddSeparator();
+		_fileMenuPopup.AddItem("Save", 2, Key.S | (Key)KeyModifierMask.MaskCtrl | (Key)KeyModifierMask.MaskAlt);
+		_fileMenuPopup.AddItem("Save As...", 3);
+		_fileMenuPopup.AddSeparator();
+		_fileMenuPopup.AddItem("Close", 4, Key.W | (Key)KeyModifierMask.MaskCtrl);
 #pragma warning restore RCS1130, S3265 // Bitwise operation on enum without Flags attribute
-		filePopup.IdPressed += OnFileMenuIdPressed;
+		_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
 
 		menuHBox.AddChild(_fileMenuButton);
 		menuHBox.MoveChild(_fileMenuButton, 0);
@@ -479,11 +779,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("ExternalLink", "EditorIcons"),
 		};
 
-		_onlineDocsButton.Pressed += () =>
-		{
-			OS.ShellOpen("https://github.com/gamesmiths-guild/forge-godot/tree/main/docs");
-		};
-
+		_onlineDocsButton.Pressed += OnOnlineDocsPressed;
 		menuHBox.AddChild(_onlineDocsButton);
 
 		_emptyLabel = new Label
@@ -504,176 +800,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		AddChild(_addNodeDialog);
 
 		UpdateTheme();
-	}
-
-	private void OnFileMenuIdPressed(long id)
-	{
-		switch ((int)id)
-		{
-			case 0:
-				ShowNewStatescriptDialog();
-				break;
-
-			case 1:
-				ShowLoadStatescriptDialog();
-				break;
-
-			case 2:
-				OnSavePressed();
-				break;
-
-			case 3:
-				ShowSaveAsDialog();
-				break;
-
-			case 4:
-				CloseCurrentTab();
-				break;
-		}
-	}
-
-	private void ShowNewStatescriptDialog()
-	{
-		_newStatescriptDialog?.QueueFree();
-
-		_newStatescriptDialog = new AcceptDialog
-		{
-			Title = "Create Statescript",
-			Size = new Vector2I(400, 140),
-			Exclusive = true,
-		};
-
-		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		var pathRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(pathRow);
-
-		pathRow.AddChild(new Label { Text = "Path:", CustomMinimumSize = new Vector2(50, 0) });
-
-		_newStatescriptPathEdit = new LineEdit
-		{
-			Text = "res://new_statescript.tres",
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		pathRow.AddChild(_newStatescriptPathEdit);
-
-		_newStatescriptDialog.AddChild(vBox);
-		_newStatescriptDialog.Confirmed += OnNewStatescriptConfirmed;
-
-		AddChild(_newStatescriptDialog);
-		_newStatescriptDialog.PopupCentered();
-	}
-
-	private void OnNewStatescriptConfirmed()
-	{
-		if (_newStatescriptPathEdit is null)
-		{
-			return;
-		}
-
-		var path = _newStatescriptPathEdit.Text.Trim();
-		if (string.IsNullOrEmpty(path))
-		{
-			return;
-		}
-
-		if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
-		{
-			path += ".tres";
-		}
-
-		var graph = new StatescriptGraph();
-		graph.EnsureEntryNode();
-
-		graph.StatescriptName = path.GetFile().GetBaseName();
-
-		ResourceSaver.Save(graph, path);
-		EditorInterface.Singleton.GetResourceFilesystem().Scan();
-
-		graph = ResourceLoader.Load<StatescriptGraph>(path);
-		if (graph is not null)
-		{
-			OpenGraph(graph);
-		}
-
-		_newStatescriptDialog?.QueueFree();
-		_newStatescriptDialog = null;
-	}
-
-	private void ShowLoadStatescriptDialog()
-	{
-		var dialog = new EditorFileDialog
-		{
-			FileMode = FileDialog.FileModeEnum.OpenFile,
-			Title = "Load Statescript File",
-			Access = FileDialog.AccessEnum.Resources,
-		};
-
-		dialog.AddFilter("*.tres;StatescriptGraph");
-		dialog.FileSelected += path =>
-		{
-			Resource? graph = ResourceLoader.Load(path);
-			if (graph is StatescriptGraph statescriptGraph)
-			{
-				OpenGraph(statescriptGraph);
-			}
-			else
-			{
-				GD.PushWarning($"Failed to load StatescriptGraph from: {path}");
-			}
-
-			dialog.QueueFree();
-		};
-
-		dialog.Canceled += dialog.QueueFree;
-
-		AddChild(dialog);
-		dialog.PopupCentered(new Vector2I(700, 500));
-	}
-
-	private void ShowSaveAsDialog()
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null)
-		{
-			return;
-		}
-
-		var dialog = new EditorFileDialog
-		{
-			FileMode = FileDialog.FileModeEnum.SaveFile,
-			Title = "Save Statescript As",
-			Access = FileDialog.AccessEnum.Resources,
-		};
-
-		dialog.AddFilter("*.tres", "Godot Resource");
-		dialog.FileSelected += path =>
-		{
-			if (_graphEdit is not null)
-			{
-				graph.ScrollOffset = _graphEdit.ScrollOffset;
-				graph.Zoom = _graphEdit.Zoom;
-				SyncVisualNodePositionsToGraph();
-				SyncConnectionsToCurrentGraph();
-			}
-
-			ResourceSaver.Save(graph, path);
-			EditorInterface.Singleton.GetResourceFilesystem().Scan();
-			GD.Print($"Statescript graph saved as: {path}");
-
-			StatescriptGraph? savedGraph = ResourceLoader.Load<StatescriptGraph>(path);
-			if (savedGraph is not null)
-			{
-				OpenGraph(savedGraph);
-			}
-
-			dialog.QueueFree();
-		};
-
-		dialog.Canceled += dialog.QueueFree;
-
-		AddChild(dialog);
-		dialog.PopupCentered(new Vector2I(700, 500));
 	}
 
 	private void UpdateTheme()
@@ -734,7 +860,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		ClearGraphEditor();
 
-		_graphEdit.ScrollOffset = graph.ScrollOffset;
 		_graphEdit.Zoom = graph.Zoom;
 
 		UpdateNextNodeId(graph);
@@ -744,6 +869,7 @@ public partial class StatescriptGraphEditorDock : EditorDock
 			var graphNode = new StatescriptGraphNode();
 			_graphEdit.AddChild(graphNode);
 			graphNode.Initialize(nodeResource, graph);
+			graphNode.SetUndoRedo(_undoRedo);
 		}
 
 		foreach (StatescriptConnection connection in graph.Connections)
@@ -756,6 +882,18 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 
 		_isLoadingGraph = wasLoading;
+
+		_ = ApplyScrollNextFrame(graph.ScrollOffset);
+	}
+
+	private async Task ApplyScrollNextFrame(Vector2 offset)
+	{
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+		if (_graphEdit is not null)
+		{
+			_graphEdit.ScrollOffset = offset;
+		}
 	}
 
 	private void ClearGraphEditor()
@@ -772,6 +910,11 @@ public partial class StatescriptGraphEditorDock : EditorDock
 
 		foreach (Node node in toRemove)
 		{
+			if (node is StatescriptGraphNode graphNode)
+			{
+				graphNode.OnBeforeSerialize();
+			}
+
 			_graphEdit.RemoveChild(node);
 			node.Free();
 		}
@@ -982,6 +1125,55 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		LoadGraphIntoEditor(graph);
 	}
 
+	private void OnVariableUndoRedoPerformed()
+	{
+		EnsureVariablesPanelVisible();
+	}
+
+	private void OnVariableHighlightChanged(string? variableName)
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		foreach (Node child in _graphEdit.GetChildren())
+		{
+			if (child is StatescriptGraphNode graphNode)
+			{
+				graphNode.SetHighlightedVariable(variableName);
+			}
+		}
+	}
+
+	private void EnsureVariablesPanelVisible()
+	{
+		if (_variablePanel is null || _variablesToggleButton is null || _openTabs.Count == 0)
+		{
+			return;
+		}
+
+		if (_variablePanel.Visible)
+		{
+			return;
+		}
+
+		_variablePanel.Visible = true;
+		_variablesToggleButton.SetPressedNoSignal(true);
+
+		var current = _tabBar?.CurrentTab ?? -1;
+		if (current >= 0 && current < _openTabs.Count)
+		{
+			_openTabs[current].VariablesPanelOpen = true;
+		}
+
+		StatescriptGraph? graph = CurrentGraph;
+		if (graph is not null)
+		{
+			_variablePanel.SetGraph(graph);
+		}
+	}
+
 	private void OnFilesystemChanged()
 	{
 		for (var i = 0; i < _openTabs.Count; i++)
@@ -998,7 +1190,8 @@ public partial class StatescriptGraphEditorDock : EditorDock
 				continue;
 			}
 
-			if (!FileAccess.FileExists(path))
+			var filePath = GetBaseFilePath(path);
+			if (!FileAccess.FileExists(filePath))
 			{
 				CloseTabByIndex(i);
 			}
@@ -1025,194 +1218,122 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		}
 	}
 
-	private void OnBeginNodeMove()
+	private void OnGraphEditGuiInput(InputEvent @event)
 	{
-		if (_graphEdit is null)
+		if (@event is InputEventKey { Pressed: true, Keycode: Key.D, CtrlPressed: true })
 		{
-			return;
-		}
-
-		_preMovePositions.Clear();
-		foreach (Node child in _graphEdit.GetChildren())
-		{
-			if (child is StatescriptGraphNode { Selected: true } sgn)
-			{
-				_preMovePositions[sgn.Name] = sgn.PositionOffset;
-			}
+			DuplicateSelectedNodes();
+			GetViewport().SetInputAsHandled();
 		}
 	}
 
-	private void OnEndNodeMove()
+	private void DisconnectUISignals()
 	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null || _preMovePositions.Count == 0)
+		if (_tabBar is not null)
 		{
-			return;
+			_tabBar.TabChanged -= OnTabChanged;
+			_tabBar.TabClosePressed -= OnTabClosePressed;
 		}
 
-		var movedNodes = new GodotCollections.Dictionary<StringName, Vector2>();
-		var oldPositions = new GodotCollections.Dictionary<StringName, Vector2>();
-
-		foreach (Node child in _graphEdit.GetChildren())
+		if (_graphEdit is not null)
 		{
-			if (child is not StatescriptGraphNode sgn || !_preMovePositions.TryGetValue(sgn.Name, out Vector2 oldPos))
-			{
-				continue;
-			}
-
-			Vector2 newPos = sgn.PositionOffset;
-			if (oldPos != newPos)
-			{
-				movedNodes[sgn.Name] = newPos;
-				oldPositions[sgn.Name] = oldPos;
-			}
+			_graphEdit.ConnectionRequest -= OnConnectionRequest;
+			_graphEdit.DisconnectionRequest -= OnDisconnectionRequest;
+			_graphEdit.DeleteNodesRequest -= OnDeleteNodesRequest;
+			_graphEdit.BeginNodeMove -= OnBeginNodeMove;
+			_graphEdit.EndNodeMove -= OnEndNodeMove;
+			_graphEdit.PopupRequest -= OnGraphEditPopupRequest;
+			_graphEdit.ConnectionToEmpty -= OnConnectionToEmpty;
+			_graphEdit.ConnectionFromEmpty -= OnConnectionFromEmpty;
+			_graphEdit.GuiInput -= OnGraphEditGuiInput;
 		}
 
-		_preMovePositions.Clear();
-
-		if (movedNodes.Count == 0)
+		if (_fileMenuPopup is not null)
 		{
-			return;
+			_fileMenuPopup.IdPressed -= OnFileMenuIdPressed;
 		}
 
-		if (_undoRedo is not null)
+		if (_addNodeButton is not null)
 		{
-			_undoRedo.CreateAction("Move Statescript Node(s)", customContext: graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoMoveNodes, graph, movedNodes);
-			_undoRedo.AddUndoMethod(this, MethodName.DoMoveNodes, graph, oldPositions);
-			_undoRedo.CommitAction(false);
+			_addNodeButton.Pressed -= OnAddNodeButtonPressed;
 		}
 
-		SyncNodePositionsToResource(graph, movedNodes);
-	}
-
-	private void DoMoveNodes(
-		StatescriptGraph graph,
-		GodotCollections.Dictionary<StringName, Vector2> positions)
-	{
-		foreach (StatescriptNode node in graph.Nodes)
+		if (_variablesToggleButton is not null)
 		{
-			if (positions.TryGetValue(node.NodeId, out Vector2 pos))
-			{
-				node.PositionOffset = pos;
-			}
+			_variablesToggleButton.Toggled -= OnVariablesToggled;
 		}
 
-		if (CurrentGraph == graph && _graphEdit is not null)
+		if (_onlineDocsButton is not null)
 		{
-			foreach (Node child in _graphEdit.GetChildren())
-			{
-				if (child is StatescriptGraphNode sgn && positions.TryGetValue(sgn.Name, out Vector2 pos))
-				{
-					sgn.PositionOffset = pos;
-				}
-			}
+			_onlineDocsButton.Pressed -= OnOnlineDocsPressed;
+		}
+
+		if (_addNodeDialog is not null)
+		{
+			_addNodeDialog.Canceled -= OnDialogCanceled;
+			_addNodeDialog.NodeCreationRequested -= OnDialogNodeCreationRequested;
+		}
+
+		if (_variablePanel is not null)
+		{
+			_variablePanel.VariablesChanged -= OnGraphVariablesChanged;
+			_variablePanel.VariableUndoRedoPerformed -= OnVariableUndoRedoPerformed;
+			_variablePanel.VariableHighlightChanged -= OnVariableHighlightChanged;
 		}
 	}
 
-	private void OnGraphEditPopupRequest(Vector2 atPosition)
+	private void ConnectUISignals()
 	{
-		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null)
+		if (_tabBar is not null)
 		{
-			return;
+			_tabBar.TabChanged += OnTabChanged;
+			_tabBar.TabClosePressed += OnTabClosePressed;
 		}
 
-		ClearPendingConnection();
-
-		Vector2 graphPosition = (_graphEdit.ScrollOffset + atPosition) / _graphEdit.Zoom;
-		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + atPosition);
-
-		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
-	}
-
-	private void OnConnectionToEmpty(StringName fromNode, long fromPort, Vector2 releasePosition)
-	{
-		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null)
+		if (_graphEdit is not null)
 		{
-			return;
+			_graphEdit.ConnectionRequest += OnConnectionRequest;
+			_graphEdit.DisconnectionRequest += OnDisconnectionRequest;
+			_graphEdit.DeleteNodesRequest += OnDeleteNodesRequest;
+			_graphEdit.BeginNodeMove += OnBeginNodeMove;
+			_graphEdit.EndNodeMove += OnEndNodeMove;
+			_graphEdit.PopupRequest += OnGraphEditPopupRequest;
+			_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
+			_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
+			_graphEdit.GuiInput += OnGraphEditGuiInput;
 		}
 
-		_pendingConnectionNode = fromNode;
-		_pendingConnectionPort = (int)fromPort;
-		_pendingConnectionIsOutput = true;
-
-		Vector2 graphPosition = (_graphEdit.ScrollOffset + releasePosition) / _graphEdit.Zoom;
-		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + releasePosition);
-
-		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
-	}
-
-	private void OnConnectionFromEmpty(StringName toNode, long toPort, Vector2 releasePosition)
-	{
-		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null)
+		if (_fileMenuPopup is not null)
 		{
-			return;
+			_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
 		}
 
-		_pendingConnectionNode = toNode;
-		_pendingConnectionPort = (int)toPort;
-		_pendingConnectionIsOutput = false;
-
-		Vector2 graphPosition = (_graphEdit.ScrollOffset + releasePosition) / _graphEdit.Zoom;
-		var screenPosition = (Vector2I)(_graphEdit.GetScreenPosition() + releasePosition);
-
-		_addNodeDialog.ShowAtPosition(graphPosition, screenPosition);
-	}
-
-	private void OnDialogNodeCreationRequested(
-		StatescriptNodeDiscovery.NodeTypeInfo? typeInfo,
-		StatescriptNodeType nodeType,
-		Vector2 position)
-	{
-		string newNodeId;
-
-		if (typeInfo is not null)
+		if (_addNodeButton is not null)
 		{
-			newNodeId = AddNodeAtPosition(nodeType, typeInfo.DisplayName, typeInfo.RuntimeTypeName, position);
-		}
-		else
-		{
-			newNodeId = AddNodeAtPosition(StatescriptNodeType.Exit, "Exit", string.Empty, position);
+			_addNodeButton.Pressed += OnAddNodeButtonPressed;
 		}
 
-		if (_pendingConnectionNode is not null && _graphEdit is not null)
+		if (_variablesToggleButton is not null)
 		{
-			if (_pendingConnectionIsOutput)
-			{
-				var inputPort = FindFirstEnabledInputPort(newNodeId);
-				if (inputPort >= 0)
-				{
-					OnConnectionRequest(
-						_pendingConnectionNode,
-						_pendingConnectionPort,
-						newNodeId,
-						inputPort);
-				}
-			}
-			else
-			{
-				var outputPort = FindFirstEnabledOutputPort(newNodeId);
-				if (outputPort >= 0)
-				{
-					OnConnectionRequest(
-						newNodeId,
-						outputPort,
-						_pendingConnectionNode,
-						_pendingConnectionPort);
-				}
-			}
-
-			ClearPendingConnection();
+			_variablesToggleButton.Toggled += OnVariablesToggled;
 		}
-	}
 
-	private void UndoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
-	{
-		graph.Nodes.Remove(nodeResource);
-
-		if (CurrentGraph == graph)
+		if (_onlineDocsButton is not null)
 		{
-			LoadGraphIntoEditor(graph);
+			_onlineDocsButton.Pressed += OnOnlineDocsPressed;
+		}
+
+		if (_addNodeDialog is not null)
+		{
+			_addNodeDialog.Canceled += OnDialogCanceled;
+			_addNodeDialog.NodeCreationRequested += OnDialogNodeCreationRequested;
+		}
+
+		if (_variablePanel is not null)
+		{
+			_variablePanel.VariablesChanged += OnGraphVariablesChanged;
+			_variablePanel.VariableUndoRedoPerformed += OnVariableUndoRedoPerformed;
+			_variablePanel.VariableHighlightChanged += OnVariableHighlightChanged;
 		}
 	}
 
@@ -1264,397 +1385,6 @@ public partial class StatescriptGraphEditorDock : EditorDock
 		return -1;
 	}
 
-	private void OnGraphEditGuiInput(InputEvent @event)
-	{
-		if (@event is InputEventKey { Pressed: true, Keycode: Key.D, CtrlPressed: true })
-		{
-			DuplicateSelectedNodes();
-			GetViewport().SetInputAsHandled();
-		}
-	}
-
-	private void DuplicateSelectedNodes()
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return;
-		}
-
-		var selectedNodes = new List<StatescriptGraphNode>();
-
-		foreach (Node child in _graphEdit.GetChildren())
-		{
-			if (child is StatescriptGraphNode { Selected: true } statescriptNode
-				&& statescriptNode.NodeResource is not null
-				&& statescriptNode.NodeResource.NodeType != StatescriptNodeType.Entry)
-			{
-				selectedNodes.Add(statescriptNode);
-			}
-		}
-
-		if (selectedNodes.Count == 0)
-		{
-			return;
-		}
-
-		foreach (StatescriptGraphNode sgn in selectedNodes)
-		{
-			sgn.Selected = false;
-		}
-
-		var duplicatedIds = new Dictionary<string, string>();
-		const float offset = 40f;
-
-		foreach (StatescriptGraphNode sgn in selectedNodes)
-		{
-			StatescriptNode original = sgn.NodeResource!;
-			var newNodeId = $"node_{_nextNodeId++}";
-			duplicatedIds[original.NodeId] = newNodeId;
-
-			var duplicated = new StatescriptNode
-			{
-				NodeId = newNodeId,
-				Title = original.Title,
-				NodeType = original.NodeType,
-				RuntimeTypeName = original.RuntimeTypeName,
-				PositionOffset = original.PositionOffset + new Vector2(offset, offset),
-			};
-
-			foreach (KeyValuePair<string, Variant> kvp in original.CustomData)
-			{
-				duplicated.CustomData[kvp.Key] = kvp.Value;
-			}
-
-			foreach (StatescriptNodeProperty binding in original.PropertyBindings)
-			{
-				var newBinding = new StatescriptNodeProperty
-				{
-					Direction = binding.Direction,
-					PropertyIndex = binding.PropertyIndex,
-					Resolver = binding.Resolver is not null
-						? (StatescriptResolverResource)binding.Resolver.Duplicate(true)
-						: null,
-				};
-
-				duplicated.PropertyBindings.Add(newBinding);
-			}
-
-			graph.Nodes.Add(duplicated);
-
-			var graphNode = new StatescriptGraphNode();
-			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(duplicated, graph);
-			graphNode.Selected = true;
-		}
-
-		foreach (StatescriptConnection connection in graph.Connections)
-		{
-			if (duplicatedIds.TryGetValue(connection.FromNode, out var newFrom)
-				&& duplicatedIds.TryGetValue(connection.ToNode, out var newTo))
-			{
-				_graphEdit.ConnectNode(newFrom, connection.OutputPort, newTo, connection.InputPort);
-			}
-		}
-
-		SyncConnectionsToCurrentGraph();
-	}
-
-	private void OnConnectionRequest(StringName fromNode, long fromPort, StringName toNode, long toPort)
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return;
-		}
-
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Connect Statescript Nodes", customContext: graph);
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.DoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.UndoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoConnect(fromNode.ToString(), (int)fromPort, toNode.ToString(), (int)toPort);
-		}
-	}
-
-	private void DoConnect(string fromNode, int fromPort, string toNode, int toPort)
-	{
-		_graphEdit?.ConnectNode(fromNode, fromPort, toNode, toPort);
-		SyncConnectionsToCurrentGraph();
-	}
-
-	private void UndoConnect(string fromNode, int fromPort, string toNode, int toPort)
-	{
-		_graphEdit?.DisconnectNode(fromNode, fromPort, toNode, toPort);
-		SyncConnectionsToCurrentGraph();
-	}
-
-	private void OnDisconnectionRequest(StringName fromNode, long fromPort, StringName toNode, long toPort)
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return;
-		}
-
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Disconnect Statescript Nodes", customContext: graph);
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.UndoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.DoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			_graphEdit.DisconnectNode(fromNode, (int)fromPort, toNode, (int)toPort);
-			SyncConnectionsToCurrentGraph();
-		}
-	}
-
-	private void OnDeleteNodesRequest(GodotCollections.Array<StringName> deletedNodes)
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return;
-		}
-
-		foreach (StringName nodeName in deletedNodes)
-		{
-			Node? child = _graphEdit.GetNodeOrNull(nodeName.ToString());
-
-			if (child is not StatescriptGraphNode graphNode)
-			{
-				continue;
-			}
-
-			if (graphNode.NodeResource?.NodeType == StatescriptNodeType.Entry)
-			{
-				GD.PushWarning("Cannot delete the Entry statescriptNode.");
-				continue;
-			}
-
-			if (graphNode.NodeResource is null)
-			{
-				continue;
-			}
-
-			var affectedConnections = new List<StatescriptConnection>();
-			foreach (GodotCollections.Dictionary connection in _graphEdit.GetConnectionList())
-			{
-				StringName from = connection["from_node"].AsStringName();
-				StringName to = connection["to_node"].AsStringName();
-
-				if (from == nodeName || to == nodeName)
-				{
-					affectedConnections.Add(new StatescriptConnection
-					{
-						FromNode = connection["from_node"].AsString(),
-						OutputPort = connection["from_port"].AsInt32(),
-						ToNode = connection["to_node"].AsString(),
-						InputPort = connection["to_port"].AsInt32(),
-					});
-				}
-			}
-
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Delete Statescript Node", customContext: graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoDeleteNode,
-					graph,
-					graphNode.NodeResource,
-					new GodotCollections.Array<StatescriptConnection>(affectedConnections));
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.UndoDeleteNode,
-					graph,
-					graphNode.NodeResource,
-					new GodotCollections.Array<StatescriptConnection>(affectedConnections));
-				_undoRedo.CommitAction();
-			}
-			else
-			{
-				DoDeleteNode(
-					graph,
-					graphNode.NodeResource,
-					[.. affectedConnections]);
-			}
-		}
-	}
-
-	private void DoDeleteNode(
-		StatescriptGraph graph,
-		StatescriptNode nodeResource,
-		GodotCollections.Array<StatescriptConnection> affectedConnections)
-	{
-		if (_graphEdit is not null && CurrentGraph == graph)
-		{
-			foreach (StatescriptConnection connection in affectedConnections)
-			{
-				_graphEdit.DisconnectNode(
-					connection.FromNode,
-					connection.OutputPort,
-					connection.ToNode,
-					connection.InputPort);
-			}
-
-			Node? child = _graphEdit.GetNodeOrNull(nodeResource.NodeId);
-			child?.QueueFree();
-		}
-
-		graph.Nodes.Remove(nodeResource);
-		SyncConnectionsToCurrentGraph();
-	}
-
-	private void UndoDeleteNode(
-		StatescriptGraph graph,
-		StatescriptNode nodeResource,
-		GodotCollections.Array<StatescriptConnection> affectedConnections)
-	{
-		graph.Nodes.Add(nodeResource);
-
-		graph.Connections.AddRange(affectedConnections);
-
-		if (CurrentGraph == graph)
-		{
-			LoadGraphIntoEditor(graph);
-		}
-	}
-
-	private void OnDialogCanceled()
-	{
-		ClearPendingConnection();
-	}
-
-	private void ClearPendingConnection()
-	{
-		_pendingConnectionNode = null;
-		_pendingConnectionPort = 0;
-		_pendingConnectionIsOutput = false;
-	}
-
-	private void OnAddNodeButtonPressed()
-	{
-		if (CurrentGraph is null || _graphEdit is null || _addNodeDialog is null || _addNodeButton is null)
-		{
-			return;
-		}
-
-		ClearPendingConnection();
-
-		var screenPosition = (Vector2I)(_addNodeButton.GetScreenPosition() + new Vector2(0, _addNodeButton.Size.Y));
-
-		Vector2 centerPosition = (_graphEdit.ScrollOffset + (_graphEdit.Size / 2)) / _graphEdit.Zoom;
-
-		_addNodeDialog.ShowAtPosition(centerPosition, screenPosition);
-	}
-
-	private string AddNodeAtPosition(
-		StatescriptNodeType nodeType,
-		string title,
-		string runtimeTypeName,
-		Vector2 position)
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return string.Empty;
-		}
-
-		var nodeId = $"node_{_nextNodeId++}";
-
-		var nodeResource = new StatescriptNode
-		{
-			NodeId = nodeId,
-			Title = title,
-			NodeType = nodeType,
-			RuntimeTypeName = runtimeTypeName,
-			PositionOffset = position,
-		};
-
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Add Statescript Node", customContext: graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoAddNode, graph, nodeResource);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddNode, graph, nodeResource);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoAddNode(graph, nodeResource);
-		}
-
-		return nodeId;
-	}
-
-	private void DoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
-	{
-		graph.Nodes.Add(nodeResource);
-
-		if (CurrentGraph == graph && _graphEdit is not null)
-		{
-			var graphNode = new StatescriptGraphNode();
-			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(nodeResource, graph);
-		}
-	}
-
-	private void OnSavePressed()
-	{
-		StatescriptGraph? graph = CurrentGraph;
-		if (graph is null || _graphEdit is null)
-		{
-			return;
-		}
-
-		graph.ScrollOffset = _graphEdit.ScrollOffset;
-		graph.Zoom = _graphEdit.Zoom;
-		SyncVisualNodePositionsToGraph();
-		SyncConnectionsToCurrentGraph();
-
-		if (string.IsNullOrEmpty(graph.ResourcePath))
-		{
-			ShowSaveAsDialog();
-			return;
-		}
-
-		ResourceSaver.Save(graph);
-		GD.Print($"Statescript graph saved: {graph.ResourcePath}");
-	}
-
-	/// <summary>
-	/// Internal record to track open tab state.
-	/// </summary>
 	private sealed class GraphTab
 	{
 		private string _cachedPath;

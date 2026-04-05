@@ -5,3 +5,4 @@
 /**                     export-ignore
 /addons                 !export-ignore
 /addons/**              !export-ignore
+/addons/forge/core/forge_data.tres export-ignore

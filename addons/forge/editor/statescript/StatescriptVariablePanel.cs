@@ -18,6 +18,9 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 {
 	private const string ExpandedArraysMetaKey = "_expanded_arrays";
 
+	private static readonly Color _variableColor = new(0xe5c07bff);
+	private static readonly Color _highlightColor = new(0x56b6c2ff);
+
 	private readonly HashSet<string> _expandedArrays = [];
 
 	private StatescriptGraph? _graph;
@@ -34,10 +37,22 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	private EditorUndoRedoManager? _undoRedo;
 
+	private string? _selectedVariableName;
+
 	/// <summary>
 	/// Raised when any variable is added, removed, or its value changes.
 	/// </summary>
 	public event Action? VariablesChanged;
+
+	/// <summary>
+	/// Raised when an undo/redo action modifies the variable panel, so the dock can auto-expand it.
+	/// </summary>
+	public event Action? VariableUndoRedoPerformed;
+
+	/// <summary>
+	/// Raised when the user selects or deselects a variable for highlighting.
+	/// </summary>
+	public event Action<string?>? VariableHighlightChanged;
 
 	public override void _Ready()
 	{
@@ -94,6 +109,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	{
 		base._ExitTree();
 
+		if (_addButton is not null)
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
 		_creationDialog?.QueueFree();
 		_creationDialog = null;
 		_newNameEdit = null;
@@ -103,6 +123,21 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	public void OnBeforeSerialize()
 	{
+		if (_addButton is not null)
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		if (_variableList is not null)
+		{
+			foreach (Node child in _variableList.GetChildren())
+			{
+				_variableList.RemoveChild(child);
+				child.Free();
+			}
+		}
+
+		_creationDialog?.Free();
 		_creationDialog = null;
 		_newNameEdit = null;
 		_newTypeDropdown = null;
@@ -111,7 +146,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	public void OnAfterDeserialize()
 	{
-		// Nothing to restore, dialog fields are transient.
+		if (_addButton is not null)
+		{
+			_addButton.Pressed += OnAddPressed;
+		}
+
+		RebuildList();
 	}
 
 	/// <summary>
@@ -146,7 +186,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		foreach (Node child in _variableList.GetChildren())
 		{
-			child.QueueFree();
+			_variableList.RemoveChild(child);
+			child.Free();
 		}
 
 		if (_graph is null)
@@ -158,12 +199,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		{
 			AddVariableRow(_graph.Variables[i], i);
 		}
-	}
-
-	private static void SetArrayElementValue(StatescriptGraphVariable variable, int index, Variant newValue)
-	{
-		variable.InitialArrayValues[index] = newValue;
-		variable.EmitChanged();
 	}
 
 	private void SaveExpandedArrayState()
@@ -219,18 +254,43 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		rowContainer.AddChild(headerRow);
 
-		var nameLabel = new Label
+		var isSelected = _selectedVariableName == variable.VariableName;
+
+		var nameButton = new Button
 		{
 			Text = variable.VariableName,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			Flat = true,
+			ToggleMode = true,
+			ButtonPressed = isSelected,
+			Alignment = HorizontalAlignment.Left,
 		};
 
-		nameLabel.AddThemeColorOverride("font_color", new(0xe5c07bff));
-		nameLabel.AddThemeFontOverride(
+		Color buttonColor = isSelected ? _highlightColor : _variableColor;
+		nameButton.AddThemeColorOverride("font_color", buttonColor);
+		nameButton.AddThemeColorOverride("font_pressed_color", _highlightColor);
+		nameButton.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));
+		nameButton.AddThemeColorOverride("font_hover_pressed_color", _highlightColor.Lightened(0.2f));
+		nameButton.AddThemeFontOverride(
 			"font",
 			EditorInterface.Singleton.GetEditorTheme().GetFont("bold", "EditorFonts"));
 
-		headerRow.AddChild(nameLabel);
+		nameButton.Toggled += pressed =>
+		{
+			if (pressed)
+			{
+				_selectedVariableName = variable.VariableName;
+			}
+			else if (_selectedVariableName == variable.VariableName)
+			{
+				_selectedVariableName = null;
+			}
+
+			RebuildList();
+			VariableHighlightChanged?.Invoke(_selectedVariableName);
+		};
+
+		headerRow.AddChild(nameButton);
 
 		var typeLabel = new Label
 		{
@@ -266,258 +326,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 
 		rowContainer.AddChild(new HSeparator());
-	}
-
-	private Control CreateScalarValueEditor(StatescriptGraphVariable variable)
-	{
-		if (variable.VariableType == StatescriptVariableType.Bool)
-		{
-			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-			hBox.AddChild(StatescriptEditorControls.CreateBoolEditor(
-				variable.InitialValue.AsBool(),
-				x => SetVariableValue(variable, Variant.From(x))));
-
-			return hBox;
-		}
-
-		if (StatescriptEditorControls.IsIntegerType(variable.VariableType)
-			|| StatescriptEditorControls.IsFloatType(variable.VariableType))
-		{
-			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-			EditorSpinSlider spin = StatescriptEditorControls.CreateNumericSpinSlider(
-				variable.VariableType,
-				variable.InitialValue.AsDouble(),
-				onChanged: x =>
-				{
-					Variant newValue = StatescriptEditorControls.IsIntegerType(variable.VariableType)
-						? Variant.From((long)x)
-						: Variant.From(x);
-					SetVariableValue(variable, newValue);
-				});
-
-			hBox.AddChild(spin);
-			return hBox;
-		}
-
-		if (StatescriptEditorControls.IsVectorType(variable.VariableType))
-		{
-			return StatescriptEditorControls.CreateVectorEditor(
-				variable.VariableType,
-				x => StatescriptEditorControls.GetVectorComponent(
-					variable.InitialValue,
-					variable.VariableType,
-					x),
-				onChanged: x =>
-				{
-					Variant newValue = StatescriptEditorControls.BuildVectorVariant(
-						variable.VariableType,
-						x);
-					SetVariableValue(variable, newValue);
-				});
-		}
-
-		var fallback = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		fallback.AddChild(new Label { Text = variable.VariableType.ToString() });
-		return fallback;
-	}
-
-	private VBoxContainer CreateArrayValueEditor(StatescriptGraphVariable variable)
-	{
-		var vBox = new VBoxContainer
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
-
-		var headerRow = new HBoxContainer();
-		vBox.AddChild(headerRow);
-
-		var isExpanded = _expandedArrays.Contains(variable.VariableName);
-
-		var elementsContainer = new VBoxContainer
-		{
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			Visible = isExpanded,
-		};
-
-		var toggleButton = new Button
-		{
-			Text = $"Array (size {variable.InitialArrayValues.Count})",
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			ToggleMode = true,
-			ButtonPressed = isExpanded,
-		};
-
-		toggleButton.Toggled += x =>
-		{
-			elementsContainer.Visible = x;
-
-			if (x)
-			{
-				_expandedArrays.Add(variable.VariableName);
-			}
-			else
-			{
-				_expandedArrays.Remove(variable.VariableName);
-			}
-
-			SaveExpandedArrayState();
-		};
-
-		headerRow.AddChild(toggleButton);
-
-		var addElementButton = new Button
-		{
-			Icon = _addIcon,
-			Flat = true,
-			TooltipText = "Add Element",
-			CustomMinimumSize = new Vector2(24, 24),
-		};
-
-		addElementButton.Pressed += () =>
-		{
-			Variant defaultValue =
-				StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variable.VariableType);
-
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Add Array Element", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoAddArrayElement,
-					variable,
-					defaultValue);
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.UndoAddArrayElement,
-					variable);
-				_undoRedo.CommitAction();
-			}
-			else
-			{
-				DoAddArrayElement(variable, defaultValue);
-			}
-		};
-
-		headerRow.AddChild(addElementButton);
-
-		vBox.AddChild(elementsContainer);
-
-		for (var i = 0; i < variable.InitialArrayValues.Count; i++)
-		{
-			var capturedIndex = i;
-
-			if (variable.VariableType == StatescriptVariableType.Bool)
-			{
-				var elementRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-				elementsContainer.AddChild(elementRow);
-				elementRow.AddChild(new Label { Text = $"[{i}]" });
-
-				elementRow.AddChild(StatescriptEditorControls.CreateBoolEditor(
-					variable.InitialArrayValues[i].AsBool(),
-					x => SetArrayElementValue(
-						variable,
-						capturedIndex,
-						Variant.From(x))));
-
-				AddArrayElementRemoveButton(elementRow, variable, capturedIndex);
-			}
-			else if (StatescriptEditorControls.IsVectorType(variable.VariableType))
-			{
-				var elementVBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-				elementsContainer.AddChild(elementVBox);
-
-				var labelRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-				elementVBox.AddChild(labelRow);
-				labelRow.AddChild(new Label
-				{
-					Text = $"[{i}]",
-					SizeFlagsHorizontal = SizeFlags.ExpandFill,
-				});
-
-				AddArrayElementRemoveButton(labelRow, variable, capturedIndex);
-
-				VBoxContainer vectorEditor = StatescriptEditorControls.CreateVectorEditor(
-					variable.VariableType,
-					x => StatescriptEditorControls.GetVectorComponent(
-						variable.InitialArrayValues[capturedIndex],
-						variable.VariableType,
-						x),
-					x =>
-					{
-						Variant newValue = StatescriptEditorControls.BuildVectorVariant(
-							variable.VariableType,
-							x);
-						SetArrayElementValue(variable, capturedIndex, newValue);
-					});
-
-				elementVBox.AddChild(vectorEditor);
-			}
-			else
-			{
-				var elementRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-				elementsContainer.AddChild(elementRow);
-				elementRow.AddChild(new Label { Text = $"[{i}]" });
-
-				EditorSpinSlider elementSpin = StatescriptEditorControls.CreateNumericSpinSlider(
-					variable.VariableType,
-					variable.InitialArrayValues[i].AsDouble(),
-					onChanged: x =>
-					{
-						Variant newValue = StatescriptEditorControls.IsIntegerType(variable.VariableType)
-							? Variant.From((long)x)
-							: Variant.From(x);
-						SetArrayElementValue(variable, capturedIndex, newValue);
-					});
-
-				elementRow.AddChild(elementSpin);
-				AddArrayElementRemoveButton(elementRow, variable, capturedIndex);
-			}
-		}
-
-		return vBox;
-	}
-
-	private void AddArrayElementRemoveButton(
-		HBoxContainer row,
-		StatescriptGraphVariable variable,
-		int elementIndex)
-	{
-		var removeElementButton = new Button
-		{
-			Icon = _removeIcon,
-			Flat = true,
-			CustomMinimumSize = new Vector2(24, 24),
-		};
-
-		removeElementButton.Pressed += () =>
-		{
-			if (_undoRedo is not null)
-			{
-				Variant removedValue = variable.InitialArrayValues[elementIndex];
-
-				_undoRedo.CreateAction("Remove Array Element", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoRemoveArrayElement,
-					variable,
-					elementIndex);
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.UndoRemoveArrayElement,
-					variable,
-					elementIndex,
-					removedValue);
-				_undoRedo.CommitAction();
-			}
-			else
-			{
-				DoRemoveArrayElement(variable, elementIndex);
-			}
-		};
-
-		row.AddChild(removeElementButton);
 	}
 
 	private void OnAddPressed()
@@ -716,121 +524,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 
 		return false;
-	}
-
-	private void ApplyVariableValue(StatescriptGraphVariable variable, Variant value)
-	{
-		variable.InitialValue = value;
-		variable.EmitChanged();
-		RebuildList();
-	}
-
-	private void DoAddVariable(StatescriptGraph graph, StatescriptGraphVariable variable)
-	{
-		graph.Variables.Add(variable);
-		RebuildList();
-		VariablesChanged?.Invoke();
-	}
-
-	private void UndoAddVariable(StatescriptGraph graph, StatescriptGraphVariable variable)
-	{
-		graph.Variables.Remove(variable);
-		RebuildList();
-		VariablesChanged?.Invoke();
-	}
-
-	private void DoRemoveVariable(StatescriptGraph graph, StatescriptGraphVariable variable, int index)
-	{
-		graph.Variables.RemoveAt(index);
-		ClearReferencesToVariable(variable.VariableName);
-		RebuildList();
-		VariablesChanged?.Invoke();
-	}
-
-	private void UndoRemoveVariable(StatescriptGraph graph, StatescriptGraphVariable variable, int index)
-	{
-		if (index >= graph.Variables.Count)
-		{
-			graph.Variables.Add(variable);
-		}
-		else
-		{
-			graph.Variables.Insert(index, variable);
-		}
-
-		RebuildList();
-		VariablesChanged?.Invoke();
-	}
-
-	private void DoAddArrayElement(StatescriptGraphVariable variable, Variant value)
-	{
-		variable.InitialArrayValues.Add(value);
-		variable.EmitChanged();
-		_expandedArrays.Add(variable.VariableName);
-		SaveExpandedArrayState();
-		RebuildList();
-	}
-
-	private void UndoAddArrayElement(StatescriptGraphVariable variable)
-	{
-		if (variable.InitialArrayValues.Count > 0)
-		{
-			variable.InitialArrayValues.RemoveAt(variable.InitialArrayValues.Count - 1);
-			variable.EmitChanged();
-		}
-
-		RebuildList();
-	}
-
-	private void DoRemoveArrayElement(StatescriptGraphVariable variable, int index)
-	{
-		variable.InitialArrayValues.RemoveAt(index);
-		variable.EmitChanged();
-		RebuildList();
-	}
-
-	private void UndoRemoveArrayElement(StatescriptGraphVariable variable, int index, Variant value)
-	{
-		if (index >= variable.InitialArrayValues.Count)
-		{
-			variable.InitialArrayValues.Add(value);
-		}
-		else
-		{
-			variable.InitialArrayValues.Insert(index, value);
-		}
-
-		variable.EmitChanged();
-		RebuildList();
-	}
-
-	private void SetVariableValue(StatescriptGraphVariable variable, Variant newValue)
-	{
-		Variant oldValue = variable.InitialValue;
-
-		variable.InitialValue = newValue;
-		variable.EmitChanged();
-
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction(
-				$"Change Variable '{variable.VariableName}'",
-				customContext: _graph);
-
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.ApplyVariableValue,
-				variable,
-				newValue);
-
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.ApplyVariableValue,
-				variable,
-				oldValue);
-
-			_undoRedo.CommitAction(false);
-		}
 	}
 }
 #endif

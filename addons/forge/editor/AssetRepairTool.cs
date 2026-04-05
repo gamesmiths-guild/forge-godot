@@ -17,7 +17,7 @@ public partial class AssetRepairTool : EditorPlugin
 {
 	public static void RepairAllAssetsTags()
 	{
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 		var tagsManager = new TagsManager([.. pluginData.RegisteredTags]);
 
 		List<string> scenes = GetScenePaths("res://");

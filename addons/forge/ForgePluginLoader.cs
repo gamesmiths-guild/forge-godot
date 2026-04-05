@@ -3,6 +3,8 @@
 #if TOOLS
 using System;
 using System.Diagnostics;
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
@@ -24,6 +26,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
+	private SharedVariableSetInspectorPlugin? _sharedVariableSetInspectorPlugin;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
 	private EditorFileSystem? _fileSystem;
@@ -31,6 +34,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _EnterTree()
 	{
+		EnsureForgeDataExists();
+
 		_tagsEditorDock = new TagsEditorDock();
 		AddDock(_tagsEditorDock);
 
@@ -44,6 +49,9 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddInspectorPlugin(_cueHandlerInspectorPlugin);
 		_attributeEditorPlugin = new AttributeEditorPlugin();
 		AddInspectorPlugin(_attributeEditorPlugin);
+		_sharedVariableSetInspectorPlugin = new SharedVariableSetInspectorPlugin();
+		_sharedVariableSetInspectorPlugin.SetUndoRedo(GetUndoRedo());
+		AddInspectorPlugin(_sharedVariableSetInspectorPlugin);
 
 		_statescriptGraphEditorDock = new StatescriptGraphEditorDock();
 		_statescriptGraphEditorDock.SetUndoRedo(GetUndoRedo());
@@ -55,6 +63,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		_resourcesReimportedCallable = new Callable(this, nameof(OnResourcesReimported));
 
 		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
+
+		Validation.Enabled = true;
 	}
 
 	public override void _ExitTree()
@@ -73,16 +83,17 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 
 		RemoveDock(_tagsEditorDock);
-		_tagsEditorDock.QueueFree();
+		_tagsEditorDock.Free();
 
 		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
 		RemoveInspectorPlugin(_tagInspectorPlugin);
 		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
 		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
 		RemoveInspectorPlugin(_attributeEditorPlugin);
+		RemoveInspectorPlugin(_sharedVariableSetInspectorPlugin);
 
 		RemoveDock(_statescriptGraphEditorDock);
-		_statescriptGraphEditorDock.QueueFree();
+		_statescriptGraphEditorDock.Free();
 
 		RemoveToolMenuItem("Repair assets tags");
 	}
@@ -118,6 +129,8 @@ public partial class ForgePluginLoader : EditorPlugin
 	public override void _EnablePlugin()
 	{
 		base._EnablePlugin();
+
+		EnsureForgeDataExists();
 
 		var config = ProjectSettings.LoadResourcePack(AutoloadPath);
 
@@ -208,6 +221,26 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 
 		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);
+	}
+
+	private static void EnsureForgeDataExists()
+	{
+		if (ResourceLoader.Exists(ForgeData.ForgeDataResourcePath))
+		{
+			return;
+		}
+
+		var forgeData = new ForgeData();
+		Error error = ResourceSaver.Save(forgeData, ForgeData.ForgeDataResourcePath);
+
+		if (error != Error.Ok)
+		{
+			GD.PrintErr($"Failed to create ForgeData resource: {error}");
+			return;
+		}
+
+		EditorInterface.Singleton.GetResourceFilesystem().Scan();
+		GD.Print("Created default ForgeData resource at ", ForgeData.ForgeDataResourcePath);
 	}
 
 	private static void CallAssetRepairTool()

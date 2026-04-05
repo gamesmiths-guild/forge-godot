@@ -6,7 +6,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
 [Tool]
-public partial class AttributeEditorProperty : EditorProperty
+public partial class AttributeEditorProperty : EditorProperty, ISerializationListener
 {
 	private const int ButtonSize = 26;
 	private const int PopupSize = 300;
@@ -74,6 +74,20 @@ public partial class AttributeEditorProperty : EditorProperty
 	{
 		var value = GetEditedObject().Get(GetEditedProperty()).AsString();
 		_label.Text = string.IsNullOrEmpty(value) ? "None" : value;
+	}
+
+	public void OnBeforeSerialize()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	public void OnAfterDeserialize()
+	{
 	}
 
 	private static void BuildAttributeTree(Tree tree)

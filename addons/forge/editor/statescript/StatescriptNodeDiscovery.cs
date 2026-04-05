@@ -524,7 +524,8 @@ internal static class StatescriptNodeDiscovery
 	/// </summary>
 	/// <param name="Label">The human-readable label for this input property.</param>
 	/// <param name="ExpectedType">The type the node expects to read.</param>
-	internal readonly record struct InputPropertyInfo(string Label, Type ExpectedType);
+	/// <param name="IsArray">Whether the input expects an array of values.</param>
+	internal readonly record struct InputPropertyInfo(string Label, Type ExpectedType, bool IsArray = false);
 
 	/// <summary>
 	/// Describes an output variable declared by a node type.

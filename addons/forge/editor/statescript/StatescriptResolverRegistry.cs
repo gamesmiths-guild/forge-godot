@@ -3,13 +3,15 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
+using System.Linq;
+using System.Reflection;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 /// <summary>
-/// Registry of available <see cref="NodeEditorProperty"/> implementations. New resolver editors are registered here and
-/// automatically become available in node input property dropdowns.
+/// Registry of available <see cref="NodeEditorProperty"/> implementations. Resolver editors are discovered
+/// automatically via reflection. Any concrete subclass of <see cref="NodeEditorProperty"/> in the executing assembly is
+/// registered and becomes available in node input property dropdowns.
 /// </summary>
 internal static class StatescriptResolverRegistry
 {
@@ -17,20 +19,14 @@ internal static class StatescriptResolverRegistry
 
 	static StatescriptResolverRegistry()
 	{
-		Register(() => new VariantResolverEditor());
-		Register(() => new VariableResolverEditor());
-		Register(() => new AttributeResolverEditor());
-		Register(() => new TagResolverEditor());
-		Register(() => new ComparisonResolverEditor());
-	}
+		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
 
-	/// <summary>
-	/// Registers a resolver editor factory.
-	/// </summary>
-	/// <param name="factory">A factory function that creates a new resolver editor instance.</param>
-	public static void Register(Func<NodeEditorProperty> factory)
-	{
-		_factories.Add(factory);
+		foreach (Type type in allTypes.Where(
+			x => x.IsSubclassOf(typeof(NodeEditorProperty)) && !x.IsAbstract))
+		{
+			Type captured = type;
+			_factories.Add(() => (NodeEditorProperty)Activator.CreateInstance(captured)!);
+		}
 	}
 
 	/// <summary>

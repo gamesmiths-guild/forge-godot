@@ -14,7 +14,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// panel, and Create/Cancel buttons.
 /// </summary>
 [Tool]
-internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
+internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISerializationListener
 {
 	private const int DialogWidth = 244;
 	private const int DialogHeight = 400;
@@ -23,6 +23,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 	private LineEdit? _searchBar;
 	private MenuButton? _expandCollapseButton;
+	private PopupMenu? _expandCollapsePopup;
 	private Tree? _tree;
 	private Label? _descriptionHeader;
 	private RichTextLabel? _descriptionLabel;
@@ -65,6 +66,23 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 
 		Confirmed += OnConfirmed;
 		Canceled += OnCanceled;
+	}
+
+	public override void _ExitTree()
+	{
+		base._ExitTree();
+		DisconnectSignals();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		DisconnectSignals();
+		NodeCreationRequested = null;
+	}
+
+	public void OnAfterDeserialize()
+	{
+		ConnectSignals();
 	}
 
 	/// <summary>
@@ -139,10 +157,10 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			TooltipText = "Options",
 		};
 
-		PopupMenu expandMenu = _expandCollapseButton.GetPopup();
-		expandMenu.AddItem("Expand All", 0);
-		expandMenu.AddItem("Collapse All", 1);
-		expandMenu.IdPressed += OnExpandCollapseMenuPressed;
+		_expandCollapsePopup = _expandCollapseButton.GetPopup();
+		_expandCollapsePopup.AddItem("Expand All", 0);
+		_expandCollapsePopup.AddItem("Collapse All", 1);
+		_expandCollapsePopup.IdPressed += OnExpandCollapseMenuPressed;
 		searchHBox.AddChild(_expandCollapseButton);
 
 		_tree = new Tree
@@ -358,6 +376,50 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog
 			StatescriptNodeDiscovery.FindByRuntimeTypeName(runtimeTypeName);
 
 		_descriptionLabel.Text = typeInfo?.Description ?? string.Empty;
+	}
+
+	private void DisconnectSignals()
+	{
+		Confirmed -= OnConfirmed;
+		Canceled -= OnCanceled;
+
+		if (_searchBar is not null)
+		{
+			_searchBar.TextChanged -= OnSearchTextChanged;
+		}
+
+		if (_expandCollapsePopup is not null)
+		{
+			_expandCollapsePopup.IdPressed -= OnExpandCollapseMenuPressed;
+		}
+
+		if (_tree is not null)
+		{
+			_tree.ItemSelected -= OnTreeItemSelected;
+			_tree.ItemActivated -= OnTreeItemActivated;
+		}
+	}
+
+	private void ConnectSignals()
+	{
+		Confirmed += OnConfirmed;
+		Canceled += OnCanceled;
+
+		if (_searchBar is not null)
+		{
+			_searchBar.TextChanged += OnSearchTextChanged;
+		}
+
+		if (_expandCollapsePopup is not null)
+		{
+			_expandCollapsePopup.IdPressed += OnExpandCollapseMenuPressed;
+		}
+
+		if (_tree is not null)
+		{
+			_tree.ItemSelected += OnTreeItemSelected;
+			_tree.ItemActivated += OnTreeItemActivated;
+		}
 	}
 }
 #endif

@@ -85,8 +85,11 @@ public static class StatescriptVariableTypeConverter
 
 	/// <summary>
 	/// Checks whether the given <see cref="Type"/> is compatible with the specified variable type.
-	/// For <see cref="Variant128"/> (wildcard type), all types are compatible.
 	/// </summary>
+	/// <remarks>
+	/// For <see cref="Variant128"/> (wildcard type), all types are compatible. Otherwise, strict type matching is used
+	/// with no implicit numeric conversions.
+	/// </remarks>
 	/// <param name="expectedType">The expected type from the node declaration.</param>
 	/// <param name="variableType">The variable type to check.</param>
 	/// <returns><see langword="true"/> if the types are compatible.</returns>
@@ -98,7 +101,7 @@ public static class StatescriptVariableTypeConverter
 		}
 
 		Type actualType = ToSystemType(variableType);
-		return expectedType.IsAssignableFrom(actualType);
+		return expectedType == actualType;
 	}
 
 	/// <summary>

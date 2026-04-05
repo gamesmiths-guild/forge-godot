@@ -20,11 +20,6 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public abstract string DisplayName { get; }
 
 	/// <summary>
-	/// Gets the CLR type that this resolver produces.
-	/// </summary>
-	public abstract Type ValueType { get; }
-
-	/// <summary>
 	/// Gets the resolver type identifier string used for matching against serialized resources.
 	/// </summary>
 	public abstract string ResolverTypeId { get; }
@@ -43,11 +38,13 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	/// <param name="property">The existing property binding to restore state from, or null for a new binding.</param>
 	/// <param name="expectedType">The type expected by the node's input property.</param>
 	/// <param name="onChanged">Callback invoked when the resolver configuration changes.</param>
+	/// <param name="isArray">Whether the input expects an array of values.</param>
 	public abstract void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
-		Action onChanged);
+		Action onChanged,
+		bool isArray);
 
 	/// <summary>
 	/// Writes the current resolver configuration to the given property binding resource.
@@ -56,10 +53,19 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public abstract void SaveTo(StatescriptNodeProperty property);
 
 	/// <summary>
-	/// Raised when the editor's layout size has changed (e.g. nested resolver swap, foldable toggle)
-	/// so that the owning <see cref="GraphNode"/> can call <see cref="Control.ResetSize"/>.
+	/// Raised when the editor's layout size has changed (e.g. nested resolver swap, foldable toggle) so that the owning
+	/// <see cref="GraphNode"/> can call <see cref="Control.ResetSize"/>.
 	/// </summary>
 	public event Action? LayoutSizeChanged;
+
+	/// <summary>
+	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
+	/// serialized or freed.
+	/// </summary>
+	public virtual void ClearCallbacks()
+	{
+		LayoutSizeChanged = null;
+	}
 
 	/// <summary>
 	/// Notifies listeners that the editor layout has changed size.

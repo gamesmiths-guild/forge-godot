@@ -5,7 +5,7 @@
 
 Forge for Godot is an Unreal GAS-like gameplay framework built for the Godot Engine.
 
-It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for implementing gameplay features such as attributes, effects, gameplay tags, abilities, events, and cues, fully aligned with Godot’s node, resource, and editor workflows.
+It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for implementing gameplay features such as attributes, effects, gameplay tags, abilities, events, cues, and visual ability scripting through Statescript, fully aligned with Godot’s node, resource, and editor workflows.
 
 Forge for Godot provides custom nodes, resources, and editor extensions that make building scalable and maintainable gameplay systems straightforward, allowing developers to leverage Forge’s architecture without reimplementing complex gameplay logic from scratch.
 
@@ -44,6 +44,7 @@ Both approaches provide:
 - **EffectsManager**: Controls effect application, stacking, periodic execution, expiration, and clean up.
 - **Abilities**: Grants, activates, or removes gameplay abilities, including custom ability logic, cooldowns, costs, and triggers.
 - **Events**: Entity or global event bus for raising, subscribing, and handling gameplay events.
+- **SharedVariables**: Entity-level variable bag for cross-ability communication through Statescript graphs.
 
 ### Godot-Specific Features
 
@@ -54,6 +55,7 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 - **EffectRayCast2D/3D**: Apply effects to entities hit by raycasts.
 - **EffectShapeCast2D/3D**: Apply effects to entities hit by shape casts.
 - **ForgeCueHandler**: Base class for implementing visual and audio feedback in response to gameplay cues.
+- **Statescript Editor**: Visual graph editor for creating Statescript ability behaviors directly in the Godot editor.
 
 ## Project Status
 
@@ -69,13 +71,15 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 - **Abilities System**: Feature-complete ability system, supporting grant/removal, custom behaviors, triggers, cooldowns, and costs.
 - **Events System**: Gameplay event bus supporting event-driven logic, subscriptions, and triggers.
 - **Cues System**: Visual/audio feedback layer; decouples presentation from game logic.
-- **Editor Extensions**: Custom inspector elements and tag editor with Godot integration.
+- **Statescript**: Visual state-based scripting system for implementing ability behaviors and custom logic with a built-in graph editor.
+- **Editor Extensions**: Custom inspector elements, tag editor, and Statescript graph editor with Godot integration.
 - **Custom Nodes**: Includes nodes like `ForgeEntity`, `ForgeAttributeSet`, `EffectArea2D`, and more.
 
 ### Planned Features 🚧
 
 - **Multiplayer Support**: Network replication for all systems, deterministic/authoritative support.
-- **Statescript**: Visual state-based scripting for implementing ability behaviors and custom logic.
+- **More Built-in Content**: More built-in components, nodes and resolvers.
+- **More sample scenes**: Sample scenes for statescript and multiplayer integration.
 
 ## Installation
 
@@ -105,6 +109,10 @@ For comprehensive documentation, explore the [docs](docs) directory:
 - [Forge Nodes](docs/nodes.md)
 - [Forge Resources](docs/resources.md)
 - [Helper Classes](docs/helper-classes.md)
+
+## Debugging
+
+The Forge NuGet package ships with [Source Link](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink) and a symbol package (`.snupkg`) published to the [NuGet symbol server](https://learn.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg#nugetorg-symbol-server). This means you can step into Forge's source code while debugging your project. For setup instructions, see the [Debugging section](docs/README.md#debugging) in the documentation.
 
 ## Contributing
 

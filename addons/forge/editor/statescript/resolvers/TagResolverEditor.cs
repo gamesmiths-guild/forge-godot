@@ -26,12 +26,10 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 	private string _selectedTag = string.Empty;
 	private Texture2D? _checkedIcon;
 	private Texture2D? _uncheckedIcon;
+	private Action? _onChanged;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Tag";
-
-	/// <inheritdoc/>
-	public override Type ValueType => typeof(bool);
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Tag";
@@ -47,8 +45,11 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
 		Type expectedType,
-		Action onChanged)
+		Action onChanged,
+		bool isArray)
 	{
+		_onChanged = onChanged;
+
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
@@ -74,14 +75,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 			Text = string.IsNullOrEmpty(_selectedTag) ? "(select tag)" : _selectedTag,
 		};
 
-		_tagButton.Toggled += x =>
-		{
-			if (_scroll is not null)
-			{
-				_scroll.Visible = x;
-				RaiseLayoutSizeChanged();
-			}
-		};
+		_tagButton.Toggled += OnTagButtonToggled;
 
 		vBox.AddChild(_tagButton);
 
@@ -103,35 +97,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 		_scroll.AddChild(_tree);
 		vBox.AddChild(_scroll);
 
-		_tree.ButtonClicked += (item, _, id, mouseButton) =>
-		{
-			if (mouseButton != 1 || id != 0)
-			{
-				return;
-			}
-
-			if (!_treeItemToNode.TryGetValue(item, out TagNode? tagNode))
-			{
-				return;
-			}
-
-			Forge.Core.StringKey newValue = tagNode.CompleteTagKey;
-
-			if (newValue == _selectedTag)
-			{
-				newValue = string.Empty;
-			}
-
-			_selectedTag = newValue;
-
-			if (_tagButton is not null)
-			{
-				_tagButton.Text = string.IsNullOrEmpty(_selectedTag) ? "(select tag)" : _selectedTag;
-			}
-
-			RebuildTree();
-			onChanged();
-		};
+		_tree.ButtonClicked += OnTreeButtonClicked;
 
 		RebuildTree();
 	}
@@ -143,6 +109,52 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 		{
 			Tag = _selectedTag,
 		};
+	}
+
+	/// <inheritdoc/>
+	public override void ClearCallbacks()
+	{
+		base.ClearCallbacks();
+		_onChanged = null;
+	}
+
+	private void OnTagButtonToggled(bool toggled)
+	{
+		if (_scroll is not null)
+		{
+			_scroll.Visible = toggled;
+			RaiseLayoutSizeChanged();
+		}
+	}
+
+	private void OnTreeButtonClicked(TreeItem item, long column, long id, long mouseButton)
+	{
+		if (mouseButton != 1 || id != 0)
+		{
+			return;
+		}
+
+		if (!_treeItemToNode.TryGetValue(item, out TagNode? tagNode))
+		{
+			return;
+		}
+
+		Forge.Core.StringKey newValue = tagNode.CompleteTagKey;
+
+		if (newValue == _selectedTag)
+		{
+			newValue = string.Empty;
+		}
+
+		_selectedTag = newValue;
+
+		if (_tagButton is not null)
+		{
+			_tagButton.Text = string.IsNullOrEmpty(_selectedTag) ? "(select tag)" : _selectedTag;
+		}
+
+		RebuildTree();
+		_onChanged?.Invoke();
 	}
 
 	private void RebuildTree()
@@ -157,7 +169,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 
 		TreeItem root = _tree.CreateItem();
 
-		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
 
 		BuildTreeRecursive(root, tagsManager.RootNode);

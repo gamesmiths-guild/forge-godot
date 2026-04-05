@@ -10,12 +10,14 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// <summary>
 /// Shared factory methods for creating value-editor controls used by both the variable panel and resolver editors.
 /// </summary>
-internal static class StatescriptEditorControls
+internal static partial class StatescriptEditorControls
 {
 	private static readonly Color _axisXColor = new(0.96f, 0.37f, 0.37f);
 	private static readonly Color _axisYColor = new(0.54f, 0.83f, 0.01f);
 	private static readonly Color _axisZColor = new(0.33f, 0.55f, 0.96f);
 	private static readonly Color _axisWColor = new(0.66f, 0.66f, 0.66f);
+
+	private static StyleBox? _cachedPanelStyle;
 
 	/// <summary>
 	/// Returns <see langword="true"/> for integer-like variable types.
@@ -54,9 +56,9 @@ internal static class StatescriptEditorControls
 	/// <summary>
 	/// Creates a <see cref="PanelContainer"/> wrapping a <see cref="CheckBox"/> for boolean editing.
 	/// </summary>
-	/// <param name="value">The initial value of the boolean variable.</param>
-	/// <param name="onChanged">An action to invoke when the boolean value changes.</param>
-	/// <returns>A <see cref="PanelContainer"/> containing the boolean editor control.</returns>
+	/// <param name="value">The initial value of the boolean.</param>
+	/// <param name="onChanged">An action invoked on value change.</param>
+	/// <returns>A <see cref="PanelContainer"/> containing a <see cref="CheckBox"/>.</returns>
 	public static PanelContainer CreateBoolEditor(bool value, Action<bool> onChanged)
 	{
 		var container = new PanelContainer
@@ -64,10 +66,7 @@ internal static class StatescriptEditorControls
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 
-		Control baseControl = EditorInterface.Singleton.GetBaseControl();
-		var style = baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate() as StyleBox;
-		style!.SetContentMarginAll(0);
-		container.AddThemeStyleboxOverride("panel", style);
+		container.AddThemeStyleboxOverride("panel", GetPanelStyle());
 
 		var checkButton = new CheckBox
 		{
@@ -76,7 +75,9 @@ internal static class StatescriptEditorControls
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 
-		checkButton.Toggled += x => onChanged(x);
+		var handler = new BoolSignalHandler { OnChanged = onChanged };
+		checkButton.AddChild(handler);
+		checkButton.Toggled += handler.HandleToggled;
 		container.AddChild(checkButton);
 		return container;
 	}
@@ -111,34 +112,17 @@ internal static class StatescriptEditorControls
 			Value = value,
 		};
 
-		var isDragging = false;
+		var handler = new NumericSpinHandler(spin) { OnChanged = onChanged };
+		spin.AddChild(handler);
 
 		if (onChanged is not null)
 		{
-			spin.ValueChanged += x =>
-			{
-				if (!isDragging)
-				{
-					onChanged?.Invoke(x);
-				}
-			};
+			spin.ValueChanged += handler.HandleValueChanged;
 		}
 
-		spin.Grabbed += () =>
-		{
-			isDragging = true;
-		};
-
-		spin.Ungrabbed += () =>
-		{
-			isDragging = false;
-			onChanged?.Invoke(spin.Value);
-		};
-
-		spin.FocusExited += () =>
-		{
-			isDragging = false;
-		};
+		spin.Grabbed += handler.HandleGrabbed;
+		spin.Ungrabbed += handler.HandleUngrabbed;
+		spin.FocusExited += handler.HandleFocusExited;
 
 		return spin;
 	}
@@ -164,16 +148,14 @@ internal static class StatescriptEditorControls
 
 		var panelContainer = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 
-		Control baseControl = EditorInterface.Singleton.GetBaseControl();
-		var style = baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate() as StyleBox;
-		style!.SetContentMarginAll(0);
-		panelContainer.AddThemeStyleboxOverride("panel", style);
+		panelContainer.AddThemeStyleboxOverride("panel", GetPanelStyle());
 
 		vBox.AddChild(panelContainer);
 		panelContainer.AddChild(row);
 
 		var values = new double[componentCount];
-		var isDragging = false;
+		var handler = new VectorComponentHandler(values) { OnChanged = onChanged };
+		vBox.AddChild(handler);
 
 		for (var i = 0; i < componentCount; i++)
 		{
@@ -191,38 +173,19 @@ internal static class StatescriptEditorControls
 				ControlState = EditorSpinSlider.ControlStateEnum.Hide,
 				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 				SizeFlagsStretchRatio = 1,
+				CustomMinimumSize = new Vector2(71, 0),
 				Value = values[i],
 			};
 
 			spin.AddThemeColorOverride("label_color", GetComponentColor(i));
 
-			var capturedI = i;
+			var componentHandler = new VectorSpinHandler(handler, i);
+			spin.AddChild(componentHandler);
 
-			spin.ValueChanged += x =>
-			{
-				values[capturedI] = x;
-
-				if (!isDragging)
-				{
-					onChanged?.Invoke(values);
-				}
-			};
-
-			spin.Grabbed += () =>
-			{
-				isDragging = true;
-			};
-
-			spin.Ungrabbed += () =>
-			{
-				isDragging = false;
-				onChanged?.Invoke(values);
-			};
-
-			spin.FocusExited += () =>
-			{
-				isDragging = false;
-			};
+			spin.ValueChanged += componentHandler.HandleValueChanged;
+			spin.Grabbed += componentHandler.HandleGrabbed;
+			spin.Ungrabbed += componentHandler.HandleUngrabbed;
+			spin.FocusExited += componentHandler.HandleFocusExited;
 
 			row.AddChild(spin);
 		}
@@ -418,8 +381,11 @@ internal static class StatescriptEditorControls
 			StatescriptVariableType.UShort => new NumericConfig(ushort.MinValue, ushort.MaxValue, 1, true, false),
 			StatescriptVariableType.Int => new NumericConfig(int.MinValue, int.MaxValue, 1, true, false),
 			StatescriptVariableType.UInt => new NumericConfig(uint.MinValue, uint.MaxValue, 1, true, false),
-			StatescriptVariableType.Long => new NumericConfig(-1e15, 1e15, 1, true, true),
-			StatescriptVariableType.ULong => new NumericConfig(0, 1e15, 1, true, true),
+
+			// Godot's interface starts acting weird if we try to use the full range of long/ulong, so we clamp to +/-
+			// 9e18 which should be sufficient for most use cases.
+			StatescriptVariableType.Long => new NumericConfig(-9e18, 9e18, 1, true, false),
+			StatescriptVariableType.ULong => new NumericConfig(0, 9e18, 1, true, false),
 			StatescriptVariableType.Float => new NumericConfig(-1e10, 1e10, 0.001, false, true),
 			StatescriptVariableType.Double => new NumericConfig(-1e10, 1e10, 0.001, false, true),
 			StatescriptVariableType.Decimal => new NumericConfig(-1e10, 1e10, 0.001, false, true),
@@ -439,5 +405,17 @@ internal static class StatescriptEditorControls
 		double Step,
 		bool IsInteger,
 		bool AllowBeyondRange);
+
+	private static StyleBox GetPanelStyle()
+	{
+		if (_cachedPanelStyle is null || !GodotObject.IsInstanceValid(_cachedPanelStyle))
+		{
+			Control baseControl = EditorInterface.Singleton.GetBaseControl();
+			_cachedPanelStyle = (StyleBox)baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate();
+			_cachedPanelStyle.SetContentMarginAll(0);
+		}
+
+		return _cachedPanelStyle;
+	}
 }
 #endif

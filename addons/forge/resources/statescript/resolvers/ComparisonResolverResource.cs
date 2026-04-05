@@ -1,32 +1,13 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
 
+using ForgeNode = Gamesmiths.Forge.Statescript.Node;
+
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-
-/// <summary>
-/// Enumerates comparison operations for the comparison resolver.
-/// </summary>
-public enum ComparisonOperation
-{
-	/// <summary>Left == Right.</summary>
-	Equal = 0,
-
-	/// <summary>Left != Right.</summary>
-	NotEqual = 1,
-
-	/// <summary>Left &lt; Right.</summary>
-	LessThan = 2,
-
-	/// <summary>Left &lt;= Right.</summary>
-	LessThanOrEqual = 3,
-
-	/// <summary>Left &gt; Right.</summary>
-	GreaterThan = 4,
-
-	/// <summary>Left &gt;= Right.</summary>
-	GreaterThanOrEqual = 5,
-}
 
 /// <summary>
 /// Resolver resource that compares two nested numeric resolvers and produces a boolean result.
@@ -35,6 +16,9 @@ public enum ComparisonOperation
 [GlobalClass]
 public partial class ComparisonResolverResource : StatescriptResolverResource
 {
+	/// <inheritdoc/>
+	public override string ResolverTypeId => "Comparison";
+
 	/// <summary>
 	/// Gets or sets the left-hand operand resolver.
 	/// </summary>
@@ -52,4 +36,29 @@ public partial class ComparisonResolverResource : StatescriptResolverResource
 	/// </summary>
 	[Export]
 	public StatescriptResolverResource? Right { get; set; }
+
+	/// <inheritdoc/>
+	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
+	{
+		IPropertyResolver comparisonResolver = BuildResolver(graph);
+		var propertyName = new StringKey($"__cmp_{nodeId}_{index}");
+
+		graph.VariableDefinitions.DefineProperty(propertyName, comparisonResolver);
+
+		runtimeNode.BindInput(index, propertyName);
+	}
+
+	/// <inheritdoc/>
+	public override IPropertyResolver BuildResolver(Graph graph)
+	{
+		IPropertyResolver leftResolver = Left?.BuildResolver(graph)
+			?? new VariantResolver(default, typeof(int));
+
+		IPropertyResolver rightResolver = Right?.BuildResolver(graph)
+			?? new VariantResolver(default, typeof(int));
+
+		var operation = (ComparisonOperation)(byte)Operation;
+
+		return new ComparisonResolver(leftResolver, operation, rightResolver);
+	}
 }
