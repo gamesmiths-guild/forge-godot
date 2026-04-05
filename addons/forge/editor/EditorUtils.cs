@@ -19,11 +19,9 @@ internal static class EditorUtils
 	{
 		var options = new List<string>();
 
-		// Get all types in the current assembly
-		Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-		// Find all types that subclass AttributeSet
-		foreach (Type attributeSetType in allTypes.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
+		foreach (Type attributeSetType in AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.Where(x => x.IsSubclassOf(typeof(AttributeSet))))
 		{
 			options.Add(attributeSetType.Name);
 		}
@@ -43,10 +41,9 @@ internal static class EditorUtils
 			return [];
 		}
 
-		var asm = Assembly.GetExecutingAssembly();
-		Type? type = Array.Find(
-			asm.GetTypes(),
-			x => x.IsSubclassOf(typeof(AttributeSet)) && x.Name == attributeSet);
+		Type? type = AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.FirstOrDefault(x => x.IsSubclassOf(typeof(AttributeSet)) && x.Name == attributeSet);
 
 		if (type is null)
 		{

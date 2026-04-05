@@ -1,7 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
-using System.Reflection;
+using System.Linq;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -84,12 +84,13 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 
 	private static IActivationDataProvider? InstantiateProvider(string className)
 	{
-		Type? type = Array.Find(
-			Assembly.GetExecutingAssembly().GetTypes(),
-			x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-				&& !x.IsAbstract
-				&& !x.IsInterface
-				&& x.Name == className);
+		Type? type = AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.FirstOrDefault(
+				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
+					&& !x.IsAbstract
+					&& !x.IsInterface
+					&& x.Name == className);
 
 		if (type is null)
 		{

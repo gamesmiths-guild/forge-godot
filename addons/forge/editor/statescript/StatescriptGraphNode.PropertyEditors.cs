@@ -13,46 +13,6 @@ public partial class StatescriptGraphNode
 {
 	private readonly Dictionary<PropertySlotKey, InputPropertyContext> _inputPropertyContexts = [];
 
-	private static OptionButton? FindOptionButtonWithMeta(Node node, long selectedValue)
-	{
-		if (node is OptionButton ob && ob.HasMeta("property_index") && ob.Selected == (int)selectedValue)
-		{
-			return ob;
-		}
-
-		foreach (Node child in node.GetChildren())
-		{
-			OptionButton? found = FindOptionButtonWithMeta(child, selectedValue);
-			if (found is not null)
-			{
-				return found;
-			}
-		}
-
-		return null;
-	}
-
-	private static OptionButton? FindOutputVarDropdownRecursive(Node node, long selectedValue)
-	{
-		if (node is OptionButton ob
-			&& ob.HasMeta("output_index")
-			&& ob.Selected == (int)selectedValue)
-		{
-			return ob;
-		}
-
-		foreach (Node child in node.GetChildren())
-		{
-			OptionButton? found = FindOutputVarDropdownRecursive(child, selectedValue);
-			if (found is not null)
-			{
-				return found;
-			}
-		}
-
-		return null;
-	}
-
 	private void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
@@ -153,19 +113,12 @@ public partial class StatescriptGraphNode
 			index,
 			propInfo.IsArray);
 
-		resolverDropdown.SetMeta("property_index", index);
-		resolverDropdown.ItemSelected += OnInputResolverDropdownItemSelected;
+		var capturedIndex = index;
+		resolverDropdown.ItemSelected += selectedItem => OnInputResolverDropdownItemSelected(selectedItem, capturedIndex);
 	}
 
-	private void OnInputResolverDropdownItemSelected(long x)
+	private void OnInputResolverDropdownItemSelected(long x, int index)
 	{
-		OptionButton? senderDropdown = FindSenderDropdown(x);
-		if (senderDropdown is null)
-		{
-			return;
-		}
-
-		var index = senderDropdown.GetMeta("property_index").AsInt32();
 		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
 
 		if (!_inputPropertyContexts.TryGetValue(key, out InputPropertyContext? ctx))
@@ -227,20 +180,6 @@ public partial class StatescriptGraphNode
 		ResetSize();
 	}
 
-	private OptionButton? FindSenderDropdown(long selectedValue)
-	{
-		foreach (Node child in GetChildren())
-		{
-			OptionButton? found = FindOptionButtonWithMeta(child, selectedValue);
-			if (found is not null)
-			{
-				return found;
-			}
-		}
-
-		return null;
-	}
-
 	private void AddOutputVariableRow(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
@@ -300,25 +239,18 @@ public partial class StatescriptGraphNode
 			}
 		}
 
-		variableDropdown.ItemSelected += OnOutputVariableDropdownItemSelected;
+		var capturedIndex = index;
+		variableDropdown.ItemSelected += selectedItem => OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
 
 		hBox.AddChild(variableDropdown);
 	}
 
-	private void OnOutputVariableDropdownItemSelected(long x)
+	private void OnOutputVariableDropdownItemSelected(long x, int index)
 	{
 		if (NodeResource is null || _graph is null)
 		{
 			return;
 		}
-
-		OptionButton? senderDropdown = FindOutputVariableDropdown(x);
-		if (senderDropdown is null)
-		{
-			return;
-		}
-
-		var index = senderDropdown.GetMeta("output_index").AsInt32();
 
 		var oldResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
 			as StatescriptResolverResource;
@@ -346,20 +278,6 @@ public partial class StatescriptGraphNode
 		}
 
 		PropertyBindingChanged?.Invoke();
-	}
-
-	private OptionButton? FindOutputVariableDropdown(long selectedValue)
-	{
-		foreach (Node child in GetChildren())
-		{
-			OptionButton? found = FindOutputVarDropdownRecursive(child, selectedValue);
-			if (found is not null)
-			{
-				return found;
-			}
-		}
-
-		return null;
 	}
 
 	private void ShowResolverEditorUI(

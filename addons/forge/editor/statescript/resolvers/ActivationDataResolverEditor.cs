@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -159,12 +158,13 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return null;
 		}
 
-		Type? type = Array.Find(
-			Assembly.GetExecutingAssembly().GetTypes(),
-			x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-				&& !x.IsAbstract
-				&& !x.IsInterface
-				&& x.Name == className);
+		Type? type = AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.FirstOrDefault(
+				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
+					&& !x.IsAbstract
+					&& !x.IsInterface
+					&& x.Name == className);
 
 		if (type is null)
 		{
@@ -251,9 +251,8 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		}
 		else
 		{
-			Type[] allTypes = Assembly.GetExecutingAssembly().GetTypes();
-
-			foreach (var name in allTypes
+			foreach (var name in AppDomain.CurrentDomain.GetAssemblies()
+				.SelectMany(a => a.GetTypes())
 				.Where(x => typeof(IActivationDataProvider).IsAssignableFrom(x)
 					&& !x.IsAbstract
 					&& !x.IsInterface)

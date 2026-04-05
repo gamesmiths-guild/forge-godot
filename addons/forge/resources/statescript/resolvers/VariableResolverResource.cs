@@ -72,6 +72,14 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			}
 		}
 
+		foreach (ArrayVariableDefinition definition in graph.VariableDefinitions.ArrayVariableDefinitions)
+		{
+			if (definition.Name == key)
+			{
+				return definition.ElementType;
+			}
+		}
+
 		return null;
 	}
 }
