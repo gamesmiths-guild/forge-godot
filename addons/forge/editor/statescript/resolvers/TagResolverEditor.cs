@@ -169,7 +169,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 
 		TreeItem root = _tree.CreateItem();
 
-		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ResourcePath);
+		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
 
 		BuildTreeRecursive(root, tagsManager.RootNode);

@@ -47,7 +47,7 @@ public partial class CueKeyEditorProperty : EditorProperty
 
 		AddChild(popup);
 
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>(ForgeData.ResourcePath);
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 		var tagsManager = new TagsManager([.. pluginData.RegisteredTags]);
 		TreeItem root = tree.CreateItem();
 		BuildTreeRecursively(tree, root, tagsManager.RootNode);

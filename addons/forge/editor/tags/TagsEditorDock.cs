@@ -41,7 +41,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	{
 		base._Ready();
 
-		_forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ResourcePath);
+		_forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");

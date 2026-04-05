@@ -225,13 +225,13 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private static void EnsureForgeDataExists()
 	{
-		if (ResourceLoader.Exists(ForgeData.ResourcePath))
+		if (ResourceLoader.Exists(ForgeData.ForgeDataResourcePath))
 		{
 			return;
 		}
 
 		var forgeData = new ForgeData();
-		Error error = ResourceSaver.Save(forgeData, ForgeData.ResourcePath);
+		Error error = ResourceSaver.Save(forgeData, ForgeData.ForgeDataResourcePath);
 
 		if (error != Error.Ok)
 		{
@@ -240,7 +240,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 
 		EditorInterface.Singleton.GetResourceFilesystem().Scan();
-		GD.Print("Created default ForgeData resource at ", ForgeData.ResourcePath);
+		GD.Print("Created default ForgeData resource at ", ForgeData.ForgeDataResourcePath);
 	}
 
 	private static void CallAssetRepairTool()

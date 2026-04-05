@@ -105,7 +105,7 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 		TreeItem root = _tree.CreateItem();
 
 		ForgeData forgePluginData =
-			ResourceLoader.Load<ForgeData>(ForgeData.ResourcePath);
+			ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 
 		var tagsManager =
 			new TagsManager([.. forgePluginData.RegisteredTags]);
