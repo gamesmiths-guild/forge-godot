@@ -109,7 +109,7 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 		TreeItem root = _tree.CreateItem();
 
 		ForgeData forgePluginData =
-			ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+			ResourceLoader.Load<ForgeData>(ForgeData.ResourcePath);
 
 		var tagsManager =
 			new TagsManager([.. forgePluginData.RegisteredTags]);

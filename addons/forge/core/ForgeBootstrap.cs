@@ -8,7 +8,7 @@ public partial class ForgeBootstrap : Node
 {
 	public override void _Ready()
 	{
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>("uid://8j4xg16o3qnl");
+		ForgeData pluginData = ResourceLoader.Load<ForgeData>(ForgeData.ResourcePath);
 		_ = new ForgeManagers(pluginData);
 	}
 }

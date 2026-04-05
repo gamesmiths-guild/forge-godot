@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
@@ -33,6 +34,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _EnterTree()
 	{
+		EnsureForgeDataExists();
+
 		_tagsEditorDock = new TagsEditorDock();
 		AddDock(_tagsEditorDock);
 
@@ -127,6 +130,8 @@ public partial class ForgePluginLoader : EditorPlugin
 	{
 		base._EnablePlugin();
 
+		EnsureForgeDataExists();
+
 		var config = ProjectSettings.LoadResourcePack(AutoloadPath);
 
 		if (config)
@@ -216,6 +221,26 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 
 		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);
+	}
+
+	private static void EnsureForgeDataExists()
+	{
+		if (ResourceLoader.Exists(ForgeData.ResourcePath))
+		{
+			return;
+		}
+
+		var forgeData = new ForgeData();
+		Error error = ResourceSaver.Save(forgeData, ForgeData.ResourcePath);
+
+		if (error != Error.Ok)
+		{
+			GD.PrintErr($"Failed to create ForgeData resource: {error}");
+			return;
+		}
+
+		EditorInterface.Singleton.GetResourceFilesystem().Scan();
+		GD.Print("Created default ForgeData resource at ", ForgeData.ResourcePath);
 	}
 
 	private static void CallAssetRepairTool()
