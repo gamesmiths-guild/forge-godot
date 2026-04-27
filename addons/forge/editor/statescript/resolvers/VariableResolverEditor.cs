@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
@@ -85,6 +86,17 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		_onChanged = null;
 	}
 
+	private static bool IsCompatibleType(Type expectedType, StatescriptVariableType variableType)
+	{
+		if (expectedType == typeof(Variant128))
+		{
+			return true;
+		}
+
+		Type actualType = StatescriptVariableTypeConverter.ToSystemType(variableType);
+		return expectedType == actualType;
+	}
+
 	private void OnDropdownItemSelected(long index)
 	{
 		if (_dropdown is null)
@@ -117,7 +129,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 				continue;
 			}
 
-			if (!StatescriptVariableTypeConverter.IsCompatible(expectedType, variable.VariableType))
+			if (!IsCompatibleType(expectedType, variable.VariableType))
 			{
 				continue;
 			}

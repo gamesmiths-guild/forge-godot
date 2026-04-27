@@ -79,7 +79,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	public void SetHighlightedVariable(string? variableName)
 	{
 		_highlightedVariableName = variableName;
-		_isHighlighted = !string.IsNullOrEmpty(variableName) && ReferencesVariable(variableName!);
+		_isHighlighted = !string.IsNullOrEmpty(variableName) && ReferencesVariable(variableName);
 		ApplyHighlightBorder();
 		UpdateChildHighlights();
 	}
@@ -226,13 +226,15 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			MethodName.ApplyResolverBinding,
 			(int)direction,
 			propertyIndex,
-			newResolver ?? new StatescriptResolverResource());
+			Variant.From(newResolver));
+
 		_undoRedo.AddUndoMethod(
 			this,
 			MethodName.ApplyResolverBinding,
 			(int)direction,
 			propertyIndex,
-			oldResolver ?? new StatescriptResolverResource());
+			Variant.From(oldResolver));
+
 		_undoRedo.CommitAction(false);
 	}
 
@@ -534,7 +536,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private void ApplyResolverBinding(
 		int directionInt,
 		int propertyIndex,
-		StatescriptResolverResource resolver)
+		Variant resolverVariant)
 	{
 		if (NodeResource is null)
 		{
@@ -543,7 +545,9 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 		var direction = (StatescriptPropertyDirection)directionInt;
 		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
-		binding.Resolver = resolver;
+		binding.Resolver = resolverVariant.VariantType == Variant.Type.Nil
+			? null
+			: resolverVariant.AsGodotObject() as StatescriptResolverResource;
 		RebuildNode();
 	}
 

@@ -116,6 +116,17 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		_onChanged = null;
 	}
 
+	private static bool IsCompatibleType(Type expectedType, StatescriptVariableType variableType)
+	{
+		if (expectedType == typeof(Variant128))
+		{
+			return true;
+		}
+
+		Type actualType = StatescriptVariableTypeConverter.ToSystemType(variableType);
+		return expectedType == actualType;
+	}
+
 	private static List<string> FindAllSharedVariableSetPaths()
 	{
 		var results = new List<string>();
@@ -259,8 +270,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 						continue;
 					}
 
-					if (_expectedType != typeof(Variant128)
-						&& !StatescriptVariableTypeConverter.IsCompatible(_expectedType, def.VariableType))
+					if (!IsCompatibleType(_expectedType, def.VariableType))
 					{
 						continue;
 					}

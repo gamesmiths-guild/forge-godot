@@ -129,6 +129,17 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		_onChanged = null;
 	}
 
+	private static bool IsCompatibleType(Type expectedType, StatescriptVariableType fieldType)
+	{
+		if (expectedType == typeof(Variant128))
+		{
+			return true;
+		}
+
+		Type actualType = StatescriptVariableTypeConverter.ToSystemType(fieldType);
+		return expectedType == actualType;
+	}
+
 	private static string FindExistingProvider(StatescriptGraph graph, StatescriptNodeProperty? currentProperty)
 	{
 		foreach (StatescriptNode node in graph.Nodes)
@@ -306,8 +317,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 					continue;
 				}
 
-				if (_expectedType != typeof(Variant128)
-					&& !StatescriptVariableTypeConverter.IsCompatible(_expectedType, field.FieldType))
+				if (!IsCompatibleType(_expectedType, field.FieldType))
 				{
 					continue;
 				}

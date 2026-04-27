@@ -41,6 +41,23 @@ public partial class StatescriptGraphNode
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
 
+		if (propInfo.IsArray)
+		{
+			resolverFactories.RemoveAll(factory =>
+			{
+				using NodeEditorProperty temp = factory();
+				return temp.ResolverTypeId != "ArrayVariable";
+			});
+		}
+		else
+		{
+			resolverFactories.RemoveAll(factory =>
+			{
+				using NodeEditorProperty temp = factory();
+				return temp.ResolverTypeId == "ArrayVariable";
+			});
+		}
+
 		if (resolverFactories.Count == 0)
 		{
 			var errorLabel = new Label
@@ -83,16 +100,7 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			for (var i = 0; i < resolverFactories.Count; i++)
-			{
-				using NodeEditorProperty temp = resolverFactories[i]();
-
-				if (temp.ResolverTypeId == "Variant")
-				{
-					selectedIndex = i;
-					break;
-				}
-			}
+			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(resolverFactories, propInfo.IsArray);
 		}
 
 		resolverDropdown.Selected = selectedIndex;
@@ -161,18 +169,21 @@ public partial class StatescriptGraphNode
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Change Resolver Type", customContext: _graph);
+
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Input,
 				index,
-				newResolver ?? new StatescriptResolverResource());
+				Variant.From(newResolver));
+
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Input,
 				index,
-				oldResolver ?? new StatescriptResolverResource());
+				Variant.From(oldResolver));
+
 			_undoRedo.CommitAction(false);
 		}
 
@@ -262,18 +273,21 @@ public partial class StatescriptGraphNode
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Change Output Variable", customContext: _graph);
+
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Output,
 				index,
 				(StatescriptResolverResource)newResolver.Duplicate());
+
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Output,
 				index,
-				oldResolver ?? new StatescriptResolverResource());
+				Variant.From(oldResolver));
+
 			_undoRedo.CommitAction(false);
 		}
 
@@ -333,18 +347,21 @@ public partial class StatescriptGraphNode
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Change Node Property", customContext: _graph);
+
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)direction,
 				propertyIndex,
-				newResolver ?? new StatescriptResolverResource());
+				Variant.From(newResolver));
+
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)direction,
 				propertyIndex,
-				oldResolver ?? new StatescriptResolverResource());
+				Variant.From(oldResolver));
+
 			_undoRedo.CommitAction(false);
 		}
 
