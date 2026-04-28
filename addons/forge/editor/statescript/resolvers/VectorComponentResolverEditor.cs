@@ -201,7 +201,8 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 			_resolverDropdown.AddItem(temp.DisplayName);
 		}
 
-		_resolverDropdown.Selected = 0;
+		int selectedIndex = GetSelectedIndex(null);
+		_resolverDropdown.Selected = selectedIndex;
 
 		if (_editorContainer is not null)
 		{
@@ -211,7 +212,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 				child.Free();
 			}
 
-			ShowEditor(0, null);
+			ShowEditor(selectedIndex, null);
 		}
 	}
 
@@ -250,19 +251,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 
 	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
 	{
-		if (existingResolver is not null)
-		{
-			for (int i = 0; i < _factories.Count; i++)
-			{
-				using NodeEditorProperty temp = _factories[i]();
-				if (temp.ResolverTypeId == existingResolver.ResolverTypeId)
-				{
-					return i;
-				}
-			}
-		}
-
-		return 0;
+		return ResolverEditorFactoryCatalog.GetDefaultFactoryIndex(_factories, existingResolver, "Variant");
 	}
 
 	private OptionButton CreateResolverDropdown(StatescriptResolverResource? existingResolver)

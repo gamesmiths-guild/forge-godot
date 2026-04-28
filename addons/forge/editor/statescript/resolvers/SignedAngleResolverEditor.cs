@@ -146,19 +146,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver)
 	{
-		if (existingResolver is not null)
-		{
-			for (int i = 0; i < factories.Count; i++)
-			{
-				using NodeEditorProperty temp = factories[i]();
-				if (temp.ResolverTypeId == existingResolver.ResolverTypeId)
-				{
-					return i;
-				}
-			}
-		}
-
-		return 0;
+		return ResolverEditorFactoryCatalog.GetDefaultFactoryIndex(factories, existingResolver, "Variant");
 	}
 
 	private static OptionButton CreateResolverDropdown(

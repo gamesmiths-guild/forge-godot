@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -234,25 +235,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
 	{
-		int selectedIndex = 0;
-
-		if (existingResolver is not null)
-		{
-			string existingTypeId = existingResolver.ResolverTypeId;
-
-			for (int i = 0; i < _numericFactories.Count; i++)
-			{
-				using NodeEditorProperty temp = _numericFactories[i]();
-
-				if (temp.ResolverTypeId == existingTypeId)
-				{
-					selectedIndex = i;
-					break;
-				}
-			}
-		}
-
-		return selectedIndex;
+		return ResolverEditorFactoryCatalog.GetDefaultFactoryIndex(_numericFactories, existingResolver, "Variant");
 	}
 
 	private OptionButton CreateResolverDropdownControl(StatescriptResolverResource? existingResolver)

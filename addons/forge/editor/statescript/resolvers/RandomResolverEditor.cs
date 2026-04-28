@@ -254,8 +254,9 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			dropdown.AddItem(temp.DisplayName);
 		}
 
-		dropdown.Selected = 0;
-		HandleResolverChanged(0, editorContainer, setEditor);
+		int selectedIndex = GetSelectedIndex(null);
+		dropdown.Selected = selectedIndex;
+		HandleResolverChanged(selectedIndex, editorContainer, setEditor);
 	}
 
 	private void HandleResolverChanged(
