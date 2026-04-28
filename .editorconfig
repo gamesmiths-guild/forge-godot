@@ -358,6 +358,9 @@ dotnet_diagnostic.IDE0053.severity = suggestion
 # IDE0010: Add missing cases
 dotnet_diagnostic.IDE0010.severity = none
 
+# IDE0072: Add missing cases
+dotnet_diagnostic.IDE0072.severity = suggestion
+
 # CA1711: Identifiers should not have incorrect suffix
 dotnet_diagnostic.CA1711.severity = none
 
