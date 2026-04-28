@@ -59,6 +59,17 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public event Action? LayoutSizeChanged;
 
 	/// <summary>
+	/// Tries to provide a short inline summary for the current editor state when embedded in a collapsed foldout.
+	/// </summary>
+	/// <param name="summary">The inline summary, when available.</param>
+	/// <returns><see langword="true"/> when an inline summary is available.</returns>
+	public virtual bool TryGetInlineSummary(out string summary)
+	{
+		summary = string.Empty;
+		return false;
+	}
+
+	/// <summary>
 	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
 	/// serialized or freed.
 	/// </summary>

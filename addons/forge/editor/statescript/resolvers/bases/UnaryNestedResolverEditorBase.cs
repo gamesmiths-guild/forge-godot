@@ -16,6 +16,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private Type _expectedType = typeof(ForgeVariant128);
+	private FoldableContainer? _operandFoldable;
 	private OptionButton? _resolverDropdown;
 	private VBoxContainer? _editorContainer;
 	private NodeEditorProperty? _operandEditor;
@@ -52,11 +53,11 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 		}
 
 		var existingResource = property?.Resolver as TResource;
-		FoldableContainer operandFoldable = CreateFoldable(OperandTitle);
-		vBox.AddChild(operandFoldable);
+		_operandFoldable = CreateFoldable(OperandTitle);
+		vBox.AddChild(_operandFoldable);
 
 		var operandContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		operandFoldable.AddChild(operandContainer);
+		_operandFoldable.AddChild(operandContainer);
 
 		_editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_resolverDropdown = CreateResolverDropdownControl(existingResource?.Operand);
@@ -65,6 +66,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 
 		ShowNestedEditor(GetSelectedIndex(existingResource?.Operand), existingResource?.Operand);
 		_resolverDropdown.ItemSelected += OnResolverDropdownItemSelected;
+		UpdateFoldableTitle();
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -107,6 +109,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 
 	private void OnFoldingChanged(bool isFolded)
 	{
+		UpdateFoldableTitle();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -130,6 +133,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 
 		_operandEditor = null;
 		ShowNestedEditor(selectedIndex, null);
+		UpdateFoldableTitle();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -173,7 +177,19 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitle();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitle()
+	{
+		if (_operandFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				OperandTitle,
+				_operandFoldable,
+				_operandEditor);
+		}
 	}
 }
 #endif

@@ -17,6 +17,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 {
 	private Action? _onChanged;
 	private StatescriptGraph? _graph;
+	private FoldableContainer? _operandFoldable;
 	private OptionButton? _operandResolverDropdown;
 	private VBoxContainer? _operandEditorContainer;
 	private NodeEditorProperty? _operandEditor;
@@ -53,16 +54,17 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		FoldableContainer operandFoldable = CreateFoldable("Operand:");
-		root.AddChild(operandFoldable);
+		_operandFoldable = CreateFoldable("Operand:");
+		root.AddChild(_operandFoldable);
 		var operandContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		operandFoldable.AddChild(operandContainer);
+		_operandFoldable.AddChild(operandContainer);
 		_operandResolverDropdown = CreateResolverDropdown(existing?.Operand);
 		_operandEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		operandContainer.AddChild(_operandResolverDropdown);
 		operandContainer.AddChild(_operandEditorContainer);
 		ShowOperandEditor(GetSelectedIndex(existing?.Operand), existing?.Operand);
 		_operandResolverDropdown.ItemSelected += OnOperandResolverDropdownItemSelected;
+		UpdateFoldableTitle();
 
 		var digitsRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		root.AddChild(digitsRow);
@@ -139,6 +141,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 	private void OnFoldingChanged(bool isFolded)
 	{
+		UpdateFoldableTitle();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -157,6 +160,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 		_operandEditor = null;
 		ShowOperandEditor((int)index, null);
+		UpdateFoldableTitle();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -212,7 +216,19 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitle();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitle()
+	{
+		if (_operandFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				"Operand:",
+				_operandFoldable,
+				_operandEditor);
+		}
 	}
 }
 #endif

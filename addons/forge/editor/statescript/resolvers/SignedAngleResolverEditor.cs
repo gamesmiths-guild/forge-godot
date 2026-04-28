@@ -21,6 +21,9 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 	private VBoxContainer? _fromEditorContainer;
 	private VBoxContainer? _toEditorContainer;
 	private VBoxContainer? _axisEditorContainer;
+	private FoldableContainer? _fromFoldable;
+	private FoldableContainer? _toFoldable;
+	private FoldableContainer? _axisFoldable;
 	private NodeEditorProperty? _fromEditor;
 	private NodeEditorProperty? _toEditor;
 	private NodeEditorProperty? _axisEditor;
@@ -61,6 +64,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			"From:",
 			_vectorFactories,
 			existing?.From,
+			x => _fromFoldable = x,
 			out _fromEditorContainer,
 			x => _fromEditor = x);
 
@@ -69,6 +73,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			"To:",
 			_vectorFactories,
 			existing?.To,
+			x => _toFoldable = x,
 			out _toEditorContainer,
 			x => _toEditor = x);
 
@@ -83,12 +88,13 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		_useAxisCheckBox.Toggled += OnUseAxisToggled;
 		axisToggleRow.AddChild(_useAxisCheckBox);
 
-		FoldableContainer axisFoldable = CreateFoldable("Axis:");
-		axisFoldable.Visible = _useAxis;
-		root.AddChild(axisFoldable);
+		_axisFoldable = CreateFoldable("Axis:");
+		_axisFoldable.Visible = _useAxis;
+		root.AddChild(_axisFoldable);
 		_axisEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		axisFoldable.AddChild(_axisEditorContainer);
+		_axisFoldable.AddChild(_axisEditorContainer);
 		BuildAxisEditor(existing?.Axis);
+		UpdateFoldableTitles();
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -170,10 +176,12 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		string title,
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
+		Action<FoldableContainer> setFoldable,
 		out VBoxContainer editorContainer,
 		Action<NodeEditorProperty?> setEditor)
 	{
 		FoldableContainer foldable = CreateFoldable(title);
+		setFoldable(foldable);
 		root.AddChild(foldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foldable.AddChild(container);
@@ -196,6 +204,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			ClearEditorContainer(capturedEditorContainer);
 			setEditor(null);
 			ShowEditor(factories, (int)index, null, typeof(ForgeVariant128), capturedEditorContainer, setEditor);
+			UpdateFoldableTitles();
 			_onChanged?.Invoke();
 			RaiseLayoutSizeChanged();
 		};
@@ -227,6 +236,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			ClearEditorContainer(nestedContainer);
 			_axisEditor = null;
 			ShowEditor(_axisFactories, (int)index, null, typeof(SysVector3), nestedContainer, x => _axisEditor = x);
+			UpdateFoldableTitles();
 			_onChanged?.Invoke();
 			RaiseLayoutSizeChanged();
 		};
@@ -241,6 +251,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 	private void OnFoldingChanged(bool isFolded)
 	{
+		UpdateFoldableTitles();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -252,6 +263,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			axisFoldable.Visible = toggled;
 		}
 
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -280,7 +292,26 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitles()
+	{
+		if (_fromFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("From:", _fromFoldable, _fromEditor);
+		}
+
+		if (_toFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("To:", _toFoldable, _toEditor);
+		}
+
+		if (_axisFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Axis:", _axisFoldable, _axisEditor);
+		}
 	}
 }
 #endif

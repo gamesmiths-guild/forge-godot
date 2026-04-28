@@ -18,6 +18,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 	private Type _expectedType = typeof(ForgeVariant128);
 	private OptionButton? _leftResolverDropdown;
 	private OptionButton? _rightResolverDropdown;
+	private FoldableContainer? _leftFoldable;
+	private FoldableContainer? _rightFoldable;
 	private VBoxContainer? _leftEditorContainer;
 	private VBoxContainer? _rightEditorContainer;
 	private NodeEditorProperty? _leftEditor;
@@ -66,10 +68,10 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 		var existingResource = property?.Resolver as TResource;
 
-		FoldableContainer leftFoldable = CreateFoldable(LeftTitle);
-		vBox.AddChild(leftFoldable);
+		_leftFoldable = CreateFoldable(LeftTitle);
+		vBox.AddChild(_leftFoldable);
 		var leftContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		leftFoldable.AddChild(leftContainer);
+		_leftFoldable.AddChild(leftContainer);
 		_leftEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftResolverDropdown = CreateResolverDropdownControl(_leftFactories, existingResource?.Left);
 		leftContainer.AddChild(_leftResolverDropdown);
@@ -85,10 +87,10 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 		_leftResolverDropdown.ItemSelected += OnLeftResolverDropdownItemSelected;
 
-		FoldableContainer rightFoldable = CreateFoldable(RightTitle);
-		vBox.AddChild(rightFoldable);
+		_rightFoldable = CreateFoldable(RightTitle);
+		vBox.AddChild(_rightFoldable);
 		var rightContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		rightFoldable.AddChild(rightContainer);
+		_rightFoldable.AddChild(rightContainer);
 		_rightEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightResolverDropdown = CreateResolverDropdownControl(_rightFactories, existingResource?.Right);
 		rightContainer.AddChild(_rightResolverDropdown);
@@ -103,6 +105,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			x => _rightEditor = x);
 
 		_rightResolverDropdown.ItemSelected += OnRightResolverDropdownItemSelected;
+		UpdateFoldableTitles();
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -191,6 +194,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 	private void OnFoldingChanged(bool isFolded)
 	{
+		UpdateFoldableTitles();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -234,6 +238,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 		setEditor(null);
 		ShowNestedEditor(factories, selectedIndex, null, nestedExpectedType, editorContainer, setEditor);
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -264,7 +269,21 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitles()
+	{
+		if (_leftFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(LeftTitle, _leftFoldable, _leftEditor);
+		}
+
+		if (_rightFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(RightTitle, _rightFoldable, _rightEditor);
+		}
 	}
 }
 #endif

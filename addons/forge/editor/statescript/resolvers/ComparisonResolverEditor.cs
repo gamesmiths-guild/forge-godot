@@ -24,6 +24,8 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	private OptionButton? _operationDropdown;
 	private VBoxContainer? _leftContainer;
 	private VBoxContainer? _rightContainer;
+	private FoldableContainer? _leftFoldable;
+	private FoldableContainer? _rightFoldable;
 	private OptionButton? _leftResolverDropdown;
 	private OptionButton? _rightResolverDropdown;
 
@@ -78,12 +80,12 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			_operation = comparisonResolver.Operation;
 		}
 
-		var leftFoldable = new FoldableContainer { Title = "Left:" };
-		leftFoldable.FoldingChanged += OnFoldingChanged;
-		vBox.AddChild(leftFoldable);
+		_leftFoldable = new FoldableContainer { Title = "Left:" };
+		_leftFoldable.FoldingChanged += OnFoldingChanged;
+		vBox.AddChild(_leftFoldable);
 
 		_leftContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		leftFoldable.AddChild(_leftContainer);
+		_leftFoldable.AddChild(_leftContainer);
 
 		_leftEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Left);
@@ -117,12 +119,12 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		opRow.AddChild(_operationDropdown);
 
-		var rightFoldable = new FoldableContainer { Title = "Right:" };
-		rightFoldable.FoldingChanged += OnFoldingChanged;
-		vBox.AddChild(rightFoldable);
+		_rightFoldable = new FoldableContainer { Title = "Right:" };
+		_rightFoldable.FoldingChanged += OnFoldingChanged;
+		vBox.AddChild(_rightFoldable);
 
 		_rightContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		rightFoldable.AddChild(_rightContainer);
+		_rightFoldable.AddChild(_rightContainer);
 
 		_rightEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Right);
@@ -135,6 +137,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			x => _rightEditor = x);
 
 		_rightResolverDropdown.ItemSelected += OnRightResolverDropdownItemSelected;
+		UpdateFoldableTitles();
 	}
 
 	/// <inheritdoc/>
@@ -171,6 +174,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private void OnFoldingChanged(bool isFolded)
 	{
+		UpdateFoldableTitles();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -208,6 +212,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		setEditor(null);
 		ShowNestedEditor(selectedIndex, null, editorContainer, setEditor);
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -280,7 +285,21 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitles()
+	{
+		if (_leftFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Left:", _leftFoldable, _leftEditor);
+		}
+
+		if (_rightFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Right:", _rightFoldable, _rightEditor);
+		}
 	}
 }
 #endif

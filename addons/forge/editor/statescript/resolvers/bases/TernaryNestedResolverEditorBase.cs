@@ -14,6 +14,9 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 {
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
+	private FoldableContainer? _firstFoldable;
+	private FoldableContainer? _secondFoldable;
+	private FoldableContainer? _thirdFoldable;
 	private NodeEditorProperty? _firstEditor;
 	private NodeEditorProperty? _secondEditor;
 	private NodeEditorProperty? _thirdEditor;
@@ -75,7 +78,8 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			_firstFactories,
 			existingResource?.First,
 			GetFirstNestedExpectedType(expectedType),
-			x => _firstEditor = x);
+			x => _firstEditor = x,
+			x => _firstFoldable = x);
 
 		BuildSlot(
 			vBox,
@@ -83,7 +87,8 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			_secondFactories,
 			existingResource?.Second,
 			GetSecondNestedExpectedType(expectedType),
-			x => _secondEditor = x);
+			x => _secondEditor = x,
+			x => _secondFoldable = x);
 
 		BuildSlot(
 			vBox,
@@ -91,7 +96,10 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			_thirdFactories,
 			existingResource?.Third,
 			GetThirdNestedExpectedType(expectedType),
-			x => _thirdEditor = x);
+			x => _thirdEditor = x,
+			x => _thirdFoldable = x);
+
+		UpdateFoldableTitles();
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -168,10 +176,16 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
 		Type nestedExpectedType,
-		Action<NodeEditorProperty?> setEditor)
+		Action<NodeEditorProperty?> setEditor,
+		Action<FoldableContainer> setFoldable)
 	{
 		FoldableContainer foldable = new() { Title = title };
-		foldable.FoldingChanged += _ => RaiseLayoutSizeChanged();
+		foldable.FoldingChanged += _ =>
+		{
+			UpdateFoldableTitles();
+			RaiseLayoutSizeChanged();
+		};
+		setFoldable(foldable);
 		root.AddChild(foldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -202,6 +216,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 			setEditor(null);
 			ShowNestedEditor(factories, (int)index, null, nestedExpectedType, editorContainer, setEditor);
+			UpdateFoldableTitles();
 			_onChanged?.Invoke();
 			RaiseLayoutSizeChanged();
 		};
@@ -231,7 +246,35 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitles()
+	{
+		if (_firstFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				FirstTitle,
+				_firstFoldable,
+				_firstEditor);
+		}
+
+		if (_secondFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				SecondTitle,
+				_secondFoldable,
+				_secondEditor);
+		}
+
+		if (_thirdFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				ThirdTitle,
+				_thirdFoldable,
+				_thirdEditor);
+		}
 	}
 }
 #endif

@@ -116,6 +116,19 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override bool TryGetInlineSummary(out string summary)
+	{
+		if (_isArray)
+		{
+			summary = string.Empty;
+			return false;
+		}
+
+		summary = InlineConstantSummaryFormatter.FormatVariant(_currentValue, _valueType);
+		return true;
+	}
+
+	/// <inheritdoc/>
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();

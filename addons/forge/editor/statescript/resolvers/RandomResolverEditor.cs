@@ -19,6 +19,8 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 	private Action? _onChanged;
 	private Type _expectedType = typeof(ForgeVariant128);
 	private OptionButton? _typeDropdown;
+	private FoldableContainer? _minFoldable;
+	private FoldableContainer? _maxFoldable;
 	private OptionButton? _minResolverDropdown;
 	private OptionButton? _maxResolverDropdown;
 	private VBoxContainer? _minEditorContainer;
@@ -87,6 +89,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			root,
 			"Min:",
 			existing?.Left,
+			out _minFoldable,
 			out _minResolverDropdown,
 			out _minEditorContainer,
 			x => _minEditor = x,
@@ -96,10 +99,13 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			root,
 			"Max:",
 			existing?.Right,
+			out _maxFoldable,
 			out _maxResolverDropdown,
 			out _maxEditorContainer,
 			x => _maxEditor = x,
 			OnMaxResolverDropdownItemSelected);
+
+		UpdateFoldableTitles();
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -171,13 +177,18 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		VBoxContainer root,
 		string title,
 		StatescriptResolverResource? existingResolver,
+		out FoldableContainer foldable,
 		out OptionButton resolverDropdown,
 		out VBoxContainer editorContainer,
 		Action<NodeEditorProperty?> setEditor,
 		Action<long> onSelected)
 	{
-		FoldableContainer foldable = new() { Title = title };
-		foldable.FoldingChanged += _ => RaiseLayoutSizeChanged();
+		foldable = new FoldableContainer { Title = title };
+		foldable.FoldingChanged += _ =>
+		 {
+			 UpdateFoldableTitles();
+			 RaiseLayoutSizeChanged();
+		 };
 		root.AddChild(foldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -203,6 +214,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetBroadExpectedClrType(_valueType));
 		RebuildResolverSlot(_minEditorContainer, x => _minEditor = x);
 		RebuildResolverSlot(_maxEditorContainer, x => _maxEditor = x);
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -258,6 +270,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 
 		setEditor(null);
 		ShowEditor(selectedIndex, null, editorContainer, setEditor);
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -302,7 +315,21 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitles()
+	{
+		if (_minFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Min:", _minFoldable, _minEditor);
+		}
+
+		if (_maxFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Max:", _maxFoldable, _maxEditor);
+		}
 	}
 
 	private Type GetExpectedClrType(StatescriptVariableType valueType)
