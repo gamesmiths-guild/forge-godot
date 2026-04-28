@@ -129,6 +129,12 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
+	{
+		return InlineConstantSummaryFormatter.GetBadgeKind(_valueType);
+	}
+
+	/// <inheritdoc/>
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
@@ -271,9 +277,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 		Texture2D removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
 
-		for (var i = 0; i < _arrayValues.Count; i++)
+		for (int i = 0; i < _arrayValues.Count; i++)
 		{
-			var capturedIndex = i;
+			int capturedIndex = i;
 
 			if (StatescriptEditorControls.IsVectorType(_valueType))
 			{

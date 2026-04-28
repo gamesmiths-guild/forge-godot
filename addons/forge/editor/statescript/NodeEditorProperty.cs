@@ -70,6 +70,14 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	}
 
 	/// <summary>
+	/// Gets the preferred badge style for inline foldout summaries.
+	/// </summary>
+	public virtual InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
+	{
+		return InlineSummaryBadgeKind.Resolver;
+	}
+
+	/// <summary>
 	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
 	/// serialized or freed.
 	/// </summary>
