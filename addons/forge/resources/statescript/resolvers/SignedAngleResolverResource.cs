@@ -21,6 +21,15 @@ public partial class SignedAngleResolverResource : StatescriptResolverResource
 	[Export]
 	public StatescriptResolverResource? Axis { get; set; }
 
+	[Export]
+	public bool FromFolded { get; set; }
+
+	[Export]
+	public bool ToFolded { get; set; }
+
+	[Export]
+	public bool AxisFolded { get; set; }
+
 	public override string ResolverTypeId => "SignedAngle";
 
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)

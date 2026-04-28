@@ -53,7 +53,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 		}
 
 		var existingResource = property?.Resolver as TResource;
-		_operandFoldable = CreateFoldable(OperandTitle);
+		_operandFoldable = CreateFoldable(OperandTitle, existingResource?.OperandFolded ?? true);
 		vBox.AddChild(_operandFoldable);
 
 		var operandContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -80,7 +80,11 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 			operand = operandProperty.Resolver;
 		}
 
-		property.Resolver = new TResource { Operand = operand };
+		property.Resolver = new TResource
+		{
+			Operand = operand,
+			OperandFolded = _operandFoldable?.Folded ?? false,
+		};
 	}
 
 	public override void ClearCallbacks()
@@ -100,9 +104,9 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 		return NestedExpectedType;
 	}
 
-	private FoldableContainer CreateFoldable(string title)
+	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title };
+		var foldable = new FoldableContainer { Title = title, Folded = folded };
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}
@@ -110,6 +114,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitle();
+		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 

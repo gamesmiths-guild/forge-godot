@@ -80,7 +80,12 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			_operation = comparisonResolver.Operation;
 		}
 
-		_leftFoldable = new FoldableContainer { Title = "Left:" };
+		_leftFoldable = new FoldableContainer
+		{
+			Title = "Left:",
+			Folded = comparisonResolver?.LeftFolded ?? true,
+		};
+
 		_leftFoldable.FoldingChanged += OnFoldingChanged;
 		vBox.AddChild(_leftFoldable);
 
@@ -119,7 +124,11 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		opRow.AddChild(_operationDropdown);
 
-		_rightFoldable = new FoldableContainer { Title = "Right:" };
+		_rightFoldable = new FoldableContainer
+		{
+			Title = "Right:",
+			Folded = comparisonResolver?.RightFolded ?? true,
+		};
 		_rightFoldable.FoldingChanged += OnFoldingChanged;
 		vBox.AddChild(_rightFoldable);
 
@@ -143,7 +152,12 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		var comparisonResolver = new ComparisonResolverResource { Operation = _operation };
+		var comparisonResolver = new ComparisonResolverResource
+		{
+			Operation = _operation,
+			LeftFolded = _leftFoldable?.Folded ?? false,
+			RightFolded = _rightFoldable?.Folded ?? false,
+		};
 
 		if (_leftEditor is not null)
 		{
@@ -175,6 +189,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitles();
+		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -219,13 +234,13 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
 	{
-		var selectedIndex = 0;
+		int selectedIndex = 0;
 
 		if (existingResolver is not null)
 		{
-			var existingTypeId = existingResolver.ResolverTypeId;
+			string existingTypeId = existingResolver.ResolverTypeId;
 
-			for (var i = 0; i < _numericFactories.Count; i++)
+			for (int i = 0; i < _numericFactories.Count; i++)
 			{
 				using NodeEditorProperty temp = _numericFactories[i]();
 

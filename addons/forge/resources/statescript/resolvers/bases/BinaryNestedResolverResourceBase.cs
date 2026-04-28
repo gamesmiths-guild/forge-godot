@@ -24,6 +24,12 @@ public abstract partial class BinaryNestedResolverResourceBase : StatescriptReso
 	[Export]
 	public StatescriptResolverResource? Right { get; set; }
 
+	[Export]
+	public bool LeftFolded { get; set; }
+
+	[Export]
+	public bool RightFolded { get; set; }
+
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		IPropertyResolver resolver = BuildResolver(graph);

@@ -23,6 +23,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 	private Action? _onChanged;
 	private VBoxContainer? _editorContainer;
 	private NodeEditorProperty? _operandEditor;
+	private FoldableContainer? _operandFoldable;
 	private OptionButton? _resolverDropdown;
 	private OptionButton? _typeDropdown;
 	private OptionButton? _componentDropdown;
@@ -79,11 +80,19 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		_typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
 		typeRow.AddChild(_typeDropdown);
 
-		FoldableContainer foldable = new() { Title = "Vector:" };
-		foldable.FoldingChanged += _ => RaiseLayoutSizeChanged();
-		root.AddChild(foldable);
+		_operandFoldable = new FoldableContainer
+		{
+			Title = "Vector:",
+			Folded = existing?.OperandFolded ?? true,
+		};
+		_operandFoldable.FoldingChanged += _ =>
+		 {
+			 _onChanged?.Invoke();
+			 RaiseLayoutSizeChanged();
+		 };
+		root.AddChild(_operandFoldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		foldable.AddChild(container);
+		_operandFoldable.AddChild(container);
 
 		_resolverDropdown = CreateResolverDropdown(existing?.Operand);
 		_editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -113,6 +122,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		{
 			OperandType = _operandType,
 			Component = _component,
+			OperandFolded = _operandFoldable?.Folded ?? false,
 			Operand = SaveNestedEditor(_operandEditor),
 		};
 	}
@@ -226,14 +236,14 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 			_componentDropdown.AddItem("W");
 		}
 
-		var maxIndex = _operandType switch
+		int maxIndex = _operandType switch
 		{
 			StatescriptVariableType.Vector2 => 1,
 			StatescriptVariableType.Vector3 => 2,
 			_ => 3,
 		};
 
-		var selected = Math.Clamp((int)_component, 0, maxIndex);
+		int selected = Math.Clamp((int)_component, 0, maxIndex);
 		_component = (VectorComponent)selected;
 		_componentDropdown.Selected = selected;
 	}
@@ -242,7 +252,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 	{
 		if (existingResolver is not null)
 		{
-			for (var i = 0; i < _factories.Count; i++)
+			for (int i = 0; i < _factories.Count; i++)
 			{
 				using NodeEditorProperty temp = _factories[i]();
 				if (temp.ResolverTypeId == existingResolver.ResolverTypeId)

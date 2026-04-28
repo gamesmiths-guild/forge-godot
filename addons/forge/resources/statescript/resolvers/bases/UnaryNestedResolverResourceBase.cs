@@ -18,6 +18,9 @@ public abstract partial class UnaryNestedResolverResourceBase : StatescriptResol
 	[Export]
 	public StatescriptResolverResource? Operand { get; set; }
 
+	[Export]
+	public bool OperandFolded { get; set; }
+
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		IPropertyResolver resolver = BuildResolver(graph);

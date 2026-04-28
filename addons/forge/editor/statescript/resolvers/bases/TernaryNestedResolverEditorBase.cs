@@ -78,6 +78,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			_firstFactories,
 			existingResource?.First,
 			GetFirstNestedExpectedType(expectedType),
+			existingResource?.FirstFolded ?? true,
 			x => _firstEditor = x,
 			x => _firstFoldable = x);
 
@@ -87,6 +88,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			_secondFactories,
 			existingResource?.Second,
 			GetSecondNestedExpectedType(expectedType),
+			existingResource?.SecondFolded ?? true,
 			x => _secondEditor = x,
 			x => _secondFoldable = x);
 
@@ -96,6 +98,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			_thirdFactories,
 			existingResource?.Third,
 			GetThirdNestedExpectedType(expectedType),
+			existingResource?.ThirdFolded ?? true,
 			x => _thirdEditor = x,
 			x => _thirdFoldable = x);
 
@@ -107,8 +110,11 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		property.Resolver = new TResource
 		{
 			First = SaveNestedEditor(_firstEditor),
+			FirstFolded = _firstFoldable?.Folded ?? false,
 			Second = SaveNestedEditor(_secondEditor),
+			SecondFolded = _secondFoldable?.Folded ?? false,
 			Third = SaveNestedEditor(_thirdEditor),
+			ThirdFolded = _thirdFoldable?.Folded ?? false,
 		};
 	}
 
@@ -176,13 +182,15 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
 		Type nestedExpectedType,
+		bool folded,
 		Action<NodeEditorProperty?> setEditor,
 		Action<FoldableContainer> setFoldable)
 	{
-		FoldableContainer foldable = new() { Title = title };
+		FoldableContainer foldable = new() { Title = title, Folded = folded };
 		foldable.FoldingChanged += _ =>
 		{
 			UpdateFoldableTitles();
+			_onChanged?.Invoke();
 			RaiseLayoutSizeChanged();
 		};
 		setFoldable(foldable);
@@ -198,7 +206,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			resolverDropdown.AddItem(temp.DisplayName);
 		}
 
-		var selectedIndex = GetSelectedIndex(factories, existingResolver);
+		int selectedIndex = GetSelectedIndex(factories, existingResolver);
 		resolverDropdown.Selected = selectedIndex;
 		container.AddChild(resolverDropdown);
 

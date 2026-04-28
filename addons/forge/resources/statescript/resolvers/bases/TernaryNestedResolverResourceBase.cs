@@ -28,6 +28,15 @@ public abstract partial class TernaryNestedResolverResourceBase : StatescriptRes
 	[Export]
 	public StatescriptResolverResource? Third { get; set; }
 
+	[Export]
+	public bool FirstFolded { get; set; }
+
+	[Export]
+	public bool SecondFolded { get; set; }
+
+	[Export]
+	public bool ThirdFolded { get; set; }
+
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		IPropertyResolver resolver = BuildResolver(graph);

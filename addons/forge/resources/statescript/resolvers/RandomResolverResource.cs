@@ -15,6 +15,12 @@ public partial class RandomResolverResource : BinaryNestedResolverResourceBase
 	[Export]
 	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Int;
 
+	[Export]
+	public bool MinFolded { get; set; }
+
+	[Export]
+	public bool MaxFolded { get; set; }
+
 	public override string ResolverTypeId => "Random";
 
 	protected override string PropertyNamePrefix => "__random";

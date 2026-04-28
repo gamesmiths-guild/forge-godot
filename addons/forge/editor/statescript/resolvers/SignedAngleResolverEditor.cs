@@ -64,6 +64,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			"From:",
 			_vectorFactories,
 			existing?.From,
+			existing?.FromFolded ?? true,
 			x => _fromFoldable = x,
 			out _fromEditorContainer,
 			x => _fromEditor = x);
@@ -73,6 +74,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			"To:",
 			_vectorFactories,
 			existing?.To,
+			existing?.ToFolded ?? true,
 			x => _toFoldable = x,
 			out _toEditorContainer,
 			x => _toEditor = x);
@@ -88,7 +90,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		_useAxisCheckBox.Toggled += OnUseAxisToggled;
 		axisToggleRow.AddChild(_useAxisCheckBox);
 
-		_axisFoldable = CreateFoldable("Axis:");
+		_axisFoldable = CreateFoldable("Axis:", existing?.AxisFolded ?? true);
 		_axisFoldable.Visible = _useAxis;
 		root.AddChild(_axisFoldable);
 		_axisEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -102,8 +104,11 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		property.Resolver = new SignedAngleResolverResource
 		{
 			From = SaveNestedEditor(_fromEditor),
+			FromFolded = _fromFoldable?.Folded ?? false,
 			To = SaveNestedEditor(_toEditor),
+			ToFolded = _toFoldable?.Folded ?? false,
 			Axis = _useAxis ? SaveNestedEditor(_axisEditor) : null,
+			AxisFolded = _axisFoldable?.Folded ?? false,
 		};
 	}
 
@@ -143,7 +148,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 	{
 		if (existingResolver is not null)
 		{
-			for (var i = 0; i < factories.Count; i++)
+			for (int i = 0; i < factories.Count; i++)
 			{
 				using NodeEditorProperty temp = factories[i]();
 				if (temp.ResolverTypeId == existingResolver.ResolverTypeId)
@@ -176,11 +181,12 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		string title,
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
+		bool folded,
 		Action<FoldableContainer> setFoldable,
 		out VBoxContainer editorContainer,
 		Action<NodeEditorProperty?> setEditor)
 	{
-		FoldableContainer foldable = CreateFoldable(title);
+		FoldableContainer foldable = CreateFoldable(title, folded);
 		setFoldable(foldable);
 		root.AddChild(foldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -242,9 +248,9 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		};
 	}
 
-	private FoldableContainer CreateFoldable(string title)
+	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title };
+		var foldable = new FoldableContainer { Title = title, Folded = folded };
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}
@@ -252,6 +258,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitles();
+		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 

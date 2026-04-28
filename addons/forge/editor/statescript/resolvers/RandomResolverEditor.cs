@@ -64,7 +64,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		var allowTypeSelection = expectedType == typeof(ForgeVariant128);
+		bool allowTypeSelection = expectedType == typeof(ForgeVariant128);
 		if (allowTypeSelection)
 		{
 			var typeRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -89,6 +89,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			root,
 			"Min:",
 			existing?.Left,
+			existing?.MinFolded ?? true,
 			out _minFoldable,
 			out _minResolverDropdown,
 			out _minEditorContainer,
@@ -99,6 +100,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			root,
 			"Max:",
 			existing?.Right,
+			existing?.MaxFolded ?? true,
 			out _maxFoldable,
 			out _maxResolverDropdown,
 			out _maxEditorContainer,
@@ -114,7 +116,9 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		{
 			ValueType = _valueType,
 			Left = SaveNestedEditor(_minEditor),
+			MinFolded = _minFoldable?.Folded ?? false,
 			Right = SaveNestedEditor(_maxEditor),
+			MaxFolded = _maxFoldable?.Folded ?? false,
 		};
 	}
 
@@ -177,16 +181,18 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		VBoxContainer root,
 		string title,
 		StatescriptResolverResource? existingResolver,
+		bool folded,
 		out FoldableContainer foldable,
 		out OptionButton resolverDropdown,
 		out VBoxContainer editorContainer,
 		Action<NodeEditorProperty?> setEditor,
 		Action<long> onSelected)
 	{
-		foldable = new FoldableContainer { Title = title };
+		foldable = new FoldableContainer { Title = title, Folded = folded };
 		foldable.FoldingChanged += _ =>
 		 {
 			 UpdateFoldableTitles();
+			 _onChanged?.Invoke();
 			 RaiseLayoutSizeChanged();
 		 };
 		root.AddChild(foldable);

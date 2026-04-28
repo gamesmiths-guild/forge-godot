@@ -54,7 +54,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		_operandFoldable = CreateFoldable("Operand:");
+		_operandFoldable = CreateFoldable("Operand:", existing?.OperandFolded ?? true);
 		root.AddChild(_operandFoldable);
 		var operandContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_operandFoldable.AddChild(operandContainer);
@@ -120,6 +120,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		property.Resolver = new RoundResolverResource
 		{
 			Operand = operand,
+			OperandFolded = _operandFoldable?.Folded ?? false,
 			Digits = _digits,
 			Mode = _mode,
 		};
@@ -132,9 +133,9 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		_operandEditor?.ClearCallbacks();
 	}
 
-	private FoldableContainer CreateFoldable(string title)
+	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title };
+		var foldable = new FoldableContainer { Title = title, Folded = folded };
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}
@@ -142,6 +143,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitle();
+		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 

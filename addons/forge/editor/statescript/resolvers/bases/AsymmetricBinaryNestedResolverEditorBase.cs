@@ -68,7 +68,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 		var existingResource = property?.Resolver as TResource;
 
-		_leftFoldable = CreateFoldable(LeftTitle);
+		_leftFoldable = CreateFoldable(LeftTitle, existingResource?.LeftFolded ?? true);
 		vBox.AddChild(_leftFoldable);
 		var leftContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftFoldable.AddChild(leftContainer);
@@ -87,7 +87,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 		_leftResolverDropdown.ItemSelected += OnLeftResolverDropdownItemSelected;
 
-		_rightFoldable = CreateFoldable(RightTitle);
+		_rightFoldable = CreateFoldable(RightTitle, existingResource?.RightFolded ?? true);
 		vBox.AddChild(_rightFoldable);
 		var rightContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightFoldable.AddChild(rightContainer);
@@ -130,7 +130,9 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		property.Resolver = new TResource
 		{
 			Left = left,
+			LeftFolded = _leftFoldable?.Folded ?? false,
 			Right = right,
+			RightFolded = _rightFoldable?.Folded ?? false,
 		};
 	}
 
@@ -185,9 +187,9 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		return dropdown;
 	}
 
-	private FoldableContainer CreateFoldable(string title)
+	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title };
+		var foldable = new FoldableContainer { Title = title, Folded = folded };
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}
@@ -195,6 +197,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitles();
+		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 

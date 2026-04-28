@@ -13,6 +13,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 internal static class InlineConstantSummaryFormatter
 {
 	private const string SummaryBadgeMetaKey = "forge_inline_summary_badge";
+	private const string SummaryBadgeResizeHookMetaKey = "forge_inline_summary_badge_resize_hook";
 	private const float MinimumBadgeWidth = 76f;
 	private const float FoldableTitleChromeWidth = 30f;
 	private const float FoldableTitleBadgeGap = 6f;
@@ -37,6 +38,7 @@ internal static class InlineConstantSummaryFormatter
 		FoldableContainer foldable,
 		NodeEditorProperty? editor)
 	{
+		EnsureResizeSyncHook(foldable);
 		foldable.Title = baseTitle;
 
 		SummaryBadgeData badgeData = GetBadgeData(foldable, editor);
@@ -194,6 +196,18 @@ internal static class InlineConstantSummaryFormatter
 		foldable.AddTitleBarControl(badge);
 		foldable.SetMeta(SummaryBadgeMetaKey, Variant.From(badge));
 		return badge;
+	}
+
+	private static void EnsureResizeSyncHook(FoldableContainer foldable)
+	{
+		if (foldable.HasMeta(SummaryBadgeResizeHookMetaKey)
+			&& foldable.GetMeta(SummaryBadgeResizeHookMetaKey).AsBool())
+		{
+			return;
+		}
+
+		foldable.Resized += () => SynchronizeSiblingBadgeWidths(foldable);
+		foldable.SetMeta(SummaryBadgeResizeHookMetaKey, Variant.From(true));
 	}
 
 	private static void ConfigureSummaryBadge(PanelContainer badge, SummaryBadgeData badgeData)
