@@ -80,6 +80,21 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override bool TryGetInlineSummary(out string summary)
+	{
+		summary = string.IsNullOrWhiteSpace(_selectedVariableName)
+			? "(None)"
+			: _selectedVariableName;
+		return true;
+	}
+
+	/// <inheritdoc/>
+	public override InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
+	{
+		return InlineSummaryBadgeKind.Variable;
+	}
+
+	/// <inheritdoc/>
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
@@ -104,7 +119,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var idx = _dropdown.Selected;
+		int idx = _dropdown.Selected;
 		_selectedVariableName = idx >= 0 && idx < _variableNames.Count ? _variableNames[idx] : string.Empty;
 		_onChanged?.Invoke();
 	}
@@ -146,7 +161,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		for (var i = 0; i < _variableNames.Count; i++)
+		for (int i = 0; i < _variableNames.Count; i++)
 		{
 			if (_variableNames[i] == name)
 			{

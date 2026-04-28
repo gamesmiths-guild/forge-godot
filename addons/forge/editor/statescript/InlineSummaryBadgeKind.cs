@@ -9,5 +9,7 @@ internal enum InlineSummaryBadgeKind
 	Numeric = 1,
 	Vector = 2,
 	Boolean = 3,
+	Variable = 4,
+	SharedVariable = 5,
 }
 #endif

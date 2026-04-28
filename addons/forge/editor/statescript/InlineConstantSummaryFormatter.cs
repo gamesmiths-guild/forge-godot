@@ -20,18 +20,24 @@ internal static class InlineConstantSummaryFormatter
 	private const float FoldableTitleRightPadding = 8f;
 	private const float BadgeTextWidthPadding = 20f;
 
-	private static readonly Color _constantNumericIconColor = new(0x4f88acff);
-	private static readonly Color _constantNumericBackgroundColor = new(0x4f88ac18);
-	private static readonly Color _constantNumericBorderColor = new(0x4f88acff);
-	private static readonly Color _constantVectorIconColor = new(0x4aa7b2ff);
-	private static readonly Color _constantVectorBackgroundColor = new(0x4aa7b218);
-	private static readonly Color _constantVectorBorderColor = new(0x4aa7b2ff);
-	private static readonly Color _constantBooleanIconColor = new(0xc2a24fff);
-	private static readonly Color _constantBooleanBackgroundColor = new(0xc2a24f18);
-	private static readonly Color _constantBooleanBorderColor = new(0xc2a24fff);
-	private static readonly Color _resolverIconColor = new(0x8f68b8ff);
-	private static readonly Color _resolverBackgroundColor = new(0x8f68b818);
-	private static readonly Color _resolverBorderColor = new(0x8f68b8ff);
+	private static readonly Color _numericIconColor = new(0x3dbcc9ff);
+	private static readonly Color _numericBackgroundColor = new(0x3dbcc918);
+	private static readonly Color _numericBorderColor = new(0x3dbcc9ff);
+	private static readonly Color _vectorIconColor = new(0xd48a3aff);
+	private static readonly Color _vectorBackgroundColor = new(0xd48a3a18);
+	private static readonly Color _vectorBorderColor = new(0xd48a3aff);
+	private static readonly Color _booleanIconColor = new(0xc2a24fff);
+	private static readonly Color _booleanBackgroundColor = new(0xc2a24f18);
+	private static readonly Color _booleanBorderColor = new(0xc2a24fff);
+	private static readonly Color _resolverIconColor = new(0xc06bcfff);
+	private static readonly Color _resolverBackgroundColor = new(0xc06bcf18);
+	private static readonly Color _resolverBorderColor = new(0xc06bcfff);
+	private static readonly Color _variableIconColor = new(0x5d7be0ff);
+	private static readonly Color _variableBackgroundColor = new(0x5d7be018);
+	private static readonly Color _variableBorderColor = new(0x5d7be0ff);
+	private static readonly Color _sharedVariableIconColor = new(0x46a86fff);
+	private static readonly Color _sharedVariableBackgroundColor = new(0x46a86f18);
+	private static readonly Color _sharedVariableBorderColor = new(0x46a86fff);
 
 	public static void ApplyFoldableTitle(
 		string baseTitle,
@@ -116,7 +122,8 @@ internal static class InlineConstantSummaryFormatter
 
 		if (editor.TryGetInlineSummary(out string summary) && !string.IsNullOrWhiteSpace(summary))
 		{
-			return CreateBadgeData(summary, editor.GetInlineSummaryBadgeKind(), true);
+			InlineSummaryBadgeKind badgeKind = editor.GetInlineSummaryBadgeKind();
+			return CreateBadgeData(summary, badgeKind, IsConstantBadgeKind(badgeKind));
 		}
 
 		return string.IsNullOrWhiteSpace(editor.DisplayName)
@@ -346,22 +353,37 @@ internal static class InlineConstantSummaryFormatter
 		return badgeKind switch
 		{
 			InlineSummaryBadgeKind.Numeric => new BadgeVisualStyle(
-				_constantNumericIconColor,
-				_constantNumericBackgroundColor,
-				_constantNumericBorderColor),
+				_numericIconColor,
+				_numericBackgroundColor,
+				_numericBorderColor),
 			InlineSummaryBadgeKind.Vector => new BadgeVisualStyle(
-				_constantVectorIconColor,
-				_constantVectorBackgroundColor,
-				_constantVectorBorderColor),
+				_vectorIconColor,
+				_vectorBackgroundColor,
+				_vectorBorderColor),
 			InlineSummaryBadgeKind.Boolean => new BadgeVisualStyle(
-				_constantBooleanIconColor,
-				_constantBooleanBackgroundColor,
-				_constantBooleanBorderColor),
+				_booleanIconColor,
+				_booleanBackgroundColor,
+				_booleanBorderColor),
+			InlineSummaryBadgeKind.Variable => new BadgeVisualStyle(
+				_variableIconColor,
+				_variableBackgroundColor,
+				_variableBorderColor),
+			InlineSummaryBadgeKind.SharedVariable => new BadgeVisualStyle(
+				_sharedVariableIconColor,
+				_sharedVariableBackgroundColor,
+				_sharedVariableBorderColor),
 			_ => new BadgeVisualStyle(
 				_resolverIconColor,
 				_resolverBackgroundColor,
 				_resolverBorderColor),
 		};
+	}
+
+	private static bool IsConstantBadgeKind(InlineSummaryBadgeKind badgeKind)
+	{
+		return badgeKind is InlineSummaryBadgeKind.Numeric
+			or InlineSummaryBadgeKind.Vector
+			or InlineSummaryBadgeKind.Boolean;
 	}
 
 	private static float MeasureFoldableTitleWidth(FoldableContainer foldable)
@@ -385,17 +407,14 @@ internal static class InlineConstantSummaryFormatter
 
 	private static string GetBadgeIcon(InlineSummaryBadgeKind badgeKind, bool isConstant)
 	{
-		if (!isConstant)
-		{
-			return "ƒ";
-		}
-
 		return badgeKind switch
 		{
 			InlineSummaryBadgeKind.Numeric => "#",
 			InlineSummaryBadgeKind.Vector => "▦",
 			InlineSummaryBadgeKind.Boolean => "●",
-			_ => "ƒ",
+			InlineSummaryBadgeKind.Variable => "𝑥",
+			InlineSummaryBadgeKind.SharedVariable => "𝑦",
+			_ => isConstant ? "#" : "ƒ",
 		};
 	}
 

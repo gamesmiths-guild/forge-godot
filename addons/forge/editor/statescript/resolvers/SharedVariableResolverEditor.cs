@@ -110,6 +110,21 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override bool TryGetInlineSummary(out string summary)
+	{
+		summary = string.IsNullOrWhiteSpace(_selectedVariableName)
+			? "(None)"
+			: _selectedVariableName;
+		return true;
+	}
+
+	/// <inheritdoc/>
+	public override InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
+	{
+		return InlineSummaryBadgeKind.SharedVariable;
+	}
+
+	/// <inheritdoc/>
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
@@ -137,9 +152,9 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 
 	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
 	{
-		for (var i = 0; i < dir.GetFileCount(); i++)
+		for (int i = 0; i < dir.GetFileCount(); i++)
 		{
-			var path = dir.GetFilePath(i);
+			string path = dir.GetFilePath(i);
 
 			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
 				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
@@ -155,7 +170,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			}
 		}
 
-		for (var i = 0; i < dir.GetSubdirCount(); i++)
+		for (int i = 0; i < dir.GetSubdirCount(); i++)
 		{
 			ScanFilesystemDirectory(dir.GetSubdir(i), results);
 		}
@@ -168,7 +183,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var idx = _setDropdown.Selected;
+		int idx = _setDropdown.Selected;
 		_selectedSetPath = idx >= 0 && idx < _setPaths.Count ? _setPaths[idx] : string.Empty;
 		_selectedVariableName = string.Empty;
 		_selectedVariableType = StatescriptVariableType.Int;
@@ -185,7 +200,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var idx = _variableDropdown.Selected;
+		int idx = _variableDropdown.Selected;
 
 		if (idx >= 0 && idx < _variableNames.Count)
 		{
@@ -216,9 +231,9 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		_setPaths.Add(string.Empty);
 		_setDisplayNames.Add("(None)");
 
-		foreach (var path in FindAllSharedVariableSetPaths())
+		foreach (string path in FindAllSharedVariableSetPaths())
 		{
-			var displayName = path[(path.LastIndexOf('/') + 1)..];
+			string displayName = path[(path.LastIndexOf('/') + 1)..];
 
 			if (displayName.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
 			{
@@ -231,7 +246,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		}
 
 		// Restore selection.
-		for (var i = 0; i < _setPaths.Count; i++)
+		for (int i = 0; i < _setPaths.Count; i++)
 		{
 			if (_setPaths[i] == _selectedSetPath)
 			{
@@ -275,7 +290,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 						continue;
 					}
 
-					var label = $"{def.VariableName}";
+					string label = $"{def.VariableName}";
 					_variableDropdown.AddItem(label);
 					_variableNames.Add(def.VariableName);
 				}
@@ -283,7 +298,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		}
 
 		// Restore selection.
-		for (var i = 0; i < _variableNames.Count; i++)
+		for (int i = 0; i < _variableNames.Count; i++)
 		{
 			if (_variableNames[i] == _selectedVariableName)
 			{
