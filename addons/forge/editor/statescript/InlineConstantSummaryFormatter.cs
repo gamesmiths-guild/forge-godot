@@ -18,7 +18,7 @@ internal static class InlineConstantSummaryFormatter
 	private const float FoldableTitleChromeWidth = 30f;
 	private const float FoldableTitleBadgeGap = 6f;
 	private const float FoldableTitleRightPadding = 8f;
-	private const float BadgeTextWidthPadding = 12f;
+	private const float BadgeTextWidthPadding = 20f;
 
 	private static readonly Color _constantNumericIconColor = new(0x4f88acff);
 	private static readonly Color _constantNumericBackgroundColor = new(0x4f88ac18);
@@ -186,7 +186,7 @@ internal static class InlineConstantSummaryFormatter
 		{
 			Name = "Text",
 			MouseFilter = Control.MouseFilterEnum.Ignore,
-			SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 			HorizontalAlignment = HorizontalAlignment.Right,
 			VerticalAlignment = VerticalAlignment.Center,
 			TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
@@ -241,11 +241,18 @@ internal static class InlineConstantSummaryFormatter
 
 		Label? iconLabel = badge.GetNodeOrNull<Label>("Row/Icon");
 		Label? textLabel = badge.GetNodeOrNull<Label>("Row/Text");
+		Control? spacer = badge.GetNodeOrNull<Control>("Row/Spacer");
 		if (iconLabel is null || textLabel is null)
 		{
 			return;
 		}
 
+		if (spacer is not null)
+		{
+			spacer.Visible = false;
+		}
+
+		textLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 		iconLabel.Text = badgeData.IconText;
 		textLabel.Text = badgeData.Text;
 		iconLabel.AddThemeColorOverride("font_color", badgeData.IconColor);
