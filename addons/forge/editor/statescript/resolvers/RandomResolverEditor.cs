@@ -83,8 +83,23 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			typeRow.AddChild(_typeDropdown);
 		}
 
-		BuildResolverSlot(root, "Min:", existing?.Left, out _minResolverDropdown, out _minEditorContainer, x => _minEditor = x, OnMinResolverDropdownItemSelected);
-		BuildResolverSlot(root, "Max:", existing?.Right, out _maxResolverDropdown, out _maxEditorContainer, x => _maxEditor = x, OnMaxResolverDropdownItemSelected);
+		BuildResolverSlot(
+			root,
+			"Min:",
+			existing?.Left,
+			out _minResolverDropdown,
+			out _minEditorContainer,
+			x => _minEditor = x,
+			OnMinResolverDropdownItemSelected);
+
+		BuildResolverSlot(
+			root,
+			"Max:",
+			existing?.Right,
+			out _maxResolverDropdown,
+			out _maxEditorContainer,
+			x => _maxEditor = x,
+			OnMaxResolverDropdownItemSelected);
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -277,7 +292,8 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		}
 
 		NodeEditorProperty editor = _factories[factoryIndex]();
-		StatescriptNodeProperty? tempProperty = existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
+		StatescriptNodeProperty? tempProperty =
+			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, GetExpectedClrType(_valueType), OnNestedEditorChanged, false);
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		container.AddChild(editor);

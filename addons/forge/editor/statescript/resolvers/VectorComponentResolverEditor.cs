@@ -276,7 +276,8 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		}
 
 		NodeEditorProperty editor = _factories[factoryIndex]();
-		StatescriptNodeProperty? tempProperty = existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
+		StatescriptNodeProperty? tempProperty =
+			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, GetOperandClrType(), OnNestedEditorChanged, false);
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		_editorContainer.AddChild(editor);

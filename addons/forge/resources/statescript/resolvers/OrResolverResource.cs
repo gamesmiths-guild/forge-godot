@@ -15,7 +15,10 @@ public partial class OrResolverResource : BinaryNestedResolverResourceBase
 
 	protected override string PropertyNamePrefix => "__or";
 
-	protected override IPropertyResolver CreateResolver(IPropertyResolver leftResolver, IPropertyResolver rightResolver, Graph graph)
+	protected override IPropertyResolver CreateResolver(
+		IPropertyResolver leftResolver,
+		IPropertyResolver rightResolver,
+		Graph graph)
 	{
 		return new OrResolver(leftResolver, rightResolver);
 	}

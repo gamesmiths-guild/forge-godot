@@ -13,7 +13,8 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class SubtractResolverEditor : NumericVectorOrQuaternionBinaryResolverEditorBase<SubtractResolverResource>
+internal sealed partial class SubtractResolverEditor
+	: NumericVectorOrQuaternionBinaryResolverEditorBase<SubtractResolverResource>
 {
 	public override string DisplayName => "Subtract";
 
@@ -22,7 +23,15 @@ internal sealed partial class SubtractResolverEditor : NumericVectorOrQuaternion
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{
 		return expectedType == typeof(ForgeVariant128)
-			? [typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(System.Numerics.Quaternion)]
+			? [
+				typeof(int),
+				typeof(float),
+				typeof(double),
+				typeof(SysVector2),
+				typeof(SysVector3),
+				typeof(SysVector4),
+				typeof(System.Numerics.Quaternion)
+			]
 			: [expectedType];
 	}
 

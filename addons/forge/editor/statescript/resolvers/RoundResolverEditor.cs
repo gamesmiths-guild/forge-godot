@@ -193,13 +193,17 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 	private void ShowOperandEditor(int factoryIndex, StatescriptResolverResource? existingResolver)
 	{
-		if (_graph is null || _operandEditorContainer is null || factoryIndex < 0 || factoryIndex >= _operandFactories.Count)
+		if (_graph is null
+			|| _operandEditorContainer is null
+			|| factoryIndex < 0
+			|| factoryIndex >= _operandFactories.Count)
 		{
 			return;
 		}
 
 		NodeEditorProperty editor = _operandFactories[factoryIndex]();
-		StatescriptNodeProperty? tempProperty = existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
+		StatescriptNodeProperty? tempProperty =
+			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, typeof(float), OnNestedEditorChanged, false);
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		_operandEditorContainer.AddChild(editor);

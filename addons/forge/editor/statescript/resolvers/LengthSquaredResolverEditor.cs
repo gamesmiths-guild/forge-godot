@@ -8,7 +8,8 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class LengthSquaredResolverEditor : VectorOrQuaternionUnaryFloatResolverEditorBase<LengthSquaredResolverResource>
+internal sealed partial class LengthSquaredResolverEditor
+	: VectorOrQuaternionUnaryFloatResolverEditorBase<LengthSquaredResolverResource>
 {
 	public override string DisplayName => "Length Squared";
 

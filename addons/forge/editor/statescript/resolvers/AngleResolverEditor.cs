@@ -13,7 +13,8 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class AngleResolverEditor : VectorOrQuaternionBinaryFloatResolverEditorBase<AngleResolverResource>
+internal sealed partial class AngleResolverEditor
+	: VectorOrQuaternionBinaryFloatResolverEditorBase<AngleResolverResource>
 {
 	public override string DisplayName => "Angle";
 

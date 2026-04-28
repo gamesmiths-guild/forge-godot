@@ -11,7 +11,8 @@ using SysQuaternion = System.Numerics.Quaternion;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class RotateTowardsResolverEditor : TernaryNestedResolverEditorBase<RotateTowardsResolverResource>
+internal sealed partial class RotateTowardsResolverEditor
+	: TernaryNestedResolverEditorBase<RotateTowardsResolverResource>
 {
 	public override string DisplayName => "Rotate Towards";
 

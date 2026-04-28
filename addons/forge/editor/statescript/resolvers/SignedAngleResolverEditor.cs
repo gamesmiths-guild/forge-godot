@@ -56,8 +56,21 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		BuildVectorSlot(root, "From:", _vectorFactories, existing?.From, out _fromEditorContainer, x => _fromEditor = x);
-		BuildVectorSlot(root, "To:", _vectorFactories, existing?.To, out _toEditorContainer, x => _toEditor = x);
+		BuildVectorSlot(
+			root,
+			"From:",
+			_vectorFactories,
+			existing?.From,
+			out _fromEditorContainer,
+			x => _fromEditor = x);
+
+		BuildVectorSlot(
+			root,
+			"To:",
+			_vectorFactories,
+			existing?.To,
+			out _toEditorContainer,
+			x => _toEditor = x);
 
 		var axisToggleRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		root.AddChild(axisToggleRow);
@@ -118,7 +131,9 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		}
 	}
 
-	private static int GetSelectedIndex(List<Func<NodeEditorProperty>> factories, StatescriptResolverResource? existingResolver)
+	private static int GetSelectedIndex(
+		List<Func<NodeEditorProperty>> factories,
+		StatescriptResolverResource? existingResolver)
 	{
 		if (existingResolver is not null)
 		{
@@ -255,7 +270,8 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		}
 
 		NodeEditorProperty editor = factories[factoryIndex]();
-		StatescriptNodeProperty? tempProperty = existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
+		StatescriptNodeProperty? tempProperty =
+			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, nestedExpectedType, OnNestedEditorChanged, false);
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		container.AddChild(editor);

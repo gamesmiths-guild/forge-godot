@@ -15,13 +15,15 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class TransformResolverEditor : AsymmetricBinaryNestedResolverEditorBase<TransformResolverResource>
+internal sealed partial class TransformResolverEditor
+	: AsymmetricBinaryNestedResolverEditorBase<TransformResolverResource>
 {
 	public override string DisplayName => "Transform";
 
 	public override string ResolverTypeId => "Transform";
 
-	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(SysPlane)];
+	protected override Type[] LeftFactoryExpectedTypes =>
+		[typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(SysPlane)];
 
 	protected override Type[] RightFactoryExpectedTypes => [typeof(SysQuaternion)];
 

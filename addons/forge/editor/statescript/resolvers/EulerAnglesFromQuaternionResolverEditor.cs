@@ -165,7 +165,8 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 		}
 
 		NodeEditorProperty editor = _factories[factoryIndex]();
-		StatescriptNodeProperty? tempProperty = existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
+		StatescriptNodeProperty? tempProperty =
+			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, typeof(SysQuaternion), OnNestedEditorChanged, false);
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		_editorContainer.AddChild(editor);
