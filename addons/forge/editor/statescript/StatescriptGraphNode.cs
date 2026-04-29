@@ -19,6 +19,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 {
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
+	private const string FoldInputPropertyKeyPrefix = "_fold_input_property_";
 	private const string CustomWidthKey = "_custom_width";
 
 	private static readonly Color _entryColor = new(0x2a4a8dff);
@@ -34,6 +35,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
+	private readonly Dictionary<PropertySlotKey, InputPropertyFoldableContext> _inputPropertyFoldables = [];
 
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
@@ -95,6 +97,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		_graph = graph;
 		_activeResolverEditors.Clear();
 		_foldableKeys.Clear();
+		_inputPropertyFoldables.Clear();
 
 		Name = resource.NodeId;
 		Title = resource.Title;
@@ -139,6 +142,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		_inputPropertyContexts.Clear();
 		_foldableKeys.Clear();
+		_inputPropertyFoldables.Clear();
 
 		_activeCustomEditor?.Unbind();
 		_activeCustomEditor = null;
@@ -269,11 +273,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 	}
 
+	private static string GetInputPropertyFoldKey(int propertyIndex)
+	{
+		return $"{FoldInputPropertyKeyPrefix}{propertyIndex}";
+	}
+
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		var maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
+		int maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
 
-		for (var slot = 0; slot < maxSlots; slot++)
+		for (int slot = 0; slot < maxSlots; slot++)
 		{
 			var hBox = new HBoxContainer();
 			hBox.AddThemeConstantOverride("separation", 16);
@@ -344,14 +353,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		if (typeInfo.InputPropertiesInfo.Length > 0)
 		{
-			var folded = GetFoldState(FoldInputKey);
+			bool folded = GetFoldState(FoldInputKey);
 			FoldableContainer inputContainer = AddPropertySectionDivider(
 				"Input Properties",
 				_inputPropertyColor,
 				FoldInputKey,
 				folded);
 
-			for (var i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+			for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
 				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
 			}
@@ -359,14 +368,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 		if (typeInfo.OutputVariablesInfo.Length > 0)
 		{
-			var folded = GetFoldState(FoldOutputKey);
+			bool folded = GetFoldState(FoldOutputKey);
 			FoldableContainer outputContainer = AddPropertySectionDivider(
 				"Output Variables",
 				_outputVariableColor,
 				FoldOutputKey,
 				folded);
 
-			for (var i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
+			for (int i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 			{
 				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
 			}
@@ -402,14 +411,36 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		foreach (KeyValuePair<FoldableContainer, string> kvp in _foldableKeys.Where(kvp => IsInstanceValid(kvp.Key)))
 		{
-			var stored = GetFoldState(kvp.Value);
+			bool stored = GetFoldState(kvp.Value);
 			if (kvp.Key.Folded != stored)
 			{
 				SetFoldStateWithUndo(kvp.Value, kvp.Key.Folded);
 			}
 		}
 
+		UpdateInputPropertyFoldableTitles();
+
 		ResetSize();
+	}
+
+	private void UpdateInputPropertyFoldableTitle(PropertySlotKey key)
+	{
+		if (!_inputPropertyFoldables.TryGetValue(key, out InputPropertyFoldableContext? context)
+			|| !IsInstanceValid(context.Foldable))
+		{
+			return;
+		}
+
+		_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor);
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(context.BaseTitle, context.Foldable, editor);
+	}
+
+	private void UpdateInputPropertyFoldableTitles()
+	{
+		foreach (PropertySlotKey key in _inputPropertyFoldables.Keys.ToArray())
+		{
+			UpdateInputPropertyFoldableTitle(key);
+		}
 	}
 
 	private bool GetFoldState(string key)
@@ -439,7 +470,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
-		var oldFolded = GetFoldState(key);
+		bool oldFolded = GetFoldState(key);
 
 		if (oldFolded == folded)
 		{
@@ -480,12 +511,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void OnResizeEnd(Vector2 newSize)
 	{
-		var newWidth = CustomMinimumSize.X;
+		float newWidth = CustomMinimumSize.X;
 
 		if (_undoRedo is not null && NodeResource is not null
 			&& !Mathf.IsEqualApprox(_widthBeforeResize, newWidth))
 		{
-			var oldWidth = _widthBeforeResize;
+			float oldWidth = _widthBeforeResize;
 
 			_undoRedo.CreateAction("Resize Node", customContext: _graph);
 			_undoRedo.AddDoMethod(
@@ -514,7 +545,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		if (NodeResource is not null
 			&& NodeResource.CustomData.TryGetValue(CustomWidthKey, out Variant value))
 		{
-			var width = (float)value.AsDouble();
+			float width = (float)value.AsDouble();
 
 			if (width > 0)
 			{
@@ -611,7 +642,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
-		for (var i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
+		for (int i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
 		{
 			StatescriptNodeProperty binding = NodeResource.PropertyBindings[i];
 
