@@ -22,7 +22,7 @@ internal abstract partial class VectorOrQuaternionUnaryFloatResolverEditorBase<T
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return expectedType == typeof(float) || expectedType == typeof(ForgeVariant128);
+		return expectedType == typeof(ForgeVariant128) || ResolverEditorCompatibility.IsFloatType(expectedType);
 	}
 }
 #endif

@@ -101,6 +101,13 @@ public static class StatescriptVariableTypeConverter
 		}
 
 		Type actualType = ToSystemType(variableType);
+
+		if ((expectedType == typeof(float) && actualType == typeof(double))
+			|| (expectedType == typeof(double) && actualType == typeof(float)))
+		{
+			return true;
+		}
+
 		return expectedType == actualType;
 	}
 

@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
@@ -25,7 +26,7 @@ internal sealed partial class MagnitudeResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return expectedType == typeof(float) || expectedType == typeof(Variant128);
+		return expectedType == typeof(Variant128) || ResolverEditorCompatibility.IsFloatType(expectedType);
 	}
 
 	/// <inheritdoc/>

@@ -133,13 +133,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 
 	private static bool IsCompatibleType(Type expectedType, StatescriptVariableType variableType)
 	{
-		if (expectedType == typeof(Variant128))
-		{
-			return true;
-		}
-
-		Type actualType = StatescriptVariableTypeConverter.ToSystemType(variableType);
-		return expectedType == actualType;
+		return StatescriptVariableTypeConverter.IsCompatible(expectedType, variableType);
 	}
 
 	private static List<string> FindAllSharedVariableSetPaths()
