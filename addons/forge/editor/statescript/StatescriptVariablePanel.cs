@@ -166,6 +166,31 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		RebuildList();
 	}
 
+	public string? GetSelectedVariableName()
+	{
+		return _selectedVariableName;
+	}
+
+	public void RestoreSelectedVariable(string? variableName)
+	{
+		if (string.IsNullOrEmpty(variableName) || !HasVariableNamed(variableName))
+		{
+			_selectedVariableName = null;
+		}
+		else
+		{
+			_selectedVariableName = variableName;
+		}
+
+		RefreshVariableSelectionVisuals();
+		VariableHighlightChanged?.Invoke(_selectedVariableName);
+	}
+
+	public void ClearSelectedVariable()
+	{
+		RestoreSelectedVariable(null);
+	}
+
 	/// <summary>
 	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
 	/// </summary>

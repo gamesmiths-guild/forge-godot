@@ -54,8 +54,10 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private string[]? _serializedTabPaths;
 	private int _serializedActiveTab = -1;
 	private bool[]? _serializedVariablesStates;
+	private string?[]? _serializedSelectedVariables;
 	private string[]? _serializedConnections;
 	private int[]? _serializedConnectionCounts;
+	private bool _persistedVariablesPanelVisible = true;
 
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
@@ -121,6 +123,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_serializedTabPaths = GetOpenResourcePaths();
 		_serializedActiveTab = GetActiveTabIndex();
 		_serializedVariablesStates = GetVariablesPanelStates();
+		_serializedSelectedVariables = GetSelectedVariableStates();
+		_persistedVariablesPanelVisible = _variablePanel?.Visible ?? _persistedVariablesPanelVisible;
 
 		SyncVisualNodePositionsToGraph();
 		SyncConnectionsToCurrentGraph();
@@ -210,6 +214,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		PersistCurrentVariablePanelState();
+
 		for (var i = 0; i < _openTabs.Count; i++)
 		{
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
@@ -223,6 +229,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		graph.EnsureEntryNode();
 
 		var tab = new GraphTab(graph);
+		tab.VariablesPanelOpen = _variablePanel?.Visible ?? false;
 		_openTabs.Add(tab);
 
 		_tabBar.AddTab(graph.StatescriptName);
@@ -257,7 +264,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	/// <returns>An array of resource paths.</returns>
 	public string[] GetOpenResourcePaths()
 	{
-		return [.. _openTabs.Select(x => x.ResourcePath)];
+		return [.. GetPersistedTabs().Select(x => x.ResourcePath)];
 	}
 
 	/// <summary>
@@ -266,7 +273,35 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	/// <returns>The active tab index, or -1 if no tabs are open.</returns>
 	public int GetActiveTabIndex()
 	{
-		return _tabBar?.CurrentTab ?? -1;
+		PersistCurrentVariablePanelState();
+
+		if (_tabBar is null)
+		{
+			return -1;
+		}
+
+		var currentTab = _tabBar.CurrentTab;
+		if (currentTab < 0 || currentTab >= _openTabs.Count)
+		{
+			return -1;
+		}
+
+		GraphTab current = _openTabs[currentTab];
+		if (string.IsNullOrEmpty(current.ResourcePath))
+		{
+			return -1;
+		}
+
+		GraphTab[] persistedTabs = GetPersistedTabs();
+		for (var i = 0; i < persistedTabs.Length; i++)
+		{
+			if (persistedTabs[i].ResourcePath == current.ResourcePath)
+			{
+				return i;
+			}
+		}
+
+		return -1;
 	}
 
 	/// <summary>
@@ -276,7 +311,14 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	/// </returns>
 	public bool[] GetVariablesPanelStates()
 	{
-		return [.. _openTabs.Select(x => x.VariablesPanelOpen)];
+		PersistCurrentVariablePanelState();
+		return [.. GetPersistedTabs().Select(x => x.VariablesPanelOpen)];
+	}
+
+	public string?[] GetSelectedVariableStates()
+	{
+		PersistCurrentVariablePanelState();
+		return [.. GetPersistedTabs().Select(x => x.SelectedVariableName)];
 	}
 
 	/// <summary>
@@ -360,9 +402,16 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		if (activeIndex >= 0 && activeIndex < _openTabs.Count)
 		{
+			_openTabs[activeIndex].VariablesPanelOpen = _persistedVariablesPanelVisible;
 			_tabBar.CurrentTab = activeIndex;
 			LoadGraphIntoEditor(_openTabs[activeIndex].GraphResource);
 			ApplyVariablesPanelState(activeIndex);
+		}
+		else if (_openTabs.Count > 0)
+		{
+			_tabBar.CurrentTab = 0;
+			LoadGraphIntoEditor(_openTabs[0].GraphResource);
+			ApplyVariablesPanelState(0);
 		}
 
 		UpdateVisibility();
@@ -508,12 +557,14 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		var paths = _serializedTabPaths;
 		var activeTab = _serializedActiveTab;
 		var varStates = _serializedVariablesStates;
+		var selectedVariables = _serializedSelectedVariables;
 		var savedConnections = _serializedConnections;
 		var connectionCounts = _serializedConnectionCounts;
 
 		_serializedTabPaths = null;
 		_serializedActiveTab = -1;
 		_serializedVariablesStates = null;
+		_serializedSelectedVariables = null;
 		_serializedConnections = null;
 		_serializedConnectionCounts = null;
 
@@ -555,6 +606,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				tab.VariablesPanelOpen = varStates[currentTab];
 			}
 
+			if (selectedVariables is not null && currentTab < selectedVariables.Length)
+			{
+				tab.SelectedVariableName = selectedVariables[currentTab];
+			}
+
 			_openTabs.Add(tab);
 			_tabBar.AddTab(graph.StatescriptName);
 		}
@@ -592,9 +648,16 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		if (activeTab >= 0 && activeTab < _openTabs.Count)
 		{
+			_openTabs[activeTab].VariablesPanelOpen = _persistedVariablesPanelVisible;
 			_tabBar.CurrentTab = activeTab;
 			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
 			ApplyVariablesPanelState(activeTab);
+		}
+		else if (_openTabs.Count > 0)
+		{
+			_tabBar.CurrentTab = 0;
+			LoadGraphIntoEditor(_openTabs[0].GraphResource);
+			ApplyVariablesPanelState(0);
 		}
 
 		UpdateVisibility();
@@ -1007,6 +1070,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 					if (_variablePanel is not null)
 					{
 						_openTabs[i].VariablesPanelOpen = _variablePanel.Visible;
+						_openTabs[i].SelectedVariableName = _variablePanel.GetSelectedVariableName();
 					}
 
 					return;
@@ -1102,6 +1166,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		if (current >= 0 && current < _openTabs.Count)
 		{
 			_openTabs[current].VariablesPanelOpen = pressed;
+			_persistedVariablesPanelVisible = pressed;
+
+			if (!pressed)
+			{
+				_openTabs[current].SelectedVariableName = null;
+			}
 		}
 
 		if (pressed)
@@ -1110,7 +1180,15 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			if (graph is not null)
 			{
 				_variablePanel.SetGraph(graph);
+				if (current >= 0 && current < _openTabs.Count)
+				{
+					_variablePanel.RestoreSelectedVariable(_openTabs[current].SelectedVariableName);
+				}
 			}
+		}
+		else
+		{
+			_variablePanel.ClearSelectedVariable();
 		}
 	}
 
@@ -1132,6 +1210,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void OnVariableHighlightChanged(string? variableName)
 	{
+		var current = _tabBar?.CurrentTab ?? -1;
+		if (current >= 0 && current < _openTabs.Count)
+		{
+			_openTabs[current].SelectedVariableName = variableName;
+		}
+
 		if (_graphEdit is null)
 		{
 			return;
@@ -1209,13 +1293,49 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		var shouldShow = _openTabs[tabIndex].VariablesPanelOpen;
+
+		if ((_tabBar?.CurrentTab ?? -1) == tabIndex)
+		{
+			shouldShow = _persistedVariablesPanelVisible;
+			_openTabs[tabIndex].VariablesPanelOpen = shouldShow;
+		}
+
 		_variablePanel.Visible = shouldShow;
 		_variablesToggleButton.SetPressedNoSignal(shouldShow);
 
 		if (shouldShow)
 		{
 			_variablePanel.SetGraph(_openTabs[tabIndex].GraphResource);
+			_variablePanel.RestoreSelectedVariable(_openTabs[tabIndex].SelectedVariableName);
 		}
+		else
+		{
+			_variablePanel.ClearSelectedVariable();
+		}
+	}
+
+	private void PersistCurrentVariablePanelState()
+	{
+		if (_variablePanel is null || _tabBar is null)
+		{
+			return;
+		}
+
+		var current = _tabBar.CurrentTab;
+		if (current < 0 || current >= _openTabs.Count)
+		{
+			return;
+		}
+
+		_openTabs[current].VariablesPanelOpen = _variablePanel.Visible;
+		_openTabs[current].SelectedVariableName = _variablePanel.GetSelectedVariableName();
+		_persistedVariablesPanelVisible = _variablePanel.Visible;
+	}
+
+	private GraphTab[] GetPersistedTabs()
+	{
+		PersistCurrentVariablePanelState();
+		return [.. _openTabs.Where(x => !string.IsNullOrEmpty(x.ResourcePath))];
 	}
 
 	private void OnGraphEditGuiInput(InputEvent @event)
@@ -1396,6 +1516,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			: _cachedPath;
 
 		public bool VariablesPanelOpen { get; set; }
+
+		public string? SelectedVariableName { get; set; }
 
 		public GraphTab(StatescriptGraph graphResource)
 		{
