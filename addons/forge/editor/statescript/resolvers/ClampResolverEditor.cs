@@ -36,20 +36,5 @@ internal sealed partial class ClampResolverEditor : NumericOrVectorTernaryResolv
 	{
 		return GetFirstFactoryExpectedTypes(expectedType);
 	}
-
-	protected override Type GetFirstNestedExpectedType(Type expectedType)
-	{
-		return expectedType;
-	}
-
-	protected override Type GetSecondNestedExpectedType(Type expectedType)
-	{
-		return expectedType;
-	}
-
-	protected override Type GetThirdNestedExpectedType(Type expectedType)
-	{
-		return expectedType;
-	}
 }
 #endif

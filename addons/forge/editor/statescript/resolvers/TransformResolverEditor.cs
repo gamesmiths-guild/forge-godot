@@ -50,10 +50,5 @@ internal sealed partial class TransformResolverEditor
 			? [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(SysPlane)]
 			: [expectedType];
 	}
-
-	protected override Type GetLeftNestedExpectedType(Type expectedType)
-	{
-		return expectedType;
-	}
 }
 #endif

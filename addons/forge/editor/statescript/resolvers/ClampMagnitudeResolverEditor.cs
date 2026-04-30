@@ -43,12 +43,5 @@ internal sealed partial class ClampMagnitudeResolverEditor
 			? [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)]
 			: [expectedType];
 	}
-
-	protected override Type GetLeftNestedExpectedType(Type expectedType)
-	{
-		return expectedType == typeof(ForgeVariant128)
-			? typeof(ForgeVariant128)
-			: expectedType;
-	}
 }
 #endif

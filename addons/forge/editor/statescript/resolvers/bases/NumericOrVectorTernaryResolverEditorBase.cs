@@ -48,19 +48,5 @@ internal abstract partial class NumericOrVectorTernaryResolverEditorBase<TResour
 			? SecondFactoryExpectedTypes
 			: [expectedType];
 	}
-
-	protected override Type GetFirstNestedExpectedType(Type expectedType)
-	{
-		return expectedType == typeof(ForgeVariant128)
-			? typeof(ForgeVariant128)
-			: expectedType;
-	}
-
-	protected override Type GetSecondNestedExpectedType(Type expectedType)
-	{
-		return expectedType == typeof(ForgeVariant128)
-			? typeof(ForgeVariant128)
-			: expectedType;
-	}
 }
 #endif

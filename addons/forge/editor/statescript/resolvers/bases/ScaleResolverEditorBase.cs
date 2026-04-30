@@ -37,12 +37,5 @@ internal abstract partial class ScaleResolverEditorBase<TResource> : AsymmetricB
 			? LeftFactoryExpectedTypes
 			: [expectedType];
 	}
-
-	protected override Type GetLeftNestedExpectedType(Type expectedType)
-	{
-		return expectedType == typeof(ForgeVariant128)
-			? typeof(ForgeVariant128)
-			: expectedType;
-	}
 }
 #endif

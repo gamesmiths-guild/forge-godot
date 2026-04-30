@@ -211,11 +211,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			return;
 		}
 
-		foreach (Node child in editorContainer.GetChildren())
-		{
-			editorContainer.RemoveChild(child);
-			child.Free();
-		}
+		NestedResolverEditorUtilities.ClearContainer(editorContainer);
 
 		setEditor(null);
 		ShowNestedEditor(selectedIndex, null, editorContainer, setEditor);
@@ -226,21 +222,12 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 
 	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
 	{
-		return ResolverEditorFactoryCatalog.GetDefaultFactoryIndex(_factories, existingResolver, "Variant");
+		return NestedResolverEditorUtilities.GetSelectedIndex(_factories, existingResolver);
 	}
 
 	private OptionButton CreateResolverDropdownControl(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		foreach (Func<NodeEditorProperty> factory in _factories)
-		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
-		}
-
-		dropdown.Selected = GetSelectedIndex(existingResolver);
-		return dropdown;
+		return NestedResolverEditorUtilities.CreateResolverDropdownControl(_factories, existingResolver);
 	}
 
 	private void ShowNestedEditor(
@@ -254,14 +241,20 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			return;
 		}
 
-		NodeEditorProperty editor = _factories[factoryIndex]();
-		editor.ConfigureAllowedExpectedTypes(GetFactoryExpectedTypes(_expectedType));
-		StatescriptNodeProperty? tempProperty = existingResolver is null
-			? null
-			: new StatescriptNodeProperty { Resolver = existingResolver };
+		NodeEditorProperty? editor = NestedResolverEditorUtilities.CreateNestedEditor(
+			_graph,
+			_factories,
+			factoryIndex,
+			existingResolver,
+			GetFactoryExpectedTypes(_expectedType),
+			OnNestedEditorChanged,
+			RaiseLayoutSizeChanged);
 
-		editor.Setup(_graph, tempProperty, GetNestedExpectedType(_expectedType), OnNestedEditorChanged, false);
-		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
+		if (editor is null)
+		{
+			return;
+		}
+
 		container.AddChild(editor);
 		setEditor(editor);
 	}

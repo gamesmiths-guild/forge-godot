@@ -36,15 +36,5 @@ internal sealed partial class LerpResolverEditor : NumericOrVectorTernaryResolve
 	{
 		return GetFirstFactoryExpectedTypes(expectedType);
 	}
-
-	protected override Type GetFirstNestedExpectedType(Type expectedType)
-	{
-		return expectedType;
-	}
-
-	protected override Type GetSecondNestedExpectedType(Type expectedType)
-	{
-		return expectedType;
-	}
 }
 #endif

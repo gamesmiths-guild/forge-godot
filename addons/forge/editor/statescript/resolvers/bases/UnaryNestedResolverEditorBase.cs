@@ -154,11 +154,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 			return;
 		}
 
-		foreach (Node child in _editorContainer.GetChildren())
-		{
-			_editorContainer.RemoveChild(child);
-			child.Free();
-		}
+		NestedResolverEditorUtilities.ClearContainer(_editorContainer);
 
 		_operandEditor = null;
 		ShowNestedEditor(selectedIndex, null);
@@ -169,21 +165,12 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 
 	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
 	{
-		return ResolverEditorFactoryCatalog.GetDefaultFactoryIndex(_factories, existingResolver, "Variant");
+		return NestedResolverEditorUtilities.GetSelectedIndex(_factories, existingResolver);
 	}
 
 	private OptionButton CreateResolverDropdownControl(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		foreach (Func<NodeEditorProperty> factory in _factories)
-		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
-		}
-
-		dropdown.Selected = GetSelectedIndex(existingResolver);
-		return dropdown;
+		return NestedResolverEditorUtilities.CreateResolverDropdownControl(_factories, existingResolver);
 	}
 
 	private void ShowNestedEditor(int factoryIndex, StatescriptResolverResource? existingResolver)
@@ -193,14 +180,20 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 			return;
 		}
 
-		NodeEditorProperty editor = _factories[factoryIndex]();
-		editor.ConfigureAllowedExpectedTypes(GetFactoryExpectedTypes(_expectedType));
-		StatescriptNodeProperty? tempProperty = existingResolver is null
-			? null
-			: new StatescriptNodeProperty { Resolver = existingResolver };
+		NodeEditorProperty? editor = NestedResolverEditorUtilities.CreateNestedEditor(
+			_graph,
+			_factories,
+			factoryIndex,
+			existingResolver,
+			GetFactoryExpectedTypes(_expectedType),
+			OnNestedEditorChanged,
+			RaiseLayoutSizeChanged);
 
-		editor.Setup(_graph, tempProperty, GetNestedExpectedType(_expectedType), OnNestedEditorChanged, false);
-		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
+		if (editor is null)
+		{
+			return;
+		}
+
 		_editorContainer.AddChild(editor);
 		_operandEditor = editor;
 	}
