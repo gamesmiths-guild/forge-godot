@@ -127,6 +127,27 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		_thirdEditor?.ClearCallbacks();
 	}
 
+	public override bool TryGetHighlightedVariableName(out string variableName)
+	{
+		if (_firstEditor is not null && _firstEditor.TryGetHighlightedVariableName(out variableName))
+		{
+			return true;
+		}
+
+		if (_secondEditor is not null && _secondEditor.TryGetHighlightedVariableName(out variableName))
+		{
+			return true;
+		}
+
+		if (_thirdEditor is not null && _thirdEditor.TryGetHighlightedVariableName(out variableName))
+		{
+			return true;
+		}
+
+		variableName = string.Empty;
+		return false;
+	}
+
 	protected virtual Type[] GetFirstFactoryExpectedTypes(Type expectedType)
 	{
 		return FirstFactoryExpectedTypes;

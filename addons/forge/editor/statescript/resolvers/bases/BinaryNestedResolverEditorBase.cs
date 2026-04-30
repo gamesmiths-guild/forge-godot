@@ -132,6 +132,22 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		_rightEditor?.ClearCallbacks();
 	}
 
+	public override bool TryGetHighlightedVariableName(out string variableName)
+	{
+		if (_leftEditor is not null && _leftEditor.TryGetHighlightedVariableName(out variableName))
+		{
+			return true;
+		}
+
+		if (_rightEditor is not null && _rightEditor.TryGetHighlightedVariableName(out variableName))
+		{
+			return true;
+		}
+
+		variableName = string.Empty;
+		return false;
+	}
+
 	protected virtual Type[] GetFactoryExpectedTypes(Type expectedType)
 	{
 		return FactoryExpectedTypes;

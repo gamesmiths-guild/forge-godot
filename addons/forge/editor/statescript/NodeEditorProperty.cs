@@ -78,6 +78,17 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	}
 
 	/// <summary>
+	/// Tries to provide the graph-variable name represented by this editor or one of its nested editors for highlight
+	/// propagation in folded summaries.
+	/// </summary>
+	/// <param name="variableName">The variable name, when available.</param>
+	public virtual bool TryGetHighlightedVariableName(out string variableName)
+	{
+		variableName = string.Empty;
+		return false;
+	}
+
+	/// <summary>
 	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
 	/// serialized or freed.
 	/// </summary>

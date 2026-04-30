@@ -868,11 +868,16 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			? InlineSummaryBadgeKind.SharedVariable
 			: InlineSummaryBadgeKind.Variable;
 
+		string highlightedVariableName = !_isSharedScope
+			? summary
+			: string.Empty;
+
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(
 			$"{label}:",
 			_targetFoldable,
 			string.IsNullOrWhiteSpace(summary) ? "(None)" : summary,
-			badgeKind);
+			badgeKind,
+			highlightedVariableName: highlightedVariableName);
 	}
 
 	private string GetSelectedGraphVariableName()

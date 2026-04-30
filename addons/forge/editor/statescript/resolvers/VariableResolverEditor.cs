@@ -94,6 +94,13 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override bool TryGetHighlightedVariableName(out string variableName)
+	{
+		variableName = _selectedVariableName;
+		return !string.IsNullOrWhiteSpace(variableName);
+	}
+
+	/// <inheritdoc/>
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();

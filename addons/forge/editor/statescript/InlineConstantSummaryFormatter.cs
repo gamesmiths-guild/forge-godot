@@ -14,6 +14,10 @@ internal static class InlineConstantSummaryFormatter
 {
 	private const string SummaryBadgeMetaKey = "forge_inline_summary_badge";
 	private const string SummaryBadgeResizeHookMetaKey = "forge_inline_summary_badge_resize_hook";
+	private const string SummaryBadgeKindMetaKey = "forge_inline_summary_badge_kind";
+	private const string SummaryBadgeTextMetaKey = "forge_inline_summary_badge_text";
+	private const string SummaryBadgeFoldableMetaKey = "forge_inline_summary_badge_foldable";
+	private const string SummaryBadgeSelectedVariableMetaKey = "forge_inline_summary_badge_selected_variable";
 	private const float MinimumBadgeWidth = 76f;
 	private const float FoldableTitleChromeWidth = 30f;
 	private const float FoldableTitleBadgeGap = 6f;
@@ -60,13 +64,14 @@ internal static class InlineConstantSummaryFormatter
 		FoldableContainer foldable,
 		string? summary,
 		InlineSummaryBadgeKind badgeKind,
-		bool isConstant = false)
+		bool isConstant = false,
+		string? highlightedVariableName = null)
 	{
 		EnsureResizeSyncHook(foldable);
 		foldable.Title = baseTitle;
 
 		SummaryBadgeData badgeData = foldable.Folded && !string.IsNullOrWhiteSpace(summary)
-			? CreateBadgeData(summary, badgeKind, isConstant)
+			? CreateBadgeData(summary, badgeKind, isConstant, highlightedVariableName)
 			: SummaryBadgeData.Hidden;
 
 		PanelContainer badge = GetOrCreateSummaryBadge(foldable);
@@ -141,26 +146,39 @@ internal static class InlineConstantSummaryFormatter
 			return SummaryBadgeData.Hidden;
 		}
 
+		string? highlightedVariableName = null;
+		if (editor.TryGetHighlightedVariableName(out string propagatedVariableName)
+			&& !string.IsNullOrWhiteSpace(propagatedVariableName))
+		{
+			highlightedVariableName = propagatedVariableName;
+		}
+
 		if (editor.TryGetInlineSummary(out string summary) && !string.IsNullOrWhiteSpace(summary))
 		{
 			InlineSummaryBadgeKind badgeKind = editor.GetInlineSummaryBadgeKind();
-			return CreateBadgeData(summary, badgeKind, IsConstantBadgeKind(badgeKind));
+			return CreateBadgeData(
+				summary,
+				badgeKind,
+				IsConstantBadgeKind(badgeKind),
+				highlightedVariableName);
 		}
 
 		return string.IsNullOrWhiteSpace(editor.DisplayName)
 			? SummaryBadgeData.Hidden
-			: CreateBadgeData(editor.DisplayName, InlineSummaryBadgeKind.Resolver, false);
+			: CreateBadgeData(editor.DisplayName, InlineSummaryBadgeKind.Resolver, false, highlightedVariableName);
 	}
 
 	private static SummaryBadgeData CreateBadgeData(
 		string text,
 		InlineSummaryBadgeKind badgeKind,
-		bool isConstant)
+		bool isConstant,
+		string? highlightedVariableName = null)
 	{
 		BadgeVisualStyle style = GetBadgeStyle(badgeKind);
 		return new SummaryBadgeData(
 			GetBadgeIcon(badgeKind, isConstant),
 			text,
+			highlightedVariableName ?? string.Empty,
 			badgeKind,
 			isConstant,
 			style.IconColor,
@@ -182,6 +200,7 @@ internal static class InlineConstantSummaryFormatter
 			MouseFilter = Control.MouseFilterEnum.Ignore,
 			SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
 		};
+		badge.SetMeta(SummaryBadgeFoldableMetaKey, Variant.From(foldable));
 
 		var row = new HBoxContainer
 		{
@@ -235,9 +254,15 @@ internal static class InlineConstantSummaryFormatter
 		badge.Visible = badgeData.Visible;
 		if (!badgeData.Visible)
 		{
+			badge.SetMeta(SummaryBadgeKindMetaKey, Variant.From((int)InlineSummaryBadgeKind.Resolver));
+			badge.SetMeta(SummaryBadgeTextMetaKey, Variant.From(string.Empty));
 			badge.CustomMinimumSize = Vector2.Zero;
 			return;
 		}
+
+		badge.SetMeta(SummaryBadgeKindMetaKey, Variant.From((int)badgeData.BadgeKind));
+		badge.SetMeta(SummaryBadgeTextMetaKey, Variant.From(badgeData.Text));
+		badge.SetMeta("forge_inline_summary_badge_highlight_variable", Variant.From(badgeData.HighlightVariableName));
 
 		StyleBoxFlat styleBox = new()
 		{
@@ -274,6 +299,23 @@ internal static class InlineConstantSummaryFormatter
 		iconLabel.AddThemeColorOverride("font_color", badgeData.IconColor);
 		textLabel.AddThemeColorOverride("font_color", textLabel.GetThemeColor("font_color", "Label"));
 		textLabel.CustomMinimumSize = Vector2.Zero;
+
+		if (badge.HasMeta(SummaryBadgeSelectedVariableMetaKey))
+		{
+			string selectedVariableName = badge.GetMeta(SummaryBadgeSelectedVariableMetaKey).AsString();
+			if (!string.IsNullOrEmpty(selectedVariableName)
+				&& selectedVariableName == badgeData.HighlightVariableName)
+			{
+				styleBox.BorderWidthLeft = Math.Max(styleBox.BorderWidthLeft, 2);
+				styleBox.BorderWidthTop = Math.Max(styleBox.BorderWidthTop, 2);
+				styleBox.BorderWidthRight = Math.Max(styleBox.BorderWidthRight, 2);
+				styleBox.BorderWidthBottom = Math.Max(styleBox.BorderWidthBottom, 2);
+				styleBox.BorderColor = new Color(0x56b6c2ff);
+				styleBox.BgColor = new Color(0x56b6c2ff);
+				iconLabel.AddThemeColorOverride("font_color", Colors.Black);
+				textLabel.AddThemeColorOverride("font_color", Colors.Black);
+			}
+		}
 	}
 
 	private static float MeasureWidestBadgeIconWidth(Label label)
@@ -500,6 +542,7 @@ internal static class InlineConstantSummaryFormatter
 	private readonly record struct SummaryBadgeData(
 		string IconText,
 		string Text,
+		string HighlightVariableName,
 		InlineSummaryBadgeKind BadgeKind,
 		bool IsConstant,
 		Color IconColor,
@@ -508,6 +551,7 @@ internal static class InlineConstantSummaryFormatter
 		bool Visible)
 	{
 		public static SummaryBadgeData Hidden => new(
+			string.Empty,
 			string.Empty,
 			string.Empty,
 			InlineSummaryBadgeKind.Resolver,

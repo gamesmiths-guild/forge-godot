@@ -94,6 +94,17 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 		_operandEditor?.ClearCallbacks();
 	}
 
+	public override bool TryGetHighlightedVariableName(out string variableName)
+	{
+		if (_operandEditor is not null && _operandEditor.TryGetHighlightedVariableName(out variableName))
+		{
+			return true;
+		}
+
+		variableName = string.Empty;
+		return false;
+	}
+
 	protected virtual Type[] GetFactoryExpectedTypes(Type expectedType)
 	{
 		return FactoryExpectedTypes;
