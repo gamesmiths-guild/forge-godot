@@ -191,6 +191,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		return GetFoldState(key);
 	}
 
+	internal bool GetFoldStateInternal(string key, bool defaultValue)
+	{
+		return GetFoldState(key, defaultValue);
+	}
+
+	internal void SetFoldStateWithUndoInternal(string key, bool folded)
+	{
+		SetFoldStateWithUndo(key, folded);
+	}
+
 	internal StatescriptNodeProperty? FindBindingInternal(
 		StatescriptPropertyDirection direction,
 		int propertyIndex)
@@ -257,6 +267,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void RaisePropertyBindingChangedInternal()
 	{
 		PropertyBindingChanged?.Invoke();
+	}
+
+	internal void UpdateInputPropertyFoldableTitlesInternal()
+	{
+		UpdateInputPropertyFoldableTitles();
 	}
 
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
@@ -395,6 +410,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		{
 			Title = sectionTitle,
 			Folded = folded,
+			CustomMinimumSize = new Vector2(192, 0),
 		};
 
 		sectionContainer.AddThemeColorOverride("font_color", color);
@@ -445,12 +461,17 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private bool GetFoldState(string key)
 	{
+		return GetFoldState(key, false);
+	}
+
+	private bool GetFoldState(string key, bool defaultValue)
+	{
 		if (NodeResource is not null && NodeResource.CustomData.TryGetValue(key, out Variant value))
 		{
 			return value.AsBool();
 		}
 
-		return false;
+		return defaultValue;
 	}
 
 	private void SetFoldState(string key, bool folded)

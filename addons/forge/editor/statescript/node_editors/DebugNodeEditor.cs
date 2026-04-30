@@ -15,11 +15,14 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 internal sealed partial class DebugNodeEditor : CustomNodeEditor
 {
 	private const string ValueTypeKey = "valueType";
+	private const string TypeFoldKey = "_debug_type_fold";
 
 	private StatescriptVariableType _selectedType = StatescriptVariableType.Int;
+	private VBoxContainer? _inputRootContainer;
 	private VBoxContainer? _inputEditorContainer;
 	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
 	private OptionButton? _typeDropdown;
+	private FoldableContainer? _typeFoldable;
 
 	/// <inheritdoc/>
 	public override string HandledRuntimeTypeName => "Gamesmiths.Forge.Statescript.Nodes.Action.DebugNode";
@@ -34,20 +37,17 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 			_selectedType = (StatescriptVariableType)storedType.AsInt32();
 		}
 
-		var inputFolded = GetFoldState("_fold_input");
+		bool inputFolded = GetFoldState("_fold_input");
 		FoldableContainer inputContainer = AddPropertySectionDivider(
 			"Input Properties",
 			InputPropertyColor,
 			"_fold_input",
 			inputFolded);
 
-		var root = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		inputContainer.AddChild(root);
+		_inputRootContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		inputContainer.AddChild(_inputRootContainer);
 
-		BuildTypeRow(root);
-
-		_inputEditorContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		root.AddChild(_inputEditorContainer);
+		BuildTypeRow(_inputRootContainer);
 
 		if (typeInfo.InputPropertiesInfo.Length > 0)
 		{
@@ -62,18 +62,26 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 	private void BuildTypeRow(VBoxContainer root)
 	{
-		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		root.AddChild(row);
-
-		var label = new Label
+		_typeFoldable = new FoldableContainer
 		{
-			Text = "Type",
-			CustomMinimumSize = new Vector2(60, 0),
+			Title = "Type:",
+			Folded = GetFoldState(TypeFoldKey, true),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
-		label.AddThemeColorOverride("font_color", InputPropertyColor);
-		row.AddChild(label);
+		_typeFoldable.FoldingChanged += OnTypeFoldableFoldingChanged;
+		root.AddChild(_typeFoldable);
 
-		_typeDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		var container = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_typeFoldable.AddChild(container);
+
+		var headerRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		container.AddChild(headerRow);
+
+		_typeDropdown = new OptionButton
+		{
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			CustomMinimumSize = new Vector2(80, 0),
+		};
 		AddTypeOption(_typeDropdown, StatescriptVariableType.Bool, "Bool");
 		AddTypeOption(_typeDropdown, StatescriptVariableType.Int, "Int");
 		AddTypeOption(_typeDropdown, StatescriptVariableType.Float, "Float");
@@ -85,12 +93,13 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		AddTypeOption(_typeDropdown, StatescriptVariableType.Quaternion, "Quaternion");
 		_typeDropdown.Selected = FindSelectedTypeIndex(_typeDropdown);
 		_typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
-		row.AddChild(_typeDropdown);
+		headerRow.AddChild(_typeDropdown);
+		UpdateTypeFoldableTitle();
 	}
 
 	private int FindSelectedTypeIndex(OptionButton dropdown)
 	{
-		for (var i = 0; i < dropdown.ItemCount; i++)
+		for (int i = 0; i < dropdown.ItemCount; i++)
 		{
 			if (dropdown.GetItemId(i) == (int)_selectedType)
 			{
@@ -111,6 +120,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		var selectedValue = (StatescriptVariableType)_typeDropdown.GetItemId((int)index);
 		NodeResource.CustomData[ValueTypeKey] = Variant.From((int)selectedValue);
 		_selectedType = selectedValue;
+		UpdateTypeFoldableTitle();
 
 		RemoveBinding(StatescriptPropertyDirection.Input, 0);
 		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
@@ -126,19 +136,61 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		ResetSize();
 	}
 
-	private void RebuildInputEditor(StatescriptNodeDiscovery.InputPropertyInfo originalInfo)
+	private void OnTypeFoldableFoldingChanged(bool folded)
 	{
-		if (_inputEditorContainer is null)
+		SetFoldStateWithUndo(TypeFoldKey, folded);
+		UpdateTypeFoldableTitle();
+		RefreshInputPropertyFoldableTitles();
+		ResetSize();
+	}
+
+	private void UpdateTypeFoldableTitle()
+	{
+		if (_typeFoldable is null)
 		{
 			return;
 		}
 
-		ClearContainer(_inputEditorContainer);
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(
+			"Type:",
+			_typeFoldable,
+			StatescriptVariableTypeConverter.GetDisplayName(_selectedType),
+			InlineSummaryBadgeKind.Enum);
+	}
+
+	private void RebuildInputEditor(StatescriptNodeDiscovery.InputPropertyInfo originalInfo)
+	{
+		if (_inputRootContainer is null)
+		{
+			return;
+		}
+
+		ClearValueRows();
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(_selectedType);
+		_inputEditorContainer = _inputRootContainer;
 		AddInputPropertyRow(
 			new StatescriptNodeDiscovery.InputPropertyInfo(originalInfo.Label, clrType),
 			0,
 			_inputEditorContainer);
+	}
+
+	private void ClearValueRows()
+	{
+		if (_inputRootContainer is null)
+		{
+			return;
+		}
+
+		foreach (Node child in _inputRootContainer.GetChildren())
+		{
+			if (child == _typeFoldable)
+			{
+				continue;
+			}
+
+			_inputRootContainer.RemoveChild(child);
+			child.Free();
+		}
 	}
 }
 #endif

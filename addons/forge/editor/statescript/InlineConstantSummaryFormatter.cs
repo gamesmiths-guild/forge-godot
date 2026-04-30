@@ -18,7 +18,6 @@ internal static class InlineConstantSummaryFormatter
 	private const float FoldableTitleChromeWidth = 30f;
 	private const float FoldableTitleBadgeGap = 6f;
 	private const float FoldableTitleRightPadding = 8f;
-	private const float BadgeTextWidthPadding = 20f;
 
 	private static readonly Color _numericIconColor = new(0x3dbcc9ff);
 	private static readonly Color _numericBackgroundColor = new(0x3dbcc918);
@@ -38,6 +37,9 @@ internal static class InlineConstantSummaryFormatter
 	private static readonly Color _sharedVariableIconColor = new(0x46a86fff);
 	private static readonly Color _sharedVariableBackgroundColor = new(0x46a86f18);
 	private static readonly Color _sharedVariableBorderColor = new(0x46a86fff);
+	private static readonly Color _enumIconColor = new(0xc0c6d1ff);
+	private static readonly Color _enumBackgroundColor = new(0xc0c6d118);
+	private static readonly Color _enumBorderColor = new(0xc0c6d1ff);
 
 	public static void ApplyFoldableTitle(
 		string baseTitle,
@@ -48,6 +50,25 @@ internal static class InlineConstantSummaryFormatter
 		foldable.Title = baseTitle;
 
 		SummaryBadgeData badgeData = GetBadgeData(foldable, editor);
+		PanelContainer badge = GetOrCreateSummaryBadge(foldable);
+		ConfigureSummaryBadge(badge, badgeData);
+		SynchronizeSiblingBadgeWidths(foldable);
+	}
+
+	public static void ApplyFoldableTitle(
+		string baseTitle,
+		FoldableContainer foldable,
+		string? summary,
+		InlineSummaryBadgeKind badgeKind,
+		bool isConstant = false)
+	{
+		EnsureResizeSyncHook(foldable);
+		foldable.Title = baseTitle;
+
+		SummaryBadgeData badgeData = foldable.Folded && !string.IsNullOrWhiteSpace(summary)
+			? CreateBadgeData(summary, badgeKind, isConstant)
+			: SummaryBadgeData.Hidden;
+
 		PanelContainer badge = GetOrCreateSummaryBadge(foldable);
 		ConfigureSummaryBadge(badge, badgeData);
 		SynchronizeSiblingBadgeWidths(foldable);
@@ -138,8 +159,8 @@ internal static class InlineConstantSummaryFormatter
 	{
 		BadgeVisualStyle style = GetBadgeStyle(badgeKind);
 		return new SummaryBadgeData(
-			$" {GetBadgeIcon(badgeKind, isConstant)}",
-			$" {text} ",
+			GetBadgeIcon(badgeKind, isConstant),
+			text,
 			badgeKind,
 			isConstant,
 			style.IconColor,
@@ -176,18 +197,10 @@ internal static class InlineConstantSummaryFormatter
 			Name = "Icon",
 			MouseFilter = Control.MouseFilterEnum.Ignore,
 			SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-			HorizontalAlignment = HorizontalAlignment.Center,
+			HorizontalAlignment = HorizontalAlignment.Left,
 			VerticalAlignment = VerticalAlignment.Center,
 		};
 		row.AddChild(iconLabel);
-
-		var spacer = new Control
-		{
-			Name = "Spacer",
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-		row.AddChild(spacer);
 
 		var textLabel = new Label
 		{
@@ -248,25 +261,30 @@ internal static class InlineConstantSummaryFormatter
 
 		Label? iconLabel = badge.GetNodeOrNull<Label>("Row/Icon");
 		Label? textLabel = badge.GetNodeOrNull<Label>("Row/Text");
-		Control? spacer = badge.GetNodeOrNull<Control>("Row/Spacer");
 		if (iconLabel is null || textLabel is null)
 		{
 			return;
 		}
 
-		if (spacer is not null)
-		{
-			spacer.Visible = false;
-		}
-
+		iconLabel.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
 		textLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 		iconLabel.Text = badgeData.IconText;
 		textLabel.Text = badgeData.Text;
+		iconLabel.CustomMinimumSize = new Vector2(MeasureWidestBadgeIconWidth(iconLabel), 0);
 		iconLabel.AddThemeColorOverride("font_color", badgeData.IconColor);
 		textLabel.AddThemeColorOverride("font_color", textLabel.GetThemeColor("font_color", "Label"));
-		textLabel.CustomMinimumSize = new Vector2(
-			MeasureLabelTextWidth(textLabel, badgeData.Text) + BadgeTextWidthPadding,
-			0);
+		textLabel.CustomMinimumSize = Vector2.Zero;
+	}
+
+	private static float MeasureWidestBadgeIconWidth(Label label)
+	{
+		float maxWidth = 0f;
+		foreach (InlineSummaryBadgeKind badgeKind in Enum.GetValues<InlineSummaryBadgeKind>())
+		{
+			maxWidth = Math.Max(maxWidth, MeasureLabelTextWidth(label, GetBadgeIcon(badgeKind, false)));
+		}
+
+		return Math.Max(maxWidth, MeasureLabelTextWidth(label, GetBadgeIcon(InlineSummaryBadgeKind.Resolver, true)));
 	}
 
 	private static bool TryGetSummaryBadge(FoldableContainer foldable, [NotNullWhen(true)] out PanelContainer? badge)
@@ -311,16 +329,9 @@ internal static class InlineConstantSummaryFormatter
 			return;
 		}
 
-		float preferredMaxWidth = MinimumBadgeWidth;
 		foreach (PanelContainer badge in siblingBadges)
 		{
 			badge.CustomMinimumSize = Vector2.Zero;
-			if (!badge.Visible)
-			{
-				continue;
-			}
-
-			preferredMaxWidth = Math.Max(preferredMaxWidth, badge.GetCombinedMinimumSize().X);
 		}
 
 		float widestTitleWidth = 0;
@@ -329,15 +340,19 @@ internal static class InlineConstantSummaryFormatter
 			widestTitleWidth = Math.Max(widestTitleWidth, MeasureFoldableTitleWidth(siblingFoldable));
 		}
 
-		float availableWidth = float.MaxValue;
-		foreach (FoldableContainer siblingFoldable in siblingFoldables)
-		{
-			availableWidth = Math.Min(
-				availableWidth,
-				siblingFoldable.Size.X - widestTitleWidth - FoldableTitleChromeWidth - FoldableTitleBadgeGap - FoldableTitleRightPadding);
-		}
+		float availableWidth = parent is Control parentControl
+			? parentControl.Size.X
+				- widestTitleWidth
+				- FoldableTitleChromeWidth
+				- FoldableTitleBadgeGap
+				- FoldableTitleRightPadding
+			: float.MaxValue;
 
-		float maxWidth = Math.Max(preferredMaxWidth, availableWidth);
+		float maxWidth = MinimumBadgeWidth;
+		if (!float.IsPositiveInfinity(availableWidth) && !float.IsNaN(availableWidth))
+		{
+			maxWidth = Math.Max(0f, availableWidth);
+		}
 
 		for (int i = 0; i < siblingBadges.Count; i++)
 		{
@@ -372,6 +387,10 @@ internal static class InlineConstantSummaryFormatter
 				_sharedVariableIconColor,
 				_sharedVariableBackgroundColor,
 				_sharedVariableBorderColor),
+			InlineSummaryBadgeKind.Enum => new BadgeVisualStyle(
+				_enumIconColor,
+				_enumBackgroundColor,
+				_enumBorderColor),
 			_ => new BadgeVisualStyle(
 				_resolverIconColor,
 				_resolverBackgroundColor,
@@ -414,6 +433,7 @@ internal static class InlineConstantSummaryFormatter
 			InlineSummaryBadgeKind.Boolean => "●",
 			InlineSummaryBadgeKind.Variable => "𝑥",
 			InlineSummaryBadgeKind.SharedVariable => "𝑦",
+			InlineSummaryBadgeKind.Enum => "≡",
 			_ => isConstant ? "#" : "ƒ",
 		};
 	}

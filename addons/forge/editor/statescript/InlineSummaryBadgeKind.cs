@@ -11,5 +11,6 @@ internal enum InlineSummaryBadgeKind
 	Boolean = 3,
 	Variable = 4,
 	SharedVariable = 5,
+	Enum = 6,
 }
 #endif

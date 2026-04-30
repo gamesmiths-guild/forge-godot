@@ -21,6 +21,8 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 {
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
+	private const string ScopeFoldKey = "_fold_output_scope";
+	private const string TargetFoldKey = "_fold_output_target";
 	private const string ScopeKey = "_output_scope";
 
 	private readonly List<string> _setPaths = [];
@@ -33,6 +35,8 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private VBoxContainer? _cachedInputEditorContainer;
 	private VBoxContainer? _cachedTargetContainer;
 	private int _cachedOutputIndex;
+	private FoldableContainer? _scopeFoldable;
+	private FoldableContainer? _targetFoldable;
 
 	private bool _isSharedScope;
 
@@ -190,22 +194,22 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 		sectionContainer.AddChild(outerVBox);
 
+		_scopeFoldable = new FoldableContainer
+		{
+			Title = "Scope:",
+			Folded = GetFoldState(ScopeFoldKey, true),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+		};
+		_scopeFoldable.FoldingChanged += OnScopeFoldableFoldingChanged;
+		outerVBox.AddChild(_scopeFoldable);
+
 		// Scope toggle row.
 		var scopeRow = new HBoxContainer
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 
-		outerVBox.AddChild(scopeRow);
-
-		var scopeLabel = new Label
-		{
-			Text = "Scope",
-			CustomMinimumSize = new Vector2(60, 0),
-		};
-
-		scopeLabel.AddThemeColorOverride("font_color", OutputVariableColor);
-		scopeRow.AddChild(scopeLabel);
+		_scopeFoldable.AddChild(scopeRow);
 
 		var graphButton = new CheckBox
 		{
@@ -228,6 +232,15 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		scopeRow.AddChild(graphButton);
 		scopeRow.AddChild(sharedButton);
 
+		_targetFoldable = new FoldableContainer
+		{
+			Title = $"{varInfo.Label}:",
+			Folded = GetFoldState(TargetFoldKey, true),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+		};
+		_targetFoldable.FoldingChanged += OnTargetFoldableFoldingChanged;
+		outerVBox.AddChild(_targetFoldable);
+
 		// Target variable container (rebuilt when scope changes).
 		var targetContainer = new VBoxContainer
 		{
@@ -235,9 +248,11 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		};
 
 		_cachedTargetContainer = targetContainer;
-		outerVBox.AddChild(targetContainer);
+		_targetFoldable.AddChild(targetContainer);
 
 		RebuildTargetUI(varInfo, index, targetContainer);
+		UpdateScopeFoldableTitle();
+		UpdateTargetFoldableTitle(varInfo.Label);
 
 		graphButton.Pressed += () => OnScopeChanged(false, varInfo, index);
 		sharedButton.Pressed += () => OnScopeChanged(true, varInfo, index);
@@ -259,7 +274,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			as StatescriptResolverResource;
 
 		_isSharedScope = isShared;
-		NodeResource.CustomData[ScopeKey] = Variant.From(isShared ? (int)VariableScope.Shared : (int)VariableScope.Graph);
+		NodeResource.CustomData[ScopeKey] = Variant.From(isShared
+			? (int)VariableScope.Shared
+			: (int)VariableScope.Graph);
 
 		// Clear the output binding since scope changed.
 		RemoveBinding(StatescriptPropertyDirection.Output, index);
@@ -310,6 +327,8 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			newInputResolver,
 			"Change Variable Scope Input");
 
+		UpdateScopeFoldableTitle();
+		UpdateTargetFoldableTitle(varInfo.Label);
 		RaisePropertyBindingChanged();
 		ResetSize();
 	}
@@ -666,6 +685,11 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				"Change Shared Target Variable Input");
 		}
 
+		if (_cachedTypeInfo?.OutputVariablesInfo.Length > 0)
+		{
+			UpdateTargetFoldableTitle(_cachedTypeInfo.OutputVariablesInfo[0].Label);
+		}
+
 		RaisePropertyBindingChanged();
 		ResetSize();
 	}
@@ -787,8 +811,84 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				"Change Target Variable Input");
 		}
 
+		if (_cachedTypeInfo?.OutputVariablesInfo.Length > 0)
+		{
+			UpdateTargetFoldableTitle(_cachedTypeInfo.OutputVariablesInfo[0].Label);
+		}
+
 		RaisePropertyBindingChanged();
 		ResetSize();
+	}
+
+	private void OnScopeFoldableFoldingChanged(bool folded)
+	{
+		SetFoldStateWithUndo(ScopeFoldKey, folded);
+		UpdateScopeFoldableTitle();
+		ResetSize();
+	}
+
+	private void OnTargetFoldableFoldingChanged(bool folded)
+	{
+		SetFoldStateWithUndo(TargetFoldKey, folded);
+
+		if (_cachedTypeInfo?.OutputVariablesInfo.Length > 0)
+		{
+			UpdateTargetFoldableTitle(_cachedTypeInfo.OutputVariablesInfo[0].Label);
+		}
+
+		ResetSize();
+	}
+
+	private void UpdateScopeFoldableTitle()
+	{
+		if (_scopeFoldable is null)
+		{
+			return;
+		}
+
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(
+			"Scope:",
+			_scopeFoldable,
+			_isSharedScope ? "Shared" : "Graph",
+			InlineSummaryBadgeKind.Enum);
+	}
+
+	private void UpdateTargetFoldableTitle(string label)
+	{
+		if (_targetFoldable is null)
+		{
+			return;
+		}
+
+		string summary = _isSharedScope
+			? _selectedSharedVarName
+			: GetSelectedGraphVariableName();
+
+		InlineSummaryBadgeKind badgeKind = _isSharedScope
+			? InlineSummaryBadgeKind.SharedVariable
+			: InlineSummaryBadgeKind.Variable;
+
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(
+			$"{label}:",
+			_targetFoldable,
+			string.IsNullOrWhiteSpace(summary) ? "(None)" : summary,
+			badgeKind);
+	}
+
+	private string GetSelectedGraphVariableName()
+	{
+		if (_cachedOutputIndex < 0)
+		{
+			return string.Empty;
+		}
+
+		if (FindBinding(StatescriptPropertyDirection.Output, _cachedOutputIndex)?.Resolver
+			is VariableResolverResource varRes)
+		{
+			return varRes.VariableName;
+		}
+
+		return string.Empty;
 	}
 
 	private void RebuildInputUI(

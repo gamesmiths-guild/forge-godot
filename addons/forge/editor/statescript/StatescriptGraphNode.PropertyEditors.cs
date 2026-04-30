@@ -26,13 +26,14 @@ public partial class StatescriptGraphNode
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
 		string baseTitle = $"{propInfo.Label}:";
+
 		var propertyFoldable = new FoldableContainer
 		{
 			Title = baseTitle,
-			Folded = GetFoldState(GetInputPropertyFoldKey(index)),
+			Folded = GetFoldState(GetInputPropertyFoldKey(index), true),
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
-		propertyFoldable.AddThemeColorOverride("font_color", _inputPropertyColor);
+
 		_foldableKeys[propertyFoldable] = GetInputPropertyFoldKey(index);
 		_inputPropertyFoldables[key] = new InputPropertyFoldableContext(propertyFoldable, baseTitle);
 		propertyFoldable.FoldingChanged += OnSectionFoldingChanged;
@@ -128,7 +129,8 @@ public partial class StatescriptGraphNode
 		UpdateInputPropertyFoldableTitle(key);
 
 		int capturedIndex = index;
-		resolverDropdown.ItemSelected += selectedItem => OnInputResolverDropdownItemSelected(selectedItem, capturedIndex);
+		resolverDropdown.ItemSelected +=
+			selectedItem => OnInputResolverDropdownItemSelected(selectedItem, capturedIndex);
 	}
 
 	private void OnInputResolverDropdownItemSelected(long x, int index)
@@ -259,7 +261,8 @@ public partial class StatescriptGraphNode
 		}
 
 		int capturedIndex = index;
-		variableDropdown.ItemSelected += selectedItem => OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
+		variableDropdown.ItemSelected +=
+			selectedItem => OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
 
 		hBox.AddChild(variableDropdown);
 	}

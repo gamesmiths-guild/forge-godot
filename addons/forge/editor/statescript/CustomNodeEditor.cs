@@ -173,6 +173,26 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	}
 
 	/// <summary>
+	/// Gets the persisted fold state for a given key, with a custom default when unset.
+	/// </summary>
+	/// <param name="key">The key used to persist the fold state.</param>
+	/// <param name="defaultValue">The default fold state when no persisted value exists.</param>
+	protected bool GetFoldState(string key, bool defaultValue)
+	{
+		return _graphNode!.GetFoldStateInternal(key, defaultValue);
+	}
+
+	/// <summary>
+	/// Persists a fold state change with undo support.
+	/// </summary>
+	/// <param name="key">The key used to persist the fold state.</param>
+	/// <param name="folded">The new folded state.</param>
+	protected void SetFoldStateWithUndo(string key, bool folded)
+	{
+		_graphNode!.SetFoldStateWithUndoInternal(key, folded);
+	}
+
+	/// <summary>
 	/// Finds an existing property binding by direction and index.
 	/// </summary>
 	/// <param name="direction">The direction of the property (input or output).</param>
@@ -243,6 +263,14 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	protected void ResetSize()
 	{
 		_graphNode!.ResetSize();
+	}
+
+	/// <summary>
+	/// Refreshes standard input-property foldable summaries.
+	/// </summary>
+	protected void RefreshInputPropertyFoldableTitles()
+	{
+		_graphNode!.UpdateInputPropertyFoldableTitlesInternal();
 	}
 
 	/// <summary>
