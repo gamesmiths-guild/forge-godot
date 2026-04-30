@@ -31,8 +31,7 @@ internal abstract partial class NumericOrVectorTernaryResolverEditorBase<TResour
 	public override bool IsCompatibleWith(Type expectedType)
 	{
 		return expectedType == typeof(ForgeVariant128)
-			|| ResolverEditorCompatibility.IsNumericOrVectorType(expectedType)
-			|| ResolverEditorCompatibility.IsQuaternionType(expectedType);
+			|| ResolverEditorCompatibility.IsNumericOrVectorType(expectedType);
 	}
 
 	protected override Type[] GetFirstFactoryExpectedTypes(Type expectedType)

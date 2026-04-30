@@ -50,9 +50,9 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		_onChanged = onChanged;
 		_expectedType = expectedType;
 		_leftFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
-			GetLeftFactoryExpectedTypes(expectedType));
+			GetConstrainedExpectedTypes(GetLeftFactoryExpectedTypes(expectedType), expectedType));
 		_rightFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
-			GetRightFactoryExpectedTypes(expectedType));
+			GetConstrainedExpectedTypes(GetRightFactoryExpectedTypes(expectedType), expectedType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -81,7 +81,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			_leftFactories,
 			GetSelectedIndex(_leftFactories, existingResource?.Left),
 			existingResource?.Left,
-			GetLeftFactoryExpectedTypes(expectedType),
+			GetConstrainedExpectedTypes(GetLeftFactoryExpectedTypes(expectedType), expectedType),
 			_leftEditorContainer,
 			x => _leftEditor = x);
 
@@ -100,7 +100,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			_rightFactories,
 			GetSelectedIndex(_rightFactories, existingResource?.Right),
 			existingResource?.Right,
-			GetRightFactoryExpectedTypes(expectedType),
+			GetConstrainedExpectedTypes(GetRightFactoryExpectedTypes(expectedType), expectedType),
 			_rightEditorContainer,
 			x => _rightEditor = x);
 
@@ -187,7 +187,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		HandleResolverDropdownChanged(
 			_leftFactories,
 			(int)index,
-			GetLeftFactoryExpectedTypes(_expectedType),
+			GetConstrainedExpectedTypes(GetLeftFactoryExpectedTypes(_expectedType), _expectedType),
 			_leftEditorContainer,
 			x => _leftEditor = x);
 	}
@@ -197,7 +197,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		HandleResolverDropdownChanged(
 			_rightFactories,
 			(int)index,
-			GetRightFactoryExpectedTypes(_expectedType),
+			GetConstrainedExpectedTypes(GetRightFactoryExpectedTypes(_expectedType), _expectedType),
 			_rightEditorContainer,
 			x => _rightEditor = x);
 	}
@@ -277,6 +277,13 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		{
 			InlineConstantSummaryFormatter.ApplyFoldableTitle(RightTitle, _rightFoldable, _rightEditor);
 		}
+	}
+
+	private Type[] GetConstrainedExpectedTypes(Type[] candidateExpectedTypes, Type expectedType)
+	{
+		return NestedResolverEditorUtilities.ConstrainExpectedTypes(
+			GetAllowedExpectedTypes(expectedType),
+			candidateExpectedTypes);
 	}
 }
 #endif

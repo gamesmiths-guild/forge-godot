@@ -44,7 +44,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		_graph = graph;
 		_onChanged = onChanged;
 		_expectedType = expectedType;
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetFactoryExpectedTypes(expectedType));
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetConstrainedExpectedTypes(expectedType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -246,7 +246,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			_factories,
 			factoryIndex,
 			existingResolver,
-			GetFactoryExpectedTypes(_expectedType),
+			GetConstrainedExpectedTypes(_expectedType),
 			OnNestedEditorChanged,
 			RaiseLayoutSizeChanged);
 
@@ -276,6 +276,13 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		{
 			InlineConstantSummaryFormatter.ApplyFoldableTitle(RightTitle, _rightFoldable, _rightEditor);
 		}
+	}
+
+	private Type[] GetConstrainedExpectedTypes(Type expectedType)
+	{
+		return NestedResolverEditorUtilities.ConstrainExpectedTypes(
+			GetAllowedExpectedTypes(expectedType),
+			GetFactoryExpectedTypes(expectedType));
 	}
 }
 #endif

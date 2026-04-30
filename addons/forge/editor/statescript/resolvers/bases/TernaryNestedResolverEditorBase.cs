@@ -52,11 +52,14 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		_graph = graph;
 		_onChanged = onChanged;
 		_firstFactories =
-			ResolverEditorFactoryCatalog.GetCompatibleFactories(GetFirstFactoryExpectedTypes(expectedType));
+			ResolverEditorFactoryCatalog.GetCompatibleFactories(
+				GetConstrainedExpectedTypes(GetFirstFactoryExpectedTypes(expectedType), expectedType));
 		_secondFactories =
-			ResolverEditorFactoryCatalog.GetCompatibleFactories(GetSecondFactoryExpectedTypes(expectedType));
+			ResolverEditorFactoryCatalog.GetCompatibleFactories(
+				GetConstrainedExpectedTypes(GetSecondFactoryExpectedTypes(expectedType), expectedType));
 		_thirdFactories =
-			ResolverEditorFactoryCatalog.GetCompatibleFactories(GetThirdFactoryExpectedTypes(expectedType));
+			ResolverEditorFactoryCatalog.GetCompatibleFactories(
+				GetConstrainedExpectedTypes(GetThirdFactoryExpectedTypes(expectedType), expectedType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -77,7 +80,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			FirstTitle,
 			_firstFactories,
 			existingResource?.First,
-			GetFirstFactoryExpectedTypes(expectedType),
+			GetConstrainedExpectedTypes(GetFirstFactoryExpectedTypes(expectedType), expectedType),
 			existingResource?.FirstFolded ?? true,
 			x => _firstEditor = x,
 			x => _firstFoldable = x);
@@ -87,7 +90,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			SecondTitle,
 			_secondFactories,
 			existingResource?.Second,
-			GetSecondFactoryExpectedTypes(expectedType),
+			GetConstrainedExpectedTypes(GetSecondFactoryExpectedTypes(expectedType), expectedType),
 			existingResource?.SecondFolded ?? true,
 			x => _secondEditor = x,
 			x => _secondFoldable = x);
@@ -97,7 +100,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			ThirdTitle,
 			_thirdFactories,
 			existingResource?.Third,
-			GetThirdFactoryExpectedTypes(expectedType),
+			GetConstrainedExpectedTypes(GetThirdFactoryExpectedTypes(expectedType), expectedType),
 			existingResource?.ThirdFolded ?? true,
 			x => _thirdEditor = x,
 			x => _thirdFoldable = x);
@@ -327,6 +330,13 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 				_thirdFoldable,
 				_thirdEditor);
 		}
+	}
+
+	private Type[] GetConstrainedExpectedTypes(Type[] candidateExpectedTypes, Type expectedType)
+	{
+		return NestedResolverEditorUtilities.ConstrainExpectedTypes(
+			GetAllowedExpectedTypes(expectedType),
+			candidateExpectedTypes);
 	}
 }
 #endif
