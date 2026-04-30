@@ -13,11 +13,18 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 internal static class InlineConstantSummaryFormatter
 {
 	private const string SummaryBadgeMetaKey = "forge_inline_summary_badge";
+	private const string SummaryBadgeInstanceIdMetaKey = "forge_inline_summary_badge_instance_id";
 	private const string SummaryBadgeResizeHookMetaKey = "forge_inline_summary_badge_resize_hook";
 	private const string SummaryBadgeKindMetaKey = "forge_inline_summary_badge_kind";
 	private const string SummaryBadgeTextMetaKey = "forge_inline_summary_badge_text";
-	private const string SummaryBadgeFoldableMetaKey = "forge_inline_summary_badge_foldable";
 	private const string SummaryBadgeSelectedVariableMetaKey = "forge_inline_summary_badge_selected_variable";
+
+	private const string SummaryBadgeSelectedSharedVariableSetPathMetaKey =
+		"forge_inline_summary_badge_selected_shared_set_path";
+
+	private const string SummaryBadgeSelectedSharedVariableMetaKey =
+		"forge_inline_summary_badge_selected_shared_variable";
+
 	private const float MinimumBadgeWidth = 76f;
 	private const float FoldableTitleChromeWidth = 30f;
 	private const float FoldableTitleBadgeGap = 6f;
@@ -65,14 +72,22 @@ internal static class InlineConstantSummaryFormatter
 		string? summary,
 		InlineSummaryBadgeKind badgeKind,
 		bool isConstant = false,
-		string? highlightedVariableName = null)
+		string? highlightedVariableName = null,
+		string? highlightedSharedVariableSetPath = null,
+		string? highlightedSharedVariableName = null)
 	{
 		EnsureResizeSyncHook(foldable);
 		foldable.Title = baseTitle;
 
 		SummaryBadgeData badgeData = foldable.Folded && !string.IsNullOrWhiteSpace(summary)
-			? CreateBadgeData(summary, badgeKind, isConstant, highlightedVariableName)
-			: SummaryBadgeData.Hidden;
+			   ? CreateBadgeData(
+				   summary,
+				   badgeKind,
+				   isConstant,
+				   highlightedVariableName,
+				   highlightedSharedVariableSetPath,
+				   highlightedSharedVariableName)
+			   : SummaryBadgeData.Hidden;
 
 		PanelContainer badge = GetOrCreateSummaryBadge(foldable);
 		ConfigureSummaryBadge(badge, badgeData);
@@ -139,6 +154,13 @@ internal static class InlineConstantSummaryFormatter
 		};
 	}
 
+	internal static bool TryGetSummaryBadgeForHighlighting(
+		FoldableContainer foldable,
+		[NotNullWhen(true)] out PanelContainer? badge)
+	{
+		return TryGetSummaryBadge(foldable, out badge);
+	}
+
 	private static SummaryBadgeData GetBadgeData(FoldableContainer foldable, NodeEditorProperty? editor)
 	{
 		if (!foldable.Folded || editor is null)
@@ -147,10 +169,23 @@ internal static class InlineConstantSummaryFormatter
 		}
 
 		string? highlightedVariableName = null;
+		string? highlightedSharedVariableSetPath = null;
+		string? highlightedSharedVariableName = null;
+
 		if (editor.TryGetHighlightedVariableName(out string propagatedVariableName)
 			&& !string.IsNullOrWhiteSpace(propagatedVariableName))
 		{
 			highlightedVariableName = propagatedVariableName;
+		}
+
+		if (editor.TryGetHighlightedSharedVariable(
+			out string propagatedSharedVariableSetPath,
+			out string propagatedSharedVariableName)
+			&& !string.IsNullOrWhiteSpace(propagatedSharedVariableSetPath)
+			&& !string.IsNullOrWhiteSpace(propagatedSharedVariableName))
+		{
+			highlightedSharedVariableSetPath = propagatedSharedVariableSetPath;
+			highlightedSharedVariableName = propagatedSharedVariableName;
 		}
 
 		if (editor.TryGetInlineSummary(out string summary) && !string.IsNullOrWhiteSpace(summary))
@@ -160,25 +195,37 @@ internal static class InlineConstantSummaryFormatter
 				summary,
 				badgeKind,
 				IsConstantBadgeKind(badgeKind),
-				highlightedVariableName);
+				highlightedVariableName,
+				highlightedSharedVariableSetPath,
+				highlightedSharedVariableName);
 		}
 
 		return string.IsNullOrWhiteSpace(editor.DisplayName)
 			? SummaryBadgeData.Hidden
-			: CreateBadgeData(editor.DisplayName, InlineSummaryBadgeKind.Resolver, false, highlightedVariableName);
+			: CreateBadgeData(
+				editor.DisplayName,
+				InlineSummaryBadgeKind.Resolver,
+				false,
+				highlightedVariableName,
+				highlightedSharedVariableSetPath,
+				highlightedSharedVariableName);
 	}
 
 	private static SummaryBadgeData CreateBadgeData(
 		string text,
 		InlineSummaryBadgeKind badgeKind,
 		bool isConstant,
-		string? highlightedVariableName = null)
+		string? highlightedVariableName = null,
+		string? highlightedSharedVariableSetPath = null,
+		string? highlightedSharedVariableName = null)
 	{
 		BadgeVisualStyle style = GetBadgeStyle(badgeKind);
 		return new SummaryBadgeData(
 			GetBadgeIcon(badgeKind, isConstant),
 			text,
 			highlightedVariableName ?? string.Empty,
+			highlightedSharedVariableSetPath ?? string.Empty,
+			highlightedSharedVariableName ?? string.Empty,
 			badgeKind,
 			isConstant,
 			style.IconColor,
@@ -196,11 +243,11 @@ internal static class InlineConstantSummaryFormatter
 
 		var badge = new PanelContainer
 		{
+			Name = "InlineSummaryBadge",
 			Visible = false,
 			MouseFilter = Control.MouseFilterEnum.Ignore,
 			SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
 		};
-		badge.SetMeta(SummaryBadgeFoldableMetaKey, Variant.From(foldable));
 
 		var row = new HBoxContainer
 		{
@@ -233,7 +280,8 @@ internal static class InlineConstantSummaryFormatter
 		row.AddChild(textLabel);
 
 		foldable.AddTitleBarControl(badge);
-		foldable.SetMeta(SummaryBadgeMetaKey, Variant.From(badge));
+		foldable.SetMeta(SummaryBadgeMetaKey, Variant.From(true));
+		foldable.SetMeta(SummaryBadgeInstanceIdMetaKey, Variant.From((long)badge.GetInstanceId()));
 		return badge;
 	}
 
@@ -262,7 +310,15 @@ internal static class InlineConstantSummaryFormatter
 
 		badge.SetMeta(SummaryBadgeKindMetaKey, Variant.From((int)badgeData.BadgeKind));
 		badge.SetMeta(SummaryBadgeTextMetaKey, Variant.From(badgeData.Text));
-		badge.SetMeta("forge_inline_summary_badge_highlight_variable", Variant.From(badgeData.HighlightVariableName));
+		badge.SetMeta(
+			"forge_inline_summary_badge_highlight_variable",
+			Variant.From(badgeData.HighlightVariableName));
+		badge.SetMeta(
+			"forge_inline_summary_badge_highlight_shared_set_path",
+			Variant.From(badgeData.HighlightSharedVariableSetPath));
+		badge.SetMeta(
+			"forge_inline_summary_badge_highlight_shared_variable",
+			Variant.From(badgeData.HighlightSharedVariableName));
 
 		StyleBoxFlat styleBox = new()
 		{
@@ -316,6 +372,30 @@ internal static class InlineConstantSummaryFormatter
 				textLabel.AddThemeColorOverride("font_color", Colors.Black);
 			}
 		}
+
+		if (badge.HasMeta(SummaryBadgeSelectedSharedVariableSetPathMetaKey)
+			&& badge.HasMeta(SummaryBadgeSelectedSharedVariableMetaKey))
+		{
+			string selectedSharedVariableSetPath = badge.GetMeta(SummaryBadgeSelectedSharedVariableSetPathMetaKey)
+				.AsString();
+			string selectedSharedVariableName = badge.GetMeta(SummaryBadgeSelectedSharedVariableMetaKey)
+				.AsString();
+
+			if (!string.IsNullOrEmpty(selectedSharedVariableSetPath)
+				&& !string.IsNullOrEmpty(selectedSharedVariableName)
+				&& selectedSharedVariableSetPath == badgeData.HighlightSharedVariableSetPath
+				&& selectedSharedVariableName == badgeData.HighlightSharedVariableName)
+			{
+				styleBox.BorderWidthLeft = Math.Max(styleBox.BorderWidthLeft, 2);
+				styleBox.BorderWidthTop = Math.Max(styleBox.BorderWidthTop, 2);
+				styleBox.BorderWidthRight = Math.Max(styleBox.BorderWidthRight, 2);
+				styleBox.BorderWidthBottom = Math.Max(styleBox.BorderWidthBottom, 2);
+				styleBox.BorderColor = new Color(0x56b6c2ff);
+				styleBox.BgColor = new Color(0x56b6c2ff);
+				iconLabel.AddThemeColorOverride("font_color", Colors.Black);
+				textLabel.AddThemeColorOverride("font_color", Colors.Black);
+			}
+		}
 	}
 
 	private static float MeasureWidestBadgeIconWidth(Label label)
@@ -332,19 +412,25 @@ internal static class InlineConstantSummaryFormatter
 	private static bool TryGetSummaryBadge(FoldableContainer foldable, [NotNullWhen(true)] out PanelContainer? badge)
 	{
 		badge = null;
-		if (!foldable.HasMeta(SummaryBadgeMetaKey))
+		if (!foldable.HasMeta(SummaryBadgeMetaKey) || !foldable.HasMeta(SummaryBadgeInstanceIdMetaKey))
 		{
 			return false;
 		}
 
-		Variant existing = foldable.GetMeta(SummaryBadgeMetaKey);
-		if (existing.Obj is not PanelContainer existingBadge || !GodotObject.IsInstanceValid(existingBadge))
+		ulong badgeInstanceId = (ulong)foldable.GetMeta(SummaryBadgeInstanceIdMetaKey).AsInt64();
+		if (badgeInstanceId == 0)
 		{
 			return false;
 		}
 
-		badge = existingBadge;
-		return true;
+		if (GodotObject.InstanceFromId(badgeInstanceId) is PanelContainer existingBadge
+			&& GodotObject.IsInstanceValid(existingBadge))
+		{
+			badge = existingBadge;
+			return true;
+		}
+
+		return false;
 	}
 
 	private static void SynchronizeSiblingBadgeWidths(FoldableContainer foldable)
@@ -462,7 +548,7 @@ internal static class InlineConstantSummaryFormatter
 			-1,
 			fontSize,
 			TextServer.JustificationFlag.None,
-			TextServer.Direction.Inherited,
+			TextServer.Direction.Auto,
 			TextServer.Orientation.Horizontal).X;
 	}
 
@@ -500,7 +586,7 @@ internal static class InlineConstantSummaryFormatter
 			-1,
 			fontSize,
 			TextServer.JustificationFlag.None,
-			TextServer.Direction.Inherited,
+			TextServer.Direction.Auto,
 			TextServer.Orientation.Horizontal).X;
 	}
 
@@ -521,7 +607,8 @@ internal static class InlineConstantSummaryFormatter
 
 	private static string FormatPlane(Plane value)
 	{
-		return $"({FormatNumber(value.Normal.X)}, {FormatNumber(value.Normal.Y)}, {FormatNumber(value.Normal.Z)}, {FormatNumber(value.D)})";
+		return $"({FormatNumber(value.Normal.X)}, {FormatNumber(value.Normal.Y)}, {FormatNumber(value.Normal.Z)}, " +
+			$"{FormatNumber(value.D)})";
 	}
 
 	private static string FormatQuaternion(Quaternion value)
@@ -543,6 +630,8 @@ internal static class InlineConstantSummaryFormatter
 		string IconText,
 		string Text,
 		string HighlightVariableName,
+		string HighlightSharedVariableSetPath,
+		string HighlightSharedVariableName,
 		InlineSummaryBadgeKind BadgeKind,
 		bool IsConstant,
 		Color IconColor,
@@ -551,6 +640,8 @@ internal static class InlineConstantSummaryFormatter
 		bool Visible)
 	{
 		public static SummaryBadgeData Hidden => new(
+			string.Empty,
+			string.Empty,
 			string.Empty,
 			string.Empty,
 			string.Empty,

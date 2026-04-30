@@ -105,6 +105,19 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 		return false;
 	}
 
+	public override bool TryGetHighlightedSharedVariable(out string sharedVariableSetPath, out string variableName)
+	{
+		if (_operandEditor is not null
+			&& _operandEditor.TryGetHighlightedSharedVariable(out sharedVariableSetPath, out variableName))
+		{
+			return true;
+		}
+
+		sharedVariableSetPath = string.Empty;
+		variableName = string.Empty;
+		return false;
+	}
+
 	protected virtual Type[] GetFactoryExpectedTypes(Type expectedType)
 	{
 		return FactoryExpectedTypes;

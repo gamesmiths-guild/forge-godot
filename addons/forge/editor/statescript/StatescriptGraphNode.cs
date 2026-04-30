@@ -44,6 +44,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private bool _resizeConnected;
 	private float _widthBeforeResize;
 	private string? _highlightedVariableName;
+	private string? _highlightedSharedVariableSetPath;
+	private string? _highlightedSharedVariableName;
 	private bool _isHighlighted;
 
 	/// <summary>
@@ -81,9 +83,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	public void SetHighlightedVariable(string? variableName)
 	{
 		_highlightedVariableName = variableName;
-		_isHighlighted = !string.IsNullOrEmpty(variableName) && ReferencesVariable(variableName);
-		ApplyHighlightBorder();
-		UpdateChildHighlights();
+		RefreshHighlightState();
+	}
+
+	public void SetHighlightedSharedVariable(string? sharedVariableSetPath, string? variableName)
+	{
+		_highlightedSharedVariableSetPath = sharedVariableSetPath;
+		_highlightedSharedVariableName = variableName;
+		RefreshHighlightState();
 	}
 
 	/// <summary>
@@ -122,6 +129,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		{
 			SetupNodeByType(resource.NodeType);
 			ApplyBottomPadding();
+			RefreshHighlightState();
 			return;
 		}
 
@@ -136,6 +144,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		ApplyBottomPadding();
+		RefreshHighlightState();
 	}
 
 	public void OnBeforeSerialize()
@@ -614,6 +623,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		Initialize(NodeResource, _graph);
 		_undoRedo = savedUndoRedo;
 		Size = new Vector2(Size.X, 0);
+	}
+
+	private void RefreshHighlightState()
+	{
+		_isHighlighted = (!string.IsNullOrEmpty(_highlightedVariableName) && ReferencesVariable(_highlightedVariableName))
+			|| ReferencesSharedVariable(_highlightedSharedVariableSetPath, _highlightedSharedVariableName);
+		ApplyHighlightBorder();
+		UpdateChildHighlights();
 	}
 
 	private StatescriptNodeProperty? FindBinding(

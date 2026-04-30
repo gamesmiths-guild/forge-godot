@@ -91,6 +91,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		});
 
 		_variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_variableDropdown.SetMeta("is_shared_variable_dropdown", true);
 		PopulateVariableDropdown();
 		varRow.AddChild(_variableDropdown);
 
@@ -122,6 +123,20 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 	public override InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
 	{
 		return InlineSummaryBadgeKind.SharedVariable;
+	}
+
+	public override bool TryGetHighlightedVariableName(out string variableName)
+	{
+		variableName = string.Empty;
+		return false;
+	}
+
+	public override bool TryGetHighlightedSharedVariable(out string sharedVariableSetPath, out string variableName)
+	{
+		sharedVariableSetPath = _selectedSetPath;
+		variableName = _selectedVariableName;
+		return !string.IsNullOrWhiteSpace(sharedVariableSetPath)
+			&& !string.IsNullOrWhiteSpace(variableName);
 	}
 
 	/// <inheritdoc/>
@@ -259,6 +274,8 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		{
 			return;
 		}
+
+		_variableDropdown.SetMeta("shared_variable_set_path", _selectedSetPath);
 
 		_variableDropdown.Clear();
 		_variableNames.Clear();

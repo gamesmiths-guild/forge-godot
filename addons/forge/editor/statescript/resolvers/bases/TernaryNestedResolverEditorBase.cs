@@ -148,6 +148,31 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		return false;
 	}
 
+	public override bool TryGetHighlightedSharedVariable(out string sharedVariableSetPath, out string variableName)
+	{
+		if (_firstEditor is not null
+			&& _firstEditor.TryGetHighlightedSharedVariable(out sharedVariableSetPath, out variableName))
+		{
+			return true;
+		}
+
+		if (_secondEditor is not null
+			&& _secondEditor.TryGetHighlightedSharedVariable(out sharedVariableSetPath, out variableName))
+		{
+			return true;
+		}
+
+		if (_thirdEditor is not null
+			&& _thirdEditor.TryGetHighlightedSharedVariable(out sharedVariableSetPath, out variableName))
+		{
+			return true;
+		}
+
+		sharedVariableSetPath = string.Empty;
+		variableName = string.Empty;
+		return false;
+	}
+
 	protected virtual Type[] GetFirstFactoryExpectedTypes(Type expectedType)
 	{
 		return FirstFactoryExpectedTypes;

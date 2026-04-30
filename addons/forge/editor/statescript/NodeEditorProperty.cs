@@ -89,6 +89,19 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	}
 
 	/// <summary>
+	/// Tries to provide the shared-variable identity represented by this editor or one of its nested editors for
+	/// highlight propagation in folded summaries.
+	/// </summary>
+	/// <param name="sharedVariableSetPath">The shared-variable set path, when available.</param>
+	/// <param name="variableName">The shared variable name, when available.</param>
+	public virtual bool TryGetHighlightedSharedVariable(out string sharedVariableSetPath, out string variableName)
+	{
+		sharedVariableSetPath = string.Empty;
+		variableName = string.Empty;
+		return false;
+	}
+
+	/// <summary>
 	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
 	/// serialized or freed.
 	/// </summary>

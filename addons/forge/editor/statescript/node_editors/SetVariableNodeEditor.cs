@@ -451,6 +451,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		});
 
 		_sharedVarDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_sharedVarDropdown.SetMeta("is_shared_variable_dropdown", true);
 		PopulateSharedVariableDropdown();
 		varRow.AddChild(_sharedVarDropdown);
 
@@ -504,6 +505,8 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		{
 			return;
 		}
+
+		_sharedVarDropdown.SetMeta("shared_variable_set_path", _selectedSetPath);
 
 		_sharedVarDropdown.Clear();
 		_variableNames.Clear();
@@ -824,6 +827,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	{
 		SetFoldStateWithUndo(ScopeFoldKey, folded);
 		UpdateScopeFoldableTitle();
+		RaisePropertyBindingChanged();
 		ResetSize();
 	}
 
@@ -836,6 +840,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			UpdateTargetFoldableTitle(_cachedTypeInfo.OutputVariablesInfo[0].Label);
 		}
 
+		RaisePropertyBindingChanged();
 		ResetSize();
 	}
 
@@ -871,13 +876,17 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		string highlightedVariableName = !_isSharedScope
 			? summary
 			: string.Empty;
+		string highlightedSharedVariableSetPath = _isSharedScope ? _selectedSetPath : string.Empty;
+		string highlightedSharedVariableName = _isSharedScope ? summary : string.Empty;
 
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(
 			$"{label}:",
 			_targetFoldable,
 			string.IsNullOrWhiteSpace(summary) ? "(None)" : summary,
 			badgeKind,
-			highlightedVariableName: highlightedVariableName);
+			highlightedVariableName: highlightedVariableName,
+			highlightedSharedVariableSetPath: highlightedSharedVariableSetPath,
+			highlightedSharedVariableName: highlightedSharedVariableName);
 	}
 
 	private string GetSelectedGraphVariableName()

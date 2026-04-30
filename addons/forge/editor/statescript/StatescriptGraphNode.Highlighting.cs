@@ -13,6 +13,11 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 public partial class StatescriptGraphNode
 {
+	private readonly Dictionary<OptionButton, StyleBoxFlat> _baseDropdownStyles = [];
+
+	private StyleBoxFlat? _basePanelStyle;
+	private StyleBoxFlat? _baseSelectedPanelStyle;
+
 	private static bool ResolverReferencesVariable(StatescriptResolverResource? resolver, string variableName)
 	{
 		if (resolver is null || string.IsNullOrEmpty(variableName))
@@ -58,6 +63,62 @@ public partial class StatescriptGraphNode
 		return false;
 	}
 
+	private static bool ResolverReferencesSharedVariable(
+		StatescriptResolverResource? resolver,
+		string sharedVariableSetPath,
+		string variableName)
+	{
+		if (resolver is null
+			|| string.IsNullOrEmpty(sharedVariableSetPath)
+			|| string.IsNullOrEmpty(variableName))
+		{
+			return false;
+		}
+
+		var visited = new HashSet<nint>();
+		return ResolverReferencesSharedVariableRecursive(resolver, sharedVariableSetPath, variableName, visited);
+	}
+
+	private static bool ResolverReferencesSharedVariableRecursive(
+		StatescriptResolverResource resolver,
+		string sharedVariableSetPath,
+		string variableName,
+		HashSet<nint> visited)
+	{
+		nint instanceId = (nint)resolver.GetInstanceId();
+		if (!visited.Add(instanceId))
+		{
+			return false;
+		}
+
+		if (resolver is SharedVariableResolverResource sharedVariableResolver
+			&& string.Equals(sharedVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
+			&& string.Equals(sharedVariableResolver.VariableName, variableName, StringComparison.Ordinal))
+		{
+			return true;
+		}
+
+		foreach (PropertyInfo property in resolver.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+		{
+			if (!property.CanRead || !typeof(StatescriptResolverResource).IsAssignableFrom(property.PropertyType))
+			{
+				continue;
+			}
+
+			if (property.GetValue(resolver) is StatescriptResolverResource nestedResolver
+				&& ResolverReferencesSharedVariableRecursive(
+					nestedResolver,
+					sharedVariableSetPath,
+					variableName,
+					visited))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private bool ReferencesVariable(string variableName)
 	{
 		if (NodeResource is null)
@@ -68,23 +129,37 @@ public partial class StatescriptGraphNode
 		return NodeResource.PropertyBindings.Any(binding => ResolverReferencesVariable(binding.Resolver, variableName));
 	}
 
+	private bool ReferencesSharedVariable(string? sharedVariableSetPath, string? variableName)
+	{
+		if (NodeResource is null
+			|| string.IsNullOrEmpty(sharedVariableSetPath)
+			|| string.IsNullOrEmpty(variableName))
+		{
+			return false;
+		}
+
+		return NodeResource.PropertyBindings.Any(binding =>
+			ResolverReferencesSharedVariable(binding.Resolver, sharedVariableSetPath, variableName));
+	}
+
 	private void ApplyHighlightBorder()
 	{
+		EnsureBasePanelStylesStored();
+
+		if (_basePanelStyle is null || _baseSelectedPanelStyle is null)
+		{
+			return;
+		}
+
 		if (_isHighlighted)
 		{
-			if (GetThemeStylebox("panel") is not StyleBoxFlat baseStyle)
-			{
-				return;
-			}
-
+			StyleBoxFlat baseStyle = _basePanelStyle;
 			var highlightStyle = (StyleBoxFlat)baseStyle.Duplicate();
-
 			highlightStyle.BorderColor = _highlightColor;
 			highlightStyle.BorderWidthTop = 2;
 			highlightStyle.BorderWidthBottom = 2;
 			highlightStyle.BorderWidthLeft = 2;
 			highlightStyle.BorderWidthRight = 2;
-
 			highlightStyle.BgColor = baseStyle.BgColor.Lerp(_highlightColor, 0.15f);
 
 			AddThemeStyleboxOverride("panel", highlightStyle);
@@ -92,10 +167,8 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			RemoveThemeStyleboxOverride("panel");
-			RemoveThemeStyleboxOverride("panel_selected");
-
-			ApplyBottomPadding();
+			AddThemeStyleboxOverride("panel", (StyleBoxFlat)_basePanelStyle.Duplicate());
+			AddThemeStyleboxOverride("panel_selected", (StyleBoxFlat)_baseSelectedPanelStyle.Duplicate());
 		}
 	}
 
@@ -131,55 +204,92 @@ public partial class StatescriptGraphNode
 
 	private void HighlightFoldableSummaryBadgeIfPresent(FoldableContainer foldable)
 	{
-		if (!foldable.HasMeta("forge_inline_summary_badge"))
+		if (!InlineConstantSummaryFormatter.TryGetSummaryBadgeForHighlighting(foldable, out PanelContainer? badge))
 		{
 			return;
 		}
 
-		if (foldable.GetMeta("forge_inline_summary_badge").Obj is PanelContainer badge
-			&& IsInstanceValid(badge))
-		{
-			HighlightSummaryBadgeIfMatches(badge);
-		}
+		HighlightSummaryBadgeIfMatches(badge);
 	}
 
 	private void HighlightOptionButtonIfMatches(OptionButton dropdown)
 	{
-		if (!dropdown.HasMeta("is_variable_dropdown"))
+		EnsureBaseDropdownStyleStored(dropdown);
+
+		if (!dropdown.HasMeta("is_variable_dropdown") && !dropdown.HasMeta("is_shared_variable_dropdown"))
 		{
 			return;
 		}
 
-		if (string.IsNullOrEmpty(_highlightedVariableName))
+		if (!_baseDropdownStyles.TryGetValue(dropdown, out StyleBoxFlat? baseStyle))
 		{
-			dropdown.RemoveThemeStyleboxOverride("normal");
 			return;
 		}
 
-		var selectedIdx = dropdown.Selected;
+		if (string.IsNullOrEmpty(_highlightedVariableName)
+			&& (string.IsNullOrEmpty(_highlightedSharedVariableSetPath)
+				|| string.IsNullOrEmpty(_highlightedSharedVariableName)))
+		{
+			dropdown.AddThemeStyleboxOverride("normal", (StyleBoxFlat)baseStyle.Duplicate());
+			return;
+		}
+
+		int selectedIdx = dropdown.Selected;
 		if (selectedIdx < 0)
 		{
-			dropdown.RemoveThemeStyleboxOverride("normal");
+			dropdown.AddThemeStyleboxOverride("normal", (StyleBoxFlat)baseStyle.Duplicate());
 			return;
 		}
 
-		var selectedText = dropdown.GetItemText(selectedIdx);
-		if (selectedText == _highlightedVariableName)
+		string selectedText = dropdown.GetItemText(selectedIdx);
+		bool isSharedVariableDropdown = dropdown.HasMeta("is_shared_variable_dropdown");
+		string dropdownSetPath = dropdown.HasMeta("shared_variable_set_path")
+			? dropdown.GetMeta("shared_variable_set_path").AsString()
+			: string.Empty;
+
+		bool isMatch = isSharedVariableDropdown
+			? !string.IsNullOrEmpty(_highlightedSharedVariableSetPath)
+				&& !string.IsNullOrEmpty(_highlightedSharedVariableName)
+				&& selectedText == _highlightedSharedVariableName
+				&& dropdownSetPath == _highlightedSharedVariableSetPath
+			: selectedText == _highlightedVariableName;
+
+		if (isMatch)
 		{
-			if (dropdown.GetThemeStylebox("normal") is not StyleBoxFlat baseStyle)
-			{
-				return;
-			}
-
 			var highlightStyle = (StyleBoxFlat)baseStyle.Duplicate();
-
 			highlightStyle.BgColor = baseStyle.BgColor.Lerp(_highlightColor, 0.25f);
-
 			dropdown.AddThemeStyleboxOverride("normal", highlightStyle);
 		}
 		else
 		{
-			dropdown.RemoveThemeStyleboxOverride("normal");
+			dropdown.AddThemeStyleboxOverride("normal", (StyleBoxFlat)baseStyle.Duplicate());
+		}
+	}
+
+	private void EnsureBasePanelStylesStored()
+	{
+		if (_basePanelStyle is null && GetThemeStylebox("panel") is StyleBoxFlat panelStyle)
+		{
+			_basePanelStyle = (StyleBoxFlat)panelStyle.Duplicate();
+		}
+
+		if (_baseSelectedPanelStyle is null
+			&& GetThemeStylebox("panel_selected") is StyleBoxFlat selectedPanelStyle)
+		{
+			_baseSelectedPanelStyle = (StyleBoxFlat)selectedPanelStyle.Duplicate();
+		}
+	}
+
+	private void EnsureBaseDropdownStyleStored(OptionButton dropdown)
+	{
+		if (_baseDropdownStyles.ContainsKey(dropdown))
+		{
+			return;
+		}
+
+		if (dropdown.GetThemeStylebox("normal") is StyleBoxFlat baseStyle)
+		{
+			_baseDropdownStyles[dropdown] = (StyleBoxFlat)baseStyle.Duplicate();
 		}
 	}
 
@@ -211,7 +321,7 @@ public partial class StatescriptGraphNode
 	private void HighlightSummaryBadgeIfMatches(PanelContainer badge)
 	{
 		if (badge.GetNodeOrNull<Label>("Row/Text") is not Label textLabel
-			  || badge.GetNodeOrNull<Label>("Row/Icon") is not Label iconLabel)
+			|| badge.GetNodeOrNull<Label>("Row/Icon") is not Label iconLabel)
 		{
 			return;
 		}
@@ -231,14 +341,31 @@ public partial class StatescriptGraphNode
 		string propagatedVariableName = badge.HasMeta("forge_inline_summary_badge_highlight_variable")
 			? badge.GetMeta("forge_inline_summary_badge_highlight_variable").AsString()
 			: string.Empty;
+		string propagatedSharedVariableName = badge.HasMeta("forge_inline_summary_badge_highlight_shared_variable")
+			? badge.GetMeta("forge_inline_summary_badge_highlight_shared_variable").AsString()
+			: string.Empty;
+		string propagatedSharedVariableSetPath = badge.HasMeta("forge_inline_summary_badge_highlight_shared_set_path")
+			? badge.GetMeta("forge_inline_summary_badge_highlight_shared_set_path").AsString()
+			: string.Empty;
 
 		bool isMatch = !string.IsNullOrEmpty(_highlightedVariableName)
 			&& (textLabel.Text == _highlightedVariableName
 				|| propagatedVariableName == _highlightedVariableName);
 
+		isMatch = isMatch
+			|| (!string.IsNullOrEmpty(_highlightedSharedVariableSetPath)
+				&& !string.IsNullOrEmpty(_highlightedSharedVariableName)
+				&& (textLabel.Text == _highlightedSharedVariableName
+					|| propagatedSharedVariableName == _highlightedSharedVariableName)
+				&& propagatedSharedVariableSetPath == _highlightedSharedVariableSetPath);
+
+		badge.SetMeta("forge_inline_summary_badge_selected_variable", Variant.From(_highlightedVariableName ?? string.Empty));
 		badge.SetMeta(
-			"forge_inline_summary_badge_selected_variable",
-			Variant.From(_highlightedVariableName ?? string.Empty));
+			"forge_inline_summary_badge_selected_shared_set_path",
+			Variant.From(_highlightedSharedVariableSetPath ?? string.Empty));
+		badge.SetMeta(
+			"forge_inline_summary_badge_selected_shared_variable",
+			Variant.From(_highlightedSharedVariableName ?? string.Empty));
 
 		var style = (StyleBoxFlat)storedBase.Duplicate();
 		if (isMatch)

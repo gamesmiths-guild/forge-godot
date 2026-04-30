@@ -148,6 +148,25 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		return false;
 	}
 
+	public override bool TryGetHighlightedSharedVariable(out string sharedVariableSetPath, out string variableName)
+	{
+		if (_leftEditor is not null
+			&& _leftEditor.TryGetHighlightedSharedVariable(out sharedVariableSetPath, out variableName))
+		{
+			return true;
+		}
+
+		if (_rightEditor is not null
+			&& _rightEditor.TryGetHighlightedSharedVariable(out sharedVariableSetPath, out variableName))
+		{
+			return true;
+		}
+
+		sharedVariableSetPath = string.Empty;
+		variableName = string.Empty;
+		return false;
+	}
+
 	protected virtual Type[] GetFactoryExpectedTypes(Type expectedType)
 	{
 		return FactoryExpectedTypes;

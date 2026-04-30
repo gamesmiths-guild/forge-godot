@@ -58,6 +58,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private string[]? _serializedConnections;
 	private int[]? _serializedConnectionCounts;
 	private bool _persistedVariablesPanelVisible = true;
+	private bool _sharedVariableHighlightSubscribed;
 
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
@@ -94,11 +95,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
 
 		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		SubscribeSharedVariableHighlightState();
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		UnsubscribeSharedVariableHighlightState();
 
 		ClearGraphEditor();
 		_openTabs.Clear();
@@ -114,6 +117,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	public void OnBeforeSerialize()
 	{
+		UnsubscribeSharedVariableHighlightState();
+
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
 			== true)
 		{
@@ -177,6 +182,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		ConnectUISignals();
+		SubscribeSharedVariableHighlightState();
 
 		if (_serializedTabPaths?.Length > 0)
 		{
@@ -933,6 +939,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_graphEdit.AddChild(graphNode);
 			graphNode.Initialize(nodeResource, graph);
 			graphNode.SetUndoRedo(_undoRedo);
+			graphNode.PropertyBindingChanged += OnGraphNodePropertyBindingChanged;
 		}
 
 		foreach (StatescriptConnection connection in graph.Connections)
@@ -943,6 +950,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				connection.ToNode,
 				connection.InputPort);
 		}
+
+		ReapplyCurrentNodeHighlights();
 
 		_isLoadingGraph = wasLoading;
 
@@ -975,6 +984,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			if (node is StatescriptGraphNode graphNode)
 			{
+				graphNode.PropertyBindingChanged -= OnGraphNodePropertyBindingChanged;
 				graphNode.OnBeforeSerialize();
 			}
 
@@ -1216,18 +1226,113 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_openTabs[current].SelectedVariableName = variableName;
 		}
 
+		if (!string.IsNullOrEmpty(variableName))
+		{
+			SharedVariableHighlightState.SetSelection(null, null);
+		}
+
+		ReapplyCurrentNodeHighlights();
+	}
+
+	private void OnGraphNodePropertyBindingChanged()
+	{
+		ReapplyCurrentNodeHighlights();
+	}
+
+	private void SubscribeSharedVariableHighlightState()
+	{
+		if (_sharedVariableHighlightSubscribed)
+		{
+			return;
+		}
+
+		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
+		_sharedVariableHighlightSubscribed = true;
+	}
+
+	private void UnsubscribeSharedVariableHighlightState()
+	{
+		if (!_sharedVariableHighlightSubscribed)
+		{
+			return;
+		}
+
+		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
+		_sharedVariableHighlightSubscribed = false;
+	}
+
+	private void OnSharedVariableHighlightChanged()
+	{
+		if (SharedVariableHighlightState.HasAnySelection())
+		{
+			ClearGraphVariableSelections();
+			return;
+		}
+
+		ApplySharedVariableHighlightToNodes();
+	}
+
+	private void ApplySharedVariableHighlightToNodes()
+	{
 		if (_graphEdit is null)
 		{
 			return;
+		}
+
+		bool hasSelection = SharedVariableHighlightState.TryGetActiveSelection(
+			out string sharedVariableSetPath,
+			out string sharedVariableName);
+
+		foreach (Node child in _graphEdit.GetChildren())
+		{
+			if (child is StatescriptGraphNode graphNode)
+			{
+				graphNode.SetHighlightedSharedVariable(
+					hasSelection ? sharedVariableSetPath : null,
+					hasSelection ? sharedVariableName : null);
+			}
+		}
+	}
+
+	private void ReapplyCurrentNodeHighlights()
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		string? selectedVariableName = null;
+		int current = _tabBar?.CurrentTab ?? -1;
+		if (current >= 0 && current < _openTabs.Count)
+		{
+			selectedVariableName = _openTabs[current].SelectedVariableName;
 		}
 
 		foreach (Node child in _graphEdit.GetChildren())
 		{
 			if (child is StatescriptGraphNode graphNode)
 			{
-				graphNode.SetHighlightedVariable(variableName);
+				graphNode.SetHighlightedVariable(selectedVariableName);
 			}
 		}
+
+		ApplySharedVariableHighlightToNodes();
+	}
+
+	private void ClearGraphVariableSelections()
+	{
+		for (int i = 0; i < _openTabs.Count; i++)
+		{
+			_openTabs[i].SelectedVariableName = null;
+		}
+
+		if (_variablePanel is not null)
+		{
+			_variablePanel.ClearSelectedVariable();
+			return;
+		}
+
+		ReapplyCurrentNodeHighlights();
 	}
 
 	private void EnsureVariablesPanelVisible()
