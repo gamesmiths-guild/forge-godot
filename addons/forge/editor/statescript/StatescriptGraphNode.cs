@@ -444,6 +444,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		UpdateInputPropertyFoldableTitles();
+		RefreshHighlightState();
 
 		ResetSize();
 	}
