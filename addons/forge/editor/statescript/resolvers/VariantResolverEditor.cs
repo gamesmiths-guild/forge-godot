@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -23,9 +24,11 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	private GodotVariant _currentValue;
 	private Array<GodotVariant> _arrayValues = [];
 	private Action? _onChanged;
+	private StatescriptVariableType[] _allowedValueTypes = [];
 
 	private Button? _toggleButton;
 	private VBoxContainer? _elementsContainer;
+	private VBoxContainer? _contentContainer;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Constant";
@@ -49,15 +52,16 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	{
 		_isArray = isArray;
 		_onChanged = onChanged;
+		_allowedValueTypes = ResolveAllowedValueTypes(expectedType);
 
-		if (!StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _valueType))
-		{
-			_valueType = StatescriptVariableType.Int;
-		}
+		_valueType = GetDefaultValueType(expectedType);
 
 		if (property?.Resolver is VariantResolverResource variantRes)
 		{
-			_valueType = variantRes.ValueType;
+			if (IsAllowedValueType(variantRes.ValueType))
+			{
+				_valueType = variantRes.ValueType;
+			}
 
 			if (_isArray)
 			{
@@ -80,16 +84,17 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 		CustomMinimumSize = new GodotVector2(200, 40);
 
-		if (_isArray)
+		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		AddChild(root);
+
+		if (_allowedValueTypes.Length > 1)
 		{
-			VBoxContainer arrayEditor = CreateArrayEditor();
-			AddChild(arrayEditor);
+			root.AddChild(CreateTypeRow());
 		}
-		else
-		{
-			Control valueEditor = CreateValueEditor();
-			AddChild(valueEditor);
-		}
+
+		_contentContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		root.AddChild(_contentContainer);
+		RebuildContent();
 	}
 
 	/// <inheritdoc/>
@@ -139,6 +144,77 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	{
 		base.ClearCallbacks();
 		_onChanged = null;
+	}
+
+	private void RebuildContent()
+	{
+		if (_contentContainer is null)
+		{
+			return;
+		}
+
+		foreach (Node child in _contentContainer.GetChildren())
+		{
+			_contentContainer.RemoveChild(child);
+			child.Free();
+		}
+
+		if (_isArray)
+		{
+			_contentContainer.AddChild(CreateArrayEditor());
+		}
+		else
+		{
+			_contentContainer.AddChild(CreateValueEditor());
+		}
+	}
+
+	private HBoxContainer CreateTypeRow()
+	{
+		var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		row.AddChild(new Label
+		{
+			Text = "Type:",
+			CustomMinimumSize = new GodotVector2(45, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+		});
+
+		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		for (int i = 0; i < _allowedValueTypes.Length; i++)
+		{
+			dropdown.AddItem(StatescriptVariableTypeConverter.GetDisplayName(_allowedValueTypes[i]));
+			if (_allowedValueTypes[i] == _valueType)
+			{
+				dropdown.Selected = i;
+			}
+		}
+
+		dropdown.ItemSelected += OnTypeDropdownItemSelected;
+		row.AddChild(dropdown);
+		return row;
+	}
+
+	private void OnTypeDropdownItemSelected(long index)
+	{
+		int selectedIndex = (int)index;
+
+		if (selectedIndex < 0 || selectedIndex >= _allowedValueTypes.Length)
+		{
+			return;
+		}
+
+		if (_valueType == _allowedValueTypes[selectedIndex])
+		{
+			return;
+		}
+
+		_valueType = _allowedValueTypes[selectedIndex];
+		ResetValuesForCurrentType();
+		RebuildContent();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
 	}
 
 	private Control CreateValueEditor()
@@ -375,6 +451,67 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		_onChanged?.Invoke();
 		RebuildArrayElements();
 		RaiseLayoutSizeChanged();
+	}
+
+	private StatescriptVariableType[] ResolveAllowedValueTypes(Type expectedType)
+	{
+		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(expectedType);
+		var result = new List<StatescriptVariableType>();
+
+		for (int i = 0; i < allowedExpectedTypes.Length; i++)
+		{
+			Type allowedType = allowedExpectedTypes[i];
+
+			if (StatescriptVariableTypeConverter.TryFromSystemType(allowedType, out StatescriptVariableType valueType)
+				&& !result.Contains(valueType))
+			{
+				result.Add(valueType);
+			}
+		}
+
+		return result.Count > 0 ? [.. result] : [StatescriptVariableType.Int];
+	}
+
+	private StatescriptVariableType GetDefaultValueType(Type expectedType)
+	{
+		if (_allowedValueTypes.Length > 0)
+		{
+			return _allowedValueTypes[0];
+		}
+
+		return StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out StatescriptVariableType valueType)
+			? valueType
+			: StatescriptVariableType.Int;
+	}
+
+	private bool IsAllowedValueType(StatescriptVariableType valueType)
+	{
+		for (int i = 0; i < _allowedValueTypes.Length; i++)
+		{
+			if (_allowedValueTypes[i] == valueType)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private void ResetValuesForCurrentType()
+	{
+		GodotVariant defaultValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(_valueType);
+
+		if (_isArray)
+		{
+			for (int i = 0; i < _arrayValues.Count; i++)
+			{
+				_arrayValues[i] = defaultValue;
+			}
+		}
+		else
+		{
+			_currentValue = defaultValue;
+		}
 	}
 
 	/// <summary>

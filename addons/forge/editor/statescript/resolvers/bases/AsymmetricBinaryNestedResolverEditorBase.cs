@@ -81,6 +81,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			_leftFactories,
 			GetSelectedIndex(_leftFactories, existingResource?.Left),
 			existingResource?.Left,
+			GetLeftFactoryExpectedTypes(expectedType),
 			GetLeftNestedExpectedType(expectedType),
 			_leftEditorContainer,
 			x => _leftEditor = x);
@@ -100,6 +101,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			_rightFactories,
 			GetSelectedIndex(_rightFactories, existingResource?.Right),
 			existingResource?.Right,
+			GetRightFactoryExpectedTypes(expectedType),
 			GetRightNestedExpectedType(expectedType),
 			_rightEditorContainer,
 			x => _rightEditor = x);
@@ -206,6 +208,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		HandleResolverDropdownChanged(
 			_leftFactories,
 			(int)index,
+			GetLeftFactoryExpectedTypes(_expectedType),
 			GetLeftNestedExpectedType(_expectedType),
 			_leftEditorContainer,
 			x => _leftEditor = x);
@@ -216,6 +219,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		HandleResolverDropdownChanged(
 			_rightFactories,
 			(int)index,
+			GetRightFactoryExpectedTypes(_expectedType),
 			GetRightNestedExpectedType(_expectedType),
 			_rightEditorContainer,
 			x => _rightEditor = x);
@@ -224,6 +228,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 	private void HandleResolverDropdownChanged(
 		List<Func<NodeEditorProperty>> factories,
 		int selectedIndex,
+		Type[] allowedExpectedTypes,
 		Type nestedExpectedType,
 		VBoxContainer? editorContainer,
 		Action<NodeEditorProperty?> setEditor)
@@ -240,7 +245,14 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		}
 
 		setEditor(null);
-		ShowNestedEditor(factories, selectedIndex, null, nestedExpectedType, editorContainer, setEditor);
+		ShowNestedEditor(
+			factories,
+			selectedIndex,
+			null,
+			allowedExpectedTypes,
+			nestedExpectedType,
+			editorContainer,
+			setEditor);
 		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
@@ -250,6 +262,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		List<Func<NodeEditorProperty>> factories,
 		int factoryIndex,
 		StatescriptResolverResource? existingResolver,
+		Type[] allowedExpectedTypes,
 		Type nestedExpectedType,
 		VBoxContainer? container,
 		Action<NodeEditorProperty?> setEditor)
@@ -260,6 +273,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		}
 
 		NodeEditorProperty editor = factories[factoryIndex]();
+		editor.ConfigureAllowedExpectedTypes(allowedExpectedTypes);
 		StatescriptNodeProperty? tempProperty = existingResolver is null
 			? null
 			: new StatescriptNodeProperty { Resolver = existingResolver };

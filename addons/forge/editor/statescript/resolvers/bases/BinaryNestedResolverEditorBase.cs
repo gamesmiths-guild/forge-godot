@@ -255,6 +255,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		}
 
 		NodeEditorProperty editor = _factories[factoryIndex]();
+		editor.ConfigureAllowedExpectedTypes(GetFactoryExpectedTypes(_expectedType));
 		StatescriptNodeProperty? tempProperty = existingResolver is null
 			? null
 			: new StatescriptNodeProperty { Resolver = existingResolver };

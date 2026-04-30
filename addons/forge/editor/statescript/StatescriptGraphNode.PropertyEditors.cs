@@ -320,6 +320,7 @@ public partial class StatescriptGraphNode
 		}
 
 		NodeEditorProperty resolverEditor = factory();
+		resolverEditor.ConfigureAllowedExpectedTypes(expectedType);
 
 		var key = new PropertySlotKey(direction, propertyIndex);
 

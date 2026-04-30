@@ -22,18 +22,12 @@ internal sealed partial class DistanceResolverEditor
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{
-		if (expectedType == typeof(ForgeVariant128))
+		if (expectedType == typeof(ForgeVariant128) || ResolverEditorCompatibility.IsFloatType(expectedType))
 		{
 			return [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(System.Numerics.Quaternion)];
 		}
-		else if (expectedType == typeof(float))
-		{
-			return [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(System.Numerics.Quaternion)];
-		}
-		else
-		{
-			return [expectedType];
-		}
+
+		return [expectedType];
 	}
 }
 #endif

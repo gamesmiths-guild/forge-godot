@@ -112,6 +112,19 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		return StatescriptVariableTypeConverter.IsCompatible(expectedType, variableType);
 	}
 
+	private static bool IsCompatibleType(Type[] expectedTypes, StatescriptVariableType variableType)
+	{
+		for (int i = 0; i < expectedTypes.Length; i++)
+		{
+			if (IsCompatibleType(expectedTypes[i], variableType))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private void OnDropdownItemSelected(long index)
 	{
 		if (_dropdown is null)
@@ -131,6 +144,8 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
+		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(expectedType);
+
 		_dropdown.Clear();
 		_variableNames.Clear();
 
@@ -144,7 +159,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 				continue;
 			}
 
-			if (!IsCompatibleType(expectedType, variable.VariableType))
+			if (!IsCompatibleType(allowedExpectedTypes, variable.VariableType))
 			{
 				continue;
 			}

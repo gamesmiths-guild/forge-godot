@@ -77,6 +77,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			FirstTitle,
 			_firstFactories,
 			existingResource?.First,
+			GetFirstFactoryExpectedTypes(expectedType),
 			GetFirstNestedExpectedType(expectedType),
 			existingResource?.FirstFolded ?? true,
 			x => _firstEditor = x,
@@ -87,6 +88,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			SecondTitle,
 			_secondFactories,
 			existingResource?.Second,
+			GetSecondFactoryExpectedTypes(expectedType),
 			GetSecondNestedExpectedType(expectedType),
 			existingResource?.SecondFolded ?? true,
 			x => _secondEditor = x,
@@ -97,6 +99,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			ThirdTitle,
 			_thirdFactories,
 			existingResource?.Third,
+			GetThirdFactoryExpectedTypes(expectedType),
 			GetThirdNestedExpectedType(expectedType),
 			existingResource?.ThirdFolded ?? true,
 			x => _thirdEditor = x,
@@ -227,6 +230,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		string title,
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
+		Type[] allowedExpectedTypes,
 		Type nestedExpectedType,
 		bool folded,
 		Action<NodeEditorProperty?> setEditor,
@@ -258,7 +262,14 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(editorContainer);
-		ShowNestedEditor(factories, selectedIndex, existingResolver, nestedExpectedType, editorContainer, setEditor);
+		ShowNestedEditor(
+			factories,
+			selectedIndex,
+			existingResolver,
+			allowedExpectedTypes,
+			nestedExpectedType,
+			editorContainer,
+			setEditor);
 
 		resolverDropdown.ItemSelected += index =>
 		{
@@ -269,7 +280,14 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			}
 
 			setEditor(null);
-			ShowNestedEditor(factories, (int)index, null, nestedExpectedType, editorContainer, setEditor);
+			ShowNestedEditor(
+				factories,
+				(int)index,
+				null,
+				allowedExpectedTypes,
+				nestedExpectedType,
+				editorContainer,
+				setEditor);
 			UpdateFoldableTitles();
 			_onChanged?.Invoke();
 			RaiseLayoutSizeChanged();
@@ -280,6 +298,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		List<Func<NodeEditorProperty>> factories,
 		int factoryIndex,
 		StatescriptResolverResource? existingResolver,
+		Type[] allowedExpectedTypes,
 		Type nestedExpectedType,
 		VBoxContainer container,
 		Action<NodeEditorProperty?> setEditor)
@@ -290,6 +309,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		}
 
 		NodeEditorProperty editor = factories[factoryIndex]();
+		editor.ConfigureAllowedExpectedTypes(allowedExpectedTypes);
 		StatescriptNodeProperty? tempProperty =
 			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, nestedExpectedType, OnNestedEditorChanged, false);

@@ -194,6 +194,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 		}
 
 		NodeEditorProperty editor = _factories[factoryIndex]();
+		editor.ConfigureAllowedExpectedTypes(GetFactoryExpectedTypes(_expectedType));
 		StatescriptNodeProperty? tempProperty = existingResolver is null
 			? null
 			: new StatescriptNodeProperty { Resolver = existingResolver };

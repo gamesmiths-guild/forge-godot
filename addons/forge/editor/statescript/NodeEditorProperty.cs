@@ -14,6 +14,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 internal abstract partial class NodeEditorProperty : PanelContainer
 {
+	private Type[] _allowedExpectedTypes = [];
+
 	/// <summary>
 	/// Gets the display name shown in the resolver type dropdown (e.g., "Variable", "Constant", "Attribute").
 	/// </summary>
@@ -57,6 +59,15 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	/// <see cref="GraphNode"/> can call <see cref="Control.ResetSize"/>.
 	/// </summary>
 	public event Action? LayoutSizeChanged;
+
+	/// <summary>
+	/// Configures the concrete input types allowed for this editor when the surrounding context accepts more than one.
+	/// </summary>
+	/// <param name="allowedExpectedTypes">The allowed expected types.</param>
+	public void ConfigureAllowedExpectedTypes(params Type[] allowedExpectedTypes)
+	{
+		_allowedExpectedTypes = allowedExpectedTypes;
+	}
 
 	/// <summary>
 	/// Tries to provide a short inline summary for the current editor state when embedded in a collapsed foldout.
@@ -116,6 +127,11 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	protected void RaiseLayoutSizeChanged()
 	{
 		LayoutSizeChanged?.Invoke();
+	}
+
+	protected Type[] GetAllowedExpectedTypes(Type fallbackExpectedType)
+	{
+		return _allowedExpectedTypes.Length > 0 ? _allowedExpectedTypes : [fallbackExpectedType];
 	}
 }
 #endif

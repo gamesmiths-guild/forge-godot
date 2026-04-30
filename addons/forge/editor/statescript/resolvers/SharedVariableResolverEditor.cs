@@ -151,6 +151,19 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		return StatescriptVariableTypeConverter.IsCompatible(expectedType, variableType);
 	}
 
+	private static bool IsCompatibleType(Type[] expectedTypes, StatescriptVariableType variableType)
+	{
+		for (int i = 0; i < expectedTypes.Length; i++)
+		{
+			if (IsCompatibleType(expectedTypes[i], variableType))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private static List<string> FindAllSharedVariableSetPaths()
 	{
 		var results = new List<string>();
@@ -283,6 +296,8 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		_variableDropdown.AddItem("(None)");
 		_variableNames.Add(string.Empty);
 
+		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(_expectedType);
+
 		if (!string.IsNullOrEmpty(_selectedSetPath) && ResourceLoader.Exists(_selectedSetPath))
 		{
 			ForgeSharedVariableSet? set = ResourceLoader.Load<ForgeSharedVariableSet>(_selectedSetPath);
@@ -296,7 +311,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 						continue;
 					}
 
-					if (!IsCompatibleType(_expectedType, def.VariableType))
+					if (!IsCompatibleType(allowedExpectedTypes, def.VariableType))
 					{
 						continue;
 					}
