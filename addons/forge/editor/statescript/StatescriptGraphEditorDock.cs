@@ -168,6 +168,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			}
 		}
 
+		DisposeCachedGraphVisuals();
+
 		_openTabs.Clear();
 	}
 
@@ -227,7 +229,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
 				&& _openTabs[i].ResourcePath == graph.ResourcePath))
 			{
-				_tabBar.CurrentTab = i;
+				SetCurrentTabWithoutLoading(i);
+				ApplyVariablesPanelState(i);
 				return;
 			}
 		}
@@ -239,7 +242,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_openTabs.Add(tab);
 
 		_tabBar.AddTab(graph.StatescriptName);
-		_tabBar.CurrentTab = _openTabs.Count - 1;
+		SetCurrentTabWithoutLoading(_openTabs.Count - 1);
 
 		LoadGraphIntoEditor(graph);
 		UpdateVisibility();
@@ -409,13 +412,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		if (activeIndex >= 0 && activeIndex < _openTabs.Count)
 		{
 			_openTabs[activeIndex].VariablesPanelOpen = _persistedVariablesPanelVisible;
-			_tabBar.CurrentTab = activeIndex;
+			SetCurrentTabWithoutLoading(activeIndex);
 			LoadGraphIntoEditor(_openTabs[activeIndex].GraphResource);
 			ApplyVariablesPanelState(activeIndex);
 		}
 		else if (_openTabs.Count > 0)
 		{
-			_tabBar.CurrentTab = 0;
+			SetCurrentTabWithoutLoading(0);
 			LoadGraphIntoEditor(_openTabs[0].GraphResource);
 			ApplyVariablesPanelState(0);
 		}
@@ -655,13 +658,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		if (activeTab >= 0 && activeTab < _openTabs.Count)
 		{
 			_openTabs[activeTab].VariablesPanelOpen = _persistedVariablesPanelVisible;
-			_tabBar.CurrentTab = activeTab;
+			SetCurrentTabWithoutLoading(activeTab);
 			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
 			ApplyVariablesPanelState(activeTab);
 		}
 		else if (_openTabs.Count > 0)
 		{
-			_tabBar.CurrentTab = 0;
+			SetCurrentTabWithoutLoading(0);
 			LoadGraphIntoEditor(_openTabs[0].GraphResource);
 			ApplyVariablesPanelState(0);
 		}
@@ -676,13 +679,15 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		DisposeCachedGraphVisuals(_openTabs[tabIndex]);
+
 		_openTabs.RemoveAt(tabIndex);
 		_tabBar.RemoveTab(tabIndex);
 
 		if (_openTabs.Count > 0)
 		{
 			var newTab = Mathf.Min(tabIndex, _openTabs.Count - 1);
-			_tabBar.CurrentTab = newTab;
+			SetCurrentTabWithoutLoading(newTab);
 			LoadGraphIntoEditor(_openTabs[newTab].GraphResource);
 			ApplyVariablesPanelState(newTab);
 		}
@@ -924,23 +929,37 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		GraphTab? tab = FindTab(graph);
+		if (tab is null)
+		{
+			return;
+		}
+
 		var wasLoading = _isLoadingGraph;
 		_isLoadingGraph = true;
 
-		ClearGraphEditor();
+		DetachVisibleGraphNodes();
 
 		_graphEdit.Zoom = graph.Zoom;
 
 		UpdateNextNodeId(graph);
 
-		foreach (StatescriptNode nodeResource in graph.Nodes)
+		tab.CachedGraphNodes.RemoveAll(x => !IsInstanceValid(x));
+
+		if (tab.CachedGraphNodes.Count == 0)
 		{
-			var graphNode = new StatescriptGraphNode();
-			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(nodeResource, graph);
-			graphNode.SetUndoRedo(_undoRedo);
-			graphNode.PropertyBindingChanged += OnGraphNodePropertyBindingChanged;
+			foreach (StatescriptNode nodeResource in graph.Nodes)
+			{
+				StatescriptGraphNode graphNode = AddGraphNodeVisual(nodeResource, graph);
+				tab.CachedGraphNodes.Add(graphNode);
+			}
 		}
+		else
+		{
+			AttachCachedGraphNodes(tab);
+		}
+
+		_graphEdit.ClearConnections();
 
 		foreach (StatescriptConnection connection in graph.Connections)
 		{
@@ -984,13 +1003,128 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			if (node is StatescriptGraphNode graphNode)
 			{
-				graphNode.PropertyBindingChanged -= OnGraphNodePropertyBindingChanged;
-				graphNode.OnBeforeSerialize();
+				RemoveGraphNodeVisual(graphNode);
+			}
+		}
+	}
+
+	private void DetachVisibleGraphNodes()
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		_graphEdit.ClearConnections();
+
+		var toDetach = new List<Node>();
+		toDetach.AddRange(_graphEdit.GetChildren().Where(x => x is GraphNode));
+
+		foreach (Node node in toDetach)
+		{
+			_graphEdit.RemoveChild(node);
+		}
+	}
+
+	private StatescriptGraphNode AddGraphNodeVisual(StatescriptNode nodeResource, StatescriptGraph graph)
+	{
+		var graphNode = new StatescriptGraphNode();
+		_graphEdit!.AddChild(graphNode);
+		graphNode.Initialize(nodeResource, graph);
+		graphNode.SetUndoRedo(_undoRedo);
+		graphNode.PropertyBindingChanged += OnGraphNodePropertyBindingChanged;
+		return graphNode;
+	}
+
+	private void AttachCachedGraphNodes(GraphTab tab)
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		foreach (StatescriptGraphNode graphNode in tab.CachedGraphNodes)
+		{
+			if (!IsInstanceValid(graphNode))
+			{
+				continue;
 			}
 
-			_graphEdit.RemoveChild(node);
-			node.Free();
+			if (graphNode.GetParent() is Node parent)
+			{
+				parent.RemoveChild(graphNode);
+			}
+
+			_graphEdit.AddChild(graphNode);
 		}
+	}
+
+	private void RemoveGraphNodeVisual(StatescriptGraphNode graphNode)
+	{
+		graphNode.PropertyBindingChanged -= OnGraphNodePropertyBindingChanged;
+		graphNode.OnBeforeSerialize();
+
+		if (graphNode.GetParent() is Node parent)
+		{
+			parent.RemoveChild(graphNode);
+		}
+
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			_openTabs[i].CachedGraphNodes.Remove(graphNode);
+		}
+
+		graphNode.Free();
+	}
+
+	private void DisposeCachedGraphVisuals()
+	{
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			DisposeCachedGraphVisuals(_openTabs[i]);
+		}
+	}
+
+	private void DisposeCachedGraphVisuals(GraphTab tab)
+	{
+		for (var i = tab.CachedGraphNodes.Count - 1; i >= 0; i--)
+		{
+			StatescriptGraphNode graphNode = tab.CachedGraphNodes[i];
+			if (!IsInstanceValid(graphNode))
+			{
+				tab.CachedGraphNodes.RemoveAt(i);
+				continue;
+			}
+
+			RemoveGraphNodeVisual(graphNode);
+		}
+	}
+
+	private GraphTab? FindTab(StatescriptGraph graph)
+	{
+		for (var i = 0; i < _openTabs.Count; i++)
+		{
+			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
+				&& _openTabs[i].ResourcePath == graph.ResourcePath))
+			{
+				return _openTabs[i];
+			}
+		}
+
+		return null;
+	}
+
+	private void SetCurrentTabWithoutLoading(int tabIndex)
+	{
+		if (_tabBar is null)
+		{
+			return;
+		}
+
+		var wasLoading = _isLoadingGraph;
+		_isLoadingGraph = true;
+		_tabBar.CurrentTab = tabIndex;
+		_isLoadingGraph = wasLoading;
 	}
 
 	private void UpdateNextNodeId(StatescriptGraph graph)
@@ -1210,6 +1344,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		InvalidateCachedGraphVisuals(graph);
 		LoadGraphIntoEditor(graph);
 	}
 
@@ -1360,6 +1495,27 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		if (graph is not null)
 		{
 			_variablePanel.SetGraph(graph);
+		}
+	}
+
+	private void InvalidateCachedGraphVisuals(StatescriptGraph graph)
+	{
+		GraphTab? tab = FindTab(graph);
+		if (tab is null)
+		{
+			return;
+		}
+
+		for (var i = tab.CachedGraphNodes.Count - 1; i >= 0; i--)
+		{
+			StatescriptGraphNode graphNode = tab.CachedGraphNodes[i];
+			if (!IsInstanceValid(graphNode))
+			{
+				tab.CachedGraphNodes.RemoveAt(i);
+				continue;
+			}
+
+			RemoveGraphNodeVisual(graphNode);
 		}
 	}
 
@@ -1615,6 +1771,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		private string _cachedPath;
 
 		public StatescriptGraph GraphResource { get; }
+
+		public List<StatescriptGraphNode> CachedGraphNodes { get; } = [];
 
 		public string ResourcePath => !string.IsNullOrEmpty(GraphResource?.ResourcePath)
 			? GraphResource.ResourcePath

@@ -238,6 +238,7 @@ public partial class StatescriptGraphEditorDock
 
 		if (CurrentGraph == graph)
 		{
+			InvalidateCachedGraphVisuals(graph);
 			LoadGraphIntoEditor(graph);
 		}
 	}
@@ -371,10 +372,9 @@ public partial class StatescriptGraphEditorDock
 
 		if (CurrentGraph == graph && _graphEdit is not null)
 		{
-			var graphNode = new StatescriptGraphNode();
-			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(nodeResource, graph);
-			graphNode.SetUndoRedo(_undoRedo);
+			GraphTab? tab = FindTab(graph);
+			StatescriptGraphNode graphNode = AddGraphNodeVisual(nodeResource, graph);
+			tab?.CachedGraphNodes.Add(graphNode);
 		}
 	}
 
@@ -384,6 +384,7 @@ public partial class StatescriptGraphEditorDock
 
 		if (CurrentGraph == graph)
 		{
+			InvalidateCachedGraphVisuals(graph);
 			LoadGraphIntoEditor(graph);
 		}
 	}
@@ -457,9 +458,9 @@ public partial class StatescriptGraphEditorDock
 
 			graph.Nodes.Add(duplicated);
 
-			var graphNode = new StatescriptGraphNode();
-			_graphEdit.AddChild(graphNode);
-			graphNode.Initialize(duplicated, graph);
+			GraphTab? tab = FindTab(graph);
+			StatescriptGraphNode graphNode = AddGraphNodeVisual(duplicated, graph);
+			tab?.CachedGraphNodes.Add(graphNode);
 			graphNode.Selected = true;
 		}
 
