@@ -19,6 +19,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 {
+	private static readonly Type[] _numericExpectedTypes = [typeof(int), typeof(float), typeof(double)];
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 
@@ -66,7 +68,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
 
-		_numericFactories = StatescriptResolverRegistry.GetCompatibleFactories(typeof(ForgeVariant128));
+		_numericFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(_numericExpectedTypes);
 
 		_numericFactories.RemoveAll(x =>
 		{
@@ -264,18 +266,19 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		NodeEditorProperty editor = _numericFactories[factoryIndex]();
+		NodeEditorProperty? editor = NestedResolverEditorUtilities.CreateNestedEditor(
+			_graph,
+			_numericFactories,
+			factoryIndex,
+			existingResolver,
+			_numericExpectedTypes,
+			OnNestedEditorChanged,
+			RaiseLayoutSizeChanged);
 
-		StatescriptNodeProperty? tempProperty = null;
-
-		if (existingResolver is not null)
+		if (editor is null)
 		{
-			tempProperty = new StatescriptNodeProperty { Resolver = existingResolver };
+			return;
 		}
-
-		editor.Setup(_graph, tempProperty, typeof(ForgeVariant128), OnNestedEditorChanged, false);
-
-		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 
 		container.AddChild(editor);
 		setEditor(editor);
