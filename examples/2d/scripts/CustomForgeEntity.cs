@@ -21,6 +21,9 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 	[Export]
 	public float Speed { get; set; } = 1f;
 
+	[Export]
+	public ForgeSharedVariableSet? SharedVariableDefinitions { get; set; }
+
 	public EntityAttributes Attributes { get; set; } = null!;
 
 	public EntityTags Tags { get; set; } = null!;
@@ -42,6 +45,8 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 		Abilities = new EntityAbilities(this);
 		Events = new EventManager();
 		SharedVariables = new Variables();
+
+		SharedVariableDefinitions?.PopulateVariables(SharedVariables);
 
 		List<AttributeSet> attributeSetList = [];
 
