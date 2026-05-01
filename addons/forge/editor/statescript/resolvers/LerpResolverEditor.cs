@@ -6,6 +6,7 @@ using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
+using SysQuaternion = System.Numerics.Quaternion;
 using SysVector2 = System.Numerics.Vector2;
 using SysVector3 = System.Numerics.Vector3;
 using SysVector4 = System.Numerics.Vector4;
@@ -25,10 +26,28 @@ internal sealed partial class LerpResolverEditor : NumericOrVectorTernaryResolve
 
 	protected override string ThirdTitle => "T:";
 
+	public override bool IsCompatibleWith(Type expectedType)
+	{
+		return expectedType == typeof(float)
+			|| expectedType == typeof(double)
+			|| expectedType == typeof(SysVector2)
+			|| expectedType == typeof(SysVector3)
+			|| expectedType == typeof(SysVector4)
+			|| expectedType == typeof(SysQuaternion)
+			|| expectedType == typeof(ForgeVariant128);
+	}
+
 	protected override Type[] GetFirstFactoryExpectedTypes(Type expectedType)
 	{
 		return expectedType == typeof(ForgeVariant128)
-			? [typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)]
+			? [
+				typeof(float),
+				typeof(double),
+				typeof(SysVector2),
+				typeof(SysVector3),
+				typeof(SysVector4),
+				typeof(SysQuaternion)
+			]
 			: [expectedType];
 	}
 

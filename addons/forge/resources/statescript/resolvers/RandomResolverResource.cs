@@ -30,7 +30,6 @@ public partial class RandomResolverResource : BinaryNestedResolverResourceBase
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
-		using var random = new ForgeRandom();
-		return new RandomResolver(random, leftResolver, rightResolver);
+		return new RandomResolver(new ForgeRandom(), leftResolver, rightResolver);
 	}
 }
