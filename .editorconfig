@@ -358,6 +358,9 @@ dotnet_diagnostic.IDE0053.severity = suggestion
 # IDE0010: Add missing cases
 dotnet_diagnostic.IDE0010.severity = none
 
+# IDE0047: Remove unnecessary parentheses
+dotnet_diagnostic.IDE0047.severity = suggestion
+
 # IDE0072: Add missing cases
 dotnet_diagnostic.IDE0072.severity = suggestion
 
