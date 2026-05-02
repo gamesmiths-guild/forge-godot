@@ -34,6 +34,18 @@ public class ForgeRandom : IRandom, IDisposable
 
 	public double NextDouble()
 	{
+		double value;
+		do
+		{
+			value = _randomNumberGenerator.Randf();
+		}
+		while (value >= 1.0d);
+
+		return value;
+	}
+
+	public double NextDoubleInclusive()
+	{
 		return _randomNumberGenerator.Randf();
 	}
 
@@ -50,6 +62,11 @@ public class ForgeRandom : IRandom, IDisposable
 	public int NextInt(int minValue, int maxValue)
 	{
 		return _randomNumberGenerator.RandiRange(minValue, maxValue - 1);
+	}
+
+	public int NextIntInclusive(int minValue, int maxValue)
+	{
+		return _randomNumberGenerator.RandiRange(minValue, maxValue);
 	}
 
 	public long NextInt64()
@@ -80,7 +97,41 @@ public class ForgeRandom : IRandom, IDisposable
 		return (long)(rand % range) + minValue;
 	}
 
+	public long NextInt64Inclusive(long minValue, long maxValue)
+	{
+		if (minValue > maxValue)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minValue), "minValue must be less than or equal to maxValue.");
+		}
+
+		if (minValue == maxValue)
+		{
+			return minValue;
+		}
+
+		if (maxValue == long.MaxValue)
+		{
+			ulong inclusiveRange = (ulong)(maxValue - minValue) + 1UL;
+			ulong rand = (ulong)NextInt64();
+			return (long)(rand % inclusiveRange) + minValue;
+		}
+
+		return NextInt64(minValue, maxValue + 1);
+	}
+
 	public float NextSingle()
+	{
+		float value;
+		do
+		{
+			value = _randomNumberGenerator.Randf();
+		}
+		while (value >= 1.0f);
+
+		return value;
+	}
+
+	public float NextSingleInclusive()
 	{
 		return _randomNumberGenerator.Randf();
 	}

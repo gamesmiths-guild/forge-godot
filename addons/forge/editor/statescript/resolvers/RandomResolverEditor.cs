@@ -21,13 +21,16 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 	private OptionButton? _typeDropdown;
 	private FoldableContainer? _minFoldable;
 	private FoldableContainer? _maxFoldable;
+	private FoldableContainer? _inclusiveMaxFoldable;
 	private OptionButton? _minResolverDropdown;
 	private OptionButton? _maxResolverDropdown;
 	private VBoxContainer? _minEditorContainer;
 	private VBoxContainer? _maxEditorContainer;
 	private NodeEditorProperty? _minEditor;
 	private NodeEditorProperty? _maxEditor;
+	private CheckBox? _inclusiveMaxCheckBox;
 	private StatescriptVariableType _valueType = StatescriptVariableType.Int;
+	private bool _isMaxInclusive = true;
 	private List<Func<NodeEditorProperty>> _factories = [];
 
 	public override string DisplayName => "Random";
@@ -58,6 +61,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		_expectedType = expectedType;
 		var existing = property?.Resolver as RandomResolverResource;
 		_valueType = existing?.ValueType ?? GetDefaultValueType(expectedType);
+		_isMaxInclusive = existing?.IsMaxInclusive ?? true;
 		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetBroadExpectedClrType(_valueType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -107,6 +111,42 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			x => _maxEditor = x,
 			OnMaxResolverDropdownItemSelected);
 
+		_inclusiveMaxFoldable = new FoldableContainer
+		{
+			Title = "Inclusive Max:",
+			Folded = existing?.InclusiveMaxFolded ?? true,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+		_inclusiveMaxFoldable.FoldingChanged += OnInclusiveMaxFoldableFoldingChanged;
+		root.AddChild(_inclusiveMaxFoldable);
+
+		var inclusiveMaxRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_inclusiveMaxFoldable.AddChild(inclusiveMaxRow);
+
+		var exclusiveButton = new CheckBox
+		{
+			Text = "Exclusive",
+			ButtonPressed = !_isMaxInclusive,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		_inclusiveMaxCheckBox = new CheckBox
+		{
+			Text = "Inclusive",
+			ButtonPressed = _isMaxInclusive,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		var buttonGroup = new ButtonGroup();
+		exclusiveButton.ButtonGroup = buttonGroup;
+		_inclusiveMaxCheckBox.ButtonGroup = buttonGroup;
+
+		inclusiveMaxRow.AddChild(exclusiveButton);
+		inclusiveMaxRow.AddChild(_inclusiveMaxCheckBox);
+
+		exclusiveButton.Pressed += () => OnInclusiveMaxChanged(false);
+		_inclusiveMaxCheckBox.Pressed += () => OnInclusiveMaxChanged(true);
+
 		UpdateFoldableTitles();
 	}
 
@@ -119,6 +159,8 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			MinFolded = _minFoldable?.Folded ?? false,
 			Right = SaveNestedEditor(_maxEditor),
 			MaxFolded = _maxFoldable?.Folded ?? false,
+			IsMaxInclusive = _isMaxInclusive,
+			InclusiveMaxFolded = _inclusiveMaxFoldable?.Folded ?? false,
 		};
 	}
 
@@ -235,6 +277,25 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		HandleResolverChanged((int)index, _maxEditorContainer, x => _maxEditor = x);
 	}
 
+	private void OnInclusiveMaxChanged(bool isInclusive)
+	{
+		if (_isMaxInclusive == isInclusive)
+		{
+			return;
+		}
+
+		_isMaxInclusive = isInclusive;
+		UpdateInclusiveMaxFoldableTitle();
+		_onChanged?.Invoke();
+	}
+
+	private void OnInclusiveMaxFoldableFoldingChanged(bool folded)
+	{
+		UpdateInclusiveMaxFoldableTitle();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
 	private void RebuildResolverSlot(VBoxContainer? editorContainer, Action<NodeEditorProperty?> setEditor)
 	{
 		if (editorContainer?.GetParent() is not VBoxContainer slotContainer)
@@ -337,6 +398,22 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		{
 			InlineConstantSummaryFormatter.ApplyFoldableTitle("Max:", _maxFoldable, _maxEditor);
 		}
+
+		UpdateInclusiveMaxFoldableTitle();
+	}
+
+	private void UpdateInclusiveMaxFoldableTitle()
+	{
+		if (_inclusiveMaxFoldable is null)
+		{
+			return;
+		}
+
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(
+			"Max:",
+			_inclusiveMaxFoldable,
+			_isMaxInclusive ? "Inclusive" : "Exclusive",
+			InlineSummaryBadgeKind.Enum);
 	}
 
 	private Type GetExpectedClrType(StatescriptVariableType valueType)

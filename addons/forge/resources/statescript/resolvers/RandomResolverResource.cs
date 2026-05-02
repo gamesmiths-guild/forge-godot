@@ -21,6 +21,12 @@ public partial class RandomResolverResource : BinaryNestedResolverResourceBase
 	[Export]
 	public bool MaxFolded { get; set; }
 
+	[Export]
+	public bool IsMaxInclusive { get; set; } = true;
+
+	[Export]
+	public bool InclusiveMaxFolded { get; set; } = true;
+
 	public override string ResolverTypeId => "Random";
 
 	protected override string PropertyNamePrefix => "__random";
@@ -30,6 +36,10 @@ public partial class RandomResolverResource : BinaryNestedResolverResourceBase
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
-		return new RandomResolver(new ForgeRandom(), leftResolver, rightResolver);
+		return new RandomResolver(
+			new ForgeRandom(),
+			leftResolver,
+			rightResolver,
+			IsMaxInclusive);
 	}
 }
