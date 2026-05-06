@@ -37,6 +37,12 @@ public partial class ComparisonResolverResource : StatescriptResolverResource
 	[Export]
 	public StatescriptResolverResource? Right { get; set; }
 
+	[Export]
+	public bool LeftFolded { get; set; }
+
+	[Export]
+	public bool RightFolded { get; set; }
+
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{

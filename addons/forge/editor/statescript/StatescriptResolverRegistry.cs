@@ -50,5 +50,27 @@ internal static class StatescriptResolverRegistry
 
 		return result;
 	}
+
+	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, bool isArray)
+	{
+		for (var i = 0; i < factories.Count; i++)
+		{
+			using NodeEditorProperty temp = factories[i]();
+
+			if (isArray)
+			{
+				if (temp.ResolverTypeId == "ArrayVariable")
+				{
+					return i;
+				}
+			}
+			else if (temp.ResolverTypeId == "Variant")
+			{
+				return i;
+			}
+		}
+
+		return 0;
+	}
 }
 #endif

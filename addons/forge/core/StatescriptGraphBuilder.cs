@@ -292,6 +292,20 @@ public static class StatescriptGraphBuilder
 
 	private static object ConvertParameter(GodotVariant value, Type targetType)
 	{
+		if (targetType.IsEnum)
+		{
+			if (value.VariantType == GodotVariant.Type.Int || value.VariantType == GodotVariant.Type.Float)
+			{
+				return Enum.ToObject(targetType, value.AsInt32());
+			}
+
+			var enumText = value.AsString();
+			if (!string.IsNullOrEmpty(enumText))
+			{
+				return Enum.Parse(targetType, enumText, ignoreCase: true);
+			}
+		}
+
 		if (targetType == typeof(StringKey))
 		{
 			return new StringKey(value.AsString());

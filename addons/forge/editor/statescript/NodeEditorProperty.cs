@@ -14,6 +14,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 internal abstract partial class NodeEditorProperty : PanelContainer
 {
+	private Type[] _allowedExpectedTypes = [];
+
 	/// <summary>
 	/// Gets the display name shown in the resolver type dropdown (e.g., "Variable", "Constant", "Attribute").
 	/// </summary>
@@ -59,6 +61,58 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public event Action? LayoutSizeChanged;
 
 	/// <summary>
+	/// Configures the concrete input types allowed for this editor when the surrounding context accepts more than one.
+	/// </summary>
+	/// <param name="allowedExpectedTypes">The allowed expected types.</param>
+	public void ConfigureAllowedExpectedTypes(params Type[] allowedExpectedTypes)
+	{
+		_allowedExpectedTypes = allowedExpectedTypes;
+	}
+
+	/// <summary>
+	/// Tries to provide a short inline summary for the current editor state when embedded in a collapsed foldout.
+	/// </summary>
+	/// <param name="summary">The inline summary, when available.</param>
+	/// <returns><see langword="true"/> when an inline summary is available.</returns>
+	public virtual bool TryGetInlineSummary(out string summary)
+	{
+		summary = string.Empty;
+		return false;
+	}
+
+	/// <summary>
+	/// Gets the preferred badge style for inline foldout summaries.
+	/// </summary>
+	public virtual InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
+	{
+		return InlineSummaryBadgeKind.Resolver;
+	}
+
+	/// <summary>
+	/// Tries to provide the graph-variable name represented by this editor or one of its nested editors for highlight
+	/// propagation in folded summaries.
+	/// </summary>
+	/// <param name="variableName">The variable name, when available.</param>
+	public virtual bool TryGetHighlightedVariableName(out string variableName)
+	{
+		variableName = string.Empty;
+		return false;
+	}
+
+	/// <summary>
+	/// Tries to provide the shared-variable identity represented by this editor or one of its nested editors for
+	/// highlight propagation in folded summaries.
+	/// </summary>
+	/// <param name="sharedVariableSetPath">The shared-variable set path, when available.</param>
+	/// <param name="variableName">The shared variable name, when available.</param>
+	public virtual bool TryGetHighlightedSharedVariable(out string sharedVariableSetPath, out string variableName)
+	{
+		sharedVariableSetPath = string.Empty;
+		variableName = string.Empty;
+		return false;
+	}
+
+	/// <summary>
 	/// Clears all delegate fields to prevent serialization issues during hot-reload. Called before the editor is
 	/// serialized or freed.
 	/// </summary>
@@ -73,6 +127,11 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	protected void RaiseLayoutSizeChanged()
 	{
 		LayoutSizeChanged?.Invoke();
+	}
+
+	protected Type[] GetAllowedExpectedTypes(Type fallbackExpectedType)
+	{
+		return _allowedExpectedTypes.Length > 0 ? _allowedExpectedTypes : [fallbackExpectedType];
 	}
 }
 #endif

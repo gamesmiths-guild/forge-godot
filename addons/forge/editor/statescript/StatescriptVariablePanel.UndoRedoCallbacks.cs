@@ -68,6 +68,12 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void DoRemoveVariable(StatescriptGraph graph, StatescriptGraphVariable variable, int index)
 	{
+		if (_selectedVariableName == variable.VariableName)
+		{
+			_selectedVariableName = null;
+			VariableHighlightChanged?.Invoke(null);
+		}
+
 		graph.Variables.RemoveAt(index);
 		ClearReferencesToVariable(variable.VariableName);
 		RebuildList();

@@ -16,7 +16,10 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, ISerializationListener
 {
+	private const string VariableNameButtonMetaKey = "_shared_variable_name_button";
+
 	private static readonly Color _variableColor = new(0xe5c07bff);
+	private static readonly Color _highlightColor = new(0x56b6c2ff);
 
 	private readonly HashSet<string> _expandedArrays = [];
 
@@ -33,6 +36,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private Texture2D? _addIcon;
 	private Texture2D? _removeIcon;
+	private string? _selectedVariableName;
 
 	/// <summary>
 	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
@@ -45,8 +49,17 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	public override void _Ready()
 	{
+		base._Ready();
+		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
+
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
+
+		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
+		{
+			SharedVariableHighlightState.SetInspectorContext(sharedVariableSet.ResourcePath);
+			SharedVariableHighlightState.SetSelection(sharedVariableSet.ResourcePath, _selectedVariableName);
+		}
 
 		var backgroundPanel = new PanelContainer
 		{
@@ -93,11 +106,31 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	public override void _UpdateProperty()
 	{
+		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
+		{
+			SharedVariableHighlightState.SetInspectorContext(sharedVariableSet.ResourcePath);
+		}
+
+		SyncSelectedVariableFromHighlightState();
 		RebuildList();
+	}
+
+	public override void _ExitTree()
+	{
+		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
+
+		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
+		{
+			SharedVariableHighlightState.ClearInspectorContext(sharedVariableSet.ResourcePath);
+		}
+
+		base._ExitTree();
 	}
 
 	public void OnBeforeSerialize()
 	{
+		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
+
 		if (_addButton is not null)
 		{
 			_addButton.Pressed -= OnAddPressed;
@@ -114,12 +147,24 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	public void OnAfterDeserialize()
 	{
+		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
+		SyncSelectedVariableFromHighlightState();
+
 		if (_addButton is not null)
 		{
 			_addButton.Pressed += OnAddPressed;
 		}
 
 		RebuildList();
+	}
+
+	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
+	{
+		Color buttonColor = isSelected ? _highlightColor : _variableColor;
+		button.AddThemeColorOverride("font_color", buttonColor);
+		button.AddThemeColorOverride("font_pressed_color", buttonColor);
+		button.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));
+		button.AddThemeColorOverride("font_hover_pressed_color", buttonColor.Lightened(0.2f));
 	}
 
 	private Array<ForgeSharedVariableDefinition> GetDefinitions()
@@ -133,7 +178,18 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void NotifyChanged()
 	{
-		if (GetEditedObject() is Resource resource)
+		GodotObject obj = GetEditedObject();
+		string propertyName = GetEditedProperty();
+
+		if (obj is not ForgeSharedVariableSet sharedVariableSet)
+		{
+			return;
+		}
+
+		obj.Set(propertyName, sharedVariableSet.Variables);
+		EmitChanged(propertyName, sharedVariableSet.Variables);
+
+		if (obj is Resource resource)
 		{
 			resource.EmitChanged();
 		}
@@ -158,6 +214,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			return;
 		}
 
+		SyncSelectedVariableFromHighlightState();
+
 		ClearVariableList();
 
 		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
@@ -166,6 +224,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			AddVariableRow(definitions, i);
 		}
+
+		RefreshVariableSelectionVisuals();
 	}
 
 	private void ClearVariableList()
@@ -180,6 +240,30 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			_variableList.RemoveChild(child);
 			child.Free();
 		}
+	}
+
+	private void OnSharedVariableHighlightChanged()
+	{
+		SyncSelectedVariableFromHighlightState();
+		RefreshVariableSelectionVisuals();
+	}
+
+	private void SyncSelectedVariableFromHighlightState()
+	{
+		if (GetEditedObject() is not ForgeSharedVariableSet sharedVariableSet)
+		{
+			_selectedVariableName = null;
+			return;
+		}
+
+		if (SharedVariableHighlightState.TryGetActiveSelection(out string selectedSetPath, out string variableName)
+			&& string.Equals(selectedSetPath, sharedVariableSet.ResourcePath, System.StringComparison.Ordinal))
+		{
+			_selectedVariableName = variableName;
+			return;
+		}
+
+		_selectedVariableName = null;
 	}
 
 	private void AddVariableRow(Array<ForgeSharedVariableDefinition> definitions, int index)
@@ -197,17 +281,25 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		rowContainer.AddChild(headerRow);
 
-		var nameLabel = new Label
+		bool isSelected = _selectedVariableName == def.VariableName;
+
+		var nameButton = new Button
 		{
 			Text = def.VariableName,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			Flat = true,
+			ToggleMode = true,
+			ButtonPressed = isSelected,
+			Alignment = HorizontalAlignment.Left,
 		};
 
-		nameLabel.AddThemeColorOverride("font_color", _variableColor);
-		nameLabel.AddThemeFontOverride(
+		nameButton.SetMeta(VariableNameButtonMetaKey, def.VariableName);
+		UpdateVariableNameButtonAppearance(nameButton, isSelected);
+		nameButton.AddThemeFontOverride(
 			"font",
 			EditorInterface.Singleton.GetEditorTheme().GetFont("bold", "EditorFonts"));
-		headerRow.AddChild(nameLabel);
+		nameButton.Toggled += pressed => SetSelectedVariable(def.VariableName, pressed);
+		headerRow.AddChild(nameButton);
 
 		var typeLabel = new Label
 		{
@@ -243,6 +335,56 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		}
 
 		rowContainer.AddChild(new HSeparator());
+	}
+
+	private void SetSelectedVariable(string variableName, bool selected)
+	{
+		if (selected)
+		{
+			_selectedVariableName = variableName;
+		}
+		else if (_selectedVariableName == variableName)
+		{
+			_selectedVariableName = null;
+		}
+
+		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
+		{
+			SharedVariableHighlightState.SetInspectorContext(sharedVariableSet.ResourcePath);
+			SharedVariableHighlightState.SetSelection(sharedVariableSet.ResourcePath, _selectedVariableName);
+		}
+		else
+		{
+			SharedVariableHighlightState.SetSelection(null, null);
+		}
+
+		RefreshVariableSelectionVisuals();
+	}
+
+	private void RefreshVariableSelectionVisuals()
+	{
+		if (_variableList is null)
+		{
+			return;
+		}
+
+		RefreshVariableSelectionVisualsRecursive(_variableList);
+	}
+
+	private void RefreshVariableSelectionVisualsRecursive(Node parent)
+	{
+		foreach (Node child in parent.GetChildren())
+		{
+			if (child is Button button && button.HasMeta(VariableNameButtonMetaKey))
+			{
+				string variableName = button.GetMeta(VariableNameButtonMetaKey).AsString();
+				bool isSelected = _selectedVariableName == variableName;
+				button.SetPressedNoSignal(isSelected);
+				UpdateVariableNameButtonAppearance(button, isSelected);
+			}
+
+			RefreshVariableSelectionVisualsRecursive(child);
+		}
 	}
 
 	private Control CreateValueEditor(ForgeSharedVariableDefinition def)

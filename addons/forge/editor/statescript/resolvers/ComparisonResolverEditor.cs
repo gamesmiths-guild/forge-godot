@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -18,12 +19,16 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 {
+	private static readonly Type[] _numericExpectedTypes = [typeof(int), typeof(float), typeof(double)];
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 
 	private OptionButton? _operationDropdown;
 	private VBoxContainer? _leftContainer;
 	private VBoxContainer? _rightContainer;
+	private FoldableContainer? _leftFoldable;
+	private FoldableContainer? _rightFoldable;
 	private OptionButton? _leftResolverDropdown;
 	private OptionButton? _rightResolverDropdown;
 
@@ -63,7 +68,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
 
-		_numericFactories = StatescriptResolverRegistry.GetCompatibleFactories(typeof(ForgeVariant128));
+		_numericFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(_numericExpectedTypes);
 
 		_numericFactories.RemoveAll(x =>
 		{
@@ -78,12 +83,17 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			_operation = comparisonResolver.Operation;
 		}
 
-		var leftFoldable = new FoldableContainer { Title = "Left:" };
-		leftFoldable.FoldingChanged += OnFoldingChanged;
-		vBox.AddChild(leftFoldable);
+		_leftFoldable = new FoldableContainer
+		{
+			Title = "Left:",
+			Folded = comparisonResolver?.LeftFolded ?? true,
+		};
+
+		_leftFoldable.FoldingChanged += OnFoldingChanged;
+		vBox.AddChild(_leftFoldable);
 
 		_leftContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		leftFoldable.AddChild(_leftContainer);
+		_leftFoldable.AddChild(_leftContainer);
 
 		_leftEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Left);
@@ -117,12 +127,16 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		opRow.AddChild(_operationDropdown);
 
-		var rightFoldable = new FoldableContainer { Title = "Right:" };
-		rightFoldable.FoldingChanged += OnFoldingChanged;
-		vBox.AddChild(rightFoldable);
+		_rightFoldable = new FoldableContainer
+		{
+			Title = "Right:",
+			Folded = comparisonResolver?.RightFolded ?? true,
+		};
+		_rightFoldable.FoldingChanged += OnFoldingChanged;
+		vBox.AddChild(_rightFoldable);
 
 		_rightContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		rightFoldable.AddChild(_rightContainer);
+		_rightFoldable.AddChild(_rightContainer);
 
 		_rightEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Right);
@@ -135,12 +149,18 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			x => _rightEditor = x);
 
 		_rightResolverDropdown.ItemSelected += OnRightResolverDropdownItemSelected;
+		UpdateFoldableTitles();
 	}
 
 	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		var comparisonResolver = new ComparisonResolverResource { Operation = _operation };
+		var comparisonResolver = new ComparisonResolverResource
+		{
+			Operation = _operation,
+			LeftFolded = _leftFoldable?.Folded ?? false,
+			RightFolded = _rightFoldable?.Folded ?? false,
+		};
 
 		if (_leftEditor is not null)
 		{
@@ -171,6 +191,8 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private void OnFoldingChanged(bool isFolded)
 	{
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 
@@ -208,31 +230,14 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		setEditor(null);
 		ShowNestedEditor(selectedIndex, null, editorContainer, setEditor);
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
 
 	private int GetSelectedIndex(StatescriptResolverResource? existingResolver)
 	{
-		var selectedIndex = 0;
-
-		if (existingResolver is not null)
-		{
-			var existingTypeId = existingResolver.ResolverTypeId;
-
-			for (var i = 0; i < _numericFactories.Count; i++)
-			{
-				using NodeEditorProperty temp = _numericFactories[i]();
-
-				if (temp.ResolverTypeId == existingTypeId)
-				{
-					selectedIndex = i;
-					break;
-				}
-			}
-		}
-
-		return selectedIndex;
+		return ResolverEditorFactoryCatalog.GetDefaultFactoryIndex(_numericFactories, existingResolver, "Variant");
 	}
 
 	private OptionButton CreateResolverDropdownControl(StatescriptResolverResource? existingResolver)
@@ -261,18 +266,19 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		NodeEditorProperty editor = _numericFactories[factoryIndex]();
+		NodeEditorProperty? editor = NestedResolverEditorUtilities.CreateNestedEditor(
+			_graph,
+			_numericFactories,
+			factoryIndex,
+			existingResolver,
+			_numericExpectedTypes,
+			OnNestedEditorChanged,
+			RaiseLayoutSizeChanged);
 
-		StatescriptNodeProperty? tempProperty = null;
-
-		if (existingResolver is not null)
+		if (editor is null)
 		{
-			tempProperty = new StatescriptNodeProperty { Resolver = existingResolver };
+			return;
 		}
-
-		editor.Setup(_graph, tempProperty, typeof(ForgeVariant128), OnNestedEditorChanged, false);
-
-		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 
 		container.AddChild(editor);
 		setEditor(editor);
@@ -280,7 +286,21 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateFoldableTitles()
+	{
+		if (_leftFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Left:", _leftFoldable, _leftEditor);
+		}
+
+		if (_rightFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Right:", _rightFoldable, _rightEditor);
+		}
 	}
 }
 #endif

@@ -79,10 +79,50 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override bool TryGetInlineSummary(out string summary)
+	{
+		summary = string.IsNullOrWhiteSpace(_selectedVariableName)
+			? "(None)"
+			: _selectedVariableName;
+		return true;
+	}
+
+	/// <inheritdoc/>
+	public override InlineSummaryBadgeKind GetInlineSummaryBadgeKind()
+	{
+		return InlineSummaryBadgeKind.Variable;
+	}
+
+	/// <inheritdoc/>
+	public override bool TryGetHighlightedVariableName(out string variableName)
+	{
+		variableName = _selectedVariableName;
+		return !string.IsNullOrWhiteSpace(variableName);
+	}
+
+	/// <inheritdoc/>
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
 		_onChanged = null;
+	}
+
+	private static bool IsCompatibleType(Type expectedType, StatescriptVariableType variableType)
+	{
+		return StatescriptVariableTypeConverter.IsCompatible(expectedType, variableType);
+	}
+
+	private static bool IsCompatibleType(Type[] expectedTypes, StatescriptVariableType variableType)
+	{
+		for (int i = 0; i < expectedTypes.Length; i++)
+		{
+			if (IsCompatibleType(expectedTypes[i], variableType))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private void OnDropdownItemSelected(long index)
@@ -92,7 +132,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var idx = _dropdown.Selected;
+		int idx = _dropdown.Selected;
 		_selectedVariableName = idx >= 0 && idx < _variableNames.Count ? _variableNames[idx] : string.Empty;
 		_onChanged?.Invoke();
 	}
@@ -103,6 +143,8 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		{
 			return;
 		}
+
+		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(expectedType);
 
 		_dropdown.Clear();
 		_variableNames.Clear();
@@ -117,7 +159,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 				continue;
 			}
 
-			if (!StatescriptVariableTypeConverter.IsCompatible(expectedType, variable.VariableType))
+			if (!IsCompatibleType(allowedExpectedTypes, variable.VariableType))
 			{
 				continue;
 			}
@@ -134,7 +176,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		for (var i = 0; i < _variableNames.Count; i++)
+		for (int i = 0; i < _variableNames.Count; i++)
 		{
 			if (_variableNames[i] == name)
 			{

@@ -17,6 +17,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISerializationListener
 {
 	private const string ExpandedArraysMetaKey = "_expanded_arrays";
+	private const string VariableNameButtonMetaKey = "_variable_name_button";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
 	private static readonly Color _highlightColor = new(0x56b6c2ff);
@@ -165,6 +166,31 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		RebuildList();
 	}
 
+	public string? GetSelectedVariableName()
+	{
+		return _selectedVariableName;
+	}
+
+	public void RestoreSelectedVariable(string? variableName)
+	{
+		if (string.IsNullOrEmpty(variableName) || !HasVariableNamed(variableName))
+		{
+			_selectedVariableName = null;
+		}
+		else
+		{
+			_selectedVariableName = variableName;
+		}
+
+		RefreshVariableSelectionVisuals();
+		VariableHighlightChanged?.Invoke(_selectedVariableName);
+	}
+
+	public void ClearSelectedVariable()
+	{
+		RestoreSelectedVariable(null);
+	}
+
 	/// <summary>
 	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
 	/// </summary>
@@ -195,10 +221,19 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			return;
 		}
 
-		for (var i = 0; i < _graph.Variables.Count; i++)
+		for (int i = 0; i < _graph.Variables.Count; i++)
 		{
 			AddVariableRow(_graph.Variables[i], i);
 		}
+	}
+
+	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
+	{
+		Color buttonColor = isSelected ? _highlightColor : _variableColor;
+		button.AddThemeColorOverride("font_color", buttonColor);
+		button.AddThemeColorOverride("font_pressed_color", _highlightColor);
+		button.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));
+		button.AddThemeColorOverride("font_hover_pressed_color", _highlightColor.Lightened(0.2f));
 	}
 
 	private void SaveExpandedArrayState()
@@ -208,7 +243,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			return;
 		}
 
-		var packed = new string[_expandedArrays.Count];
+		string[] packed = new string[_expandedArrays.Count];
 		_expandedArrays.CopyTo(packed);
 		_graph.SetMeta(ExpandedArraysMetaKey, Variant.From(packed));
 	}
@@ -226,7 +261,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		if (meta.VariantType == Variant.Type.PackedStringArray)
 		{
-			foreach (var name in meta.AsStringArray())
+			foreach (string name in meta.AsStringArray())
 			{
 				_expandedArrays.Add(name);
 			}
@@ -254,7 +289,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		rowContainer.AddChild(headerRow);
 
-		var isSelected = _selectedVariableName == variable.VariableName;
+		bool isSelected = _selectedVariableName == variable.VariableName;
 
 		var nameButton = new Button
 		{
@@ -266,28 +301,15 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			Alignment = HorizontalAlignment.Left,
 		};
 
-		Color buttonColor = isSelected ? _highlightColor : _variableColor;
-		nameButton.AddThemeColorOverride("font_color", buttonColor);
-		nameButton.AddThemeColorOverride("font_pressed_color", _highlightColor);
-		nameButton.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));
-		nameButton.AddThemeColorOverride("font_hover_pressed_color", _highlightColor.Lightened(0.2f));
+		nameButton.SetMeta(VariableNameButtonMetaKey, variable.VariableName);
+		UpdateVariableNameButtonAppearance(nameButton, isSelected);
 		nameButton.AddThemeFontOverride(
 			"font",
 			EditorInterface.Singleton.GetEditorTheme().GetFont("bold", "EditorFonts"));
 
 		nameButton.Toggled += pressed =>
 		{
-			if (pressed)
-			{
-				_selectedVariableName = variable.VariableName;
-			}
-			else if (_selectedVariableName == variable.VariableName)
-			{
-				_selectedVariableName = null;
-			}
-
-			RebuildList();
-			VariableHighlightChanged?.Invoke(_selectedVariableName);
+			SetSelectedVariable(variable.VariableName, pressed);
 		};
 
 		headerRow.AddChild(nameButton);
@@ -301,7 +323,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		typeLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 		headerRow.AddChild(typeLabel);
 
-		var capturedIndex = index;
+		int capturedIndex = index;
 
 		var deleteButton = new Button
 		{
@@ -326,6 +348,47 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 
 		rowContainer.AddChild(new HSeparator());
+	}
+
+	private void SetSelectedVariable(string variableName, bool selected)
+	{
+		if (selected)
+		{
+			_selectedVariableName = variableName;
+		}
+		else if (_selectedVariableName == variableName)
+		{
+			_selectedVariableName = null;
+		}
+
+		RefreshVariableSelectionVisuals();
+		VariableHighlightChanged?.Invoke(_selectedVariableName);
+	}
+
+	private void RefreshVariableSelectionVisuals()
+	{
+		if (_variableList is null)
+		{
+			return;
+		}
+
+		RefreshVariableSelectionVisualsRecursive(_variableList);
+	}
+
+	private void RefreshVariableSelectionVisualsRecursive(Node parent)
+	{
+		foreach (Node child in parent.GetChildren())
+		{
+			if (child is Button button && button.HasMeta(VariableNameButtonMetaKey))
+			{
+				string variableName = button.GetMeta(VariableNameButtonMetaKey).AsString();
+				bool isSelected = _selectedVariableName == variableName;
+				button.SetPressedNoSignal(isSelected);
+				UpdateVariableNameButtonAppearance(button, isSelected);
+			}
+
+			RefreshVariableSelectionVisualsRecursive(child);
+		}
 	}
 
 	private void OnAddPressed()
@@ -373,7 +436,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		StatescriptVariableType[] allTypes = StatescriptVariableTypeConverter.GetAllTypes();
 
-		for (var t = 0; t < allTypes.Length; t++)
+		for (int t = 0; t < allTypes.Length; t++)
 		{
 			_newTypeDropdown.AddItem(StatescriptVariableTypeConverter.GetDisplayName(allTypes[t]), t);
 		}
@@ -404,20 +467,20 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			return;
 		}
 
-		var name = _newNameEdit.Text.Trim();
+		string name = _newNameEdit.Text.Trim();
 
 		if (string.IsNullOrEmpty(name) || HasVariableNamed(name))
 		{
 			return;
 		}
 
-		var selectedIndex = _newTypeDropdown.Selected;
+		int selectedIndex = _newTypeDropdown.Selected;
 		if (selectedIndex < 0)
 		{
 			return;
 		}
 
-		var selectedId = _newTypeDropdown.GetItemId(selectedIndex);
+		int selectedId = _newTypeDropdown.GetItemId(selectedIndex);
 		var varType = (StatescriptVariableType)selectedId;
 
 		var newVariable = new StatescriptGraphVariable
@@ -431,8 +494,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Add Graph Variable", customContext: _graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoAddVariable, _graph!, newVariable);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddVariable, _graph!, newVariable);
+			_undoRedo.AddDoMethod(this, MethodName.DoAddVariable, _graph, newVariable);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoAddVariable, _graph, newVariable);
 			_undoRedo.CommitAction();
 		}
 		else
@@ -459,8 +522,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Remove Graph Variable", customContext: _graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoRemoveVariable, _graph!, variable, index);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveVariable, _graph!, variable, index);
+			_undoRedo.AddDoMethod(this, MethodName.DoRemoveVariable, _graph, variable, index);
+			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveVariable, _graph, variable, index);
 			_undoRedo.CommitAction();
 		}
 		else
@@ -497,8 +560,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 
 		const string baseName = "variable";
-		var counter = 1;
-		var name = baseName;
+		int counter = 1;
+		string name = baseName;
 
 		while (HasVariableNamed(name))
 		{

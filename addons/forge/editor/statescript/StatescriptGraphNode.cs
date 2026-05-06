@@ -19,6 +19,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 {
 	private const string FoldInputKey = "_fold_input";
 	private const string FoldOutputKey = "_fold_output";
+	private const string FoldInputPropertyKeyPrefix = "_fold_input_property_";
 	private const string CustomWidthKey = "_custom_width";
 
 	private static readonly Color _entryColor = new(0x2a4a8dff);
@@ -34,6 +35,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
+	private readonly Dictionary<PropertySlotKey, InputPropertyFoldableContext> _inputPropertyFoldables = [];
 
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
@@ -42,6 +44,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private bool _resizeConnected;
 	private float _widthBeforeResize;
 	private string? _highlightedVariableName;
+	private string? _highlightedSharedVariableSetPath;
+	private string? _highlightedSharedVariableName;
 	private bool _isHighlighted;
 
 	/// <summary>
@@ -79,9 +83,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	public void SetHighlightedVariable(string? variableName)
 	{
 		_highlightedVariableName = variableName;
-		_isHighlighted = !string.IsNullOrEmpty(variableName) && ReferencesVariable(variableName!);
-		ApplyHighlightBorder();
-		UpdateChildHighlights();
+		RefreshHighlightState();
+	}
+
+	public void SetHighlightedSharedVariable(string? sharedVariableSetPath, string? variableName)
+	{
+		_highlightedSharedVariableSetPath = sharedVariableSetPath;
+		_highlightedSharedVariableName = variableName;
+		RefreshHighlightState();
 	}
 
 	/// <summary>
@@ -95,6 +104,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		_graph = graph;
 		_activeResolverEditors.Clear();
 		_foldableKeys.Clear();
+		_inputPropertyFoldables.Clear();
 
 		Name = resource.NodeId;
 		Title = resource.Title;
@@ -119,6 +129,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		{
 			SetupNodeByType(resource.NodeType);
 			ApplyBottomPadding();
+			RefreshHighlightState();
 			return;
 		}
 
@@ -133,12 +144,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		ApplyBottomPadding();
+		RefreshHighlightState();
 	}
 
 	public void OnBeforeSerialize()
 	{
 		_inputPropertyContexts.Clear();
 		_foldableKeys.Clear();
+		_inputPropertyFoldables.Clear();
 
 		_activeCustomEditor?.Unbind();
 		_activeCustomEditor = null;
@@ -187,6 +200,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		return GetFoldState(key);
 	}
 
+	internal bool GetFoldStateInternal(string key, bool defaultValue)
+	{
+		return GetFoldState(key, defaultValue);
+	}
+
+	internal void SetFoldStateWithUndoInternal(string key, bool folded)
+	{
+		SetFoldStateWithUndo(key, folded);
+	}
+
 	internal StatescriptNodeProperty? FindBindingInternal(
 		StatescriptPropertyDirection direction,
 		int propertyIndex)
@@ -226,13 +249,15 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			MethodName.ApplyResolverBinding,
 			(int)direction,
 			propertyIndex,
-			newResolver ?? new StatescriptResolverResource());
+			Variant.From(newResolver));
+
 		_undoRedo.AddUndoMethod(
 			this,
 			MethodName.ApplyResolverBinding,
 			(int)direction,
 			propertyIndex,
-			oldResolver ?? new StatescriptResolverResource());
+			Variant.From(oldResolver));
+
 		_undoRedo.CommitAction(false);
 	}
 
@@ -253,6 +278,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		PropertyBindingChanged?.Invoke();
 	}
 
+	internal void UpdateInputPropertyFoldableTitlesInternal()
+	{
+		UpdateInputPropertyFoldableTitles();
+	}
+
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
 	{
 		return resolver.ResolverTypeId;
@@ -267,11 +297,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 	}
 
+	private static string GetInputPropertyFoldKey(int propertyIndex)
+	{
+		return $"{FoldInputPropertyKeyPrefix}{propertyIndex}";
+	}
+
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		var maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
+		int maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
 
-		for (var slot = 0; slot < maxSlots; slot++)
+		for (int slot = 0; slot < maxSlots; slot++)
 		{
 			var hBox = new HBoxContainer();
 			hBox.AddThemeConstantOverride("separation", 16);
@@ -342,14 +377,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		if (typeInfo.InputPropertiesInfo.Length > 0)
 		{
-			var folded = GetFoldState(FoldInputKey);
+			bool folded = GetFoldState(FoldInputKey);
 			FoldableContainer inputContainer = AddPropertySectionDivider(
 				"Input Properties",
 				_inputPropertyColor,
 				FoldInputKey,
 				folded);
 
-			for (var i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+			for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
 				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
 			}
@@ -357,14 +392,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 		if (typeInfo.OutputVariablesInfo.Length > 0)
 		{
-			var folded = GetFoldState(FoldOutputKey);
+			bool folded = GetFoldState(FoldOutputKey);
 			FoldableContainer outputContainer = AddPropertySectionDivider(
 				"Output Variables",
 				_outputVariableColor,
 				FoldOutputKey,
 				folded);
 
-			for (var i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
+			for (int i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 			{
 				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
 			}
@@ -384,6 +419,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		{
 			Title = sectionTitle,
 			Folded = folded,
+			CustomMinimumSize = new Vector2(192, 0),
 		};
 
 		sectionContainer.AddThemeColorOverride("font_color", color);
@@ -400,24 +436,52 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		foreach (KeyValuePair<FoldableContainer, string> kvp in _foldableKeys.Where(kvp => IsInstanceValid(kvp.Key)))
 		{
-			var stored = GetFoldState(kvp.Value);
+			bool stored = GetFoldState(kvp.Value);
 			if (kvp.Key.Folded != stored)
 			{
 				SetFoldStateWithUndo(kvp.Value, kvp.Key.Folded);
 			}
 		}
 
+		UpdateInputPropertyFoldableTitles();
+		RefreshHighlightState();
+
 		ResetSize();
 	}
 
+	private void UpdateInputPropertyFoldableTitle(PropertySlotKey key)
+	{
+		if (!_inputPropertyFoldables.TryGetValue(key, out InputPropertyFoldableContext? context)
+			|| !IsInstanceValid(context.Foldable))
+		{
+			return;
+		}
+
+		_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor);
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(context.BaseTitle, context.Foldable, editor);
+	}
+
+	private void UpdateInputPropertyFoldableTitles()
+	{
+		foreach (PropertySlotKey key in _inputPropertyFoldables.Keys.ToArray())
+		{
+			UpdateInputPropertyFoldableTitle(key);
+		}
+	}
+
 	private bool GetFoldState(string key)
+	{
+		return GetFoldState(key, false);
+	}
+
+	private bool GetFoldState(string key, bool defaultValue)
 	{
 		if (NodeResource is not null && NodeResource.CustomData.TryGetValue(key, out Variant value))
 		{
 			return value.AsBool();
 		}
 
-		return false;
+		return defaultValue;
 	}
 
 	private void SetFoldState(string key, bool folded)
@@ -437,7 +501,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
-		var oldFolded = GetFoldState(key);
+		bool oldFolded = GetFoldState(key);
 
 		if (oldFolded == folded)
 		{
@@ -478,12 +542,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void OnResizeEnd(Vector2 newSize)
 	{
-		var newWidth = CustomMinimumSize.X;
+		float newWidth = CustomMinimumSize.X;
 
 		if (_undoRedo is not null && NodeResource is not null
 			&& !Mathf.IsEqualApprox(_widthBeforeResize, newWidth))
 		{
-			var oldWidth = _widthBeforeResize;
+			float oldWidth = _widthBeforeResize;
 
 			_undoRedo.CreateAction("Resize Node", customContext: _graph);
 			_undoRedo.AddDoMethod(
@@ -512,7 +576,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		if (NodeResource is not null
 			&& NodeResource.CustomData.TryGetValue(CustomWidthKey, out Variant value))
 		{
-			var width = (float)value.AsDouble();
+			float width = (float)value.AsDouble();
 
 			if (width > 0)
 			{
@@ -534,7 +598,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private void ApplyResolverBinding(
 		int directionInt,
 		int propertyIndex,
-		StatescriptResolverResource resolver)
+		Variant resolverVariant)
 	{
 		if (NodeResource is null)
 		{
@@ -543,7 +607,9 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 		var direction = (StatescriptPropertyDirection)directionInt;
 		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
-		binding.Resolver = resolver;
+		binding.Resolver = resolverVariant.VariantType == Variant.Type.Nil
+			? null
+			: resolverVariant.AsGodotObject() as StatescriptResolverResource;
 		RebuildNode();
 	}
 
@@ -558,6 +624,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		Initialize(NodeResource, _graph);
 		_undoRedo = savedUndoRedo;
 		Size = new Vector2(Size.X, 0);
+	}
+
+	private void RefreshHighlightState()
+	{
+		_isHighlighted = (!string.IsNullOrEmpty(_highlightedVariableName) && ReferencesVariable(_highlightedVariableName))
+			|| ReferencesSharedVariable(_highlightedSharedVariableSetPath, _highlightedSharedVariableName);
+		ApplyHighlightBorder();
+		UpdateChildHighlights();
 	}
 
 	private StatescriptNodeProperty? FindBinding(
@@ -607,7 +681,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
-		for (var i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
+		for (int i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
 		{
 			StatescriptNodeProperty binding = NodeResource.PropertyBindings[i];
 

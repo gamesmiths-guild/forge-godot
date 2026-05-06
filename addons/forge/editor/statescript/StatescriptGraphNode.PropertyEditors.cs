@@ -24,22 +24,44 @@ public partial class StatescriptGraphNode
 		}
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		sectionContainer.AddChild(container);
+		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
+		string baseTitle = $"{propInfo.Label}:";
+
+		var propertyFoldable = new FoldableContainer
+		{
+			Title = baseTitle,
+			Folded = GetFoldState(GetInputPropertyFoldKey(index), true),
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		_foldableKeys[propertyFoldable] = GetInputPropertyFoldKey(index);
+		_inputPropertyFoldables[key] = new InputPropertyFoldableContext(propertyFoldable, baseTitle);
+		propertyFoldable.FoldingChanged += OnSectionFoldingChanged;
+		sectionContainer.AddChild(propertyFoldable);
+		propertyFoldable.AddChild(container);
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(headerRow);
 
-		var nameLabel = new Label
-		{
-			Text = propInfo.Label,
-			CustomMinimumSize = new Vector2(60, 0),
-		};
-
-		nameLabel.AddThemeColorOverride("font_color", _inputPropertyColor);
-		headerRow.AddChild(nameLabel);
-
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
+
+		if (propInfo.IsArray)
+		{
+			resolverFactories.RemoveAll(factory =>
+			{
+				using NodeEditorProperty temp = factory();
+				return temp.ResolverTypeId != "ArrayVariable";
+			});
+		}
+		else
+		{
+			resolverFactories.RemoveAll(factory =>
+			{
+				using NodeEditorProperty temp = factory();
+				return temp.ResolverTypeId == "ArrayVariable";
+			});
+		}
 
 		if (resolverFactories.Count == 0)
 		{
@@ -49,7 +71,8 @@ public partial class StatescriptGraphNode
 			};
 
 			errorLabel.AddThemeColorOverride("font_color", Colors.Red);
-			headerRow.AddChild(errorLabel);
+			container.AddChild(errorLabel);
+			UpdateInputPropertyFoldableTitle(key);
 			return;
 		}
 
@@ -66,11 +89,11 @@ public partial class StatescriptGraphNode
 		}
 
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Input, index);
-		var selectedIndex = 0;
+		int selectedIndex = 0;
 
 		if (binding?.Resolver is not null)
 		{
-			for (var i = 0; i < resolverFactories.Count; i++)
+			for (int i = 0; i < resolverFactories.Count; i++)
 			{
 				using NodeEditorProperty temp = resolverFactories[i]();
 
@@ -83,16 +106,7 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			for (var i = 0; i < resolverFactories.Count; i++)
-			{
-				using NodeEditorProperty temp = resolverFactories[i]();
-
-				if (temp.ResolverTypeId == "Variant")
-				{
-					selectedIndex = i;
-					break;
-				}
-			}
+			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(resolverFactories, propInfo.IsArray);
 		}
 
 		resolverDropdown.Selected = selectedIndex;
@@ -101,7 +115,6 @@ public partial class StatescriptGraphNode
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(editorContainer);
 
-		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
 		_inputPropertyContexts[key] = new InputPropertyContext(resolverFactories, propInfo, editorContainer);
 
 		ShowResolverEditorUI(
@@ -113,8 +126,11 @@ public partial class StatescriptGraphNode
 			index,
 			propInfo.IsArray);
 
-		var capturedIndex = index;
-		resolverDropdown.ItemSelected += selectedItem => OnInputResolverDropdownItemSelected(selectedItem, capturedIndex);
+		UpdateInputPropertyFoldableTitle(key);
+
+		int capturedIndex = index;
+		resolverDropdown.ItemSelected +=
+			selectedItem => OnInputResolverDropdownItemSelected(selectedItem, capturedIndex);
 	}
 
 	private void OnInputResolverDropdownItemSelected(long x, int index)
@@ -155,24 +171,29 @@ public partial class StatescriptGraphNode
 			SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
 		}
 
+		UpdateInputPropertyFoldableTitle(key);
+
 		StatescriptNodeProperty? updated = FindBinding(StatescriptPropertyDirection.Input, index);
 		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
 
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Change Resolver Type", customContext: _graph);
+
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Input,
 				index,
-				newResolver ?? new StatescriptResolverResource());
+				Variant.From(newResolver));
+
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Input,
 				index,
-				oldResolver ?? new StatescriptResolverResource());
+				Variant.From(oldResolver));
+
 			_undoRedo.CommitAction(false);
 		}
 
@@ -212,12 +233,12 @@ public partial class StatescriptGraphNode
 		}
 
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Output, index);
-		var selectedIndex = 0;
+		int selectedIndex = 0;
 
 		if (binding?.Resolver is VariableResolverResource varRes
 			&& !string.IsNullOrEmpty(varRes.VariableName))
 		{
-			for (var i = 0; i < _graph.Variables.Count; i++)
+			for (int i = 0; i < _graph.Variables.Count; i++)
 			{
 				if (_graph.Variables[i].VariableName == varRes.VariableName)
 				{
@@ -233,14 +254,15 @@ public partial class StatescriptGraphNode
 
 			if (binding is null)
 			{
-				var variableName = _graph.Variables[selectedIndex].VariableName;
+				string variableName = _graph.Variables[selectedIndex].VariableName;
 				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
 					new VariableResolverResource { VariableName = variableName };
 			}
 		}
 
-		var capturedIndex = index;
-		variableDropdown.ItemSelected += selectedItem => OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
+		int capturedIndex = index;
+		variableDropdown.ItemSelected +=
+			selectedItem => OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
 
 		hBox.AddChild(variableDropdown);
 	}
@@ -255,25 +277,28 @@ public partial class StatescriptGraphNode
 		var oldResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
 			as StatescriptResolverResource;
 
-		var variableName = _graph.Variables[(int)x].VariableName;
+		string variableName = _graph.Variables[(int)x].VariableName;
 		var newResolver = new VariableResolverResource { VariableName = variableName };
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
 
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Change Output Variable", customContext: _graph);
+
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Output,
 				index,
 				(StatescriptResolverResource)newResolver.Duplicate());
+
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)StatescriptPropertyDirection.Output,
 				index,
-				oldResolver ?? new StatescriptResolverResource());
+				Variant.From(oldResolver));
+
 			_undoRedo.CommitAction(false);
 		}
 
@@ -295,6 +320,7 @@ public partial class StatescriptGraphNode
 		}
 
 		NodeEditorProperty resolverEditor = factory();
+		resolverEditor.ConfigureAllowedExpectedTypes(expectedType);
 
 		var key = new PropertySlotKey(direction, propertyIndex);
 
@@ -333,18 +359,21 @@ public partial class StatescriptGraphNode
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Change Node Property", customContext: _graph);
+
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)direction,
 				propertyIndex,
-				newResolver ?? new StatescriptResolverResource());
+				Variant.From(newResolver));
+
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.ApplyResolverBinding,
 				(int)direction,
 				propertyIndex,
-				oldResolver ?? new StatescriptResolverResource());
+				Variant.From(oldResolver));
+
 			_undoRedo.CommitAction(false);
 		}
 
