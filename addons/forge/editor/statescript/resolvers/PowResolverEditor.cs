@@ -8,7 +8,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class PowResolverEditor : ScalarBinaryResolverEditorBase<PowResolverResource>
+internal sealed partial class PowResolverEditor : NumericOrVectorBinaryResolverEditorBase<PowResolverResource>
 {
 	public override string DisplayName => "Pow";
 

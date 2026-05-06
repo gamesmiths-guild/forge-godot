@@ -8,7 +8,7 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class DegToRadResolverEditor : ScalarUnaryResolverEditorBase<DegToRadResolverResource>
+internal sealed partial class DegToRadResolverEditor : NumericOrVectorUnaryResolverEditorBase<DegToRadResolverResource>
 {
 	public override string DisplayName => "Deg To Rad";
 
