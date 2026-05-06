@@ -11,7 +11,10 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 	private const int ButtonSize = 26;
 	private const int PopupSize = 300;
 
-	private Label _label = null!;
+	private Label? _label;
+	private Button? _button;
+	private Popup? _popup;
+	private Tree? _tree;
 
 	public override void _Ready()
 	{
@@ -19,20 +22,20 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 
 		var hBox = new HBoxContainer();
 		_label = new Label { Text = "None", SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		var button = new Button { Icon = dropdownIcon, CustomMinimumSize = new Vector2(ButtonSize, 0) };
+		_button = new Button { Icon = dropdownIcon, CustomMinimumSize = new Vector2(ButtonSize, 0) };
 
 		hBox.AddChild(_label);
-		hBox.AddChild(button);
+		hBox.AddChild(_button);
 		AddChild(hBox);
 
-		var popup = new Popup { Size = new Vector2I(PopupSize, PopupSize) };
-		var tree = new Tree
+		_popup = new Popup { Size = new Vector2I(PopupSize, PopupSize) };
+		_tree = new Tree
 		{
 			HideRoot = true,
 			AnchorRight = 1,
 			AnchorBottom = 1,
 		};
-		popup.AddChild(tree);
+		_popup.AddChild(_tree);
 
 		var bg = new StyleBoxFlat
 		{
@@ -40,44 +43,44 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 				.GetEditorTheme()
 				.GetColor("dark_color_2", "Editor"),
 		};
-		tree.AddThemeStyleboxOverride("panel", bg);
+		_tree.AddThemeStyleboxOverride("panel", bg);
 
-		AddChild(popup);
+		AddChild(_popup);
 
-		BuildAttributeTree(tree);
+		BuildAttributeTree(_tree);
 
-		button.Pressed += () =>
-		{
-			Window win = GetWindow();
-			popup.Position = (Vector2I)button.GlobalPosition
-				+ win.Position
-				- new Vector2I(PopupSize - ButtonSize, -30);
-			popup.Popup();
-		};
-
-		tree.ItemActivated += () =>
-		{
-			TreeItem item = tree.GetSelected();
-			if (item?.HasMeta("attribute_path") != true)
-			{
-				return;
-			}
-
-			var fullPath = item.GetMeta("attribute_path").AsString();
-			_label.Text = fullPath;
-			EmitChanged(GetEditedProperty(), fullPath);
-			popup.Hide();
-		};
+		_button.Pressed += OnButtonPressed;
+		_tree.ItemActivated += OnTreeItemActivated;
 	}
 
 	public override void _UpdateProperty()
 	{
+		if (_label is null || !IsInstanceValid(_label))
+		{
+			return;
+		}
+
 		var value = GetEditedObject().Get(GetEditedProperty()).AsString();
 		_label.Text = string.IsNullOrEmpty(value) ? "None" : value;
 	}
 
 	public void OnBeforeSerialize()
 	{
+		if (_button is not null && IsInstanceValid(_button))
+		{
+			_button.Pressed -= OnButtonPressed;
+		}
+
+		if (_tree is not null && IsInstanceValid(_tree))
+		{
+			_tree.ItemActivated -= OnTreeItemActivated;
+		}
+
+		_label = null;
+		_button = null;
+		_popup = null;
+		_tree = null;
+
 		for (var i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
@@ -88,6 +91,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 
 	public void OnAfterDeserialize()
 	{
+		// This method was intentionally left blank.
 	}
 
 	private static void BuildAttributeTree(Tree tree)
@@ -108,6 +112,40 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 				attributeItem.SetMeta("attribute_path", attributePath);
 			}
 		}
+	}
+
+	private void OnButtonPressed()
+	{
+		if (_button is null || _popup is null || !IsInstanceValid(_button) || !IsInstanceValid(_popup))
+		{
+			return;
+		}
+
+		Window win = GetWindow();
+		_popup.Position = (Vector2I)_button.GlobalPosition
+			+ win.Position
+			- new Vector2I(PopupSize - ButtonSize, -30);
+		_popup.Popup();
+	}
+
+	private void OnTreeItemActivated()
+	{
+		if (_tree is null || _popup is null || _label is null
+			|| !IsInstanceValid(_tree) || !IsInstanceValid(_popup) || !IsInstanceValid(_label))
+		{
+			return;
+		}
+
+		TreeItem item = _tree.GetSelected();
+		if (item?.HasMeta("attribute_path") != true)
+		{
+			return;
+		}
+
+		var fullPath = item.GetMeta("attribute_path").AsString();
+		_label.Text = fullPath;
+		EmitChanged(GetEditedProperty(), fullPath);
+		_popup.Hide();
 	}
 }
 #endif
