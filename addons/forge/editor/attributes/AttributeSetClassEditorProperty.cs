@@ -14,7 +14,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 [Tool]
 public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializationListener
 {
-	private OptionButton _optionButton = null!;
+	private OptionButton? _optionButton;
 
 	public override void _Ready()
 	{
@@ -27,51 +27,16 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 			_optionButton.AddItem(option);
 		}
 
-		_optionButton.ItemSelected += x =>
-		{
-			var className = _optionButton.GetItemText((int)x);
-			EmitChanged(GetEditedProperty(), className);
-
-			GodotObject @object = GetEditedObject();
-			if (@object is not null)
-			{
-				var dictionary = new Dictionary<string, AttributeValues>();
-
-				var assembly = Assembly.GetAssembly(typeof(ForgeAttributeSet));
-				Type? targetType = System.Array.Find(assembly?.GetTypes() ?? [], x => x.Name == className);
-				if (targetType is not null)
-				{
-					System.Collections.Generic.IEnumerable<PropertyInfo> attributeProperties = targetType
-						.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-						.Where(x => x.PropertyType == typeof(EntityAttribute));
-
-					foreach (var propertyName in attributeProperties.Select(x => x.Name))
-					{
-						if (@object is not ForgeAttributeSet forgeAttributeSet)
-						{
-							dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);
-							continue;
-						}
-
-						AttributeSet? attributeSet = forgeAttributeSet.GetAttributeSet();
-						if (attributeSet is null)
-						{
-							dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);
-							continue;
-						}
-
-						EntityAttribute key = attributeSet.AttributesMap[className + "." + propertyName];
-						dictionary[propertyName] = new AttributeValues(key.CurrentValue, key.Min, key.Max);
-					}
-				}
-
-				EmitChanged("InitialAttributeValues", dictionary);
-			}
-		};
+		_optionButton.ItemSelected += OnItemSelected;
 	}
 
 	public override void _UpdateProperty()
 	{
+		if (_optionButton is null || !IsInstanceValid(_optionButton))
+		{
+			return;
+		}
+
 		GodotObject obj = GetEditedObject();
 		StringName property = GetEditedProperty();
 		var val = obj.Get(property).AsString();
@@ -87,6 +52,13 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 
 	public void OnBeforeSerialize()
 	{
+		if (_optionButton is not null && IsInstanceValid(_optionButton))
+		{
+			_optionButton.ItemSelected -= OnItemSelected;
+		}
+
+		_optionButton = null;
+
 		for (var i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
@@ -97,6 +69,55 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 
 	public void OnAfterDeserialize()
 	{
+	}
+
+	private void OnItemSelected(long index)
+	{
+		if (_optionButton is null || !IsInstanceValid(_optionButton))
+		{
+			return;
+		}
+
+		var className = _optionButton.GetItemText((int)index);
+		EmitChanged(GetEditedProperty(), className);
+
+		GodotObject @object = GetEditedObject();
+		if (@object is null)
+		{
+			return;
+		}
+
+		var dictionary = new Dictionary<string, AttributeValues>();
+
+		var assembly = Assembly.GetAssembly(typeof(ForgeAttributeSet));
+		Type? targetType = System.Array.Find(assembly?.GetTypes() ?? [], x => x.Name == className);
+		if (targetType is not null)
+		{
+			System.Collections.Generic.IEnumerable<PropertyInfo> attributeProperties = targetType
+				.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+				.Where(x => x.PropertyType == typeof(EntityAttribute));
+
+			foreach (var propertyName in attributeProperties.Select(x => x.Name))
+			{
+				if (@object is not ForgeAttributeSet forgeAttributeSet)
+				{
+					dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);
+					continue;
+				}
+
+				AttributeSet? attributeSet = forgeAttributeSet.GetAttributeSet();
+				if (attributeSet is null)
+				{
+					dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);
+					continue;
+				}
+
+				EntityAttribute key = attributeSet.AttributesMap[className + "." + propertyName];
+				dictionary[propertyName] = new AttributeValues(key.CurrentValue, key.Min, key.Max);
+			}
+		}
+
+		EmitChanged("InitialAttributeValues", dictionary);
 	}
 }
 #endif
