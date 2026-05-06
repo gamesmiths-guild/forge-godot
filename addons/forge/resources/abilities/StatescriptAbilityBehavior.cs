@@ -90,7 +90,9 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
 					&& !x.IsAbstract
 					&& !x.IsInterface
-					&& x.Name == className);
+					&& (x.AssemblyQualifiedName == className
+						|| x.FullName == className
+						|| x.Name == className));
 
 		if (type is null)
 		{

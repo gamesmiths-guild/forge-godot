@@ -169,13 +169,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return null;
 		}
 
-		Type? type = AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(a => a.GetTypes())
-			.FirstOrDefault(
-				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-					&& !x.IsAbstract
-					&& !x.IsInterface
-					&& x.Name == className);
+		Type? type = ResolveProviderType(className);
 
 		if (type is null)
 		{
@@ -183,6 +177,43 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		}
 
 		return Activator.CreateInstance(type) as IActivationDataProvider;
+	}
+
+	private static IEnumerable<Type> GetProviderTypes()
+	{
+		return AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.Where(x => typeof(IActivationDataProvider).IsAssignableFrom(x)
+				&& !x.IsAbstract
+				&& !x.IsInterface);
+	}
+
+	private static string GetProviderIdentifier(Type type)
+	{
+		return type.FullName ?? type.Name;
+	}
+
+	private static bool ProviderMatches(Type type, string providerIdentifier)
+	{
+		return type.AssemblyQualifiedName == providerIdentifier
+			|| type.FullName == providerIdentifier
+			|| type.Name == providerIdentifier;
+	}
+
+	private static Type? ResolveProviderType(string providerIdentifier)
+	{
+		return GetProviderTypes().FirstOrDefault(x => ProviderMatches(x, providerIdentifier));
+	}
+
+	private static bool ProviderIdentifiersMatch(string left, string right)
+	{
+		if (left == right)
+		{
+			return true;
+		}
+
+		Type? leftType = ResolveProviderType(left);
+		return leftType is not null && ProviderMatches(leftType, right);
 	}
 
 	private void OnProviderDropdownItemSelected(long index)
@@ -257,20 +288,21 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		if (!string.IsNullOrEmpty(graphLockedProvider))
 		{
 			// Another node already uses a provider: only show that one (plus None).
-			_providerDropdown.AddItem(graphLockedProvider);
-			_providerClassNames.Add(graphLockedProvider);
+			Type? lockedProviderType = ResolveProviderType(graphLockedProvider);
+			string lockedProviderIdentifier = lockedProviderType is null
+				? graphLockedProvider
+				: GetProviderIdentifier(lockedProviderType);
+			string lockedProviderDisplayName = lockedProviderType?.Name ?? graphLockedProvider;
+
+			_providerDropdown.AddItem(lockedProviderDisplayName);
+			_providerClassNames.Add(lockedProviderIdentifier);
 		}
 		else
 		{
-			foreach (var name in AppDomain.CurrentDomain.GetAssemblies()
-				.SelectMany(a => a.GetTypes())
-				.Where(x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-					&& !x.IsAbstract
-					&& !x.IsInterface)
-				.Select(x => x.Name))
+			foreach (Type providerType in GetProviderTypes())
 			{
-				_providerDropdown.AddItem(name);
-				_providerClassNames.Add(name);
+				_providerDropdown.AddItem(providerType.Name);
+				_providerClassNames.Add(GetProviderIdentifier(providerType));
 			}
 		}
 
@@ -279,8 +311,9 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		{
 			for (var i = 0; i < _providerClassNames.Count; i++)
 			{
-				if (_providerClassNames[i] == _selectedProviderClassName)
+				if (ProviderIdentifiersMatch(_providerClassNames[i], _selectedProviderClassName))
 				{
+					_selectedProviderClassName = _providerClassNames[i];
 					_providerDropdown.Selected = i;
 					return;
 				}
