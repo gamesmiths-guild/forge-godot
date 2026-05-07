@@ -22,6 +22,9 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		To = 1,
 	}
 
+	private static readonly Type[] _vectorExpectedTypes = [typeof(SysVector2), typeof(SysVector3)];
+	private static readonly Type[] _axisExpectedTypes = [typeof(SysVector3)];
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private VBoxContainer? _fromEditorContainer;
@@ -220,7 +223,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			factories,
 			GetSelectedIndex(factories, existingResolver),
 			existingResolver,
-			typeof(ForgeVariant128),
+			_vectorExpectedTypes,
 			editorContainer,
 			setEditor);
 
@@ -251,7 +254,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			_axisFactories,
 			GetSelectedIndex(_axisFactories, existingResolver),
 			existingResolver,
-			typeof(SysVector3),
+			_axisExpectedTypes,
 			nestedContainer,
 			x => _axisEditor = x);
 
@@ -278,7 +281,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 		ClearEditorContainer(nestedContainer);
 		_axisEditor = null;
-		ShowEditor(_axisFactories, (int)index, null, typeof(SysVector3), nestedContainer, x => _axisEditor = x);
+		ShowEditor(_axisFactories, (int)index, null, _axisExpectedTypes, nestedContainer, x => _axisEditor = x);
 		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
@@ -297,7 +300,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 		ClearEditorContainer(editorContainer);
 		setEditor(null);
-		ShowEditor(factories, index, null, typeof(ForgeVariant128), editorContainer, setEditor);
+		ShowEditor(factories, index, null, _vectorExpectedTypes, editorContainer, setEditor);
 		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
@@ -341,7 +344,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		List<Func<NodeEditorProperty>> factories,
 		int factoryIndex,
 		StatescriptResolverResource? existingResolver,
-		Type nestedExpectedType,
+		Type[] allowedExpectedTypes,
 		VBoxContainer? container,
 		Action<NodeEditorProperty?> setEditor)
 	{
@@ -350,11 +353,20 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		NodeEditorProperty editor = factories[factoryIndex]();
-		StatescriptNodeProperty? tempProperty =
-			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
-		editor.Setup(_graph, tempProperty, nestedExpectedType, OnNestedEditorChanged, false);
-		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
+		NodeEditorProperty? editor = NestedResolverEditorUtilities.CreateNestedEditor(
+			_graph,
+			factories,
+			factoryIndex,
+			existingResolver,
+			allowedExpectedTypes,
+			OnNestedEditorChanged,
+			RaiseLayoutSizeChanged);
+
+		if (editor is null)
+		{
+			return;
+		}
+
 		container.AddChild(editor);
 		setEditor(editor);
 	}
