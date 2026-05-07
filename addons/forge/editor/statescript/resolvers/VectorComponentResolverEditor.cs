@@ -85,11 +85,9 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 			Title = "Vector:",
 			Folded = existing?.OperandFolded ?? true,
 		};
-		_operandFoldable.FoldingChanged += _ =>
-		 {
-			 _onChanged?.Invoke();
-			 RaiseLayoutSizeChanged();
-		 };
+
+		_operandFoldable.FoldingChanged += OnOperandFoldableFoldingChanged;
+
 		root.AddChild(_operandFoldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_operandFoldable.AddChild(container);
@@ -164,6 +162,12 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetOperandClrType());
 		PopulateResolverDropdown();
 		PopulateComponentDropdown();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnOperandFoldableFoldingChanged(bool folded)
+	{
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}

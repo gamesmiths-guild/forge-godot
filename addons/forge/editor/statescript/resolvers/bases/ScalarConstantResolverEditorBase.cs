@@ -68,8 +68,7 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 			typeDropdown.AddItem("Float");
 			typeDropdown.AddItem("Double");
 			typeDropdown.Selected = _valueType == StatescriptVariableType.Double ? 1 : 0;
-			typeDropdown.ItemSelected += index =>
-				_valueType = index == 1 ? StatescriptVariableType.Double : StatescriptVariableType.Float;
+			typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
 			row.AddChild(typeDropdown);
 		}
 		else
@@ -92,6 +91,11 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 		return valueType == StatescriptVariableType.Double
 			? StatescriptVariableType.Double
 			: StatescriptVariableType.Float;
+	}
+
+	private void OnTypeDropdownItemSelected(long index)
+	{
+		_valueType = index == 1 ? StatescriptVariableType.Double : StatescriptVariableType.Float;
 	}
 }
 #endif

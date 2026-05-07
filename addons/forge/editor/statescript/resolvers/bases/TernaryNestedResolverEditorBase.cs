@@ -12,6 +12,13 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 internal abstract partial class TernaryNestedResolverEditorBase<TResource> : NodeEditorProperty
 	where TResource : TernaryNestedResolverResourceBase, new()
 {
+	private enum ResolverSlot
+	{
+		First = 0,
+		Second = 1,
+		Third = 2,
+	}
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private FoldableContainer? _firstFoldable;
@@ -77,33 +84,30 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 		BuildSlot(
 			vBox,
+			ResolverSlot.First,
 			FirstTitle,
 			_firstFactories,
 			existingResource?.First,
 			GetConstrainedExpectedTypes(GetFirstFactoryExpectedTypes(expectedType), expectedType),
-			existingResource?.FirstFolded ?? true,
-			x => _firstEditor = x,
-			x => _firstFoldable = x);
+			existingResource?.FirstFolded ?? true);
 
 		BuildSlot(
 			vBox,
+			ResolverSlot.Second,
 			SecondTitle,
 			_secondFactories,
 			existingResource?.Second,
 			GetConstrainedExpectedTypes(GetSecondFactoryExpectedTypes(expectedType), expectedType),
-			existingResource?.SecondFolded ?? true,
-			x => _secondEditor = x,
-			x => _secondFoldable = x);
+			existingResource?.SecondFolded ?? true);
 
 		BuildSlot(
 			vBox,
+			ResolverSlot.Third,
 			ThirdTitle,
 			_thirdFactories,
 			existingResource?.Third,
 			GetConstrainedExpectedTypes(GetThirdFactoryExpectedTypes(expectedType), expectedType),
-			existingResource?.ThirdFolded ?? true,
-			x => _thirdEditor = x,
-			x => _thirdFoldable = x);
+			existingResource?.ThirdFolded ?? true);
 
 		UpdateFoldableTitles();
 	}
@@ -218,22 +222,16 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 	private void BuildSlot(
 		VBoxContainer root,
+		ResolverSlot slot,
 		string title,
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
 		Type[] allowedExpectedTypes,
-		bool folded,
-		Action<NodeEditorProperty?> setEditor,
-		Action<FoldableContainer> setFoldable)
+		bool folded)
 	{
 		FoldableContainer foldable = new() { Title = title, Folded = folded };
-		foldable.FoldingChanged += _ =>
-		{
-			UpdateFoldableTitles();
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
-		};
-		setFoldable(foldable);
+		foldable.FoldingChanged += OnFoldableFoldingChanged;
+		SetFoldable(slot, foldable);
 		root.AddChild(foldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -249,38 +247,28 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(editorContainer);
 		ShowNestedEditor(
+			slot,
 			factories,
 			selectedIndex,
 			existingResolver,
 			allowedExpectedTypes,
-			editorContainer,
-			setEditor);
+			editorContainer);
 
-		resolverDropdown.ItemSelected += index =>
+		resolverDropdown.ItemSelected += slot switch
 		{
-			NestedResolverEditorUtilities.ClearContainer(editorContainer);
-
-			setEditor(null);
-			ShowNestedEditor(
-				factories,
-				(int)index,
-				null,
-				allowedExpectedTypes,
-				editorContainer,
-				setEditor);
-			UpdateFoldableTitles();
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
+			ResolverSlot.First => OnFirstResolverDropdownItemSelected,
+			ResolverSlot.Second => OnSecondResolverDropdownItemSelected,
+			_ => OnThirdResolverDropdownItemSelected,
 		};
 	}
 
 	private void ShowNestedEditor(
+		ResolverSlot slot,
 		List<Func<NodeEditorProperty>> factories,
 		int factoryIndex,
 		StatescriptResolverResource? existingResolver,
 		Type[] allowedExpectedTypes,
-		VBoxContainer container,
-		Action<NodeEditorProperty?> setEditor)
+		VBoxContainer container)
 	{
 		if (_graph is null || factoryIndex < 0 || factoryIndex >= factories.Count)
 		{
@@ -302,7 +290,106 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		}
 
 		container.AddChild(editor);
-		setEditor(editor);
+		SetEditor(slot, editor);
+	}
+
+	private void OnFoldableFoldingChanged(bool folded)
+	{
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnFirstResolverDropdownItemSelected(long index)
+	{
+		HandleResolverDropdownChanged(ResolverSlot.First, (int)index, _firstFactories, GetFirstAllowedExpectedTypes());
+	}
+
+	private void OnSecondResolverDropdownItemSelected(long index)
+	{
+		HandleResolverDropdownChanged(ResolverSlot.Second, (int)index, _secondFactories, GetSecondAllowedExpectedTypes());
+	}
+
+	private void OnThirdResolverDropdownItemSelected(long index)
+	{
+		HandleResolverDropdownChanged(ResolverSlot.Third, (int)index, _thirdFactories, GetThirdAllowedExpectedTypes());
+	}
+
+	private void HandleResolverDropdownChanged(
+		ResolverSlot slot,
+		int index,
+		List<Func<NodeEditorProperty>> factories,
+		Type[] allowedExpectedTypes)
+	{
+		VBoxContainer? editorContainer = GetEditorContainer(slot);
+		if (editorContainer is null)
+		{
+			return;
+		}
+
+		NestedResolverEditorUtilities.ClearContainer(editorContainer);
+		SetEditor(slot, null);
+		ShowNestedEditor(slot, factories, index, null, allowedExpectedTypes, editorContainer);
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private Type[] GetFirstAllowedExpectedTypes()
+	{
+		return GetConstrainedExpectedTypes(FirstFactoryExpectedTypes, FirstNestedExpectedType);
+	}
+
+	private Type[] GetSecondAllowedExpectedTypes()
+	{
+		return GetConstrainedExpectedTypes(SecondFactoryExpectedTypes, SecondNestedExpectedType);
+	}
+
+	private Type[] GetThirdAllowedExpectedTypes()
+	{
+		return GetConstrainedExpectedTypes(ThirdFactoryExpectedTypes, ThirdNestedExpectedType);
+	}
+
+	private void SetFoldable(ResolverSlot slot, FoldableContainer foldable)
+	{
+		switch (slot)
+		{
+			case ResolverSlot.First:
+				_firstFoldable = foldable;
+				break;
+			case ResolverSlot.Second:
+				_secondFoldable = foldable;
+				break;
+			default:
+				_thirdFoldable = foldable;
+				break;
+		}
+	}
+
+	private void SetEditor(ResolverSlot slot, NodeEditorProperty? editor)
+	{
+		switch (slot)
+		{
+			case ResolverSlot.First:
+				_firstEditor = editor;
+				break;
+			case ResolverSlot.Second:
+				_secondEditor = editor;
+				break;
+			default:
+				_thirdEditor = editor;
+				break;
+		}
+	}
+
+	private VBoxContainer? GetEditorContainer(ResolverSlot slot)
+	{
+		return slot switch
+		{
+			ResolverSlot.First => _firstFoldable?.GetChildCount() > 0 ? _firstFoldable.GetChild(0) as VBoxContainer : null,
+			ResolverSlot.Second => _secondFoldable?.GetChildCount() > 0 ? _secondFoldable.GetChild(0) as VBoxContainer : null,
+			_ => _thirdFoldable?.GetChildCount() > 0 ? _thirdFoldable.GetChild(0) as VBoxContainer : null,
+		};
 	}
 
 	private void OnNestedEditorChanged()

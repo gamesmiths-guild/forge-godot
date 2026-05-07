@@ -16,6 +16,12 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 {
+	private enum VectorSlot
+	{
+		From = 0,
+		To = 1,
+	}
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private VBoxContainer? _fromEditorContainer;
@@ -61,22 +67,20 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 		BuildVectorSlot(
 			root,
+			VectorSlot.From,
 			"From:",
 			_vectorFactories,
 			existing?.From,
 			existing?.FromFolded ?? true,
-			x => _fromFoldable = x,
-			out _fromEditorContainer,
 			x => _fromEditor = x);
 
 		BuildVectorSlot(
 			root,
+			VectorSlot.To,
 			"To:",
 			_vectorFactories,
 			existing?.To,
 			existing?.ToFolded ?? true,
-			x => _toFoldable = x,
-			out _toEditorContainer,
 			x => _toEditor = x);
 
 		var axisToggleRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -176,42 +180,58 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 	private void BuildVectorSlot(
 		VBoxContainer root,
+		VectorSlot slot,
 		string title,
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver,
 		bool folded,
-		Action<FoldableContainer> setFoldable,
-		out VBoxContainer editorContainer,
 		Action<NodeEditorProperty?> setEditor)
 	{
 		FoldableContainer foldable = CreateFoldable(title, folded);
-		setFoldable(foldable);
+
+		if (slot == VectorSlot.From)
+		{
+			_fromFoldable = foldable;
+		}
+		else
+		{
+			_toFoldable = foldable;
+		}
+
 		root.AddChild(foldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foldable.AddChild(container);
 		OptionButton dropdown = CreateResolverDropdown(factories, existingResolver);
-		editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		VBoxContainer capturedEditorContainer = editorContainer;
+		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		if (slot == VectorSlot.From)
+		{
+			_fromEditorContainer = editorContainer;
+		}
+		else
+		{
+			_toEditorContainer = editorContainer;
+		}
+
 		container.AddChild(dropdown);
-		container.AddChild(capturedEditorContainer);
+		container.AddChild(editorContainer);
 
 		ShowEditor(
 			factories,
 			GetSelectedIndex(factories, existingResolver),
 			existingResolver,
 			typeof(ForgeVariant128),
-			capturedEditorContainer,
+			editorContainer,
 			setEditor);
 
-		dropdown.ItemSelected += index =>
+		if (slot == VectorSlot.From)
 		{
-			ClearEditorContainer(capturedEditorContainer);
-			setEditor(null);
-			ShowEditor(factories, (int)index, null, typeof(ForgeVariant128), capturedEditorContainer, setEditor);
-			UpdateFoldableTitles();
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
-		};
+			dropdown.ItemSelected += OnFromResolverDropdownItemSelected;
+		}
+		else
+		{
+			dropdown.ItemSelected += OnToResolverDropdownItemSelected;
+		}
 	}
 
 	private void BuildAxisEditor(StatescriptResolverResource? existingResolver)
@@ -235,15 +255,59 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			nestedContainer,
 			x => _axisEditor = x);
 
-		dropdown.ItemSelected += index =>
+		dropdown.ItemSelected += OnAxisResolverDropdownItemSelected;
+	}
+
+	private void OnFromResolverDropdownItemSelected(long index)
+	{
+		HandleVectorResolverChanged(_fromEditorContainer, _vectorFactories, (int)index, x => _fromEditor = x);
+	}
+
+	private void OnToResolverDropdownItemSelected(long index)
+	{
+		HandleVectorResolverChanged(_toEditorContainer, _vectorFactories, (int)index, x => _toEditor = x);
+	}
+
+	private void OnAxisResolverDropdownItemSelected(long index)
+	{
+		VBoxContainer? nestedContainer = GetAxisNestedContainer();
+		if (nestedContainer is null)
 		{
-			ClearEditorContainer(nestedContainer);
-			_axisEditor = null;
-			ShowEditor(_axisFactories, (int)index, null, typeof(SysVector3), nestedContainer, x => _axisEditor = x);
-			UpdateFoldableTitles();
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
-		};
+			return;
+		}
+
+		ClearEditorContainer(nestedContainer);
+		_axisEditor = null;
+		ShowEditor(_axisFactories, (int)index, null, typeof(SysVector3), nestedContainer, x => _axisEditor = x);
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void HandleVectorResolverChanged(
+		VBoxContainer? editorContainer,
+		List<Func<NodeEditorProperty>> factories,
+		int index,
+		Action<NodeEditorProperty?> setEditor)
+	{
+		if (editorContainer is null)
+		{
+			return;
+		}
+
+		ClearEditorContainer(editorContainer);
+		setEditor(null);
+		ShowEditor(factories, index, null, typeof(ForgeVariant128), editorContainer, setEditor);
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private VBoxContainer? GetAxisNestedContainer()
+	{
+		return _axisEditorContainer?.GetChildCount() > 1
+			? _axisEditorContainer.GetChild(1) as VBoxContainer
+			: null;
 	}
 
 	private FoldableContainer CreateFoldable(string title, bool folded)
