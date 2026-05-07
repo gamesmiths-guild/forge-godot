@@ -132,6 +132,12 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		base.ClearCallbacks();
 		_onChanged = null;
 		_operandEditor?.ClearCallbacks();
+		_operandEditor = null;
+		_editorContainer = null;
+		_operandFoldable = null;
+		_resolverDropdown = null;
+		_typeDropdown = null;
+		_componentDropdown = null;
 	}
 
 	private static StatescriptResolverResource? SaveNestedEditor(NodeEditorProperty? editor)

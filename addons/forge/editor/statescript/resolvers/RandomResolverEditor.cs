@@ -170,6 +170,17 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		_onChanged = null;
 		_minEditor?.ClearCallbacks();
 		_maxEditor?.ClearCallbacks();
+		_typeDropdown = null;
+		_minFoldable = null;
+		_maxFoldable = null;
+		_inclusiveMaxFoldable = null;
+		_minResolverDropdown = null;
+		_maxResolverDropdown = null;
+		_minEditorContainer = null;
+		_maxEditorContainer = null;
+		_minEditor = null;
+		_maxEditor = null;
+		_inclusiveMaxCheckBox = null;
 	}
 
 	private static StatescriptResolverResource? SaveNestedEditor(NodeEditorProperty? editor)

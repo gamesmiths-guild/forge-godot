@@ -119,6 +119,16 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		_fromEditor?.ClearCallbacks();
 		_toEditor?.ClearCallbacks();
 		_axisEditor?.ClearCallbacks();
+		_fromEditorContainer = null;
+		_toEditorContainer = null;
+		_axisEditorContainer = null;
+		_fromFoldable = null;
+		_toFoldable = null;
+		_axisFoldable = null;
+		_fromEditor = null;
+		_toEditor = null;
+		_axisEditor = null;
+		_useAxisCheckBox = null;
 	}
 
 	private static StatescriptResolverResource? SaveNestedEditor(NodeEditorProperty? editor)

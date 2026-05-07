@@ -128,6 +128,12 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		_firstEditor?.ClearCallbacks();
 		_secondEditor?.ClearCallbacks();
 		_thirdEditor?.ClearCallbacks();
+		_firstFoldable = null;
+		_secondFoldable = null;
+		_thirdFoldable = null;
+		_firstEditor = null;
+		_secondEditor = null;
+		_thirdEditor = null;
 	}
 
 	public override bool TryGetHighlightedVariableName(out string variableName)

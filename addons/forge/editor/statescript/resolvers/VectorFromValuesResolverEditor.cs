@@ -139,6 +139,22 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 		_yEditor?.ClearCallbacks();
 		_zEditor?.ClearCallbacks();
 		_wEditor?.ClearCallbacks();
+		_xFoldable = null;
+		_yFoldable = null;
+		_zFoldable = null;
+		_wFoldable = null;
+		_xResolverDropdown = null;
+		_yResolverDropdown = null;
+		_zResolverDropdown = null;
+		_wResolverDropdown = null;
+		_xEditorContainer = null;
+		_yEditorContainer = null;
+		_zEditorContainer = null;
+		_wEditorContainer = null;
+		_xEditor = null;
+		_yEditor = null;
+		_zEditor = null;
+		_wEditor = null;
 	}
 
 	private static void SetFoldableVisible(FoldableContainer? foldable, bool visible)

@@ -131,6 +131,12 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		base.ClearCallbacks();
 		_onChanged = null;
 		_operandEditor?.ClearCallbacks();
+		_operandFoldable = null;
+		_operandResolverDropdown = null;
+		_operandEditorContainer = null;
+		_operandEditor = null;
+		_digitsSpin = null;
+		_modeDropdown = null;
 	}
 
 	private FoldableContainer CreateFoldable(string title, bool folded)
