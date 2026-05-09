@@ -17,6 +17,10 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISerializationListener
 {
 	private const string ExpandedArraysMetaKey = "_expanded_arrays";
+	private const string HeaderRowNodeName = "HeaderRow";
+	private const string AddButtonNodeName = "AddButton";
+	private const string VariablesScrollNodeName = "VariablesScroll";
+	private const string VariableListNodeName = "VariableList";
 	private const string VariableNameButtonMetaKey = "_variable_name_button";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
@@ -65,7 +69,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		SizeFlagsVertical = SizeFlags.ExpandFill;
 		CustomMinimumSize = new Vector2(360, 0);
 
-		var headerHBox = new HBoxContainer();
+		var headerHBox = new HBoxContainer { Name = HeaderRowNodeName };
 		AddChild(headerHBox);
 
 		var titleLabel = new Label
@@ -78,6 +82,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		_addButton = new Button
 		{
+			Name = AddButtonNodeName,
 			Icon = _addIcon,
 			Flat = true,
 			TooltipText = "Add Variable",
@@ -92,6 +97,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		var scrollContainer = new ScrollContainer
 		{
+			Name = VariablesScrollNodeName,
 			SizeFlagsVertical = SizeFlags.ExpandFill,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
@@ -100,6 +106,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		_variableList = new VBoxContainer
 		{
+			Name = VariableListNodeName,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
@@ -109,45 +116,19 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	public override void _ExitTree()
 	{
 		base._ExitTree();
-
-		if (_addButton is not null)
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
-
-		_creationDialog?.QueueFree();
-		_creationDialog = null;
-		_newNameEdit = null;
-		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		ReleaseUiState();
 	}
 
 	public void OnBeforeSerialize()
 	{
-		if (_addButton is not null)
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
-
-		if (_variableList is not null)
-		{
-			foreach (Node child in _variableList.GetChildren())
-			{
-				_variableList.RemoveChild(child);
-				child.Free();
-			}
-		}
-
-		_creationDialog?.Free();
-		_creationDialog = null;
-		_newNameEdit = null;
-		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
 	{
-		if (_addButton is not null)
+		EnsureControlsCached();
+
+		if (_addButton is not null && IsInstanceValid(_addButton))
 		{
 			_addButton.Pressed += OnAddPressed;
 		}
@@ -205,16 +186,14 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	/// </summary>
 	public void RebuildList()
 	{
+		EnsureControlsCached();
+
 		if (_variableList is null)
 		{
 			return;
 		}
 
-		foreach (Node child in _variableList.GetChildren())
-		{
-			_variableList.RemoveChild(child);
-			child.Free();
-		}
+		ClearVariableList();
 
 		if (_graph is null)
 		{
@@ -234,6 +213,55 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		button.AddThemeColorOverride("font_pressed_color", _highlightColor);
 		button.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));
 		button.AddThemeColorOverride("font_hover_pressed_color", _highlightColor.Lightened(0.2f));
+	}
+
+	private void EnsureControlsCached()
+	{
+		_addButton ??= GetNodeOrNull<Button>($"{HeaderRowNodeName}/{AddButtonNodeName}");
+		_variableList ??= GetNodeOrNull<VBoxContainer>($"{VariablesScrollNodeName}/{VariableListNodeName}");
+	}
+
+	private void ClearVariableList()
+	{
+		EnsureControlsCached();
+
+		if (_variableList is null || !IsInstanceValid(_variableList))
+		{
+			return;
+		}
+
+		foreach (Node child in _variableList.GetChildren())
+		{
+			_variableList.RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		ClearVariableList();
+
+		if (_creationDialog is not null && IsInstanceValid(_creationDialog))
+		{
+			if (_creationDialog is AcceptDialog acceptDialog)
+			{
+				acceptDialog.Confirmed -= OnCreationConfirmed;
+			}
+
+			_creationDialog.Free();
+		}
+
+		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
+		_variableList = null;
+		_addButton = null;
 	}
 
 	private void SaveExpandedArrayState()

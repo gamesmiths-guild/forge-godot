@@ -187,6 +187,17 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		_leftEditor?.ClearCallbacks();
 		_rightEditor?.ClearCallbacks();
+		_operationDropdown = null;
+		_leftContainer = null;
+		_rightContainer = null;
+		_leftFoldable = null;
+		_rightFoldable = null;
+		_leftResolverDropdown = null;
+		_rightResolverDropdown = null;
+		_leftEditor = null;
+		_rightEditor = null;
+		_leftEditorContainer = null;
+		_rightEditorContainer = null;
 	}
 
 	private void OnFoldingChanged(bool isFolded)
@@ -246,8 +257,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		foreach (Func<NodeEditorProperty> factory in _numericFactories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

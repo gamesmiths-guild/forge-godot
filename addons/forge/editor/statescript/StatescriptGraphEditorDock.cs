@@ -104,6 +104,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		UnsubscribeSharedVariableHighlightState();
 
 		ClearGraphEditor();
+		DisposeCachedGraphVisuals();
 		_openTabs.Clear();
 
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
@@ -113,6 +114,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		DisconnectUISignals();
+		_fileSystem = null;
+		_filesystemChangedCallable = default;
 	}
 
 	public void OnBeforeSerialize()
@@ -237,8 +240,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		graph.EnsureEntryNode();
 
-		var tab = new GraphTab(graph);
-		tab.VariablesPanelOpen = _variablePanel?.Visible ?? false;
+		var tab = new GraphTab(graph)
+		{
+			VariablesPanelOpen = _variablePanel?.Visible ?? false,
+		};
+
 		_openTabs.Add(tab);
 
 		_tabBar.AddTab(graph.StatescriptName);
@@ -1472,12 +1478,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void EnsureVariablesPanelVisible()
 	{
-		if (_variablePanel is null || _variablesToggleButton is null || _openTabs.Count == 0)
-		{
-			return;
-		}
-
-		if (_variablePanel.Visible)
+		if (_variablePanel is null || _variablesToggleButton is null)
 		{
 			return;
 		}

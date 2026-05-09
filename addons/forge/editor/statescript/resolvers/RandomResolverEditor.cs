@@ -15,6 +15,12 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class RandomResolverEditor : NodeEditorProperty
 {
+	private enum ResolverSlot
+	{
+		Min = 0,
+		Max = 1,
+	}
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private Type _expectedType = typeof(ForgeVariant128);
@@ -91,25 +97,25 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 
 		BuildResolverSlot(
 			root,
+			ResolverSlot.Min,
 			"Min:",
 			existing?.Left,
 			existing?.MinFolded ?? true,
 			out _minFoldable,
 			out _minResolverDropdown,
 			out _minEditorContainer,
-			x => _minEditor = x,
-			OnMinResolverDropdownItemSelected);
+			x => _minEditor = x);
 
 		BuildResolverSlot(
 			root,
+			ResolverSlot.Max,
 			"Max:",
 			existing?.Right,
 			existing?.MaxFolded ?? true,
 			out _maxFoldable,
 			out _maxResolverDropdown,
 			out _maxEditorContainer,
-			x => _maxEditor = x,
-			OnMaxResolverDropdownItemSelected);
+			x => _maxEditor = x);
 
 		_inclusiveMaxFoldable = new FoldableContainer
 		{
@@ -144,8 +150,8 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		inclusiveMaxRow.AddChild(exclusiveButton);
 		inclusiveMaxRow.AddChild(_inclusiveMaxCheckBox);
 
-		exclusiveButton.Pressed += () => OnInclusiveMaxChanged(false);
-		_inclusiveMaxCheckBox.Pressed += () => OnInclusiveMaxChanged(true);
+		exclusiveButton.Pressed += OnExclusiveMaxPressed;
+		_inclusiveMaxCheckBox.Pressed += OnInclusiveMaxPressed;
 
 		UpdateFoldableTitles();
 	}
@@ -170,6 +176,17 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		_onChanged = null;
 		_minEditor?.ClearCallbacks();
 		_maxEditor?.ClearCallbacks();
+		_typeDropdown = null;
+		_minFoldable = null;
+		_maxFoldable = null;
+		_inclusiveMaxFoldable = null;
+		_minResolverDropdown = null;
+		_maxResolverDropdown = null;
+		_minEditorContainer = null;
+		_maxEditorContainer = null;
+		_minEditor = null;
+		_maxEditor = null;
+		_inclusiveMaxCheckBox = null;
 	}
 
 	private static StatescriptResolverResource? SaveNestedEditor(NodeEditorProperty? editor)
@@ -221,22 +238,17 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 
 	private void BuildResolverSlot(
 		VBoxContainer root,
+		ResolverSlot slot,
 		string title,
 		StatescriptResolverResource? existingResolver,
 		bool folded,
 		out FoldableContainer foldable,
 		out OptionButton resolverDropdown,
 		out VBoxContainer editorContainer,
-		Action<NodeEditorProperty?> setEditor,
-		Action<long> onSelected)
+		Action<NodeEditorProperty?> setEditor)
 	{
 		foldable = new FoldableContainer { Title = title, Folded = folded };
-		foldable.FoldingChanged += _ =>
-		 {
-			 UpdateFoldableTitles();
-			 _onChanged?.Invoke();
-			 RaiseLayoutSizeChanged();
-		 };
+		foldable.FoldingChanged += OnResolverSlotFoldableFoldingChanged;
 		root.AddChild(foldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -247,7 +259,15 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		container.AddChild(resolverDropdown);
 		container.AddChild(editorContainer);
 		ShowEditor(GetSelectedIndex(existingResolver), existingResolver, editorContainer, setEditor);
-		resolverDropdown.ItemSelected += index => onSelected(index);
+
+		if (slot == ResolverSlot.Min)
+		{
+			resolverDropdown.ItemSelected += OnMinResolverDropdownItemSelected;
+		}
+		else
+		{
+			resolverDropdown.ItemSelected += OnMaxResolverDropdownItemSelected;
+		}
 	}
 
 	private void OnTypeDropdownItemSelected(long index)
@@ -289,9 +309,26 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		_onChanged?.Invoke();
 	}
 
+	private void OnExclusiveMaxPressed()
+	{
+		OnInclusiveMaxChanged(false);
+	}
+
+	private void OnInclusiveMaxPressed()
+	{
+		OnInclusiveMaxChanged(true);
+	}
+
 	private void OnInclusiveMaxFoldableFoldingChanged(bool folded)
 	{
 		UpdateInclusiveMaxFoldableTitle();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnResolverSlotFoldableFoldingChanged(bool folded)
+	{
+		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -311,8 +348,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		dropdown.Clear();
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		int selectedIndex = GetSelectedIndex(null);
@@ -353,8 +389,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

@@ -15,13 +15,13 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
-	private VBoxContainer _root = null!;
-	private Button _containerButton = null!;
-	private ScrollContainer _scroll = null!;
-	private Tree _tree = null!;
+	private VBoxContainer? _root;
+	private Button? _containerButton;
+	private ScrollContainer? _scroll;
+	private Tree? _tree;
 
-	private Texture2D _checkedIcon = null!;
-	private Texture2D _uncheckedIcon = null!;
+	private Texture2D? _checkedIcon;
+	private Texture2D? _uncheckedIcon;
 
 	private GodotStringArray _currentValue = [];
 
@@ -75,23 +75,30 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	public override void _UpdateProperty()
 	{
+		if (_tree is null || _containerButton is null || !IsInstanceValid(_tree) || !IsInstanceValid(_containerButton))
+		{
+			return;
+		}
+
 		GodotObject obj = GetEditedObject();
 		string propertyName = GetEditedProperty();
 
-		_currentValue =
-			obj.Get(propertyName).AsGodotArray<string>() ?? [];
+		_currentValue = obj.Get(propertyName).AsGodotArray<string>() ?? [];
 
 		RebuildTree();
 	}
 
+	public override void _ExitTree()
+	{
+		ReleaseUiState();
+		FreeAllChildren();
+		base._ExitTree();
+	}
+
 	public void OnBeforeSerialize()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
+		ReleaseUiState();
+		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -100,19 +107,21 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	private void RebuildTree()
 	{
+		if (_tree is null || _containerButton is null || _checkedIcon is null || _uncheckedIcon is null)
+		{
+			return;
+		}
+
 		_tree.Clear();
 		_treeItemToNode.Clear();
 
-		_containerButton.Text =
-			$"Container (size: {_currentValue.Count})";
+		_containerButton.Text = $"Container (size: {_currentValue.Count})";
 
 		TreeItem root = _tree.CreateItem();
 
-		ForgeData forgePluginData =
-			ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
+		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 
-		var tagsManager =
-			new TagsManager([.. forgePluginData.RegisteredTags]);
+		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
 
 		BuildTreeRecursive(root, tagsManager.RootNode);
 
@@ -122,17 +131,19 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	private void BuildTreeRecursive(TreeItem parent, TagNode node)
 	{
+		if (_tree is null)
+		{
+			return;
+		}
+
 		foreach (TagNode child in node.ChildTags)
 		{
 			TreeItem item = _tree.CreateItem(parent);
 			item.SetText(0, child.TagKey);
 
-			var checkedState =
-				_currentValue.Contains(child.CompleteTagKey);
+			var checkedState = _currentValue.Contains(child.CompleteTagKey);
 
-			item.AddButton(
-				0,
-				checkedState ? _checkedIcon : _uncheckedIcon);
+			item.AddButton(0, checkedState ? _checkedIcon : _uncheckedIcon);
 
 			_treeItemToNode[item] = child;
 			BuildTreeRecursive(item, child);
@@ -145,6 +156,11 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 		long id,
 		long mouseButtonIndex)
 	{
+		if (_tree is null || !IsInstanceValid(_tree))
+		{
+			return;
+		}
+
 		if (mouseButtonIndex != 1 || id != 0)
 		{
 			return;
@@ -165,10 +181,46 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	private void OnToggled(bool toggled)
 	{
+		if (_scroll is null || !IsInstanceValid(_scroll))
+		{
+			return;
+		}
+
 		_scroll.Visible = toggled;
 
 		UpdateMinimumSize();
 		NotifyPropertyListChanged();
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_containerButton is not null && IsInstanceValid(_containerButton))
+		{
+			_containerButton.Toggled -= OnToggled;
+		}
+
+		if (_tree is not null && IsInstanceValid(_tree))
+		{
+			_tree.ButtonClicked -= OnTreeButtonClicked;
+		}
+
+		_treeItemToNode.Clear();
+		_root = null;
+		_containerButton = null;
+		_scroll = null;
+		_tree = null;
+		_checkedIcon = null;
+		_uncheckedIcon = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
 	}
 }
 #endif

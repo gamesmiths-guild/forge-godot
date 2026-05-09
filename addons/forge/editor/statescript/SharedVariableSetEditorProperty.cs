@@ -16,6 +16,11 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, ISerializationListener
 {
+	private const string BackgroundPanelNodeName = "BackgroundPanel";
+	private const string RootNodeName = "Root";
+	private const string HeaderRowNodeName = "HeaderRow";
+	private const string AddButtonNodeName = "AddButton";
+	private const string VariableListNodeName = "VariableList";
 	private const string VariableNameButtonMetaKey = "_shared_variable_name_button";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
@@ -63,6 +68,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		var backgroundPanel = new PanelContainer
 		{
+			Name = BackgroundPanelNodeName,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
@@ -83,14 +89,19 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		AddChild(backgroundPanel);
 		SetBottomEditor(backgroundPanel);
 
-		_root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_root = new VBoxContainer
+		{
+			Name = RootNodeName,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
 		backgroundPanel.AddChild(_root);
 
-		var headerHBox = new HBoxContainer();
+		var headerHBox = new HBoxContainer { Name = HeaderRowNodeName };
 		_root.AddChild(headerHBox);
 
 		_addButton = new Button
 		{
+			Name = AddButtonNodeName,
 			Text = "Add Variable",
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
@@ -100,12 +111,18 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		_root.AddChild(new HSeparator());
 
-		_variableList = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_variableList = new VBoxContainer
+		{
+			Name = VariableListNodeName,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
 		_root.AddChild(_variableList);
 	}
 
 	public override void _UpdateProperty()
 	{
+		EnsureControlsCached();
+
 		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
 		{
 			SharedVariableHighlightState.SetInspectorContext(sharedVariableSet.ResourcePath);
@@ -124,33 +141,25 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			SharedVariableHighlightState.ClearInspectorContext(sharedVariableSet.ResourcePath);
 		}
 
+		ReleaseUiState();
+		FreeAllChildren();
+
 		base._ExitTree();
 	}
 
 	public void OnBeforeSerialize()
 	{
 		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
-
-		if (_addButton is not null)
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
-
-		ClearVariableList();
-
-		_creationDialog?.Free();
-		_creationDialog = null;
-		_newNameEdit = null;
-		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
 	{
+		EnsureControlsCached();
 		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
 		SyncSelectedVariableFromHighlightState();
 
-		if (_addButton is not null)
+		if (_addButton is not null && IsInstanceValid(_addButton))
 		{
 			_addButton.Pressed += OnAddPressed;
 		}
@@ -197,18 +206,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void RebuildList()
 	{
-		if (_variableList is null)
-		{
-			return;
-		}
+		EnsureControlsCached();
 
-		// Defer the actual rebuild so that any in-progress signal emission (e.g. a button Pressed handler that
-		// triggered an add/remove) finishes before we free the emitting nodes.
-		CallDeferred(MethodName.RebuildListDeferred);
-	}
-
-	private void RebuildListDeferred()
-	{
 		if (_variableList is null)
 		{
 			return;
@@ -230,6 +229,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void ClearVariableList()
 	{
+		EnsureControlsCached();
+
 		if (_variableList is null)
 		{
 			return;
@@ -238,6 +239,51 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		foreach (Node child in _variableList.GetChildren())
 		{
 			_variableList.RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	private void EnsureControlsCached()
+	{
+		_root ??= GetNodeOrNull<VBoxContainer>(
+			$"{BackgroundPanelNodeName}/{RootNodeName}");
+		_addButton ??= GetNodeOrNull<Button>(
+			$"{BackgroundPanelNodeName}/{RootNodeName}/{HeaderRowNodeName}/{AddButtonNodeName}");
+		_variableList ??= GetNodeOrNull<VBoxContainer>(
+			$"{BackgroundPanelNodeName}/{RootNodeName}/{VariableListNodeName}");
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		ClearVariableList();
+
+		if (_creationDialog is not null && IsInstanceValid(_creationDialog))
+		{
+			_creationDialog.Confirmed -= OnCreationConfirmed;
+			_creationDialog.Canceled -= OnCreationCanceled;
+			_creationDialog.Free();
+		}
+
+		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
+		_root = null;
+		_variableList = null;
+		_addButton = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
 			child.Free();
 		}
 	}

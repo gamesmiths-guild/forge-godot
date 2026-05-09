@@ -26,8 +26,7 @@ internal static class NestedResolverEditorUtilities
 
 		foreach (Func<NodeEditorProperty> factory in factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(factories, existingResolver);

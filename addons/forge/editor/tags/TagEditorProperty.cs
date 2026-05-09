@@ -13,13 +13,13 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
-	private VBoxContainer _root = null!;
-	private Button _containerButton = null!;
-	private ScrollContainer _scroll = null!;
-	private Tree _tree = null!;
+	private VBoxContainer? _root;
+	private Button? _containerButton;
+	private ScrollContainer? _scroll;
+	private Tree? _tree;
 
-	private Texture2D _checkedIcon = null!;
-	private Texture2D _uncheckedIcon = null!;
+	private Texture2D? _checkedIcon;
+	private Texture2D? _uncheckedIcon;
 
 	private string _currentValue = string.Empty;
 
@@ -73,6 +73,11 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	public override void _UpdateProperty()
 	{
+		if (_tree is null || _containerButton is null || !IsInstanceValid(_tree) || !IsInstanceValid(_containerButton))
+		{
+			return;
+		}
+
 		GodotObject obj = GetEditedObject();
 		string propertyName = GetEditedProperty();
 
@@ -80,14 +85,17 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 		RebuildTree();
 	}
 
+	public override void _ExitTree()
+	{
+		ReleaseUiState();
+		FreeAllChildren();
+		base._ExitTree();
+	}
+
 	public void OnBeforeSerialize()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
+		ReleaseUiState();
+		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -96,19 +104,21 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	private void RebuildTree()
 	{
+		if (_tree is null || _containerButton is null || _checkedIcon is null || _uncheckedIcon is null)
+		{
+			return;
+		}
+
 		_tree.Clear();
 		_treeItemToNode.Clear();
 
-		_containerButton.Text =
-			string.IsNullOrEmpty(_currentValue) ? "(none)" : _currentValue;
+		_containerButton.Text = string.IsNullOrEmpty(_currentValue) ? "(none)" : _currentValue;
 
 		TreeItem root = _tree.CreateItem();
 
-		ForgeData forgePluginData =
-			ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
+		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
 
-		var tagsManager =
-			new TagsManager([.. forgePluginData.RegisteredTags]);
+		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
 
 		BuildTreeRecursive(root, tagsManager.RootNode);
 
@@ -118,6 +128,11 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	private void BuildTreeRecursive(TreeItem parent, TagNode node)
 	{
+		if (_tree is null)
+		{
+			return;
+		}
+
 		foreach (TagNode child in node.ChildTags)
 		{
 			TreeItem item = _tree.CreateItem(parent);
@@ -137,6 +152,11 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 		long id,
 		long mouseButtonIndex)
 	{
+		if (_tree is null || !IsInstanceValid(_tree))
+		{
+			return;
+		}
+
 		if (mouseButtonIndex != 1 || id != 0)
 		{
 			return;
@@ -154,10 +174,46 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	private void OnToggled(bool toggled)
 	{
+		if (_scroll is null || !IsInstanceValid(_scroll))
+		{
+			return;
+		}
+
 		_scroll.Visible = toggled;
 
 		UpdateMinimumSize();
 		NotifyPropertyListChanged();
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_containerButton is not null && IsInstanceValid(_containerButton))
+		{
+			_containerButton.Toggled -= OnToggled;
+		}
+
+		if (_tree is not null && IsInstanceValid(_tree))
+		{
+			_tree.ButtonClicked -= OnTreeButtonClicked;
+		}
+
+		_treeItemToNode.Clear();
+		_root = null;
+		_containerButton = null;
+		_scroll = null;
+		_tree = null;
+		_checkedIcon = null;
+		_uncheckedIcon = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
 	}
 }
 #endif

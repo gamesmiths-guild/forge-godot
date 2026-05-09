@@ -144,6 +144,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	{
 		base.ClearCallbacks();
 		_onChanged = null;
+		_toggleButton = null;
+		_elementsContainer = null;
+		_contentContainer = null;
 	}
 
 	private void RebuildContent()

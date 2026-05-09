@@ -50,16 +50,14 @@ public partial class StatescriptGraphNode
 		{
 			resolverFactories.RemoveAll(factory =>
 			{
-				using NodeEditorProperty temp = factory();
-				return temp.ResolverTypeId != "ArrayVariable";
+				return StatescriptResolverRegistry.GetResolverTypeId(factory) != "ArrayVariable";
 			});
 		}
 		else
 		{
 			resolverFactories.RemoveAll(factory =>
 			{
-				using NodeEditorProperty temp = factory();
-				return temp.ResolverTypeId == "ArrayVariable";
+				return StatescriptResolverRegistry.GetResolverTypeId(factory) == "ArrayVariable";
 			});
 		}
 
@@ -84,8 +82,7 @@ public partial class StatescriptGraphNode
 
 		foreach (Func<NodeEditorProperty> factory in resolverFactories)
 		{
-			using NodeEditorProperty temp = factory();
-			resolverDropdown.AddItem(temp.DisplayName);
+			resolverDropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Input, index);
@@ -95,9 +92,8 @@ public partial class StatescriptGraphNode
 		{
 			for (int i = 0; i < resolverFactories.Count; i++)
 			{
-				using NodeEditorProperty temp = resolverFactories[i]();
-
-				if (temp.ResolverTypeId == GetResolverTypeId(binding.Resolver))
+				if (StatescriptResolverRegistry.GetResolverTypeId(resolverFactories[i])
+					== GetResolverTypeId(binding.Resolver))
 				{
 					selectedIndex = i;
 					break;

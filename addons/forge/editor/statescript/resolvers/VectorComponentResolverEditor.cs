@@ -85,11 +85,9 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 			Title = "Vector:",
 			Folded = existing?.OperandFolded ?? true,
 		};
-		_operandFoldable.FoldingChanged += _ =>
-		 {
-			 _onChanged?.Invoke();
-			 RaiseLayoutSizeChanged();
-		 };
+
+		_operandFoldable.FoldingChanged += OnOperandFoldableFoldingChanged;
+
 		root.AddChild(_operandFoldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_operandFoldable.AddChild(container);
@@ -132,6 +130,12 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		base.ClearCallbacks();
 		_onChanged = null;
 		_operandEditor?.ClearCallbacks();
+		_operandEditor = null;
+		_editorContainer = null;
+		_operandFoldable = null;
+		_resolverDropdown = null;
+		_typeDropdown = null;
+		_componentDropdown = null;
 	}
 
 	private static StatescriptResolverResource? SaveNestedEditor(NodeEditorProperty? editor)
@@ -158,6 +162,12 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetOperandClrType());
 		PopulateResolverDropdown();
 		PopulateComponentDropdown();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnOperandFoldableFoldingChanged(bool folded)
+	{
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -197,8 +207,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		_resolverDropdown.Clear();
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			_resolverDropdown.AddItem(temp.DisplayName);
+			_resolverDropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		int selectedIndex = GetSelectedIndex(null);
@@ -259,8 +268,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

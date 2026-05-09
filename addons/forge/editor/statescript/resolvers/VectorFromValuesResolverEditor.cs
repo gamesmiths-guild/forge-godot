@@ -17,6 +17,14 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class VectorFromValuesResolverEditor : NodeEditorProperty
 {
+	private enum ComponentSlot
+	{
+		X = 0,
+		Y = 1,
+		Z = 2,
+		W = 3,
+	}
+
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private StatescriptVariableType _valueType = StatescriptVariableType.Vector3;
@@ -73,42 +81,34 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 
 		BuildComponentSlot(
 			root,
+			ComponentSlot.X,
 			"X:",
 			existing?.X,
 			existing?.XFolded ?? true,
-			x => _xFoldable = x,
-			x => _xResolverDropdown = x,
-			x => _xEditorContainer = x,
 			x => _xEditor = x);
 
 		BuildComponentSlot(
 			root,
+			ComponentSlot.Y,
 			"Y:",
 			existing?.Y,
 			existing?.YFolded ?? true,
-			x => _yFoldable = x,
-			x => _yResolverDropdown = x,
-			x => _yEditorContainer = x,
 			x => _yEditor = x);
 
 		BuildComponentSlot(
 			root,
+			ComponentSlot.Z,
 			"Z:",
 			existing?.Z,
 			existing?.ZFolded ?? true,
-			x => _zFoldable = x,
-			x => _zResolverDropdown = x,
-			x => _zEditorContainer = x,
 			x => _zEditor = x);
 
 		BuildComponentSlot(
 			root,
+			ComponentSlot.W,
 			"W:",
 			existing?.W,
 			existing?.WFolded ?? true,
-			x => _wFoldable = x,
-			x => _wResolverDropdown = x,
-			x => _wEditorContainer = x,
 			x => _wEditor = x);
 
 		RefreshVisibleComponents();
@@ -139,6 +139,22 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 		_yEditor?.ClearCallbacks();
 		_zEditor?.ClearCallbacks();
 		_wEditor?.ClearCallbacks();
+		_xFoldable = null;
+		_yFoldable = null;
+		_zFoldable = null;
+		_wFoldable = null;
+		_xResolverDropdown = null;
+		_yResolverDropdown = null;
+		_zResolverDropdown = null;
+		_wResolverDropdown = null;
+		_xEditorContainer = null;
+		_yEditorContainer = null;
+		_zEditorContainer = null;
+		_wEditorContainer = null;
+		_xEditor = null;
+		_yEditor = null;
+		_zEditor = null;
+		_wEditor = null;
 	}
 
 	private static void SetFoldableVisible(FoldableContainer? foldable, bool visible)
@@ -225,22 +241,31 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 
 	private void BuildComponentSlot(
 		VBoxContainer root,
+		ComponentSlot slot,
 		string title,
 		StatescriptResolverResource? existingResolver,
 		bool folded,
-		Action<FoldableContainer> setFoldable,
-		Action<OptionButton> setDropdown,
-		Action<VBoxContainer> setContainer,
 		Action<NodeEditorProperty?> setEditor)
 	{
 		FoldableContainer foldable = new() { Title = title, Folded = folded };
-		foldable.FoldingChanged += _ =>
+		foldable.FoldingChanged += OnComponentFoldableFoldingChanged;
+
+		switch (slot)
 		{
-			UpdateFoldableTitles();
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
-		};
-		setFoldable(foldable);
+			case ComponentSlot.X:
+				_xFoldable = foldable;
+				break;
+			case ComponentSlot.Y:
+				_yFoldable = foldable;
+				break;
+			case ComponentSlot.Z:
+				_zFoldable = foldable;
+				break;
+			default:
+				_wFoldable = foldable;
+				break;
+		}
+
 		root.AddChild(foldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -248,24 +273,54 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 
 		OptionButton resolverDropdown =
 			NestedResolverEditorUtilities.CreateResolverDropdownControl(_factories, existingResolver);
-		setDropdown(resolverDropdown);
+
+		switch (slot)
+		{
+			case ComponentSlot.X:
+				_xResolverDropdown = resolverDropdown;
+				break;
+			case ComponentSlot.Y:
+				_yResolverDropdown = resolverDropdown;
+				break;
+			case ComponentSlot.Z:
+				_zResolverDropdown = resolverDropdown;
+				break;
+			default:
+				_wResolverDropdown = resolverDropdown;
+				break;
+		}
+
 		container.AddChild(resolverDropdown);
 
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		setContainer(editorContainer);
+
+		switch (slot)
+		{
+			case ComponentSlot.X:
+				_xEditorContainer = editorContainer;
+				break;
+			case ComponentSlot.Y:
+				_yEditorContainer = editorContainer;
+				break;
+			case ComponentSlot.Z:
+				_zEditorContainer = editorContainer;
+				break;
+			default:
+				_wEditorContainer = editorContainer;
+				break;
+		}
+
 		container.AddChild(editorContainer);
 
 		int selectedIndex = NestedResolverEditorUtilities.GetSelectedIndex(_factories, existingResolver);
 		ShowNestedEditor(selectedIndex, existingResolver, editorContainer, setEditor);
 
-		resolverDropdown.ItemSelected += index =>
+		resolverDropdown.ItemSelected += slot switch
 		{
-			NestedResolverEditorUtilities.ClearContainer(editorContainer);
-			setEditor(null);
-			ShowNestedEditor((int)index, null, editorContainer, setEditor);
-			UpdateFoldableTitles();
-			_onChanged?.Invoke();
-			RaiseLayoutSizeChanged();
+			ComponentSlot.X => OnXResolverDropdownItemSelected,
+			ComponentSlot.Y => OnYResolverDropdownItemSelected,
+			ComponentSlot.Z => OnZResolverDropdownItemSelected,
+			_ => OnWResolverDropdownItemSelected,
 		};
 	}
 
@@ -308,6 +363,51 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 		};
 
 		RefreshVisibleComponents();
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnComponentFoldableFoldingChanged(bool folded)
+	{
+		UpdateFoldableTitles();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void OnXResolverDropdownItemSelected(long index)
+	{
+		HandleComponentResolverChanged(_xEditorContainer, (int)index, x => _xEditor = x);
+	}
+
+	private void OnYResolverDropdownItemSelected(long index)
+	{
+		HandleComponentResolverChanged(_yEditorContainer, (int)index, x => _yEditor = x);
+	}
+
+	private void OnZResolverDropdownItemSelected(long index)
+	{
+		HandleComponentResolverChanged(_zEditorContainer, (int)index, x => _zEditor = x);
+	}
+
+	private void OnWResolverDropdownItemSelected(long index)
+	{
+		HandleComponentResolverChanged(_wEditorContainer, (int)index, x => _wEditor = x);
+	}
+
+	private void HandleComponentResolverChanged(
+		VBoxContainer? editorContainer,
+		int index,
+		Action<NodeEditorProperty?> setEditor)
+	{
+		if (editorContainer is null)
+		{
+			return;
+		}
+
+		NestedResolverEditorUtilities.ClearContainer(editorContainer);
+		setEditor(null);
+		ShowNestedEditor(index, null, editorContainer, setEditor);
 		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
