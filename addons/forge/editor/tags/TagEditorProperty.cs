@@ -138,7 +138,7 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 			TreeItem item = _tree.CreateItem(parent);
 			item.SetText(0, child.TagKey);
 
-			var selected = _currentValue == child.CompleteTagKey;
+			bool selected = _currentValue == child.CompleteTagKey;
 			item.AddButton(0, selected ? _checkedIcon : _uncheckedIcon);
 
 			_treeItemToNode[item] = child;
@@ -208,7 +208,7 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	private void FreeAllChildren()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
+		for (int i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
 			RemoveChild(child);

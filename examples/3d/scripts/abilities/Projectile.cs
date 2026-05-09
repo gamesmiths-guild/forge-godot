@@ -52,8 +52,8 @@ public partial class Projectile : Node3D
 			return;
 		}
 
-		var distanceTraveled = GlobalPosition.DistanceTo(_launchPosition);
-		var damageFalloffMultiplier = Math.Clamp(1f - (distanceTraveled / 10f), 0.1f, 1f);
+		float distanceTraveled = GlobalPosition.DistanceTo(_launchPosition);
+		float damageFalloffMultiplier = Math.Clamp(1f - (distanceTraveled / 10f), 0.1f, 1f);
 
 		_effectApplier!.ApplyEffects(other, damageFalloffMultiplier, _effectOwner, ForgeEntity);
 

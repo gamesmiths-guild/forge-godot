@@ -139,8 +139,8 @@ internal static partial class StatescriptEditorControls
 		Func<int, double> getComponent,
 		Action<double[]>? onChanged)
 	{
-		var componentCount = GetVectorComponentCount(type);
-		var labels = GetVectorComponentLabels(type);
+		int componentCount = GetVectorComponentCount(type);
+		string[] labels = GetVectorComponentLabels(type);
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 
 		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -153,11 +153,11 @@ internal static partial class StatescriptEditorControls
 		vBox.AddChild(panelContainer);
 		panelContainer.AddChild(row);
 
-		var values = new double[componentCount];
+		double[] values = new double[componentCount];
 		var handler = new VectorComponentHandler(values) { OnChanged = onChanged };
 		vBox.AddChild(handler);
 
-		for (var i = 0; i < componentCount; i++)
+		for (int i = 0; i < componentCount; i++)
 		{
 			values[i] = getComponent(i);
 

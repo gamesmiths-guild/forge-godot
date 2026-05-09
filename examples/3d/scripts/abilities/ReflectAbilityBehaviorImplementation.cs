@@ -47,9 +47,9 @@ public sealed class ReflectAbilityBehaviorImplementation : IAbilityBehavior<Dama
 				Tag.RequestTag(ForgeManagers.Instance.TagsManager, "set_by_caller.damage"),
 				context.Magnitude * 2);
 
-			var distance = ownerNode.GetParent<Node3D>().GlobalTransform.Origin.DistanceTo(body.GlobalTransform.Origin);
+			float distance = ownerNode.GetParent<Node3D>().GlobalTransform.Origin.DistanceTo(body.GlobalTransform.Origin);
 			distance--;
-			var damageFalloffMultiplier = Math.Clamp(1f - (distance / 3.5f), 0.1f, 1f);
+			float damageFalloffMultiplier = Math.Clamp(1f - (distance / 3.5f), 0.1f, 1f);
 
 			forgeEntity.EffectsManager.ApplyEffect(_damageEffect, damageFalloffMultiplier);
 		}

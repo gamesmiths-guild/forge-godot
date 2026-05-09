@@ -31,7 +31,7 @@ internal static class ResolverEditorFactoryCatalog
 	{
 		if (existingResolver is not null)
 		{
-			for (var i = 0; i < factories.Count; i++)
+			for (int i = 0; i < factories.Count; i++)
 			{
 				if (StatescriptResolverRegistry.GetResolverTypeId(factories[i]) == existingResolver.ResolverTypeId)
 				{
@@ -40,7 +40,7 @@ internal static class ResolverEditorFactoryCatalog
 			}
 		}
 
-		for (var i = 0; i < factories.Count; i++)
+		for (int i = 0; i < factories.Count; i++)
 		{
 			if (StatescriptResolverRegistry.GetResolverTypeId(factories[i]) == preferredResolverTypeId)
 			{

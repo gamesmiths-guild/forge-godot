@@ -73,8 +73,8 @@ public static class StatescriptGraphBuilder
 				continue;
 			}
 
-			var outputPortIndex = connectionResource.OutputPort;
-			var inputPortIndex = connectionResource.InputPort;
+			int outputPortIndex = connectionResource.OutputPort;
+			int inputPortIndex = connectionResource.InputPort;
 
 			if (outputPortIndex < 0 || outputPortIndex >= fromNode.OutputPorts.Length)
 			{
@@ -120,7 +120,7 @@ public static class StatescriptGraphBuilder
 			if (variable.IsArray)
 			{
 				var initialValues = new Variant128[variable.InitialArrayValues.Count];
-				for (var i = 0; i < variable.InitialArrayValues.Count; i++)
+				for (int i = 0; i < variable.InitialArrayValues.Count; i++)
 				{
 					initialValues[i] = StatescriptVariableTypeConverter.GodotVariantToForge(
 						variable.InitialArrayValues[i],
@@ -167,7 +167,7 @@ public static class StatescriptGraphBuilder
 					continue;
 				}
 
-				var index = (byte)binding.PropertyIndex;
+				byte index = (byte)binding.PropertyIndex;
 
 				if (binding.Direction == StatescriptPropertyDirection.Input)
 				{
@@ -251,11 +251,11 @@ public static class StatescriptGraphBuilder
 		ConstructorInfo constructor = constructors.OrderByDescending(x => x.GetParameters().Length).First();
 		ParameterInfo[] parameters = constructor.GetParameters();
 
-		var args = new object[parameters.Length];
-		for (var i = 0; i < parameters.Length; i++)
+		object[] args = new object[parameters.Length];
+		for (int i = 0; i < parameters.Length; i++)
 		{
 			ParameterInfo param = parameters[i];
-			var paramName = param.Name ?? string.Empty;
+			string paramName = param.Name ?? string.Empty;
 
 			if (nodeResource.CustomData.TryGetValue(paramName, out GodotVariant value))
 			{
@@ -299,7 +299,7 @@ public static class StatescriptGraphBuilder
 				return Enum.ToObject(targetType, value.AsInt32());
 			}
 
-			var enumText = value.AsString();
+			string enumText = value.AsString();
 			if (!string.IsNullOrEmpty(enumText))
 			{
 				return Enum.Parse(targetType, enumText, ignoreCase: true);

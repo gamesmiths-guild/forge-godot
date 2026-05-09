@@ -206,7 +206,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		IReadOnlyList<StatescriptNodeDiscovery.NodeTypeInfo> discoveredTypes =
 			StatescriptNodeDiscovery.GetDiscoveredNodeTypes();
 
-		var filterLower = filter.ToLowerInvariant();
+		string filterLower = filter.ToLowerInvariant();
 
 		TreeItem? actionCategory = null;
 		TreeItem? conditionCategory = null;
@@ -304,7 +304,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 		GetOkButton().Disabled = false;
 
-		var metadata = selected.GetMetadata(0).AsString();
+		string metadata = selected.GetMetadata(0).AsString();
 		UpdateDescription(metadata);
 	}
 
@@ -330,7 +330,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 			return;
 		}
 
-		var metadata = selected.GetMetadata(0).AsString();
+		string metadata = selected.GetMetadata(0).AsString();
 
 		if (metadata == "__exit__")
 		{

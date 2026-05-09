@@ -68,7 +68,7 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 
 		// Define the variable so the data binder's SetVar call succeeds at runtime.
 		// Check if the variable is already defined to avoid duplicates when multiple nodes bind the same field.
-		var alreadyDefined = false;
+		bool alreadyDefined = false;
 		foreach (VariableDefinition existing in graph.VariableDefinitions.VariableDefinitions)
 		{
 			if (existing.Name == variableName)

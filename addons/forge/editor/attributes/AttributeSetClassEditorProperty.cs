@@ -22,7 +22,7 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 		AddChild(_optionButton);
 
 		_optionButton.AddItem("Select AttributeSet Class");
-		foreach (var option in EditorUtils.GetAttributeSetOptions())
+		foreach (string option in EditorUtils.GetAttributeSetOptions())
 		{
 			_optionButton.AddItem(option);
 		}
@@ -39,8 +39,8 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 
 		GodotObject obj = GetEditedObject();
 		StringName property = GetEditedProperty();
-		var val = obj.Get(property).AsString();
-		for (var i = 0; i < _optionButton.GetItemCount(); i++)
+		string val = obj.Get(property).AsString();
+		for (int i = 0; i < _optionButton.GetItemCount(); i++)
 		{
 			if (_optionButton.GetItemText(i) == val)
 			{
@@ -74,7 +74,7 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 			return;
 		}
 
-		var className = _optionButton.GetItemText((int)index);
+		string className = _optionButton.GetItemText((int)index);
 		EmitChanged(GetEditedProperty(), className);
 
 		GodotObject @object = GetEditedObject();
@@ -93,7 +93,7 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 				.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 				.Where(x => x.PropertyType == typeof(EntityAttribute));
 
-			foreach (var propertyName in attributeProperties.Select(x => x.Name))
+			foreach (string? propertyName in attributeProperties.Select(x => x.Name))
 			{
 				if (@object is not ForgeAttributeSet forgeAttributeSet)
 				{
@@ -128,7 +128,7 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 
 	private void FreeAllChildren()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
+		for (int i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
 			RemoveChild(child);

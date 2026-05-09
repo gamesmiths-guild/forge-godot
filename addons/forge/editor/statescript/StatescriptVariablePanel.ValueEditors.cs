@@ -73,7 +73,7 @@ internal sealed partial class StatescriptVariablePanel
 		var headerRow = new HBoxContainer();
 		vBox.AddChild(headerRow);
 
-		var isExpanded = _expandedArrays.Contains(variable.VariableName);
+		bool isExpanded = _expandedArrays.Contains(variable.VariableName);
 
 		var elementsContainer = new VBoxContainer
 		{
@@ -93,7 +93,7 @@ internal sealed partial class StatescriptVariablePanel
 		{
 			elementsContainer.Visible = x;
 
-			var wasExpanded = !x;
+			bool wasExpanded = !x;
 
 			if (x)
 			{
@@ -162,9 +162,9 @@ internal sealed partial class StatescriptVariablePanel
 
 		vBox.AddChild(elementsContainer);
 
-		for (var i = 0; i < variable.InitialArrayValues.Count; i++)
+		for (int i = 0; i < variable.InitialArrayValues.Count; i++)
 		{
-			var capturedIndex = i;
+			int capturedIndex = i;
 
 			if (variable.VariableType == StatescriptVariableType.Bool)
 			{

@@ -59,7 +59,7 @@ public partial class VariantResolverResource : StatescriptResolverResource
 		if (IsArray)
 		{
 			var values = new Variant128[ArrayValues.Count];
-			for (var i = 0; i < ArrayValues.Count; i++)
+			for (int i = 0; i < ArrayValues.Count; i++)
 			{
 				values[i] = StatescriptVariableTypeConverter.GodotVariantToForge(ArrayValues[i], ValueType);
 			}

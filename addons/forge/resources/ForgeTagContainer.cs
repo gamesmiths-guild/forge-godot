@@ -25,7 +25,7 @@ public partial class ForgeTagContainer : Resource
 
 		var tags = new HashSet<Tag>();
 
-		foreach (var tag in ContainerTags)
+		foreach (string tag in ContainerTags)
 		{
 			try
 			{

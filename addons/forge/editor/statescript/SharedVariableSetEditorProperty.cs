@@ -219,7 +219,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
 
-		for (var i = 0; i < definitions.Count; i++)
+		for (int i = 0; i < definitions.Count; i++)
 		{
 			AddVariableRow(definitions, i);
 		}
@@ -280,7 +280,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void FreeAllChildren()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
+		for (int i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
 			RemoveChild(child);
@@ -356,7 +356,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		typeLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 		headerRow.AddChild(typeLabel);
 
-		var capturedIndex = index;
+		int capturedIndex = index;
 
 		var deleteButton = new Button
 		{
@@ -498,7 +498,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		var headerRow = new HBoxContainer();
 		vBox.AddChild(headerRow);
 
-		var isExpanded = _expandedArrays.Contains(def.VariableName);
+		bool isExpanded = _expandedArrays.Contains(def.VariableName);
 
 		var elementsContainer = new VBoxContainer
 		{
@@ -518,7 +518,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			elementsContainer.Visible = x;
 
-			var wasExpanded = !x;
+			bool wasExpanded = !x;
 
 			if (x)
 			{
@@ -567,9 +567,9 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		vBox.AddChild(elementsContainer);
 
-		for (var i = 0; i < def.InitialArrayValues.Count; i++)
+		for (int i = 0; i < def.InitialArrayValues.Count; i++)
 		{
-			var capturedIndex = i;
+			int capturedIndex = i;
 
 			if (def.VariableType == StatescriptVariableType.Bool)
 			{
@@ -690,7 +690,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void AddArrayElement(ForgeSharedVariableDefinition def, Variant value)
 	{
-		var wasExpanded = _expandedArrays.Contains(def.VariableName);
+		bool wasExpanded = _expandedArrays.Contains(def.VariableName);
 
 		if (_undoRedo is not null)
 		{
@@ -793,7 +793,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			return;
 		}
 
-		var name = _newNameEdit.Text.Trim();
+		string name = _newNameEdit.Text.Trim();
 
 		if (string.IsNullOrEmpty(name))
 		{

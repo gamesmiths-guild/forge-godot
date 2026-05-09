@@ -61,7 +61,7 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 
 	public override void _UpdateProperty()
 	{
-		var property = GetEditedObject().Get(GetEditedProperty()).AsString();
+		string property = GetEditedObject().Get(GetEditedProperty()).AsString();
 
 		if (_label is not null && IsInstanceValid(_label))
 		{
@@ -133,7 +133,7 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 			current = current.GetParent();
 		}
 
-		var fullPath = string.Join(".", segments);
+		string fullPath = string.Join(".", segments);
 
 		_label.Text = fullPath;
 		EmitChanged(GetEditedProperty(), fullPath);
@@ -160,7 +160,7 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 
 	private void FreeAllChildren()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
+		for (int i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
 			RemoveChild(child);

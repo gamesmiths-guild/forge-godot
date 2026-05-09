@@ -141,7 +141,7 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 			TreeItem item = _tree.CreateItem(parent);
 			item.SetText(0, child.TagKey);
 
-			var checkedState = _currentValue.Contains(child.CompleteTagKey);
+			bool checkedState = _currentValue.Contains(child.CompleteTagKey);
 
 			item.AddButton(0, checkedState ? _checkedIcon : _uncheckedIcon);
 
@@ -215,7 +215,7 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	private void FreeAllChildren()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
+		for (int i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
 			RemoveChild(child);

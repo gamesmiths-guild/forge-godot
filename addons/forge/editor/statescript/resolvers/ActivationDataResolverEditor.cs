@@ -223,7 +223,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var idx = _providerDropdown.Selected;
+		int idx = _providerDropdown.Selected;
 		_selectedProviderClassName = idx >= 0 && idx < _providerClassNames.Count
 			? _providerClassNames[idx]
 			: string.Empty;
@@ -242,7 +242,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		var dropdownIndex = _fieldDropdown.Selected;
+		int dropdownIndex = _fieldDropdown.Selected;
 
 		if (dropdownIndex >= 0 && dropdownIndex < _fieldNames.Count)
 		{
@@ -281,7 +281,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		_providerClassNames.Add(string.Empty);
 
 		// Re-scan the graph each time to pick up changes from other editors.
-		var graphLockedProvider = _graph is not null
+		string graphLockedProvider = _graph is not null
 			? FindExistingProvider(_graph, _currentProperty)
 			: string.Empty;
 
@@ -309,7 +309,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		// Restore selection.
 		if (!string.IsNullOrEmpty(_selectedProviderClassName))
 		{
-			for (var i = 0; i < _providerClassNames.Count; i++)
+			for (int i = 0; i < _providerClassNames.Count; i++)
 			{
 				if (ProviderIdentifiersMatch(_providerClassNames[i], _selectedProviderClassName))
 				{
@@ -363,7 +363,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		// Restore selection.
 		if (!string.IsNullOrEmpty(_selectedFieldName))
 		{
-			for (var i = 0; i < _fieldNames.Count; i++)
+			for (int i = 0; i < _fieldNames.Count; i++)
 			{
 				if (_fieldNames[i] == _selectedFieldName)
 				{

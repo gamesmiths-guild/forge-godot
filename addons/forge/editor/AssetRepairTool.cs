@@ -23,12 +23,12 @@ public partial class AssetRepairTool : EditorPlugin
 		List<string> scenes = GetScenePaths("res://");
 		GD.Print($"Found {scenes.Count} scene(s) to process.");
 
-		var openedScenes = EditorInterface.Singleton.GetOpenScenes();
+		string[] openedScenes = EditorInterface.Singleton.GetOpenScenes();
 
-		foreach (var originalScenePath in scenes)
+		foreach (string originalScenePath in scenes)
 		{
 			// For some weird reason scenes from the GetScenePath are coming with 3 slashes instead of just two.
-			var scenePath = originalScenePath.Replace("res:///", "res://");
+			string scenePath = originalScenePath.Replace("res:///", "res://");
 
 			GD.Print($"Processing scene: {scenePath}.");
 			PackedScene? packedScene = ResourceLoader.Load<PackedScene>(scenePath);
@@ -40,7 +40,7 @@ public partial class AssetRepairTool : EditorPlugin
 			}
 
 			Node sceneInstance = packedScene.Instantiate();
-			var modified = ProcessNode(sceneInstance, tagsManager);
+			bool modified = ProcessNode(sceneInstance, tagsManager);
 
 			if (!modified)
 			{
@@ -92,13 +92,13 @@ public partial class AssetRepairTool : EditorPlugin
 		dir.ListDirBegin();
 		while (true)
 		{
-			var fileName = dir.GetNext();
+			string fileName = dir.GetNext();
 			if (string.IsNullOrEmpty(fileName))
 			{
 				break;
 			}
 
-			var filePath = $"{basePath}/{fileName}";
+			string filePath = $"{basePath}/{fileName}";
 			if (dir.CurrentIsDir())
 			{
 				// Recursively scan subdirectories.
@@ -123,7 +123,7 @@ public partial class AssetRepairTool : EditorPlugin
 	/// <returns><see langword="true"/> if any ForgeEntity was modified.</returns>
 	private static bool ProcessNode(Node node, TagsManager tagsManager)
 	{
-		var modified = ValidateNode(node, tagsManager);
+		bool modified = ValidateNode(node, tagsManager);
 
 		foreach (Node child in node.GetChildren())
 		{
@@ -135,7 +135,7 @@ public partial class AssetRepairTool : EditorPlugin
 
 	private static bool ValidateNode(Node node, TagsManager tagsManager)
 	{
-		var modified = false;
+		bool modified = false;
 		foreach (Dictionary propertyInfo in node.GetPropertyList())
 		{
 			if (!propertyInfo.TryGetValue("class_name", out Variant className))
@@ -153,7 +153,7 @@ public partial class AssetRepairTool : EditorPlugin
 				continue;
 			}
 
-			var propertyName = nameObj.AsString();
+			string propertyName = nameObj.AsString();
 			Variant value = node.Get(propertyName);
 
 			if (value.VariantType != Variant.Type.Object)
@@ -182,9 +182,9 @@ public partial class AssetRepairTool : EditorPlugin
 
 		Array<string> originalTags = container.ContainerTags;
 		var newTags = new Array<string>();
-		var modified = false;
+		bool modified = false;
 
-		foreach (var tag in originalTags)
+		foreach (string tag in originalTags)
 		{
 			try
 			{
