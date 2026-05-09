@@ -66,7 +66,7 @@ Property resolvers provide **read-only computed values** that nodes can bind to 
 
 Resolvers are bound to node input properties at graph construction time. At runtime, when a node needs to read an input, the resolver computes the value from the current graph and entity state.
 
-For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
+For the full built-in resolver reference, see [Property Resolvers](resolvers.md). For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
 
 ### Resolution Order
 
@@ -77,75 +77,17 @@ When a node reads a named value through `GraphContext.TryResolve<T>()`:
 
 This means a graph variable can "shadow" a property definition with the same name.
 
-### Variable Resolver
+### Built-in Resolver Categories
 
-Reads the current value of a graph variable by name.
+Forge for Godot includes a large built-in resolver set covering:
 
-**Configuration:**
-- **Variable**: The name of the graph variable to read.
-- **Type**: The expected value type.
+- **Core data access**: Variable, Shared Variable, Variant, Attribute, Tag, Magnitude, and Activation Data.
+- **Boolean expressions**: `And`, `Or`, `Not`, `Xor`, and `Comparison`.
+- **Math**: Scalar math, generic numeric/vector math, interpolation, clamping, rounding, and conversion helpers.
+- **Spatial math**: Vector, quaternion, plane, and transform operations.
+- **Random generation**: Scalar and spatial random resolvers.
 
-**Behavior:** Looks up the named variable in the graph's runtime variables. If the variable doesn't exist, returns a default value (zero).
-
-### Shared Variable Resolver
-
-Reads the current value of a shared variable from the entity.
-
-**Configuration:**
-- **Variable**: The name of the shared variable to read.
-- **Type**: The expected value type.
-
-**Behavior:** Looks up the named variable in the graph context's shared variables. If no shared variables exist or the name isn't found, returns a default value.
-
-### Variant Resolver
-
-Holds a fixed constant value directly. Use this for hardcoded values in expressions (e.g., the right-hand side of a comparison like "health > **50**").
-
-**Configuration:**
-- **Value**: The constant value.
-- **Type**: The value type.
-
-### Attribute Resolver
-
-Reads the current value of a specific entity attribute.
-
-**Configuration:**
-- **Attribute**: The fully qualified attribute key (e.g., `"CombatAttributeSet.Health"`).
-
-**Behavior:** Retrieves the owner entity from the ability's `AbilityBehaviorContext` and reads the attribute's `CurrentValue`. Returns an `int`. If the graph has no activation context or the attribute doesn't exist, returns zero.
-
-### Tag Resolver
-
-Checks whether the owner entity has a specific gameplay tag.
-
-**Configuration:**
-- **Tag**: The tag to check for.
-
-**Behavior:** Returns `true` if the owner entity's combined tags contain the specified tag, `false` otherwise. Requires ability activation context.
-
-### Comparison Resolver
-
-Compares two values using a comparison operation and returns a `bool`.
-
-**Configuration:**
-- **Left**: A nested property resolver for the left operand.
-- **Operation**: The comparison (`Equal`, `NotEqual`, `LessThan`, `LessThanOrEqual`, `GreaterThan`, `GreaterThanOrEqual`).
-- **Right**: A nested property resolver for the right operand.
-
-**Behavior:** Both operands are converted to `double` for comparison, allowing any numeric property (int attributes, float variables, etc.) to be compared directly.
-
-**Example:** To check "is health greater than 50":
-- Left: `AttributeResolver("CombatAttributeSet.Health")`
-- Operation: `GreaterThan`
-- Right: `VariantResolver(50)`
-
-Comparison resolvers can be nested arbitrarily. Supports nesting: operands can be other `ComparisonResolver` instances or any `IPropertyResolver`, enabling complex expressions. Use as the condition input for an `ExpressionNode` to create data-driven branching without custom code.
-
-### Magnitude Resolver
-
-Reads the magnitude value from the ability's activation context.
-
-**Behavior:** Returns the `Magnitude` float from the `AbilityBehaviorContext`. This is the numeric value passed during `AbilityHandle.Activate()` or propagated from an event trigger's `EventMagnitude`. Returns `0` if no activation context is available.
+Use the [Property Resolvers](resolvers.md) reference for the full resolver table, output types, and links to the corresponding core Forge documentation.
 
 ### Activation Data Resolver
 

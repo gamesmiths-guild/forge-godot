@@ -116,6 +116,7 @@ Statescript graphs must be **acyclic**. The framework validates this at graph co
 - [Nodes](nodes.md): Detailed reference for all node types and their ports.
 - [Subgraphs](subgraphs.md): Deep dive into subgraph lifetime, patterns, and common pitfalls.
 - [Variables and Data](variables.md): Variables, shared variables, and property resolvers.
+- [Property Resolvers](resolvers.md): Reference table for the built-in resolver set available in Forge for Godot.
 - [Custom Nodes](custom-nodes.md): How to create custom Action, Condition, and State nodes for Godot.
 - [Custom Resolvers](custom-resolvers.md): Creating custom property resolvers to expose game-specific data.
 - [Custom Editors](custom-editors.md): Creating custom node and resolver editors for the Statescript graph editor.

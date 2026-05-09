@@ -1,8 +1,8 @@
 # Custom Resolvers
 
-Property resolvers provide read-only computed values that nodes can bind to as input properties. Forge ships with several [built-in resolvers](variables.md#property-resolvers) (`AttributeResolver`, `TagResolver`, `ComparisonResolver`, `VariableResolver`, `SharedVariableResolver`, `VariantResolver`, `MagnitudeResolver`), but you can create your own to expose any data source to graph nodes without writing custom node subclasses.
+Property resolvers provide read-only computed values that nodes can bind to as input properties. Forge ships with many [built-in resolvers](resolvers.md), but you can create your own to expose any data source to graph nodes without writing custom node subclasses.
 
-For core API details and code examples, see the [core Custom Resolvers documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers.md).
+For core API details and code examples, see the [core Custom Resolvers documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/custom-resolvers.md).
 
 ## When to Create a Custom Resolver
 
