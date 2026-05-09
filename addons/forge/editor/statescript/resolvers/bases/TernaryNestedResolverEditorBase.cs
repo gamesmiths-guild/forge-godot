@@ -220,6 +220,21 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		return NestedResolverEditorUtilities.GetSelectedIndex(factories, existingResolver);
 	}
 
+	private static VBoxContainer? GetNestedEditorContainer(FoldableContainer? foldable)
+	{
+		if (foldable is null || foldable.GetChildCount() <= 0)
+		{
+			return null;
+		}
+
+		if (foldable.GetChild(0) is not VBoxContainer slotContainer || slotContainer.GetChildCount() <= 1)
+		{
+			return null;
+		}
+
+		return slotContainer.GetChild(1) as VBoxContainer;
+	}
+
 	private void BuildSlot(
 		VBoxContainer root,
 		ResolverSlot slot,
@@ -386,9 +401,9 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 	{
 		return slot switch
 		{
-			ResolverSlot.First => _firstFoldable?.GetChildCount() > 0 ? _firstFoldable.GetChild(0) as VBoxContainer : null,
-			ResolverSlot.Second => _secondFoldable?.GetChildCount() > 0 ? _secondFoldable.GetChild(0) as VBoxContainer : null,
-			_ => _thirdFoldable?.GetChildCount() > 0 ? _thirdFoldable.GetChild(0) as VBoxContainer : null,
+			ResolverSlot.First => GetNestedEditorContainer(_firstFoldable),
+			ResolverSlot.Second => GetNestedEditorContainer(_secondFoldable),
+			_ => GetNestedEditorContainer(_thirdFoldable),
 		};
 	}
 
