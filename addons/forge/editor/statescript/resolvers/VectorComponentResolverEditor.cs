@@ -68,7 +68,6 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		});
 
 		_typeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		using System.Linq;
 		_typeDropdown.AddItem("Vector2");
 		_typeDropdown.AddItem("Vector3");
 		_typeDropdown.AddItem("Vector4");
