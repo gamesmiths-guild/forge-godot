@@ -149,8 +149,7 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

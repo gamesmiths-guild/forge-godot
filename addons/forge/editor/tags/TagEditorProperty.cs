@@ -85,32 +85,17 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 		RebuildTree();
 	}
 
+	public override void _ExitTree()
+	{
+		ReleaseUiState();
+		FreeAllChildren();
+		base._ExitTree();
+	}
+
 	public void OnBeforeSerialize()
 	{
-		if (_containerButton is not null && IsInstanceValid(_containerButton))
-		{
-			_containerButton.Toggled -= OnToggled;
-		}
-
-		if (_tree is not null && IsInstanceValid(_tree))
-		{
-			_tree.ButtonClicked -= OnTreeButtonClicked;
-		}
-
-		_treeItemToNode.Clear();
-		_root = null;
-		_containerButton = null;
-		_scroll = null;
-		_tree = null;
-		_checkedIcon = null;
-		_uncheckedIcon = null;
-
-		for (var i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
+		ReleaseUiState();
+		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -198,6 +183,37 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 		UpdateMinimumSize();
 		NotifyPropertyListChanged();
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_containerButton is not null && IsInstanceValid(_containerButton))
+		{
+			_containerButton.Toggled -= OnToggled;
+		}
+
+		if (_tree is not null && IsInstanceValid(_tree))
+		{
+			_tree.ButtonClicked -= OnTreeButtonClicked;
+		}
+
+		_treeItemToNode.Clear();
+		_root = null;
+		_containerButton = null;
+		_scroll = null;
+		_tree = null;
+		_checkedIcon = null;
+		_uncheckedIcon = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
 	}
 }
 #endif

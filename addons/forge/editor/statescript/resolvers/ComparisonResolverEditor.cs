@@ -257,8 +257,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		foreach (Func<NodeEditorProperty> factory in _numericFactories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

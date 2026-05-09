@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System;
-using System.Diagnostics;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
@@ -69,31 +68,35 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _ExitTree()
 	{
-		Debug.Assert(
-			_tagsEditorDock is not null,
-			$"{nameof(_tagsEditorDock)} should have been initialized on _Ready().");
-		Debug.Assert(
-			_statescriptGraphEditorDock is not null,
-			$"{nameof(_statescriptGraphEditorDock)} should have been initialized on _Ready().");
-
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable)
 			== true)
 		{
 			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
 		}
 
-		RemoveDock(_tagsEditorDock);
-		_tagsEditorDock.Free();
+		if (_tagsEditorDock is not null)
+		{
+			RemoveDock(_tagsEditorDock);
+			_tagsEditorDock.Free();
+			_tagsEditorDock = null;
+		}
 
-		RemoveInspectorPlugin(_tagContainerInspectorPlugin);
-		RemoveInspectorPlugin(_tagInspectorPlugin);
-		RemoveInspectorPlugin(_attributeSetInspectorPlugin);
-		RemoveInspectorPlugin(_cueHandlerInspectorPlugin);
-		RemoveInspectorPlugin(_attributeEditorPlugin);
-		RemoveInspectorPlugin(_sharedVariableSetInspectorPlugin);
+		RemoveInspectorPluginAndRelease(ref _tagContainerInspectorPlugin);
+		RemoveInspectorPluginAndRelease(ref _tagInspectorPlugin);
+		RemoveInspectorPluginAndRelease(ref _attributeSetInspectorPlugin);
+		RemoveInspectorPluginAndRelease(ref _cueHandlerInspectorPlugin);
+		RemoveInspectorPluginAndRelease(ref _attributeEditorPlugin);
+		RemoveInspectorPluginAndRelease(ref _sharedVariableSetInspectorPlugin);
 
-		RemoveDock(_statescriptGraphEditorDock);
-		_statescriptGraphEditorDock.Free();
+		if (_statescriptGraphEditorDock is not null)
+		{
+			RemoveDock(_statescriptGraphEditorDock);
+			_statescriptGraphEditorDock.Free();
+			_statescriptGraphEditorDock = null;
+		}
+
+		_fileSystem = null;
+		_resourcesReimportedCallable = default;
 
 		RemoveToolMenuItem("Repair assets tags");
 	}
@@ -246,6 +249,18 @@ public partial class ForgePluginLoader : EditorPlugin
 	private static void CallAssetRepairTool()
 	{
 		AssetRepairTool.RepairAllAssetsTags();
+	}
+
+	private void RemoveInspectorPluginAndRelease<TPlugin>(ref TPlugin? plugin)
+		where TPlugin : EditorInspectorPlugin
+	{
+		if (plugin is null)
+		{
+			return;
+		}
+
+		RemoveInspectorPlugin(plugin);
+		plugin = null;
 	}
 
 	private void OnResourcesReimported(string[] resources)

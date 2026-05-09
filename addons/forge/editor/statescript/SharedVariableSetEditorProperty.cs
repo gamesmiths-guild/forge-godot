@@ -141,28 +141,16 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			SharedVariableHighlightState.ClearInspectorContext(sharedVariableSet.ResourcePath);
 		}
 
+		ReleaseUiState();
+		FreeAllChildren();
+
 		base._ExitTree();
 	}
 
 	public void OnBeforeSerialize()
 	{
 		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
-
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
-
-		ClearVariableList();
-
-		_creationDialog?.Free();
-		_creationDialog = null;
-		_newNameEdit = null;
-		_newTypeDropdown = null;
-		_newArrayToggle = null;
-		_root = null;
-		_variableList = null;
-		_addButton = null;
+		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
@@ -225,20 +213,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			return;
 		}
 
-		// Defer the actual rebuild so that any in-progress signal emission (e.g. a button Pressed handler that
-		// triggered an add/remove) finishes before we free the emitting nodes.
-		CallDeferred(MethodName.RebuildListDeferred);
-	}
-
-	private void RebuildListDeferred()
-	{
-		EnsureControlsCached();
-
-		if (_variableList is null)
-		{
-			return;
-		}
-
 		SyncSelectedVariableFromHighlightState();
 
 		ClearVariableList();
@@ -271,9 +245,47 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void EnsureControlsCached()
 	{
-		_root ??= GetNodeOrNull<VBoxContainer>($"{BackgroundPanelNodeName}/{RootNodeName}");
-		_addButton ??= GetNodeOrNull<Button>($"{BackgroundPanelNodeName}/{RootNodeName}/{HeaderRowNodeName}/{AddButtonNodeName}");
-		_variableList ??= GetNodeOrNull<VBoxContainer>($"{BackgroundPanelNodeName}/{RootNodeName}/{VariableListNodeName}");
+		_root ??= GetNodeOrNull<VBoxContainer>(
+			$"{BackgroundPanelNodeName}/{RootNodeName}");
+		_addButton ??= GetNodeOrNull<Button>(
+			$"{BackgroundPanelNodeName}/{RootNodeName}/{HeaderRowNodeName}/{AddButtonNodeName}");
+		_variableList ??= GetNodeOrNull<VBoxContainer>(
+			$"{BackgroundPanelNodeName}/{RootNodeName}/{VariableListNodeName}");
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		ClearVariableList();
+
+		if (_creationDialog is not null && IsInstanceValid(_creationDialog))
+		{
+			_creationDialog.Confirmed -= OnCreationConfirmed;
+			_creationDialog.Canceled -= OnCreationCanceled;
+			_creationDialog.Free();
+		}
+
+		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
+		_root = null;
+		_variableList = null;
+		_addButton = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
 	}
 
 	private void OnSharedVariableHighlightChanged()

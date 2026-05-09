@@ -64,29 +64,17 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		_label.Text = string.IsNullOrEmpty(value) ? "None" : value;
 	}
 
+	public override void _ExitTree()
+	{
+		ReleaseUiState();
+		FreeAllChildren();
+		base._ExitTree();
+	}
+
 	public void OnBeforeSerialize()
 	{
-		if (_button is not null && IsInstanceValid(_button))
-		{
-			_button.Pressed -= OnButtonPressed;
-		}
-
-		if (_tree is not null && IsInstanceValid(_tree))
-		{
-			_tree.ItemActivated -= OnTreeItemActivated;
-		}
-
-		_label = null;
-		_button = null;
-		_popup = null;
-		_tree = null;
-
-		for (var i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
+		ReleaseUiState();
+		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -146,6 +134,34 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		_label.Text = fullPath;
 		EmitChanged(GetEditedProperty(), fullPath);
 		_popup.Hide();
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_button is not null && IsInstanceValid(_button))
+		{
+			_button.Pressed -= OnButtonPressed;
+		}
+
+		if (_tree is not null && IsInstanceValid(_tree))
+		{
+			_tree.ItemActivated -= OnTreeItemActivated;
+		}
+
+		_label = null;
+		_button = null;
+		_popup = null;
+		_tree = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
 	}
 }
 #endif

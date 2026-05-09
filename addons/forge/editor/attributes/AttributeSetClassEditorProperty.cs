@@ -50,21 +50,17 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 		}
 	}
 
+	public override void _ExitTree()
+	{
+		ReleaseUiState();
+		FreeAllChildren();
+		base._ExitTree();
+	}
+
 	public void OnBeforeSerialize()
 	{
-		if (_optionButton is not null && IsInstanceValid(_optionButton))
-		{
-			_optionButton.ItemSelected -= OnItemSelected;
-		}
-
-		_optionButton = null;
-
-		for (var i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
+		ReleaseUiState();
+		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -118,6 +114,26 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 		}
 
 		EmitChanged("InitialAttributeValues", dictionary);
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_optionButton is not null && IsInstanceValid(_optionButton))
+		{
+			_optionButton.ItemSelected -= OnItemSelected;
+		}
+
+		_optionButton = null;
+	}
+
+	private void FreeAllChildren()
+	{
+		for (var i = GetChildCount() - 1; i >= 0; i--)
+		{
+			Node child = GetChild(i);
+			RemoveChild(child);
+			child.Free();
+		}
 	}
 }
 #endif

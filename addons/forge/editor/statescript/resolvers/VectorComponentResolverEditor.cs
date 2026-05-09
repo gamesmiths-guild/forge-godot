@@ -68,6 +68,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		});
 
 		_typeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		using System.Linq;
 		_typeDropdown.AddItem("Vector2");
 		_typeDropdown.AddItem("Vector3");
 		_typeDropdown.AddItem("Vector4");
@@ -207,8 +208,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		_resolverDropdown.Clear();
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			_resolverDropdown.AddItem(temp.DisplayName);
+			_resolverDropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		int selectedIndex = GetSelectedIndex(null);
@@ -269,8 +269,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

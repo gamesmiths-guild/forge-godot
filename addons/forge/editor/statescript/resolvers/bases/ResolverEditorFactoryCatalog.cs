@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
@@ -16,16 +17,8 @@ internal static class ResolverEditorFactoryCatalog
 
 		foreach (Type expectedType in expectedTypes)
 		{
-			foreach (Func<NodeEditorProperty> factory in
-				StatescriptResolverRegistry.GetCompatibleFactories(expectedType))
-			{
-				using NodeEditorProperty temp = factory();
-
-				if (seenTypeIds.Add(temp.ResolverTypeId))
-				{
-					result.Add(factory);
-				}
-			}
+			result.AddRange(StatescriptResolverRegistry.GetCompatibleFactories(expectedType)
+				.Where(factory => seenTypeIds.Add(StatescriptResolverRegistry.GetResolverTypeId(factory))));
 		}
 
 		return result;
@@ -40,9 +33,7 @@ internal static class ResolverEditorFactoryCatalog
 		{
 			for (var i = 0; i < factories.Count; i++)
 			{
-				using NodeEditorProperty temp = factories[i]();
-
-				if (temp.ResolverTypeId == existingResolver.ResolverTypeId)
+				if (StatescriptResolverRegistry.GetResolverTypeId(factories[i]) == existingResolver.ResolverTypeId)
 				{
 					return i;
 				}
@@ -51,9 +42,7 @@ internal static class ResolverEditorFactoryCatalog
 
 		for (var i = 0; i < factories.Count; i++)
 		{
-			using NodeEditorProperty temp = factories[i]();
-
-			if (temp.ResolverTypeId == preferredResolverTypeId)
+			if (StatescriptResolverRegistry.GetResolverTypeId(factories[i]) == preferredResolverTypeId)
 			{
 				return i;
 			}

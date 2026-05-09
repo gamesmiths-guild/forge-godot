@@ -348,8 +348,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		dropdown.Clear();
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		int selectedIndex = GetSelectedIndex(null);
@@ -390,8 +389,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
-			using NodeEditorProperty temp = factory();
-			dropdown.AddItem(temp.DisplayName);
+			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
 		}
 
 		dropdown.Selected = GetSelectedIndex(existingResolver);

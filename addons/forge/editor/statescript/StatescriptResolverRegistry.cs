@@ -36,41 +36,61 @@ internal static class StatescriptResolverRegistry
 	/// <returns>A list of compatible resolver editor factories.</returns>
 	public static List<Func<NodeEditorProperty>> GetCompatibleFactories(Type expectedType)
 	{
-		var result = new List<Func<NodeEditorProperty>>();
-
-		foreach (Func<NodeEditorProperty> factory in _factories)
-		{
-			using NodeEditorProperty temp = factory();
-
-			if (temp.IsCompatibleWith(expectedType))
-			{
-				result.Add(factory);
-			}
-		}
-
-		return result;
+		return [.. _factories.Where(factory => IsCompatibleFactory(factory, expectedType))];
 	}
 
 	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, bool isArray)
 	{
 		for (var i = 0; i < factories.Count; i++)
 		{
-			using NodeEditorProperty temp = factories[i]();
-
 			if (isArray)
 			{
-				if (temp.ResolverTypeId == "ArrayVariable")
+				if (GetResolverTypeId(factories[i]) == "ArrayVariable")
 				{
 					return i;
 				}
 			}
-			else if (temp.ResolverTypeId == "Variant")
+			else if (GetResolverTypeId(factories[i]) == "Variant")
 			{
 				return i;
 			}
 		}
 
 		return 0;
+	}
+
+	public static string GetDisplayName(Func<NodeEditorProperty> factory)
+	{
+		return UseTemporaryEditor(factory, static editor => editor.DisplayName);
+	}
+
+	public static string GetResolverTypeId(Func<NodeEditorProperty> factory)
+	{
+		return UseTemporaryEditor(factory, static editor => editor.ResolverTypeId);
+	}
+
+	public static bool IsCompatibleFactory(Func<NodeEditorProperty> factory, Type expectedType)
+	{
+		return UseTemporaryEditor(factory, editor => editor.IsCompatibleWith(expectedType));
+	}
+
+	private static TResult UseTemporaryEditor<TResult>(
+		Func<NodeEditorProperty> factory,
+		Func<NodeEditorProperty, TResult> selector)
+	{
+		NodeEditorProperty editor = factory();
+
+		try
+		{
+			return selector(editor);
+		}
+		finally
+		{
+			if (global::Godot.GodotObject.IsInstanceValid(editor))
+			{
+				editor.Free();
+			}
+		}
 	}
 }
 #endif

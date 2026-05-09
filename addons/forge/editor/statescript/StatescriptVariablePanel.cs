@@ -116,42 +116,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	public override void _ExitTree()
 	{
 		base._ExitTree();
-
-		if (_addButton is not null)
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
-
-		_creationDialog?.QueueFree();
-		_creationDialog = null;
-		_newNameEdit = null;
-		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		ReleaseUiState();
 	}
 
 	public void OnBeforeSerialize()
 	{
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
-
-		if (_variableList is not null && IsInstanceValid(_variableList))
-		{
-			foreach (Node child in _variableList.GetChildren())
-			{
-				_variableList.RemoveChild(child);
-				child.Free();
-			}
-		}
-
-		_creationDialog?.Free();
-		_creationDialog = null;
-		_newNameEdit = null;
-		_newTypeDropdown = null;
-		_newArrayToggle = null;
-		_variableList = null;
-		_addButton = null;
+		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
@@ -223,11 +193,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			return;
 		}
 
-		foreach (Node child in _variableList.GetChildren())
-		{
-			_variableList.RemoveChild(child);
-			child.Free();
-		}
+		ClearVariableList();
 
 		if (_graph is null)
 		{
@@ -253,6 +219,49 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	{
 		_addButton ??= GetNodeOrNull<Button>($"{HeaderRowNodeName}/{AddButtonNodeName}");
 		_variableList ??= GetNodeOrNull<VBoxContainer>($"{VariablesScrollNodeName}/{VariableListNodeName}");
+	}
+
+	private void ClearVariableList()
+	{
+		EnsureControlsCached();
+
+		if (_variableList is null || !IsInstanceValid(_variableList))
+		{
+			return;
+		}
+
+		foreach (Node child in _variableList.GetChildren())
+		{
+			_variableList.RemoveChild(child);
+			child.Free();
+		}
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		ClearVariableList();
+
+		if (_creationDialog is not null && IsInstanceValid(_creationDialog))
+		{
+			if (_creationDialog is AcceptDialog acceptDialog)
+			{
+				acceptDialog.Confirmed -= OnCreationConfirmed;
+			}
+
+			_creationDialog.Free();
+		}
+
+		_creationDialog = null;
+		_newNameEdit = null;
+		_newTypeDropdown = null;
+		_newArrayToggle = null;
+		_variableList = null;
+		_addButton = null;
 	}
 
 	private void SaveExpandedArrayState()
