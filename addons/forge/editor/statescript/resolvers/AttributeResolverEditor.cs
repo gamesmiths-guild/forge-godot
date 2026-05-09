@@ -135,7 +135,7 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 
 		_setDropdown.Clear();
 
-		foreach (var option in EditorUtils.GetAttributeSetOptions())
+		foreach (string option in EditorUtils.GetAttributeSetOptions())
 		{
 			_setDropdown.AddItem(option);
 		}
@@ -143,7 +143,7 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		// Restore selection.
 		if (!string.IsNullOrEmpty(_selectedSetClass))
 		{
-			for (var i = 0; i < _setDropdown.GetItemCount(); i++)
+			for (int i = 0; i < _setDropdown.GetItemCount(); i++)
 			{
 				if (_setDropdown.GetItemText(i) == _selectedSetClass)
 				{
@@ -170,14 +170,14 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 
 		_attributeDropdown.Clear();
 
-		foreach (var option in EditorUtils.GetAttributeOptions(_selectedSetClass))
+		foreach (string option in EditorUtils.GetAttributeOptions(_selectedSetClass))
 		{
 			_attributeDropdown.AddItem(option);
 		}
 
 		if (!string.IsNullOrEmpty(_selectedAttribute))
 		{
-			for (var i = 0; i < _attributeDropdown.GetItemCount(); i++)
+			for (int i = 0; i < _attributeDropdown.GetItemCount(); i++)
 			{
 				if (_attributeDropdown.GetItemText(i) == _selectedAttribute)
 				{

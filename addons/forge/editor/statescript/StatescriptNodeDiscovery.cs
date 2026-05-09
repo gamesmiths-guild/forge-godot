@@ -49,7 +49,7 @@ internal static class StatescriptNodeDiscovery
 	{
 		IReadOnlyList<NodeTypeInfo> types = GetDiscoveredNodeTypes();
 
-		for (var i = 0; i < types.Count; i++)
+		for (int i = 0; i < types.Count; i++)
 		{
 			if (types[i].RuntimeTypeName == runtimeTypeName)
 			{
@@ -131,11 +131,11 @@ internal static class StatescriptNodeDiscovery
 
 	private static NodeTypeInfo BuildNodeTypeInfo(Type type, StatescriptNodeType nodeType)
 	{
-		var displayName = FormatDisplayName(type.Name);
-		var runtimeTypeName = type.FullName!;
+		string displayName = FormatDisplayName(type.Name);
+		string runtimeTypeName = type.FullName!;
 
 		// Get constructor parameter names.
-		var constructorParamNames = GetConstructorParameterNames(type);
+		string[] constructorParamNames = GetConstructorParameterNames(type);
 
 		// Determine ports and description by instantiating a temporary node.
 		string[] inputLabels;
@@ -194,8 +194,8 @@ internal static class StatescriptNodeDiscovery
 		ConstructorInfo constructor = constructors.OrderBy(x => x.GetParameters().Length).First();
 		ParameterInfo[] parameters = constructor.GetParameters();
 
-		var args = new object[parameters.Length];
-		for (var i = 0; i < parameters.Length; i++)
+		object[] args = new object[parameters.Length];
+		for (int i = 0; i < parameters.Length; i++)
 		{
 			Type paramType = parameters[i].ParameterType;
 
@@ -236,8 +236,8 @@ internal static class StatescriptNodeDiscovery
 
 	private static string[] GetInputPortLabels(Node node, StatescriptNodeType nodeType)
 	{
-		var count = node.InputPorts.Length;
-		var labels = new string[count];
+		int count = node.InputPorts.Length;
+		string[] labels = new string[count];
 
 		switch (nodeType)
 		{
@@ -268,7 +268,7 @@ internal static class StatescriptNodeDiscovery
 					labels[1] = "Abort";
 				}
 
-				for (var i = 2; i < count; i++)
+				for (int i = 2; i < count; i++)
 				{
 					labels[i] = $"Input {i}";
 				}
@@ -276,7 +276,7 @@ internal static class StatescriptNodeDiscovery
 				break;
 
 			default:
-				for (var i = 0; i < count; i++)
+				for (int i = 0; i < count; i++)
 				{
 					labels[i] = $"Input {i}";
 				}
@@ -289,8 +289,8 @@ internal static class StatescriptNodeDiscovery
 
 	private static string[] GetOutputPortLabels(Node node, StatescriptNodeType nodeType)
 	{
-		var count = node.OutputPorts.Length;
-		var labels = new string[count];
+		int count = node.OutputPorts.Length;
+		string[] labels = new string[count];
 
 		switch (nodeType)
 		{
@@ -336,7 +336,7 @@ internal static class StatescriptNodeDiscovery
 					labels[3] = "Subgraph";
 				}
 
-				for (var i = 4; i < count; i++)
+				for (int i = 4; i < count; i++)
 				{
 					labels[i] = $"Event {i}";
 				}
@@ -344,7 +344,7 @@ internal static class StatescriptNodeDiscovery
 				break;
 
 			default:
-				for (var i = 0; i < count; i++)
+				for (int i = 0; i < count; i++)
 				{
 					labels[i] = $"Output {i}";
 				}
@@ -357,10 +357,10 @@ internal static class StatescriptNodeDiscovery
 
 	private static bool[] GetSubgraphFlags(Node node)
 	{
-		var count = node.OutputPorts.Length;
-		var flags = new bool[count];
+		int count = node.OutputPorts.Length;
+		bool[] flags = new bool[count];
 
-		for (var i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 		{
 			flags[i] = node.OutputPorts[i] is SubgraphPort;
 		}
@@ -371,7 +371,7 @@ internal static class StatescriptNodeDiscovery
 	private static InputPropertyInfo[] GetInputPropertiesInfo(Node node)
 	{
 		var propertiesInfo = new InputPropertyInfo[node.InputProperties.Length];
-		for (var i = 0; i < node.InputProperties.Length; i++)
+		for (int i = 0; i < node.InputProperties.Length; i++)
 		{
 			propertiesInfo[i] = new InputPropertyInfo(
 				node.InputProperties[i].Label,
@@ -384,7 +384,7 @@ internal static class StatescriptNodeDiscovery
 	private static OutputVariableInfo[] GetOutputVariablesInfo(Node node)
 	{
 		var variablesInfo = new OutputVariableInfo[node.OutputVariables.Length];
-		for (var i = 0; i < node.OutputVariables.Length; i++)
+		for (int i = 0; i < node.OutputVariables.Length; i++)
 		{
 			variablesInfo[i] = new OutputVariableInfo(
 				node.OutputVariables[i].Label,
@@ -425,7 +425,7 @@ internal static class StatescriptNodeDiscovery
 
 		// Insert spaces before capital letters for camelCase names.
 		var result = new System.Text.StringBuilder();
-		for (var i = 0; i < typeName.Length; i++)
+		for (int i = 0; i < typeName.Length; i++)
 		{
 			if (i > 0 && char.IsUpper(typeName[i]) && !char.IsUpper(typeName[i - 1]))
 			{

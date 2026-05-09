@@ -145,10 +145,10 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		var allConnections = new List<string>();
 		_serializedConnectionCounts = new int[_openTabs.Count];
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			StatescriptGraph graph = _openTabs[i].GraphResource;
-			var count = 0;
+			int count = 0;
 			foreach (StatescriptConnection c in graph.Connections)
 			{
 				allConnections.Add($"{c.FromNode},{c.OutputPort},{c.ToNode},{c.InputPort}");
@@ -227,7 +227,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		PersistCurrentVariablePanelState();
 
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
 				&& _openTabs[i].ResourcePath == graph.ResourcePath))
@@ -264,7 +264,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		var currentTab = _tabBar.CurrentTab;
+		int currentTab = _tabBar.CurrentTab;
 		if (currentTab < 0 || currentTab >= _openTabs.Count)
 		{
 			return;
@@ -295,7 +295,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return -1;
 		}
 
-		var currentTab = _tabBar.CurrentTab;
+		int currentTab = _tabBar.CurrentTab;
 		if (currentTab < 0 || currentTab >= _openTabs.Count)
 		{
 			return -1;
@@ -308,7 +308,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		GraphTab[] persistedTabs = GetPersistedTabs();
-		for (var i = 0; i < persistedTabs.Length; i++)
+		for (int i = 0; i < persistedTabs.Length; i++)
 		{
 			if (persistedTabs[i].ResourcePath == current.ResourcePath)
 			{
@@ -388,10 +388,10 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_tabBar.RemoveTab(0);
 		}
 
-		var skippedTabs = 0;
-		for (var i = 0; i < paths.Length; i++)
+		int skippedTabs = 0;
+		for (int i = 0; i < paths.Length; i++)
 		{
-			var path = paths[i];
+			string path = paths[i];
 
 			StatescriptGraph? graph = LoadGraphFromPath(path);
 			if (graph is null)
@@ -403,7 +403,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			graph.EnsureEntryNode();
 			var tab = new GraphTab(graph);
 
-			var currentTab = i - skippedTabs;
+			int currentTab = i - skippedTabs;
 			if (variablesStates is not null && currentTab < variablesStates.Length)
 			{
 				tab.VariablesPanelOpen = variablesStates[currentTab];
@@ -452,7 +452,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private static string GetBaseFilePath(string resourcePath)
 	{
-		var separatorIndex = resourcePath.IndexOf("::", StringComparison.Ordinal);
+		int separatorIndex = resourcePath.IndexOf("::", StringComparison.Ordinal);
 		return separatorIndex >= 0 ? resourcePath[..separatorIndex] : resourcePath;
 	}
 
@@ -465,7 +465,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	{
 		if (IsSubResourcePath(path))
 		{
-			var basePath = GetBaseFilePath(path);
+			string basePath = GetBaseFilePath(path);
 			if (!ResourceLoader.Exists(basePath))
 			{
 				return null;
@@ -490,7 +490,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private static StatescriptGraph? FindSubResourceGraph(Resource parentResource, string subResourcePath)
 	{
-		foreach (var propertyName in parentResource.GetPropertyList()
+		foreach (string? propertyName in parentResource.GetPropertyList()
 			.Select(p => p["name"].AsString()))
 		{
 			Variant value = parentResource.Get(propertyName);
@@ -519,7 +519,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return graph;
 		}
 
-		foreach (var propertyName in resource.GetPropertyList()
+		foreach (string? propertyName in resource.GetPropertyList()
 			.Select(p => p["name"].AsString()))
 		{
 			Variant value = resource.Get(propertyName);
@@ -543,11 +543,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private static void SaveGraphResource(StatescriptGraph graph)
 	{
-		var path = graph.ResourcePath;
+		string path = graph.ResourcePath;
 
 		if (IsSubResourcePath(path))
 		{
-			var basePath = GetBaseFilePath(path);
+			string basePath = GetBaseFilePath(path);
 			Resource? parentResource = ResourceLoader.Load(basePath);
 			if (parentResource is not null)
 			{
@@ -569,12 +569,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		var paths = _serializedTabPaths;
-		var activeTab = _serializedActiveTab;
-		var varStates = _serializedVariablesStates;
-		var selectedVariables = _serializedSelectedVariables;
-		var savedConnections = _serializedConnections;
-		var connectionCounts = _serializedConnectionCounts;
+		string[] paths = _serializedTabPaths;
+		int activeTab = _serializedActiveTab;
+		bool[]? varStates = _serializedVariablesStates;
+		string?[]? selectedVariables = _serializedSelectedVariables;
+		string[]? savedConnections = _serializedConnections;
+		int[]? connectionCounts = _serializedConnectionCounts;
 
 		_serializedTabPaths = null;
 		_serializedActiveTab = -1;
@@ -596,8 +596,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_tabBar.RemoveTab(0);
 		}
 
-		var skippedTabs = 0;
-		for (var i = 0; i < paths.Length; i++)
+		int skippedTabs = 0;
+		for (int i = 0; i < paths.Length; i++)
 		{
 			if (!ResourceLoader.Exists(paths[i]))
 			{
@@ -615,7 +615,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			graph.EnsureEntryNode();
 			var tab = new GraphTab(graph);
 
-			var currentTab = i - skippedTabs;
+			int currentTab = i - skippedTabs;
 			if (varStates is not null && currentTab < varStates.Length)
 			{
 				tab.VariablesPanelOpen = varStates[currentTab];
@@ -634,18 +634,18 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		if (savedConnections is not null && connectionCounts is not null)
 		{
-			var offset = 0;
-			for (var i = 0; i < _openTabs.Count && i < connectionCounts.Length; i++)
+			int offset = 0;
+			for (int i = 0; i < _openTabs.Count && i < connectionCounts.Length; i++)
 			{
 				StatescriptGraph graph = _openTabs[i].GraphResource;
 				graph.Connections.Clear();
 
-				for (var j = 0; j < connectionCounts[i] && offset < savedConnections.Length; j++, offset++)
+				for (int j = 0; j < connectionCounts[i] && offset < savedConnections.Length; j++, offset++)
 				{
-					var parts = savedConnections[offset].Split(',');
+					string[] parts = savedConnections[offset].Split(',');
 					if (parts.Length != 4
-						|| !int.TryParse(parts[1], out var outPort)
-						|| !int.TryParse(parts[3], out var inPort))
+						|| !int.TryParse(parts[1], out int outPort)
+						|| !int.TryParse(parts[3], out int inPort))
 					{
 						continue;
 					}
@@ -692,7 +692,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		if (_openTabs.Count > 0)
 		{
-			var newTab = Mathf.Min(tabIndex, _openTabs.Count - 1);
+			int newTab = Mathf.Min(tabIndex, _openTabs.Count - 1);
 			SetCurrentTabWithoutLoading(newTab);
 			LoadGraphIntoEditor(_openTabs[newTab].GraphResource);
 			ApplyVariablesPanelState(newTab);
@@ -900,7 +900,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void UpdateVisibility()
 	{
-		var hasOpenGraph = _openTabs.Count > 0;
+		bool hasOpenGraph = _openTabs.Count > 0;
 
 		if (_splitContainer is not null)
 		{
@@ -941,7 +941,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		var wasLoading = _isLoadingGraph;
+		bool wasLoading = _isLoadingGraph;
 		_isLoadingGraph = true;
 
 		DetachVisibleGraphNodes();
@@ -1075,7 +1075,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			parent.RemoveChild(graphNode);
 		}
 
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			_openTabs[i].CachedGraphNodes.Remove(graphNode);
 		}
@@ -1085,7 +1085,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void DisposeCachedGraphVisuals()
 	{
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			DisposeCachedGraphVisuals(_openTabs[i]);
 		}
@@ -1093,7 +1093,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void DisposeCachedGraphVisuals(GraphTab tab)
 	{
-		for (var i = tab.CachedGraphNodes.Count - 1; i >= 0; i--)
+		for (int i = tab.CachedGraphNodes.Count - 1; i >= 0; i--)
 		{
 			StatescriptGraphNode graphNode = tab.CachedGraphNodes[i];
 			if (!IsInstanceValid(graphNode))
@@ -1108,7 +1108,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private GraphTab? FindTab(StatescriptGraph graph)
 	{
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
 				&& _openTabs[i].ResourcePath == graph.ResourcePath))
@@ -1127,7 +1127,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		var wasLoading = _isLoadingGraph;
+		bool wasLoading = _isLoadingGraph;
 		_isLoadingGraph = true;
 		_tabBar.CurrentTab = tabIndex;
 		_isLoadingGraph = wasLoading;
@@ -1135,11 +1135,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void UpdateNextNodeId(StatescriptGraph graph)
 	{
-		var maxId = 0;
-		foreach (var nodeId in graph.Nodes.Select(x => x.NodeId))
+		int maxId = 0;
+		foreach (string? nodeId in graph.Nodes.Select(x => x.NodeId))
 		{
 			if (nodeId.StartsWith("node_", StringComparison.InvariantCultureIgnoreCase)
-				&& int.TryParse(nodeId["node_".Length..], out var id)
+				&& int.TryParse(nodeId["node_".Length..], out int id)
 				&& id >= maxId)
 			{
 				maxId = id + 1;
@@ -1159,7 +1159,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			_tabBar.SetTabTitle(i, _openTabs[i].GraphResource.StatescriptName);
 		}
@@ -1203,7 +1203,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			if (i == newTabIndex)
 			{
@@ -1312,7 +1312,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_variablePanel.Visible = pressed;
 
-		var current = _tabBar.CurrentTab;
+		int current = _tabBar.CurrentTab;
 		if (current >= 0 && current < _openTabs.Count)
 		{
 			_openTabs[current].VariablesPanelOpen = pressed;
@@ -1361,7 +1361,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void OnVariableHighlightChanged(string? variableName)
 	{
-		var current = _tabBar?.CurrentTab ?? -1;
+		int current = _tabBar?.CurrentTab ?? -1;
 		if (current >= 0 && current < _openTabs.Count)
 		{
 			_openTabs[current].SelectedVariableName = variableName;
@@ -1486,7 +1486,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_variablePanel.Visible = true;
 		_variablesToggleButton.SetPressedNoSignal(true);
 
-		var current = _tabBar?.CurrentTab ?? -1;
+		int current = _tabBar?.CurrentTab ?? -1;
 		if (current >= 0 && current < _openTabs.Count)
 		{
 			_openTabs[current].VariablesPanelOpen = true;
@@ -1507,7 +1507,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		for (var i = tab.CachedGraphNodes.Count - 1; i >= 0; i--)
+		for (int i = tab.CachedGraphNodes.Count - 1; i >= 0; i--)
 		{
 			StatescriptGraphNode graphNode = tab.CachedGraphNodes[i];
 			if (!IsInstanceValid(graphNode))
@@ -1522,21 +1522,21 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void OnFilesystemChanged()
 	{
-		for (var i = 0; i < _openTabs.Count; i++)
+		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			_openTabs[i].UpdateCachedPathIfMissing();
 		}
 
-		for (var i = _openTabs.Count - 1; i >= 0; i--)
+		for (int i = _openTabs.Count - 1; i >= 0; i--)
 		{
-			var path = _openTabs[i].ResourcePath;
+			string path = _openTabs[i].ResourcePath;
 
 			if (string.IsNullOrEmpty(path))
 			{
 				continue;
 			}
 
-			var filePath = GetBaseFilePath(path);
+			string filePath = GetBaseFilePath(path);
 			if (!FileAccess.FileExists(filePath))
 			{
 				CloseTabByIndex(i);
@@ -1554,7 +1554,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		var shouldShow = _openTabs[tabIndex].VariablesPanelOpen;
+		bool shouldShow = _openTabs[tabIndex].VariablesPanelOpen;
 
 		if ((_tabBar?.CurrentTab ?? -1) == tabIndex)
 		{
@@ -1583,7 +1583,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		var current = _tabBar.CurrentTab;
+		int current = _tabBar.CurrentTab;
 		if (current < 0 || current >= _openTabs.Count)
 		{
 			return;
@@ -1732,7 +1732,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return -1;
 		}
 
-		for (var i = 0; i < graphNode.GetChildCount(); i++)
+		for (int i = 0; i < graphNode.GetChildCount(); i++)
 		{
 			if (graphNode.IsSlotEnabledLeft(i))
 			{
@@ -1756,7 +1756,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return -1;
 		}
 
-		for (var i = 0; i < graphNode.GetChildCount(); i++)
+		for (int i = 0; i < graphNode.GetChildCount(); i++)
 		{
 			if (graphNode.IsSlotEnabledRight(i))
 			{

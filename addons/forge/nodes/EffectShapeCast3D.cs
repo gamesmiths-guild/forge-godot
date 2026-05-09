@@ -51,13 +51,13 @@ public partial class EffectShapeCast3D : ShapeCast3D
 
 		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
 
-		var collisions = GetCollisionCount();
+		int collisions = GetCollisionCount();
 
 		var collidersThisFrame = new List<GodotObject>();
-		for (var i = 0; i < collisions; i++)
+		for (int i = 0; i < collisions; i++)
 		{
 			GodotObject current = GetCollider(i);
-			var hadLast = _lastFrameColliders.Contains(current);
+			bool hadLast = _lastFrameColliders.Contains(current);
 
 			_lastFrameColliders.Add(current);
 			collidersThisFrame.Add(current);

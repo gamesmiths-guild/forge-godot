@@ -70,7 +70,7 @@ public class DamageExecution : CustomExecution
 				-targetIncomingDamage)); // Negative for damage
 		}
 
-		var finalDamage = targetIncomingDamage;
+		float finalDamage = targetIncomingDamage;
 
 		if (targetHealthAttribute!.CurrentValue - targetIncomingDamage <= targetHealthAttribute.Min)
 		{

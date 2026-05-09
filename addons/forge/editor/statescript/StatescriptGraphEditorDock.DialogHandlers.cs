@@ -73,7 +73,7 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		var path = _newStatescriptPathEdit.Text.Trim();
+		string path = _newStatescriptPathEdit.Text.Trim();
 		if (string.IsNullOrEmpty(path))
 		{
 			return;
@@ -270,7 +270,7 @@ public partial class StatescriptGraphEditorDock
 		{
 			if (_pendingConnectionIsOutput)
 			{
-				var inputPort = FindFirstEnabledInputPort(newNodeId);
+				int inputPort = FindFirstEnabledInputPort(newNodeId);
 				if (inputPort >= 0)
 				{
 					OnConnectionRequest(
@@ -282,7 +282,7 @@ public partial class StatescriptGraphEditorDock
 			}
 			else
 			{
-				var outputPort = FindFirstEnabledOutputPort(newNodeId);
+				int outputPort = FindFirstEnabledOutputPort(newNodeId);
 				if (outputPort >= 0)
 				{
 					OnConnectionRequest(

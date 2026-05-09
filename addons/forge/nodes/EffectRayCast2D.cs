@@ -50,8 +50,8 @@ public partial class EffectRayCast2D : RayCast2D
 		Debug.Assert(_effectApplier is not null, $"{_effectApplier} should have been initialized on _Ready().");
 
 		GodotObject current = GetCollider();
-		var hasCurrent = current is Node;
-		var hadLast = _lastFrameCollider is Node;
+		bool hasCurrent = current is Node;
+		bool hadLast = _lastFrameCollider is Node;
 
 		// Enter: is colliding now, wasn't colliding before.
 		if (current is Node currentNode && !hadLast)

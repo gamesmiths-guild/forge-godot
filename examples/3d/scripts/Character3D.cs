@@ -96,7 +96,7 @@ public partial class Character3D : CharacterBody3D
 			forgeEntity);
 
 		Tag? cooldownTag = null;
-		var totalCooldownTime = 0f;
+		float totalCooldownTime = 0f;
 
 		if (config.HasCooldown)
 		{
@@ -145,7 +145,7 @@ public partial class Character3D : CharacterBody3D
 				ThornsAbilityData, Skill4View, InputAction: null, ActivationStrategy: null, HasCooldown: true),
 		];
 
-		for (var i = 0; i < SkillCount; i++)
+		for (int i = 0; i < SkillCount; i++)
 		{
 			_skillSlots[i] = CreateSkillSlot(forgeEntity, skillConfigs[i]);
 		}
@@ -176,7 +176,7 @@ public partial class Character3D : CharacterBody3D
 		}
 
 		var tagsText = new StringBuilder();
-		foreach (Tag tag in _entityTags!)
+		foreach (Tag tag in _entityTags)
 		{
 			tagsText.Append(tag.ToString() + "\n");
 		}
@@ -252,7 +252,7 @@ public partial class Character3D : CharacterBody3D
 
 			if (_cooldownTag is not null)
 			{
-				var cooldownRemaining = Handle.GetRemainingCooldownTime(_cooldownTag.Value);
+				float cooldownRemaining = Handle.GetRemainingCooldownTime(_cooldownTag.Value);
 				view.UpdateCooldown(cooldownRemaining, _totalCooldownTime);
 			}
 

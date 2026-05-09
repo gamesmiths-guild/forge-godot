@@ -41,7 +41,7 @@ internal static class StatescriptResolverRegistry
 
 	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, bool isArray)
 	{
-		for (var i = 0; i < factories.Count; i++)
+		for (int i = 0; i < factories.Count; i++)
 		{
 			if (isArray)
 			{

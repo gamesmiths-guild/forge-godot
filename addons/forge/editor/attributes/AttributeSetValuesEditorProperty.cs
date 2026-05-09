@@ -40,7 +40,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 			return;
 		}
 
-		var className = obj.AttributeSetClass;
+		string className = obj.AttributeSetClass;
 		var assembly = Assembly.GetAssembly(typeof(ForgeAttributeSet));
 		Type? targetType = System.Array.Find(assembly?.GetTypes() ?? [], x => x.Name == className);
 
@@ -53,7 +53,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 			.Where(x => x.PropertyType == typeof(EntityAttribute));
 
-		foreach (var attributeName in attributeProperties.Select(x => x.Name))
+		foreach (string? attributeName in attributeProperties.Select(x => x.Name))
 		{
 			var groupVBox = new VBoxContainer();
 
@@ -99,7 +99,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 		VBoxContainer? attributesRoot = GetNodeOrNull<VBoxContainer>("AttributesRoot");
 		if (attributesRoot is not null)
 		{
-			for (var i = attributesRoot.GetChildCount() - 1; i >= 0; i--)
+			for (int i = attributesRoot.GetChildCount() - 1; i >= 0; i--)
 			{
 				Node child = attributesRoot.GetChild(i);
 				attributesRoot.RemoveChild(child);
@@ -169,7 +169,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 
 	private static void FreeAllChildren(Node node)
 	{
-		for (var i = node.GetChildCount() - 1; i >= 0; i--)
+		for (int i = node.GetChildCount() - 1; i >= 0; i--)
 		{
 			node.GetChild(i).QueueFree();
 		}

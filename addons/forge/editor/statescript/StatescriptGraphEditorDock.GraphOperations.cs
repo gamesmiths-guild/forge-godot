@@ -340,7 +340,7 @@ public partial class StatescriptGraphEditorDock
 			return string.Empty;
 		}
 
-		var nodeId = $"node_{_nextNodeId++}";
+		string nodeId = $"node_{_nextNodeId++}";
 
 		var nodeResource = new StatescriptNode
 		{
@@ -425,7 +425,7 @@ public partial class StatescriptGraphEditorDock
 		foreach (StatescriptGraphNode sgn in selectedNodes)
 		{
 			StatescriptNode original = sgn.NodeResource!;
-			var newNodeId = $"node_{_nextNodeId++}";
+			string newNodeId = $"node_{_nextNodeId++}";
 			duplicatedIds[original.NodeId] = newNodeId;
 
 			var duplicated = new StatescriptNode
@@ -466,8 +466,8 @@ public partial class StatescriptGraphEditorDock
 
 		foreach (StatescriptConnection connection in graph.Connections)
 		{
-			if (duplicatedIds.TryGetValue(connection.FromNode, out var newFrom)
-				&& duplicatedIds.TryGetValue(connection.ToNode, out var newTo))
+			if (duplicatedIds.TryGetValue(connection.FromNode, out string? newFrom)
+				&& duplicatedIds.TryGetValue(connection.ToNode, out string? newTo))
 			{
 				_graphEdit.ConnectNode(newFrom, connection.OutputPort, newTo, connection.InputPort);
 			}

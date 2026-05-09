@@ -60,7 +60,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 			return;
 		}
 
-		var value = GetEditedObject().Get(GetEditedProperty()).AsString();
+		string value = GetEditedObject().Get(GetEditedProperty()).AsString();
 		_label.Text = string.IsNullOrEmpty(value) ? "None" : value;
 	}
 
@@ -86,16 +86,16 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 	{
 		TreeItem root = tree.CreateItem();
 
-		foreach (var attributeSet in EditorUtils.GetAttributeSetOptions())
+		foreach (string attributeSet in EditorUtils.GetAttributeSetOptions())
 		{
 			TreeItem setItem = tree.CreateItem(root);
 			setItem.SetText(0, attributeSet);
 			setItem.Collapsed = true;
 
-			foreach (var attribute in EditorUtils.GetAttributeOptions(attributeSet))
+			foreach (string attribute in EditorUtils.GetAttributeOptions(attributeSet))
 			{
 				TreeItem attributeItem = tree.CreateItem(setItem);
-				var attributePath = $"{attributeSet}.{attribute}";
+				string attributePath = $"{attributeSet}.{attribute}";
 				attributeItem.SetText(0, attribute);
 				attributeItem.SetMeta("attribute_path", attributePath);
 			}
@@ -130,7 +130,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 			return;
 		}
 
-		var fullPath = item.GetMeta("attribute_path").AsString();
+		string fullPath = item.GetMeta("attribute_path").AsString();
 		_label.Text = fullPath;
 		EmitChanged(GetEditedProperty(), fullPath);
 		_popup.Hide();
@@ -156,7 +156,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 
 	private void FreeAllChildren()
 	{
-		for (var i = GetChildCount() - 1; i >= 0; i--)
+		for (int i = GetChildCount() - 1; i >= 0; i--)
 		{
 			Node child = GetChild(i);
 			RemoveChild(child);

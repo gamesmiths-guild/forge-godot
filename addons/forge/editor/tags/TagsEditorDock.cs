@@ -19,7 +19,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
-	private TagsManager _tagsManager = null!;
+	private TagsManager _tagsManager;
 
 	private ForgeData? _forgePluginData;
 
@@ -139,7 +139,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 			_forgePluginData.RegisteredTags is not null,
 			$"{_forgePluginData.RegisteredTags} should have been initialized by the Forge plugin.");
 
-		if (!Tag.IsValidKey(_tagNameTextField.Text, out var _, out var fixedTag))
+		if (!Tag.IsValidKey(_tagNameTextField.Text, out string _, out string? fixedTag))
 		{
 			_tagNameTextField.Text = fixedTag;
 		}
@@ -223,9 +223,9 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 			{
 				TagNode selectedTag = _treeItemToNode[item];
 
-				for (var i = _forgePluginData.RegisteredTags.Count - 1; i >= 0; i--)
+				for (int i = _forgePluginData.RegisteredTags.Count - 1; i >= 0; i--)
 				{
-					var tag = _forgePluginData.RegisteredTags[i];
+					string tag = _forgePluginData.RegisteredTags[i];
 
 					if (string.Equals(tag, selectedTag.CompleteTagKey, StringComparison.OrdinalIgnoreCase) ||
 						tag.StartsWith(selectedTag.CompleteTagKey + ".", StringComparison.InvariantCultureIgnoreCase))

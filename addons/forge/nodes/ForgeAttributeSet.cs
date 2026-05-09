@@ -59,7 +59,7 @@ public partial class ForgeAttributeSet : Node
 		{
 			if (prop.PropertyType == typeof(EntityAttribute))
 			{
-				var name = prop.Name;
+				string name = prop.Name;
 				if (InitialAttributeValues.TryGetValue(name, out AttributeValues? value))
 				{
 					SetAttributeValue("SetAttributeBaseValue", instance, prop, value.Default);

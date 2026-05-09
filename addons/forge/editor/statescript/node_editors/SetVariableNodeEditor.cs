@@ -54,7 +54,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	{
 		_cachedTypeInfo = typeInfo;
 
-		var inputFolded = GetFoldState(FoldInputKey);
+		bool inputFolded = GetFoldState(FoldInputKey);
 		FoldableContainer inputContainer = AddPropertySectionDivider(
 			"Input Properties",
 			InputPropertyColor,
@@ -70,7 +70,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 		inputContainer.AddChild(inputEditorContainer);
 
-		var outputFolded = GetFoldState(FoldOutputKey);
+		bool outputFolded = GetFoldState(FoldOutputKey);
 		FoldableContainer outputContainer = AddPropertySectionDivider(
 			"Output Variables",
 			OutputVariableColor,
@@ -126,9 +126,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
 	{
-		for (var i = 0; i < dir.GetFileCount(); i++)
+		for (int i = 0; i < dir.GetFileCount(); i++)
 		{
-			var path = dir.GetFilePath(i);
+			string path = dir.GetFilePath(i);
 
 			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
 				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
@@ -144,7 +144,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			}
 		}
 
-		for (var i = 0; i < dir.GetSubdirCount(); i++)
+		for (int i = 0; i < dir.GetSubdirCount(); i++)
 		{
 			ScanFilesystemDirectory(dir.GetSubdir(i), results);
 		}
@@ -384,12 +384,12 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Output, index);
-		var selectedIndex = 0;
+		int selectedIndex = 0;
 
 		if (binding?.Resolver is VariableResolverResource varRes
 			&& !string.IsNullOrEmpty(varRes.VariableName))
 		{
-			for (var i = 0; i < Graph.Variables.Count; i++)
+			for (int i = 0; i < Graph.Variables.Count; i++)
 			{
 				if (Graph.Variables[i].VariableName == varRes.VariableName)
 				{
@@ -472,9 +472,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_setDropdown.AddItem("(None)");
 		_setPaths.Add(string.Empty);
 
-		foreach (var path in FindAllSharedVariableSetPaths())
+		foreach (string path in FindAllSharedVariableSetPaths())
 		{
-			var displayName = path[(path.LastIndexOf('/') + 1)..];
+			string displayName = path[(path.LastIndexOf('/') + 1)..];
 
 			if (displayName.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
 			{
@@ -486,7 +486,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 
 		// Restore selection.
-		for (var i = 0; i < _setPaths.Count; i++)
+		for (int i = 0; i < _setPaths.Count; i++)
 		{
 			if (_setPaths[i] == _selectedSetPath)
 			{
@@ -520,7 +520,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 			if (set is not null)
 			{
-				foreach (var variableName in set.Variables.Select(x => x.VariableName))
+				foreach (string? variableName in set.Variables.Select(x => x.VariableName))
 				{
 					if (string.IsNullOrEmpty(variableName))
 					{
@@ -534,7 +534,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 
 		// Restore selection.
-		for (var i = 0; i < _variableNames.Count; i++)
+		for (int i = 0; i < _variableNames.Count; i++)
 		{
 			if (_variableNames[i] == _selectedSharedVarName)
 			{
@@ -554,7 +554,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		var idx = _setDropdown.Selected;
+		int idx = _setDropdown.Selected;
 
 		var oldResolver = FindBinding(StatescriptPropertyDirection.Output, _cachedOutputIndex)?.Resolver?.Duplicate()
 			as StatescriptResolverResource;
@@ -619,7 +619,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		var idx = _sharedVarDropdown.Selected;
+		int idx = _sharedVarDropdown.Selected;
 
 		var oldResolver = FindBinding(StatescriptPropertyDirection.Output, _cachedOutputIndex)?.Resolver?.Duplicate()
 			as StatescriptResolverResource;
@@ -627,7 +627,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			as StatescriptResolverResource;
 
 		StatescriptVariableType? previousType = _resolvedType;
-		var previousIsArray = _resolvedIsArray;
+		bool previousIsArray = _resolvedIsArray;
 
 		if (idx >= 0 && idx < _variableNames.Count)
 		{
@@ -751,11 +751,11 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		var index = _cachedOutputIndex;
-		var variableIndex = (int)x - 1;
+		int index = _cachedOutputIndex;
+		int variableIndex = (int)x - 1;
 
 		StatescriptVariableType? previousType = _resolvedType;
-		var previousIsArray = _resolvedIsArray;
+		bool previousIsArray = _resolvedIsArray;
 
 		var oldOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
 			as StatescriptResolverResource;
@@ -770,7 +770,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 		else
 		{
-			var variableName = Graph.Variables[variableIndex].VariableName;
+			string variableName = Graph.Variables[variableIndex].VariableName;
 			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
 				new VariableResolverResource { VariableName = variableName };
 

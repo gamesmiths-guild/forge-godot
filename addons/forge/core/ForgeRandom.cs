@@ -18,7 +18,7 @@ public class ForgeRandom : IRandom, IDisposable
 
 	public void NextBytes(byte[] buffer)
 	{
-		for (var i = 0; i < buffer.Length; i++)
+		for (int i = 0; i < buffer.Length; i++)
 		{
 			buffer[i] = (byte)_randomNumberGenerator.RandiRange(0, 255);
 		}
@@ -26,7 +26,7 @@ public class ForgeRandom : IRandom, IDisposable
 
 	public void NextBytes(Span<byte> buffer)
 	{
-		for (var i = 0; i < buffer.Length; i++)
+		for (int i = 0; i < buffer.Length; i++)
 		{
 			buffer[i] = (byte)_randomNumberGenerator.RandiRange(0, 255);
 		}
@@ -73,8 +73,8 @@ public class ForgeRandom : IRandom, IDisposable
 	{
 		unchecked
 		{
-			var high = _randomNumberGenerator.Randi();
-			var low = _randomNumberGenerator.Randi();
+			uint high = _randomNumberGenerator.Randi();
+			uint low = _randomNumberGenerator.Randi();
 			return ((long)high << 32) | low;
 		}
 	}
@@ -91,8 +91,8 @@ public class ForgeRandom : IRandom, IDisposable
 			throw new ArgumentOutOfRangeException(nameof(minValue), "minValue must be less than maxValue.");
 		}
 
-		var range = (ulong)(maxValue - minValue);
-		var rand = (ulong)NextInt64();
+		ulong range = (ulong)(maxValue - minValue);
+		ulong rand = (ulong)NextInt64();
 
 		return (long)(rand % range) + minValue;
 	}

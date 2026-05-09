@@ -135,7 +135,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		EnsureForgeDataExists();
 
-		var config = ProjectSettings.LoadResourcePack(AutoloadPath);
+		bool config = ProjectSettings.LoadResourcePack(AutoloadPath);
 
 		if (config)
 		{
@@ -176,7 +176,7 @@ public partial class ForgePluginLoader : EditorPlugin
 			return;
 		}
 
-		var paths = _statescriptGraphEditorDock.GetOpenResourcePaths();
+		string[] paths = _statescriptGraphEditorDock.GetOpenResourcePaths();
 
 		if (paths.Length == 0)
 		{
@@ -186,7 +186,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		configuration.SetValue("Forge", "open_tabs", string.Join(";", paths));
 		configuration.SetValue("Forge", "active_tab", _statescriptGraphEditorDock.GetActiveTabIndex());
 
-		var varStates = _statescriptGraphEditorDock.GetVariablesPanelStates();
+		bool[] varStates = _statescriptGraphEditorDock.GetVariablesPanelStates();
 		configuration.SetValue("Forge", "variables_states", string.Join(";", varStates));
 	}
 
@@ -200,26 +200,26 @@ public partial class ForgePluginLoader : EditorPlugin
 		Variant tabsValue = configuration.GetValue("Forge", "open_tabs", string.Empty);
 		Variant active = configuration.GetValue("Forge", "active_tab", -1);
 
-		var tabsString = tabsValue.AsString();
+		string tabsString = tabsValue.AsString();
 		if (string.IsNullOrEmpty(tabsString))
 		{
 			return;
 		}
 
-		var paths = tabsString.Split(';', StringSplitOptions.RemoveEmptyEntries);
-		var activeIndex = active.AsInt32();
+		string[] paths = tabsString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+		int activeIndex = active.AsInt32();
 
 		bool[]? variablesStates = null;
 		Variant varStatesValue = configuration.GetValue("Forge", "variables_states", string.Empty);
-		var varString = varStatesValue.AsString();
+		string varString = varStatesValue.AsString();
 
 		if (!string.IsNullOrEmpty(varString))
 		{
-			var parts = varString.Split(';');
+			string[] parts = varString.Split(';');
 			variablesStates = new bool[parts.Length];
-			for (var i = 0; i < parts.Length; i++)
+			for (int i = 0; i < parts.Length; i++)
 			{
-				variablesStates[i] = bool.TryParse(parts[i], out var v) && v;
+				variablesStates[i] = bool.TryParse(parts[i], out bool v) && v;
 			}
 		}
 
@@ -265,14 +265,14 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private void OnResourcesReimported(string[] resources)
 	{
-		foreach (var path in resources)
+		foreach (string path in resources)
 		{
 			if (!ResourceLoader.Exists(path))
 			{
 				continue;
 			}
 
-			var fileType = EditorInterface.Singleton.GetResourceFilesystem().GetFileType(path);
+			string fileType = EditorInterface.Singleton.GetResourceFilesystem().GetFileType(path);
 			if (fileType != "StatescriptGraph" && fileType != "Resource")
 			{
 				continue;

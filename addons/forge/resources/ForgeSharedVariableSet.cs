@@ -43,7 +43,7 @@ public partial class ForgeSharedVariableSet : Resource
 			if (definition.IsArray)
 			{
 				var initialValues = new Variant128[definition.InitialArrayValues.Count];
-				for (var i = 0; i < definition.InitialArrayValues.Count; i++)
+				for (int i = 0; i < definition.InitialArrayValues.Count; i++)
 				{
 					initialValues[i] = StatescriptVariableTypeConverter.GodotVariantToForge(
 						definition.InitialArrayValues[i],

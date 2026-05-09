@@ -187,7 +187,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 			TreeItem item = _tree.CreateItem(parent);
 			item.SetText(0, child.TagKey);
 
-			var selected = _selectedTag == child.CompleteTagKey;
+			bool selected = _selectedTag == child.CompleteTagKey;
 			item.AddButton(0, selected ? _checkedIcon : _uncheckedIcon);
 
 			_treeItemToNode[item] = child;
