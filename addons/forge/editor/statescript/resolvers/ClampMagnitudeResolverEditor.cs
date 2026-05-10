@@ -22,7 +22,7 @@ internal sealed partial class ClampMagnitudeResolverEditor
 
 	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
 
-	protected override Type[] RightFactoryExpectedTypes => [typeof(float), typeof(double)];
+	protected override Type[] RightFactoryExpectedTypes => ResolverEditorCompatibility.FloatOperandExpectedTypes;
 
 	protected override Type LeftNestedExpectedType => typeof(ForgeVariant128);
 

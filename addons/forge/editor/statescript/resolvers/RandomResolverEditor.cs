@@ -89,7 +89,6 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			_typeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 			_typeDropdown.AddItem("Int");
 			_typeDropdown.AddItem("Float");
-			_typeDropdown.AddItem("Double");
 			_typeDropdown.Selected = GetTypeDropdownIndex(_valueType);
 			_typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
 			typeRow.AddChild(_typeDropdown);
@@ -205,7 +204,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 	{
 		return valueType switch
 		{
-			StatescriptVariableType.Float => typeof(float),
+			StatescriptVariableType.Float => typeof(double),
 			StatescriptVariableType.Double => typeof(double),
 			_ => typeof(int),
 		};
@@ -213,12 +212,12 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 
 	private static StatescriptVariableType GetDefaultValueType(Type expectedType)
 	{
-		if (expectedType == typeof(float))
+		if (expectedType == typeof(double))
 		{
-			return StatescriptVariableType.Float;
+			return StatescriptVariableType.Double;
 		}
 
-		if (expectedType == typeof(double))
+		if (expectedType == typeof(float))
 		{
 			return StatescriptVariableType.Double;
 		}
@@ -231,7 +230,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		return valueType switch
 		{
 			StatescriptVariableType.Float => 1,
-			StatescriptVariableType.Double => 2,
+			StatescriptVariableType.Double => 1,
 			_ => 0,
 		};
 	}
@@ -274,8 +273,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 	{
 		_valueType = index switch
 		{
-			1 => StatescriptVariableType.Float,
-			2 => StatescriptVariableType.Double,
+			1 => StatescriptVariableType.Double,
 			_ => StatescriptVariableType.Int,
 		};
 

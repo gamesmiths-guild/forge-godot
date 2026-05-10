@@ -21,6 +21,7 @@ public partial class SlerpResolverResource : TernaryNestedResolverResourceBase
 		IPropertyResolver thirdResolver,
 		Graph graph)
 	{
+		thirdResolver = AdaptResolverForExpectedType(thirdResolver, typeof(float));
 		return new SlerpResolver(firstResolver, secondResolver, thirdResolver);
 	}
 }

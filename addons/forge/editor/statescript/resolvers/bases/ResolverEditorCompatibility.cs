@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 using SysPlane = System.Numerics.Plane;
 using SysQuaternion = System.Numerics.Quaternion;
 using SysVector2 = System.Numerics.Vector2;
@@ -13,6 +14,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
 internal static class ResolverEditorCompatibility
 {
+	public static readonly Type[] FloatOperandExpectedTypes = [typeof(int), typeof(float), typeof(double)];
+
 	public static bool IsNumericType(Type expectedType)
 	{
 		if (!StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out StatescriptVariableType variableType))
@@ -64,6 +67,14 @@ internal static class ResolverEditorCompatibility
 	public static bool IsNumericVectorOrQuaternionType(Type expectedType)
 	{
 		return IsNumericOrVectorType(expectedType) || IsQuaternionType(expectedType);
+	}
+
+	public static bool AreExpectedTypesCompatible(Type candidateExpectedType, Type allowedExpectedType)
+	{
+		return candidateExpectedType == allowedExpectedType
+			|| candidateExpectedType == typeof(ForgeVariant128)
+			|| allowedExpectedType == typeof(ForgeVariant128)
+			|| StatescriptVariableTypeConverter.IsCompatible(allowedExpectedType, candidateExpectedType);
 	}
 }
 #endif

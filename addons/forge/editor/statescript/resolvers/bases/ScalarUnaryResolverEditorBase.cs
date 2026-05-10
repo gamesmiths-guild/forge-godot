@@ -10,7 +10,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 internal abstract partial class ScalarUnaryResolverEditorBase<TResource> : UnaryNestedResolverEditorBase<TResource>
 	where TResource : UnaryNestedResolverResourceBase, new()
 {
-	protected override Type[] FactoryExpectedTypes => [typeof(float), typeof(double)];
+	protected override Type[] FactoryExpectedTypes => ResolverEditorCompatibility.FloatOperandExpectedTypes;
 
 	protected override Type NestedExpectedType => typeof(float);
 

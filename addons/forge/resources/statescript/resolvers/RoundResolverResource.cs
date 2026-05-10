@@ -24,6 +24,9 @@ public partial class RoundResolverResource : UnaryNestedResolverResourceBase
 
 	protected override IPropertyResolver CreateResolver(IPropertyResolver operandResolver, Graph graph)
 	{
+		operandResolver = PromoteIntegralResolverToFloatingPoint(
+			operandResolver,
+			GetPreferredFloatingPointType(operandResolver));
 		return new RoundResolver(operandResolver, Digits, Mode);
 	}
 }

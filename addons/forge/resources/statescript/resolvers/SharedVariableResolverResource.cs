@@ -49,13 +49,12 @@ public partial class SharedVariableResolverResource : StatescriptResolverResourc
 		}
 
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(VariableType);
-		var propertyName = new StringKey($"__shared_{nodeId}_{index}");
-
-		graph.VariableDefinitions.DefineProperty(
-			propertyName,
+		DefineAndBindInputProperty(
+			graph,
+			runtimeNode,
+			$"__shared_{nodeId}_{index}",
+			index,
 			new SharedVariableResolver(new StringKey(VariableName), clrType));
-
-		runtimeNode.BindInput(index, propertyName);
 	}
 
 	/// <inheritdoc/>

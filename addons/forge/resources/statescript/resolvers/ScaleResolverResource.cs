@@ -20,6 +20,7 @@ public partial class ScaleResolverResource : BinaryNestedResolverResourceBase
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
+		rightResolver = AdaptResolverForExpectedType(rightResolver, typeof(float));
 		return new ScaleResolver(leftResolver, rightResolver);
 	}
 }

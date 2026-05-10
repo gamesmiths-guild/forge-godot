@@ -21,6 +21,14 @@ public partial class MoveTowardsResolverResource : TernaryNestedResolverResource
 		IPropertyResolver thirdResolver,
 		Graph graph)
 	{
+		if (StatescriptNumericCompatibility.IsNumericType(firstResolver.ValueType)
+			&& StatescriptNumericCompatibility.IsNumericType(secondResolver.ValueType))
+		{
+			firstResolver = AdaptResolverForExpectedType(firstResolver, typeof(float));
+			secondResolver = AdaptResolverForExpectedType(secondResolver, typeof(float));
+		}
+
+		thirdResolver = AdaptResolverForExpectedType(thirdResolver, typeof(float));
 		return new MoveTowardsResolver(firstResolver, secondResolver, thirdResolver);
 	}
 }

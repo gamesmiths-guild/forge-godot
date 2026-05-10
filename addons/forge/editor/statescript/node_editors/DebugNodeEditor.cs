@@ -82,15 +82,15 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 			CustomMinimumSize = new Vector2(80, 0),
 		};
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Bool, "Bool");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Int, "Int");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Float, "Float");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Double, "Double");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Vector2, "Vector2");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Vector3, "Vector3");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Vector4, "Vector4");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Plane, "Plane");
-		AddTypeOption(_typeDropdown, StatescriptVariableType.Quaternion, "Quaternion");
+
+		foreach (StatescriptVariableType variableType in StatescriptVariableTypeConverter.GetAllTypes())
+		{
+			AddTypeOption(
+				_typeDropdown,
+				variableType,
+				StatescriptVariableTypeConverter.GetDisplayName(variableType));
+		}
+
 		_typeDropdown.Selected = FindSelectedTypeIndex(_typeDropdown);
 		_typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
 		headerRow.AddChild(_typeDropdown);

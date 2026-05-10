@@ -17,22 +17,16 @@ public abstract partial class TypedConstantResolverResourceBase : StatescriptRes
 	protected abstract IPropertyResolver CreateResolver(Type valueType);
 
 	[Export]
-	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Float;
+	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Double;
 
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		IPropertyResolver resolver = BuildResolver(graph);
-		var propertyName = new StringKey($"{PropertyNamePrefix}_{nodeId}_{index}");
-		graph.VariableDefinitions.DefineProperty(propertyName, resolver);
-		runtimeNode.BindInput(index, propertyName);
+		DefineAndBindInputProperty(graph, runtimeNode, $"{PropertyNamePrefix}_{nodeId}_{index}", index, resolver);
 	}
 
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		Type valueType = StatescriptVariableTypeConverter.ToSystemType(ValueType == StatescriptVariableType.Double
-			? StatescriptVariableType.Double
-			: StatescriptVariableType.Float);
-
-		return CreateResolver(valueType);
+		return CreateResolver(StatescriptVariableTypeConverter.ToSystemType(StatescriptVariableType.Double));
 	}
 }

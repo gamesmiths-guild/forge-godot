@@ -7,6 +7,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
 using Godot.Collections;
+using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 using GodotVariant = Godot.Variant;
 using GodotVector2 = Godot.Vector2;
 
@@ -459,6 +460,15 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	private StatescriptVariableType[] ResolveAllowedValueTypes(Type expectedType)
 	{
 		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(expectedType);
+
+		for (int i = 0; i < allowedExpectedTypes.Length; i++)
+		{
+			if (allowedExpectedTypes[i] == typeof(ForgeVariant128))
+			{
+				return StatescriptVariableTypeConverter.GetAllTypes();
+			}
+		}
+
 		var result = new List<StatescriptVariableType>();
 
 		for (int i = 0; i < allowedExpectedTypes.Length; i++)
@@ -477,6 +487,11 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 	private StatescriptVariableType GetDefaultValueType(Type expectedType)
 	{
+		if (expectedType == typeof(ForgeVariant128))
+		{
+			return StatescriptVariableType.Int;
+		}
+
 		if (_allowedValueTypes.Length > 0)
 		{
 			return _allowedValueTypes[0];

@@ -20,6 +20,7 @@ public partial class PlaneFromNormalResolverResource : BinaryNestedResolverResou
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
+		rightResolver = AdaptResolverForExpectedType(rightResolver, typeof(float));
 		return new PlaneFromNormalResolver(leftResolver, rightResolver);
 	}
 }

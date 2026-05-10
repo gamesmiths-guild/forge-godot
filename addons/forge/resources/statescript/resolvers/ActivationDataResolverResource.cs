@@ -84,6 +84,17 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 				new VariableDefinition(variableName, default, clrType));
 		}
 
+		if (NeedsNumericInputAdaptation(runtimeNode, index, clrType))
+		{
+			DefineAndBindInputProperty(
+				graph,
+				runtimeNode,
+				$"__activation_{nodeId}_{index}",
+				index,
+				new VariableResolver(variableName, clrType));
+			return;
+		}
+
 		runtimeNode.BindInput(index, variableName);
 	}
 

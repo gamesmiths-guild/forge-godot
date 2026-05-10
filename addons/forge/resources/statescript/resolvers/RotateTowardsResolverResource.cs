@@ -21,6 +21,7 @@ public partial class RotateTowardsResolverResource : TernaryNestedResolverResour
 		IPropertyResolver thirdResolver,
 		Graph graph)
 	{
+		thirdResolver = AdaptResolverForExpectedType(thirdResolver, typeof(float));
 		return new RotateTowardsResolver(firstResolver, secondResolver, thirdResolver);
 	}
 }

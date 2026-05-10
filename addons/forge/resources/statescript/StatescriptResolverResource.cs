@@ -1,5 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
+using System.Linq;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -61,5 +63,113 @@ public partial class StatescriptResolverResource : Resource
 	public virtual IPropertyResolver BuildResolver(Graph graph)
 	{
 		return new VariantResolver(default, typeof(int));
+	}
+
+	protected static void DefineAndBindInputProperty(
+		Graph graph,
+		ForgeNode runtimeNode,
+		string propertyName,
+		byte index,
+		IPropertyResolver resolver)
+	{
+		var propertyKey = new StringKey(propertyName);
+		graph.VariableDefinitions.DefineProperty(
+			propertyKey,
+			AdaptResolverForExpectedInput(runtimeNode, index, resolver));
+		runtimeNode.BindInput(index, propertyKey);
+	}
+
+	protected static bool NeedsNumericInputAdaptation(
+		ForgeNode runtimeNode,
+		byte index,
+		Type actualType)
+	{
+		if (index >= runtimeNode.InputProperties.Length)
+		{
+			return false;
+		}
+
+		Type expectedType = runtimeNode.InputProperties[index].ExpectedType;
+		return expectedType != typeof(Variant128)
+			&& expectedType != actualType
+			&& StatescriptNumericCompatibility.CanCoerce(actualType, expectedType);
+	}
+
+	protected static IPropertyResolver AdaptResolverForExpectedType(
+		IPropertyResolver resolver,
+		Type expectedType)
+	{
+		if (expectedType == typeof(Variant128) || expectedType == resolver.ValueType)
+		{
+			return resolver;
+		}
+
+		if (StatescriptNumericCompatibility.CanCoerce(resolver.ValueType, expectedType))
+		{
+			return new NumericCoercionResolver(resolver, expectedType);
+		}
+
+		return resolver;
+	}
+
+	protected static IPropertyResolver PromoteIntegralResolverToFloatingPoint(
+		IPropertyResolver resolver,
+		Type preferredFloatingType)
+	{
+		if (!StatescriptNumericCompatibility.IsNumericType(resolver.ValueType)
+			|| IsFloatingPointType(resolver.ValueType))
+		{
+			return resolver;
+		}
+
+		return AdaptResolverForExpectedType(resolver, preferredFloatingType);
+	}
+
+	protected static Type GetPreferredFloatingPointType(params IPropertyResolver[] resolvers)
+	{
+		foreach (Type resolverType in resolvers.Select(resolver => resolver.ValueType))
+		{
+			if (resolverType == typeof(double) || resolverType == typeof(decimal))
+			{
+				return typeof(double);
+			}
+		}
+
+		foreach (IPropertyResolver resolver in resolvers)
+		{
+			if (resolver.ValueType == typeof(float))
+			{
+				return typeof(float);
+			}
+		}
+
+		return typeof(double);
+	}
+
+	protected static bool IsVectorOrQuaternionType(Type type)
+	{
+		return type == typeof(System.Numerics.Vector2)
+			|| type == typeof(System.Numerics.Vector3)
+			|| type == typeof(System.Numerics.Vector4)
+			|| type == typeof(System.Numerics.Quaternion);
+	}
+
+	private static IPropertyResolver AdaptResolverForExpectedInput(
+		ForgeNode runtimeNode,
+		byte index,
+		IPropertyResolver resolver)
+	{
+		if (index >= runtimeNode.InputProperties.Length)
+		{
+			return resolver;
+		}
+
+		Type expectedType = runtimeNode.InputProperties[index].ExpectedType;
+		return AdaptResolverForExpectedType(resolver, expectedType);
+	}
+
+	private static bool IsFloatingPointType(Type type)
+	{
+		return type == typeof(float) || type == typeof(double) || type == typeof(decimal);
 	}
 }

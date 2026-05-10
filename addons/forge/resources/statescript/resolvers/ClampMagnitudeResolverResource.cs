@@ -20,6 +20,7 @@ public partial class ClampMagnitudeResolverResource : BinaryNestedResolverResour
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
+		rightResolver = AdaptResolverForExpectedType(rightResolver, typeof(float));
 		return new ClampMagnitudeResolver(leftResolver, rightResolver);
 	}
 }
