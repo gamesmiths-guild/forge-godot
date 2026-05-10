@@ -67,7 +67,8 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 		_graph = graph;
 		_onChanged = onChanged;
 		_valueType = ResolveValueType(property, expectedType);
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(typeof(float), typeof(double));
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			ResolverEditorCompatibility.FloatOperandExpectedTypes);
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -340,7 +341,7 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 			_factories,
 			factoryIndex,
 			existingResolver,
-			[typeof(float), typeof(double)],
+			ResolverEditorCompatibility.FloatOperandExpectedTypes,
 			OnNestedEditorChanged,
 			RaiseLayoutSizeChanged);
 

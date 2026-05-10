@@ -146,11 +146,7 @@ internal static class NestedResolverEditorUtilities
 
 	private static bool AreExpectedTypesCompatible(Type candidateExpectedType, Type allowedExpectedType)
 	{
-		return candidateExpectedType == allowedExpectedType
-			|| candidateExpectedType == typeof(ForgeVariant128)
-			|| allowedExpectedType == typeof(ForgeVariant128)
-			|| (ResolverEditorCompatibility.IsFloatType(candidateExpectedType)
-				&& ResolverEditorCompatibility.IsFloatType(allowedExpectedType));
+		return ResolverEditorCompatibility.AreExpectedTypesCompatible(candidateExpectedType, allowedExpectedType);
 	}
 
 	private static bool ContainsVariantType(Type[] expectedTypes)

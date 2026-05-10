@@ -34,7 +34,21 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			return;
 		}
 
-		runtimeNode.BindInput(index, new StringKey(VariableName));
+		Type? variableType = FindGraphVariableType(graph, VariableName);
+		var variableKey = new StringKey(VariableName);
+
+		if (variableType is not null && NeedsNumericInputAdaptation(runtimeNode, index, variableType))
+		{
+			DefineAndBindInputProperty(
+				graph,
+				runtimeNode,
+				$"__var_{nodeId}_{index}",
+				index,
+				new VariableResolver(variableKey, variableType));
+			return;
+		}
+
+		runtimeNode.BindInput(index, variableKey);
 	}
 
 	/// <inheritdoc/>

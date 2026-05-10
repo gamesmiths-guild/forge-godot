@@ -21,6 +21,9 @@ public partial class QuaternionFromYawPitchRollResolverResource : TernaryNestedR
 		IPropertyResolver thirdResolver,
 		Graph graph)
 	{
+		firstResolver = AdaptResolverForExpectedType(firstResolver, typeof(float));
+		secondResolver = AdaptResolverForExpectedType(secondResolver, typeof(float));
+		thirdResolver = AdaptResolverForExpectedType(thirdResolver, typeof(float));
 		return new QuaternionFromYawPitchRollResolver(firstResolver, secondResolver, thirdResolver);
 	}
 }

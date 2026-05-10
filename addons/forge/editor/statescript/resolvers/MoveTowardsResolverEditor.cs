@@ -20,13 +20,12 @@ internal sealed partial class MoveTowardsResolverEditor : TernaryNestedResolverE
 	public override string ResolverTypeId => "MoveTowards";
 
 	protected override Type[] FirstFactoryExpectedTypes =>
-		[typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
+		[typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
 
 	protected override Type[] SecondFactoryExpectedTypes =>
-		[typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
+		[typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
 
-	protected override Type[] ThirdFactoryExpectedTypes =>
-		[typeof(float), typeof(double)];
+	protected override Type[] ThirdFactoryExpectedTypes => ResolverEditorCompatibility.FloatOperandExpectedTypes;
 
 	protected override Type FirstNestedExpectedType => typeof(ForgeVariant128);
 
@@ -53,11 +52,11 @@ internal sealed partial class MoveTowardsResolverEditor : TernaryNestedResolverE
 	{
 		if (expectedType == typeof(float))
 		{
-			return [typeof(float), typeof(double)];
+			return ResolverEditorCompatibility.FloatOperandExpectedTypes;
 		}
 		else if (expectedType == typeof(ForgeVariant128))
 		{
-			return [typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
+			return [typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
 		}
 		else
 		{

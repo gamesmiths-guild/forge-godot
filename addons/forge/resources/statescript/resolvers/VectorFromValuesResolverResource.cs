@@ -52,10 +52,18 @@ public partial class VectorFromValuesResolverResource : StatescriptResolverResou
 
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		IPropertyResolver xResolver = X?.BuildResolver(graph) ?? CreateDefaultComponentResolver();
-		IPropertyResolver yResolver = Y?.BuildResolver(graph) ?? CreateDefaultComponentResolver();
-		IPropertyResolver zResolver = Z?.BuildResolver(graph) ?? CreateDefaultComponentResolver();
-		IPropertyResolver wResolver = W?.BuildResolver(graph) ?? CreateDefaultComponentResolver();
+		IPropertyResolver xResolver = AdaptResolverForExpectedType(
+			X?.BuildResolver(graph) ?? CreateDefaultComponentResolver(),
+			typeof(float));
+		IPropertyResolver yResolver = AdaptResolverForExpectedType(
+			Y?.BuildResolver(graph) ?? CreateDefaultComponentResolver(),
+			typeof(float));
+		IPropertyResolver zResolver = AdaptResolverForExpectedType(
+			Z?.BuildResolver(graph) ?? CreateDefaultComponentResolver(),
+			typeof(float));
+		IPropertyResolver wResolver = AdaptResolverForExpectedType(
+			W?.BuildResolver(graph) ?? CreateDefaultComponentResolver(),
+			typeof(float));
 
 		return GetNormalizedValueType() switch
 		{

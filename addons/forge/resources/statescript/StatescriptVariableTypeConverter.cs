@@ -21,6 +21,18 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript;
 /// </summary>
 public static class StatescriptVariableTypeConverter
 {
+	private static readonly StatescriptVariableType[] _authoringTypes =
+	[
+		StatescriptVariableType.Bool,
+		StatescriptVariableType.Int,
+		StatescriptVariableType.Double,
+		StatescriptVariableType.Vector2,
+		StatescriptVariableType.Vector3,
+		StatescriptVariableType.Vector4,
+		StatescriptVariableType.Plane,
+		StatescriptVariableType.Quaternion,
+	];
+
 	private static readonly Dictionary<StatescriptVariableType, Type> _typeMap = new()
 	{
 		[StatescriptVariableType.Bool] = typeof(bool),
@@ -43,23 +55,36 @@ public static class StatescriptVariableTypeConverter
 		[StatescriptVariableType.Quaternion] = typeof(System.Numerics.Quaternion),
 	};
 
-	private static readonly Dictionary<Type, StatescriptVariableType> _reverseTypeMap = [];
-
-	static StatescriptVariableTypeConverter()
+	private static readonly Dictionary<Type, StatescriptVariableType> _authoringTypeMap = new()
 	{
-		foreach (KeyValuePair<StatescriptVariableType, Type> kvp in _typeMap)
-		{
-			_reverseTypeMap[kvp.Value] = kvp.Key;
-		}
-	}
+		[typeof(bool)] = StatescriptVariableType.Bool,
+		[typeof(byte)] = StatescriptVariableType.Int,
+		[typeof(sbyte)] = StatescriptVariableType.Int,
+		[typeof(char)] = StatescriptVariableType.Int,
+		[typeof(short)] = StatescriptVariableType.Int,
+		[typeof(ushort)] = StatescriptVariableType.Int,
+		[typeof(int)] = StatescriptVariableType.Int,
+		[typeof(uint)] = StatescriptVariableType.Int,
+		[typeof(long)] = StatescriptVariableType.Int,
+		[typeof(ulong)] = StatescriptVariableType.Int,
+		[typeof(float)] = StatescriptVariableType.Double,
+		[typeof(double)] = StatescriptVariableType.Double,
+		[typeof(decimal)] = StatescriptVariableType.Double,
+		[typeof(SysVector2)] = StatescriptVariableType.Vector2,
+		[typeof(SysVector3)] = StatescriptVariableType.Vector3,
+		[typeof(SysVector4)] = StatescriptVariableType.Vector4,
+		[typeof(System.Numerics.Plane)] = StatescriptVariableType.Plane,
+		[typeof(System.Numerics.Quaternion)] = StatescriptVariableType.Quaternion,
+	};
 
 	/// <summary>
-	/// Gets all supported variable type values.
+	/// Gets all supported designer-facing authoring types.
 	/// </summary>
-	/// <returns>All values of <see cref="StatescriptVariableType"/>.</returns>
+	/// <returns>The subset of <see cref="StatescriptVariableType"/> values exposed for authoring in the Godot editor.
+	/// </returns>
 	public static StatescriptVariableType[] GetAllTypes()
 	{
-		return (StatescriptVariableType[])Enum.GetValues(typeof(StatescriptVariableType));
+		return [.. _authoringTypes];
 	}
 
 	/// <summary>
@@ -80,35 +105,26 @@ public static class StatescriptVariableTypeConverter
 	/// <returns><see langword="true"/> if a matching variable type was found.</returns>
 	public static bool TryFromSystemType(Type type, out StatescriptVariableType variableType)
 	{
-		return _reverseTypeMap.TryGetValue(type, out variableType);
+		return _authoringTypeMap.TryGetValue(type, out variableType);
 	}
 
 	/// <summary>
 	/// Checks whether the given <see cref="Type"/> is compatible with the specified variable type.
 	/// </summary>
 	/// <remarks>
-	/// For <see cref="Variant128"/> (wildcard type), all types are compatible. Otherwise, strict type matching is used
-	/// with no implicit numeric conversions.
+	/// For <see cref="Variant128"/> (wildcard type), all types are compatible. Otherwise, exact type matches are
+	/// accepted, and numeric types are also considered compatible when
+	/// <see cref="StatescriptNumericCompatibility.CanCoerce(Type, Type)"/> can adapt the authored value to the expected
+	/// runtime type. This allows integral-to-integral and numeric-to-floating-point compatibility, but not
+	/// floating-point-to-integral coercion.
 	/// </remarks>
 	/// <param name="expectedType">The expected type from the node declaration.</param>
 	/// <param name="variableType">The variable type to check.</param>
 	/// <returns><see langword="true"/> if the types are compatible.</returns>
 	public static bool IsCompatible(Type expectedType, StatescriptVariableType variableType)
 	{
-		if (expectedType == typeof(Variant128))
-		{
-			return true;
-		}
-
 		Type actualType = ToSystemType(variableType);
-
-		if ((expectedType == typeof(float) && actualType == typeof(double))
-			|| (expectedType == typeof(double) && actualType == typeof(float)))
-		{
-			return true;
-		}
-
-		return expectedType == actualType;
+		return IsCompatible(expectedType, actualType);
 	}
 
 	/// <summary>
@@ -181,7 +197,33 @@ public static class StatescriptVariableTypeConverter
 	/// <returns>A human-readable name for the type.</returns>
 	public static string GetDisplayName(StatescriptVariableType variableType)
 	{
-		return variableType.ToString();
+		return variableType switch
+		{
+			StatescriptVariableType.Byte => "Int",
+			StatescriptVariableType.SByte => "Int",
+			StatescriptVariableType.Char => "Int",
+			StatescriptVariableType.Int => "Int",
+			StatescriptVariableType.UInt => "Int",
+			StatescriptVariableType.Long => "Int",
+			StatescriptVariableType.ULong => "Int",
+			StatescriptVariableType.Short => "Int",
+			StatescriptVariableType.UShort => "Int",
+			StatescriptVariableType.Decimal => "Float",
+			StatescriptVariableType.Double => "Float",
+			StatescriptVariableType.Float => "Float",
+			_ => variableType.ToString(),
+		};
+	}
+
+	internal static bool IsCompatible(Type expectedType, Type actualType)
+	{
+		if (expectedType == typeof(Variant128))
+		{
+			return true;
+		}
+
+		return expectedType == actualType
+			|| StatescriptNumericCompatibility.CanCoerce(actualType, expectedType);
 	}
 
 	private static Variant128 ToForgeVector2(GodotVector2 v)

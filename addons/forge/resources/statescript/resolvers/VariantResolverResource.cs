@@ -73,9 +73,13 @@ public partial class VariantResolverResource : StatescriptResolverResource
 		{
 			Variant128 value = StatescriptVariableTypeConverter.GodotVariantToForge(Value, ValueType);
 			Type clrType = StatescriptVariableTypeConverter.ToSystemType(ValueType);
-
-			graph.VariableDefinitions.PropertyDefinitions.Add(
-				new PropertyDefinition(propertyName, new VariantResolver(value, clrType)));
+			DefineAndBindInputProperty(
+				graph,
+				runtimeNode,
+				propertyName.ToString(),
+				index,
+				new VariantResolver(value, clrType));
+			return;
 		}
 
 		runtimeNode.BindInput(index, propertyName);

@@ -13,7 +13,6 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 	where TResource : TypedConstantResolverResourceBase, new()
 {
 	private StatescriptVariableType _valueType;
-	private bool _allowTypeSelection;
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
@@ -29,26 +28,13 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 		Action onChanged,
 		bool isArray)
 	{
-		if (property?.Resolver is TResource existing)
+		if (property?.Resolver is TResource)
 		{
-			_valueType = NormalizeValueType(existing.ValueType);
-		}
-		else if (expectedType == typeof(double))
-		{
-			_valueType = StatescriptVariableType.Double;
+			_valueType = NormalizeValueType();
 		}
 		else
 		{
-			_valueType = StatescriptVariableType.Float;
-		}
-
-		_allowTypeSelection = expectedType == typeof(ForgeVariant128);
-
-		if (!_allowTypeSelection)
-		{
-			_valueType = expectedType == typeof(double)
-				? StatescriptVariableType.Double
-				: StatescriptVariableType.Float;
+			_valueType = StatescriptVariableType.Double;
 		}
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -62,23 +48,11 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		if (_allowTypeSelection)
+		row.AddChild(new Label
 		{
-			var typeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			typeDropdown.AddItem("Float");
-			typeDropdown.AddItem("Double");
-			typeDropdown.Selected = _valueType == StatescriptVariableType.Double ? 1 : 0;
-			typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
-			row.AddChild(typeDropdown);
-		}
-		else
-		{
-			row.AddChild(new Label
-			{
-				Text = _valueType == StatescriptVariableType.Double ? "Double" : "Float",
-				SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			});
-		}
+			Text = "Float",
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		});
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -86,16 +60,9 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 		property.Resolver = new TResource { ValueType = _valueType };
 	}
 
-	private static StatescriptVariableType NormalizeValueType(StatescriptVariableType valueType)
+	private static StatescriptVariableType NormalizeValueType()
 	{
-		return valueType == StatescriptVariableType.Double
-			? StatescriptVariableType.Double
-			: StatescriptVariableType.Float;
-	}
-
-	private void OnTypeDropdownItemSelected(long index)
-	{
-		_valueType = index == 1 ? StatescriptVariableType.Double : StatescriptVariableType.Float;
+		return StatescriptVariableType.Double;
 	}
 }
 #endif

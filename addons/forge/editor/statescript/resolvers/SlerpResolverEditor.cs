@@ -21,7 +21,7 @@ internal sealed partial class SlerpResolverEditor : TernaryNestedResolverEditorB
 
 	protected override Type[] SecondFactoryExpectedTypes => [typeof(SysQuaternion)];
 
-	protected override Type[] ThirdFactoryExpectedTypes => [typeof(float), typeof(double)];
+	protected override Type[] ThirdFactoryExpectedTypes => ResolverEditorCompatibility.FloatOperandExpectedTypes;
 
 	protected override Type FirstNestedExpectedType => typeof(SysQuaternion);
 

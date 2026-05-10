@@ -167,6 +167,19 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		RebuildList();
 	}
 
+	private static int FindTypeDropdownIndex(OptionButton dropdown, StatescriptVariableType variableType)
+	{
+		for (int i = 0; i < dropdown.ItemCount; i++)
+		{
+			if (dropdown.GetItemId(i) == (int)variableType)
+			{
+				return i;
+			}
+		}
+
+		return 0;
+	}
+
 	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
 	{
 		Color buttonColor = isSelected ? _highlightColor : _variableColor;
@@ -770,6 +783,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 				StatescriptVariableTypeConverter.GetDisplayName(variableType),
 				(int)variableType);
 		}
+
+		_newTypeDropdown.Selected = FindTypeDropdownIndex(_newTypeDropdown, StatescriptVariableType.Int);
 
 		typeRow.AddChild(_newTypeDropdown);
 

@@ -20,6 +20,7 @@ public partial class QuaternionFromAxisAngleResolverResource : BinaryNestedResol
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
+		rightResolver = AdaptResolverForExpectedType(rightResolver, typeof(float));
 		return new QuaternionFromAxisAngleResolver(leftResolver, rightResolver);
 	}
 }

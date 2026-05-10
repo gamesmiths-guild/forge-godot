@@ -19,9 +19,7 @@ public abstract partial class RandomlessConstantResolverResourceBase : Statescri
 #pragma warning restore SA1202 // Elements should be ordered by access
 	{
 		IPropertyResolver resolver = BuildResolver(graph);
-		var propertyName = new StringKey($"{PropertyNamePrefix}_{nodeId}_{index}");
-		graph.VariableDefinitions.DefineProperty(propertyName, resolver);
-		runtimeNode.BindInput(index, propertyName);
+		DefineAndBindInputProperty(graph, runtimeNode, $"{PropertyNamePrefix}_{nodeId}_{index}", index, resolver);
 	}
 
 	public override IPropertyResolver BuildResolver(Graph graph)

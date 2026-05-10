@@ -6,6 +6,8 @@ For how resolvers fit into Statescript's data flow, see [Variables and Data](var
 
 This page keeps the Godot documentation concise by listing the resolvers available in Forge for Godot and linking to the corresponding core Forge documentation for resolver behavior details where available.
 
+The type names in the tables below follow the underlying Forge/runtime terminology used by the linked resolver docs. In the Godot editor, numeric resolver authoring is simplified to the same designer-facing scalar types used by variables: `Int` for integral CLR types, and `Float` for floating-point CLR types such as `float`, `double`, and `decimal`. The visible `Float` option is backed by Forge's `double` path by default, and compatible numeric inputs are coerced explicitly when graphs are built.
+
 > **Note:** `ActivationDataResolver` is specific to Forge for Godot's Statescript workflow, so it does not have a matching page in the core Forge resolver reference.
 
 ## Built-in Resolvers
@@ -148,4 +150,4 @@ This page keeps the Godot documentation concise by listing the resolvers availab
 | [RandomInsideCircleResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/randominsidecircle-resolver.md) | `Vector2` | Returns a random point inside the unit circle. |
 | [RandomInsideSphereResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/randominsidesphere-resolver.md) | `Vector3` | Returns a random point inside the unit sphere. |
 | [RandomOnSphereResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/randomonsphere-resolver.md) | `Vector3` | Returns a random normalized 3D direction on the unit sphere. |
-| [RandomResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/random-resolver.md) | `int`/`float`/`double` | Generates a random value in a range using an `IRandom` provider. |
+| [RandomResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/random-resolver.md) | `Int`/`Float` | Generates a random value in a range using an `IRandom` provider. |

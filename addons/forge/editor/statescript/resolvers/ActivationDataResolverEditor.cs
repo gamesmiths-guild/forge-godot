@@ -131,13 +131,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 
 	private static bool IsCompatibleType(Type expectedType, StatescriptVariableType fieldType)
 	{
-		if (expectedType == typeof(Variant128))
-		{
-			return true;
-		}
-
-		Type actualType = StatescriptVariableTypeConverter.ToSystemType(fieldType);
-		return expectedType == actualType;
+		return StatescriptVariableTypeConverter.IsCompatible(expectedType, fieldType);
 	}
 
 	private static string FindExistingProvider(StatescriptGraph graph, StatescriptNodeProperty? currentProperty)

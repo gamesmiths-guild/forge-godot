@@ -17,6 +17,9 @@ public partial class TruncateResolverResource : UnaryNestedResolverResourceBase
 
 	protected override IPropertyResolver CreateResolver(IPropertyResolver operandResolver, Graph graph)
 	{
+		operandResolver = PromoteIntegralResolverToFloatingPoint(
+			operandResolver,
+			GetPreferredFloatingPointType(operandResolver));
 		return new TruncateResolver(operandResolver);
 	}
 }

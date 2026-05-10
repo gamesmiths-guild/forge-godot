@@ -8,9 +8,11 @@ For C# API details and code examples, see the [core Variables documentation](htt
 
 Graph variables are **mutable values** scoped to a single graph execution instance. They are defined at graph construction time with a name, type, and initial value. When a graph starts, each variable is initialized from its definition. Multiple executions of the same graph each get their own independent copy.
 
-**Supported types:**
+**Supported authoring types in Godot:**
 
-All types supported by `Variant128`: `bool`, `byte`, `sbyte`, `char`, `decimal`, `double`, `float`, `int`, `uint`, `long`, `ulong`, `short`, `ushort`, `Vector2`, `Vector3`, `Vector4`, `Plane`, `Quaternion`.
+`Bool`, `Int`, `Float`, `Vector2`, `Vector3`, `Vector4`, `Plane`, and `Quaternion`.
+
+In the Godot editor, `Float` is the single designer-facing floating-point choice. It is backed by Forge's `double` path so it stays compatible with the broader numeric support in the core library, while still presenting a simpler authoring model.
 
 **Array variables** are also supported. These hold a fixed-length list of `Variant128` values.
 
@@ -46,7 +48,7 @@ Shared variables are **entity-level values** accessible by all Statescript graph
 
 ### Defining Shared Variables
 
-In Godot, shared variables are defined through a `ForgeSharedVariableSet` resource assigned to the `ForgeEntity` node's `SharedVariableDefinitions` property. Each shared variable has a name, type, and initial value.
+In Godot, shared variables are defined through a `ForgeSharedVariableSet` resource assigned to the `ForgeEntity` node's `SharedVariableDefinitions` property. Each shared variable has a name, type, and initial value, using the same simplified authoring types as graph variables.
 
 When the entity initializes, the shared variable set populates the entity's `SharedVariables` bag. All Statescript graphs running on that entity can then read and write these variables.
 
@@ -65,6 +67,8 @@ When the entity initializes, the shared variable set populates the entity's `Sha
 Property resolvers provide **read-only computed values** that nodes can bind to as input properties. Each resolver implements `IPropertyResolver` and returns a `Variant128` given a `GraphContext`.
 
 Resolvers are bound to node input properties at graph construction time. At runtime, when a node needs to read an input, the resolver computes the value from the current graph and entity state.
+
+When a Godot-authored variable or resolver output needs to feed a different compatible numeric type, Forge for Godot inserts an explicit numeric coercion step during graph build instead of relying on raw `Variant128` reads. That keeps the simplified `Int`/`Float` authoring model safe for existing core resolver signatures.
 
 For the full built-in resolver reference, see [Property Resolvers](resolvers.md). For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
 

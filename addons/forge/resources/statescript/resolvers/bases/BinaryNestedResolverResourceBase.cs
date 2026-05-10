@@ -33,9 +33,7 @@ public abstract partial class BinaryNestedResolverResourceBase : StatescriptReso
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		IPropertyResolver resolver = BuildResolver(graph);
-		var propertyName = new StringKey($"{PropertyNamePrefix}_{nodeId}_{index}");
-		graph.VariableDefinitions.DefineProperty(propertyName, resolver);
-		runtimeNode.BindInput(index, propertyName);
+		DefineAndBindInputProperty(graph, runtimeNode, $"{PropertyNamePrefix}_{nodeId}_{index}", index, resolver);
 	}
 
 	public override IPropertyResolver BuildResolver(Graph graph)

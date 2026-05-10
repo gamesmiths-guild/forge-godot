@@ -21,7 +21,7 @@ internal sealed partial class PlaneFromNormalResolverEditor
 
 	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysVector3)];
 
-	protected override Type[] RightFactoryExpectedTypes => [typeof(float), typeof(double)];
+	protected override Type[] RightFactoryExpectedTypes => ResolverEditorCompatibility.FloatOperandExpectedTypes;
 
 	protected override Type LeftNestedExpectedType => typeof(SysVector3);
 

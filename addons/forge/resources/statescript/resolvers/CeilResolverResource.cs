@@ -17,6 +17,9 @@ public partial class CeilResolverResource : UnaryNestedResolverResourceBase
 
 	protected override IPropertyResolver CreateResolver(IPropertyResolver operandResolver, Graph graph)
 	{
+		operandResolver = PromoteIntegralResolverToFloatingPoint(
+			operandResolver,
+			GetPreferredFloatingPointType(operandResolver));
 		return new CeilResolver(operandResolver);
 	}
 }
