@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -27,6 +26,6 @@ public abstract partial class TypedConstantResolverResourceBase : StatescriptRes
 
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		return CreateResolver(StatescriptVariableTypeConverter.ToSystemType(StatescriptVariableType.Double));
+		return CreateResolver(StatescriptVariableTypeConverter.ToSystemType(ValueType));
 	}
 }

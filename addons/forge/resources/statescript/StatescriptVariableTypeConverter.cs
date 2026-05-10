@@ -78,9 +78,10 @@ public static class StatescriptVariableTypeConverter
 	};
 
 	/// <summary>
-	/// Gets all supported variable type values.
+	/// Gets all supported designer-facing authoring types.
 	/// </summary>
-	/// <returns>All values of <see cref="StatescriptVariableType"/>.</returns>
+	/// <returns>The subset of <see cref="StatescriptVariableType"/> values exposed for authoring in the Godot editor.
+	/// </returns>
 	public static StatescriptVariableType[] GetAllTypes()
 	{
 		return [.. _authoringTypes];
@@ -111,8 +112,11 @@ public static class StatescriptVariableTypeConverter
 	/// Checks whether the given <see cref="Type"/> is compatible with the specified variable type.
 	/// </summary>
 	/// <remarks>
-	/// For <see cref="Variant128"/> (wildcard type), all types are compatible. Otherwise, strict type matching is used
-	/// with no implicit numeric conversions.
+	/// For <see cref="Variant128"/> (wildcard type), all types are compatible. Otherwise, exact type matches are
+	/// accepted, and numeric types are also considered compatible when
+	/// <see cref="StatescriptNumericCompatibility.CanCoerce(Type, Type)"/> can adapt the authored value to the expected
+	/// runtime type. This allows integral-to-integral and numeric-to-floating-point compatibility, but not
+	/// floating-point-to-integral coercion.
 	/// </remarks>
 	/// <param name="expectedType">The expected type from the node declaration.</param>
 	/// <param name="variableType">The variable type to check.</param>
