@@ -87,7 +87,7 @@ public class HasTagNode : ConditionNode
             return false;
         }
 
-        return context.Owner.Tags.CombinedTags.HasTag(_tag);
+        return context.Owner.Tags.AllTags.HasTag(_tag);
     }
 }
 ```

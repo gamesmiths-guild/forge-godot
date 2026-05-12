@@ -155,11 +155,11 @@ Tags are hierarchical identifiers used throughout the Forge system for classific
 
 ```csharp
 // Check if an entity has a tag
-bool isPlayer = forgeEntity.Tags.CombinedTags.HasTag(
+bool isPlayer = forgeEntity.Tags.AllTags.HasTag(
     Tag.RequestTag(ForgeManagers.Instance.TagsManager, "character.player"));
 
 // Check for tag inheritance (will match "character.player.wizard" too)
-bool isCharacter = forgeEntity.Tags.CombinedTags.HasTag(
+bool isCharacter = forgeEntity.Tags.AllTags.HasTag(
     Tag.RequestTag(ForgeManagers.Instance.TagsManager, "character"));
 ```
 

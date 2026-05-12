@@ -55,7 +55,7 @@ public partial class Character3D : CharacterBody3D
 		base._Ready();
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
-		_entityTags = forgeEntity.Tags.CombinedTags;
+		_entityTags = forgeEntity.Tags.AllTags;
 
 		InitializeSkillSlots(forgeEntity);
 	}
