@@ -100,6 +100,18 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 3. In the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
 4. Enable **Forge Gameplay System** under `Project > Project Settings > Plugins`.
 
+### Local Core Development (Optional)
+
+When developing `forge-godot` together with the core `forge` repository, `Forge.props` automatically switches to local project references when both repositories are cloned as sibling folders:
+
+```text
+Projects/
+├── forge/
+└── forge-godot/
+```
+
+This allows direct source-level development across both repositories without requiring local NuGet packages.
+
 ## Documentation
 
 For comprehensive documentation, explore the [docs](docs) directory:

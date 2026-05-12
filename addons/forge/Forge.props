@@ -1,8 +1,12 @@
 <Project>
   <PropertyGroup>
     <Nullable>enable</Nullable>
+    <LocalForgeProjectPath>$(MSBuildThisFileDirectory)..\..\..\forge\Forge\Forge.csproj</LocalForgeProjectPath>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="$(LocalForgeProjectPath)" Condition="Exists('$(LocalForgeProjectPath)')" />
+  </ItemGroup>
+  <ItemGroup Condition="!Exists('$(LocalForgeProjectPath)')">
     <PackageReference Include="Gamesmiths.Forge" Version="0.3.3" />
   </ItemGroup>
 </Project>
