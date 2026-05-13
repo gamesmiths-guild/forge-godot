@@ -205,7 +205,7 @@ A built-in `ForgeAbilityBehavior` implementation that drives an ability's lifecy
 
 `StatescriptAbilityBehavior` allows you to use a visual Statescript graph as the behavior for an ability, replacing the need to write a custom `IAbilityBehavior` in C#. Assign a `StatescriptGraph` resource to this behavior and set it as the `AbilityBehavior` on a `ForgeAbilityData`. At runtime, the graph is built once and cached, then each ability activation creates a new `GraphProcessor` with independent state.
 
-If any node in the graph uses an `ActivationDataResolverResource`, the behavior automatically detects the associated `IActivationDataProvider` and maps activation data fields into graph variables.
+If any node in the graph uses an `ActivationDataResolverResource`, the behavior automatically detects the associated `IActivationDataProvider`, builds the matching `GraphAbilityBehavior<TData>`, and lets the resolver read the selected activation-data member directly from the typed payload.
 
 **Usage:**
 

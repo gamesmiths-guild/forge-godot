@@ -19,10 +19,9 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 /// </summary>
 /// <remarks>
 /// If any node in the graph uses an <see cref="ActivationDataResolverResource"/>, the behavior automatically detects
-/// the associated <see cref="IActivationDataProvider"/> implementation and produces a
-/// <see cref="GraphAbilityBehavior{TData}"/> with a data binder that maps activation data fields into graph variables.
-/// When no activation data resolver is present, a plain <see cref="GraphAbilityBehavior"/> (without data
-/// support) is created.
+/// the associated <see cref="IActivationDataProvider"/> implementation and produces the matching
+/// <see cref="GraphAbilityBehavior{TData}"/> directly. When no activation data resolver is present, a plain
+/// <see cref="GraphAbilityBehavior"/> is created.
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -40,6 +39,26 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 	/// </summary>
 	[Export]
 	public StatescriptGraph? Statescript { get; set; }
+
+	public static IActivationDataProvider? InstantiateProvider(string className)
+	{
+		Type? type = AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.FirstOrDefault(
+				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
+					&& !x.IsAbstract
+					&& !x.IsInterface
+					&& (x.AssemblyQualifiedName == className
+						|| x.FullName == className
+						|| x.Name == className));
+
+		if (type is null)
+		{
+			return null;
+		}
+
+		return Activator.CreateInstance(type) as IActivationDataProvider;
+	}
 
 	/// <inheritdoc/>
 	public override IAbilityBehavior GetBehavior()
@@ -60,7 +79,9 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 
 		if (_cachedProvider is not null)
 		{
-			return _cachedProvider.CreateBehavior(_cachedGraph);
+			Type activationDataType = _cachedProvider.ActivationDataType;
+			Type behaviorType = typeof(GraphAbilityBehavior<>).MakeGenericType(activationDataType);
+			return (IAbilityBehavior)Activator.CreateInstance(behaviorType, _cachedGraph)!;
 		}
 
 		return new GraphAbilityBehavior(_cachedGraph);
@@ -80,25 +101,5 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		}
 
 		return null;
-	}
-
-	private static IActivationDataProvider? InstantiateProvider(string className)
-	{
-		Type? type = AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(a => a.GetTypes())
-			.FirstOrDefault(
-				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-					&& !x.IsAbstract
-					&& !x.IsInterface
-					&& (x.AssemblyQualifiedName == className
-						|| x.FullName == className
-						|| x.Name == className));
-
-		if (type is null)
-		{
-			return null;
-		}
-
-		return Activator.CreateInstance(type) as IActivationDataProvider;
 	}
 }

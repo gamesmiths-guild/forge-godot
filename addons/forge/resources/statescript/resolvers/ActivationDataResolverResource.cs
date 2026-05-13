@@ -1,7 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
-using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -14,9 +14,8 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// Resolver resource that binds a node property to a field declared by an <see cref="IActivationDataProvider"/>.
 /// </summary>
 /// <remarks>
-/// At build time the resolver defines a graph variable for the field so that the data binder can write to it, and binds
-/// the node input to that variable. At runtime the value is read from the graph's variables after the data binder has
-/// populated them.
+/// At build time this resource constructs Forge's core <see cref="ActivationDataResolver"/> so the selected member is
+/// read directly from the typed activation-data payload.
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -63,39 +62,12 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 			return;
 		}
 
-		Type clrType = StatescriptVariableTypeConverter.ToSystemType(FieldType);
-		var variableName = new StringKey(FieldName);
-
-		// Define the variable so the data binder's SetVar call succeeds at runtime.
-		// Check if the variable is already defined to avoid duplicates when multiple nodes bind the same field.
-		bool alreadyDefined = false;
-		foreach (VariableDefinition existing in graph.VariableDefinitions.VariableDefinitions)
-		{
-			if (existing.Name == variableName)
-			{
-				alreadyDefined = true;
-				break;
-			}
-		}
-
-		if (!alreadyDefined)
-		{
-			graph.VariableDefinitions.VariableDefinitions.Add(
-				new VariableDefinition(variableName, default, clrType));
-		}
-
-		if (NeedsNumericInputAdaptation(runtimeNode, index, clrType))
-		{
-			DefineAndBindInputProperty(
-				graph,
-				runtimeNode,
-				$"__activation_{nodeId}_{index}",
-				index,
-				new VariableResolver(variableName, clrType));
-			return;
-		}
-
-		runtimeNode.BindInput(index, variableName);
+		DefineAndBindInputProperty(
+			graph,
+			runtimeNode,
+			$"__activation_{nodeId}_{index}",
+			index,
+			BuildActivationDataResolver());
 	}
 
 	/// <inheritdoc/>
@@ -110,7 +82,18 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 			return new VariantResolver(default, typeof(int));
 		}
 
-		Type clrType = StatescriptVariableTypeConverter.ToSystemType(FieldType);
-		return new VariableResolver(new StringKey(FieldName), clrType);
+		return BuildActivationDataResolver();
+	}
+
+	private ActivationDataResolver BuildActivationDataResolver()
+	{
+		IActivationDataProvider? provider = StatescriptAbilityBehavior.InstantiateProvider(ProviderClassName);
+		if (provider is null)
+		{
+			throw new InvalidOperationException(
+				$"Statescript: Could not instantiate activation data provider '{ProviderClassName}'.");
+		}
+
+		return new ActivationDataResolver(provider.ActivationDataType, FieldName);
 	}
 }

@@ -318,30 +318,21 @@ Constructor parameters are matched by name to entries in the node's `CustomData`
 For abilities that receive custom typed data on activation, you can create an `IActivationDataProvider` that declares which fields the graph can bind to:
 
 ```csharp
-using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Resources;
-using Gamesmiths.Forge.Statescript;
 
 public record struct DashData(float Distance, float Speed);
 
 public class DashDataProvider : IActivationDataProvider
 {
+    public Type ActivationDataType => typeof(DashData);
+
     public ForgeActivationDataField[] GetFields()
     {
         return
         [
-            new ForgeActivationDataField("Distance", typeof(float)),
-            new ForgeActivationDataField("Speed", typeof(float)),
+            new ForgeActivationDataField("Distance", StatescriptVariableType.Float),
+            new ForgeActivationDataField("Speed", StatescriptVariableType.Float),
         ];
-    }
-
-    public IAbilityBehavior CreateBehavior(Graph graph)
-    {
-        return new GraphAbilityBehavior<DashData>(graph, (data, vars) =>
-        {
-            vars.SetVar(new Core.StringKey("Distance"), data.Distance);
-            vars.SetVar(new Core.StringKey("Speed"), data.Speed);
-        });
     }
 }
 ```
@@ -350,7 +341,7 @@ Once defined:
 
 1. The provider appears automatically in the Activation Data resolver dropdown in the graph editor.
 2. Nodes can bind input properties to the provider's fields.
-3. At runtime, when the ability is activated with `DashData`, the data binder writes the values into graph variables before the graph starts.
+3. At runtime, when the ability is activated with `DashData`, the resolver reads the selected public field or property directly from that payload.
 
 > **Constraint:** A graph supports only one activation data provider. If nodes already reference a provider, subsequent nodes are restricted to the same one.
 

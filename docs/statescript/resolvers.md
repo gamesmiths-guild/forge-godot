@@ -8,15 +8,13 @@ This page keeps the Godot documentation concise by listing the resolvers availab
 
 The type names in the tables below follow the underlying Forge/runtime terminology used by the linked resolver docs. In the Godot editor, numeric resolver authoring is simplified to the same designer-facing scalar types used by variables: `Int` for integral CLR types, and `Float` for floating-point CLR types such as `float`, `double`, and `decimal`. The visible `Float` option is backed by Forge's `double` path by default, and compatible numeric inputs are coerced explicitly when graphs are built.
 
-> **Note:** `ActivationDataResolver` is specific to Forge for Godot's Statescript workflow, so it does not have a matching page in the core Forge resolver reference.
-
 ## Built-in Resolvers
 
 | Resolver | Output Type | Description |
 | --- | --- | --- |
 | [ArrayVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/array-resolver.md) | `(configured)` | Stores a mutable array of values with indexed access. |
-| ActivationDataResolver | `(configured)` | Reads a field from the graph's configured activation data provider. |
 | [AttributeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/attribute-resolver.md) | `int` | Reads the current value of an entity attribute. |
+| [ActivationDataResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/activation-data-resolver.md) | `(configured)` | Reads a field from the graph's configured activation data provider. |
 | [MagnitudeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/magnitude-resolver.md) | `float` | Reads the magnitude from the ability activation context. |
 | [SharedVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/shared-variable-resolver.md) | `(configured)` | Reads a shared variable from the entity. |
 | [TagResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-resolver.md) | `bool` | Checks whether the owner entity has a specific tag. |
