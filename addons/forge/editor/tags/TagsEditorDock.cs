@@ -69,8 +69,6 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 
 	public void OnAfterDeserialize()
 	{
-		EnsureInitialized();
-
 		if (_tree is not null)
 		{
 			_tree.ButtonClicked += TreeButtonClicked;
@@ -80,6 +78,9 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 		{
 			_addTagButton.Pressed += AddTagButton_Pressed;
 		}
+
+		Debug.Assert(
+			_forgePluginData is not null, $"{nameof(_forgePluginData)} should have been initialized on _Ready().");
 
 		_tagsManager = new TagsManager([.. _forgePluginData.RegisteredTags]);
 		ReconstructTreeNode();
@@ -249,10 +250,14 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	[MemberNotNull(nameof(_tagsManager), nameof(_tree), nameof(_tagNameTextField), nameof(_forgePluginData))]
 	private void EnsureInitialized()
 	{
-		Debug.Assert(_tagsManager is not null, $"{_tagsManager} should have been initialized on _Ready().");
-		Debug.Assert(_tree is not null, $"{_tree} should have been initialized on _Ready().");
-		Debug.Assert(_tagNameTextField is not null, $"{_tagNameTextField} should have been initialized on _Ready().");
-		Debug.Assert(_forgePluginData is not null, $"{_forgePluginData} should have been initialized on _Ready().");
+		Debug.Assert(
+			_tagsManager is not null, $"{nameof(_tagsManager)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_tree is not null, $"{nameof(_tree)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_tagNameTextField is not null, $"{nameof(_tagNameTextField)} should have been initialized on _Ready().");
+		Debug.Assert(
+			_forgePluginData is not null, $"{nameof(_forgePluginData)} should have been initialized on _Ready().");
 	}
 }
 #endif
