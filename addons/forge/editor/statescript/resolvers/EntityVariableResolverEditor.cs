@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -15,6 +16,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 {
+	private const float LabelWidth = 45.0f;
+
 	private readonly List<string> _graphVariableNames = [];
 	private readonly List<string> _setPaths = [];
 	private readonly List<string> _sharedVariableNames = [];
@@ -65,23 +68,26 @@ internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 		_scopeDropdown.AddItem("Shared");
 		_scopeDropdown.Selected = _sharedScope ? 1 : 0;
 		_scopeDropdown.ItemSelected += OnScopeChanged;
-		root.AddChild(CreateLabeledRow("Scope:", _scopeDropdown));
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Scope:", _scopeDropdown, LabelWidth));
 
 		_graphVariableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_graphVariableDropdown.SetMeta("is_variable_dropdown", true);
 		_graphVariableDropdown.ItemSelected += OnGraphVariableChanged;
-		_graphRow = CreateLabeledRow("Var:", _graphVariableDropdown);
+		_graphRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Var:", _graphVariableDropdown, LabelWidth);
 		root.AddChild(_graphRow);
 
 		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_setDropdown.ItemSelected += OnSetChanged;
-		_setRow = CreateLabeledRow("Set:", _setDropdown);
+		_setRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth);
 		root.AddChild(_setRow);
 
 		_sharedVariableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_sharedVariableDropdown.SetMeta("is_shared_variable_dropdown", true);
 		_sharedVariableDropdown.ItemSelected += OnSharedVariableChanged;
-		_sharedVariableRow = CreateLabeledRow("Var:", _sharedVariableDropdown);
+		_sharedVariableRow = ResolverEditorLayoutUtilities.CreateLabeledRow(
+			"Var:",
+			_sharedVariableDropdown,
+			LabelWidth);
 		root.AddChild(_sharedVariableRow);
 
 		PopulateGraphVariableDropdown(graph);
@@ -130,65 +136,6 @@ internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 	{
 		base.ClearCallbacks();
 		_onChanged = null;
-	}
-
-	private static List<string> FindAllSharedVariableSetPaths()
-	{
-		var results = new List<string>();
-		EditorFileSystemDirectory root = EditorInterface.Singleton.GetResourceFilesystem().GetFilesystem();
-		ScanFilesystemDirectory(root, results);
-		return results;
-	}
-
-	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
-	{
-		for (int i = 0; i < dir.GetFileCount(); i++)
-		{
-			string path = dir.GetFilePath(i);
-			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
-			{
-				continue;
-			}
-
-			Resource resource = ResourceLoader.Load(path);
-			if (resource is ForgeSharedVariableSet)
-			{
-				results.Add(path);
-			}
-		}
-
-		for (int i = 0; i < dir.GetSubdirCount(); i++)
-		{
-			ScanFilesystemDirectory(dir.GetSubdir(i), results);
-		}
-	}
-
-	private static HBoxContainer CreateLabeledRow(string labelText, Control editor)
-	{
-		var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		row.AddChild(new Label
-		{
-			Text = labelText,
-			CustomMinimumSize = new Vector2(45, 0),
-			HorizontalAlignment = HorizontalAlignment.Right,
-		});
-		row.AddChild(editor);
-		return row;
-	}
-
-	private static void RestoreSelection(OptionButton dropdown, List<string> values, string selectedValue)
-	{
-		for (int i = 0; i < values.Count; i++)
-		{
-			if (values[i] == selectedValue)
-			{
-				dropdown.Selected = i;
-				return;
-			}
-		}
-
-		dropdown.Selected = 0;
 	}
 
 	private void OnScopeChanged(long index)
@@ -252,7 +199,10 @@ internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 			}
 		}
 
-		RestoreSelection(_graphVariableDropdown, _graphVariableNames, _selectedVariableName);
+		ResolverEditorLayoutUtilities.RestoreSelection(
+			_graphVariableDropdown,
+			_graphVariableNames,
+			_selectedVariableName);
 	}
 
 	private void PopulateSetDropdown()
@@ -267,19 +217,13 @@ internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 		_setDropdown.AddItem("(None)");
 		_setPaths.Add(string.Empty);
 
-		foreach (string path in FindAllSharedVariableSetPaths())
+		foreach (string path in VariableResolverEditorUtilities.FindAllSharedVariableSetPaths())
 		{
-			string displayName = path[(path.LastIndexOf('/') + 1)..];
-			if (displayName.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
-			{
-				displayName = displayName[..^5];
-			}
-
-			_setDropdown.AddItem(displayName);
+			_setDropdown.AddItem(VariableResolverEditorUtilities.GetResourceDisplayName(path));
 			_setPaths.Add(path);
 		}
 
-		RestoreSelection(_setDropdown, _setPaths, _selectedSetPath);
+		ResolverEditorLayoutUtilities.RestoreSelection(_setDropdown, _setPaths, _selectedSetPath);
 	}
 
 	private void PopulateSharedVariableDropdown()
@@ -313,7 +257,10 @@ internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 			}
 		}
 
-		RestoreSelection(_sharedVariableDropdown, _sharedVariableNames, _selectedVariableName);
+		ResolverEditorLayoutUtilities.RestoreSelection(
+			_sharedVariableDropdown,
+			_sharedVariableNames,
+			_selectedVariableName);
 	}
 
 	private void UpdateRowVisibility()
