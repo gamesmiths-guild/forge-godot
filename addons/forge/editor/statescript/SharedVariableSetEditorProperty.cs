@@ -448,6 +448,13 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private Control CreateValueEditor(ForgeSharedVariableDefinition def)
 	{
+		if (def.VariableType == StatescriptVariableType.Entity)
+		{
+			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			info.AddChild(new Label { Text = "Runtime-assigned entity reference." });
+			return info;
+		}
+
 		if (def.VariableType == StatescriptVariableType.Bool)
 		{
 			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -560,6 +567,12 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		};
 
 		headerRow.AddChild(toggleButton);
+
+		if (def.VariableType == StatescriptVariableType.Entity)
+		{
+			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
+			return vBox;
+		}
 
 		var addElementButton = new Button
 		{

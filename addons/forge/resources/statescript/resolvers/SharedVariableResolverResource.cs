@@ -11,9 +11,8 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds a node property to an entity's shared variable by name. At runtime the value is read
-/// from the <see cref="GraphContext.SharedVariables"/> bag, which is populated from the entity's
-/// <see cref="ForgeSharedVariableSet"/>.
+/// Resolver resource that binds a node property to an entity's shared variable by name. This is a Godot-side editor
+/// convenience over Forge's scope-aware <see cref="VariableResolver"/>.
 /// </summary>
 [Tool]
 [GlobalClass]
@@ -54,7 +53,7 @@ public partial class SharedVariableResolverResource : StatescriptResolverResourc
 			runtimeNode,
 			$"__shared_{nodeId}_{index}",
 			index,
-			new SharedVariableResolver(new StringKey(VariableName), clrType));
+			new VariableResolver(new StringKey(VariableName), clrType, VariableScope.Shared));
 	}
 
 	/// <inheritdoc/>
@@ -77,6 +76,6 @@ public partial class SharedVariableResolverResource : StatescriptResolverResourc
 		}
 
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(VariableType);
-		return new SharedVariableResolver(new StringKey(VariableName), clrType);
+		return new VariableResolver(new StringKey(VariableName), clrType, VariableScope.Shared);
 	}
 }

@@ -45,6 +45,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private string _selectedSetPath = string.Empty;
 	private string _selectedSharedVarName = string.Empty;
 	private StatescriptVariableType _selectedSharedVarType = StatescriptVariableType.Int;
+	private bool _selectedSharedVarIsArray;
 
 	/// <inheritdoc/>
 	public override string HandledRuntimeTypeName => "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode";
@@ -175,8 +176,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			_selectedSetPath = sharedRes.SharedVariableSetPath;
 			_selectedSharedVarName = sharedRes.VariableName;
 			_selectedSharedVarType = sharedRes.VariableType;
+			ResolveSharedVariableType();
 			_resolvedType = sharedRes.VariableType;
-			_resolvedIsArray = false;
+			_resolvedIsArray = _selectedSharedVarIsArray;
 		}
 	}
 
@@ -289,6 +291,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			_selectedSetPath = string.Empty;
 			_selectedSharedVarName = string.Empty;
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 		}
 
 		if (_cachedTargetContainer is not null)
@@ -638,6 +641,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		{
 			_selectedSharedVarName = string.Empty;
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 		}
 
 		UpdateSharedOutputBinding();
@@ -645,7 +649,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (!string.IsNullOrEmpty(_selectedSharedVarName))
 		{
 			_resolvedType = _selectedSharedVarType;
-			_resolvedIsArray = false;
+			_resolvedIsArray = _selectedSharedVarIsArray;
 		}
 		else
 		{
@@ -721,6 +725,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			|| !ResourceLoader.Exists(_selectedSetPath))
 		{
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 			return;
 		}
 
@@ -729,6 +734,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (set is null)
 		{
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 			return;
 		}
 
@@ -737,11 +743,13 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			if (def.VariableName == _selectedSharedVarName)
 			{
 				_selectedSharedVarType = def.VariableType;
+				_selectedSharedVarIsArray = def.IsArray;
 				return;
 			}
 		}
 
 		_selectedSharedVarType = StatescriptVariableType.Int;
+		_selectedSharedVarIsArray = false;
 	}
 
 	private void OnTargetVariableDropdownItemSelected(long x)

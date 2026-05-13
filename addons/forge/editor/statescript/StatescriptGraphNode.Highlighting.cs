@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -41,7 +42,22 @@ public partial class StatescriptGraphNode
 		}
 
 		if (resolver is VariableResolverResource variableResolver
+			&& variableResolver.Scope == VariableScope.Graph
 			&& string.Equals(variableResolver.VariableName, variableName, StringComparison.Ordinal))
+		{
+			return true;
+		}
+
+		if (resolver is ArrayVariableResolverResource arrayVariableResolver
+			&& arrayVariableResolver.Scope == VariableScope.Graph
+			&& string.Equals(arrayVariableResolver.VariableName, variableName, StringComparison.Ordinal))
+		{
+			return true;
+		}
+
+		if (resolver is EntityVariableResolverResource entityVariableResolver
+			&& entityVariableResolver.Scope == VariableScope.Graph
+			&& string.Equals(entityVariableResolver.VariableName, variableName, StringComparison.Ordinal))
 		{
 			return true;
 		}
@@ -94,6 +110,30 @@ public partial class StatescriptGraphNode
 		if (resolver is SharedVariableResolverResource sharedVariableResolver
 			&& string.Equals(sharedVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
 			&& string.Equals(sharedVariableResolver.VariableName, variableName, StringComparison.Ordinal))
+		{
+			return true;
+		}
+
+		if (resolver is VariableResolverResource variableResolver
+			&& variableResolver.Scope == VariableScope.Shared
+			&& string.Equals(variableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
+			&& string.Equals(variableResolver.VariableName, variableName, StringComparison.Ordinal))
+		{
+			return true;
+		}
+
+		if (resolver is ArrayVariableResolverResource arrayVariableResolver
+			&& arrayVariableResolver.Scope == VariableScope.Shared
+			&& string.Equals(arrayVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
+			&& string.Equals(arrayVariableResolver.VariableName, variableName, StringComparison.Ordinal))
+		{
+			return true;
+		}
+
+		if (resolver is EntityVariableResolverResource entityVariableResolver
+			&& entityVariableResolver.Scope == VariableScope.Shared
+			&& string.Equals(entityVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
+			&& string.Equals(entityVariableResolver.VariableName, variableName, StringComparison.Ordinal))
 		{
 			return true;
 		}
@@ -177,9 +217,9 @@ public partial class StatescriptGraphNode
 		UpdateHighlightsRecursive(this);
 	}
 
-	private void UpdateHighlightsRecursive(Node parent)
+	private void UpdateHighlightsRecursive(global::Godot.Node parent)
 	{
-		foreach (Node child in parent.GetChildren())
+		foreach (global::Godot.Node child in parent.GetChildren())
 		{
 			if (child is OptionButton optionButton)
 			{

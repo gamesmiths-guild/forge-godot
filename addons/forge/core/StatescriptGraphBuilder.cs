@@ -117,6 +117,22 @@ public static class StatescriptGraphBuilder
 
 			Type clrType = StatescriptVariableTypeConverter.ToSystemType(variable.VariableType);
 
+			if (variable.VariableType == StatescriptVariableType.Entity)
+			{
+				if (variable.IsArray)
+				{
+					graph.VariableDefinitions.DefineReferenceArrayVariable<IForgeEntity>(
+						new StringKey(variable.VariableName));
+				}
+				else
+				{
+					graph.VariableDefinitions.DefineReferenceVariable<IForgeEntity>(
+						new StringKey(variable.VariableName));
+				}
+
+				continue;
+			}
+
 			if (variable.IsArray)
 			{
 				var initialValues = new Variant128[variable.InitialArrayValues.Count];

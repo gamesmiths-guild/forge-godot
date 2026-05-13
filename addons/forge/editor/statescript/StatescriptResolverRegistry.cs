@@ -45,7 +45,13 @@ internal static class StatescriptResolverRegistry
 		{
 			if (isArray)
 			{
-				if (GetResolverTypeId(factories[i]) == "ArrayVariable")
+				string resolverTypeId = GetResolverTypeId(factories[i]);
+				if (resolverTypeId == "Variant")
+				{
+					return i;
+				}
+
+				if (resolverTypeId == "ArrayVariable")
 				{
 					return i;
 				}
