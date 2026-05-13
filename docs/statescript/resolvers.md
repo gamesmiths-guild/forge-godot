@@ -23,6 +23,15 @@ The type names in the tables below follow the underlying Forge/runtime terminolo
 | [VariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variable-resolver.md) | `(configured)` | Reads a graph variable by name. |
 | [VariantResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variant-resolver.md) | `(configured)` | Holds a fixed constant value. |
 
+## Entity Resolvers
+
+| Resolver | Output Type | Description |
+| --- | --- | --- |
+| [EntityVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/entity-variable-resolver.md) | `IForgeEntity?` | Reads an entity reference from a graph or shared variable authored with the `Entity` type. |
+| [OwnerEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/owner-entity-resolver.md) | `IForgeEntity?` | Resolves the owner entity from the current ability activation. |
+| [SourceEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/source-entity-resolver.md) | `IForgeEntity?` | Resolves the source entity that granted the current ability. |
+| [TargetEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/target-entity-resolver.md) | `IForgeEntity?` | Resolves the current ability target. |
+
 ## Boolean Expressions
 
 | Resolver | Output Type | Description |
