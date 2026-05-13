@@ -124,7 +124,7 @@ Evaluates a boolean input property to choose the output. This eliminates the nee
 The condition input can be bound to any resolver that produces a `bool`:
 
 - A **VariableResolver** reading a bool graph variable.
-- A **TagResolver** checking if the entity has a tag.
+- A **TagQueryResolver** checking if the entity has a tag.
 - A **ComparisonResolver** comparing two values (e.g., "health > 50").
 - A nested chain of resolvers for complex expressions.
 

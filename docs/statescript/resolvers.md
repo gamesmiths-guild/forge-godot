@@ -17,7 +17,7 @@ The type names in the tables below follow the underlying Forge/runtime terminolo
 | [ActivationDataResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/activation-data-resolver.md) | `(configured)` | Reads a field from the graph's configured activation data provider. |
 | [MagnitudeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/magnitude-resolver.md) | `float` | Reads the magnitude from the ability activation context. |
 | [SharedVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/shared-variable-resolver.md) | `(configured)` | Reads a shared variable from the entity. |
-| [TagResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-resolver.md) | `bool` | Checks whether the owner entity has a specific tag. |
+| [TagQueryResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-query-resolver.md) | `bool` | Evaluates a tag query against all, base, or modifier tags on owner, source, target, or an entity variable. |
 | [VariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variable-resolver.md) | `(configured)` | Reads a graph variable by name. |
 | [VariantResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variant-resolver.md) | `(configured)` | Holds a fixed constant value. |
 

@@ -92,7 +92,7 @@ public class HasTagNode : ConditionNode
 }
 ```
 
-> **Tip:** For many condition use cases, the built-in `ExpressionNode` combined with property resolvers (`TagResolver`, `ComparisonResolver`) is sufficient and avoids creating custom classes entirely.
+> **Tip:** For many condition use cases, the built-in `ExpressionNode` combined with property resolvers (`TagQueryResolver`, `ComparisonResolver`) is sufficient and avoids creating custom classes entirely.
 
 ## Creating a Custom State Node
 
