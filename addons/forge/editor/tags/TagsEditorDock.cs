@@ -19,7 +19,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
-	private TagsManager _tagsManager;
+	private TagsManager? _tagsManager;
 
 	private ForgeData? _forgePluginData;
 
@@ -246,9 +246,10 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 		}
 	}
 
-	[MemberNotNull(nameof(_tree), nameof(_tagNameTextField), nameof(_forgePluginData))]
+	[MemberNotNull(nameof(_tagsManager), nameof(_tree), nameof(_tagNameTextField), nameof(_forgePluginData))]
 	private void EnsureInitialized()
 	{
+		Debug.Assert(_tagsManager is not null, $"{_tagsManager} should have been initialized on _Ready().");
 		Debug.Assert(_tree is not null, $"{_tree} should have been initialized on _Ready().");
 		Debug.Assert(_tagNameTextField is not null, $"{_tagNameTextField} should have been initialized on _Ready().");
 		Debug.Assert(_forgePluginData is not null, $"{_forgePluginData} should have been initialized on _Ready().");
