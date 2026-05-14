@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Gamesmiths.Forge.Core;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -39,13 +40,19 @@ internal static class StatescriptResolverRegistry
 		return [.. _factories.Where(factory => IsCompatibleFactory(factory, expectedType))];
 	}
 
-	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, bool isArray)
+	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, Type expectedType, bool isArray)
 	{
 		for (int i = 0; i < factories.Count; i++)
 		{
+			string resolverTypeId = GetResolverTypeId(factories[i]);
+
+			if (!isArray && expectedType == typeof(IForgeEntity) && resolverTypeId == "OwnerEntity")
+			{
+				return i;
+			}
+
 			if (isArray)
 			{
-				string resolverTypeId = GetResolverTypeId(factories[i]);
 				if (resolverTypeId == "Variant")
 				{
 					return i;
@@ -56,7 +63,7 @@ internal static class StatescriptResolverRegistry
 					return i;
 				}
 			}
-			else if (GetResolverTypeId(factories[i]) == "Variant")
+			else if (resolverTypeId == "Variant")
 			{
 				return i;
 			}

@@ -103,7 +103,10 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(resolverFactories, propInfo.IsArray);
+			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
+				resolverFactories,
+				propInfo.ExpectedType,
+				propInfo.IsArray);
 		}
 
 		resolverDropdown.Selected = selectedIndex;

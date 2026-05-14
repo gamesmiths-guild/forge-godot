@@ -34,6 +34,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 	private string _selectedSetPath = string.Empty;
 	private string _selectedVariableName = string.Empty;
 	private StatescriptVariableType _selectedVariableType = StatescriptVariableType.Int;
+	private bool _selectedIsArray;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Shared Variable";
@@ -67,6 +68,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			_selectedSetPath = sharedRes.SharedVariableSetPath;
 			_selectedVariableName = sharedRes.VariableName;
 			_selectedVariableType = sharedRes.VariableType;
+			_selectedIsArray = sharedRes.IsArray;
 		}
 
 		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -90,6 +92,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			SharedVariableSetPath = _selectedSetPath,
 			VariableName = _selectedVariableName,
 			VariableType = _selectedVariableType,
+			IsArray = _selectedIsArray,
 		};
 	}
 
@@ -158,6 +161,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		_selectedSetPath = idx >= 0 && idx < _setPaths.Count ? _setPaths[idx] : string.Empty;
 		_selectedVariableName = string.Empty;
 		_selectedVariableType = StatescriptVariableType.Int;
+		_selectedIsArray = false;
 
 		PopulateVariableDropdown();
 
@@ -182,6 +186,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		{
 			_selectedVariableName = string.Empty;
 			_selectedVariableType = StatescriptVariableType.Int;
+			_selectedIsArray = false;
 		}
 
 		_onChanged?.Invoke();
@@ -270,6 +275,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			|| !ResourceLoader.Exists(_selectedSetPath))
 		{
 			_selectedVariableType = StatescriptVariableType.Int;
+			_selectedIsArray = false;
 			return;
 		}
 
@@ -278,6 +284,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		if (set is null)
 		{
 			_selectedVariableType = StatescriptVariableType.Int;
+			_selectedIsArray = false;
 			return;
 		}
 
@@ -286,11 +293,13 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			if (def.VariableName == _selectedVariableName)
 			{
 				_selectedVariableType = def.VariableType;
+				_selectedIsArray = def.IsArray;
 				return;
 			}
 		}
 
 		_selectedVariableType = StatescriptVariableType.Int;
+		_selectedIsArray = false;
 	}
 }
 #endif
