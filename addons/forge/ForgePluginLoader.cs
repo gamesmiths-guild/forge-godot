@@ -21,6 +21,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private TagsEditorDock? _tagsEditorDock;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
+	private QueryExpressionInspectorPlugin? _queryExpressionInspectorPlugin;
 	private TagInspectorPlugin? _tagInspectorPlugin;
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
@@ -40,6 +41,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
 		AddInspectorPlugin(_tagContainerInspectorPlugin);
+		_queryExpressionInspectorPlugin = new QueryExpressionInspectorPlugin();
+		AddInspectorPlugin(_queryExpressionInspectorPlugin);
 		_tagInspectorPlugin = new TagInspectorPlugin();
 		AddInspectorPlugin(_tagInspectorPlugin);
 		_attributeSetInspectorPlugin = new AttributeSetInspectorPlugin();
@@ -82,6 +85,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		}
 
 		RemoveInspectorPluginAndRelease(ref _tagContainerInspectorPlugin);
+		RemoveInspectorPluginAndRelease(ref _queryExpressionInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _tagInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _attributeSetInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _cueHandlerInspectorPlugin);

@@ -45,7 +45,7 @@ public partial class SimpleEnemy3D : CharacterBody3D
 			}
 		};
 
-		_entityTags = forgeEntity.Tags.CombinedTags;
+		_entityTags = forgeEntity.Tags.AllTags;
 	}
 
 	public override void _Process(double delta)

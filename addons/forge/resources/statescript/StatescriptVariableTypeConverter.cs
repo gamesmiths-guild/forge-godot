@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using GodotPlane = Godot.Plane;
 using GodotQuaternion = Godot.Quaternion;
@@ -31,6 +32,7 @@ public static class StatescriptVariableTypeConverter
 		StatescriptVariableType.Vector4,
 		StatescriptVariableType.Plane,
 		StatescriptVariableType.Quaternion,
+		StatescriptVariableType.Entity,
 	];
 
 	private static readonly Dictionary<StatescriptVariableType, Type> _typeMap = new()
@@ -53,6 +55,7 @@ public static class StatescriptVariableTypeConverter
 		[StatescriptVariableType.Vector4] = typeof(SysVector4),
 		[StatescriptVariableType.Plane] = typeof(System.Numerics.Plane),
 		[StatescriptVariableType.Quaternion] = typeof(System.Numerics.Quaternion),
+		[StatescriptVariableType.Entity] = typeof(IForgeEntity),
 	};
 
 	private static readonly Dictionary<Type, StatescriptVariableType> _authoringTypeMap = new()
@@ -75,6 +78,7 @@ public static class StatescriptVariableTypeConverter
 		[typeof(SysVector4)] = StatescriptVariableType.Vector4,
 		[typeof(System.Numerics.Plane)] = StatescriptVariableType.Plane,
 		[typeof(System.Numerics.Quaternion)] = StatescriptVariableType.Quaternion,
+		[typeof(IForgeEntity)] = StatescriptVariableType.Entity,
 	};
 
 	/// <summary>
@@ -154,6 +158,7 @@ public static class StatescriptVariableTypeConverter
 			StatescriptVariableType.Vector4 => GodotVariant.From(GodotVector4.Zero),
 			StatescriptVariableType.Plane => GodotVariant.From(new GodotPlane(0, 1, 0, 0)),
 			StatescriptVariableType.Quaternion => GodotVariant.From(GodotQuaternion.Identity),
+			StatescriptVariableType.Entity => default,
 			_ => GodotVariant.From(0),
 		};
 	}
@@ -164,6 +169,8 @@ public static class StatescriptVariableTypeConverter
 	/// <param name="godotValue">The Godot variant value.</param>
 	/// <param name="variableType">The variable type that determines interpretation.</param>
 	/// <returns>The corresponding <see cref="Variant128"/>.</returns>
+	/// <exception cref="InvalidOperationException">Thrown when attempting to convert an entity reference, which is not
+	/// stored in Variant128.</exception>
 	public static Variant128 GodotVariantToForge(GodotVariant godotValue, StatescriptVariableType variableType)
 	{
 		return variableType switch
@@ -186,6 +193,9 @@ public static class StatescriptVariableTypeConverter
 			StatescriptVariableType.Vector4 => ToForgeVector4(godotValue.AsVector4()),
 			StatescriptVariableType.Plane => ToForgePlane(godotValue.AsPlane()),
 			StatescriptVariableType.Quaternion => ToForgeQuaternion(godotValue.AsQuaternion()),
+			StatescriptVariableType.Entity => throw new InvalidOperationException(
+				"Entity references are stored through Forge's reference-variable lane and cannot be converted to " +
+				"Variant128."),
 			_ => default,
 		};
 	}
@@ -211,6 +221,7 @@ public static class StatescriptVariableTypeConverter
 			StatescriptVariableType.Decimal => "Float",
 			StatescriptVariableType.Double => "Float",
 			StatescriptVariableType.Float => "Float",
+			StatescriptVariableType.Entity => "Entity",
 			_ => variableType.ToString(),
 		};
 	}

@@ -29,7 +29,7 @@ var forgeEntity = GetNode<ForgeEntity>("ForgeEntity");
 int health = forgeEntity.Attributes["PlayerAttributes.Health"].CurrentValue;
 
 // Check tags
-bool hasFireTag = forgeEntity.Tags.CombinedTags.HasTag(
+bool hasFireTag = forgeEntity.Tags.AllTags.HasTag(
     Tag.RequestTag(ForgeManagers.Instance.TagsManager, "element.fire"));
 ```
 

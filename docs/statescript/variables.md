@@ -98,11 +98,11 @@ Use the [Property Resolvers](resolvers.md) reference for the full resolver table
 Reads a field from custom activation data passed when the ability was activated.
 
 **Configuration:**
-- **Provider Class**: The `IActivationDataProvider` implementation that declares the field.
+- **Provider Class**: The `IActivationDataProvider` implementation that declares the field and activation-data type.
 - **Field Name**: The name of the field to read.
 - **Field Type**: The expected type of the field.
 
-**Behavior:** At graph build time, the resolver defines a graph variable for the field so the data binder can write to it at runtime. When the ability starts, the `GraphAbilityBehavior<TData>` writes activation data fields into graph variables, and the resolver reads them back through the standard variable system.
+**Behavior:** At graph build time, the resolver builds Forge's core `ActivationDataResolver`. At runtime, `StatescriptAbilityBehavior` creates the matching `GraphAbilityBehavior<TData>` and the resolver reads the selected public field or property directly from the typed activation-data payload.
 
 > **Note:** A graph supports only one activation data provider at a time. If you need multiple data types, combine them into a single provider.
 
@@ -115,7 +115,7 @@ When a graph executes:
 1. **Graph variables** are initialized from their definitions.
 2. If variable overrides are provided (e.g., from activation data), they are applied.
 3. Nodes read values through **input properties**, which are resolved by **property resolvers**.
-4. Resolvers query the **GraphContext** for variables, shared variables, attributes, tags, or activation context.
+4. Resolvers query the **GraphContext** for variables, shared variables, attributes, tags, activation data, or activation context.
 5. Nodes write values through **output variables** to either graph-scoped or shared-scoped variable bags.
 
 ```

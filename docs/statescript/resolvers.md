@@ -8,20 +8,27 @@ This page keeps the Godot documentation concise by listing the resolvers availab
 
 The type names in the tables below follow the underlying Forge/runtime terminology used by the linked resolver docs. In the Godot editor, numeric resolver authoring is simplified to the same designer-facing scalar types used by variables: `Int` for integral CLR types, and `Float` for floating-point CLR types such as `float`, `double`, and `decimal`. The visible `Float` option is backed by Forge's `double` path by default, and compatible numeric inputs are coerced explicitly when graphs are built.
 
-> **Note:** `ActivationDataResolver` is specific to Forge for Godot's Statescript workflow, so it does not have a matching page in the core Forge resolver reference.
-
 ## Built-in Resolvers
 
 | Resolver | Output Type | Description |
 | --- | --- | --- |
-| [ArrayVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/array-resolver.md) | `(configured)` | Stores a mutable array of values with indexed access. |
-| ActivationDataResolver | `(configured)` | Reads a field from the graph's configured activation data provider. |
-| [AttributeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/attribute-resolver.md) | `int` | Reads the current value of an entity attribute. |
+| [ArrayVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/array-resolver.md) | `(configured)` | Reads a graph-scoped or shared array variable by name. |
+| [ActivationDataResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/activation-data-resolver.md) | `(configured)` | Reads a field from the graph's configured activation data provider. |
+| [AttributeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/attribute-resolver.md) | `int` | Reads a selected attribute value from owner, source, target, or an entity variable. |
 | [MagnitudeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/magnitude-resolver.md) | `float` | Reads the magnitude from the ability activation context. |
 | [SharedVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/shared-variable-resolver.md) | `(configured)` | Reads a shared variable from the entity. |
-| [TagResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-resolver.md) | `bool` | Checks whether the owner entity has a specific tag. |
+| [TagQueryResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-query-resolver.md) | `bool` | Evaluates a tag query against all, base, or modifier tags on owner, source, target, or an entity variable. |
 | [VariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variable-resolver.md) | `(configured)` | Reads a graph variable by name. |
-| [VariantResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variant-resolver.md) | `(configured)` | Holds a fixed constant value. |
+| [VariantResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variant-resolver.md) | `(configured)` | Holds a fixed constant value, including inline constant arrays. |
+
+## Entity Resolvers
+
+| Resolver | Output Type | Description |
+| --- | --- | --- |
+| [EntityVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/entity-variable-resolver.md) | `IForgeEntity?` | Reads an entity reference from a graph or shared variable authored with the `Entity` type. |
+| [OwnerEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/owner-entity-resolver.md) | `IForgeEntity?` | Resolves the owner entity from the current ability activation. |
+| [SourceEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/source-entity-resolver.md) | `IForgeEntity?` | Resolves the source entity that granted the current ability. |
+| [TargetEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/target-entity-resolver.md) | `IForgeEntity?` | Resolves the current ability target. |
 
 ## Boolean Expressions
 

@@ -10,6 +10,13 @@ internal sealed partial class StatescriptVariablePanel
 {
 	private Control CreateScalarValueEditor(StatescriptGraphVariable variable)
 	{
+		if (variable.VariableType == StatescriptVariableType.Entity)
+		{
+			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			info.AddChild(new Label { Text = "Runtime-assigned entity reference." });
+			return info;
+		}
+
 		if (variable.VariableType == StatescriptVariableType.Bool)
 		{
 			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -124,6 +131,12 @@ internal sealed partial class StatescriptVariablePanel
 		};
 
 		headerRow.AddChild(toggleButton);
+
+		if (variable.VariableType == StatescriptVariableType.Entity)
+		{
+			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
+			return vBox;
+		}
 
 		var addElementButton = new Button
 		{

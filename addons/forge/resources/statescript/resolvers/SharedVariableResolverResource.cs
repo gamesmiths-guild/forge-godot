@@ -11,9 +11,8 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds a node property to an entity's shared variable by name. At runtime the value is read
-/// from the <see cref="GraphContext.SharedVariables"/> bag, which is populated from the entity's
-/// <see cref="ForgeSharedVariableSet"/>.
+/// Resolver resource that binds a node property to an entity's shared variable by name. This is a Godot-side editor
+/// convenience over Forge's scope-aware <see cref="VariableResolver"/>.
 /// </summary>
 [Tool]
 [GlobalClass]
@@ -40,6 +39,12 @@ public partial class SharedVariableResolverResource : StatescriptResolverResourc
 	[Export]
 	public StatescriptVariableType VariableType { get; set; } = StatescriptVariableType.Int;
 
+	/// <summary>
+	/// Gets or sets a value indicating whether the selected shared variable is an array.
+	/// </summary>
+	[Export]
+	public bool IsArray { get; set; }
+
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
@@ -48,13 +53,44 @@ public partial class SharedVariableResolverResource : StatescriptResolverResourc
 			return;
 		}
 
+		var variableKey = new StringKey(VariableName);
+		var propertyName = new StringKey($"__shared_{nodeId}_{index}");
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(VariableType);
+
+		if (IsArray)
+		{
+			if (VariableType == StatescriptVariableType.Entity)
+			{
+				graph.VariableDefinitions.DefineReferenceArrayProperty(
+					propertyName,
+					new ReferenceArrayVariableResolver<IForgeEntity>(variableKey, VariableScope.Shared));
+			}
+			else
+			{
+				graph.VariableDefinitions.DefineArrayProperty(
+					propertyName,
+					new ArrayVariableResolver(variableKey, clrType, VariableScope.Shared));
+			}
+
+			runtimeNode.BindInput(index, propertyName);
+			return;
+		}
+
+		if (VariableType == StatescriptVariableType.Entity)
+		{
+			graph.VariableDefinitions.DefineReferenceProperty(
+				propertyName,
+				new EntityVariableResolver(variableKey, VariableScope.Shared));
+			runtimeNode.BindInput(index, propertyName);
+			return;
+		}
+
 		DefineAndBindInputProperty(
 			graph,
 			runtimeNode,
-			$"__shared_{nodeId}_{index}",
+			propertyName.ToString(),
 			index,
-			new SharedVariableResolver(new StringKey(VariableName), clrType));
+			new VariableResolver(variableKey, clrType, VariableScope.Shared));
 	}
 
 	/// <inheritdoc/>
@@ -77,6 +113,6 @@ public partial class SharedVariableResolverResource : StatescriptResolverResourc
 		}
 
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(VariableType);
-		return new SharedVariableResolver(new StringKey(VariableName), clrType);
+		return new VariableResolver(new StringKey(VariableName), clrType, VariableScope.Shared);
 	}
 }

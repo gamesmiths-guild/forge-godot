@@ -50,7 +50,8 @@ public partial class StatescriptGraphNode
 		{
 			resolverFactories.RemoveAll(factory =>
 			{
-				return StatescriptResolverRegistry.GetResolverTypeId(factory) != "ArrayVariable";
+				string resolverTypeId = StatescriptResolverRegistry.GetResolverTypeId(factory);
+				return resolverTypeId != "ArrayVariable" && resolverTypeId != "Variant";
 			});
 		}
 		else
@@ -102,7 +103,10 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(resolverFactories, propInfo.IsArray);
+			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
+				resolverFactories,
+				propInfo.ExpectedType,
+				propInfo.IsArray);
 		}
 
 		resolverDropdown.Selected = selectedIndex;

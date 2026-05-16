@@ -18,7 +18,7 @@ public partial class TargetTagRequirements : ForgeEffectComponent
 	public ForgeTagContainer? ApplicationIgnoredTags { get; set; }
 
 	[Export]
-	public QueryExpression? ApplicationTagQuery { get; set; }
+	public ForgeQueryExpression? ApplicationTagQuery { get; set; }
 
 	[ExportGroup("Removal Requirements")]
 	[Export]
@@ -28,7 +28,7 @@ public partial class TargetTagRequirements : ForgeEffectComponent
 	public ForgeTagContainer? RemovalIgnoredTags { get; set; }
 
 	[Export]
-	public QueryExpression? RemovalTagQuery { get; set; }
+	public ForgeQueryExpression? RemovalTagQuery { get; set; }
 
 	[ExportGroup("Ongoing Requirements")]
 	[Export]
@@ -38,7 +38,7 @@ public partial class TargetTagRequirements : ForgeEffectComponent
 	public ForgeTagContainer? OngoingIgnoredTags { get; set; }
 
 	[Export]
-	public QueryExpression? OngoingTagQuery { get; set; }
+	public ForgeQueryExpression? OngoingTagQuery { get; set; }
 
 	public override IEffectComponent GetComponent()
 	{

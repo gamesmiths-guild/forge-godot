@@ -11,7 +11,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [Tool]
 [GlobalClass]
 [Icon("uid://dscm401i41h52")]
-public partial class QueryExpression : Resource
+public partial class ForgeQueryExpression : Resource
 {
 	private TagQueryExpressionType _expressionType;
 
@@ -28,7 +28,7 @@ public partial class QueryExpression : Resource
 	}
 
 	[Export]
-	public Array<QueryExpression>? Expressions { get; set; }
+	public Array<ForgeQueryExpression>? Expressions { get; set; }
 
 	[Export]
 	public ForgeTagContainer? TagContainer { get; set; }
@@ -118,7 +118,7 @@ public partial class QueryExpression : Resource
 			Expressions is not null,
 			$"{nameof(Expressions)} reference is missing.");
 
-		foreach (QueryExpression innerExpression in Expressions)
+		foreach (ForgeQueryExpression innerExpression in Expressions)
 		{
 			expression.AddExpression(innerExpression.GetQueryExpression());
 		}

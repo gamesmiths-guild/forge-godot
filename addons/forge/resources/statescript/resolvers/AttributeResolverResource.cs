@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -31,6 +32,25 @@ public partial class AttributeResolverResource : StatescriptResolverResource
 	[Export]
 	public string AttributeName { get; set; } = string.Empty;
 
+	/// <summary>
+	/// Gets or sets which attribute value should be read.
+	/// </summary>
+	[Export]
+	public AttributeCalculationType CalculationType { get; set; }
+
+	/// <summary>
+	/// Gets or sets the final channel to include when using
+	/// <see cref="AttributeCalculationType.MagnitudeEvaluatedUpToChannel"/>.
+	/// </summary>
+	[Export]
+	public int FinalChannel { get; set; }
+
+	/// <summary>
+	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
+	/// </summary>
+	[Export]
+	public EntityResolverResourceBase? EntityResolver { get; set; }
+
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
@@ -39,10 +59,9 @@ public partial class AttributeResolverResource : StatescriptResolverResource
 			return;
 		}
 
-		var attributeKey = new StringKey($"{AttributeSetClass}.{AttributeName}");
 		var propertyName = new StringKey($"__attr_{nodeId}_{index}");
 
-		graph.VariableDefinitions.DefineProperty(propertyName, new AttributeResolver(attributeKey));
+		graph.VariableDefinitions.DefineProperty(propertyName, BuildAttributeResolver(graph));
 
 		runtimeNode.BindInput(index, propertyName);
 	}
@@ -50,7 +69,13 @@ public partial class AttributeResolverResource : StatescriptResolverResource
 	/// <inheritdoc/>
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
+		return BuildAttributeResolver(graph);
+	}
+
+	private AttributeResolver BuildAttributeResolver(Graph graph)
+	{
 		var attributeKey = new StringKey($"{AttributeSetClass}.{AttributeName}");
-		return new AttributeResolver(attributeKey);
+		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new OwnerEntityResolver();
+		return new AttributeResolver(attributeKey, entityResolver, CalculationType, FinalChannel);
 	}
 }

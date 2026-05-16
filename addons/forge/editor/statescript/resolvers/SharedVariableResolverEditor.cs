@@ -3,6 +3,8 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -19,8 +21,9 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 {
+	private const float LabelWidth = 45.0f;
+
 	private readonly List<string> _setPaths = [];
-	private readonly List<string> _setDisplayNames = [];
 	private readonly List<string> _variableNames = [];
 
 	private OptionButton? _setDropdown;
@@ -31,6 +34,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 	private string _selectedSetPath = string.Empty;
 	private string _selectedVariableName = string.Empty;
 	private StatescriptVariableType _selectedVariableType = StatescriptVariableType.Int;
+	private bool _selectedIsArray;
 
 	/// <inheritdoc/>
 	public override string DisplayName => "Shared Variable";
@@ -41,7 +45,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return true;
+		return expectedType != typeof(IForgeEntity);
 	}
 
 	/// <inheritdoc/>
@@ -64,36 +68,17 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			_selectedSetPath = sharedRes.SharedVariableSetPath;
 			_selectedVariableName = sharedRes.VariableName;
 			_selectedVariableType = sharedRes.VariableType;
+			_selectedIsArray = sharedRes.IsArray;
 		}
-
-		var setRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(setRow);
-
-		setRow.AddChild(new Label
-		{
-			Text = "Set:",
-			CustomMinimumSize = new Vector2(45, 0),
-			HorizontalAlignment = HorizontalAlignment.Right,
-		});
 
 		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateSetDropdown();
-		setRow.AddChild(_setDropdown);
-
-		var varRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(varRow);
-
-		varRow.AddChild(new Label
-		{
-			Text = "Var:",
-			CustomMinimumSize = new Vector2(45, 0),
-			HorizontalAlignment = HorizontalAlignment.Right,
-		});
+		vBox.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth));
 
 		_variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_variableDropdown.SetMeta("is_shared_variable_dropdown", true);
 		PopulateVariableDropdown();
-		varRow.AddChild(_variableDropdown);
+		vBox.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Var:", _variableDropdown, LabelWidth));
 
 		_setDropdown.ItemSelected += OnSetDropdownItemSelected;
 		_variableDropdown.ItemSelected += OnVariableDropdownItemSelected;
@@ -107,6 +92,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			SharedVariableSetPath = _selectedSetPath,
 			VariableName = _selectedVariableName,
 			VariableType = _selectedVariableType,
+			IsArray = _selectedIsArray,
 		};
 	}
 
@@ -164,40 +150,6 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		return false;
 	}
 
-	private static List<string> FindAllSharedVariableSetPaths()
-	{
-		var results = new List<string>();
-		EditorFileSystemDirectory root = EditorInterface.Singleton.GetResourceFilesystem().GetFilesystem();
-		ScanFilesystemDirectory(root, results);
-		return results;
-	}
-
-	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
-	{
-		for (int i = 0; i < dir.GetFileCount(); i++)
-		{
-			string path = dir.GetFilePath(i);
-
-			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
-			{
-				continue;
-			}
-
-			Resource resource = ResourceLoader.Load(path);
-
-			if (resource is ForgeSharedVariableSet)
-			{
-				results.Add(path);
-			}
-		}
-
-		for (int i = 0; i < dir.GetSubdirCount(); i++)
-		{
-			ScanFilesystemDirectory(dir.GetSubdir(i), results);
-		}
-	}
-
 	private void OnSetDropdownItemSelected(long index)
 	{
 		if (_setDropdown is null)
@@ -209,6 +161,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		_selectedSetPath = idx >= 0 && idx < _setPaths.Count ? _setPaths[idx] : string.Empty;
 		_selectedVariableName = string.Empty;
 		_selectedVariableType = StatescriptVariableType.Int;
+		_selectedIsArray = false;
 
 		PopulateVariableDropdown();
 
@@ -233,6 +186,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		{
 			_selectedVariableName = string.Empty;
 			_selectedVariableType = StatescriptVariableType.Int;
+			_selectedIsArray = false;
 		}
 
 		_onChanged?.Invoke();
@@ -247,38 +201,22 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 
 		_setDropdown.Clear();
 		_setPaths.Clear();
-		_setDisplayNames.Clear();
 
 		_setDropdown.AddItem("(None)");
 		_setPaths.Add(string.Empty);
-		_setDisplayNames.Add("(None)");
 
-		foreach (string path in FindAllSharedVariableSetPaths())
+		foreach (string path in VariableResolverEditorUtilities.FindAllSharedVariableSetPaths())
 		{
-			string displayName = path[(path.LastIndexOf('/') + 1)..];
-
-			if (displayName.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
-			{
-				displayName = displayName[..^5];
-			}
-
+			string displayName = VariableResolverEditorUtilities.GetResourceDisplayName(path);
 			_setDropdown.AddItem(displayName);
 			_setPaths.Add(path);
-			_setDisplayNames.Add(displayName);
 		}
 
-		// Restore selection.
-		for (int i = 0; i < _setPaths.Count; i++)
+		ResolverEditorLayoutUtilities.RestoreSelection(_setDropdown, _setPaths, _selectedSetPath);
+		if (_setDropdown.Selected == 0)
 		{
-			if (_setPaths[i] == _selectedSetPath)
-			{
-				_setDropdown.Selected = i;
-				return;
-			}
+			_selectedSetPath = string.Empty;
 		}
-
-		_setDropdown.Selected = 0;
-		_selectedSetPath = string.Empty;
 	}
 
 	private void PopulateVariableDropdown()
@@ -323,18 +261,11 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			}
 		}
 
-		// Restore selection.
-		for (int i = 0; i < _variableNames.Count; i++)
+		ResolverEditorLayoutUtilities.RestoreSelection(_variableDropdown, _variableNames, _selectedVariableName);
+		if (_variableDropdown.Selected == 0)
 		{
-			if (_variableNames[i] == _selectedVariableName)
-			{
-				_variableDropdown.Selected = i;
-				return;
-			}
+			_selectedVariableName = string.Empty;
 		}
-
-		_variableDropdown.Selected = 0;
-		_selectedVariableName = string.Empty;
 	}
 
 	private void ResolveVariableType()
@@ -344,6 +275,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			|| !ResourceLoader.Exists(_selectedSetPath))
 		{
 			_selectedVariableType = StatescriptVariableType.Int;
+			_selectedIsArray = false;
 			return;
 		}
 
@@ -352,6 +284,7 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 		if (set is null)
 		{
 			_selectedVariableType = StatescriptVariableType.Int;
+			_selectedIsArray = false;
 			return;
 		}
 
@@ -360,11 +293,13 @@ internal sealed partial class SharedVariableResolverEditor : NodeEditorProperty
 			if (def.VariableName == _selectedVariableName)
 			{
 				_selectedVariableType = def.VariableType;
+				_selectedIsArray = def.IsArray;
 				return;
 			}
 		}
 
 		_selectedVariableType = StatescriptVariableType.Int;
+		_selectedIsArray = false;
 	}
 }
 #endif

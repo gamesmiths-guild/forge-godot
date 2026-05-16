@@ -26,6 +26,26 @@ public partial class VariableResolverResource : StatescriptResolverResource
 	[Export]
 	public string VariableName { get; set; } = string.Empty;
 
+	/// <summary>
+	/// Gets or sets which variable bag should be read from or written to.
+	/// </summary>
+	[Export]
+	public VariableScope Scope { get; set; }
+
+	/// <summary>
+	/// Gets or sets the resource path of the selected shared variable set. This is editor metadata used for highlighting
+	/// and inspector integration when <see cref="Scope"/> is <see cref="VariableScope.Shared"/>.
+	/// </summary>
+	[Export]
+	public string SharedVariableSetPath { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Gets or sets the authored variable type. This is primarily needed for shared-scope lookups whose definitions are
+	/// not stored inside the runtime graph.
+	/// </summary>
+	[Export]
+	public StatescriptVariableType VariableType { get; set; } = StatescriptVariableType.Int;
+
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
@@ -34,17 +54,18 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			return;
 		}
 
-		Type? variableType = FindGraphVariableType(graph, VariableName);
+		Type? variableType = FindVariableType(graph, VariableName);
 		var variableKey = new StringKey(VariableName);
 
-		if (variableType is not null && NeedsNumericInputAdaptation(runtimeNode, index, variableType))
+		if (Scope == VariableScope.Shared
+			|| (variableType is not null && NeedsNumericInputAdaptation(runtimeNode, index, variableType)))
 		{
 			DefineAndBindInputProperty(
 				graph,
 				runtimeNode,
 				$"__var_{nodeId}_{index}",
 				index,
-				new VariableResolver(variableKey, variableType));
+				new VariableResolver(variableKey, variableType ?? typeof(int), Scope));
 			return;
 		}
 
@@ -59,7 +80,7 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			return;
 		}
 
-		runtimeNode.BindOutput(index, new StringKey(VariableName));
+		runtimeNode.BindOutput(index, new StringKey(VariableName), Scope);
 	}
 
 	/// <inheritdoc/>
@@ -70,12 +91,17 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			return new VariantResolver(default, typeof(int));
 		}
 
-		Type? variableType = FindGraphVariableType(graph, VariableName);
-		return new VariableResolver(new StringKey(VariableName), variableType ?? typeof(int));
+		Type? variableType = FindVariableType(graph, VariableName);
+		return new VariableResolver(new StringKey(VariableName), variableType ?? typeof(int), Scope);
 	}
 
-	private static Type? FindGraphVariableType(Graph graph, string variableName)
+	private Type? FindVariableType(Graph graph, string variableName)
 	{
+		if (Scope == VariableScope.Shared)
+		{
+			return StatescriptVariableTypeConverter.ToSystemType(VariableType);
+		}
+
 		var key = new StringKey(variableName);
 
 		foreach (VariableDefinition def in graph.VariableDefinitions.VariableDefinitions)

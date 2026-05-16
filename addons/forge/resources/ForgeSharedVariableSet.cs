@@ -40,6 +40,20 @@ public partial class ForgeSharedVariableSet : Resource
 
 			var key = new StringKey(definition.VariableName);
 
+			if (definition.VariableType == StatescriptVariableType.Entity)
+			{
+				if (definition.IsArray)
+				{
+					target.DefineReferenceArrayVariable<IForgeEntity>(key, []);
+				}
+				else
+				{
+					target.DefineReferenceVariable<IForgeEntity>(key);
+				}
+
+				continue;
+			}
+
 			if (definition.IsArray)
 			{
 				var initialValues = new Variant128[definition.InitialArrayValues.Count];

@@ -2,6 +2,8 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Effects.Magnitudes;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
@@ -9,31 +11,31 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
-/// <summary>
-/// Resolver editor that reads a value from a Forge entity attribute. Shows attribute set and attribute dropdowns.
-/// </summary>
 [Tool]
-internal sealed partial class AttributeResolverEditor : NodeEditorProperty
+internal sealed partial class AttributeResolverEditor : EntityScopedResolverEditorBase
 {
+	private const float LabelWidth = 60.0f;
+
 	private OptionButton? _setDropdown;
 	private OptionButton? _attributeDropdown;
+	private OptionButton? _calculationDropdown;
+	private SpinBox? _finalChannelSpin;
+	private Control? _finalChannelRow;
+
 	private string _selectedSetClass = string.Empty;
 	private string _selectedAttribute = string.Empty;
-	private Action? _onChanged;
+	private AttributeCalculationType _calculationType;
+	private int _finalChannel;
 
-	/// <inheritdoc/>
 	public override string DisplayName => "Attribute";
 
-	/// <inheritdoc/>
 	public override string ResolverTypeId => "Attribute";
 
-	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
 		return expectedType == typeof(int) || expectedType == typeof(Variant128);
 	}
 
-	/// <inheritdoc/>
 	public override void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
@@ -41,68 +43,72 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		Action onChanged,
 		bool isArray)
 	{
-		_onChanged = onChanged;
+		var existingResource = property?.Resolver as AttributeResolverResource;
 
-		SizeFlagsHorizontal = SizeFlags.ExpandFill;
-		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		AddChild(vBox);
-
-		if (property?.Resolver is AttributeResolverResource attrRes)
+		if (existingResource is not null)
 		{
-			_selectedSetClass = attrRes.AttributeSetClass;
-			_selectedAttribute = attrRes.AttributeName;
+			_selectedSetClass = existingResource.AttributeSetClass;
+			_selectedAttribute = existingResource.AttributeName;
+			_calculationType = existingResource.CalculationType;
+			_finalChannel = existingResource.FinalChannel;
 		}
 
-		var setRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(setRow);
+		InitializeEntityScope(graph, onChanged, existingResource?.EntityResolver);
 
-		setRow.AddChild(new Label
-		{
-			Text = "Set:",
-			CustomMinimumSize = new Vector2(45, 0),
-			HorizontalAlignment = HorizontalAlignment.Right,
-		});
+		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		AddChild(root);
 
 		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		PopulateSetDropdown();
-		setRow.AddChild(_setDropdown);
-
-		var attrRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(attrRow);
-
-		attrRow.AddChild(new Label
-		{
-			Text = "Attr:",
-			CustomMinimumSize = new Vector2(45, 0),
-			HorizontalAlignment = HorizontalAlignment.Right,
-		});
+		_setDropdown.ItemSelected += OnSetChanged;
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth));
 
 		_attributeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		PopulateAttributeDropdown();
-		attrRow.AddChild(_attributeDropdown);
+		_attributeDropdown.ItemSelected += OnAttributeChanged;
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Attr:", _attributeDropdown, LabelWidth));
 
-		_setDropdown.ItemSelected += OnSetDropdownItemSelected;
-		_attributeDropdown.ItemSelected += OnAttributeDropdownItemSelected;
+		_calculationDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		foreach (AttributeCalculationType value in Enum.GetValues<AttributeCalculationType>())
+		{
+			_calculationDropdown.AddItem(value.ToString());
+		}
+
+		_calculationDropdown.Selected = (int)_calculationType;
+		_calculationDropdown.ItemSelected += OnCalculationChanged;
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Calc:", _calculationDropdown, LabelWidth));
+
+		_finalChannelSpin = new SpinBox
+		{
+			MinValue = 0,
+			Step = 1,
+			Value = _finalChannel,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+		_finalChannelSpin.ValueChanged += OnFinalChannelChanged;
+		_finalChannelRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Chan:", _finalChannelSpin, LabelWidth);
+		root.AddChild(_finalChannelRow);
+
+		root.AddChild(CreateEntitySelectorRow(LabelWidth));
+		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
+
+		PopulateSetDropdown();
+		PopulateAttributeDropdown();
+		PopulateEntityScopeEditor(existingResource?.EntityResolver);
+		UpdateFinalChannelVisibility();
 	}
 
-	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
 		property.Resolver = new AttributeResolverResource
 		{
 			AttributeSetClass = _selectedSetClass,
 			AttributeName = _selectedAttribute,
+			CalculationType = _calculationType,
+			FinalChannel = _finalChannel,
+			EntityResolver = BuildEntityResolverResource(),
 		};
 	}
 
-	/// <inheritdoc/>
-	public override void ClearCallbacks()
-	{
-		base.ClearCallbacks();
-		_onChanged = null;
-	}
-
-	private void OnSetDropdownItemSelected(long index)
+	private void OnSetChanged(long index)
 	{
 		if (_setDropdown is null)
 		{
@@ -112,10 +118,10 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		_selectedSetClass = _setDropdown.GetItemText(_setDropdown.Selected);
 		_selectedAttribute = string.Empty;
 		PopulateAttributeDropdown();
-		_onChanged?.Invoke();
+		NotifyChanged();
 	}
 
-	private void OnAttributeDropdownItemSelected(long index)
+	private void OnAttributeChanged(long index)
 	{
 		if (_attributeDropdown is null)
 		{
@@ -123,7 +129,20 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		}
 
 		_selectedAttribute = _attributeDropdown.GetItemText(_attributeDropdown.Selected);
-		_onChanged?.Invoke();
+		NotifyChanged();
+	}
+
+	private void OnCalculationChanged(long index)
+	{
+		_calculationType = (AttributeCalculationType)(int)index;
+		UpdateFinalChannelVisibility();
+		NotifyChanged();
+	}
+
+	private void OnFinalChannelChanged(double value)
+	{
+		_finalChannel = (int)value;
+		NotifyChanged();
 	}
 
 	private void PopulateSetDropdown()
@@ -134,27 +153,21 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		}
 
 		_setDropdown.Clear();
-
 		foreach (string option in EditorUtils.GetAttributeSetOptions())
 		{
 			_setDropdown.AddItem(option);
 		}
 
-		// Restore selection.
-		if (!string.IsNullOrEmpty(_selectedSetClass))
+		for (int i = 0; i < _setDropdown.ItemCount; i++)
 		{
-			for (int i = 0; i < _setDropdown.GetItemCount(); i++)
+			if (_setDropdown.GetItemText(i) == _selectedSetClass)
 			{
-				if (_setDropdown.GetItemText(i) == _selectedSetClass)
-				{
-					_setDropdown.Selected = i;
-					return;
-				}
+				_setDropdown.Selected = i;
+				return;
 			}
 		}
 
-		// Default to first if available.
-		if (_setDropdown.GetItemCount() > 0)
+		if (_setDropdown.ItemCount > 0)
 		{
 			_setDropdown.Selected = 0;
 			_selectedSetClass = _setDropdown.GetItemText(0);
@@ -169,28 +182,32 @@ internal sealed partial class AttributeResolverEditor : NodeEditorProperty
 		}
 
 		_attributeDropdown.Clear();
-
 		foreach (string option in EditorUtils.GetAttributeOptions(_selectedSetClass))
 		{
 			_attributeDropdown.AddItem(option);
 		}
 
-		if (!string.IsNullOrEmpty(_selectedAttribute))
+		for (int i = 0; i < _attributeDropdown.ItemCount; i++)
 		{
-			for (int i = 0; i < _attributeDropdown.GetItemCount(); i++)
+			if (_attributeDropdown.GetItemText(i) == _selectedAttribute)
 			{
-				if (_attributeDropdown.GetItemText(i) == _selectedAttribute)
-				{
-					_attributeDropdown.Selected = i;
-					return;
-				}
+				_attributeDropdown.Selected = i;
+				return;
 			}
 		}
 
-		if (_attributeDropdown.GetItemCount() > 0)
+		if (_attributeDropdown.ItemCount > 0)
 		{
 			_attributeDropdown.Selected = 0;
 			_selectedAttribute = _attributeDropdown.GetItemText(0);
+		}
+	}
+
+	private void UpdateFinalChannelVisibility()
+	{
+		if (_finalChannelRow is not null)
+		{
+			_finalChannelRow.Visible = _calculationType == AttributeCalculationType.MagnitudeEvaluatedUpToChannel;
 		}
 	}
 }

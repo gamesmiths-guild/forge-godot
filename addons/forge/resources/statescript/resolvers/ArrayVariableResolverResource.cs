@@ -1,10 +1,10 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
-using Godot.Collections;
 
 using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 
@@ -15,31 +15,58 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 public partial class ArrayVariableResolverResource : StatescriptResolverResource
 {
 	[Export]
+	public string VariableName { get; set; } = string.Empty;
+
+	[Export]
+	public VariableScope Scope { get; set; }
+
+	[Export]
+	public string SharedVariableSetPath { get; set; } = string.Empty;
+
+	[Export]
 	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Int;
-
-	[Export]
-	public Array<Variant> ArrayValues { get; set; } = [];
-
-	[Export]
-	public bool IsArrayExpanded { get; set; }
 
 	public override string ResolverTypeId => "ArrayVariable";
 
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
-		var propertyName = new StringKey($"__array_{nodeId}_{index}");
-		graph.VariableDefinitions.DefineProperty(propertyName, BuildResolver(graph));
-		runtimeNode.BindInput(index, propertyName);
-	}
-
-	public override IPropertyResolver BuildResolver(Graph graph)
-	{
-		var values = new Variant128[ArrayValues.Count];
-		for (int i = 0; i < ArrayValues.Count; i++)
+		if (string.IsNullOrEmpty(VariableName))
 		{
-			values[i] = StatescriptVariableTypeConverter.GodotVariantToForge(ArrayValues[i], ValueType);
+			return;
 		}
 
-		return new ArrayVariableResolver(values, StatescriptVariableTypeConverter.ToSystemType(ValueType));
+		var propertyName = new StringKey($"__array_{nodeId}_{index}");
+		var variableName = new StringKey(VariableName);
+
+		if (Scope == VariableScope.Shared)
+		{
+			Type elementType = ResolveElementType(graph);
+			graph.VariableDefinitions.DefineArrayProperty(
+				propertyName,
+				new ArrayVariableResolver(variableName, elementType, VariableScope.Shared));
+			runtimeNode.BindInput(index, propertyName);
+			return;
+		}
+
+		runtimeNode.BindInput(index, variableName);
+	}
+
+	private Type ResolveElementType(Graph graph)
+	{
+		if (Scope == VariableScope.Shared)
+		{
+			return StatescriptVariableTypeConverter.ToSystemType(ValueType);
+		}
+
+		var key = new StringKey(VariableName);
+		foreach (ArrayVariableDefinition definition in graph.VariableDefinitions.ArrayVariableDefinitions)
+		{
+			if (definition.Name == key)
+			{
+				return definition.ElementType;
+			}
+		}
+
+		return StatescriptVariableTypeConverter.ToSystemType(ValueType);
 	}
 }

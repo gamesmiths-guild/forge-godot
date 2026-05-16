@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -45,6 +46,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private string _selectedSetPath = string.Empty;
 	private string _selectedSharedVarName = string.Empty;
 	private StatescriptVariableType _selectedSharedVarType = StatescriptVariableType.Int;
+	private bool _selectedSharedVarIsArray;
 
 	/// <inheritdoc/>
 	public override string HandledRuntimeTypeName => "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode";
@@ -116,40 +118,6 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_sharedVarDropdown = null;
 	}
 
-	private static List<string> FindAllSharedVariableSetPaths()
-	{
-		var results = new List<string>();
-		EditorFileSystemDirectory root = EditorInterface.Singleton.GetResourceFilesystem().GetFilesystem();
-		ScanFilesystemDirectory(root, results);
-		return results;
-	}
-
-	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
-	{
-		for (int i = 0; i < dir.GetFileCount(); i++)
-		{
-			string path = dir.GetFilePath(i);
-
-			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
-			{
-				continue;
-			}
-
-			Resource resource = ResourceLoader.Load(path);
-
-			if (resource is ForgeSharedVariableSet)
-			{
-				results.Add(path);
-			}
-		}
-
-		for (int i = 0; i < dir.GetSubdirCount(); i++)
-		{
-			ScanFilesystemDirectory(dir.GetSubdir(i), results);
-		}
-	}
-
 	private void ResolveTypeFromBinding(StatescriptNodeProperty? outputBinding)
 	{
 		_resolvedType = null;
@@ -175,8 +143,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			_selectedSetPath = sharedRes.SharedVariableSetPath;
 			_selectedSharedVarName = sharedRes.VariableName;
 			_selectedSharedVarType = sharedRes.VariableType;
+			ResolveSharedVariableType();
 			_resolvedType = sharedRes.VariableType;
-			_resolvedIsArray = false;
+			_resolvedIsArray = _selectedSharedVarIsArray;
 		}
 	}
 
@@ -289,6 +258,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			_selectedSetPath = string.Empty;
 			_selectedSharedVarName = string.Empty;
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 		}
 
 		if (_cachedTargetContainer is not null)
@@ -472,16 +442,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_setDropdown.AddItem("(None)");
 		_setPaths.Add(string.Empty);
 
-		foreach (string path in FindAllSharedVariableSetPaths())
+		foreach (string path in VariableResolverEditorUtilities.FindAllSharedVariableSetPaths())
 		{
-			string displayName = path[(path.LastIndexOf('/') + 1)..];
-
-			if (displayName.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
-			{
-				displayName = displayName[..^5];
-			}
-
-			_setDropdown.AddItem(displayName);
+			_setDropdown.AddItem(VariableResolverEditorUtilities.GetResourceDisplayName(path));
 			_setPaths.Add(path);
 		}
 
@@ -638,6 +601,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		{
 			_selectedSharedVarName = string.Empty;
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 		}
 
 		UpdateSharedOutputBinding();
@@ -645,7 +609,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (!string.IsNullOrEmpty(_selectedSharedVarName))
 		{
 			_resolvedType = _selectedSharedVarType;
-			_resolvedIsArray = false;
+			_resolvedIsArray = _selectedSharedVarIsArray;
 		}
 		else
 		{
@@ -711,6 +675,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				SharedVariableSetPath = _selectedSetPath,
 				VariableName = _selectedSharedVarName,
 				VariableType = _selectedSharedVarType,
+				IsArray = _selectedSharedVarIsArray,
 			};
 	}
 
@@ -721,6 +686,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			|| !ResourceLoader.Exists(_selectedSetPath))
 		{
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 			return;
 		}
 
@@ -729,6 +695,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (set is null)
 		{
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarIsArray = false;
 			return;
 		}
 
@@ -737,11 +704,13 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			if (def.VariableName == _selectedSharedVarName)
 			{
 				_selectedSharedVarType = def.VariableType;
+				_selectedSharedVarIsArray = def.IsArray;
 				return;
 			}
 		}
 
 		_selectedSharedVarType = StatescriptVariableType.Int;
+		_selectedSharedVarIsArray = false;
 	}
 
 	private void OnTargetVariableDropdownItemSelected(long x)
