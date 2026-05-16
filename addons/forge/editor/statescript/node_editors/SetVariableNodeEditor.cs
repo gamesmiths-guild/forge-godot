@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -115,40 +116,6 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_cachedTargetContainer = null;
 		_setDropdown = null;
 		_sharedVarDropdown = null;
-	}
-
-	private static List<string> FindAllSharedVariableSetPaths()
-	{
-		var results = new List<string>();
-		EditorFileSystemDirectory root = EditorInterface.Singleton.GetResourceFilesystem().GetFilesystem();
-		ScanFilesystemDirectory(root, results);
-		return results;
-	}
-
-	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
-	{
-		for (int i = 0; i < dir.GetFileCount(); i++)
-		{
-			string path = dir.GetFilePath(i);
-
-			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
-			{
-				continue;
-			}
-
-			Resource resource = ResourceLoader.Load(path);
-
-			if (resource is ForgeSharedVariableSet)
-			{
-				results.Add(path);
-			}
-		}
-
-		for (int i = 0; i < dir.GetSubdirCount(); i++)
-		{
-			ScanFilesystemDirectory(dir.GetSubdir(i), results);
-		}
 	}
 
 	private void ResolveTypeFromBinding(StatescriptNodeProperty? outputBinding)
@@ -475,16 +442,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_setDropdown.AddItem("(None)");
 		_setPaths.Add(string.Empty);
 
-		foreach (string path in FindAllSharedVariableSetPaths())
+		foreach (string path in VariableResolverEditorUtilities.FindAllSharedVariableSetPaths())
 		{
-			string displayName = path[(path.LastIndexOf('/') + 1)..];
-
-			if (displayName.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
-			{
-				displayName = displayName[..^5];
-			}
-
-			_setDropdown.AddItem(displayName);
+			_setDropdown.AddItem(VariableResolverEditorUtilities.GetResourceDisplayName(path));
 			_setPaths.Add(path);
 		}
 
@@ -715,6 +675,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				SharedVariableSetPath = _selectedSetPath,
 				VariableName = _selectedSharedVarName,
 				VariableType = _selectedSharedVarType,
+				IsArray = _selectedSharedVarIsArray,
 			};
 	}
 

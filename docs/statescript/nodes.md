@@ -68,13 +68,13 @@ Action nodes are stateless and instantaneous. They do not persist between frames
 
 #### SetVariableNode
 
-Reads a value from an input property and writes it to a graph or shared variable. This is the primary way to copy data between variables or write computed values.
+Reads a value from an input property and writes it to an existing graph or shared variable. The bound target variable determines whether the write is treated as a value, array, reference, or reference-array assignment.
 
 **Input Properties:**
 
 | Index | Label | Expected Type | Description |
 |-------|-------|---------------|-------------|
-| 0 | Source | Variant128 | The value to read. Can be resolved from any property resolver. |
+| 0 | Source | object | The value to read. The editor narrows this to the selected target variable's concrete type. |
 
 **Output Variables:**
 
