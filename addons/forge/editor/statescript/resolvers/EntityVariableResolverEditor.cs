@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class EntityVariableResolverEditor : NodeEditorProperty
 {
-	private const float LabelWidth = 45.0f;
+	private const float LabelWidth = 62.0f;
 
 	private readonly List<string> _graphVariableNames = [];
 	private readonly List<string> _setPaths = [];
