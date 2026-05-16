@@ -1,6 +1,5 @@
 // Copyright © Gamesmiths Guild.
 
-using System;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -67,7 +66,7 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 			runtimeNode,
 			$"__activation_{nodeId}_{index}",
 			index,
-			BuildActivationDataResolver());
+			BuildActivationDataResolver(nodeId, index));
 	}
 
 	/// <inheritdoc/>
@@ -85,13 +84,19 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 		return BuildActivationDataResolver();
 	}
 
-	private ActivationDataResolver BuildActivationDataResolver()
+	private IPropertyResolver BuildActivationDataResolver(string? nodeId = null, byte? index = null)
 	{
 		IActivationDataProvider? provider = StatescriptAbilityBehavior.InstantiateProvider(ProviderClassName);
 		if (provider is null)
 		{
-			throw new InvalidOperationException(
-				$"Statescript: Could not instantiate activation data provider '{ProviderClassName}'.");
+			string location = nodeId is not null && index is not null
+				? $" on node '{nodeId}' (input {index})"
+				: string.Empty;
+
+			GD.PushError(
+				$"Statescript: Could not instantiate activation data provider '{ProviderClassName}'{location}. " +
+				"The resolver will return a default value.");
+			return new VariantResolver(default, typeof(int));
 		}
 
 		return new ActivationDataResolver(provider.ActivationDataType, FieldName);

@@ -37,10 +37,10 @@ public partial class ArrayVariableResolverResource : StatescriptResolverResource
 
 		var propertyName = new StringKey($"__array_{nodeId}_{index}");
 		var variableName = new StringKey(VariableName);
-		Type elementType = ResolveElementType(graph);
 
 		if (Scope == VariableScope.Shared)
 		{
+			Type elementType = ResolveElementType(graph);
 			graph.VariableDefinitions.DefineArrayProperty(
 				propertyName,
 				new ArrayVariableResolver(variableName, elementType, VariableScope.Shared));

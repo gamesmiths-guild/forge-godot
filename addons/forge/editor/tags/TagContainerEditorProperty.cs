@@ -40,6 +40,8 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	public void OnBeforeSerialize()
 	{
+		ReleaseUiState();
+		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()

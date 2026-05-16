@@ -1,7 +1,9 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -43,7 +45,7 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 	public static IActivationDataProvider? InstantiateProvider(string className)
 	{
 		Type? type = AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(a => a.GetTypes())
+			.SelectMany(GetLoadableTypes)
 			.FirstOrDefault(
 				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
 					&& !x.IsAbstract
@@ -57,7 +59,32 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 			return null;
 		}
 
-		return Activator.CreateInstance(type) as IActivationDataProvider;
+		try
+		{
+			return Activator.CreateInstance(type) as IActivationDataProvider;
+		}
+		catch (MissingMethodException)
+		{
+			GD.PushError(
+				$"StatescriptAbilityBehavior: Activation data provider '{type.FullName}' must have a public " +
+				"parameterless constructor.");
+			return null;
+		}
+		catch (MemberAccessException)
+		{
+			GD.PushError(
+				$"StatescriptAbilityBehavior: Activation data provider '{type.FullName}' could not be instantiated " +
+				"because its constructor is not accessible.");
+			return null;
+		}
+		catch (TargetInvocationException ex)
+		{
+			string message = ex.InnerException?.Message ?? ex.Message;
+			GD.PushError(
+				$"StatescriptAbilityBehavior: Activation data provider '{type.FullName}' threw during " +
+				$"construction: {message}");
+			return null;
+		}
 	}
 
 	/// <inheritdoc/>
@@ -101,5 +128,17 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		}
 
 		return null;
+	}
+
+	private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+	{
+		try
+		{
+			return assembly.GetTypes();
+		}
+		catch (ReflectionTypeLoadException ex)
+		{
+			return ex.Types.Where(type => type is not null)!;
+		}
 	}
 }
