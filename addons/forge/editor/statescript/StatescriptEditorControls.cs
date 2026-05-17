@@ -83,6 +83,49 @@ internal static partial class StatescriptEditorControls
 	}
 
 	/// <summary>
+	/// Creates a compact dropdown for choosing between a single value and an array value.
+	/// </summary>
+	/// <param name="isArray">Whether the initial mode is array.</param>
+	/// <param name="onChanged">An action invoked when the mode changes.</param>
+	/// <returns>An <see cref="OptionButton"/> that switches between single-value and array-value modes.</returns>
+	public static OptionButton CreateValueShapeDropdown(bool isArray, Action<bool>? onChanged = null)
+	{
+		var dropdown = new OptionButton
+		{
+			CustomMinimumSize = new Vector2(44, 0),
+			SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+			FitToLongestItem = false,
+		};
+
+		if (EditorInterface.Singleton is not null)
+		{
+			Theme theme = EditorInterface.Singleton.GetEditorTheme();
+			if (theme.HasIcon("KeyValue", "EditorIcons") && theme.HasIcon("Array", "EditorIcons"))
+			{
+				dropdown.AddIconItem(theme.GetIcon("KeyValue", "EditorIcons"), string.Empty, 0);
+				dropdown.SetItemTooltip(0, "Single value");
+				dropdown.AddIconItem(theme.GetIcon("Array", "EditorIcons"), string.Empty, 1);
+				dropdown.SetItemTooltip(1, "Array value");
+			}
+		}
+
+		if (dropdown.ItemCount == 0)
+		{
+			dropdown.AddItem("Single", 0);
+			dropdown.AddItem("Array", 1);
+		}
+
+		dropdown.Select(isArray ? 1 : 0);
+		UpdateValueShapeDropdownTooltip(dropdown);
+
+		var handler = new ValueShapeDropdownHandler(dropdown) { OnChanged = onChanged };
+		dropdown.AddChild(handler);
+		dropdown.ItemSelected += handler.HandleItemSelected;
+
+		return dropdown;
+	}
+
+	/// <summary>
 	/// Creates an <see cref="EditorSpinSlider"/> configured for the given numeric variable type.
 	/// </summary>
 	/// <param name="type">The type of the numeric variable.</param>
@@ -416,6 +459,11 @@ internal static partial class StatescriptEditorControls
 		}
 
 		return _cachedPanelStyle;
+	}
+
+	private static void UpdateValueShapeDropdownTooltip(OptionButton dropdown)
+	{
+		dropdown.TooltipText = dropdown.GetSelectedId() == 1 ? "Array value" : "Single value";
 	}
 }
 #endif

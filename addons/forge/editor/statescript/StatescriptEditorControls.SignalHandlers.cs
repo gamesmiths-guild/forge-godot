@@ -27,6 +27,33 @@ internal static partial class StatescriptEditorControls
 	}
 
 	/// <summary>
+	/// Handles <see cref="OptionButton.ItemSelected"/> for the single/array mode dropdown.
+	/// </summary>
+	[Tool]
+	internal sealed partial class ValueShapeDropdownHandler : Node
+	{
+		private readonly OptionButton _dropdown;
+
+		public Action<bool>? OnChanged { get; set; }
+
+		public ValueShapeDropdownHandler()
+		{
+			_dropdown = null!;
+		}
+
+		public ValueShapeDropdownHandler(OptionButton dropdown)
+		{
+			_dropdown = dropdown;
+		}
+
+		public void HandleItemSelected(long index)
+		{
+			UpdateValueShapeDropdownTooltip(_dropdown);
+			OnChanged?.Invoke(_dropdown.GetItemId((int)index) == 1);
+		}
+	}
+
+	/// <summary>
 	/// Handles <see cref="EditorSpinSlider"/> signals (<c>ValueChanged</c>, <c>Grabbed</c>, <c>Ungrabbed</c>,
 	/// <c>FocusExited</c>) for numeric editors with drag-commit semantics.
 	/// </summary>

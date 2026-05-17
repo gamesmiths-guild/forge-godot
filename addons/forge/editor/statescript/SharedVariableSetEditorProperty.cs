@@ -37,7 +37,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 	private AcceptDialog? _creationDialog;
 	private LineEdit? _newNameEdit;
 	private OptionButton? _newTypeDropdown;
-	private CheckBox? _newArrayToggle;
+	private OptionButton? _newValueShapeDropdown;
 
 	private Texture2D? _addIcon;
 	private Texture2D? _removeIcon;
@@ -285,7 +285,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		_creationDialog = null;
 		_newNameEdit = null;
 		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		_newValueShapeDropdown = null;
 		_root = null;
 		_variableList = null;
 		_addButton = null;
@@ -765,7 +765,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		_creationDialog = new AcceptDialog
 		{
 			Title = "Add Shared Variable",
-			Size = new Vector2I(300, 160),
+			Size = new Vector2I(300, 130),
 			Exclusive = true,
 		};
 
@@ -784,7 +784,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		nameRow.AddChild(_newNameEdit);
 
-		var typeRow = new HBoxContainer();
+		var typeRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		typeRow.AddThemeConstantOverride("separation", 8);
 		vBox.AddChild(typeRow);
 		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });
 
@@ -800,13 +801,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		_newTypeDropdown.Selected = FindTypeDropdownIndex(_newTypeDropdown, StatescriptVariableType.Int);
 
 		typeRow.AddChild(_newTypeDropdown);
-
-		var arrayRow = new HBoxContainer();
-		vBox.AddChild(arrayRow);
-		arrayRow.AddChild(new Label { Text = "Array:", CustomMinimumSize = new Vector2(60, 0) });
-
-		_newArrayToggle = new CheckBox();
-		arrayRow.AddChild(_newArrayToggle);
+		_newValueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(false);
+		typeRow.AddChild(_newValueShapeDropdown);
 
 		_creationDialog.Confirmed += OnCreationConfirmed;
 		_creationDialog.Canceled += OnCreationCanceled;
@@ -816,7 +812,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void OnCreationConfirmed()
 	{
-		if (_newNameEdit is null || _newTypeDropdown is null || _newArrayToggle is null)
+		if (_newNameEdit is null || _newTypeDropdown is null || _newValueShapeDropdown is null)
 		{
 			return;
 		}
@@ -834,7 +830,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			VariableName = name,
 			VariableType = variableType,
-			IsArray = _newArrayToggle.ButtonPressed,
+			IsArray = _newValueShapeDropdown.GetSelectedId() == 1,
 			InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variableType),
 		};
 
@@ -866,7 +862,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		_creationDialog = null;
 		_newNameEdit = null;
 		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		_newValueShapeDropdown = null;
 	}
 
 	private void OnDeletePressed(int index)
