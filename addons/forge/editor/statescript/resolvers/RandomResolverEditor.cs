@@ -255,7 +255,7 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 
 		resolverDropdown = CreateResolverDropdown(existingResolver);
 		editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		container.AddChild(resolverDropdown);
+		container.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(resolverDropdown));
 		container.AddChild(editorContainer);
 		ShowEditor(GetSelectedIndex(existingResolver), existingResolver, editorContainer, setEditor);
 

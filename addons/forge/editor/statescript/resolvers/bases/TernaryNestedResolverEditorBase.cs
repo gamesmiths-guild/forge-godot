@@ -257,7 +257,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 		int selectedIndex = GetSelectedIndex(factories, existingResolver);
 		resolverDropdown.Selected = selectedIndex;
-		container.AddChild(resolverDropdown);
+		container.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(resolverDropdown));
 
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(editorContainer);

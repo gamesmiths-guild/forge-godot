@@ -291,7 +291,7 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 				break;
 		}
 
-		container.AddChild(resolverDropdown);
+		container.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(resolverDropdown));
 
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 

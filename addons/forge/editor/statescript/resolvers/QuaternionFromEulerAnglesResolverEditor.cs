@@ -58,7 +58,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 
 		OptionButton dropdown = CreateResolverDropdown(existing?.Operand);
 		_editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		container.AddChild(dropdown);
+		container.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(dropdown));
 		container.AddChild(_editorContainer);
 		ShowEditor(GetSelectedIndex(existing?.Operand), existing?.Operand);
 		dropdown.ItemSelected += OnResolverDropdownItemSelected;

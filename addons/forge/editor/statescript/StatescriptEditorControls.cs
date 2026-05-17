@@ -167,12 +167,14 @@ internal static partial class StatescriptEditorControls
 	/// </returns>
 	public static OptionButton CreateValueShapeDropdown(bool isArray, Action<bool>? onChanged = null)
 	{
+		const float minimumWidth = 33;
 		var dropdown = new OptionButton
 		{
-			CustomMinimumSize = new Vector2(36, 0),
+			CustomMinimumSize = new Vector2(minimumWidth, 0),
 			SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
 			FitToLongestItem = false,
 			Alignment = HorizontalAlignment.Center,
+			ClipText = true,
 		};
 
 		var image = Image.CreateEmpty(1, 1, false, Image.Format.Rgba8);
@@ -190,11 +192,12 @@ internal static partial class StatescriptEditorControls
 			{
 				Texture2D singleIcon = theme.GetIcon("KeyValue", "EditorIcons");
 				Texture2D arrayIcon = theme.GetIcon("Array", "EditorIcons");
+				dropdown.CustomMinimumSize = new Vector2(minimumWidth, 0);
 
-				dropdown.AddIconItem(singleIcon, "Single", 0);
+				dropdown.AddIconItem(singleIcon, string.Empty, 0);
 				dropdown.SetItemTooltip(0, "Single value");
 
-				dropdown.AddIconItem(arrayIcon, "Array", 1);
+				dropdown.AddIconItem(arrayIcon, string.Empty, 1);
 				dropdown.SetItemTooltip(1, "Array value");
 			}
 		}

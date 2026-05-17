@@ -61,7 +61,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		_operandFoldable.AddChild(operandContainer);
 		_operandResolverDropdown = CreateResolverDropdown(existing?.Operand);
 		_operandEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		operandContainer.AddChild(_operandResolverDropdown);
+		operandContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_operandResolverDropdown));
 		operandContainer.AddChild(_operandEditorContainer);
 		ShowOperandEditor(GetSelectedIndex(existing?.Operand), existing?.Operand);
 		_operandResolverDropdown.ItemSelected += OnOperandResolverDropdownItemSelected;

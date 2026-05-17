@@ -456,7 +456,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		nameRow.AddChild(_newNameEdit);
 
 		var typeRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		typeRow.AddThemeConstantOverride("separation", 8);
+		typeRow.AddThemeConstantOverride("separation", 5);
 		vBox.AddChild(typeRow);
 
 		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });

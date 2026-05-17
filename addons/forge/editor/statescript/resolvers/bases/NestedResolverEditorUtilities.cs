@@ -33,6 +33,18 @@ internal static class NestedResolverEditorUtilities
 		return dropdown;
 	}
 
+	public static HBoxContainer CreateResolverSelectorRow(OptionButton resolverDropdown, bool isArray = false)
+	{
+		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		row.AddThemeConstantOverride("separation", 5);
+		row.AddChild(resolverDropdown);
+
+		OptionButton valueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(isArray);
+		valueShapeDropdown.Disabled = true;
+		row.AddChild(valueShapeDropdown);
+		return row;
+	}
+
 	public static void ClearContainer(VBoxContainer? container)
 	{
 		if (container is null)

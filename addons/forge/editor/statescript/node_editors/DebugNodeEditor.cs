@@ -76,7 +76,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		_typeFoldable.AddChild(container);
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		headerRow.AddThemeConstantOverride("separation", 8);
+		headerRow.AddThemeConstantOverride("separation", 5);
 		container.AddChild(headerRow);
 
 		OptionButton typeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(
