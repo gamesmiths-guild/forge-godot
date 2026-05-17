@@ -102,9 +102,8 @@ internal static partial class StatescriptEditorControls
 
 		if (onChanged is not null)
 		{
-			var handler = new VariableTypeDropdownHandler(dropdown) { OnChanged = onChanged };
-			dropdown.AddChild(handler);
-			dropdown.ItemSelected += handler.HandleItemSelected;
+			dropdown.ItemSelected +=
+				index => onChanged((StatescriptVariableType)dropdown.GetItemId((int)index));
 		}
 
 		return dropdown;
@@ -212,9 +211,15 @@ internal static partial class StatescriptEditorControls
 
 		UpdateValueShapeDropdownTooltip(dropdown);
 
-		var handler = new ValueShapeDropdownHandler(dropdown) { OnChanged = onChanged };
-		dropdown.AddChild(handler);
-		dropdown.ItemSelected += handler.HandleItemSelected;
+		if (onChanged is not null)
+		{
+			dropdown.ItemSelected += index =>
+			{
+				dropdown.Text = string.Empty;
+				UpdateValueShapeDropdownTooltip(dropdown);
+				onChanged(dropdown.GetItemId((int)index) == 1);
+			};
+		}
 
 		return dropdown;
 	}

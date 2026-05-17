@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System;
-using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -24,60 +23,6 @@ internal static partial class StatescriptEditorControls
 		public void HandleToggled(bool pressed)
 		{
 			OnChanged?.Invoke(pressed);
-		}
-	}
-
-	/// <summary>
-	/// Handles <see cref="OptionButton.ItemSelected"/> for a Statescript variable type dropdown.
-	/// </summary>
-	[Tool]
-	internal sealed partial class VariableTypeDropdownHandler : Node
-	{
-		private readonly OptionButton _dropdown;
-
-		public Action<StatescriptVariableType>? OnChanged { get; set; }
-
-		public VariableTypeDropdownHandler()
-		{
-			_dropdown = null!;
-		}
-
-		public VariableTypeDropdownHandler(OptionButton dropdown)
-		{
-			_dropdown = dropdown;
-		}
-
-		public void HandleItemSelected(long index)
-		{
-			OnChanged?.Invoke((StatescriptVariableType)_dropdown.GetItemId((int)index));
-		}
-	}
-
-	/// <summary>
-	/// Handles <see cref="OptionButton.ItemSelected"/> for the single/array mode dropdown.
-	/// </summary>
-	[Tool]
-	internal sealed partial class ValueShapeDropdownHandler : Node
-	{
-		private readonly OptionButton _dropdown;
-
-		public Action<bool>? OnChanged { get; set; }
-
-		public ValueShapeDropdownHandler()
-		{
-			_dropdown = null!;
-		}
-
-		public ValueShapeDropdownHandler(OptionButton dropdown)
-		{
-			_dropdown = dropdown;
-		}
-
-		public void HandleItemSelected(long index)
-		{
-			_dropdown.Text = string.Empty;
-			UpdateValueShapeDropdownTooltip(_dropdown);
-			OnChanged?.Invoke(_dropdown.GetItemId((int)index) == 1);
 		}
 	}
 
