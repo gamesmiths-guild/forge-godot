@@ -39,6 +39,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	public override string ResolverTypeId => "Variant";
 
 	/// <inheritdoc/>
+	public override bool SupportsArrayValues => true;
+
+	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
 		return expectedType != typeof(IForgeEntity);

@@ -48,13 +48,6 @@ public partial class StatescriptGraphNode
 			return true;
 		}
 
-		if (resolver is ArrayVariableResolverResource arrayVariableResolver
-			&& arrayVariableResolver.Scope == VariableScope.Graph
-			&& string.Equals(arrayVariableResolver.VariableName, variableName, StringComparison.Ordinal))
-		{
-			return true;
-		}
-
 		foreach (PropertyInfo property in resolver.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
 			if (!property.CanRead || !typeof(StatescriptResolverResource).IsAssignableFrom(property.PropertyType))
@@ -104,20 +97,6 @@ public partial class StatescriptGraphNode
 			&& variableResolver.Scope == VariableScope.Shared
 			&& string.Equals(variableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
 			&& string.Equals(variableResolver.VariableName, variableName, StringComparison.Ordinal))
-		{
-			return true;
-		}
-
-		if (resolver is ArrayVariableResolverResource arrayVariableResolver
-			&& arrayVariableResolver.Scope == VariableScope.Shared
-			&& string.Equals(
-				arrayVariableResolver.SharedVariableSetPath,
-				sharedVariableSetPath,
-				StringComparison.Ordinal)
-			&& string.Equals(
-				arrayVariableResolver.VariableName,
-				variableName,
-				StringComparison.Ordinal))
 		{
 			return true;
 		}

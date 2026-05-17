@@ -58,7 +58,7 @@ internal static class StatescriptResolverRegistry
 					return i;
 				}
 
-				if (resolverTypeId == "ArrayVariable")
+				if (resolverTypeId == "Variable")
 				{
 					return i;
 				}
@@ -85,6 +85,11 @@ internal static class StatescriptResolverRegistry
 	public static bool IsCompatibleFactory(Func<NodeEditorProperty> factory, Type expectedType)
 	{
 		return UseTemporaryEditor(factory, editor => editor.IsCompatibleWith(expectedType));
+	}
+
+	public static bool SupportsArrayValues(Func<NodeEditorProperty> factory)
+	{
+		return UseTemporaryEditor(factory, static editor => editor.SupportsArrayValues);
 	}
 
 	private static TResult UseTemporaryEditor<TResult>(

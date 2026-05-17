@@ -51,6 +51,9 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	public override string ResolverTypeId => "Variable";
 
 	/// <inheritdoc/>
+	public override bool SupportsArrayValues => true;
+
+	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
 		return true;
