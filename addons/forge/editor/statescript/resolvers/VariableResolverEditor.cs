@@ -110,13 +110,15 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
+		bool hasSelectedVariable = !string.IsNullOrWhiteSpace(_selectedVariableName);
+
 		property.Resolver = new VariableResolverResource
 		{
 			VariableName = _selectedVariableName,
 			Scope = _selectedScope,
 			SharedVariableSetPath = _selectedScope == VariableScope.Shared ? _selectedSetPath : string.Empty,
 			VariableType = _selectedVariableType,
-			IsArray = _selectedIsArray,
+			IsArray = hasSelectedVariable && _selectedIsArray,
 		};
 	}
 

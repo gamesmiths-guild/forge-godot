@@ -133,6 +133,13 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 	/// <inheritdoc/>
 	public override IEntityResolver BuildEntityResolver(Graph graph)
 	{
+		if (string.IsNullOrEmpty(VariableName))
+		{
+			GD.PushError(
+				"Statescript: Variable resolver is missing a variable name and cannot build an entity resolver.");
+			return new EntityVariableResolver(new StringKey(string.Empty), Scope);
+		}
+
 		return new EntityVariableResolver(new StringKey(VariableName), Scope);
 	}
 

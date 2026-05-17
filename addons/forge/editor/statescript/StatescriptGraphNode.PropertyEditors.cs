@@ -289,8 +289,6 @@ public partial class StatescriptGraphNode
 		{
 			VariableName = variable.VariableName,
 			Scope = VariableScope.Graph,
-			VariableType = variable.VariableType,
-			IsArray = variable.IsArray,
 		};
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
 
