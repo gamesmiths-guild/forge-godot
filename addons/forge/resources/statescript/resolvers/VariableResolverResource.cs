@@ -11,17 +11,17 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds a node property to a graph variable by name.
+/// Resolver resource that binds a node property to a graph or shared variable by name.
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class VariableResolverResource : StatescriptResolverResource
+public partial class VariableResolverResource : EntityResolverResourceBase
 {
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Variable";
 
 	/// <summary>
-	/// Gets or sets the name of the graph variable to bind to.
+	/// Gets or sets the name of the variable to bind to.
 	/// </summary>
 	[Export]
 	public string VariableName { get; set; } = string.Empty;
@@ -33,8 +33,8 @@ public partial class VariableResolverResource : StatescriptResolverResource
 	public VariableScope Scope { get; set; }
 
 	/// <summary>
-	/// Gets or sets the resource path of the selected shared variable set. This is editor metadata used for highlighting
-	/// and inspector integration when <see cref="Scope"/> is <see cref="VariableScope.Shared"/>.
+	/// Gets or sets the resource path of the selected shared variable set. This is editor metadata used for
+	/// highlighting and inspector integration when <see cref="Scope"/> is <see cref="VariableScope.Shared"/>.
 	/// </summary>
 	[Export]
 	public string SharedVariableSetPath { get; set; } = string.Empty;
@@ -46,6 +46,13 @@ public partial class VariableResolverResource : StatescriptResolverResource
 	[Export]
 	public StatescriptVariableType VariableType { get; set; } = StatescriptVariableType.Int;
 
+	/// <summary>
+	/// Gets or sets a value indicating whether the selected variable is an array. This is primarily editor metadata for
+	/// shared variables and output-variable authoring.
+	/// </summary>
+	[Export]
+	public bool IsArray { get; set; }
+
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
@@ -54,18 +61,29 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			return;
 		}
 
-		Type? variableType = FindVariableType(graph, VariableName);
+		VariableMetadata metadata = ResolveVariableMetadata(graph, VariableName);
 		var variableKey = new StringKey(VariableName);
 
-		if (Scope == VariableScope.Shared
-			|| (variableType is not null && NeedsNumericInputAdaptation(runtimeNode, index, variableType)))
+		if (metadata.IsArray)
+		{
+			BindArrayInput(graph, runtimeNode, nodeId, index, variableKey, metadata.ValueType);
+			return;
+		}
+
+		if (metadata.ValueType == typeof(IForgeEntity))
+		{
+			base.BindInput(graph, runtimeNode, nodeId, index);
+			return;
+		}
+
+		if (Scope == VariableScope.Shared || NeedsNumericInputAdaptation(runtimeNode, index, metadata.ValueType))
 		{
 			DefineAndBindInputProperty(
 				graph,
 				runtimeNode,
 				$"__var_{nodeId}_{index}",
 				index,
-				new VariableResolver(variableKey, variableType ?? typeof(int), Scope));
+				new VariableResolver(variableKey, metadata.ValueType, Scope));
 			return;
 		}
 
@@ -91,24 +109,96 @@ public partial class VariableResolverResource : StatescriptResolverResource
 			return new VariantResolver(default, typeof(int));
 		}
 
-		Type? variableType = FindVariableType(graph, VariableName);
-		return new VariableResolver(new StringKey(VariableName), variableType ?? typeof(int), Scope);
+		VariableMetadata metadata = ResolveVariableMetadata(graph, VariableName);
+
+		if (metadata.IsArray)
+		{
+			GD.PushError(
+				$"Statescript: Variable resolver '{VariableName}' is configured as an array and cannot be used " +
+				"where a scalar property resolver is required.");
+			return new VariantResolver(default, typeof(int));
+		}
+
+		if (metadata.ValueType == typeof(IForgeEntity))
+		{
+			GD.PushError(
+				$"Statescript: Variable resolver '{VariableName}' targets an entity reference and cannot be used " +
+				"where a Variant-based property resolver is required.");
+			return new VariantResolver(default, typeof(int));
+		}
+
+		return new VariableResolver(new StringKey(VariableName), metadata.ValueType, Scope);
 	}
 
-	private Type? FindVariableType(Graph graph, string variableName)
+	/// <inheritdoc/>
+	public override IEntityResolver BuildEntityResolver(Graph graph)
+	{
+		if (string.IsNullOrEmpty(VariableName))
+		{
+			GD.PushError(
+				"Statescript: Variable resolver is missing a variable name and cannot build an entity resolver.");
+			return new EntityVariableResolver(new StringKey(string.Empty), Scope);
+		}
+
+		return new EntityVariableResolver(new StringKey(VariableName), Scope);
+	}
+
+	private void BindArrayInput(
+		Graph graph,
+		ForgeNode runtimeNode,
+		string nodeId,
+		byte index,
+		StringKey variableKey,
+		Type elementType)
+	{
+		if (Scope != VariableScope.Shared)
+		{
+			runtimeNode.BindInput(index, variableKey);
+			return;
+		}
+
+		var propertyName = new StringKey($"__var_{nodeId}_{index}");
+
+		if (elementType == typeof(IForgeEntity))
+		{
+			graph.VariableDefinitions.DefineReferenceArrayProperty(
+				propertyName,
+				new ReferenceArrayVariableResolver<IForgeEntity>(variableKey, VariableScope.Shared));
+		}
+		else
+		{
+			graph.VariableDefinitions.DefineArrayProperty(
+				propertyName,
+				new ArrayVariableResolver(variableKey, elementType, VariableScope.Shared));
+		}
+
+		runtimeNode.BindInput(index, propertyName);
+	}
+
+	private VariableMetadata ResolveVariableMetadata(Graph graph, string variableName)
 	{
 		if (Scope == VariableScope.Shared)
 		{
-			return StatescriptVariableTypeConverter.ToSystemType(VariableType);
+			return new VariableMetadata(
+				StatescriptVariableTypeConverter.ToSystemType(VariableType),
+				IsArray);
 		}
 
 		var key = new StringKey(variableName);
 
-		foreach (VariableDefinition def in graph.VariableDefinitions.VariableDefinitions)
+		foreach (VariableDefinition definition in graph.VariableDefinitions.VariableDefinitions)
 		{
-			if (def.Name == key)
+			if (definition.Name == key)
 			{
-				return def.ValueType;
+				return new VariableMetadata(definition.ValueType, false);
+			}
+		}
+
+		foreach (ReferenceVariableDefinition definition in graph.VariableDefinitions.ReferenceVariableDefinitions)
+		{
+			if (definition.Name == key)
+			{
+				return new VariableMetadata(definition.ValueType, false);
 			}
 		}
 
@@ -116,10 +206,23 @@ public partial class VariableResolverResource : StatescriptResolverResource
 		{
 			if (definition.Name == key)
 			{
-				return definition.ElementType;
+				return new VariableMetadata(definition.ElementType, true);
 			}
 		}
 
-		return null;
+		foreach (ReferenceArrayVariableDefinition definition
+			in graph.VariableDefinitions.ReferenceArrayVariableDefinitions)
+		{
+			if (definition.Name == key)
+			{
+				return new VariableMetadata(definition.ElementType, true);
+			}
+		}
+
+		return new VariableMetadata(
+			StatescriptVariableTypeConverter.ToSystemType(VariableType),
+			IsArray);
 	}
+
+	private readonly record struct VariableMetadata(Type ValueType, bool IsArray);
 }

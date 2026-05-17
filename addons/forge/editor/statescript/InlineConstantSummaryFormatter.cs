@@ -339,6 +339,7 @@ internal static class InlineConstantSummaryFormatter
 		};
 
 		badge.AddThemeStyleboxOverride("panel", styleBox);
+		badge.SetMeta("forge_inline_summary_badge_base_stylebox", Variant.From(styleBox.Duplicate()));
 
 		Label? iconLabel = badge.GetNodeOrNull<Label>("Row/Icon");
 		Label? textLabel = badge.GetNodeOrNull<Label>("Row/Text");

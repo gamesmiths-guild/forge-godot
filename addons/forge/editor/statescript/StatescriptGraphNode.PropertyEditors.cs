@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -254,9 +255,15 @@ public partial class StatescriptGraphNode
 
 			if (binding is null)
 			{
-				string variableName = _graph.Variables[selectedIndex].VariableName;
+				StatescriptGraphVariable variable = _graph.Variables[selectedIndex];
 				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
-					new VariableResolverResource { VariableName = variableName };
+					new VariableResolverResource
+					{
+						VariableName = variable.VariableName,
+						Scope = VariableScope.Graph,
+						VariableType = variable.VariableType,
+						IsArray = variable.IsArray,
+					};
 			}
 		}
 
@@ -277,8 +284,12 @@ public partial class StatescriptGraphNode
 		var oldResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
 			as StatescriptResolverResource;
 
-		string variableName = _graph.Variables[(int)x].VariableName;
-		var newResolver = new VariableResolverResource { VariableName = variableName };
+		StatescriptGraphVariable variable = _graph.Variables[(int)x];
+		var newResolver = new VariableResolverResource
+		{
+			VariableName = variable.VariableName,
+			Scope = VariableScope.Graph,
+		};
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
 
 		if (_undoRedo is not null)
@@ -377,7 +388,13 @@ public partial class StatescriptGraphNode
 			_undoRedo.CommitAction(false);
 		}
 
+		if (direction == StatescriptPropertyDirection.Input)
+		{
+			UpdateInputPropertyFoldableTitle(new PropertySlotKey(direction, propertyIndex));
+		}
+
 		PropertyBindingChanged?.Invoke();
+		ResetSize();
 	}
 
 	private void SaveResolverEditor(
