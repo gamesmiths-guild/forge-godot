@@ -83,7 +83,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_resolvedIsArray = false;
 
 		StatescriptNodeProperty? outputBinding = FindBinding(StatescriptPropertyDirection.Output, 0);
-		_isSharedScope = outputBinding?.Resolver is SharedVariableResolverResource;
+		_isSharedScope = GetResolverScope(outputBinding?.Resolver) == VariableScope.Shared;
 
 		if (outputBinding is null
 			&& NodeResource.CustomData.TryGetValue(ScopeKey, out Variant scopeValue))
@@ -118,6 +118,15 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_sharedVarDropdown = null;
 	}
 
+	private static VariableScope GetResolverScope(StatescriptResolverResource? resolver)
+	{
+		return resolver switch
+		{
+			VariableResolverResource variableResolver => variableResolver.Scope,
+			_ => VariableScope.Graph,
+		};
+	}
+
 	private void ResolveTypeFromBinding(StatescriptNodeProperty? outputBinding)
 	{
 		_resolvedType = null;
@@ -126,6 +135,18 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (outputBinding?.Resolver is VariableResolverResource varRes
 			&& !string.IsNullOrEmpty(varRes.VariableName))
 		{
+			if (GetResolverScope(varRes) == VariableScope.Shared)
+			{
+				_selectedSetPath = varRes.SharedVariableSetPath;
+				_selectedSharedVarName = varRes.VariableName;
+				_selectedSharedVarType = varRes.VariableType;
+				_selectedSharedVarIsArray = varRes.IsArray;
+				ResolveSharedVariableType();
+				_resolvedType = _selectedSharedVarType;
+				_resolvedIsArray = _selectedSharedVarIsArray;
+				return;
+			}
+
 			foreach (StatescriptGraphVariable v in Graph.Variables)
 			{
 				if (v.VariableName == varRes.VariableName)
@@ -135,17 +156,6 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 					return;
 				}
 			}
-		}
-
-		if (outputBinding?.Resolver is SharedVariableResolverResource sharedRes
-			&& !string.IsNullOrEmpty(sharedRes.VariableName))
-		{
-			_selectedSetPath = sharedRes.SharedVariableSetPath;
-			_selectedSharedVarName = sharedRes.VariableName;
-			_selectedSharedVarType = sharedRes.VariableType;
-			ResolveSharedVariableType();
-			_resolvedType = sharedRes.VariableType;
-			_resolvedIsArray = _selectedSharedVarIsArray;
 		}
 	}
 
@@ -670,8 +680,9 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 
 		EnsureBinding(StatescriptPropertyDirection.Output, _cachedOutputIndex).Resolver =
-			new SharedVariableResolverResource
+			new VariableResolverResource
 			{
+				Scope = VariableScope.Shared,
 				SharedVariableSetPath = _selectedSetPath,
 				VariableName = _selectedSharedVarName,
 				VariableType = _selectedSharedVarType,
@@ -739,12 +750,18 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 		else
 		{
-			string variableName = Graph.Variables[variableIndex].VariableName;
+			StatescriptGraphVariable variable = Graph.Variables[variableIndex];
 			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
-				new VariableResolverResource { VariableName = variableName };
+				new VariableResolverResource
+				{
+					VariableName = variable.VariableName,
+					Scope = VariableScope.Graph,
+					VariableType = variable.VariableType,
+					IsArray = variable.IsArray,
+				};
 
-			_resolvedType = Graph.Variables[variableIndex].VariableType;
-			_resolvedIsArray = Graph.Variables[variableIndex].IsArray;
+			_resolvedType = variable.VariableType;
+			_resolvedIsArray = variable.IsArray;
 		}
 
 		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
@@ -901,6 +918,13 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			new StatescriptNodeDiscovery.InputPropertyInfo(propInfo.Label, resolvedClrType, _resolvedIsArray),
 			0,
 			container);
+
+		var inputKey = new PropertySlotKey(StatescriptPropertyDirection.Input, 0);
+		if (FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver is null
+			&& ActiveResolverEditors.TryGetValue(inputKey, out NodeEditorProperty? resolverEditor))
+		{
+			resolverEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, 0));
+		}
 
 		ResetSize();
 	}

@@ -23,7 +23,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 	private StatescriptGraph? _graph;
 	private Control? _entityEditorRow;
 	private VBoxContainer? _entityEditorContainer;
-	private EntityVariableResolverEditor? _entityVariableEditor;
+	private VariableResolverEditor? _entityVariableEditor;
 
 	protected EntitySelection SelectedEntitySelection { get; private set; } = EntitySelection.Owner;
 
@@ -91,7 +91,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 		{
 			SourceEntityResolverResource => EntitySelection.Source,
 			TargetEntityResolverResource => EntitySelection.Target,
-			EntityVariableResolverResource => EntitySelection.Variable,
+			VariableResolverResource => EntitySelection.Variable,
 			_ => EntitySelection.Owner,
 		};
 	}
@@ -124,11 +124,11 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 			return;
 		}
 
-		StatescriptNodeProperty? entityProperty = existingResolver is EntityVariableResolverResource entityVariable
-			? new StatescriptNodeProperty { Resolver = entityVariable }
+		StatescriptNodeProperty? entityProperty = existingResolver is VariableResolverResource entityVariable
+			? new StatescriptNodeProperty { Resolver = (StatescriptResolverResource)entityVariable.Duplicate() }
 			: null;
 
-		_entityVariableEditor = new EntityVariableResolverEditor();
+		_entityVariableEditor = new VariableResolverEditor();
 		_entityVariableEditor.Setup(
 			_graph,
 			entityProperty,
@@ -150,16 +150,21 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 		RaiseLayoutSizeChanged();
 	}
 
-	private EntityVariableResolverResource BuildEntityVariableResolver()
+	private VariableResolverResource BuildEntityVariableResolver()
 	{
 		if (_entityVariableEditor is null)
 		{
-			return new EntityVariableResolverResource();
+			return new VariableResolverResource { VariableType = StatescriptVariableType.Entity };
 		}
 
 		var tempProperty = new StatescriptNodeProperty();
 		_entityVariableEditor.SaveTo(tempProperty);
-		return (EntityVariableResolverResource?)tempProperty.Resolver ?? new EntityVariableResolverResource();
+		if (tempProperty.Resolver is VariableResolverResource variableResolver)
+		{
+			return variableResolver;
+		}
+
+		return new VariableResolverResource { VariableType = StatescriptVariableType.Entity };
 	}
 }
 #endif

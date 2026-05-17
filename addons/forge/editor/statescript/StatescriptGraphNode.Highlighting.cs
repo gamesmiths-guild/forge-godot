@@ -55,13 +55,6 @@ public partial class StatescriptGraphNode
 			return true;
 		}
 
-		if (resolver is EntityVariableResolverResource entityVariableResolver
-			&& entityVariableResolver.Scope == VariableScope.Graph
-			&& string.Equals(entityVariableResolver.VariableName, variableName, StringComparison.Ordinal))
-		{
-			return true;
-		}
-
 		foreach (PropertyInfo property in resolver.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
 			if (!property.CanRead || !typeof(StatescriptResolverResource).IsAssignableFrom(property.PropertyType))
@@ -107,13 +100,6 @@ public partial class StatescriptGraphNode
 			return false;
 		}
 
-		if (resolver is SharedVariableResolverResource sharedVariableResolver
-			&& string.Equals(sharedVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
-			&& string.Equals(sharedVariableResolver.VariableName, variableName, StringComparison.Ordinal))
-		{
-			return true;
-		}
-
 		if (resolver is VariableResolverResource variableResolver
 			&& variableResolver.Scope == VariableScope.Shared
 			&& string.Equals(variableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
@@ -124,16 +110,14 @@ public partial class StatescriptGraphNode
 
 		if (resolver is ArrayVariableResolverResource arrayVariableResolver
 			&& arrayVariableResolver.Scope == VariableScope.Shared
-			&& string.Equals(arrayVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
-			&& string.Equals(arrayVariableResolver.VariableName, variableName, StringComparison.Ordinal))
-		{
-			return true;
-		}
-
-		if (resolver is EntityVariableResolverResource entityVariableResolver
-			&& entityVariableResolver.Scope == VariableScope.Shared
-			&& string.Equals(entityVariableResolver.SharedVariableSetPath, sharedVariableSetPath, StringComparison.Ordinal)
-			&& string.Equals(entityVariableResolver.VariableName, variableName, StringComparison.Ordinal))
+			&& string.Equals(
+				arrayVariableResolver.SharedVariableSetPath,
+				sharedVariableSetPath,
+				StringComparison.Ordinal)
+			&& string.Equals(
+				arrayVariableResolver.VariableName,
+				variableName,
+				StringComparison.Ordinal))
 		{
 			return true;
 		}
@@ -399,7 +383,9 @@ public partial class StatescriptGraphNode
 					|| propagatedSharedVariableName == _highlightedSharedVariableName)
 				&& propagatedSharedVariableSetPath == _highlightedSharedVariableSetPath);
 
-		badge.SetMeta("forge_inline_summary_badge_selected_variable", Variant.From(_highlightedVariableName ?? string.Empty));
+		badge.SetMeta(
+			"forge_inline_summary_badge_selected_variable",
+			Variant.From(_highlightedVariableName ?? string.Empty));
 		badge.SetMeta(
 			"forge_inline_summary_badge_selected_shared_set_path",
 			Variant.From(_highlightedSharedVariableSetPath ?? string.Empty));

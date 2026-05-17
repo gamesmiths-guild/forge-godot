@@ -85,7 +85,7 @@ This means a graph variable can "shadow" a property definition with the same nam
 
 Forge for Godot includes a large built-in resolver set covering:
 
-- **Core data access**: Variable, Shared Variable, Variant, Attribute, Tag, Magnitude, and Activation Data.
+- **Core data access**: Variable (graph/shared, including entity-typed variables), Variant, Attribute, Tag, Magnitude, and Activation Data.
 - **Boolean expressions**: `And`, `Or`, `Not`, `Xor`, and `Comparison`.
 - **Math**: Scalar math, generic numeric/vector math, interpolation, clamping, rounding, and conversion helpers.
 - **Spatial math**: Vector, quaternion, plane, and transform operations.
