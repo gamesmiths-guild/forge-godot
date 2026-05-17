@@ -83,28 +83,119 @@ internal static partial class StatescriptEditorControls
 	}
 
 	/// <summary>
+	/// Creates a dropdown for choosing a Statescript variable type.
+	/// </summary>
+	/// <param name="selectedType">The initial selected type.</param>
+	/// <param name="onChanged">An action invoked when the type changes.</param>
+	/// <returns>An <see cref="OptionButton"/> populated with all supported variable types.</returns>
+	public static OptionButton CreateVariableTypeDropdown(
+		StatescriptVariableType selectedType,
+		Action<StatescriptVariableType>? onChanged = null)
+	{
+		var dropdown = new OptionButton
+		{
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+		};
+
+		PopulateVariableTypeDropdown(dropdown);
+		dropdown.Selected = FindVariableTypeDropdownIndex(dropdown, selectedType);
+
+		if (onChanged is not null)
+		{
+			var handler = new VariableTypeDropdownHandler(dropdown) { OnChanged = onChanged };
+			dropdown.AddChild(handler);
+			dropdown.ItemSelected += handler.HandleItemSelected;
+		}
+
+		return dropdown;
+	}
+
+	/// <summary>
+	/// Populates a dropdown with all supported Statescript variable types.
+	/// </summary>
+	/// <param name="dropdown">The dropdown to populate.</param>
+	public static void PopulateVariableTypeDropdown(OptionButton dropdown)
+	{
+		dropdown.Clear();
+
+		foreach (StatescriptVariableType variableType in StatescriptVariableTypeConverter.GetAllTypes())
+		{
+			dropdown.AddItem(
+				StatescriptVariableTypeConverter.GetDisplayName(variableType),
+				(int)variableType);
+		}
+	}
+
+	/// <summary>
+	/// Finds the dropdown index for a given Statescript variable type.
+	/// </summary>
+	/// <param name="dropdown">The populated dropdown.</param>
+	/// <param name="variableType">The variable type to locate.</param>
+	/// <returns>The matching dropdown index, or zero when the type is not present.</returns>
+	public static int FindVariableTypeDropdownIndex(
+		OptionButton dropdown,
+		StatescriptVariableType variableType)
+	{
+		for (int i = 0; i < dropdown.ItemCount; i++)
+		{
+			if (dropdown.GetItemId(i) == (int)variableType)
+			{
+				return i;
+			}
+		}
+
+		return 0;
+	}
+
+	/// <summary>
+	/// Formats a variable type display name, optionally as an array.
+	/// </summary>
+	/// <param name="variableType">The base variable type.</param>
+	/// <param name="isArray">Whether the type represents an array.</param>
+	/// <returns>The formatted display string.</returns>
+	public static string FormatVariableTypeDisplayName(StatescriptVariableType variableType, bool isArray)
+	{
+		return StatescriptVariableTypeConverter.GetDisplayName(variableType) + (isArray ? "[]" : string.Empty);
+	}
+
+	/// <summary>
 	/// Creates a compact dropdown for choosing between a single value and an array value.
 	/// </summary>
 	/// <param name="isArray">Whether the initial mode is array.</param>
 	/// <param name="onChanged">An action invoked when the mode changes.</param>
-	/// <returns>An <see cref="OptionButton"/> that switches between single-value and array-value modes.</returns>
+	/// <returns>
+	/// An <see cref="OptionButton"/> that switches between single-value and array-value modes.
+	/// </returns>
 	public static OptionButton CreateValueShapeDropdown(bool isArray, Action<bool>? onChanged = null)
 	{
 		var dropdown = new OptionButton
 		{
-			CustomMinimumSize = new Vector2(44, 0),
+			CustomMinimumSize = new Vector2(36, 0),
 			SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
 			FitToLongestItem = false,
+			Alignment = HorizontalAlignment.Center,
 		};
+
+		var image = Image.CreateEmpty(1, 1, false, Image.Format.Rgba8);
+		image.Fill(Colors.Transparent);
+		var emptyTexture = ImageTexture.CreateFromImage(image);
+
+		dropdown.AddThemeIconOverride("arrow", emptyTexture);
+		dropdown.AddThemeConstantOverride("arrow_margin", 0);
+		dropdown.AddThemeConstantOverride("h_separation", 0);
 
 		if (EditorInterface.Singleton is not null)
 		{
 			Theme theme = EditorInterface.Singleton.GetEditorTheme();
 			if (theme.HasIcon("KeyValue", "EditorIcons") && theme.HasIcon("Array", "EditorIcons"))
 			{
-				dropdown.AddIconItem(theme.GetIcon("KeyValue", "EditorIcons"), string.Empty, 0);
+				Texture2D singleIcon = theme.GetIcon("KeyValue", "EditorIcons");
+				Texture2D arrayIcon = theme.GetIcon("Array", "EditorIcons");
+
+				dropdown.AddIconItem(singleIcon, "Single", 0);
 				dropdown.SetItemTooltip(0, "Single value");
-				dropdown.AddIconItem(theme.GetIcon("Array", "EditorIcons"), string.Empty, 1);
+
+				dropdown.AddIconItem(arrayIcon, "Array", 1);
 				dropdown.SetItemTooltip(1, "Array value");
 			}
 		}
@@ -116,6 +207,9 @@ internal static partial class StatescriptEditorControls
 		}
 
 		dropdown.Select(isArray ? 1 : 0);
+
+		dropdown.Text = string.Empty;
+
 		UpdateValueShapeDropdownTooltip(dropdown);
 
 		var handler = new ValueShapeDropdownHandler(dropdown) { OnChanged = onChanged };

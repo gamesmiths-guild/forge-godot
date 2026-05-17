@@ -8,20 +8,21 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
 /// <summary>
-/// Custom editor for <c>DebugNode</c>. Lets the user choose the concrete value type to debug, then constrains the
-/// source resolver picker to that type so debug output can be interpreted correctly.
+/// Custom editor for <c>DebugNode</c>. Lets the user choose the concrete scalar or array value type to debug, then
+/// constrains the source resolver picker to that shape so debug output can be interpreted correctly.
 /// </summary>
 [Tool]
 internal sealed partial class DebugNodeEditor : CustomNodeEditor
 {
 	private const string ValueTypeKey = "valueType";
+	private const string IsArrayKey = "isArray";
 	private const string TypeFoldKey = "_debug_type_fold";
 
 	private StatescriptVariableType _selectedType = StatescriptVariableType.Int;
+	private bool _selectedIsArray;
 	private VBoxContainer? _inputRootContainer;
 	private VBoxContainer? _inputEditorContainer;
 	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
-	private OptionButton? _typeDropdown;
 	private FoldableContainer? _typeFoldable;
 
 	/// <inheritdoc/>
@@ -35,6 +36,11 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		if (NodeResource.CustomData.TryGetValue(ValueTypeKey, out Variant storedType))
 		{
 			_selectedType = (StatescriptVariableType)storedType.AsInt32();
+		}
+
+		if (NodeResource.CustomData.TryGetValue(IsArrayKey, out Variant storedIsArray))
+		{
+			_selectedIsArray = storedIsArray.AsBool();
 		}
 
 		bool inputFolded = GetFoldState("_fold_input");
@@ -55,11 +61,6 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		}
 	}
 
-	private static void AddTypeOption(OptionButton dropdown, StatescriptVariableType type, string label)
-	{
-		dropdown.AddItem(label, (int)type);
-	}
-
 	private void BuildTypeRow(VBoxContainer root)
 	{
 		_typeFoldable = new FoldableContainer
@@ -75,65 +76,45 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		_typeFoldable.AddChild(container);
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		headerRow.AddThemeConstantOverride("separation", 8);
 		container.AddChild(headerRow);
 
-		_typeDropdown = new OptionButton
-		{
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			CustomMinimumSize = new Vector2(80, 0),
-		};
+		OptionButton typeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(
+			_selectedType,
+			OnTypeChanged);
+		typeDropdown.CustomMinimumSize = new Vector2(80, 0);
+		headerRow.AddChild(typeDropdown);
 
-		foreach (StatescriptVariableType variableType in StatescriptVariableTypeConverter.GetAllTypes())
-		{
-			AddTypeOption(
-				_typeDropdown,
-				variableType,
-				StatescriptVariableTypeConverter.GetDisplayName(variableType));
-		}
+		OptionButton shapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(
+			_selectedIsArray,
+			OnShapeChanged);
+		headerRow.AddChild(shapeDropdown);
 
-		_typeDropdown.Selected = FindSelectedTypeIndex(_typeDropdown);
-		_typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
-		headerRow.AddChild(_typeDropdown);
 		UpdateTypeFoldableTitle();
 	}
 
-	private int FindSelectedTypeIndex(OptionButton dropdown)
+	private void OnTypeChanged(StatescriptVariableType selectedValue)
 	{
-		for (int i = 0; i < dropdown.ItemCount; i++)
-		{
-			if (dropdown.GetItemId(i) == (int)_selectedType)
-			{
-				return i;
-			}
-		}
-
-		return 0;
-	}
-
-	private void OnTypeDropdownItemSelected(long index)
-	{
-		if (_typeDropdown is null)
+		if (_selectedType == selectedValue)
 		{
 			return;
 		}
 
-		var selectedValue = (StatescriptVariableType)_typeDropdown.GetItemId((int)index);
 		NodeResource.CustomData[ValueTypeKey] = Variant.From((int)selectedValue);
 		_selectedType = selectedValue;
-		UpdateTypeFoldableTitle();
+		RefreshTypedInputEditor();
+	}
 
-		RemoveBinding(StatescriptPropertyDirection.Input, 0);
-		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
-
-		if (_cachedTypeInfo is not null
-			&& _inputEditorContainer is not null
-			&& _cachedTypeInfo.InputPropertiesInfo.Length > 0)
+	private void OnShapeChanged(bool isArray)
+	{
+		if (_selectedIsArray == isArray)
 		{
-			RebuildInputEditor(_cachedTypeInfo.InputPropertiesInfo[0]);
+			return;
 		}
 
-		RaisePropertyBindingChanged();
-		ResetSize();
+		NodeResource.CustomData[IsArrayKey] = Variant.From(isArray);
+		_selectedIsArray = isArray;
+		RefreshTypedInputEditor();
 	}
 
 	private void OnTypeFoldableFoldingChanged(bool folded)
@@ -154,7 +135,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(
 			"Type:",
 			_typeFoldable,
-			StatescriptVariableTypeConverter.GetDisplayName(_selectedType),
+			StatescriptEditorControls.FormatVariableTypeDisplayName(_selectedType, _selectedIsArray),
 			InlineSummaryBadgeKind.Enum);
 	}
 
@@ -169,9 +150,27 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(_selectedType);
 		_inputEditorContainer = _inputRootContainer;
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(originalInfo.Label, clrType),
+			new StatescriptNodeDiscovery.InputPropertyInfo(originalInfo.Label, clrType, _selectedIsArray),
 			0,
 			_inputEditorContainer);
+	}
+
+	private void RefreshTypedInputEditor()
+	{
+		UpdateTypeFoldableTitle();
+
+		RemoveBinding(StatescriptPropertyDirection.Input, 0);
+		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
+
+		if (_cachedTypeInfo is not null
+			&& _inputEditorContainer is not null
+			&& _cachedTypeInfo.InputPropertiesInfo.Length > 0)
+		{
+			RebuildInputEditor(_cachedTypeInfo.InputPropertiesInfo[0]);
+		}
+
+		RaisePropertyBindingChanged();
+		ResetSize();
 	}
 
 	private void ClearValueRows()

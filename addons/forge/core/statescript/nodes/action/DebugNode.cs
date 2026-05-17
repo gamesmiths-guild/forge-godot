@@ -17,13 +17,15 @@ namespace Gamesmiths.Forge.Statescript.Nodes.Action;
 public sealed class DebugNode : ActionNode
 {
 	private readonly StatescriptVariableType _valueType;
+	private readonly bool _isArray;
 
 	/// <inheritdoc/>
 	public override string Description => "Prints the resolved input value to the Godot console for debugging.";
 
-	public DebugNode(StatescriptVariableType valueType = StatescriptVariableType.Int)
+	public DebugNode(StatescriptVariableType valueType = StatescriptVariableType.Int, bool isArray = false)
 	{
 		_valueType = valueType;
+		_isArray = isArray;
 	}
 
 	/// <inheritdoc/>
@@ -31,7 +33,8 @@ public sealed class DebugNode : ActionNode
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		inputProperties.Add(new InputProperty("Value", StatescriptVariableTypeConverter.ToSystemType(_valueType)));
+		Type valueType = StatescriptVariableTypeConverter.ToSystemType(_valueType);
+		inputProperties.Add(new InputProperty("Value", _isArray ? valueType.MakeArrayType() : valueType));
 	}
 
 	/// <inheritdoc/>

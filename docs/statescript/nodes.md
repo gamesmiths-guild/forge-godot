@@ -82,6 +82,16 @@ Reads a value from an input property and writes it to an existing graph or share
 |-------|-------|-------|-------------|
 | 0 | Target | Graph or Shared | The variable to write to. |
 
+#### DebugNode
+
+Prints a resolved value to the Godot console for debugging. In the editor, the node's **Type** control selects both the base value type and whether the **Value** input expects a single value or an array, and the available resolvers update to match that choice.
+
+**Input Properties:**
+
+| Index | Label | Expected Type | Description |
+|-------|-------|---------------|-------------|
+| 0 | Value | `(configured scalar or array type)` | The value to print to the console. |
+
 ---
 
 ## Condition Nodes

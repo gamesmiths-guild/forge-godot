@@ -373,9 +373,17 @@ internal static class StatescriptNodeDiscovery
 		var propertiesInfo = new InputPropertyInfo[node.InputProperties.Length];
 		for (int i = 0; i < node.InputProperties.Length; i++)
 		{
+			Type expectedType = node.InputProperties[i].ExpectedType;
+			bool isArray = expectedType.IsArray;
+			if (isArray && expectedType.GetElementType() is Type elementType)
+			{
+				expectedType = elementType;
+			}
+
 			propertiesInfo[i] = new InputPropertyInfo(
 				node.InputProperties[i].Label,
-				node.InputProperties[i].ExpectedType);
+				expectedType,
+				isArray);
 		}
 
 		return propertiesInfo;

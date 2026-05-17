@@ -206,19 +206,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 	}
 
-	private static int FindTypeDropdownIndex(OptionButton dropdown, StatescriptVariableType variableType)
-	{
-		for (int i = 0; i < dropdown.ItemCount; i++)
-		{
-			if (dropdown.GetItemId(i) == (int)variableType)
-			{
-				return i;
-			}
-		}
-
-		return 0;
-	}
-
 	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
 	{
 		Color buttonColor = isSelected ? _highlightColor : _variableColor;
@@ -474,18 +461,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });
 
-		_newTypeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		StatescriptVariableType[] allTypes = StatescriptVariableTypeConverter.GetAllTypes();
-
-		for (int t = 0; t < allTypes.Length; t++)
-		{
-			_newTypeDropdown.AddItem(
-				StatescriptVariableTypeConverter.GetDisplayName(allTypes[t]),
-				(int)allTypes[t]);
-		}
-
-		_newTypeDropdown.Selected = FindTypeDropdownIndex(_newTypeDropdown, StatescriptVariableType.Int);
+		_newTypeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(StatescriptVariableType.Int);
 		typeRow.AddChild(_newTypeDropdown);
 		_newValueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(false);
 		typeRow.AddChild(_newValueShapeDropdown);
