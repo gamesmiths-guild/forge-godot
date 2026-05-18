@@ -66,7 +66,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		_leftFoldable.AddChild(leftContainer);
 		_leftEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftResolverDropdown = CreateResolverDropdownControl(existingResource?.Left);
-		leftContainer.AddChild(_leftResolverDropdown);
+		leftContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_leftResolverDropdown));
 		leftContainer.AddChild(_leftEditorContainer);
 
 		ShowNestedEditor(
@@ -83,7 +83,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		_rightFoldable.AddChild(rightContainer);
 		_rightEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightResolverDropdown = CreateResolverDropdownControl(existingResource?.Right);
-		rightContainer.AddChild(_rightResolverDropdown);
+		rightContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_rightResolverDropdown));
 		rightContainer.AddChild(_rightEditorContainer);
 
 		ShowNestedEditor(

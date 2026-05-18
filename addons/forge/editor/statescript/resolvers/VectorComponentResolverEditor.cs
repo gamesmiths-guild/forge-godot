@@ -94,7 +94,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 
 		_resolverDropdown = CreateResolverDropdown(existing?.Operand);
 		_editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		container.AddChild(_resolverDropdown);
+		container.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_resolverDropdown));
 		container.AddChild(_editorContainer);
 		ShowEditor(GetSelectedIndex(existing?.Operand), existing?.Operand);
 		_resolverDropdown.ItemSelected += OnResolverDropdownItemSelected;

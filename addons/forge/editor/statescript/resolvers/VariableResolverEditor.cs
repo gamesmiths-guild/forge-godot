@@ -10,6 +10,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
 using Godot;
+using GodotVector2 = Godot.Vector2;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
@@ -49,6 +50,9 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Variable";
+
+	/// <inheritdoc/>
+	public override bool SupportsArrayValues => true;
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
@@ -99,6 +103,9 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			"Var:",
 			_sharedVariableDropdown,
 			LabelWidth);
+
+		CustomMinimumSize = new GodotVector2(200, 40);
+
 		root.AddChild(_sharedVariableRow);
 
 		PopulateGraphVariableDropdown(graph);

@@ -12,12 +12,11 @@ The type names in the tables below follow the underlying Forge/runtime terminolo
 
 | Resolver | Output Type | Description |
 | --- | --- | --- |
-| [ArrayVariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/array-resolver.md) | `(configured)` | Reads a graph-scoped or shared array variable by name. |
 | [ActivationDataResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/activation-data-resolver.md) | `(configured)` | Reads a field from the graph's configured activation data provider. |
 | [AttributeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/attribute-resolver.md) | `int` | Reads a selected attribute value from owner, source, target, or an entity variable. |
 | [MagnitudeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/magnitude-resolver.md) | `float` | Reads the magnitude from the ability activation context. |
 | [TagQueryResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-query-resolver.md) | `bool` | Evaluates a tag query against all, base, or modifier tags on owner, source, target, or an entity variable. |
-| [VariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variable-resolver.md) | `(configured)` | Reads a graph-scoped or shared variable by name, including entity-typed variables when the binding expects an entity. |
+| [VariableResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variable-resolver.md) | `(configured)` | Reads a graph-scoped or shared variable by name, including arrays and entity-typed variables when the binding expects them. |
 | [VariantResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/variant-resolver.md) | `(configured)` | Holds a fixed constant value, including inline constant arrays. |
 
 ## Entity Resolvers

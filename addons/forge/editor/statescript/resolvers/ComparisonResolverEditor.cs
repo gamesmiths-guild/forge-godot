@@ -97,7 +97,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		_leftEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Left);
-		_leftContainer.AddChild(_leftResolverDropdown);
+		_leftContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_leftResolverDropdown));
 		_leftContainer.AddChild(_leftEditorContainer);
 		ShowNestedEditor(
 			GetSelectedIndex(comparisonResolver?.Left),
@@ -140,7 +140,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		_rightEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightResolverDropdown = CreateResolverDropdownControl(comparisonResolver?.Right);
-		_rightContainer.AddChild(_rightResolverDropdown);
+		_rightContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_rightResolverDropdown));
 		_rightContainer.AddChild(_rightEditorContainer);
 		ShowNestedEditor(
 			GetSelectedIndex(comparisonResolver?.Right),

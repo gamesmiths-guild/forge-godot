@@ -61,6 +61,11 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public event Action? LayoutSizeChanged;
 
 	/// <summary>
+	/// Gets a value indicating whether this editor can author array-valued inputs.
+	/// </summary>
+	public virtual bool SupportsArrayValues => false;
+
+	/// <summary>
 	/// Configures the concrete input types allowed for this editor when the surrounding context accepts more than one.
 	/// </summary>
 	/// <param name="allowedExpectedTypes">The allowed expected types.</param>

@@ -42,7 +42,11 @@ public partial class StatescriptGraphNode
 		propertyFoldable.AddChild(container);
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		headerRow.AddThemeConstantOverride("separation", 5);
 		container.AddChild(headerRow);
+
+		OptionButton valueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(propInfo.IsArray);
+		valueShapeDropdown.Disabled = true;
 
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
@@ -51,15 +55,7 @@ public partial class StatescriptGraphNode
 		{
 			resolverFactories.RemoveAll(factory =>
 			{
-				string resolverTypeId = StatescriptResolverRegistry.GetResolverTypeId(factory);
-				return resolverTypeId != "ArrayVariable" && resolverTypeId != "Variant";
-			});
-		}
-		else
-		{
-			resolverFactories.RemoveAll(factory =>
-			{
-				return StatescriptResolverRegistry.GetResolverTypeId(factory) == "ArrayVariable";
+				return !StatescriptResolverRegistry.SupportsArrayValues(factory);
 			});
 		}
 
@@ -71,6 +67,7 @@ public partial class StatescriptGraphNode
 			};
 
 			errorLabel.AddThemeColorOverride("font_color", Colors.Red);
+			headerRow.AddChild(valueShapeDropdown);
 			container.AddChild(errorLabel);
 			UpdateInputPropertyFoldableTitle(key);
 			return;
@@ -112,6 +109,7 @@ public partial class StatescriptGraphNode
 
 		resolverDropdown.Selected = selectedIndex;
 		headerRow.AddChild(resolverDropdown);
+		headerRow.AddChild(valueShapeDropdown);
 
 		var editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		container.AddChild(editorContainer);

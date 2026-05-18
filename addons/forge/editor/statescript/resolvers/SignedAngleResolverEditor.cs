@@ -215,7 +215,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 			_toEditorContainer = editorContainer;
 		}
 
-		container.AddChild(dropdown);
+		container.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(dropdown));
 		container.AddChild(editorContainer);
 
 		ShowEditor(
@@ -245,7 +245,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 		ClearEditorContainer(_axisEditorContainer);
 		OptionButton dropdown = CreateResolverDropdown(_axisFactories, existingResolver);
-		_axisEditorContainer.AddChild(dropdown);
+		_axisEditorContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(dropdown));
 		var nestedContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_axisEditorContainer.AddChild(nestedContainer);
 

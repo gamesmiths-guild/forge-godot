@@ -61,7 +61,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 
 		_editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_resolverDropdown = CreateResolverDropdownControl(existingResource?.Operand);
-		operandContainer.AddChild(_resolverDropdown);
+		operandContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_resolverDropdown));
 		operandContainer.AddChild(_editorContainer);
 
 		ShowNestedEditor(GetSelectedIndex(existingResource?.Operand), existingResource?.Operand);

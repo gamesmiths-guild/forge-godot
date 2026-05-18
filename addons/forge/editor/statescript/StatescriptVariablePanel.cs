@@ -35,7 +35,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	private Window? _creationDialog;
 	private LineEdit? _newNameEdit;
 	private OptionButton? _newTypeDropdown;
-	private CheckBox? _newArrayToggle;
+	private OptionButton? _newValueShapeDropdown;
 
 	private Texture2D? _addIcon;
 	private Texture2D? _removeIcon;
@@ -206,19 +206,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 	}
 
-	private static int FindTypeDropdownIndex(OptionButton dropdown, StatescriptVariableType variableType)
-	{
-		for (int i = 0; i < dropdown.ItemCount; i++)
-		{
-			if (dropdown.GetItemId(i) == (int)variableType)
-			{
-				return i;
-			}
-		}
-
-		return 0;
-	}
-
 	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
 	{
 		Color buttonColor = isSelected ? _highlightColor : _variableColor;
@@ -272,7 +259,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		_creationDialog = null;
 		_newNameEdit = null;
 		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		_newValueShapeDropdown = null;
 		_variableList = null;
 		_addButton = null;
 	}
@@ -449,7 +436,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		_creationDialog = new AcceptDialog
 		{
 			Title = "Add Variable",
-			Size = new Vector2I(300, 160),
+			Size = new Vector2I(300, 130),
 			Exclusive = true,
 		};
 
@@ -469,31 +456,15 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		nameRow.AddChild(_newNameEdit);
 
 		var typeRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		typeRow.AddThemeConstantOverride("separation", 5);
 		vBox.AddChild(typeRow);
 
 		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });
 
-		_newTypeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		StatescriptVariableType[] allTypes = StatescriptVariableTypeConverter.GetAllTypes();
-
-		for (int t = 0; t < allTypes.Length; t++)
-		{
-			_newTypeDropdown.AddItem(
-				StatescriptVariableTypeConverter.GetDisplayName(allTypes[t]),
-				(int)allTypes[t]);
-		}
-
-		_newTypeDropdown.Selected = FindTypeDropdownIndex(_newTypeDropdown, StatescriptVariableType.Int);
+		_newTypeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(StatescriptVariableType.Int);
 		typeRow.AddChild(_newTypeDropdown);
-
-		var arrayRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(arrayRow);
-
-		arrayRow.AddChild(new Label { Text = "Array:", CustomMinimumSize = new Vector2(60, 0) });
-
-		_newArrayToggle = new CheckBox();
-		arrayRow.AddChild(_newArrayToggle);
+		_newValueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(false);
+		typeRow.AddChild(_newValueShapeDropdown);
 
 		_creationDialog.AddChild(vBox);
 
@@ -505,7 +476,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	private void OnCreationConfirmed()
 	{
-		if (_graph is null || _newNameEdit is null || _newTypeDropdown is null || _newArrayToggle is null)
+		if (_graph is null || _newNameEdit is null || _newTypeDropdown is null || _newValueShapeDropdown is null)
 		{
 			return;
 		}
@@ -530,7 +501,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		{
 			VariableName = name,
 			VariableType = varType,
-			IsArray = _newArrayToggle.ButtonPressed,
+			IsArray = _newValueShapeDropdown.GetSelectedId() == 1,
 			InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(varType),
 		};
 
@@ -550,7 +521,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		_creationDialog = null;
 		_newNameEdit = null;
 		_newTypeDropdown = null;
-		_newArrayToggle = null;
+		_newValueShapeDropdown = null;
 	}
 
 	private void OnDeletePressed(int index)
