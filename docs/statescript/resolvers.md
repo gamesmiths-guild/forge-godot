@@ -13,6 +13,7 @@ The type names in the tables below follow the underlying Forge/runtime terminolo
 | Resolver | Output Type | Description |
 | --- | --- | --- |
 | [ActivationDataResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/activation-data-resolver.md) | `(configured)` | Reads a field from the graph's configured activation data provider. |
+| [ArrayResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/array-resolver.md) | `(configured array)` | Builds an array by evaluating nested resolvers for each element. |
 | [AttributeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/attribute-resolver.md) | `int` | Reads a selected attribute value from owner, source, target, or an entity variable. |
 | [MagnitudeResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/magnitude-resolver.md) | `float` | Reads the magnitude from the ability activation context. |
 | [TagQueryResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/tag-query-resolver.md) | `bool` | Evaluates a tag query against all, base, or modifier tags on owner, source, target, or an entity variable. |
@@ -23,6 +24,7 @@ The type names in the tables below follow the underlying Forge/runtime terminolo
 
 | Resolver | Output Type | Description |
 | --- | --- | --- |
+| [EntityArrayResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/entity-array-resolver.md) | `IForgeEntity?[]` | Builds an entity reference array by evaluating nested entity resolvers. |
 | [OwnerEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/owner-entity-resolver.md) | `IForgeEntity?` | Resolves the owner entity from the current ability activation. |
 | [SourceEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/source-entity-resolver.md) | `IForgeEntity?` | Resolves the source entity that granted the current ability. |
 | [TargetEntityResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/target-entity-resolver.md) | `IForgeEntity?` | Resolves the current ability target. |
