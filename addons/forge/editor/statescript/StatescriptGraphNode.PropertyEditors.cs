@@ -58,6 +58,13 @@ public partial class StatescriptGraphNode
 				return !StatescriptResolverRegistry.SupportsArrayValues(factory);
 			});
 		}
+		else
+		{
+			resolverFactories.RemoveAll(factory =>
+			{
+				return !StatescriptResolverRegistry.SupportsScalarValues(factory);
+			});
+		}
 
 		if (resolverFactories.Count == 0)
 		{

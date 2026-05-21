@@ -61,6 +61,11 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public event Action? LayoutSizeChanged;
 
 	/// <summary>
+	/// Gets a value indicating whether this editor can author scalar values.
+	/// </summary>
+	public virtual bool SupportsScalarValues => true;
+
+	/// <summary>
 	/// Gets a value indicating whether this editor can author array-valued inputs.
 	/// </summary>
 	public virtual bool SupportsArrayValues => false;
