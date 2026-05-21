@@ -92,6 +92,11 @@ internal static class StatescriptResolverRegistry
 		return UseTemporaryEditor(factory, static editor => editor.SupportsArrayValues);
 	}
 
+	public static bool SupportsScalarValues(Func<NodeEditorProperty> factory)
+	{
+		return UseTemporaryEditor(factory, static editor => editor.SupportsScalarValues);
+	}
+
 	private static TResult UseTemporaryEditor<TResult>(
 		Func<NodeEditorProperty> factory,
 		Func<NodeEditorProperty, TResult> selector)

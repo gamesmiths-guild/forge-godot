@@ -18,6 +18,7 @@ internal static class ResolverEditorFactoryCatalog
 		foreach (Type expectedType in expectedTypes)
 		{
 			result.AddRange(StatescriptResolverRegistry.GetCompatibleFactories(expectedType)
+				.Where(StatescriptResolverRegistry.SupportsScalarValues)
 				.Where(factory => seenTypeIds.Add(StatescriptResolverRegistry.GetResolverTypeId(factory))));
 		}
 
