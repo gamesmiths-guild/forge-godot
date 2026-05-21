@@ -35,6 +35,12 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 	public StatescriptVariableType ElementType { get; set; } = StatescriptVariableType.Int;
 
 	/// <summary>
+	/// Gets or sets a value indicating whether <see cref="ElementType"/> was explicitly authored.
+	/// </summary>
+	[Export]
+	public bool HasExplicitElementType { get; set; }
+
+	/// <summary>
 	/// Gets or sets a value indicating whether the overall array section is expanded in the editor.
 	/// </summary>
 	[Export]
@@ -56,9 +62,11 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 
 		if (!TryResolveElementType(graph, runtimeNode, index, out Type elementType))
 		{
+			Type expectedType = runtimeNode.InputProperties[index].ExpectedType;
 			GD.PushError(
-				$"Statescript: Array resolver '{ResolverTypeId}' could not determine the element type for input " +
-				$"index {index} on node '{runtimeNode.GetType().Name}'.");
+				$"Statescript: Array resolver '{ResolverTypeId}' can only bind to array-typed inputs or dynamic " +
+				$"object inputs. Input index {index} on node '{runtimeNode.GetType().Name}' expects " +
+				$"'{expectedType}'.");
 			return;
 		}
 
@@ -97,14 +105,26 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 			return true;
 		}
 
+		if (expectedType != typeof(object))
+		{
+			elementType = null!;
+			return false;
+		}
+
 		if (TryInferElementTypeFromResolvers(graph, out Type inferredElementType))
 		{
 			elementType = inferredElementType;
 			return true;
 		}
 
-		elementType = StatescriptVariableTypeConverter.ToSystemType(ElementType);
-		return true;
+		if (HasExplicitElementType)
+		{
+			elementType = StatescriptVariableTypeConverter.ToSystemType(ElementType);
+			return true;
+		}
+
+		elementType = null!;
+		return false;
 	}
 
 	private bool TryInferElementTypeFromResolvers(Graph graph, out Type elementType)

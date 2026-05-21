@@ -84,6 +84,7 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 		property.Resolver = new ArrayResolverResource
 		{
 			ElementType = elementType,
+			HasExplicitElementType = true,
 			ElementResolvers = resolvers,
 			IsExpanded = _isExpanded,
 			ElementFoldedStates = [.. _elementFoldedStates],
