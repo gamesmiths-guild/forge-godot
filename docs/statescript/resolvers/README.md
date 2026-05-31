@@ -21,7 +21,9 @@ Use the **core Forge documentation** for runtime resolver behavior and API detai
 | Resolver | Output Type | Description |
 |----------|-------------|-------------|
 | [AbilityLevelResolver](ability-level-resolver.md) | `int` | Authors the current ability level as a node input. |
+| [AbilityOwnershipResolver](ability-ownership-resolver.md) | `EffectOwnership` | Authors the current ability owner/source pair as a node input. |
 | [EffectDataResolver](effect-data-resolver.md) | `EffectData` / `EffectData[]` | Authors one or more `ForgeEffectData` resources for effect inputs. |
+| [OwnershipResolver](ownership-resolver.md) | `EffectOwnership` | Composes effect ownership from two nested entity resolvers. |
 
 ## Related Docs
 
