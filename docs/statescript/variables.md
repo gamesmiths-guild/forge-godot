@@ -106,7 +106,7 @@ Reads a field from custom activation data passed when the ability was activated.
 
 > **Note:** A graph supports only one activation data provider at a time. If you need multiple data types, combine them into a single provider.
 
-For implementation details on creating activation data providers, see [Custom Nodes](custom-nodes.md#activation-data-providers).
+For implementation details on creating activation data providers, see [Custom Statescript Nodes](nodes/custom-nodes.md#activation-data-providers).
 
 ## Data Flow Summary
 

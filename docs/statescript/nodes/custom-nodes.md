@@ -2,7 +2,7 @@
 
 For now statescript ships with a small set of built-in nodes (`SetVariableNode`, `ExpressionNode`, `TimerNode`), but the system is designed to be extended. This page explains how to create custom Action, Condition, and State nodes for your game.
 
-For additional code examples, see the [core Nodes documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes.md).
+For additional code examples, see the [core Nodes documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/README.md).
 
 ## Creating a Custom Action Node
 
@@ -347,7 +347,7 @@ Once defined:
 
 ## Best Practices
 
-1. **Prefer built-in nodes and resolvers**: Before creating a custom node, check if the built-in `ExpressionNode` with resolvers can achieve the same result. For custom data sources, consider creating a [custom resolver](custom-resolvers.md) instead of a custom node.
+1. **Prefer built-in nodes and resolvers**: Before creating a custom node, check if the built-in `ExpressionNode` with resolvers can achieve the same result. For custom data sources, consider creating a [custom resolver](../custom-resolvers.md) instead of a custom node.
 2. **Keep nodes focused**: Each node should do one thing well. Compose complex behaviors by connecting multiple simple nodes.
 3. **Always call DeactivateNode**: State nodes must eventually deactivate. A node that never deactivates will prevent the graph from completing and the ability from ending.
 4. **Use OnDeactivate for cleanup**: Any resources, effects, or state set up during `OnActivate` should be cleaned up in `OnDeactivate`.
@@ -357,5 +357,5 @@ Once defined:
 
 ## See Also
 
-- [Custom Resolvers](custom-resolvers.md): Creating custom property resolvers for the Statescript graph editor.
-- [Custom Editors](custom-editors.md): Creating custom node and resolver editors for the graph editor UI.
+- [Custom Resolvers](../custom-resolvers.md): Creating custom property resolvers for the Statescript graph editor.
+- [Custom Editors](../custom-editors.md): Creating custom node and resolver editors for the graph editor UI.

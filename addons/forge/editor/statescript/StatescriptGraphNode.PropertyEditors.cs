@@ -18,7 +18,8 @@ public partial class StatescriptGraphNode
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control sectionContainer,
-		Action<bool>? onShapeChanged = null)
+		Action<bool>? onShapeChanged = null,
+		string? preferredDefaultResolverTypeId = null)
 	{
 		if (NodeResource is null)
 		{
@@ -111,10 +112,28 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
-				resolverFactories,
-				propInfo.ExpectedType,
-				propInfo.IsArray);
+			selectedIndex = -1;
+
+			if (!string.IsNullOrEmpty(preferredDefaultResolverTypeId))
+			{
+				for (int i = 0; i < resolverFactories.Count; i++)
+				{
+					if (StatescriptResolverRegistry.GetResolverTypeId(resolverFactories[i])
+						== preferredDefaultResolverTypeId)
+					{
+						selectedIndex = i;
+						break;
+					}
+				}
+			}
+
+			if (selectedIndex < 0)
+			{
+				selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
+					resolverFactories,
+					propInfo.ExpectedType,
+					propInfo.IsArray);
+			}
 		}
 
 		resolverDropdown.Selected = selectedIndex;

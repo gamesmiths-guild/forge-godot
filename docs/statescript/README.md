@@ -55,7 +55,7 @@ Messages flow from output ports to input ports. This propagation is **synchronou
 | **Condition** | Branches execution | Evaluates a test and routes the message to True or False. |
 | **State** | Maintains active state over time | Activates on input, remains active, deactivates based on internal logic. |
 
-For detailed information on each node type, see the [Nodes](nodes.md) reference.
+For the built-in node index and links to the core per-node documentation, see [Nodes](nodes/README.md).
 
 ## Subgraphs
 
@@ -113,11 +113,11 @@ Statescript graphs must be **acyclic**. The framework validates this at graph co
 
 ## Documentation
 
-- [Nodes](nodes.md): Detailed reference for all node types and their ports.
+- [Nodes](nodes/README.md): Built-in node index for Forge for Godot, with Godot-specific node pages where needed.
 - [Subgraphs](subgraphs.md): Deep dive into subgraph lifetime, patterns, and common pitfalls.
 - [Variables and Data](variables.md): Variables, shared variables, and property resolvers.
-- [Custom Nodes](custom-nodes.md): How to create custom Action, Condition, and State nodes for Godot.
 - [Property Resolvers](resolvers/README.md): Index of the resolver set available in Forge for Godot, with local pages for Godot-specific resolver resources.
+- [Custom Statescript Nodes](nodes/custom-nodes.md): How to create custom Action, Condition, and State nodes for Godot.
 - [Custom Resolvers](custom-resolvers.md): Creating custom property resolvers to expose game-specific data.
 - [Custom Editors](custom-editors.md): Creating custom node and resolver editors for the Statescript graph editor.
 - [Core Statescript Documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/README.md): API reference and C# code examples.

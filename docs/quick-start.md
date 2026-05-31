@@ -451,7 +451,7 @@ public partial class DamageCueHandler : ForgeCueHandler
 
 ## Next Steps
 
-- Learn more about the [custom nodes](nodes.md) provided by the plugin.
+- Learn more about the [Forge nodes](nodes.md) provided by the plugin.
 - Browse all available [Forge resources](resources.md) for configuring effects, abilities, tags, and more.
 - Build ability behaviors visually with [Statescript](statescript/README.md).
 - Discover [helper classes](helper-classes.md) for streamlining common Forge workflows in Godot.
