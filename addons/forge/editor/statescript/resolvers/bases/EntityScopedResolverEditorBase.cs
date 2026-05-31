@@ -78,10 +78,10 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 	{
 		return SelectedEntitySelection switch
 		{
-			EntitySelection.Source => new SourceEntityResolverResource(),
-			EntitySelection.Target => new TargetEntityResolverResource(),
+			EntitySelection.Source => new AbilitySourceResolverResource(),
+			EntitySelection.Target => new AbilityTargetResolverResource(),
 			EntitySelection.Variable => BuildEntityVariableResolver(),
-			_ => new OwnerEntityResolverResource(),
+			_ => new AbilityOwnerResolverResource(),
 		};
 	}
 
@@ -89,8 +89,8 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 	{
 		return resource switch
 		{
-			SourceEntityResolverResource => EntitySelection.Source,
-			TargetEntityResolverResource => EntitySelection.Target,
+			AbilitySourceResolverResource => EntitySelection.Source,
+			AbilityTargetResolverResource => EntitySelection.Target,
 			VariableResolverResource => EntitySelection.Variable,
 			_ => EntitySelection.Owner,
 		};

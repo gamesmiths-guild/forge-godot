@@ -70,11 +70,11 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 		var ownerContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_ownerFoldable.AddChild(ownerContainer);
 		_ownerEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_ownerResolverDropdown = CreateResolverDropdownControl(ownershipResolver?.Owner, "OwnerEntity");
+		_ownerResolverDropdown = CreateResolverDropdownControl(ownershipResolver?.Owner, "AbilityOwner");
 		ownerContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_ownerResolverDropdown));
 		ownerContainer.AddChild(_ownerEditorContainer);
 		ShowNestedEditor(
-			GetSelectedIndex(ownershipResolver?.Owner, "OwnerEntity"),
+			GetSelectedIndex(ownershipResolver?.Owner, "AbilityOwner"),
 			ownershipResolver?.Owner,
 			_ownerEditorContainer,
 			editor => _ownerEditor = editor);
@@ -91,11 +91,11 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 		var sourceContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_sourceFoldable.AddChild(sourceContainer);
 		_sourceEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_sourceResolverDropdown = CreateResolverDropdownControl(ownershipResolver?.Source, "SourceEntity");
+		_sourceResolverDropdown = CreateResolverDropdownControl(ownershipResolver?.Source, "AbilitySource");
 		sourceContainer.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(_sourceResolverDropdown));
 		sourceContainer.AddChild(_sourceEditorContainer);
 		ShowNestedEditor(
-			GetSelectedIndex(ownershipResolver?.Source, "SourceEntity"),
+			GetSelectedIndex(ownershipResolver?.Source, "AbilitySource"),
 			ownershipResolver?.Source,
 			_sourceEditorContainer,
 			editor => _sourceEditor = editor);

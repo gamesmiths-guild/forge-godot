@@ -221,7 +221,7 @@ public static class StatescriptGraphBuilder
 		{
 			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
 			{
-				if (binding.Resolver is ActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				if (binding.Resolver is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
 				{
 					if (firstProvider is null)
 					{

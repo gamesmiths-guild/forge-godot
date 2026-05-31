@@ -15,13 +15,13 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// the <see cref="Abilities.AbilityBehaviorContext"/> at runtime. Only compatible with <see langword="float"/> inputs.
 /// </summary>
 [Tool]
-internal sealed partial class MagnitudeResolverEditor : NodeEditorProperty
+internal sealed partial class AbilityMagnitudeResolverEditor : NodeEditorProperty
 {
 	/// <inheritdoc/>
-	public override string DisplayName => "Magnitude";
+	public override string DisplayName => "Ability Magnitude";
 
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "Magnitude";
+	public override string ResolverTypeId => "AbilityMagnitude";
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
@@ -52,7 +52,7 @@ internal sealed partial class MagnitudeResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new MagnitudeResolverResource();
+		property.Resolver = new AbilityMagnitudeResolverResource();
 	}
 }
 #endif

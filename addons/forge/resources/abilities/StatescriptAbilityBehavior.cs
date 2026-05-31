@@ -20,8 +20,8 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 /// <see cref="GraphProcessor"/> with independent <see cref="GraphContext"/> state.
 /// </summary>
 /// <remarks>
-/// If any node in the graph uses an <see cref="ActivationDataResolverResource"/>, the behavior automatically detects
-/// the associated <see cref="IActivationDataProvider"/> implementation and produces the matching
+/// If any node in the graph uses an <see cref="AbilityActivationDataResolverResource"/>, the behavior automatically
+/// detects the associated <see cref="IActivationDataProvider"/> implementation and produces the matching
 /// <see cref="GraphAbilityBehavior{TData}"/> directly. When no activation data resolver is present, a plain
 /// <see cref="GraphAbilityBehavior"/> is created.
 /// </remarks>
@@ -120,7 +120,8 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		{
 			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
 			{
-				if (binding.Resolver is ActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				if (binding.Resolver
+					is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
 				{
 					return InstantiateProvider(resolver.ProviderClassName);
 				}

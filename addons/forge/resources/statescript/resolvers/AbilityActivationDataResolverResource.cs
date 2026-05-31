@@ -13,15 +13,15 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// Resolver resource that binds a node property to a field declared by an <see cref="IActivationDataProvider"/>.
 /// </summary>
 /// <remarks>
-/// At build time this resource constructs Forge's core <see cref="ActivationDataResolver"/> so the selected member is
-/// read directly from the typed activation-data payload.
+/// At build time this resource constructs Forge's core <see cref="AbilityActivationDataResolver"/> so the selected
+/// member is read directly from the typed activation-data payload.
 /// </remarks>
 [Tool]
 [GlobalClass]
-public partial class ActivationDataResolverResource : StatescriptResolverResource
+public partial class AbilityActivationDataResolverResource : StatescriptResolverResource
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "ActivationData";
+	public override string ResolverTypeId => "AbilityActivationData";
 
 	/// <summary>
 	/// Gets or sets the class name of the <see cref="IActivationDataProvider"/> implementation that declares the field.
@@ -47,7 +47,7 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 		if (string.IsNullOrEmpty(ProviderClassName))
 		{
 			GD.PushError(
-				$"Statescript: Activation Data resolver on node '{nodeId}' (input {index}) " +
+				$"Statescript: Ability Activation Data resolver on node '{nodeId}' (input {index}) " +
 				"has no provider selected. Select a provider and field in the graph editor.");
 			return;
 		}
@@ -55,7 +55,7 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 		if (string.IsNullOrEmpty(FieldName))
 		{
 			GD.PushError(
-				$"Statescript: Activation Data resolver on node '{nodeId}' (input {index}) " +
+				$"Statescript: Ability Activation Data resolver on node '{nodeId}' (input {index}) " +
 				$"has provider '{ProviderClassName}' but no field selected. " +
 				"Select a field in the graph editor.");
 			return;
@@ -66,7 +66,7 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 			runtimeNode,
 			$"__activation_{nodeId}_{index}",
 			index,
-			BuildActivationDataResolver(nodeId, index));
+			BuildAbilityActivationDataResolver(nodeId, index));
 	}
 
 	/// <inheritdoc/>
@@ -75,16 +75,16 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 		if (string.IsNullOrEmpty(ProviderClassName) || string.IsNullOrEmpty(FieldName))
 		{
 			GD.PushError(
-				"Statescript: Activation Data resolver has incomplete configuration " +
+				"Statescript: Ability Activation Data resolver has incomplete configuration " +
 				$"(provider: '{ProviderClassName}', field: '{FieldName}'). " +
 				"The resolver will return a default value.");
 			return new VariantResolver(default, typeof(int));
 		}
 
-		return BuildActivationDataResolver();
+		return BuildAbilityActivationDataResolver();
 	}
 
-	private IPropertyResolver BuildActivationDataResolver(string? nodeId = null, byte? index = null)
+	private IPropertyResolver BuildAbilityActivationDataResolver(string? nodeId = null, byte? index = null)
 	{
 		IActivationDataProvider? provider = StatescriptAbilityBehavior.InstantiateProvider(ProviderClassName);
 		if (provider is null)
@@ -99,6 +99,6 @@ public partial class ActivationDataResolverResource : StatescriptResolverResourc
 			return new VariantResolver(default, typeof(int));
 		}
 
-		return new ActivationDataResolver(provider.ActivationDataType, FieldName);
+		return new AbilityActivationDataResolver(provider.ActivationDataType, FieldName);
 	}
 }

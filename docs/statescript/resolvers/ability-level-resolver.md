@@ -1,16 +1,19 @@
 # AbilityLevelResolver
 
-> **Resolver Resource:** `Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.AbilityLevelResolverResource`
+> **Type:** `Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.AbilityLevelResolverResource`
+> **Output Type:** `int`
 
-Authors the current ability level for an `int` input property.
-
-Use the core Forge docs for runtime semantics. This page covers the Godot authoring behavior.
+Authors the current ability level for node inputs that accept an `int`.
 
 ## Authoring in Godot
 
 - No extra configuration is required.
 - Select **Ability Level** in the resolver dropdown to bind the current ability level directly.
-- This is a convenient default for `ApplyEffectNode.Level` and `EffectNode.Level` when you want the graph to show that dependency explicitly.
+- This is a convenient explicit binding for `ApplyEffectNode.Level` and `EffectNode.Level`.
+
+## Runtime Binding
+
+At graph-build time, this resource binds the core Forge `AbilityLevelResolver`.
 
 ## Related Docs
 

@@ -102,7 +102,7 @@ Reads a field from custom activation data passed when the ability was activated.
 - **Field Name**: The name of the field to read.
 - **Field Type**: The expected type of the field.
 
-**Behavior:** At graph build time, the resolver builds Forge's core `ActivationDataResolver`. At runtime, `StatescriptAbilityBehavior` creates the matching `GraphAbilityBehavior<TData>` and the resolver reads the selected public field or property directly from the typed activation-data payload.
+**Behavior:** At graph build time, the resolver builds Forge's core `AbilityActivationDataResolver`. At runtime, `StatescriptAbilityBehavior` creates the matching `GraphAbilityBehavior<TData>` and the resolver reads the selected public field or property directly from the typed activation-data payload.
 
 > **Note:** A graph supports only one activation data provider at a time. If you need multiple data types, combine them into a single provider.
 

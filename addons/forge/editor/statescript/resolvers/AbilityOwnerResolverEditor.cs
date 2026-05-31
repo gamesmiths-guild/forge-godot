@@ -10,11 +10,11 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class TargetEntityResolverEditor : NodeEditorProperty
+internal sealed partial class AbilityOwnerResolverEditor : NodeEditorProperty
 {
-	public override string DisplayName => "Target";
+	public override string DisplayName => "Ability Owner";
 
-	public override string ResolverTypeId => "TargetEntity";
+	public override string ResolverTypeId => "AbilityOwner";
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
@@ -28,17 +28,17 @@ internal sealed partial class TargetEntityResolverEditor : NodeEditorProperty
 		Action onChanged,
 		bool isArray)
 	{
-		AddChild(new Label { Text = "Uses the ability target." });
+		AddChild(new Label { Text = "Uses the current ability owner." });
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new TargetEntityResolverResource();
+		property.Resolver = new AbilityOwnerResolverResource();
 	}
 
 	public override bool TryGetInlineSummary(out string summary)
 	{
-		summary = "Target";
+		summary = "Ability Owner";
 		return true;
 	}
 }

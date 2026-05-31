@@ -75,7 +75,7 @@ public partial class AttributeResolverResource : StatescriptResolverResource
 	private AttributeResolver BuildAttributeResolver(Graph graph)
 	{
 		var attributeKey = new StringKey($"{AttributeSetClass}.{AttributeName}");
-		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new OwnerEntityResolver();
+		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
 		return new AttributeResolver(attributeKey, entityResolver, CalculationType, FinalChannel);
 	}
 }

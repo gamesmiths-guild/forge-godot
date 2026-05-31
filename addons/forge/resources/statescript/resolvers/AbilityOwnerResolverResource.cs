@@ -8,12 +8,12 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 [Tool]
 [GlobalClass]
-public partial class SourceEntityResolverResource : EntityResolverResourceBase
+public partial class AbilityOwnerResolverResource : EntityResolverResourceBase
 {
-	public override string ResolverTypeId => "SourceEntity";
+	public override string ResolverTypeId => "AbilityOwner";
 
 	public override IEntityResolver BuildEntityResolver(Graph graph)
 	{
-		return new SourceEntityResolver();
+		return new AbilityOwnerResolver();
 	}
 }

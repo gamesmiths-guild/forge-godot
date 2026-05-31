@@ -48,7 +48,7 @@ public partial class TagQueryResolverResource : StatescriptResolverResource
 
 	private TagQueryResolver BuildTagQueryResolver(Graph graph)
 	{
-		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new OwnerEntityResolver();
+		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
 		return new TagQueryResolver(
 			Query!.GetQueryExpression(),
 			entityResolver,

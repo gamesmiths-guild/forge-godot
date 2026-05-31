@@ -23,7 +23,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// the dropdown.
 /// </remarks>
 [Tool]
-internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
+internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorProperty
 {
 	private readonly List<string> _providerClassNames = [];
 	private readonly List<string> _fieldNames = [];
@@ -41,10 +41,10 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 	private StatescriptVariableType _selectedFieldType = StatescriptVariableType.Int;
 
 	/// <inheritdoc/>
-	public override string DisplayName => "Activation Data";
+	public override string DisplayName => "Ability Activation Data";
 
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "ActivationData";
+	public override string ResolverTypeId => "AbilityActivationData";
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
@@ -71,7 +71,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
 
-		if (property?.Resolver is ActivationDataResolverResource activationRes)
+		if (property?.Resolver is AbilityActivationDataResolverResource activationRes)
 		{
 			_selectedProviderClassName = activationRes.ProviderClassName;
 			_selectedFieldName = activationRes.FieldName;
@@ -116,7 +116,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new ActivationDataResolverResource
+		property.Resolver = new AbilityActivationDataResolverResource
 		{
 			ProviderClassName = _selectedProviderClassName,
 			FieldName = _selectedFieldName,
@@ -148,7 +148,7 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 					continue;
 				}
 
-				if (binding.Resolver is ActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				if (binding.Resolver is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
 				{
 					return resolver.ProviderClassName;
 				}
