@@ -70,7 +70,7 @@ Resolvers are bound to node input properties at graph construction time. At runt
 
 When a Godot-authored variable or resolver output needs to feed a different compatible numeric type, Forge for Godot inserts an explicit numeric coercion step during graph build instead of relying on raw `Variant128` reads. That keeps the simplified `Int`/`Float` authoring model safe for existing core resolver signatures.
 
-For the full built-in resolver reference, see [Property Resolvers](resolvers.md). For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
+For the built-in resolver index, see [Property Resolvers](resolvers/README.md). For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
 
 ### Resolution Order
 
@@ -91,7 +91,7 @@ Forge for Godot includes a large built-in resolver set covering:
 - **Spatial math**: Vector, quaternion, plane, and transform operations.
 - **Random generation**: Scalar and spatial random resolvers.
 
-Use the [Property Resolvers](resolvers.md) reference for the full resolver table, output types, and links to the corresponding core Forge documentation.
+Use the [Property Resolvers](resolvers/README.md) reference for the resolver categories, Godot-specific pages, and links to the corresponding core Forge documentation.
 
 ### Activation Data Resolver
 
