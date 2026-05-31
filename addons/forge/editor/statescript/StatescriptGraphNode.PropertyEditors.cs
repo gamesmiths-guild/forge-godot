@@ -17,7 +17,8 @@ public partial class StatescriptGraphNode
 	private void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		Control sectionContainer)
+		Control sectionContainer,
+		Action<bool>? onShapeChanged = null)
 	{
 		if (NodeResource is null)
 		{
@@ -45,8 +46,10 @@ public partial class StatescriptGraphNode
 		headerRow.AddThemeConstantOverride("separation", 5);
 		container.AddChild(headerRow);
 
-		OptionButton valueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(propInfo.IsArray);
-		valueShapeDropdown.Disabled = true;
+		OptionButton valueShapeDropdown =
+			StatescriptEditorControls.CreateValueShapeDropdown(propInfo.IsArray, onShapeChanged);
+
+		valueShapeDropdown.Disabled = onShapeChanged is null;
 
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);

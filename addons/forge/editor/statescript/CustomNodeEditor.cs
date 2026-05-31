@@ -141,12 +141,14 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	/// <param name="propInfo">Metadata about the input property.</param>
 	/// <param name="index">Index of the input property.</param>
 	/// <param name="container">Container to add the input property row to.</param>
+	/// <param name="onShapeChanged">Callback invoked when the shape of the input property changes.</param>
 	protected void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		Control container)
+		Control container,
+		Action<bool>? onShapeChanged = null)
 	{
-		_graphNode!.AddInputPropertyRowInternal(propInfo, index, container);
+		_graphNode!.AddInputPropertyRowInternal(propInfo, index, container, onShapeChanged);
 	}
 
 	/// <summary>

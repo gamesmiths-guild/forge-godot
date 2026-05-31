@@ -49,7 +49,9 @@ internal sealed partial class ActivationDataResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return true;
+		return expectedType == typeof(object)
+			|| expectedType == typeof(Variant128)
+			|| StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _);
 	}
 
 	/// <inheritdoc/>

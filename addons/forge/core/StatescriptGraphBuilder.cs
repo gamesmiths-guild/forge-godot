@@ -121,12 +121,12 @@ public static class StatescriptGraphBuilder
 			{
 				if (variable.IsArray)
 				{
-					graph.VariableDefinitions.DefineReferenceArrayVariable<IForgeEntity>(
+					graph.VariableDefinitions.DefineObjectArrayVariable<IForgeEntity>(
 						new StringKey(variable.VariableName));
 				}
 				else
 				{
-					graph.VariableDefinitions.DefineReferenceVariable<IForgeEntity>(
+					graph.VariableDefinitions.DefineObjectVariable<IForgeEntity>(
 						new StringKey(variable.VariableName));
 				}
 

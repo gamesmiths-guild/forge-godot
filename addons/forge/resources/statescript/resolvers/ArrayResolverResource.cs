@@ -80,7 +80,7 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 				return;
 			}
 
-			graph.VariableDefinitions.DefineReferenceArrayProperty(propertyName, resolver);
+			graph.VariableDefinitions.DefineObjectArrayProperty(propertyName, resolver);
 		}
 		else
 		{

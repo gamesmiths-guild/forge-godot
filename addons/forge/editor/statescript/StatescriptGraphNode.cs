@@ -182,9 +182,10 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void AddInputPropertyRowInternal(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		Control container)
+		Control container,
+		Action<bool>? onShapeChanged = null)
 	{
-		AddInputPropertyRow(propInfo, index, container);
+		AddInputPropertyRow(propInfo, index, container, onShapeChanged);
 	}
 
 	internal void AddOutputVariableRowInternal(
