@@ -20,9 +20,17 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 	private StatescriptVariableType _selectedType = StatescriptVariableType.Int;
 	private bool _selectedIsArray;
+
+	[NonSerialized]
 	private VBoxContainer? _inputRootContainer;
+
+	[NonSerialized]
 	private VBoxContainer? _inputEditorContainer;
+
+	[NonSerialized]
 	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
+
+	[NonSerialized]
 	private FoldableContainer? _typeFoldable;
 
 	/// <inheritdoc/>
@@ -59,6 +67,16 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		{
 			RebuildInputEditor(typeInfo.InputPropertiesInfo[0]);
 		}
+	}
+
+	/// <inheritdoc/>
+	internal override void Unbind()
+	{
+		base.Unbind();
+		_inputRootContainer = null;
+		_inputEditorContainer = null;
+		_cachedTypeInfo = null;
+		_typeFoldable = null;
 	}
 
 	private void BuildTypeRow(VBoxContainer root)
@@ -102,6 +120,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 		NodeResource.CustomData[ValueTypeKey] = Variant.From((int)selectedValue);
 		_selectedType = selectedValue;
+		NotifyGraphResourceChanged();
 		RefreshTypedInputEditor();
 	}
 
@@ -114,6 +133,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 		NodeResource.CustomData[IsArrayKey] = Variant.From(isArray);
 		_selectedIsArray = isArray;
+		NotifyGraphResourceChanged();
 		RefreshTypedInputEditor();
 	}
 

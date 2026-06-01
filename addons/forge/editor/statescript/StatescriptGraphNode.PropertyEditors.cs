@@ -291,6 +291,7 @@ public partial class StatescriptGraphNode
 						VariableType = variable.VariableType,
 						IsArray = variable.IsArray,
 					};
+				NotifyGraphResourceChanged();
 			}
 		}
 
@@ -318,6 +319,7 @@ public partial class StatescriptGraphNode
 			Scope = VariableScope.Graph,
 		};
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
+		NotifyGraphResourceChanged();
 
 		if (_undoRedo is not null)
 		{
@@ -436,6 +438,7 @@ public partial class StatescriptGraphNode
 
 		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
 		resolverEditor.SaveTo(binding);
+		NotifyGraphResourceChanged();
 	}
 
 	private sealed class InputPropertyContext(

@@ -14,8 +14,8 @@ Use the local pages here when a node needs Godot editor, resource, or authoring 
 | **Action** | `DebugNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/README.md#built-in-action-nodes) | — | Logs a resolved input value for debugging. |
 | **Action** | `SetVariableNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/set-variable-node.md) | — | Copies a resolved value into a graph or shared variable. |
 | **Condition** | `ExpressionNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/condition/expression-node.md) | — | Branches execution based on a boolean resolver tree. |
-| **State** | `EffectNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/effect-node.md) | [EffectNode](effect-node.md) | Keeps applied effects active while the node remains active. |
-| **State** | `TimerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/timer-node.md) | — | Keeps a state active for a configured duration. |
+| **State** | `EffectNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/effect-node.md) | [EffectNode](effect-node.md) | Stays active while any effect it applied remains active and exposes an OnEffectEnd event for natural completion. |
+| **State** | `TimerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/timer-node.md) | — | Keeps a state active for a configured duration and exposes an OnTimerEnd event for natural completion. |
 
 ## Future Godot-specific Nodes
 

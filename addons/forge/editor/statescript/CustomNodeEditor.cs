@@ -26,11 +26,18 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// </para>
 /// </remarks>
 [Tool]
-internal abstract partial class CustomNodeEditor : RefCounted
+internal abstract partial class CustomNodeEditor : RefCounted, ISerializationListener
 {
+	[NonSerialized]
 	private StatescriptGraphNode? _graphNode;
+
+	[NonSerialized]
 	private StatescriptGraph? _graph;
+
+	[NonSerialized]
 	private StatescriptNode? _nodeResource;
+
+	[NonSerialized]
 	private Dictionary<PropertySlotKey, NodeEditorProperty>? _activeResolverEditors;
 
 	/// <summary>
@@ -74,6 +81,17 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	/// Gets the undo/redo manager, if available.
 	/// </summary>
 	protected EditorUndoRedoManager? UndoRedo => _graphNode?.GetUndoRedo();
+
+	/// <inheritdoc/>
+	public void OnBeforeSerialize()
+	{
+		Unbind();
+	}
+
+	/// <inheritdoc/>
+	public void OnAfterDeserialize()
+	{
+	}
 
 	/// <summary>
 	/// Stores references needed by helper methods. Called once after the instance is created.
@@ -288,6 +306,14 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	protected void RaisePropertyBindingChanged()
 	{
 		_graphNode!.RaisePropertyBindingChangedInternal();
+	}
+
+	/// <summary>
+	/// Marks the underlying node and graph resources as changed so Godot persists the latest editor mutations.
+	/// </summary>
+	protected void NotifyGraphResourceChanged()
+	{
+		_graphNode!.NotifyGraphResourceChangedInternal();
 	}
 
 	/// <summary>

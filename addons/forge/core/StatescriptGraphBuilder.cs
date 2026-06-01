@@ -221,7 +221,8 @@ public static class StatescriptGraphBuilder
 		{
 			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
 			{
-				if (binding.Resolver is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				if (binding.Resolver
+					is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
 				{
 					if (firstProvider is null)
 					{
@@ -279,7 +280,7 @@ public static class StatescriptGraphBuilder
 			}
 			else
 			{
-				args[i] = GetDefaultValue(param.ParameterType);
+				args[i] = GetParameterDefaultValue(param);
 			}
 		}
 
@@ -358,6 +359,42 @@ public static class StatescriptGraphBuilder
 		}
 
 		return Convert.ChangeType(value.AsString(), targetType, CultureInfo.InvariantCulture);
+	}
+
+	private static object GetParameterDefaultValue(ParameterInfo parameter)
+	{
+		if (!parameter.HasDefaultValue || parameter.DefaultValue is DBNull)
+		{
+			return GetDefaultValue(parameter.ParameterType);
+		}
+
+		object? defaultValue = parameter.DefaultValue;
+
+		if (defaultValue is null)
+		{
+			return null!;
+		}
+
+		Type parameterType = parameter.ParameterType;
+
+		if (parameterType.IsEnum)
+		{
+			return defaultValue.GetType().IsEnum
+				? defaultValue
+				: Enum.ToObject(parameterType, defaultValue);
+		}
+
+		if (parameterType == typeof(StringKey) && defaultValue is string stringKeyValue)
+		{
+			return new StringKey(stringKeyValue);
+		}
+
+		if (parameterType.IsInstanceOfType(defaultValue))
+		{
+			return defaultValue;
+		}
+
+		return Convert.ChangeType(defaultValue, parameterType, CultureInfo.InvariantCulture);
 	}
 
 	private static object GetDefaultValue(Type type)

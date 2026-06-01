@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -13,7 +14,10 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 	private const string TargetIsArrayKey = "_target_input_array";
 	private const string InputFoldKey = "_fold_input";
 
+	[NonSerialized]
 	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
+
+	[NonSerialized]
 	private VBoxContainer? _inputEditorsContainer;
 	private bool _effectIsArray;
 	private bool _targetIsArray;
@@ -78,6 +82,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 
 		_effectIsArray = isArray;
 		NodeResource.CustomData[EffectIsArrayKey] = Variant.From(isArray);
+		NotifyGraphResourceChanged();
 		RemoveBinding(StatescriptPropertyDirection.Input, 0);
 		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
 		RebuildInputEditors();
@@ -94,6 +99,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 
 		_targetIsArray = isArray;
 		NodeResource.CustomData[TargetIsArrayKey] = Variant.From(isArray);
+		NotifyGraphResourceChanged();
 		RemoveBinding(StatescriptPropertyDirection.Input, 1);
 		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 1));
 		RebuildInputEditors();

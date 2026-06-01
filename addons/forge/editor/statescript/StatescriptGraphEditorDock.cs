@@ -971,7 +971,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			_graphEdit.ConnectNode(
 				connection.FromNode,
-				connection.OutputPort,
+				ToVisualOutputPort(connection.FromNode, connection.OutputPort),
 				connection.ToNode,
 				connection.InputPort);
 		}
@@ -1264,16 +1264,19 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		graph.Connections.Clear();
 		foreach (GodotCollections.Dictionary connection in _graphEdit.GetConnectionList())
 		{
+			string fromNode = connection["from_node"].AsString();
 			var connectionResource = new StatescriptConnection
 			{
-				FromNode = connection["from_node"].AsString(),
-				OutputPort = connection["from_port"].AsInt32(),
+				FromNode = fromNode,
+				OutputPort = ToRuntimeOutputPort(fromNode, connection["from_port"].AsInt32()),
 				ToNode = connection["to_node"].AsString(),
 				InputPort = connection["to_port"].AsInt32(),
 			};
 
 			graph.Connections.Add(connectionResource);
 		}
+
+		graph.EmitChanged();
 	}
 
 	private void SyncConnectionsToCurrentGraph()
@@ -1292,6 +1295,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		StatescriptGraph? graph = CurrentGraph;
+		bool changed = false;
+
 		foreach (Node child in _graphEdit.GetChildren())
 		{
 			if (child is not StatescriptGraphNode sgn || sgn.NodeResource is null)
@@ -1299,7 +1305,19 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				continue;
 			}
 
+			if (sgn.NodeResource.PositionOffset == sgn.PositionOffset)
+			{
+				continue;
+			}
+
 			sgn.NodeResource.PositionOffset = sgn.PositionOffset;
+			sgn.NodeResource.EmitChanged();
+			changed = true;
+		}
+
+		if (changed)
+		{
+			graph?.EmitChanged();
 		}
 	}
 
@@ -1350,6 +1368,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		graph.EmitChanged();
 		InvalidateCachedGraphVisuals(graph);
 		LoadGraphIntoEditor(graph);
 	}
@@ -1765,6 +1784,26 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		return -1;
+	}
+
+	private StatescriptGraphNode? FindGraphNodeVisual(string nodeId)
+	{
+		if (_graphEdit is null)
+		{
+			return null;
+		}
+
+		return _graphEdit.GetNodeOrNull(nodeId) as StatescriptGraphNode;
+	}
+
+	private int ToRuntimeOutputPort(string nodeId, int visualOutputPort)
+	{
+		return FindGraphNodeVisual(nodeId)?.VisualToRuntimeOutputPort(visualOutputPort) ?? visualOutputPort;
+	}
+
+	private int ToVisualOutputPort(string nodeId, int runtimeOutputPort)
+	{
+		return FindGraphNodeVisual(nodeId)?.RuntimeToVisualOutputPort(runtimeOutputPort) ?? runtimeOutputPort;
 	}
 
 	private sealed class GraphTab

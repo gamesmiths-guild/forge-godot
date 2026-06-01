@@ -8,6 +8,7 @@ using System.Reflection;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
+using Gamesmiths.Forge.Statescript.Nodes.State;
 using Gamesmiths.Forge.Statescript.Ports;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -339,6 +340,16 @@ internal static class StatescriptNodeDiscovery
 				for (int i = 4; i < count; i++)
 				{
 					labels[i] = $"Event {i}";
+				}
+
+				if (node is EffectNode && count > EffectNode.OnEffectEndPort)
+				{
+					labels[EffectNode.OnEffectEndPort] = "OnEffectEnd";
+				}
+
+				if (node is TimerNode && count > TimerNode.OnTimerEndPort)
+				{
+					labels[TimerNode.OnTimerEndPort] = "OnTimerEnd";
 				}
 
 				break;
