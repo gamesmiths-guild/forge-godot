@@ -134,7 +134,7 @@ Refer to your IDE's documentation for the specific settings locations. Most mode
 ## Next Steps
 
 - [Quick Start Guide](quick-start.md): Get started with Forge for Godot in minutes.
-- [Nodes Documentation](nodes.md): Learn about the custom nodes provided by the plugin.
+- [Forge Nodes Documentation](nodes.md): Learn about the Forge nodes provided by the plugin.
 - [Resources Documentation](resources.md): Explore all configurable resource types—effects, abilities, tags, cues, and more.
 - [Statescript Documentation](statescript/README.md): Learn how to build ability behaviors visually with Statescript graphs.
 - [Helper Classes](helper-classes.md): Find utility classes to streamline effect application, manager access, and integration patterns.

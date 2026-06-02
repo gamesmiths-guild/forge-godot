@@ -44,13 +44,13 @@ public sealed class DebugNode : ActionNode
 
 		if (_valueType == StatescriptVariableType.Entity)
 		{
-			if (graphContext.TryResolveReferenceArray(boundName, out IForgeEntity?[]? entities))
+			if (graphContext.TryResolveObjectArray(boundName, out IForgeEntity?[]? entities))
 			{
 				GD.Print("[Statescript Debug] ", FormatEntityArray(entities));
 				return;
 			}
 
-			if (graphContext.TryResolveReference(boundName, out IForgeEntity? entity))
+			if (graphContext.TryResolveObject(boundName, out IForgeEntity? entity))
 			{
 				GD.Print("[Statescript Debug] ", FormatEntity(entity));
 				return;

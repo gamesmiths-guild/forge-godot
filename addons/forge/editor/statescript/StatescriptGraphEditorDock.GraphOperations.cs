@@ -53,7 +53,12 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		if (WouldCreateLoop(graph, fromNode.ToString(), (int)fromPort, toNode.ToString(), (int)toPort))
+		string fromNodeId = fromNode.ToString();
+		string toNodeId = toNode.ToString();
+		int runtimeFromPort = ToRuntimeOutputPort(fromNodeId, (int)fromPort);
+		int runtimeToPort = (int)toPort;
+
+		if (WouldCreateLoop(graph, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort))
 		{
 			ShowLoopWarningDialog();
 			return;
@@ -65,34 +70,34 @@ public partial class StatescriptGraphEditorDock
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.DoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
+				fromNodeId,
+				runtimeFromPort,
+				toNodeId,
+				runtimeToPort);
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.UndoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
+				fromNodeId,
+				runtimeFromPort,
+				toNodeId,
+				runtimeToPort);
 			_undoRedo.CommitAction();
 		}
 		else
 		{
-			DoConnect(fromNode.ToString(), (int)fromPort, toNode.ToString(), (int)toPort);
+			DoConnect(fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
 		}
 	}
 
 	private void DoConnect(string fromNode, int fromPort, string toNode, int toPort)
 	{
-		_graphEdit?.ConnectNode(fromNode, fromPort, toNode, toPort);
+		_graphEdit?.ConnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
 
 	private void UndoConnect(string fromNode, int fromPort, string toNode, int toPort)
 	{
-		_graphEdit?.DisconnectNode(fromNode, fromPort, toNode, toPort);
+		_graphEdit?.DisconnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
 
@@ -104,23 +109,28 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
+		string fromNodeId = fromNode.ToString();
+		string toNodeId = toNode.ToString();
+		int runtimeFromPort = ToRuntimeOutputPort(fromNodeId, (int)fromPort);
+		int runtimeToPort = (int)toPort;
+
 		if (_undoRedo is not null)
 		{
 			_undoRedo.CreateAction("Disconnect Statescript Nodes", customContext: graph);
 			_undoRedo.AddDoMethod(
 				this,
 				MethodName.UndoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
+				fromNodeId,
+				runtimeFromPort,
+				toNodeId,
+				runtimeToPort);
 			_undoRedo.AddUndoMethod(
 				this,
 				MethodName.DoConnect,
-				fromNode.ToString(),
-				(int)fromPort,
-				toNode.ToString(),
-				(int)toPort);
+				fromNodeId,
+				runtimeFromPort,
+				toNodeId,
+				runtimeToPort);
 			_undoRedo.CommitAction();
 		}
 		else
@@ -169,7 +179,9 @@ public partial class StatescriptGraphEditorDock
 					affectedConnections.Add(new StatescriptConnection
 					{
 						FromNode = connection["from_node"].AsString(),
-						OutputPort = connection["from_port"].AsInt32(),
+						OutputPort = ToRuntimeOutputPort(
+							connection["from_node"].AsString(),
+							connection["from_port"].AsInt32()),
 						ToNode = connection["to_node"].AsString(),
 						InputPort = connection["to_port"].AsInt32(),
 					});
@@ -214,7 +226,7 @@ public partial class StatescriptGraphEditorDock
 			{
 				_graphEdit.DisconnectNode(
 					connection.FromNode,
-					connection.OutputPort,
+					ToVisualOutputPort(connection.FromNode, connection.OutputPort),
 					connection.ToNode,
 					connection.InputPort);
 			}
@@ -224,6 +236,7 @@ public partial class StatescriptGraphEditorDock
 		}
 
 		graph.Nodes.Remove(nodeResource);
+		graph.EmitChanged();
 		SyncConnectionsToCurrentGraph();
 	}
 
@@ -235,6 +248,7 @@ public partial class StatescriptGraphEditorDock
 		graph.Nodes.Add(nodeResource);
 
 		graph.Connections.AddRange(affectedConnections);
+		graph.EmitChanged();
 
 		if (CurrentGraph == graph)
 		{
@@ -369,6 +383,7 @@ public partial class StatescriptGraphEditorDock
 	private void DoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
 		graph.Nodes.Add(nodeResource);
+		graph.EmitChanged();
 
 		if (CurrentGraph == graph && _graphEdit is not null)
 		{
@@ -381,6 +396,7 @@ public partial class StatescriptGraphEditorDock
 	private void UndoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
 		graph.Nodes.Remove(nodeResource);
+		graph.EmitChanged();
 
 		if (CurrentGraph == graph)
 		{
@@ -457,6 +473,7 @@ public partial class StatescriptGraphEditorDock
 			}
 
 			graph.Nodes.Add(duplicated);
+			graph.EmitChanged();
 
 			GraphTab? tab = FindTab(graph);
 			StatescriptGraphNode graphNode = AddGraphNodeVisual(duplicated, graph);
@@ -469,7 +486,11 @@ public partial class StatescriptGraphEditorDock
 			if (duplicatedIds.TryGetValue(connection.FromNode, out string? newFrom)
 				&& duplicatedIds.TryGetValue(connection.ToNode, out string? newTo))
 			{
-				_graphEdit.ConnectNode(newFrom, connection.OutputPort, newTo, connection.InputPort);
+				_graphEdit.ConnectNode(
+					newFrom,
+					ToVisualOutputPort(newFrom, connection.OutputPort),
+					newTo,
+					connection.InputPort);
 			}
 		}
 

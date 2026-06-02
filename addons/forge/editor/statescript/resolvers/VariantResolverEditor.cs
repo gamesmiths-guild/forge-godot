@@ -3,7 +3,6 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -44,7 +43,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return expectedType != typeof(IForgeEntity);
+		return expectedType == typeof(object)
+			|| (StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out StatescriptVariableType valueType)
+				&& valueType != StatescriptVariableType.Entity);
 	}
 
 	/// <inheritdoc/>

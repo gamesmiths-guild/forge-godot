@@ -161,9 +161,9 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 
 		if (elementType == typeof(IForgeEntity))
 		{
-			graph.VariableDefinitions.DefineReferenceArrayProperty(
+			graph.VariableDefinitions.DefineObjectArrayProperty(
 				propertyName,
-				new ReferenceArrayVariableResolver<IForgeEntity>(variableKey, VariableScope.Shared));
+				new ObjectArrayVariableResolver<IForgeEntity>(variableKey, VariableScope.Shared));
 		}
 		else
 		{
@@ -194,7 +194,7 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			}
 		}
 
-		foreach (ReferenceVariableDefinition definition in graph.VariableDefinitions.ReferenceVariableDefinitions)
+		foreach (ObjectVariableDefinition definition in graph.VariableDefinitions.ObjectVariableDefinitions)
 		{
 			if (definition.Name == key)
 			{
@@ -210,8 +210,8 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			}
 		}
 
-		foreach (ReferenceArrayVariableDefinition definition
-			in graph.VariableDefinitions.ReferenceArrayVariableDefinitions)
+		foreach (ObjectArrayVariableDefinition definition
+			in graph.VariableDefinitions.ObjectArrayVariableDefinitions)
 		{
 			if (definition.Name == key)
 			{

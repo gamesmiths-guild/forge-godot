@@ -46,7 +46,7 @@ internal static class StatescriptResolverRegistry
 		{
 			string resolverTypeId = GetResolverTypeId(factories[i]);
 
-			if (!isArray && expectedType == typeof(IForgeEntity) && resolverTypeId == "OwnerEntity")
+			if (!isArray && expectedType == typeof(IForgeEntity) && resolverTypeId == "AbilityOwner")
 			{
 				return i;
 			}

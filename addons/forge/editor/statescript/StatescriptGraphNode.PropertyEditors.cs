@@ -17,7 +17,9 @@ public partial class StatescriptGraphNode
 	private void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		Control sectionContainer)
+		Control sectionContainer,
+		Action<bool>? onShapeChanged = null,
+		string? preferredDefaultResolverTypeId = null)
 	{
 		if (NodeResource is null)
 		{
@@ -45,8 +47,10 @@ public partial class StatescriptGraphNode
 		headerRow.AddThemeConstantOverride("separation", 5);
 		container.AddChild(headerRow);
 
-		OptionButton valueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(propInfo.IsArray);
-		valueShapeDropdown.Disabled = true;
+		OptionButton valueShapeDropdown =
+			StatescriptEditorControls.CreateValueShapeDropdown(propInfo.IsArray, onShapeChanged);
+
+		valueShapeDropdown.Disabled = onShapeChanged is null;
 
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
@@ -108,10 +112,28 @@ public partial class StatescriptGraphNode
 		}
 		else
 		{
-			selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
-				resolverFactories,
-				propInfo.ExpectedType,
-				propInfo.IsArray);
+			selectedIndex = -1;
+
+			if (!string.IsNullOrEmpty(preferredDefaultResolverTypeId))
+			{
+				for (int i = 0; i < resolverFactories.Count; i++)
+				{
+					if (StatescriptResolverRegistry.GetResolverTypeId(resolverFactories[i])
+						== preferredDefaultResolverTypeId)
+					{
+						selectedIndex = i;
+						break;
+					}
+				}
+			}
+
+			if (selectedIndex < 0)
+			{
+				selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
+					resolverFactories,
+					propInfo.ExpectedType,
+					propInfo.IsArray);
+			}
 		}
 
 		resolverDropdown.Selected = selectedIndex;
@@ -269,6 +291,7 @@ public partial class StatescriptGraphNode
 						VariableType = variable.VariableType,
 						IsArray = variable.IsArray,
 					};
+				NotifyGraphResourceChanged();
 			}
 		}
 
@@ -296,6 +319,7 @@ public partial class StatescriptGraphNode
 			Scope = VariableScope.Graph,
 		};
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
+		NotifyGraphResourceChanged();
 
 		if (_undoRedo is not null)
 		{
@@ -414,6 +438,7 @@ public partial class StatescriptGraphNode
 
 		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
 		resolverEditor.SaveTo(binding);
+		NotifyGraphResourceChanged();
 	}
 
 	private sealed class InputPropertyContext(

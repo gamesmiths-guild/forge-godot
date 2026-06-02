@@ -64,9 +64,9 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 		{
 			Type expectedType = runtimeNode.InputProperties[index].ExpectedType;
 			GD.PushError(
-				$"Statescript: Array resolver '{ResolverTypeId}' can only bind to array-typed inputs or dynamic " +
-				$"object inputs. Input index {index} on node '{runtimeNode.GetType().Name}' expects " +
-				$"'{expectedType}'.");
+				$"Statescript: Array resolver '{ResolverTypeId}' can only bind to array-typed inputs, dynamic object " +
+				$"inputs, or scalar inputs whose value type matches the authored array elements. Input index {index} " +
+				$"on node '{runtimeNode.GetType().Name}' expects '{expectedType}'.");
 			return;
 		}
 
@@ -80,7 +80,7 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 				return;
 			}
 
-			graph.VariableDefinitions.DefineReferenceArrayProperty(propertyName, resolver);
+			graph.VariableDefinitions.DefineObjectArrayProperty(propertyName, resolver);
 		}
 		else
 		{
@@ -105,12 +105,26 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 			return true;
 		}
 
-		if (expectedType != typeof(object))
+		if (!TryGetConfiguredElementType(graph, out Type configuredElementType))
 		{
 			elementType = null!;
 			return false;
 		}
 
+		if (expectedType == typeof(object)
+			|| expectedType.IsAssignableFrom(configuredElementType)
+			|| StatescriptNumericCompatibility.CanCoerce(configuredElementType, expectedType))
+		{
+			elementType = configuredElementType;
+			return true;
+		}
+
+		elementType = null!;
+		return false;
+	}
+
+	private bool TryGetConfiguredElementType(Graph graph, out Type elementType)
+	{
 		if (TryInferElementTypeFromResolvers(graph, out Type inferredElementType))
 		{
 			elementType = inferredElementType;

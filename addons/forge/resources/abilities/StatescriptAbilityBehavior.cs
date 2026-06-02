@@ -20,8 +20,8 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 /// <see cref="GraphProcessor"/> with independent <see cref="GraphContext"/> state.
 /// </summary>
 /// <remarks>
-/// If any node in the graph uses an <see cref="ActivationDataResolverResource"/>, the behavior automatically detects
-/// the associated <see cref="IActivationDataProvider"/> implementation and produces the matching
+/// If any node in the graph uses an <see cref="AbilityActivationDataResolverResource"/>, the behavior automatically
+/// detects the associated <see cref="IActivationDataProvider"/> implementation and produces the matching
 /// <see cref="GraphAbilityBehavior{TData}"/> directly. When no activation data resolver is present, a plain
 /// <see cref="GraphAbilityBehavior"/> is created.
 /// </remarks>
@@ -30,9 +30,13 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 [Icon("uid://b6yrjb46fluw3")]
 public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 {
+	private readonly Callable _statescriptChangedCallable;
+
 	private Graph? _cachedGraph;
 
 	private IActivationDataProvider? _cachedProvider;
+
+	private StatescriptGraph? _statescript;
 
 	private bool _providerResolved;
 
@@ -40,7 +44,28 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 	/// Gets or sets the Statescript graph resource that defines the ability's behavior.
 	/// </summary>
 	[Export]
-	public StatescriptGraph? Statescript { get; set; }
+	public StatescriptGraph? Statescript
+	{
+		get => _statescript;
+		set
+		{
+			if (ReferenceEquals(_statescript, value))
+			{
+				return;
+			}
+
+			UnsubscribeFromStatescriptChanged(_statescript);
+			_statescript = value;
+			SubscribeToStatescriptChanged(_statescript);
+			InvalidateCachedBehavior();
+			EmitChanged();
+		}
+	}
+
+	public StatescriptAbilityBehavior()
+	{
+		_statescriptChangedCallable = Callable.From(OnStatescriptChanged);
+	}
 
 	public static IActivationDataProvider? InstantiateProvider(string className)
 	{
@@ -120,7 +145,8 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		{
 			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
 			{
-				if (binding.Resolver is ActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				if (binding.Resolver
+					is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
 				{
 					return InstantiateProvider(resolver.ProviderClassName);
 				}
@@ -140,5 +166,38 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		{
 			return ex.Types.Where(type => type is not null)!;
 		}
+	}
+
+	private void InvalidateCachedBehavior()
+	{
+		_cachedGraph = null;
+		_cachedProvider = null;
+		_providerResolved = false;
+	}
+
+	private void SubscribeToStatescriptChanged(StatescriptGraph? graph)
+	{
+		if (graph?.IsConnected(Resource.SignalName.Changed, _statescriptChangedCallable) != false)
+		{
+			return;
+		}
+
+		graph.Connect(Resource.SignalName.Changed, _statescriptChangedCallable);
+	}
+
+	private void UnsubscribeFromStatescriptChanged(StatescriptGraph? graph)
+	{
+		if (graph?.IsConnected(Resource.SignalName.Changed, _statescriptChangedCallable) != true)
+		{
+			return;
+		}
+
+		graph.Disconnect(Resource.SignalName.Changed, _statescriptChangedCallable);
+	}
+
+	private void OnStatescriptChanged()
+	{
+		InvalidateCachedBehavior();
+		EmitChanged();
 	}
 }

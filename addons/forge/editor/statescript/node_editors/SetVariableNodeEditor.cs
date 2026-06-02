@@ -32,16 +32,28 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private StatescriptVariableType? _resolvedType;
 	private bool _resolvedIsArray;
 
+	[NonSerialized]
 	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
+
+	[NonSerialized]
 	private VBoxContainer? _cachedInputEditorContainer;
+
+	[NonSerialized]
 	private VBoxContainer? _cachedTargetContainer;
 	private int _cachedOutputIndex;
+
+	[NonSerialized]
 	private FoldableContainer? _scopeFoldable;
+
+	[NonSerialized]
 	private FoldableContainer? _targetFoldable;
 
 	private bool _isSharedScope;
 
+	[NonSerialized]
 	private OptionButton? _setDropdown;
+
+	[NonSerialized]
 	private OptionButton? _sharedVarDropdown;
 	private string _selectedSetPath = string.Empty;
 	private string _selectedSharedVarName = string.Empty;
@@ -256,6 +268,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		NodeResource.CustomData[ScopeKey] = Variant.From(isShared
 			? (int)VariableScope.Shared
 			: (int)VariableScope.Graph);
+		NotifyGraphResourceChanged();
 
 		// Clear the output binding since scope changed.
 		RemoveBinding(StatescriptPropertyDirection.Output, index);

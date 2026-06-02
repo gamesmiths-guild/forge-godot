@@ -26,11 +26,18 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// </para>
 /// </remarks>
 [Tool]
-internal abstract partial class CustomNodeEditor : RefCounted
+internal abstract partial class CustomNodeEditor : RefCounted, ISerializationListener
 {
+	[NonSerialized]
 	private StatescriptGraphNode? _graphNode;
+
+	[NonSerialized]
 	private StatescriptGraph? _graph;
+
+	[NonSerialized]
 	private StatescriptNode? _nodeResource;
+
+	[NonSerialized]
 	private Dictionary<PropertySlotKey, NodeEditorProperty>? _activeResolverEditors;
 
 	/// <summary>
@@ -74,6 +81,17 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	/// Gets the undo/redo manager, if available.
 	/// </summary>
 	protected EditorUndoRedoManager? UndoRedo => _graphNode?.GetUndoRedo();
+
+	/// <inheritdoc/>
+	public void OnBeforeSerialize()
+	{
+		Unbind();
+	}
+
+	/// <inheritdoc/>
+	public void OnAfterDeserialize()
+	{
+	}
 
 	/// <summary>
 	/// Stores references needed by helper methods. Called once after the instance is created.
@@ -141,12 +159,21 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	/// <param name="propInfo">Metadata about the input property.</param>
 	/// <param name="index">Index of the input property.</param>
 	/// <param name="container">Container to add the input property row to.</param>
+	/// <param name="onShapeChanged">Callback invoked when the shape of the input property changes.</param>
+	/// <param name="preferredDefaultResolverTypeId">The preferred default resolver type ID.</param>
 	protected void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		Control container)
+		Control container,
+		Action<bool>? onShapeChanged = null,
+		string? preferredDefaultResolverTypeId = null)
 	{
-		_graphNode!.AddInputPropertyRowInternal(propInfo, index, container);
+		_graphNode!.AddInputPropertyRowInternal(
+			propInfo,
+			index,
+			container,
+			onShapeChanged,
+			preferredDefaultResolverTypeId);
 	}
 
 	/// <summary>
@@ -279,6 +306,14 @@ internal abstract partial class CustomNodeEditor : RefCounted
 	protected void RaisePropertyBindingChanged()
 	{
 		_graphNode!.RaisePropertyBindingChangedInternal();
+	}
+
+	/// <summary>
+	/// Marks the underlying node and graph resources as changed so Godot persists the latest editor mutations.
+	/// </summary>
+	protected void NotifyGraphResourceChanged()
+	{
+		_graphNode!.NotifyGraphResourceChangedInternal();
 	}
 
 	/// <summary>

@@ -37,6 +37,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
 	private readonly Dictionary<PropertySlotKey, InputPropertyFoldableContext> _inputPropertyFoldables = [];
 
+	private int[] _visualToRuntimeOutputPortMap = [];
+	private int[] _runtimeToVisualOutputPortMap = [];
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
 	private EditorUndoRedoManager? _undoRedo;
@@ -57,6 +59,20 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	/// Gets the underlying node resource.
 	/// </summary>
 	public StatescriptNode? NodeResource { get; private set; }
+
+	public int VisualToRuntimeOutputPort(int visualPort)
+	{
+		return visualPort >= 0 && visualPort < _visualToRuntimeOutputPortMap.Length
+			? _visualToRuntimeOutputPortMap[visualPort]
+			: visualPort;
+	}
+
+	public int RuntimeToVisualOutputPort(int runtimePort)
+	{
+		return runtimePort >= 0 && runtimePort < _runtimeToVisualOutputPortMap.Length
+			? _runtimeToVisualOutputPortMap[runtimePort]
+			: runtimePort;
+	}
 
 	/// <summary>
 	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
@@ -182,9 +198,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void AddInputPropertyRowInternal(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
-		Control container)
+		Control container,
+		Action<bool>? onShapeChanged = null,
+		string? preferredDefaultResolverTypeId = null)
 	{
-		AddInputPropertyRow(propInfo, index, container);
+		AddInputPropertyRow(propInfo, index, container, onShapeChanged, preferredDefaultResolverTypeId);
 	}
 
 	internal void AddOutputVariableRowInternal(
@@ -278,6 +296,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		PropertyBindingChanged?.Invoke();
 	}
 
+	internal void NotifyGraphResourceChangedInternal()
+	{
+		NotifyGraphResourceChanged();
+	}
+
 	internal void UpdateInputPropertyFoldableTitlesInternal()
 	{
 		UpdateInputPropertyFoldableTitles();
@@ -304,7 +327,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		int maxSlots = Math.Max(typeInfo.InputPortLabels.Length, typeInfo.OutputPortLabels.Length);
+		BuildOutputPortMappings(typeInfo);
+		int maxSlots = Math.Max(typeInfo.InputPortLabels.Length, _visualToRuntimeOutputPortMap.Length);
 
 		for (int slot = 0; slot < maxSlots; slot++)
 		{
@@ -329,18 +353,19 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				hBox.AddChild(spacer);
 			}
 
-			if (slot < typeInfo.OutputPortLabels.Length)
+			if (slot < _visualToRuntimeOutputPortMap.Length)
 			{
+				int runtimeOutputSlot = VisualToRuntimeOutputPort(slot);
 				var outputLabel = new Label
 				{
-					Text = typeInfo.OutputPortLabels[slot],
+					Text = typeInfo.OutputPortLabels[runtimeOutputSlot],
 					HorizontalAlignment = HorizontalAlignment.Right,
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
 
 				hBox.AddChild(outputLabel);
 				SetSlotEnabledRight(slot, true);
-				Color portColor = typeInfo.IsSubgraphPort[slot] ? _subgraphColor : _eventColor;
+				Color portColor = typeInfo.IsSubgraphPort[runtimeOutputSlot] ? _subgraphColor : _eventColor;
 				SetSlotColorRight(slot, portColor);
 			}
 		}
@@ -403,6 +428,38 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			{
 				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
 			}
+		}
+	}
+
+	private void BuildOutputPortMappings(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		int outputCount = typeInfo.OutputPortLabels.Length;
+		_visualToRuntimeOutputPortMap = new int[outputCount];
+		_runtimeToVisualOutputPortMap = new int[outputCount];
+
+		int visualIndex = 0;
+		for (int runtimeIndex = 0; runtimeIndex < outputCount; runtimeIndex++)
+		{
+			if (typeInfo.IsSubgraphPort[runtimeIndex])
+			{
+				continue;
+			}
+
+			_visualToRuntimeOutputPortMap[visualIndex] = runtimeIndex;
+			_runtimeToVisualOutputPortMap[runtimeIndex] = visualIndex;
+			visualIndex++;
+		}
+
+		for (int runtimeIndex = 0; runtimeIndex < outputCount; runtimeIndex++)
+		{
+			if (!typeInfo.IsSubgraphPort[runtimeIndex])
+			{
+				continue;
+			}
+
+			_visualToRuntimeOutputPortMap[visualIndex] = runtimeIndex;
+			_runtimeToVisualOutputPortMap[runtimeIndex] = visualIndex;
+			visualIndex++;
 		}
 	}
 
@@ -492,6 +549,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		NodeResource.CustomData[key] = Variant.From(folded);
+		NotifyGraphResourceChanged();
 	}
 
 	private void SetFoldStateWithUndo(string key, bool folded)
@@ -593,6 +651,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		NodeResource.CustomData[CustomWidthKey] = Variant.From(width);
+		NotifyGraphResourceChanged();
 	}
 
 	private void ApplyResolverBinding(
@@ -610,7 +669,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		binding.Resolver = resolverVariant.VariantType == Variant.Type.Nil
 			? null
 			: resolverVariant.AsGodotObject() as StatescriptResolverResource;
+		NotifyGraphResourceChanged();
 		RebuildNode();
+	}
+
+	private void NotifyGraphResourceChanged()
+	{
+		NodeResource?.EmitChanged();
+		_graph?.EmitChanged();
 	}
 
 	private void RebuildNode()
@@ -669,6 +735,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			};
 
 			NodeResource!.PropertyBindings.Add(binding);
+			NotifyGraphResourceChanged();
 		}
 
 		return binding;
@@ -681,6 +748,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
+		bool removedAny = false;
 		for (int i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
 		{
 			StatescriptNodeProperty binding = NodeResource.PropertyBindings[i];
@@ -688,7 +756,13 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			if (binding.Direction == direction && binding.PropertyIndex == propertyIndex)
 			{
 				NodeResource.PropertyBindings.RemoveAt(i);
+				removedAny = true;
 			}
+		}
+
+		if (removedAny)
+		{
+			NotifyGraphResourceChanged();
 		}
 	}
 }

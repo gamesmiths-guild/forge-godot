@@ -44,11 +44,11 @@ public partial class ForgeSharedVariableSet : Resource
 			{
 				if (definition.IsArray)
 				{
-					target.DefineReferenceArrayVariable<IForgeEntity>(key, []);
+					target.DefineObjectArrayVariable<IForgeEntity>(key, []);
 				}
 				else
 				{
-					target.DefineReferenceVariable<IForgeEntity>(key);
+					target.DefineObjectVariable<IForgeEntity>(key);
 				}
 
 				continue;

@@ -16,7 +16,7 @@ public abstract partial class EntityResolverResourceBase : StatescriptResolverRe
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		var propertyKey = new StringKey($"__entity_{nodeId}_{index}");
-		graph.VariableDefinitions.DefineReferenceProperty(propertyKey, BuildEntityResolver(graph));
+		graph.VariableDefinitions.DefineObjectProperty(propertyKey, BuildEntityResolver(graph));
 		runtimeNode.BindInput(index, propertyKey);
 	}
 }

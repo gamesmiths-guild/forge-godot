@@ -70,7 +70,7 @@ Resolvers are bound to node input properties at graph construction time. At runt
 
 When a Godot-authored variable or resolver output needs to feed a different compatible numeric type, Forge for Godot inserts an explicit numeric coercion step during graph build instead of relying on raw `Variant128` reads. That keeps the simplified `Int`/`Float` authoring model safe for existing core resolver signatures.
 
-For the full built-in resolver reference, see [Property Resolvers](resolvers.md). For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
+For the built-in resolver index, see [Property Resolvers](resolvers/README.md). For how to create your own resolvers, see [Custom Resolvers](custom-resolvers.md).
 
 ### Resolution Order
 
@@ -91,7 +91,7 @@ Forge for Godot includes a large built-in resolver set covering:
 - **Spatial math**: Vector, quaternion, plane, and transform operations.
 - **Random generation**: Scalar and spatial random resolvers.
 
-Use the [Property Resolvers](resolvers.md) reference for the full resolver table, output types, and links to the corresponding core Forge documentation.
+Use the [Property Resolvers](resolvers/README.md) reference for the resolver categories, Godot-specific pages, and links to the corresponding core Forge documentation.
 
 ### Activation Data Resolver
 
@@ -102,11 +102,11 @@ Reads a field from custom activation data passed when the ability was activated.
 - **Field Name**: The name of the field to read.
 - **Field Type**: The expected type of the field.
 
-**Behavior:** At graph build time, the resolver builds Forge's core `ActivationDataResolver`. At runtime, `StatescriptAbilityBehavior` creates the matching `GraphAbilityBehavior<TData>` and the resolver reads the selected public field or property directly from the typed activation-data payload.
+**Behavior:** At graph build time, the resolver builds Forge's core `AbilityActivationDataResolver`. At runtime, `StatescriptAbilityBehavior` creates the matching `GraphAbilityBehavior<TData>` and the resolver reads the selected public field or property directly from the typed activation-data payload.
 
 > **Note:** A graph supports only one activation data provider at a time. If you need multiple data types, combine them into a single provider.
 
-For implementation details on creating activation data providers, see [Custom Nodes](custom-nodes.md#activation-data-providers).
+For implementation details on creating activation data providers, see [Custom Statescript Nodes](nodes/custom-nodes.md#activation-data-providers).
 
 ## Data Flow Summary
 

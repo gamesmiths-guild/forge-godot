@@ -1,0 +1,159 @@
+// Copyright © Gamesmiths Guild.
+
+#if TOOLS
+using System;
+using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Godot;
+
+namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
+
+internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEditor
+{
+	private const string EffectIsArrayKey = "_effect_input_array";
+	private const string TargetIsArrayKey = "_target_input_array";
+	private const string InputFoldKey = "_fold_input";
+
+	[NonSerialized]
+	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
+
+	[NonSerialized]
+	private VBoxContainer? _inputEditorsContainer;
+	private bool _effectIsArray;
+	private bool _targetIsArray;
+
+	/// <inheritdoc/>
+	public override void BuildPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		_cachedTypeInfo = typeInfo;
+
+		_effectIsArray = ResolveInputShape(
+			EffectIsArrayKey,
+			FindBinding(StatescriptPropertyDirection.Input, 0));
+		_targetIsArray = ResolveInputShape(
+			TargetIsArrayKey,
+			FindBinding(StatescriptPropertyDirection.Input, 1));
+
+		FoldableContainer inputContainer = AddPropertySectionDivider(
+			"Input Properties",
+			InputPropertyColor,
+			InputFoldKey,
+			GetFoldState(InputFoldKey));
+
+		var root = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		inputContainer.AddChild(root);
+
+		_inputEditorsContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		root.AddChild(_inputEditorsContainer);
+
+		RebuildInputEditors();
+	}
+
+	/// <inheritdoc/>
+	internal override void Unbind()
+	{
+		base.Unbind();
+		_cachedTypeInfo = null;
+		_inputEditorsContainer = null;
+	}
+
+	private bool ResolveInputShape(string customDataKey, StatescriptNodeProperty? binding)
+	{
+		if (NodeResource.CustomData.TryGetValue(customDataKey, out Variant storedValue))
+		{
+			return storedValue.AsBool();
+		}
+
+		return binding?.Resolver switch
+		{
+			EffectDataResolverResource effectResolver => effectResolver.IsArray,
+			VariableResolverResource variableResolver => variableResolver.IsArray,
+			ArrayResolverResource => true,
+			_ => false,
+		};
+	}
+
+	private void OnEffectShapeChanged(bool isArray)
+	{
+		if (_effectIsArray == isArray)
+		{
+			return;
+		}
+
+		_effectIsArray = isArray;
+		NodeResource.CustomData[EffectIsArrayKey] = Variant.From(isArray);
+		NotifyGraphResourceChanged();
+		RemoveBinding(StatescriptPropertyDirection.Input, 0);
+		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
+		RebuildInputEditors();
+		RaisePropertyBindingChanged();
+		ResetSize();
+	}
+
+	private void OnTargetShapeChanged(bool isArray)
+	{
+		if (_targetIsArray == isArray)
+		{
+			return;
+		}
+
+		_targetIsArray = isArray;
+		NodeResource.CustomData[TargetIsArrayKey] = Variant.From(isArray);
+		NotifyGraphResourceChanged();
+		RemoveBinding(StatescriptPropertyDirection.Input, 1);
+		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 1));
+		RebuildInputEditors();
+		RaisePropertyBindingChanged();
+		ResetSize();
+	}
+
+	private void RebuildInputEditors()
+	{
+		if (_cachedTypeInfo is null || _inputEditorsContainer is null || _cachedTypeInfo.InputPropertiesInfo.Length < 2)
+		{
+			return;
+		}
+
+		for (int i = 0; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
+		{
+			ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, i));
+		}
+
+		ClearContainer(_inputEditorsContainer);
+
+		StatescriptNodeDiscovery.InputPropertyInfo effectInfo = _cachedTypeInfo.InputPropertiesInfo[0];
+		StatescriptNodeDiscovery.InputPropertyInfo targetInfo = _cachedTypeInfo.InputPropertiesInfo[1];
+
+		AddInputPropertyRow(
+			new StatescriptNodeDiscovery.InputPropertyInfo(
+				effectInfo.Label,
+				effectInfo.ExpectedType,
+				_effectIsArray),
+			0,
+			_inputEditorsContainer,
+			OnEffectShapeChanged);
+		AddInputPropertyRow(
+			new StatescriptNodeDiscovery.InputPropertyInfo(
+				targetInfo.Label,
+				targetInfo.ExpectedType,
+				_targetIsArray),
+			1,
+			_inputEditorsContainer,
+			OnTargetShapeChanged);
+
+		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
+		{
+			string? preferredDefaultResolverTypeId =
+				i == 2 && _cachedTypeInfo.InputPropertiesInfo[i].Label == "Level"
+					? "AbilityLevel"
+					: null;
+
+			AddInputPropertyRow(
+				_cachedTypeInfo.InputPropertiesInfo[i],
+				i,
+				_inputEditorsContainer,
+				preferredDefaultResolverTypeId: preferredDefaultResolverTypeId);
+		}
+	}
+}
+#endif
