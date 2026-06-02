@@ -8,7 +8,6 @@ using System.Reflection;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
-using Gamesmiths.Forge.Statescript.Nodes.State;
 using Gamesmiths.Forge.Statescript.Ports;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -237,133 +236,55 @@ internal static class StatescriptNodeDiscovery
 
 	private static string[] GetInputPortLabels(Node node, StatescriptNodeType nodeType)
 	{
-		int count = node.InputPorts.Length;
-		string[] labels = new string[count];
+		return GetPortLabels(node.InputPorts, index => GetFallbackInputPortLabel(nodeType, index));
+	}
 
-		switch (nodeType)
+	private static string[] GetOutputPortLabels(Node node, StatescriptNodeType nodeType)
+	{
+		return GetPortLabels(node.OutputPorts, index => GetFallbackOutputPortLabel(nodeType, index));
+	}
+
+	private static string[] GetPortLabels<TPort>(TPort[] ports, Func<int, string> fallbackLabelFactory)
+		where TPort : Port
+	{
+		string[] labels = new string[ports.Length];
+
+		for (int i = 0; i < ports.Length; i++)
 		{
-			case StatescriptNodeType.Action:
-				if (count >= 1)
-				{
-					labels[0] = "Execute";
-				}
-
-				break;
-
-			case StatescriptNodeType.Condition:
-				if (count >= 1)
-				{
-					labels[0] = "Condition";
-				}
-
-				break;
-
-			case StatescriptNodeType.State:
-				if (count >= 1)
-				{
-					labels[0] = "Begin";
-				}
-
-				if (count >= 2)
-				{
-					labels[1] = "Abort";
-				}
-
-				for (int i = 2; i < count; i++)
-				{
-					labels[i] = $"Input {i}";
-				}
-
-				break;
-
-			default:
-				for (int i = 0; i < count; i++)
-				{
-					labels[i] = $"Input {i}";
-				}
-
-				break;
+			labels[i] = string.IsNullOrWhiteSpace(ports[i].Label)
+				? fallbackLabelFactory(i)
+				: ports[i].Label;
 		}
 
 		return labels;
 	}
 
-	private static string[] GetOutputPortLabels(Node node, StatescriptNodeType nodeType)
+	private static string GetFallbackInputPortLabel(StatescriptNodeType nodeType, int index)
 	{
-		int count = node.OutputPorts.Length;
-		string[] labels = new string[count];
-
-		switch (nodeType)
+		return nodeType switch
 		{
-			case StatescriptNodeType.Action:
-				if (count >= 1)
-				{
-					labels[0] = "Done";
-				}
+			StatescriptNodeType.Action when index == 0 => "Execute",
+			StatescriptNodeType.Condition when index == 0 => "Condition",
+			StatescriptNodeType.State when index == 0 => "Begin",
+			StatescriptNodeType.State when index == 1 => "Abort",
+			_ => $"Input {index}",
+		};
+	}
 
-				break;
-
-			case StatescriptNodeType.Condition:
-				if (count >= 1)
-				{
-					labels[0] = "True";
-				}
-
-				if (count >= 2)
-				{
-					labels[1] = "False";
-				}
-
-				break;
-
-			case StatescriptNodeType.State:
-				if (count >= 1)
-				{
-					labels[0] = "OnActivate";
-				}
-
-				if (count >= 2)
-				{
-					labels[1] = "OnDeactivate";
-				}
-
-				if (count >= 3)
-				{
-					labels[2] = "OnAbort";
-				}
-
-				if (count >= 4)
-				{
-					labels[3] = "Subgraph";
-				}
-
-				for (int i = 4; i < count; i++)
-				{
-					labels[i] = $"Event {i}";
-				}
-
-				if (node is EffectNode && count > EffectNode.OnEffectEndPort)
-				{
-					labels[EffectNode.OnEffectEndPort] = "OnEffectEnd";
-				}
-
-				if (node is TimerNode && count > TimerNode.OnTimerEndPort)
-				{
-					labels[TimerNode.OnTimerEndPort] = "OnTimerEnd";
-				}
-
-				break;
-
-			default:
-				for (int i = 0; i < count; i++)
-				{
-					labels[i] = $"Output {i}";
-				}
-
-				break;
-		}
-
-		return labels;
+	private static string GetFallbackOutputPortLabel(StatescriptNodeType nodeType, int index)
+	{
+		return nodeType switch
+		{
+			StatescriptNodeType.Action when index == 0 => "Done",
+			StatescriptNodeType.Condition when index == 0 => "True",
+			StatescriptNodeType.Condition when index == 1 => "False",
+			StatescriptNodeType.State when index == 0 => "OnActivate",
+			StatescriptNodeType.State when index == 1 => "OnDeactivate",
+			StatescriptNodeType.State when index == 2 => "OnAbort",
+			StatescriptNodeType.State when index == 3 => "Subgraph",
+			StatescriptNodeType.State => $"Event {index}",
+			_ => $"Output {index}",
+		};
 	}
 
 	private static bool[] GetSubgraphFlags(Node node)
