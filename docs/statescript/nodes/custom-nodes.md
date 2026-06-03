@@ -204,8 +204,8 @@ public class TickingNode : StateNode<TickingNodeContext>
         // Call base to get the standard ports (Input, Abort, OnActivate, OnDeactivate, OnAbort, Subgraph).
         base.DefinePorts(inputPorts, outputPorts);
 
-        // Add custom event port.
-        outputPorts.Add(CreatePort<EventPort>(OnTickPort));
+        // Add custom event port. The label is what the Godot graph editor will show.
+        outputPorts.Add(CreatePort<EventPort>(OnTickPort, "OnTick"));
     }
 
     protected override void OnActivate(GraphContext graphContext)
@@ -308,6 +308,8 @@ else
 For your custom nodes to appear in the Statescript graph editor, they must be discoverable by the `StatescriptGraphBuilder`. The builder resolves node types by their fully qualified C# type name from loaded assemblies.
 
 When you add a node in the graph editor, select your custom node type from the available options. The editor stores the `RuntimeTypeName` in the `StatescriptNode` resource. At build time, the builder instantiates the node via reflection, passing `CustomData` entries as constructor parameters.
+
+Port labels also come from the runtime node definition. When creating ports, pass a label to `CreatePort<T>(index, label)` so custom flow and event ports appear in the graph editor with the names defined by your node, without changing any plugin code.
 
 **Constructor parameter mapping:**
 

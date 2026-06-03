@@ -14,6 +14,8 @@ By default, when a node is displayed in the graph editor, its input properties a
 
 Most custom nodes **don't need** a custom node editor. The default rendering works well for nodes with independent input properties. Only create a custom editor when the default behavior is insufficient.
 
+Port labels are not, by themselves, a reason to create a custom node editor. The default node rendering reads labels from the runtime node's ports, so custom flow, event, and subgraph port names should be defined in the Forge node with `CreatePort<T>(index, "Label")`.
+
 ### Creating a Custom Node Editor
 
 **Requirements:**
