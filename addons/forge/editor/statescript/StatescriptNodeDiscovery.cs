@@ -251,9 +251,10 @@ internal static class StatescriptNodeDiscovery
 
 		for (int i = 0; i < ports.Length; i++)
 		{
-			labels[i] = string.IsNullOrWhiteSpace(ports[i].Label)
+			string? label = ports[i].Label;
+			labels[i] = string.IsNullOrWhiteSpace(label)
 				? fallbackLabelFactory(i)
-				: ports[i].Label;
+				: label;
 		}
 
 		return labels;
