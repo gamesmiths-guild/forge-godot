@@ -59,6 +59,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private int[]? _serializedConnectionCounts;
 	private bool _persistedVariablesPanelVisible = true;
 	private bool _sharedVariableHighlightSubscribed;
+	private bool _uiSignalsConnected;
+	private bool _pendingRestoreTabs;
 
 	/// <summary>
 	/// Gets the currently active graph resource, if any.
@@ -75,6 +77,22 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		DockIcon = GD.Load<Texture2D>("uid://b6yrjb46fluw3");
 
 		AvailableLayouts = DockLayout.Horizontal | DockLayout.Floating;
+	}
+
+	public override void _EnterTree()
+	{
+		base._EnterTree();
+
+		ConnectUISignals();
+		SubscribeSharedVariableHighlightState();
+
+		if (_fileSystem is not null
+			&& !_fileSystem.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable))
+		{
+			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		TryRestoreTabsDeferred();
 	}
 
 	public override void _Ready()
@@ -94,40 +112,32 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
 		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
 
-		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		if (!_fileSystem.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable))
+		{
+			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		ConnectUISignals();
 		SubscribeSharedVariableHighlightState();
+		TryRestoreTabsDeferred();
 	}
 
 	public override void _ExitTree()
 	{
 		base._ExitTree();
-		UnsubscribeSharedVariableHighlightState();
 
-		ClearGraphEditor();
-		DisposeCachedGraphVisuals();
-		_openTabs.Clear();
+		DisconnectUISignals();
+		UnsubscribeSharedVariableHighlightState();
 
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
 			== true)
 		{
 			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
 		}
-
-		DisconnectUISignals();
-		_fileSystem = null;
-		_filesystemChangedCallable = default;
 	}
 
 	public void OnBeforeSerialize()
 	{
-		UnsubscribeSharedVariableHighlightState();
-
-		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
-			== true)
-		{
-			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
-		}
-
 		_serializedTabPaths = GetOpenResourcePaths();
 		_serializedActiveTab = GetActiveTabIndex();
 		_serializedVariablesStates = GetVariablesPanelStates();
@@ -159,40 +169,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		_serializedConnections = [.. allConnections];
-
-		DisconnectUISignals();
-		ClearGraphEditor();
-
-		if (_tabBar is not null)
-		{
-			while (_tabBar.GetTabCount() > 0)
-			{
-				_tabBar.RemoveTab(0);
-			}
-		}
-
-		DisposeCachedGraphVisuals();
-
-		_openTabs.Clear();
 	}
 
 	public void OnAfterDeserialize()
 	{
-		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
-
-		if (_fileSystem?.
-			IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable) == false)
-		{
-			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
-		}
-
-		ConnectUISignals();
-		SubscribeSharedVariableHighlightState();
-
-		if (_serializedTabPaths?.Length > 0)
-		{
-			_ = RestoreTabsDeferred();
-		}
+		_pendingRestoreTabs = _serializedTabPaths?.Length > 0;
 	}
 
 	public override void _Notification(int what)
@@ -560,6 +541,28 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 	}
 
+	private void TryRestoreTabsDeferred()
+	{
+		if (!_pendingRestoreTabs)
+		{
+			return;
+		}
+
+		if (!IsInsideTree() || _tabBar is null || _graphEdit is null)
+		{
+			return;
+		}
+
+		if (_openTabs.Count > 0)
+		{
+			_pendingRestoreTabs = false;
+			return;
+		}
+
+		_pendingRestoreTabs = false;
+		_ = RestoreTabsDeferred();
+	}
+
 	private async Task RestoreTabsDeferred()
 	{
 		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -732,8 +735,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			DragToRearrangeEnabled = true,
 		};
 
-		_tabBar.TabChanged += OnTabChanged;
-		_tabBar.TabClosePressed += OnTabClosePressed;
 		tabBarHBox.AddChild(_tabBar);
 
 		_contentPanel = new PanelContainer
@@ -761,15 +762,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			GridPattern = GraphEdit.GridPatternEnum.Dots,
 		};
 
-		_graphEdit.ConnectionRequest += OnConnectionRequest;
-		_graphEdit.DisconnectionRequest += OnDisconnectionRequest;
-		_graphEdit.DeleteNodesRequest += OnDeleteNodesRequest;
-		_graphEdit.BeginNodeMove += OnBeginNodeMove;
-		_graphEdit.EndNodeMove += OnEndNodeMove;
-		_graphEdit.PopupRequest += OnGraphEditPopupRequest;
-		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
-		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
-		_graphEdit.GuiInput += OnGraphEditGuiInput;
 		_splitContainer.AddChild(_graphEdit);
 
 		_variablePanel = new StatescriptVariablePanel
@@ -777,9 +769,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			Visible = true,
 		};
 
-		_variablePanel.VariablesChanged += OnGraphVariablesChanged;
-		_variablePanel.VariableUndoRedoPerformed += OnVariableUndoRedoPerformed;
-		_variablePanel.VariableHighlightChanged += OnVariableHighlightChanged;
 		_splitContainer.AddChild(_variablePanel);
 
 		if (_undoRedo is not null)
@@ -811,7 +800,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_fileMenuPopup.AddSeparator();
 		_fileMenuPopup.AddItem("Close", 4, Key.W | (Key)KeyModifierMask.MaskCtrl);
 #pragma warning restore RCS1130, S3265 // Bitwise operation on enum without Flags attribute
-		_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
 
 		menuHBox.AddChild(_fileMenuButton);
 		menuHBox.MoveChild(_fileMenuButton, 0);
@@ -825,8 +813,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			Text = "Add Node...",
 			ThemeTypeVariation = "FlatButton",
 		};
-
-		_addNodeButton.Pressed += OnAddNodeButtonPressed;
 
 		menuHBox.AddChild(_addNodeButton);
 		menuHBox.MoveChild(_addNodeButton, 2);
@@ -842,7 +828,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("SubViewport", "EditorIcons"),
 		};
 
-		_variablesToggleButton.Toggled += OnVariablesToggled;
 		menuHBox.AddChild(_variablesToggleButton);
 
 		var spacer = new Control
@@ -859,7 +844,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("ExternalLink", "EditorIcons"),
 		};
 
-		_onlineDocsButton.Pressed += OnOnlineDocsPressed;
 		menuHBox.AddChild(_onlineDocsButton);
 
 		_emptyLabel = new Label
@@ -875,8 +859,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_contentPanel.AddChild(_emptyLabel);
 
 		_addNodeDialog = new StatescriptAddNodeDialog();
-		_addNodeDialog.NodeCreationRequested += OnDialogNodeCreationRequested;
-		_addNodeDialog.Canceled += OnDialogCanceled;
 		AddChild(_addNodeDialog);
 
 		UpdateTheme();
@@ -1630,6 +1612,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void DisconnectUISignals()
 	{
+		if (!_uiSignalsConnected)
+		{
+			return;
+		}
+
+		_uiSignalsConnected = false;
+
 		if (_tabBar is not null)
 		{
 			_tabBar.TabChanged -= OnTabChanged;
@@ -1685,24 +1674,25 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void ConnectUISignals()
 	{
-		if (_tabBar is not null)
+		if (_uiSignalsConnected || _tabBar is null || _graphEdit is null)
 		{
-			_tabBar.TabChanged += OnTabChanged;
-			_tabBar.TabClosePressed += OnTabClosePressed;
+			return;
 		}
 
-		if (_graphEdit is not null)
-		{
-			_graphEdit.ConnectionRequest += OnConnectionRequest;
-			_graphEdit.DisconnectionRequest += OnDisconnectionRequest;
-			_graphEdit.DeleteNodesRequest += OnDeleteNodesRequest;
-			_graphEdit.BeginNodeMove += OnBeginNodeMove;
-			_graphEdit.EndNodeMove += OnEndNodeMove;
-			_graphEdit.PopupRequest += OnGraphEditPopupRequest;
-			_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
-			_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
-			_graphEdit.GuiInput += OnGraphEditGuiInput;
-		}
+		_uiSignalsConnected = true;
+
+		_tabBar.TabChanged += OnTabChanged;
+		_tabBar.TabClosePressed += OnTabClosePressed;
+
+		_graphEdit.ConnectionRequest += OnConnectionRequest;
+		_graphEdit.DisconnectionRequest += OnDisconnectionRequest;
+		_graphEdit.DeleteNodesRequest += OnDeleteNodesRequest;
+		_graphEdit.BeginNodeMove += OnBeginNodeMove;
+		_graphEdit.EndNodeMove += OnEndNodeMove;
+		_graphEdit.PopupRequest += OnGraphEditPopupRequest;
+		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
+		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
+		_graphEdit.GuiInput += OnGraphEditGuiInput;
 
 		if (_fileMenuPopup is not null)
 		{
