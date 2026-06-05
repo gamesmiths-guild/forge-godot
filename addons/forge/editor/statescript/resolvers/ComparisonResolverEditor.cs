@@ -70,11 +70,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		_numericFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(_numericExpectedTypes);
 
-		_numericFactories.RemoveAll(x =>
-		{
-			using NodeEditorProperty temp = x();
-			return temp.ResolverTypeId == "Comparison";
-		});
+		_numericFactories.RemoveAll(x => StatescriptResolverRegistry.GetResolverTypeId(x) == ResolverTypeId);
 
 		var comparisonResolver = property?.Resolver as ComparisonResolverResource;
 

@@ -29,6 +29,8 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 	private RichTextLabel? _descriptionLabel;
 
 	private bool _isFiltering;
+	private bool _uiBuilt;
+	private bool _signalsConnected;
 
 	/// <summary>
 	/// Raised when the user confirms node creation. The first argument is the selected
@@ -52,6 +54,12 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		OkButtonText = "Create";
 	}
 
+	public override void _EnterTree()
+	{
+		base._EnterTree();
+		ConnectSignals();
+	}
+
 	public override void _Ready()
 	{
 		base._Ready();
@@ -64,8 +72,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 		GetOkButton().Disabled = true;
 
-		Confirmed += OnConfirmed;
-		Canceled += OnCanceled;
+		ConnectSignals();
 	}
 
 	public override void _ExitTree()
@@ -82,6 +89,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 	public void OnAfterDeserialize()
 	{
+		_signalsConnected = false;
 		ConnectSignals();
 	}
 
@@ -147,7 +155,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 			RightIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Search", "EditorIcons"),
 		};
 
-		_searchBar.TextChanged += OnSearchTextChanged;
 		searchHBox.AddChild(_searchBar);
 
 		_expandCollapseButton = new MenuButton
@@ -160,7 +167,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		_expandCollapsePopup = _expandCollapseButton.GetPopup();
 		_expandCollapsePopup.AddItem("Expand All", 0);
 		_expandCollapsePopup.AddItem("Collapse All", 1);
-		_expandCollapsePopup.IdPressed += OnExpandCollapseMenuPressed;
 		searchHBox.AddChild(_expandCollapseButton);
 
 		_tree = new Tree
@@ -171,8 +177,6 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 			SelectMode = Tree.SelectModeEnum.Single,
 		};
 
-		_tree.ItemSelected += OnTreeItemSelected;
-		_tree.ItemActivated += OnTreeItemActivated;
 		vBox.AddChild(_tree);
 
 		_descriptionHeader = new Label
@@ -190,6 +194,8 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		};
 
 		vBox.AddChild(_descriptionLabel);
+
+		_uiBuilt = true;
 	}
 
 	private void PopulateTree(string filter = "")
@@ -380,6 +386,13 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 	private void DisconnectSignals()
 	{
+		if (!_signalsConnected)
+		{
+			return;
+		}
+
+		_signalsConnected = false;
+
 		Confirmed -= OnConfirmed;
 		Canceled -= OnCanceled;
 
@@ -402,6 +415,13 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 	private void ConnectSignals()
 	{
+		if (!_uiBuilt || _signalsConnected)
+		{
+			return;
+		}
+
+		_signalsConnected = true;
+
 		Confirmed += OnConfirmed;
 		Canceled += OnCanceled;
 

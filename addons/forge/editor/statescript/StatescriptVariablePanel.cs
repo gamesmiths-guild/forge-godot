@@ -43,6 +43,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	private EditorUndoRedoManager? _undoRedo;
 
 	private string? _selectedVariableName;
+	private bool _signalsConnected;
 
 	/// <summary>
 	/// Raised when any variable is added, removed, or its value changes.
@@ -89,7 +90,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			CustomMinimumSize = new Vector2(28, 28),
 		};
 
-		_addButton.Pressed += OnAddPressed;
 		headerHBox.AddChild(_addButton);
 
 		var separator = new HSeparator();
@@ -111,28 +111,33 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		};
 
 		scrollContainer.AddChild(_variableList);
+
+		ConnectSignals();
+	}
+
+	public override void _EnterTree()
+	{
+		base._EnterTree();
+		ConnectSignals();
 	}
 
 	public override void _ExitTree()
 	{
+		DisconnectSignals();
 		base._ExitTree();
-		ReleaseUiState();
 	}
 
 	public void OnBeforeSerialize()
 	{
+		SaveExpandedArrayState();
 		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
 	{
 		EnsureControlsCached();
-
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed += OnAddPressed;
-		}
-
+		_signalsConnected = false;
+		ConnectSignals();
 		RebuildList();
 	}
 
@@ -221,6 +226,39 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		_variableList ??= GetNodeOrNull<VBoxContainer>($"{VariablesScrollNodeName}/{VariableListNodeName}");
 	}
 
+	private void ConnectSignals()
+	{
+		if (_signalsConnected)
+		{
+			return;
+		}
+
+		EnsureControlsCached();
+
+		if (_addButton is null || !IsInstanceValid(_addButton))
+		{
+			return;
+		}
+
+		_addButton.Pressed += OnAddPressed;
+		_signalsConnected = true;
+	}
+
+	private void DisconnectSignals()
+	{
+		if (!_signalsConnected)
+		{
+			return;
+		}
+
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		_signalsConnected = false;
+	}
+
 	private void ClearVariableList()
 	{
 		EnsureControlsCached();
@@ -239,10 +277,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	private void ReleaseUiState()
 	{
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
+		DisconnectSignals();
 
 		ClearVariableList();
 

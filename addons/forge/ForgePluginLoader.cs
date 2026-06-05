@@ -94,6 +94,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		if (_statescriptGraphEditorDock is not null)
 		{
+			_statescriptGraphEditorDock.Release();
 			RemoveDock(_statescriptGraphEditorDock);
 			_statescriptGraphEditorDock.Free();
 			_statescriptGraphEditorDock = null;
