@@ -86,8 +86,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		ConnectUISignals();
 		SubscribeSharedVariableHighlightState();
 
-		if (_fileSystem is not null
-			&& !_fileSystem.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable))
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			== false)
 		{
 			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
 		}
@@ -169,18 +169,42 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		_serializedConnections = [.. allConnections];
+
+		ReleaseEditorRuntimeState();
 	}
 
 	public void OnAfterDeserialize()
 	{
 		_pendingRestoreTabs = _serializedTabPaths?.Length > 0;
+		_uiSignalsConnected = false;
+		_sharedVariableHighlightSubscribed = false;
+		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
+
+		if (EditorInterface.Singleton is not null)
+		{
+			_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
+		}
+
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			== false)
+		{
+			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		ConnectUISignals();
+		SubscribeSharedVariableHighlightState();
+		TryRestoreTabsDeferred();
 	}
 
 	public override void _Notification(int what)
 	{
 		base._Notification(what);
 
-		if (what == NotificationThemeChanged)
+		if (what == NotificationPredelete)
+		{
+			ReleaseEditorRuntimeState();
+		}
+		else if (what == NotificationThemeChanged)
 		{
 			UpdateTheme();
 		}
@@ -193,6 +217,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	public void SetUndoRedo(EditorUndoRedoManager undoRedo)
 	{
 		_undoRedo = undoRedo;
+	}
+
+	public void Release()
+	{
+		ReleaseEditorRuntimeState();
 	}
 
 	/// <summary>
@@ -539,6 +568,36 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			ResourceSaver.Save(graph);
 		}
+	}
+
+	private void ReleaseEditorRuntimeState()
+	{
+		DisconnectUISignals();
+		UnsubscribeSharedVariableHighlightState();
+
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			== true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+		}
+
+		_fileSystem = null;
+		_filesystemChangedCallable = default;
+
+		ReleaseNewStatescriptDialog();
+		ClearGraphEditor();
+
+		if (_tabBar is not null)
+		{
+			while (_tabBar.GetTabCount() > 0)
+			{
+				_tabBar.RemoveTab(0);
+			}
+		}
+
+		DisposeCachedGraphVisuals();
+
+		_openTabs.Clear();
 	}
 
 	private void TryRestoreTabsDeferred()

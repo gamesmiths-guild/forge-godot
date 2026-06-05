@@ -36,7 +36,7 @@ public partial class StatescriptGraphEditorDock
 
 	private void ShowNewStatescriptDialog()
 	{
-		_newStatescriptDialog?.QueueFree();
+		ReleaseNewStatescriptDialog();
 
 		_newStatescriptDialog = new AcceptDialog
 		{
@@ -98,8 +98,26 @@ public partial class StatescriptGraphEditorDock
 			OpenGraph(graph);
 		}
 
-		_newStatescriptDialog?.QueueFree();
+		if (_newStatescriptDialog is not null && IsInstanceValid(_newStatescriptDialog))
+		{
+			_newStatescriptDialog.Confirmed -= OnNewStatescriptConfirmed;
+			_newStatescriptDialog.QueueFree();
+		}
+
 		_newStatescriptDialog = null;
+		_newStatescriptPathEdit = null;
+	}
+
+	private void ReleaseNewStatescriptDialog()
+	{
+		if (_newStatescriptDialog is not null && IsInstanceValid(_newStatescriptDialog))
+		{
+			_newStatescriptDialog.Confirmed -= OnNewStatescriptConfirmed;
+			_newStatescriptDialog.Free();
+		}
+
+		_newStatescriptDialog = null;
+		_newStatescriptPathEdit = null;
 	}
 
 	private void ShowLoadStatescriptDialog()

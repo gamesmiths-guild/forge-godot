@@ -130,11 +130,13 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	public void OnBeforeSerialize()
 	{
 		SaveExpandedArrayState();
+		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
 	{
 		EnsureControlsCached();
+		_signalsConnected = false;
 		ConnectSignals();
 		RebuildList();
 	}
@@ -275,10 +277,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	private void ReleaseUiState()
 	{
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
+		DisconnectSignals();
 
 		ClearVariableList();
 

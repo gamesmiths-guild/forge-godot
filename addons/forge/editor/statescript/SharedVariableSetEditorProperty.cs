@@ -42,6 +42,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 	private Texture2D? _addIcon;
 	private Texture2D? _removeIcon;
 	private string? _selectedVariableName;
+	private bool _signalsConnected;
 
 	/// <summary>
 	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
@@ -55,7 +56,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 	public override void _Ready()
 	{
 		base._Ready();
-		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
@@ -106,7 +106,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
-		_addButton.Pressed += OnAddPressed;
 		headerHBox.AddChild(_addButton);
 
 		_root.AddChild(new HSeparator());
@@ -117,6 +116,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 		_root.AddChild(_variableList);
+
+		ConnectSignals();
 	}
 
 	public override void _UpdateProperty()
@@ -134,7 +135,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	public override void _ExitTree()
 	{
-		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
+		DisconnectSignals();
 
 		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
 		{
@@ -149,20 +150,15 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	public void OnBeforeSerialize()
 	{
-		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
 		ReleaseUiState();
 	}
 
 	public void OnAfterDeserialize()
 	{
 		EnsureControlsCached();
-		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
+		_signalsConnected = false;
+		ConnectSignals();
 		SyncSelectedVariableFromHighlightState();
-
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed += OnAddPressed;
-		}
 
 		RebuildList();
 	}
@@ -255,10 +251,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void ReleaseUiState()
 	{
-		if (_addButton is not null && IsInstanceValid(_addButton))
-		{
-			_addButton.Pressed -= OnAddPressed;
-		}
+		DisconnectSignals();
 
 		ClearVariableList();
 
@@ -276,6 +269,40 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		_root = null;
 		_variableList = null;
 		_addButton = null;
+	}
+
+	private void ConnectSignals()
+	{
+		if (_signalsConnected)
+		{
+			return;
+		}
+
+		SharedVariableHighlightState.Changed += OnSharedVariableHighlightChanged;
+
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed += OnAddPressed;
+		}
+
+		_signalsConnected = true;
+	}
+
+	private void DisconnectSignals()
+	{
+		if (!_signalsConnected)
+		{
+			return;
+		}
+
+		SharedVariableHighlightState.Changed -= OnSharedVariableHighlightChanged;
+
+		if (_addButton is not null && IsInstanceValid(_addButton))
+		{
+			_addButton.Pressed -= OnAddPressed;
+		}
+
+		_signalsConnected = false;
 	}
 
 	private void FreeAllChildren()

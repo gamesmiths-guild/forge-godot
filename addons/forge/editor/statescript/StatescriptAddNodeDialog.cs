@@ -83,11 +83,13 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 	public void OnBeforeSerialize()
 	{
-		// Intentionally left blank. This can be triggered by editor layout changes without a deserialize step.
+		DisconnectSignals();
+		NodeCreationRequested = null;
 	}
 
 	public void OnAfterDeserialize()
 	{
+		_signalsConnected = false;
 		ConnectSignals();
 	}
 
