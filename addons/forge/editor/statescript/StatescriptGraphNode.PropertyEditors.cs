@@ -212,26 +212,25 @@ public partial class StatescriptGraphNode
 		StatescriptNodeProperty? updated = FindBinding(StatescriptPropertyDirection.Input, index);
 		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Change Resolver Type", customContext: _graph);
-
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.ApplyResolverBinding,
-				(int)StatescriptPropertyDirection.Input,
-				index,
-				Variant.From(newResolver));
-
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.ApplyResolverBinding,
-				(int)StatescriptPropertyDirection.Input,
-				index,
-				Variant.From(oldResolver));
-
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Change Resolver Type",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Input,
+					index,
+					Variant.From(newResolver));
+				undo.AddUndoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Input,
+					index,
+					Variant.From(oldResolver));
+			});
 
 		PropertyBindingChanged?.Invoke();
 		ResetSize();
@@ -329,26 +328,25 @@ public partial class StatescriptGraphNode
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
 		NotifyGraphResourceChanged();
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Change Output Variable", customContext: _graph);
-
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.ApplyResolverBinding,
-				(int)StatescriptPropertyDirection.Output,
-				index,
-				(StatescriptResolverResource)newResolver.Duplicate());
-
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.ApplyResolverBinding,
-				(int)StatescriptPropertyDirection.Output,
-				index,
-				Variant.From(oldResolver));
-
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Change Output Variable",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Output,
+					index,
+					(StatescriptResolverResource)newResolver.Duplicate());
+				undo.AddUndoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)StatescriptPropertyDirection.Output,
+					index,
+					Variant.From(oldResolver));
+			});
 
 		PropertyBindingChanged?.Invoke();
 	}
@@ -404,26 +402,25 @@ public partial class StatescriptGraphNode
 		StatescriptNodeProperty? updated = FindBinding(direction, propertyIndex);
 		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Change Node Property", customContext: _graph);
-
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.ApplyResolverBinding,
-				(int)direction,
-				propertyIndex,
-				Variant.From(newResolver));
-
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.ApplyResolverBinding,
-				(int)direction,
-				propertyIndex,
-				Variant.From(oldResolver));
-
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Change Node Property",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)direction,
+					propertyIndex,
+					Variant.From(newResolver));
+				undo.AddUndoMethod(
+					this,
+					MethodName.ApplyResolverBinding,
+					(int)direction,
+					propertyIndex,
+					Variant.From(oldResolver));
+			});
 
 		if (direction == StatescriptPropertyDirection.Input)
 		{

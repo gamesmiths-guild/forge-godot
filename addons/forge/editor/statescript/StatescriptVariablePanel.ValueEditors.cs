@@ -113,21 +113,15 @@ internal sealed partial class StatescriptVariablePanel
 
 			SaveExpandedArrayState();
 
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Toggle Array Expand", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoSetArrayExpanded,
-					variable.VariableName,
-					x);
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.DoSetArrayExpanded,
-					variable.VariableName,
-					wasExpanded);
-				_undoRedo.CommitAction(false);
-			}
+			EditorUndoRedoUtils.Record(
+				_undoRedo,
+				"Toggle Array Expand",
+				_graph,
+				undo =>
+				{
+					undo.AddDoMethod(this, MethodName.DoSetArrayExpanded, variable.VariableName, x);
+					undo.AddUndoMethod(this, MethodName.DoSetArrayExpanded, variable.VariableName, wasExpanded);
+				});
 		};
 
 		headerRow.AddChild(toggleButton);
@@ -151,24 +145,17 @@ internal sealed partial class StatescriptVariablePanel
 			Variant defaultValue =
 				StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variable.VariableType);
 
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Add Array Element", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoAddArrayElement,
-					variable,
-					defaultValue);
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.UndoAddArrayElement,
-					variable);
-				_undoRedo.CommitAction();
-			}
-			else
-			{
-				DoAddArrayElement(variable, defaultValue);
-			}
+			EditorUndoRedoUtils.Record(
+				_undoRedo,
+				"Add Array Element",
+				_graph,
+				undo =>
+				{
+					undo.AddDoMethod(this, MethodName.DoAddArrayElement, variable, defaultValue);
+					undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, variable);
+				},
+				execute: true,
+				fallback: () => DoAddArrayElement(variable, defaultValue));
 		};
 
 		headerRow.AddChild(addElementButton);
@@ -187,7 +174,7 @@ internal sealed partial class StatescriptVariablePanel
 
 				elementRow.AddChild(StatescriptEditorControls.CreateBoolEditor(
 					variable.InitialArrayValues[i].AsBool(),
-					x => SetArrayElementValue(
+					x => SetArrayElementValueWithUndo(
 						variable,
 						capturedIndex,
 						Variant.From(x))));
@@ -220,7 +207,7 @@ internal sealed partial class StatescriptVariablePanel
 						Variant newValue = StatescriptEditorControls.BuildVectorVariant(
 							variable.VariableType,
 							x);
-						SetArrayElementValue(variable, capturedIndex, newValue);
+						SetArrayElementValueWithUndo(variable, capturedIndex, newValue);
 					});
 
 				elementVBox.AddChild(vectorEditor);
@@ -239,7 +226,7 @@ internal sealed partial class StatescriptVariablePanel
 						Variant newValue = StatescriptEditorControls.IsIntegerType(variable.VariableType)
 							? Variant.From((long)x)
 							: Variant.From(x);
-						SetArrayElementValue(variable, capturedIndex, newValue);
+						SetArrayElementValueWithUndo(variable, capturedIndex, newValue);
 					});
 
 				elementRow.AddChild(elementSpin);
@@ -264,28 +251,19 @@ internal sealed partial class StatescriptVariablePanel
 
 		removeElementButton.Pressed += () =>
 		{
-			if (_undoRedo is not null)
-			{
-				Variant removedValue = variable.InitialArrayValues[elementIndex];
+			Variant removedValue = variable.InitialArrayValues[elementIndex];
 
-				_undoRedo.CreateAction("Remove Array Element", customContext: _graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoRemoveArrayElement,
-					variable,
-					elementIndex);
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.UndoRemoveArrayElement,
-					variable,
-					elementIndex,
-					removedValue);
-				_undoRedo.CommitAction();
-			}
-			else
-			{
-				DoRemoveArrayElement(variable, elementIndex);
-			}
+			EditorUndoRedoUtils.Record(
+				_undoRedo,
+				"Remove Array Element",
+				_graph,
+				undo =>
+				{
+					undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, variable, elementIndex);
+					undo.AddUndoMethod(this, MethodName.UndoRemoveArrayElement, variable, elementIndex, removedValue);
+				},
+				execute: true,
+				fallback: () => DoRemoveArrayElement(variable, elementIndex));
 		};
 
 		row.AddChild(removeElementButton);

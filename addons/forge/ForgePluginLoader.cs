@@ -37,6 +37,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		EnsureForgeDataExists();
 
 		_tagsEditorDock = new TagsEditorDock();
+		_tagsEditorDock.SetUndoRedo(GetUndoRedo());
 		AddDock(_tagsEditorDock);
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();

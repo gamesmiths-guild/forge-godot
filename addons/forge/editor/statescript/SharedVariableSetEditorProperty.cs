@@ -563,21 +563,15 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 				_expandedArrays.Remove(def.VariableName);
 			}
 
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Toggle Array Expand");
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoSetArrayExpanded,
-					def.VariableName,
-					x);
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.DoSetArrayExpanded,
-					def.VariableName,
-					wasExpanded);
-				_undoRedo.CommitAction(false);
-			}
+			EditorUndoRedoUtils.Record(
+				_undoRedo,
+				"Toggle Array Expand",
+				null,
+				undo =>
+				{
+					undo.AddDoMethod(this, MethodName.DoSetArrayExpanded, def.VariableName, x);
+					undo.AddUndoMethod(this, MethodName.DoSetArrayExpanded, def.VariableName, wasExpanded);
+				});
 		};
 
 		headerRow.AddChild(toggleButton);
@@ -703,13 +697,15 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		def.InitialValue = newValue;
 		NotifyChanged();
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction($"Change Shared Variable '{def.VariableName}'");
-			_undoRedo.AddDoMethod(this, MethodName.ApplyVariableValue, def, newValue);
-			_undoRedo.AddUndoMethod(this, MethodName.ApplyVariableValue, def, oldValue);
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			$"Change Shared Variable '{def.VariableName}'",
+			null,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyVariableValue, def, newValue);
+				undo.AddUndoMethod(this, MethodName.ApplyVariableValue, def, oldValue);
+			});
 	}
 
 	private void SetArrayElementValue(ForgeSharedVariableDefinition def, int index, Variant newValue)
@@ -719,30 +715,32 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		def.InitialArrayValues[index] = newValue;
 		NotifyChanged();
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction($"Change Shared Variable '{def.VariableName}' Element [{index}]");
-			_undoRedo.AddDoMethod(this, MethodName.ApplyArrayElementValue, def, index, newValue);
-			_undoRedo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, def, index, oldValue);
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			$"Change Shared Variable '{def.VariableName}' Element [{index}]",
+			null,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyArrayElementValue, def, index, newValue);
+				undo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, def, index, oldValue);
+			});
 	}
 
 	private void AddArrayElement(ForgeSharedVariableDefinition def, Variant value)
 	{
 		bool wasExpanded = _expandedArrays.Contains(def.VariableName);
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction($"Add Element to '{def.VariableName}'");
-			_undoRedo.AddDoMethod(this, MethodName.DoAddArrayElement, def, value);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddArrayElement, def, wasExpanded);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoAddArrayElement(def, value);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			$"Add Element to '{def.VariableName}'",
+			null,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoAddArrayElement, def, value);
+				undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, def, wasExpanded);
+			},
+			execute: true,
+			fallback: () => DoAddArrayElement(def, value));
 	}
 
 	private void RemoveArrayElement(ForgeSharedVariableDefinition def, int index)
@@ -754,17 +752,17 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		Variant oldValue = def.InitialArrayValues[index];
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction($"Remove Element [{index}] from '{def.VariableName}'");
-			_undoRedo.AddDoMethod(this, MethodName.DoRemoveArrayElement, def, index);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveArrayElement, def, index, oldValue);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoRemoveArrayElement(def, index);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			$"Remove Element [{index}] from '{def.VariableName}'",
+			null,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, def, index);
+				undo.AddUndoMethod(this, MethodName.UndoRemoveArrayElement, def, index, oldValue);
+			},
+			execute: true,
+			fallback: () => DoRemoveArrayElement(def, index));
 	}
 
 	private void OnAddPressed()
@@ -841,17 +839,17 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Add Shared Variable");
-			_undoRedo.AddDoMethod(this, MethodName.DoAddVariable, definitions, newDef);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddVariable, definitions, newDef);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoAddVariable(definitions, newDef);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Add Shared Variable",
+			null,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoAddVariable, definitions, newDef);
+				undo.AddUndoMethod(this, MethodName.UndoAddVariable, definitions, newDef);
+			},
+			execute: true,
+			fallback: () => DoAddVariable(definitions, newDef));
 
 		CleanupCreationDialog();
 	}
@@ -881,17 +879,17 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		ForgeSharedVariableDefinition variable = definitions[index];
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Remove Shared Variable");
-			_undoRedo.AddDoMethod(this, MethodName.DoRemoveVariable, definitions, variable, index);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveVariable, definitions, variable, index);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoRemoveVariable(definitions, index);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Remove Shared Variable",
+			null,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoRemoveVariable, definitions, variable, index);
+				undo.AddUndoMethod(this, MethodName.UndoRemoveVariable, definitions, variable, index);
+			},
+			execute: true,
+			fallback: () => DoRemoveVariable(definitions, index));
 	}
 
 	private void ApplyVariableValue(ForgeSharedVariableDefinition def, Variant value)

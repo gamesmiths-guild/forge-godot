@@ -23,6 +23,8 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 
 	private ForgeData? _forgePluginData;
 
+	private EditorUndoRedoManager? _undoRedo;
+
 	private Tree? _tree;
 	private LineEdit? _tagNameTextField;
 	private Button? _addTagButton;
@@ -35,6 +37,15 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 		Title = "Tags";
 		DockIcon = GD.Load<Texture2D>("uid://cu6ncpuumjo20");
 		DefaultSlot = DockSlot.RightUl;
+	}
+
+	/// <summary>
+	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
+	/// </summary>
+	/// <param name="undoRedo">The undo/redo manager from the editor plugin.</param>
+	public void SetUndoRedo(EditorUndoRedoManager undoRedo)
+	{
+		_undoRedo = undoRedo;
 	}
 
 	public override void _Ready()
@@ -151,10 +162,10 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 			return;
 		}
 
-		_forgePluginData.RegisteredTags.Add(_tagNameTextField.Text);
-		ResourceSaver.Save(_forgePluginData);
+		string[] oldTags = [.. _forgePluginData.RegisteredTags];
+		string[] newTags = [.. oldTags, _tagNameTextField.Text];
 
-		ReconstructTreeNode();
+		RecordRegisteredTagsChange($"Add Tag '{_tagNameTextField.Text}'", oldTags, newTags);
 	}
 
 	private void ReconstructTreeNode()
@@ -224,27 +235,55 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 			{
 				TagNode selectedTag = _treeItemToNode[item];
 
-				for (int i = _forgePluginData.RegisteredTags.Count - 1; i >= 0; i--)
+				string[] oldTags = [.. _forgePluginData.RegisteredTags];
+				var newTags = new List<string>(oldTags);
+
+				for (int i = newTags.Count - 1; i >= 0; i--)
 				{
-					string tag = _forgePluginData.RegisteredTags[i];
+					string tag = newTags[i];
 
 					if (string.Equals(tag, selectedTag.CompleteTagKey, StringComparison.OrdinalIgnoreCase) ||
 						tag.StartsWith(selectedTag.CompleteTagKey + ".", StringComparison.InvariantCultureIgnoreCase))
 					{
-						_forgePluginData.RegisteredTags.Remove(tag);
+						newTags.RemoveAt(i);
 					}
 				}
 
 				if (selectedTag.ParentTagNode is not null
-					&& !_forgePluginData.RegisteredTags.Contains(selectedTag.ParentTagNode.CompleteTagKey))
+					&& !newTags.Contains(selectedTag.ParentTagNode.CompleteTagKey))
 				{
-					_forgePluginData.RegisteredTags.Add(selectedTag.ParentTagNode.CompleteTagKey);
+					newTags.Add(selectedTag.ParentTagNode.CompleteTagKey);
 				}
 
-				ResourceSaver.Save(_forgePluginData);
-				ReconstructTreeNode();
+				RecordRegisteredTagsChange($"Remove Tag '{selectedTag.CompleteTagKey}'", oldTags, [.. newTags]);
 			}
 		}
+	}
+
+	private void RecordRegisteredTagsChange(string actionName, string[] oldTags, string[] newTags)
+	{
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			actionName,
+			_forgePluginData,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyRegisteredTags, newTags);
+				undo.AddUndoMethod(this, MethodName.ApplyRegisteredTags, oldTags);
+			},
+			execute: true,
+			fallback: () => ApplyRegisteredTags(newTags));
+	}
+
+	private void ApplyRegisteredTags(string[] tags)
+	{
+		EnsureInitialized();
+
+		_forgePluginData.RegisteredTags.Clear();
+		_forgePluginData.RegisteredTags.AddRange(tags);
+		ResourceSaver.Save(_forgePluginData);
+
+		ReconstructTreeNode();
 	}
 
 	[MemberNotNull(nameof(_tagsManager), nameof(_tree), nameof(_tagNameTextField), nameof(_forgePluginData))]
