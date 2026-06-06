@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
+using GodotCollections = Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -36,6 +37,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
 	private readonly Dictionary<PropertySlotKey, InputPropertyFoldableContext> _inputPropertyFoldables = [];
+	private readonly Dictionary<int, PendingInputConfig> _pendingInputConfigs = [];
 
 	private int[] _visualToRuntimeOutputPortMap = [];
 	private int[] _runtimeToVisualOutputPortMap = [];
@@ -168,6 +170,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		_inputPropertyContexts.Clear();
 		_foldableKeys.Clear();
 		_inputPropertyFoldables.Clear();
+		_pendingInputConfigs.Clear();
 
 		_activeCustomEditor?.Unbind();
 		_activeCustomEditor = null;
@@ -199,10 +202,10 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control container,
-		Action<bool>? onShapeChanged = null,
+		string? shapeCustomDataKey = null,
 		string? preferredDefaultResolverTypeId = null)
 	{
-		AddInputPropertyRow(propInfo, index, container, onShapeChanged, preferredDefaultResolverTypeId);
+		AddInputPropertyRow(propInfo, index, container, shapeCustomDataKey, preferredDefaultResolverTypeId);
 	}
 
 	internal void AddOutputVariableRowInternal(
@@ -306,6 +309,44 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		UpdateInputPropertyFoldableTitles();
 	}
 
+	/// <summary>
+	/// Requests an input-property type/shape change for a single slot with full undo/redo support.
+	/// </summary>
+	/// <remarks>
+	/// This is the single entry point used both by standard shape dropdowns (wired automatically in
+	/// <see cref="AddInputPropertyRow"/>) and by custom dropdowns in node editors (via
+	/// <see cref="CustomNodeEditor.ChangeInputPropertyConfig"/>). The actual mutation is deferred so the dropdown that
+	/// emitted the change is not freed mid-signal by the node rebuild, and repeated changes to the same slot within a
+	/// frame are coalesced into a single undo action.
+	/// </remarks>
+	/// <param name="propertyIndex">The input slot whose configuration changes.</param>
+	/// <param name="customData">The CustomData entries to store (e.g. value type and/or array shape).</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	internal void ChangeInputPropertyConfigInternal(
+		int propertyIndex,
+		GodotCollections.Dictionary customData,
+		string actionName)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		// Merge into any change already queued for this slot this frame so none is lost before the deferred flush.
+		if (_pendingInputConfigs.TryGetValue(propertyIndex, out PendingInputConfig? pending))
+		{
+			foreach (KeyValuePair<Variant, Variant> entry in customData)
+			{
+				pending.CustomData[entry.Key] = entry.Value;
+			}
+
+			return;
+		}
+
+		_pendingInputConfigs[propertyIndex] = new PendingInputConfig(customData, actionName);
+		CallDeferred(MethodName.FlushInputPropertyConfig, propertyIndex);
+	}
+
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
 	{
 		return resolver.ResolverTypeId;
@@ -316,13 +357,28 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		foreach (Node child in container.GetChildren())
 		{
 			container.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 	}
 
 	private static string GetInputPropertyFoldKey(int propertyIndex)
 	{
 		return $"{FoldInputPropertyKeyPrefix}{propertyIndex}";
+	}
+
+	private static bool VariantEquals(Variant a, Variant b)
+	{
+		if (a.VariantType != b.VariantType)
+		{
+			return false;
+		}
+
+		return a.VariantType switch
+		{
+			Variant.Type.Bool => a.AsBool() == b.AsBool(),
+			Variant.Type.Int => a.AsInt64() == b.AsInt64(),
+			_ => a.AsString() == b.AsString(),
+		};
 	}
 
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
@@ -673,6 +729,93 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		RebuildNode();
 	}
 
+	private void FlushInputPropertyConfig(int propertyIndex)
+	{
+		if (!_pendingInputConfigs.Remove(propertyIndex, out PendingInputConfig? pending) || NodeResource is null)
+		{
+			return;
+		}
+
+		GodotCollections.Dictionary newData = pending.CustomData;
+
+		// Snapshot the current values of exactly the keys being changed so they can be restored on undo, and detect
+		// whether anything actually changes (dropdowns can re-emit the already-selected value).
+		var oldData = new GodotCollections.Dictionary();
+		bool changed = false;
+
+		foreach (KeyValuePair<Variant, Variant> entry in newData)
+		{
+			string key = entry.Key.AsString();
+			bool had = NodeResource.CustomData.TryGetValue(key, out Variant existing);
+			oldData[key] = had ? existing : default;
+
+			if (!had || !VariantEquals(existing, entry.Value))
+			{
+				changed = true;
+			}
+		}
+
+		if (!changed)
+		{
+			return;
+		}
+
+		var oldResolver = FindBinding(StatescriptPropertyDirection.Input, propertyIndex)?.Resolver?.Duplicate()
+			as StatescriptResolverResource;
+
+		// Changing an input's type/shape invalidates its resolver, so the binding is reset (passing a Nil resolver).
+		ApplyInputPropertyConfig(newData, propertyIndex, default);
+
+		if (_undoRedo is not null)
+		{
+			_undoRedo.CreateAction(pending.ActionName, customContext: _graph);
+			_undoRedo.AddDoMethod(
+				this,
+				MethodName.ApplyInputPropertyConfig,
+				newData,
+				propertyIndex,
+				Variant.From((StatescriptResolverResource?)null));
+			_undoRedo.AddUndoMethod(
+				this,
+				MethodName.ApplyInputPropertyConfig,
+				oldData,
+				propertyIndex,
+				Variant.From(oldResolver));
+			_undoRedo.CommitAction(false);
+		}
+
+		PropertyBindingChanged?.Invoke();
+	}
+
+	private void ApplyInputPropertyConfig(
+		GodotCollections.Dictionary customData,
+		int propertyIndex,
+		Variant resolverVariant)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		foreach (KeyValuePair<Variant, Variant> entry in customData)
+		{
+			NodeResource.CustomData[entry.Key.AsString()] = entry.Value;
+		}
+
+		if (resolverVariant.VariantType == Variant.Type.Nil)
+		{
+			RemoveBinding(StatescriptPropertyDirection.Input, propertyIndex);
+		}
+		else
+		{
+			EnsureBinding(StatescriptPropertyDirection.Input, propertyIndex).Resolver =
+				resolverVariant.AsGodotObject() as StatescriptResolverResource;
+		}
+
+		NotifyGraphResourceChanged();
+		RebuildNode();
+	}
+
 	private void NotifyGraphResourceChanged()
 	{
 		NodeResource?.EmitChanged();
@@ -765,6 +908,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			NotifyGraphResourceChanged();
 		}
 	}
+
+	private sealed record PendingInputConfig(GodotCollections.Dictionary CustomData, string ActionName);
 }
 
 /// <summary>

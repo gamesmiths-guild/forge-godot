@@ -7,6 +7,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
 using Godot;
+using GodotCollections = Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -18,7 +19,7 @@ public partial class StatescriptGraphNode
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control sectionContainer,
-		Action<bool>? onShapeChanged = null,
+		string? shapeCustomDataKey = null,
 		string? preferredDefaultResolverTypeId = null)
 	{
 		if (NodeResource is null)
@@ -47,10 +48,17 @@ public partial class StatescriptGraphNode
 		headerRow.AddThemeConstantOverride("separation", 5);
 		container.AddChild(headerRow);
 
+		Action<bool>? onShapeChanged = shapeCustomDataKey is null
+			? null
+			: isArray => ChangeInputPropertyConfigInternal(
+				index,
+				new GodotCollections.Dictionary { { shapeCustomDataKey, isArray } },
+				"Change Input Shape");
+
 		OptionButton valueShapeDropdown =
 			StatescriptEditorControls.CreateValueShapeDropdown(propInfo.IsArray, onShapeChanged);
 
-		valueShapeDropdown.Disabled = onShapeChanged is null;
+		valueShapeDropdown.Disabled = shapeCustomDataKey is null;
 
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);

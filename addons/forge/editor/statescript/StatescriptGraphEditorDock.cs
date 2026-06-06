@@ -112,9 +112,10 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
 		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
 
-		if (!_fileSystem.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable))
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable)
+			!= true)
 		{
-			_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
+			_fileSystem?.Connect(EditorFileSystem.SignalName.ResourcesReimported, _filesystemChangedCallable);
 		}
 
 		ConnectUISignals();

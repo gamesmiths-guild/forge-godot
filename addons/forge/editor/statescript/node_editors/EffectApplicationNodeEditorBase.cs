@@ -19,6 +19,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 
 	[NonSerialized]
 	private VBoxContainer? _inputEditorsContainer;
+
 	private bool _effectIsArray;
 	private bool _targetIsArray;
 
@@ -73,40 +74,6 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 		};
 	}
 
-	private void OnEffectShapeChanged(bool isArray)
-	{
-		if (_effectIsArray == isArray)
-		{
-			return;
-		}
-
-		_effectIsArray = isArray;
-		NodeResource.CustomData[EffectIsArrayKey] = Variant.From(isArray);
-		NotifyGraphResourceChanged();
-		RemoveBinding(StatescriptPropertyDirection.Input, 0);
-		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
-		RebuildInputEditors();
-		RaisePropertyBindingChanged();
-		ResetSize();
-	}
-
-	private void OnTargetShapeChanged(bool isArray)
-	{
-		if (_targetIsArray == isArray)
-		{
-			return;
-		}
-
-		_targetIsArray = isArray;
-		NodeResource.CustomData[TargetIsArrayKey] = Variant.From(isArray);
-		NotifyGraphResourceChanged();
-		RemoveBinding(StatescriptPropertyDirection.Input, 1);
-		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 1));
-		RebuildInputEditors();
-		RaisePropertyBindingChanged();
-		ResetSize();
-	}
-
 	private void RebuildInputEditors()
 	{
 		if (_cachedTypeInfo is null || _inputEditorsContainer is null || _cachedTypeInfo.InputPropertiesInfo.Length < 2)
@@ -131,7 +98,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 				_effectIsArray),
 			0,
 			_inputEditorsContainer,
-			OnEffectShapeChanged);
+			EffectIsArrayKey);
 		AddInputPropertyRow(
 			new StatescriptNodeDiscovery.InputPropertyInfo(
 				targetInfo.Label,
@@ -139,7 +106,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 				_targetIsArray),
 			1,
 			_inputEditorsContainer,
-			OnTargetShapeChanged);
+			TargetIsArrayKey);
 
 		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
 		{
