@@ -736,10 +736,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		var direction = (StatescriptPropertyDirection)directionInt;
-		StatescriptNodeProperty binding = EnsureBinding(direction, propertyIndex);
-		binding.Resolver = resolverVariant.VariantType == Variant.Type.Nil
-			? null
-			: resolverVariant.AsGodotObject() as StatescriptResolverResource;
+
+		if (resolverVariant.AsGodotObject() is not StatescriptResolverResource resolver)
+		{
+			RemoveBinding(direction, propertyIndex);
+		}
+		else
+		{
+			EnsureBinding(direction, propertyIndex).Resolver = resolver;
+		}
+
 		EnsurePropertyVisible(direction, propertyIndex);
 		NotifyGraphResourceChanged();
 		RebuildNode();
@@ -842,7 +848,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 		foreach (KeyValuePair<Variant, Variant> entry in customData)
 		{
-			NodeResource.CustomData[entry.Key.AsString()] = entry.Value;
+			string key = entry.Key.AsString();
+			if (entry.Value.VariantType == Variant.Type.Nil)
+			{
+				NodeResource.CustomData.Remove(key);
+				continue;
+			}
+
+			NodeResource.CustomData[key] = entry.Value;
 		}
 
 		if (resolverVariant.VariantType == Variant.Type.Nil)
