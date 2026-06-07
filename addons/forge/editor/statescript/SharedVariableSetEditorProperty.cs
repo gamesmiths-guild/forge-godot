@@ -529,6 +529,12 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
+		if (def.VariableType == StatescriptVariableType.Entity)
+		{
+			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
+			return vBox;
+		}
+
 		var headerRow = new HBoxContainer();
 		vBox.AddChild(headerRow);
 
@@ -575,12 +581,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		};
 
 		headerRow.AddChild(toggleButton);
-
-		if (def.VariableType == StatescriptVariableType.Entity)
-		{
-			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
-			return vBox;
-		}
 
 		var addElementButton = new Button
 		{
