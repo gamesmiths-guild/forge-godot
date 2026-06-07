@@ -64,29 +64,17 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Connect Statescript Nodes", customContext: graph);
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.DoConnect,
-				fromNodeId,
-				runtimeFromPort,
-				toNodeId,
-				runtimeToPort);
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.UndoConnect,
-				fromNodeId,
-				runtimeFromPort,
-				toNodeId,
-				runtimeToPort);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoConnect(fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Connect Statescript Nodes",
+			graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
+				undo.AddUndoMethod(this, MethodName.UndoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
+			},
+			execute: true,
+			fallback: () => DoConnect(fromNodeId, runtimeFromPort, toNodeId, runtimeToPort));
 	}
 
 	private void DoConnect(string fromNode, int fromPort, string toNode, int toPort)
@@ -114,30 +102,21 @@ public partial class StatescriptGraphEditorDock
 		int runtimeFromPort = ToRuntimeOutputPort(fromNodeId, (int)fromPort);
 		int runtimeToPort = (int)toPort;
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Disconnect Statescript Nodes", customContext: graph);
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.UndoConnect,
-				fromNodeId,
-				runtimeFromPort,
-				toNodeId,
-				runtimeToPort);
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.DoConnect,
-				fromNodeId,
-				runtimeFromPort,
-				toNodeId,
-				runtimeToPort);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			_graphEdit.DisconnectNode(fromNode, (int)fromPort, toNode, (int)toPort);
-			SyncConnectionsToCurrentGraph();
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Disconnect Statescript Nodes",
+			graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.UndoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
+				undo.AddUndoMethod(this, MethodName.DoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
+			},
+			execute: true,
+			fallback: () =>
+			{
+				_graphEdit.DisconnectNode(fromNode, (int)fromPort, toNode, (int)toPort);
+				SyncConnectionsToCurrentGraph();
+			});
 	}
 
 	private void OnDeleteNodesRequest(GodotCollections.Array<StringName> deletedNodes)
@@ -188,30 +167,28 @@ public partial class StatescriptGraphEditorDock
 				}
 			}
 
-			if (_undoRedo is not null)
-			{
-				_undoRedo.CreateAction("Delete Statescript Node", customContext: graph);
-				_undoRedo.AddDoMethod(
-					this,
-					MethodName.DoDeleteNode,
-					graph,
-					graphNode.NodeResource,
-					new GodotCollections.Array<StatescriptConnection>(affectedConnections));
-				_undoRedo.AddUndoMethod(
-					this,
-					MethodName.UndoDeleteNode,
-					graph,
-					graphNode.NodeResource,
-					new GodotCollections.Array<StatescriptConnection>(affectedConnections));
-				_undoRedo.CommitAction();
-			}
-			else
-			{
-				DoDeleteNode(
-					graph,
-					graphNode.NodeResource,
-					[.. affectedConnections]);
-			}
+			StatescriptNode nodeResource = graphNode.NodeResource;
+			EditorUndoRedoUtils.Record(
+				_undoRedo,
+				"Delete Statescript Node",
+				graph,
+				undo =>
+				{
+					undo.AddDoMethod(
+						this,
+						MethodName.DoDeleteNode,
+						graph,
+						nodeResource,
+						new GodotCollections.Array<StatescriptConnection>(affectedConnections));
+					undo.AddUndoMethod(
+						this,
+						MethodName.UndoDeleteNode,
+						graph,
+						nodeResource,
+						new GodotCollections.Array<StatescriptConnection>(affectedConnections));
+				},
+				execute: true,
+				fallback: () => DoDeleteNode(graph, nodeResource, [.. affectedConnections]));
 		}
 	}
 
@@ -307,13 +284,15 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Move Statescript Node(s)", customContext: graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoMoveNodes, graph, movedNodes);
-			_undoRedo.AddUndoMethod(this, MethodName.DoMoveNodes, graph, oldPositions);
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Move Statescript Node(s)",
+			graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoMoveNodes, graph, movedNodes);
+				undo.AddUndoMethod(this, MethodName.DoMoveNodes, graph, oldPositions);
+			});
 
 		SyncNodePositionsToResource(graph, movedNodes);
 	}
@@ -365,17 +344,17 @@ public partial class StatescriptGraphEditorDock
 			PositionOffset = position,
 		};
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Add Statescript Node", customContext: graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoAddNode, graph, nodeResource);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddNode, graph, nodeResource);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoAddNode(graph, nodeResource);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Add Statescript Node",
+			graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoAddNode, graph, nodeResource);
+				undo.AddUndoMethod(this, MethodName.UndoAddNode, graph, nodeResource);
+			},
+			execute: true,
+			fallback: () => DoAddNode(graph, nodeResource));
 
 		return nodeId;
 	}
@@ -436,6 +415,7 @@ public partial class StatescriptGraphEditorDock
 		}
 
 		var duplicatedIds = new Dictionary<string, string>();
+		var duplicatedNodes = new GodotCollections.Array<StatescriptNode>();
 		const float offset = 40f;
 
 		foreach (StatescriptGraphNode sgn in selectedNodes)
@@ -472,29 +452,100 @@ public partial class StatescriptGraphEditorDock
 				duplicated.PropertyBindings.Add(newBinding);
 			}
 
-			graph.Nodes.Add(duplicated);
-			graph.EmitChanged();
-
-			GraphTab? tab = FindTab(graph);
-			StatescriptGraphNode graphNode = AddGraphNodeVisual(duplicated, graph);
-			tab?.CachedGraphNodes.Add(graphNode);
-			graphNode.Selected = true;
+			duplicatedNodes.Add(duplicated);
 		}
 
+		var duplicatedConnections = new GodotCollections.Array<StatescriptConnection>();
 		foreach (StatescriptConnection connection in graph.Connections)
 		{
 			if (duplicatedIds.TryGetValue(connection.FromNode, out string? newFrom)
 				&& duplicatedIds.TryGetValue(connection.ToNode, out string? newTo))
 			{
-				_graphEdit.ConnectNode(
-					newFrom,
-					ToVisualOutputPort(newFrom, connection.OutputPort),
-					newTo,
-					connection.InputPort);
+				duplicatedConnections.Add(new StatescriptConnection
+				{
+					FromNode = newFrom,
+					OutputPort = connection.OutputPort,
+					ToNode = newTo,
+					InputPort = connection.InputPort,
+				});
 			}
 		}
 
-		SyncConnectionsToCurrentGraph();
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Duplicate Statescript Node(s)",
+			graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoDuplicateNodes, graph, duplicatedNodes, duplicatedConnections);
+				undo.AddUndoMethod(this, MethodName.UndoDuplicateNodes, graph, duplicatedNodes, duplicatedConnections);
+			},
+			execute: true,
+			fallback: () => DoDuplicateNodes(graph, duplicatedNodes, duplicatedConnections));
+	}
+
+	private void DoDuplicateNodes(
+		StatescriptGraph graph,
+		GodotCollections.Array<StatescriptNode> nodes,
+		GodotCollections.Array<StatescriptConnection> connections)
+	{
+		graph.Nodes.AddRange(nodes);
+
+		graph.Connections.AddRange(connections);
+		graph.EmitChanged();
+
+		if (CurrentGraph == graph)
+		{
+			InvalidateCachedGraphVisuals(graph);
+			LoadGraphIntoEditor(graph);
+			SelectGraphNodes(graph, nodes);
+		}
+	}
+
+	private void UndoDuplicateNodes(
+		StatescriptGraph graph,
+		GodotCollections.Array<StatescriptNode> nodes,
+		GodotCollections.Array<StatescriptConnection> connections)
+	{
+		foreach (StatescriptConnection connection in connections)
+		{
+			graph.Connections.Remove(connection);
+		}
+
+		foreach (StatescriptNode node in nodes)
+		{
+			graph.Nodes.Remove(node);
+		}
+
+		graph.EmitChanged();
+
+		if (CurrentGraph == graph)
+		{
+			InvalidateCachedGraphVisuals(graph);
+			LoadGraphIntoEditor(graph);
+		}
+	}
+
+	private void SelectGraphNodes(StatescriptGraph graph, GodotCollections.Array<StatescriptNode> nodes)
+	{
+		if (_graphEdit is null || CurrentGraph != graph)
+		{
+			return;
+		}
+
+		var ids = new HashSet<string>();
+		foreach (StatescriptNode node in nodes)
+		{
+			ids.Add(node.NodeId);
+		}
+
+		foreach (Node child in _graphEdit.GetChildren())
+		{
+			if (child is StatescriptGraphNode sgn && sgn.NodeResource is not null)
+			{
+				sgn.Selected = ids.Contains(sgn.NodeResource.NodeId);
+			}
+		}
 	}
 
 	private void ShowLoopWarningDialog()

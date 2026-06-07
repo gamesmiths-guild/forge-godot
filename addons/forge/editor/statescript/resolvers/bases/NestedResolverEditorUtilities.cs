@@ -55,7 +55,7 @@ internal static class NestedResolverEditorUtilities
 		foreach (Node child in container.GetChildren())
 		{
 			container.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 	}
 

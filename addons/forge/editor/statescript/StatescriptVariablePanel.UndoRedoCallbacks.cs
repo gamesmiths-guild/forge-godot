@@ -14,6 +14,43 @@ internal sealed partial class StatescriptVariablePanel
 		variable.EmitChanged();
 	}
 
+	private void SetArrayElementValueWithUndo(StatescriptGraphVariable variable, int index, Variant newValue)
+	{
+		if (index < 0 || index >= variable.InitialArrayValues.Count)
+		{
+			return;
+		}
+
+		Variant oldValue = variable.InitialArrayValues[index];
+
+		SetArrayElementValue(variable, index, newValue);
+
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			$"Change Variable '{variable.VariableName}' [{index}]",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyArrayElementValue, variable, index, newValue);
+				undo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, variable, index, oldValue);
+			});
+	}
+
+	private void ApplyArrayElementValue(StatescriptGraphVariable variable, int index, Variant value)
+	{
+		if (index >= 0 && index < variable.InitialArrayValues.Count)
+		{
+			variable.InitialArrayValues[index] = value;
+			variable.EmitChanged();
+		}
+
+		// Reveal the changed element so an undo/redo isn't hidden inside a collapsed array.
+		EnsureArrayExpanded(variable.VariableName);
+
+		RebuildList();
+		VariableUndoRedoPerformed?.Invoke();
+	}
+
 	private void SetVariableValue(StatescriptGraphVariable variable, Variant newValue)
 	{
 		Variant oldValue = variable.InitialValue;
@@ -21,26 +58,15 @@ internal sealed partial class StatescriptVariablePanel
 		variable.InitialValue = newValue;
 		variable.EmitChanged();
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction(
-				$"Change Variable '{variable.VariableName}'",
-				customContext: _graph);
-
-			_undoRedo.AddDoMethod(
-				this,
-				MethodName.ApplyVariableValue,
-				variable,
-				newValue);
-
-			_undoRedo.AddUndoMethod(
-				this,
-				MethodName.ApplyVariableValue,
-				variable,
-				oldValue);
-
-			_undoRedo.CommitAction(false);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			$"Change Variable '{variable.VariableName}'",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyVariableValue, variable, newValue);
+				undo.AddUndoMethod(this, MethodName.ApplyVariableValue, variable, oldValue);
+			});
 	}
 
 	private void ApplyVariableValue(StatescriptGraphVariable variable, Variant value)
@@ -100,8 +126,7 @@ internal sealed partial class StatescriptVariablePanel
 	{
 		variable.InitialArrayValues.Add(value);
 		variable.EmitChanged();
-		_expandedArrays.Add(variable.VariableName);
-		SaveExpandedArrayState();
+		EnsureArrayExpanded(variable.VariableName);
 		RebuildList();
 	}
 
@@ -113,6 +138,7 @@ internal sealed partial class StatescriptVariablePanel
 			variable.EmitChanged();
 		}
 
+		EnsureArrayExpanded(variable.VariableName);
 		RebuildList();
 		VariableUndoRedoPerformed?.Invoke();
 	}
@@ -136,8 +162,19 @@ internal sealed partial class StatescriptVariablePanel
 		}
 
 		variable.EmitChanged();
+		EnsureArrayExpanded(variable.VariableName);
 		RebuildList();
 		VariableUndoRedoPerformed?.Invoke();
+	}
+
+	private void EnsureArrayExpanded(string variableName)
+	{
+		// Reveal the array so an undo/redo or programmatic change isn't hidden inside a collapsed entry. This adjusts
+		// only the persisted expand state and does not record its own undo step.
+		if (_expandedArrays.Add(variableName))
+		{
+			SaveExpandedArrayState();
+		}
 	}
 
 	private void DoSetArrayExpanded(string variableName, bool expanded)

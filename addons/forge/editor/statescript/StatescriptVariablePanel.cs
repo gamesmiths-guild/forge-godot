@@ -540,17 +540,17 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(varType),
 		};
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Add Graph Variable", customContext: _graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoAddVariable, _graph, newVariable);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoAddVariable, _graph, newVariable);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoAddVariable(_graph, newVariable);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Add Graph Variable",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoAddVariable, _graph, newVariable);
+				undo.AddUndoMethod(this, MethodName.UndoAddVariable, _graph, newVariable);
+			},
+			execute: true,
+			fallback: () => DoAddVariable(_graph, newVariable));
 
 		_creationDialog?.QueueFree();
 		_creationDialog = null;
@@ -568,17 +568,17 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		StatescriptGraphVariable variable = _graph.Variables[index];
 
-		if (_undoRedo is not null)
-		{
-			_undoRedo.CreateAction("Remove Graph Variable", customContext: _graph);
-			_undoRedo.AddDoMethod(this, MethodName.DoRemoveVariable, _graph, variable, index);
-			_undoRedo.AddUndoMethod(this, MethodName.UndoRemoveVariable, _graph, variable, index);
-			_undoRedo.CommitAction();
-		}
-		else
-		{
-			DoRemoveVariable(_graph, variable, index);
-		}
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Remove Graph Variable",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoRemoveVariable, _graph, variable, index);
+				undo.AddUndoMethod(this, MethodName.UndoRemoveVariable, _graph, variable, index);
+			},
+			execute: true,
+			fallback: () => DoRemoveVariable(_graph, variable, index));
 	}
 
 	private void ClearReferencesToVariable(string variableName)

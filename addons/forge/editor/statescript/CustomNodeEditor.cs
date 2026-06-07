@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
+using GodotCollections = Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -133,7 +134,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 		foreach (Node child in container.GetChildren())
 		{
 			container.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 	}
 
@@ -159,20 +160,23 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <param name="propInfo">Metadata about the input property.</param>
 	/// <param name="index">Index of the input property.</param>
 	/// <param name="container">Container to add the input property row to.</param>
-	/// <param name="onShapeChanged">Callback invoked when the shape of the input property changes.</param>
+	/// <param name="shapeCustomDataKey">
+	/// When provided, enables the row's single/array shape dropdown and wires it to undo-tracked
+	/// type/shape changes that persist the new shape under this CustomData key. When null the dropdown is disabled.
+	/// </param>
 	/// <param name="preferredDefaultResolverTypeId">The preferred default resolver type ID.</param>
 	protected void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control container,
-		Action<bool>? onShapeChanged = null,
+		string? shapeCustomDataKey = null,
 		string? preferredDefaultResolverTypeId = null)
 	{
 		_graphNode!.AddInputPropertyRowInternal(
 			propInfo,
 			index,
 			container,
-			onShapeChanged,
+			shapeCustomDataKey,
 			preferredDefaultResolverTypeId);
 	}
 
@@ -337,6 +341,26 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 			oldResolver,
 			newResolver,
 			actionName);
+	}
+
+	/// <summary>
+	/// Changes the type/shape configuration of an input-property slot with full undo/redo support.
+	/// </summary>
+	/// <remarks>
+	/// Custom dropdowns (such as a value-type picker) call this directly; the standard single/array shape dropdown
+	/// created by <see cref="AddInputPropertyRow"/> is wired to the same engine automatically. The given CustomData
+	/// entries are persisted, the slot's resolver binding is reset, and the node is rebuilt — all as one undoable
+	/// action. No per-node bookkeeping is required.
+	/// </remarks>
+	/// <param name="propertyIndex">The input slot whose configuration changes.</param>
+	/// <param name="customData">The CustomData entries to store (e.g. value type and/or array shape).</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	protected void ChangeInputPropertyConfig(
+		int propertyIndex,
+		GodotCollections.Dictionary customData,
+		string actionName)
+	{
+		_graphNode!.ChangeInputPropertyConfigInternal(propertyIndex, customData, actionName);
 	}
 }
 #endif

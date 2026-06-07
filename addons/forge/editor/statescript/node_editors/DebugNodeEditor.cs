@@ -4,6 +4,7 @@
 using System;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
+using GodotCollections = Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
@@ -25,12 +26,6 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 	private VBoxContainer? _inputRootContainer;
 
 	[NonSerialized]
-	private VBoxContainer? _inputEditorContainer;
-
-	[NonSerialized]
-	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
-
-	[NonSerialized]
 	private FoldableContainer? _typeFoldable;
 
 	/// <inheritdoc/>
@@ -39,8 +34,6 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 	/// <inheritdoc/>
 	public override void BuildPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		_cachedTypeInfo = typeInfo;
-
 		if (NodeResource.CustomData.TryGetValue(ValueTypeKey, out Variant storedType))
 		{
 			_selectedType = (StatescriptVariableType)storedType.AsInt32();
@@ -74,8 +67,6 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 	{
 		base.Unbind();
 		_inputRootContainer = null;
-		_inputEditorContainer = null;
-		_cachedTypeInfo = null;
 		_typeFoldable = null;
 	}
 
@@ -118,10 +109,10 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		NodeResource.CustomData[ValueTypeKey] = Variant.From((int)selectedValue);
-		_selectedType = selectedValue;
-		NotifyGraphResourceChanged();
-		RefreshTypedInputEditor();
+		ChangeInputPropertyConfig(
+			0,
+			new GodotCollections.Dictionary { { ValueTypeKey, (int)selectedValue } },
+			"Change Debug Input Type");
 	}
 
 	private void OnShapeChanged(bool isArray)
@@ -131,10 +122,10 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		NodeResource.CustomData[IsArrayKey] = Variant.From(isArray);
-		_selectedIsArray = isArray;
-		NotifyGraphResourceChanged();
-		RefreshTypedInputEditor();
+		ChangeInputPropertyConfig(
+			0,
+			new GodotCollections.Dictionary { { IsArrayKey, isArray } },
+			"Change Debug Input Shape");
 	}
 
 	private void OnTypeFoldableFoldingChanged(bool folded)
@@ -168,29 +159,10 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 		ClearValueRows();
 		Type clrType = StatescriptVariableTypeConverter.ToSystemType(_selectedType);
-		_inputEditorContainer = _inputRootContainer;
 		AddInputPropertyRow(
 			new StatescriptNodeDiscovery.InputPropertyInfo(originalInfo.Label, clrType, _selectedIsArray),
 			0,
-			_inputEditorContainer);
-	}
-
-	private void RefreshTypedInputEditor()
-	{
-		UpdateTypeFoldableTitle();
-
-		RemoveBinding(StatescriptPropertyDirection.Input, 0);
-		ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
-
-		if (_cachedTypeInfo is not null
-			&& _inputEditorContainer is not null
-			&& _cachedTypeInfo.InputPropertiesInfo.Length > 0)
-		{
-			RebuildInputEditor(_cachedTypeInfo.InputPropertiesInfo[0]);
-		}
-
-		RaisePropertyBindingChanged();
-		ResetSize();
+			_inputRootContainer);
 	}
 
 	private void ClearValueRows()
@@ -208,7 +180,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 			}
 
 			_inputRootContainer.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 	}
 }
