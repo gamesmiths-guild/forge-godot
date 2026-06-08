@@ -16,6 +16,8 @@ In the Godot editor, `Float` is the single designer-facing floating-point choice
 
 **Array variables** are also supported. These hold a fixed-length list of `Variant128` values.
 
+**Reference (object-backed) types:** In addition to the value types above, the editor exposes `Entity` and `Effect` variable types for storing Forge reference objects. These have no inline initial value (they are assigned at runtime) and are read with their dedicated resolvers (the **Variable** resolver, or `EntityVariableResolver` / `EffectVariableResolver` in code). Storing an `Effect` lets you build it once and reuse the same instance: write it with a `SetVariable` node fed by an [EffectResolver](resolvers/effect-resolver.md), apply it through `ApplyEffectNode`/`EffectNode`, and keep mutating that instance (for example to level it up) so non-snapshot active applications update on their targets live.
+
 ### Defining Variables in Godot
 
 In the Statescript graph editor, use the **Variables panel** to add, remove, and configure graph variables. Each variable has:

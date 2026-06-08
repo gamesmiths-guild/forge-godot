@@ -2,18 +2,17 @@
 
 > **Runtime Type:** `Gamesmiths.Forge.Statescript.Nodes.State.EffectNode`
 
-Applies one or more effects, stays active while any applied instance remains active, and removes still-active
-instances on deactivation.
+Applies one or more effect instances, stays active while any applied instance remains active, and removes still-active instances on deactivation.
 
 Use the core Forge docs for runtime behavior and lifecycle details. This page covers the Godot authoring details.
 
 ## Authoring in Godot
 
-- The `Effect` input is authored through [EffectDataResolver](../resolvers/effect-data-resolver.md).
+- The node has two inputs: `Effect` and `Target`.
+- The `Effect` input is authored through [EffectResolver](../resolvers/effect-resolver.md), which selects one or more `ForgeEffectData` resources and carries the **Level** and **Ownership** for the produced effect.
+- To reuse a single effect instance, store it once with a `SetVariable` node and re-read it on the `Effect` input through the **Variable** resolver bound to an `Effect`-typed variable.
 - The input-row shape toggle switches the `Effect` binding between **single** and **array** mode.
 - The `Target` input uses the standard entity resolver flow and also supports single or array bindings.
-- The `Level` input uses normal scalar resolver authoring. Use [AbilityLevelResolver](../resolvers/ability-level-resolver.md) to read the current ability level, or bind another int-compatible resolver when you need an explicit override.
-- The `Ownership` input uses object-backed resolver authoring. Use [AbilityOwnershipResolver](../resolvers/ability-ownership-resolver.md) for the current ability owner/source pair, or [OwnershipResolver](../resolvers/ownership-resolver.md) to compose a custom owner and source from nested entity resolvers.
 - The node follows the same effect/entity cross-product authoring flow as [ApplyEffectNode](apply-effect-node.md).
 - The node deactivates itself automatically once every applied non-instant effect ended or was removed elsewhere. If every applied effect is instant, it deactivates in the same frame.
 - The extra `OnEffectEnd` output fires only on that natural completion path. It does not fire when the node is deactivated externally and removes its own active effects during cleanup.
@@ -22,7 +21,5 @@ Use the core Forge docs for runtime behavior and lifecycle details. This page co
 
 - [Nodes Reference](README.md)
 - [Core EffectNode](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/effect-node.md)
-- [AbilityLevelResolver](../resolvers/ability-level-resolver.md)
-- [AbilityOwnershipResolver](../resolvers/ability-ownership-resolver.md)
-- [EffectDataResolver](../resolvers/effect-data-resolver.md)
-- [OwnershipResolver](../resolvers/ownership-resolver.md)
+- [EffectResolver](../resolvers/effect-resolver.md)
+- [Variables and Data](../variables.md)
