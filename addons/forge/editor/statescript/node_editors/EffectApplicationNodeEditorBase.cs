@@ -107,24 +107,6 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 			1,
 			_inputEditorsContainer,
 			TargetIsArrayKey);
-
-		PersistDefaultBindingIfMissing(0);
-		PersistDefaultBindingIfMissing(1);
-	}
-
-	private void PersistDefaultBindingIfMissing(int index)
-	{
-		if (FindBinding(StatescriptPropertyDirection.Input, index)?.Resolver is not null)
-		{
-			return;
-		}
-
-		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
-
-		if (ActiveResolverEditors.TryGetValue(key, out NodeEditorProperty? resolverEditor))
-		{
-			resolverEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
-		}
 	}
 }
 #endif

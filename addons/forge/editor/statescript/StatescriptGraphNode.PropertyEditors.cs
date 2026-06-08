@@ -162,6 +162,15 @@ public partial class StatescriptGraphNode
 			index,
 			propInfo.IsArray);
 
+		// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
+		// used at runtime, without requiring the user to interact with the slot first.
+		if (binding?.Resolver is null
+			&& _activeResolverEditors.TryGetValue(key, out NodeEditorProperty? defaultEditor))
+		{
+			defaultEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
+			NotifyGraphResourceChanged();
+		}
+
 		UpdateInputPropertyFoldableTitle(key);
 
 		int capturedIndex = index;
