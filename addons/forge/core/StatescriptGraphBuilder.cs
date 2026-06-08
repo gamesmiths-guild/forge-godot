@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
@@ -127,6 +128,22 @@ public static class StatescriptGraphBuilder
 				else
 				{
 					graph.VariableDefinitions.DefineObjectVariable<IForgeEntity>(
+						new StringKey(variable.VariableName));
+				}
+
+				continue;
+			}
+
+			if (variable.VariableType == StatescriptVariableType.Effect)
+			{
+				if (variable.IsArray)
+				{
+					graph.VariableDefinitions.DefineObjectArrayVariable<Effect>(
+						new StringKey(variable.VariableName));
+				}
+				else
+				{
+					graph.VariableDefinitions.DefineObjectVariable<Effect>(
 						new StringKey(variable.VariableName));
 				}
 

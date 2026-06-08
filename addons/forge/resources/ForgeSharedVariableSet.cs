@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Godot;
@@ -49,6 +50,20 @@ public partial class ForgeSharedVariableSet : Resource
 				else
 				{
 					target.DefineObjectVariable<IForgeEntity>(key);
+				}
+
+				continue;
+			}
+
+			if (definition.VariableType == StatescriptVariableType.Effect)
+			{
+				if (definition.IsArray)
+				{
+					target.DefineObjectArrayVariable<Effect>(key, []);
+				}
+				else
+				{
+					target.DefineObjectVariable<Effect>(key);
 				}
 
 				continue;

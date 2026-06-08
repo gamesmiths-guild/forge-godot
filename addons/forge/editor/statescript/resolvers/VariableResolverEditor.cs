@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -411,9 +412,19 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 	private void ResetSelectedVariableMetadata()
 	{
-		_selectedVariableType = _expectedType == typeof(IForgeEntity)
-			? StatescriptVariableType.Entity
-			: StatescriptVariableType.Int;
+		if (_expectedType == typeof(IForgeEntity))
+		{
+			_selectedVariableType = StatescriptVariableType.Entity;
+		}
+		else if (_expectedType == typeof(Effect))
+		{
+			_selectedVariableType = StatescriptVariableType.Effect;
+		}
+		else
+		{
+			_selectedVariableType = StatescriptVariableType.Int;
+		}
+
 		_selectedIsArray = _expectedIsArray;
 	}
 

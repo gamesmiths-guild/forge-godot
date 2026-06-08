@@ -2,6 +2,7 @@
 
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -76,6 +77,16 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			return;
 		}
 
+		if (metadata.ValueType == typeof(Effect))
+		{
+			var effectPropertyKey = new StringKey($"__effect_{nodeId}_{index}");
+			graph.VariableDefinitions.DefineObjectProperty(
+				effectPropertyKey,
+				new EffectVariableResolver(variableKey, Scope));
+			runtimeNode.BindInput(index, effectPropertyKey);
+			return;
+		}
+
 		if (Scope == VariableScope.Shared || NeedsNumericInputAdaptation(runtimeNode, index, metadata.ValueType))
 		{
 			DefineAndBindInputProperty(
@@ -127,6 +138,14 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			return new VariantResolver(default, typeof(int));
 		}
 
+		if (metadata.ValueType == typeof(Effect))
+		{
+			GD.PushError(
+				$"Statescript: Variable resolver '{VariableName}' targets an effect reference and cannot be used " +
+				"where a Variant-based property resolver is required.");
+			return new VariantResolver(default, typeof(int));
+		}
+
 		return new VariableResolver(new StringKey(VariableName), metadata.ValueType, Scope);
 	}
 
@@ -164,6 +183,12 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			graph.VariableDefinitions.DefineObjectArrayProperty(
 				propertyName,
 				new ObjectArrayVariableResolver<IForgeEntity>(variableKey, VariableScope.Shared));
+		}
+		else if (elementType == typeof(Effect))
+		{
+			graph.VariableDefinitions.DefineObjectArrayProperty(
+				propertyName,
+				new EffectArrayVariableResolver(variableKey, VariableScope.Shared));
 		}
 		else
 		{

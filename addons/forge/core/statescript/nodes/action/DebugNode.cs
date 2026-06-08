@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -60,6 +61,24 @@ public sealed class DebugNode : ActionNode
 			return;
 		}
 
+		if (_valueType == StatescriptVariableType.Effect)
+		{
+			if (graphContext.TryResolveObjectArray(boundName, out Effect?[]? effects))
+			{
+				GD.Print("[Statescript Debug] ", FormatEffectArray(effects));
+				return;
+			}
+
+			if (graphContext.TryResolveObject(boundName, out Effect? effect))
+			{
+				GD.Print("[Statescript Debug] ", FormatEffect(effect));
+				return;
+			}
+
+			GD.Print("[Statescript Debug] <unresolved>");
+			return;
+		}
+
 		if (graphContext.TryResolveArray(boundName, out Variant128[]? values))
 		{
 			GD.Print("[Statescript Debug] ", FormatArray(values));
@@ -104,6 +123,27 @@ public sealed class DebugNode : ActionNode
 		}
 
 		return entity.GetType().FullName ?? entity.GetType().Name;
+	}
+
+	private static string FormatEffectArray(Effect?[]? values)
+	{
+		if (values is null || values.Length == 0)
+		{
+			return "[]";
+		}
+
+		string[] formatted = new string[values.Length];
+		for (int i = 0; i < values.Length; i++)
+		{
+			formatted[i] = FormatEffect(values[i]);
+		}
+
+		return $"[{string.Join(", ", formatted)}]";
+	}
+
+	private static string FormatEffect(Effect? effect)
+	{
+		return effect is null ? "<null>" : effect.EffectData.Name;
 	}
 
 	private string FormatValue(Variant128 value)

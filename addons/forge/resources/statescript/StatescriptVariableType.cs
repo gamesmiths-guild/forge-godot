@@ -66,4 +66,7 @@ public enum StatescriptVariableType
 
 	/// <summary>Forge entity reference.</summary>
 	Entity = 18,
+
+	/// <summary>Forge effect instance reference.</summary>
+	Effect = 19,
 }

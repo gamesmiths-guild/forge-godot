@@ -67,7 +67,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 
 		return binding?.Resolver switch
 		{
-			EffectDataResolverResource effectResolver => effectResolver.IsArray,
+			EffectResolverResource effectResolver => effectResolver.IsArray,
 			VariableResolverResource variableResolver => variableResolver.IsArray,
 			ArrayResolverResource => true,
 			_ => false,
@@ -108,18 +108,22 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 			_inputEditorsContainer,
 			TargetIsArrayKey);
 
-		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
-		{
-			string? preferredDefaultResolverTypeId =
-				i == 2 && _cachedTypeInfo.InputPropertiesInfo[i].Label == "Level"
-					? "AbilityLevel"
-					: null;
+		PersistDefaultBindingIfMissing(0);
+		PersistDefaultBindingIfMissing(1);
+	}
 
-			AddInputPropertyRow(
-				_cachedTypeInfo.InputPropertiesInfo[i],
-				i,
-				_inputEditorsContainer,
-				preferredDefaultResolverTypeId: preferredDefaultResolverTypeId);
+	private void PersistDefaultBindingIfMissing(int index)
+	{
+		if (FindBinding(StatescriptPropertyDirection.Input, index)?.Resolver is not null)
+		{
+			return;
+		}
+
+		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
+
+		if (ActiveResolverEditors.TryGetValue(key, out NodeEditorProperty? resolverEditor))
+		{
+			resolverEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
 		}
 	}
 }

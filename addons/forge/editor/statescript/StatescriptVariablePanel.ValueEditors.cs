@@ -17,6 +17,13 @@ internal sealed partial class StatescriptVariablePanel
 			return info;
 		}
 
+		if (variable.VariableType == StatescriptVariableType.Effect)
+		{
+			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			info.AddChild(new Label { Text = "Runtime-assigned effect reference." });
+			return info;
+		}
+
 		if (variable.VariableType == StatescriptVariableType.Bool)
 		{
 			var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -80,6 +87,12 @@ internal sealed partial class StatescriptVariablePanel
 		if (variable.VariableType == StatescriptVariableType.Entity)
 		{
 			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
+			return vBox;
+		}
+
+		if (variable.VariableType == StatescriptVariableType.Effect)
+		{
+			vBox.AddChild(new Label { Text = "Runtime-assigned effect references." });
 			return vBox;
 		}
 

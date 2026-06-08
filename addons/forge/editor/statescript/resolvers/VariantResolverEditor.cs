@@ -45,7 +45,8 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	{
 		return expectedType == typeof(object)
 			|| (StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out StatescriptVariableType valueType)
-				&& valueType != StatescriptVariableType.Entity);
+				&& valueType != StatescriptVariableType.Entity
+				&& valueType != StatescriptVariableType.Effect);
 	}
 
 	/// <inheritdoc/>
