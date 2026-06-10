@@ -2,8 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Statescript;
 using GodotPlane = Godot.Plane;
 using GodotQuaternion = Godot.Quaternion;
@@ -33,8 +31,6 @@ public static class StatescriptVariableTypeConverter
 		StatescriptVariableType.Vector4,
 		StatescriptVariableType.Plane,
 		StatescriptVariableType.Quaternion,
-		StatescriptVariableType.Entity,
-		StatescriptVariableType.Effect,
 	];
 
 	private static readonly Dictionary<StatescriptVariableType, Type> _typeMap = new()
@@ -57,8 +53,6 @@ public static class StatescriptVariableTypeConverter
 		[StatescriptVariableType.Vector4] = typeof(SysVector4),
 		[StatescriptVariableType.Plane] = typeof(System.Numerics.Plane),
 		[StatescriptVariableType.Quaternion] = typeof(System.Numerics.Quaternion),
-		[StatescriptVariableType.Entity] = typeof(IForgeEntity),
-		[StatescriptVariableType.Effect] = typeof(Effect),
 	};
 
 	private static readonly Dictionary<Type, StatescriptVariableType> _authoringTypeMap = new()
@@ -81,8 +75,6 @@ public static class StatescriptVariableTypeConverter
 		[typeof(SysVector4)] = StatescriptVariableType.Vector4,
 		[typeof(System.Numerics.Plane)] = StatescriptVariableType.Plane,
 		[typeof(System.Numerics.Quaternion)] = StatescriptVariableType.Quaternion,
-		[typeof(IForgeEntity)] = StatescriptVariableType.Entity,
-		[typeof(Effect)] = StatescriptVariableType.Effect,
 	};
 
 	/// <summary>
@@ -96,13 +88,15 @@ public static class StatescriptVariableTypeConverter
 	}
 
 	/// <summary>
-	/// Converts a <see cref="StatescriptVariableType"/> to the corresponding <see cref="Type"/>.
+	/// Converts a <see cref="StatescriptVariableType"/> to the corresponding <see cref="Type"/>. Unknown values (for
+	/// example object-type enum values from graphs authored before object variable types moved to the registry) fall
+	/// back to <see cref="int"/>.
 	/// </summary>
 	/// <param name="variableType">The variable type enum value.</param>
 	/// <returns>The corresponding CLR type.</returns>
 	public static Type ToSystemType(StatescriptVariableType variableType)
 	{
-		return _typeMap[variableType];
+		return _typeMap.TryGetValue(variableType, out Type? type) ? type : typeof(int);
 	}
 
 	/// <summary>
@@ -162,8 +156,6 @@ public static class StatescriptVariableTypeConverter
 			StatescriptVariableType.Vector4 => GodotVariant.From(GodotVector4.Zero),
 			StatescriptVariableType.Plane => GodotVariant.From(new GodotPlane(0, 1, 0, 0)),
 			StatescriptVariableType.Quaternion => GodotVariant.From(GodotQuaternion.Identity),
-			StatescriptVariableType.Entity => default,
-			StatescriptVariableType.Effect => default,
 			_ => GodotVariant.From(0),
 		};
 	}
@@ -198,12 +190,6 @@ public static class StatescriptVariableTypeConverter
 			StatescriptVariableType.Vector4 => ToForgeVector4(godotValue.AsVector4()),
 			StatescriptVariableType.Plane => ToForgePlane(godotValue.AsPlane()),
 			StatescriptVariableType.Quaternion => ToForgeQuaternion(godotValue.AsQuaternion()),
-			StatescriptVariableType.Entity => throw new InvalidOperationException(
-				"Entity references are stored through Forge's reference-variable lane and cannot be converted to " +
-				"Variant128."),
-			StatescriptVariableType.Effect => throw new InvalidOperationException(
-				"Effect references are stored through Forge's reference-variable lane and cannot be converted to " +
-				"Variant128."),
 			_ => default,
 		};
 	}
@@ -229,8 +215,6 @@ public static class StatescriptVariableTypeConverter
 			StatescriptVariableType.Decimal => "Float",
 			StatescriptVariableType.Double => "Float",
 			StatescriptVariableType.Float => "Float",
-			StatescriptVariableType.Entity => "Entity",
-			StatescriptVariableType.Effect => "Effect",
 			_ => variableType.ToString(),
 		};
 	}

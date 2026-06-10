@@ -154,7 +154,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 	{
 		if (_entityVariableEditor is null)
 		{
-			return new VariableResolverResource { VariableType = StatescriptVariableType.Entity };
+			return new VariableResolverResource { ObjectTypeId = "Entity" };
 		}
 
 		var tempProperty = new StatescriptNodeProperty();
@@ -164,7 +164,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 			return variableResolver;
 		}
 
-		return new VariableResolverResource { VariableType = StatescriptVariableType.Entity };
+		return new VariableResolverResource { ObjectTypeId = "Entity" };
 	}
 }
 #endif

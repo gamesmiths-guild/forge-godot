@@ -3,8 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -44,6 +43,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	private string _selectedSetPath = string.Empty;
 	private string _selectedVariableName = string.Empty;
 	private StatescriptVariableType _selectedVariableType = StatescriptVariableType.Int;
+	private string _selectedObjectTypeId = string.Empty;
 	private bool _selectedIsArray;
 
 	/// <inheritdoc/>
@@ -60,7 +60,8 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	{
 		return expectedType == typeof(object)
 			|| expectedType == typeof(Variant128)
-			|| StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _);
+			|| StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _)
+			|| StatescriptObjectVariableTypeRegistry.IsObjectType(expectedType);
 	}
 
 	/// <inheritdoc/>
@@ -128,6 +129,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			Scope = _selectedScope,
 			SharedVariableSetPath = _selectedScope == VariableScope.Shared ? _selectedSetPath : string.Empty,
 			VariableType = _selectedVariableType,
+			ObjectTypeId = _selectedObjectTypeId,
 			IsArray = hasSelectedVariable && _selectedIsArray,
 		};
 	}
@@ -190,6 +192,34 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		return false;
 	}
 
+	private static bool IsVariableCompatible(
+		StatescriptVariableType variableType,
+		string objectTypeId,
+		Type[] allowedExpectedTypes)
+	{
+		if (!string.IsNullOrEmpty(objectTypeId))
+		{
+			if (!StatescriptObjectVariableTypeRegistry.TryGet(
+				objectTypeId,
+				out StatescriptObjectVariableType? descriptor))
+			{
+				return false;
+			}
+
+			for (int i = 0; i < allowedExpectedTypes.Length; i++)
+			{
+				if (allowedExpectedTypes[i].IsAssignableFrom(descriptor.ClrType))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		return IsCompatibleType(allowedExpectedTypes, variableType);
+	}
+
 	private static List<string> GetVariableNames(List<VariableOption> variables)
 	{
 		var names = new List<string>(variables.Count);
@@ -209,6 +239,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 			_selectedSetPath = variableResolver.SharedVariableSetPath;
 			_selectedVariableName = variableResolver.VariableName;
 			_selectedVariableType = variableResolver.VariableType;
+			_selectedObjectTypeId = variableResolver.ObjectTypeId;
 			_selectedIsArray = variableResolver.IsArray;
 		}
 	}
@@ -286,7 +317,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		_graphVariableDropdown.Clear();
 		_graphVariables.Clear();
 		_graphVariableDropdown.AddItem("(None)");
-		_graphVariables.Add(new VariableOption(string.Empty, StatescriptVariableType.Int, false));
+		_graphVariables.Add(new VariableOption(string.Empty, StatescriptVariableType.Int, string.Empty, false));
 
 		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(_expectedType);
 
@@ -294,13 +325,17 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		{
 			if (string.IsNullOrEmpty(variable.VariableName)
 				|| variable.IsArray != _expectedIsArray
-				|| !IsCompatibleType(allowedExpectedTypes, variable.VariableType))
+				|| !IsVariableCompatible(variable.VariableType, variable.ObjectTypeId, allowedExpectedTypes))
 			{
 				continue;
 			}
 
 			_graphVariableDropdown.AddItem(variable.VariableName);
-			_graphVariables.Add(new VariableOption(variable.VariableName, variable.VariableType, variable.IsArray));
+			_graphVariables.Add(new VariableOption(
+				variable.VariableName,
+				variable.VariableType,
+				variable.ObjectTypeId,
+				variable.IsArray));
 		}
 
 		ResolverEditorLayoutUtilities.RestoreSelection(
@@ -358,7 +393,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		_sharedVariableDropdown.Clear();
 		_sharedVariables.Clear();
 		_sharedVariableDropdown.AddItem("(None)");
-		_sharedVariables.Add(new VariableOption(string.Empty, StatescriptVariableType.Int, false));
+		_sharedVariables.Add(new VariableOption(string.Empty, StatescriptVariableType.Int, string.Empty, false));
 
 		Type[] allowedExpectedTypes = GetAllowedExpectedTypes(_expectedType);
 
@@ -372,14 +407,20 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 				{
 					if (string.IsNullOrEmpty(definition.VariableName)
 						|| definition.IsArray != _expectedIsArray
-						|| !IsCompatibleType(allowedExpectedTypes, definition.VariableType))
+						|| !IsVariableCompatible(
+							definition.VariableType,
+							definition.ObjectTypeId,
+							allowedExpectedTypes))
 					{
 						continue;
 					}
 
 					_sharedVariableDropdown.AddItem(definition.VariableName);
-					_sharedVariables.Add(
-						new VariableOption(definition.VariableName, definition.VariableType, definition.IsArray));
+					_sharedVariables.Add(new VariableOption(
+						definition.VariableName,
+						definition.VariableType,
+						definition.ObjectTypeId,
+						definition.IsArray));
 				}
 			}
 		}
@@ -407,24 +448,19 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 	{
 		_selectedVariableName = option.Name;
 		_selectedVariableType = option.VariableType;
+		_selectedObjectTypeId = option.ObjectTypeId;
 		_selectedIsArray = option.IsArray;
 	}
 
 	private void ResetSelectedVariableMetadata()
 	{
-		if (_expectedType == typeof(IForgeEntity))
-		{
-			_selectedVariableType = StatescriptVariableType.Entity;
-		}
-		else if (_expectedType == typeof(Effect))
-		{
-			_selectedVariableType = StatescriptVariableType.Effect;
-		}
-		else
-		{
-			_selectedVariableType = StatescriptVariableType.Int;
-		}
-
+		_selectedVariableType = StatescriptVariableType.Int;
+		_selectedObjectTypeId =
+			StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+				_expectedType,
+				out StatescriptObjectVariableType? descriptor)
+					? descriptor.TypeId
+					: string.Empty;
 		_selectedIsArray = _expectedIsArray;
 	}
 
@@ -446,6 +482,10 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		}
 	}
 
-	private readonly record struct VariableOption(string Name, StatescriptVariableType VariableType, bool IsArray);
+	private readonly record struct VariableOption(
+		string Name,
+		StatescriptVariableType VariableType,
+		string ObjectTypeId,
+		bool IsArray);
 }
 #endif

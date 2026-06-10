@@ -10,17 +10,10 @@ internal sealed partial class StatescriptVariablePanel
 {
 	private Control CreateScalarValueEditor(StatescriptGraphVariable variable)
 	{
-		if (variable.VariableType == StatescriptVariableType.Entity)
+		if (!string.IsNullOrEmpty(variable.ObjectTypeId))
 		{
 			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			info.AddChild(new Label { Text = "Runtime-assigned entity reference." });
-			return info;
-		}
-
-		if (variable.VariableType == StatescriptVariableType.Effect)
-		{
-			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			info.AddChild(new Label { Text = "Runtime-assigned effect reference." });
+			info.AddChild(new Label { Text = "Runtime-assigned reference." });
 			return info;
 		}
 
@@ -84,15 +77,9 @@ internal sealed partial class StatescriptVariablePanel
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
-		if (variable.VariableType == StatescriptVariableType.Entity)
+		if (!string.IsNullOrEmpty(variable.ObjectTypeId))
 		{
-			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
-			return vBox;
-		}
-
-		if (variable.VariableType == StatescriptVariableType.Effect)
-		{
-			vBox.AddChild(new Label { Text = "Runtime-assigned effect references." });
+			vBox.AddChild(new Label { Text = "Runtime-assigned references." });
 			return vBox;
 		}
 

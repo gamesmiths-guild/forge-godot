@@ -20,10 +20,18 @@ public partial class ForgeSharedVariableDefinition : Resource
 	public string VariableName { get; set; } = string.Empty;
 
 	/// <summary>
-	/// Gets or sets the type of this shared variable.
+	/// Gets or sets the Variant128 (primitive) type of this shared variable. Ignored when <see cref="ObjectTypeId"/> is
+	/// set.
 	/// </summary>
 	[Export]
 	public StatescriptVariableType VariableType { get; set; } = StatescriptVariableType.Int;
+
+	/// <summary>
+	/// Gets or sets the object variable type id when this shared variable is object-backed (reference type); empty for
+	/// primitive variables.
+	/// </summary>
+	[Export]
+	public string ObjectTypeId { get; set; } = string.Empty;
 
 	/// <summary>
 	/// Gets or sets a value indicating whether this is an array variable.

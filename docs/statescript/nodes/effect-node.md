@@ -13,6 +13,7 @@ Use the core Forge docs for runtime behavior and lifecycle details. This page co
 - To reuse a single effect instance, store it once with a `SetVariable` node and re-read it on the `Effect` input through the **Variable** resolver bound to an `Effect`-typed variable.
 - The input-row shape toggle switches the `Effect` binding between **single** and **array** mode.
 - The `Target` input uses the standard entity resolver flow and also supports single or array bindings.
+- The optional **Active Effect** output writes the produced `ActiveEffectHandle`(s) to a graph variable on activation, with the same input-following shape and `Active Effect Handle`-variable filtering as [ApplyEffectNode](apply-effect-node.md).
 - The node follows the same effect/entity cross-product authoring flow as [ApplyEffectNode](apply-effect-node.md).
 - The node deactivates itself automatically once every applied non-instant effect ended or was removed elsewhere. If every applied effect is instant, it deactivates in the same frame.
 - The extra `OnEffectEnd` output fires only on that natural completion path. It does not fire when the node is deactivated externally and removes its own active effects during cleanup.

@@ -462,17 +462,10 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private Control CreateValueEditor(ForgeSharedVariableDefinition def)
 	{
-		if (def.VariableType == StatescriptVariableType.Entity)
+		if (!string.IsNullOrEmpty(def.ObjectTypeId))
 		{
 			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			info.AddChild(new Label { Text = "Runtime-assigned entity reference." });
-			return info;
-		}
-
-		if (def.VariableType == StatescriptVariableType.Effect)
-		{
-			var info = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-			info.AddChild(new Label { Text = "Runtime-assigned effect reference." });
+			info.AddChild(new Label { Text = "Runtime-assigned reference." });
 			return info;
 		}
 
@@ -536,15 +529,9 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
 
-		if (def.VariableType == StatescriptVariableType.Entity)
+		if (!string.IsNullOrEmpty(def.ObjectTypeId))
 		{
-			vBox.AddChild(new Label { Text = "Runtime-assigned entity references." });
-			return vBox;
-		}
-
-		if (def.VariableType == StatescriptVariableType.Effect)
-		{
-			vBox.AddChild(new Label { Text = "Runtime-assigned effect references." });
+			vBox.AddChild(new Label { Text = "Runtime-assigned references." });
 			return vBox;
 		}
 
@@ -814,7 +801,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		vBox.AddChild(typeRow);
 		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });
 
-		_newTypeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(StatescriptVariableType.Int);
+		_newTypeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(
+			VariableTypeSelection.Primitive(StatescriptVariableType.Int));
 
 		typeRow.AddChild(_newTypeDropdown);
 		_newValueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(false);
@@ -840,14 +828,18 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			return;
 		}
 
-		var variableType = (StatescriptVariableType)_newTypeDropdown.GetItemId(_newTypeDropdown.Selected);
+		VariableTypeSelection selection =
+			StatescriptEditorControls.GetVariableTypeSelection(_newTypeDropdown, _newTypeDropdown.Selected);
 
 		var newDef = new ForgeSharedVariableDefinition
 		{
 			VariableName = name,
-			VariableType = variableType,
+			VariableType = selection.IsObject ? StatescriptVariableType.Int : selection.PrimitiveType,
+			ObjectTypeId = selection.ObjectTypeId,
 			IsArray = _newValueShapeDropdown.GetSelectedId() == 1,
-			InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variableType),
+			InitialValue = selection.IsObject
+				? default
+				: StatescriptVariableTypeConverter.CreateDefaultGodotVariant(selection.PrimitiveType),
 		};
 
 		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();

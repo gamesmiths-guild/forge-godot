@@ -14,6 +14,7 @@ Use the core Forge docs for runtime behavior and port details. This page covers 
 - The input-row shape toggle switches the `Effect` binding between **single** and **array** mode.
 - The `Target` input uses the standard entity resolver flow and also supports single or array bindings.
 - All four effect/entity combinations are supported: single/single, single/array, array/single, and array/array.
+- The optional **Active Effect** output writes the produced `ActiveEffectHandle`(s) to a graph variable. Its shape follows the inputs (a single handle when both inputs are single, otherwise an array), and the output dropdown only lists `Active Effect Handle` variables of the matching shape. Declare one in the Variables panel to capture handles for later use; instant effects write `null` (scalar) or contribute nothing (array).
 
 ## Related Docs
 

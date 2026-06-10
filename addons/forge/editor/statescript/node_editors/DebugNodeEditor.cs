@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using GodotCollections = Godot.Collections;
@@ -16,10 +17,12 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 internal sealed partial class DebugNodeEditor : CustomNodeEditor
 {
 	private const string ValueTypeKey = "valueType";
+	private const string ObjectTypeIdKey = "objectTypeId";
 	private const string IsArrayKey = "isArray";
 	private const string TypeFoldKey = "_debug_type_fold";
 
 	private StatescriptVariableType _selectedType = StatescriptVariableType.Int;
+	private string _selectedObjectTypeId = string.Empty;
 	private bool _selectedIsArray;
 
 	[NonSerialized]
@@ -37,6 +40,11 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		if (NodeResource.CustomData.TryGetValue(ValueTypeKey, out Variant storedType))
 		{
 			_selectedType = (StatescriptVariableType)storedType.AsInt32();
+		}
+
+		if (NodeResource.CustomData.TryGetValue(ObjectTypeIdKey, out Variant storedObjectTypeId))
+		{
+			_selectedObjectTypeId = storedObjectTypeId.AsString();
 		}
 
 		if (NodeResource.CustomData.TryGetValue(IsArrayKey, out Variant storedIsArray))
@@ -89,7 +97,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		container.AddChild(headerRow);
 
 		OptionButton typeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(
-			_selectedType,
+			CurrentSelection(),
 			OnTypeChanged);
 		typeDropdown.CustomMinimumSize = new Vector2(80, 0);
 		headerRow.AddChild(typeDropdown);
@@ -102,17 +110,32 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		UpdateTypeFoldableTitle();
 	}
 
-	private void OnTypeChanged(StatescriptVariableType selectedValue)
+	private void OnTypeChanged(VariableTypeSelection selectedValue)
 	{
-		if (_selectedType == selectedValue)
+		if (CurrentSelection() == selectedValue)
 		{
 			return;
 		}
 
 		ChangeInputPropertyConfig(
 			0,
-			new GodotCollections.Dictionary { { ValueTypeKey, (int)selectedValue } },
+			new GodotCollections.Dictionary
+			{
+				{
+					ValueTypeKey, selectedValue.IsObject
+						? (int)StatescriptVariableType.Int
+						: (int)selectedValue.PrimitiveType
+				},
+				{ ObjectTypeIdKey, selectedValue.ObjectTypeId },
+			},
 			"Change Debug Input Type");
+	}
+
+	private VariableTypeSelection CurrentSelection()
+	{
+		return string.IsNullOrEmpty(_selectedObjectTypeId)
+			? VariableTypeSelection.Primitive(_selectedType)
+			: VariableTypeSelection.Object(_selectedObjectTypeId);
 	}
 
 	private void OnShapeChanged(bool isArray)
@@ -146,7 +169,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(
 			"Type:",
 			_typeFoldable,
-			StatescriptEditorControls.FormatVariableTypeDisplayName(_selectedType, _selectedIsArray),
+			StatescriptEditorControls.FormatVariableTypeDisplayName(CurrentSelection(), _selectedIsArray),
 			InlineSummaryBadgeKind.Enum);
 	}
 
@@ -158,7 +181,13 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		}
 
 		ClearValueRows();
-		Type clrType = StatescriptVariableTypeConverter.ToSystemType(_selectedType);
+		Type clrType =
+			!string.IsNullOrEmpty(_selectedObjectTypeId)
+			&& StatescriptObjectVariableTypeRegistry.TryGet(
+				_selectedObjectTypeId,
+				out StatescriptObjectVariableType? descriptor)
+					? descriptor.ClrType
+					: StatescriptVariableTypeConverter.ToSystemType(_selectedType);
 		AddInputPropertyRow(
 			new StatescriptNodeDiscovery.InputPropertyInfo(originalInfo.Label, clrType, _selectedIsArray),
 			0,

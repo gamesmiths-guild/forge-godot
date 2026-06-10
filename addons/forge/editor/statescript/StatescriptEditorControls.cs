@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -83,14 +84,14 @@ internal static partial class StatescriptEditorControls
 	}
 
 	/// <summary>
-	/// Creates a dropdown for choosing a Statescript variable type.
+	/// Creates a dropdown for choosing a Statescript variable type (Variant128 primitives plus registered object types).
 	/// </summary>
 	/// <param name="selectedType">The initial selected type.</param>
 	/// <param name="onChanged">An action invoked when the type changes.</param>
 	/// <returns>An <see cref="OptionButton"/> populated with all supported variable types.</returns>
 	public static OptionButton CreateVariableTypeDropdown(
-		StatescriptVariableType selectedType,
-		Action<StatescriptVariableType>? onChanged = null)
+		VariableTypeSelection selectedType,
+		Action<VariableTypeSelection>? onChanged = null)
 	{
 		var dropdown = new OptionButton
 		{
@@ -102,42 +103,79 @@ internal static partial class StatescriptEditorControls
 
 		if (onChanged is not null)
 		{
-			dropdown.ItemSelected +=
-				index => onChanged((StatescriptVariableType)dropdown.GetItemId((int)index));
+			dropdown.ItemSelected += index => onChanged(GetVariableTypeSelection(dropdown, (int)index));
 		}
 
 		return dropdown;
 	}
 
 	/// <summary>
-	/// Populates a dropdown with all supported Statescript variable types.
+	/// Populates a dropdown with all supported variable types: Variant128 primitives followed by registered object
+	/// types. Primitive items carry an empty metadata string; object items carry their type id as metadata.
 	/// </summary>
 	/// <param name="dropdown">The dropdown to populate.</param>
 	public static void PopulateVariableTypeDropdown(OptionButton dropdown)
 	{
 		dropdown.Clear();
 
+		int itemIndex = 0;
+
 		foreach (StatescriptVariableType variableType in StatescriptVariableTypeConverter.GetAllTypes())
 		{
 			dropdown.AddItem(
 				StatescriptVariableTypeConverter.GetDisplayName(variableType),
 				(int)variableType);
+			dropdown.SetItemMetadata(itemIndex, string.Empty);
+			itemIndex++;
+		}
+
+		foreach (StatescriptObjectVariableType objectType in StatescriptObjectVariableTypeRegistry.All)
+		{
+			dropdown.AddItem(objectType.DisplayName);
+			dropdown.SetItemMetadata(itemIndex, objectType.TypeId);
+			itemIndex++;
 		}
 	}
 
 	/// <summary>
-	/// Finds the dropdown index for a given Statescript variable type.
+	/// Reads the variable type selection for a dropdown item created by <see cref="PopulateVariableTypeDropdown"/>.
 	/// </summary>
 	/// <param name="dropdown">The populated dropdown.</param>
-	/// <param name="variableType">The variable type to locate.</param>
-	/// <returns>The matching dropdown index, or zero when the type is not present.</returns>
-	public static int FindVariableTypeDropdownIndex(
-		OptionButton dropdown,
-		StatescriptVariableType variableType)
+	/// <param name="index">The item index.</param>
+	/// <returns>The selection at the given index.</returns>
+	public static VariableTypeSelection GetVariableTypeSelection(OptionButton dropdown, int index)
+	{
+		if (index < 0 || index >= dropdown.ItemCount)
+		{
+			return VariableTypeSelection.Primitive(StatescriptVariableType.Int);
+		}
+
+		string objectTypeId = dropdown.GetItemMetadata(index).AsString();
+		return string.IsNullOrEmpty(objectTypeId)
+			? VariableTypeSelection.Primitive((StatescriptVariableType)dropdown.GetItemId(index))
+			: VariableTypeSelection.Object(objectTypeId);
+	}
+
+	/// <summary>
+	/// Finds the dropdown index for a given variable type selection.
+	/// </summary>
+	/// <param name="dropdown">The populated dropdown.</param>
+	/// <param name="selection">The selection to locate.</param>
+	/// <returns>The matching dropdown index, or zero when the selection is not present.</returns>
+	public static int FindVariableTypeDropdownIndex(OptionButton dropdown, VariableTypeSelection selection)
 	{
 		for (int i = 0; i < dropdown.ItemCount; i++)
 		{
-			if (dropdown.GetItemId(i) == (int)variableType)
+			string objectTypeId = dropdown.GetItemMetadata(i).AsString();
+
+			if (selection.IsObject)
+			{
+				if (objectTypeId == selection.ObjectTypeId)
+				{
+					return i;
+				}
+			}
+			else if (string.IsNullOrEmpty(objectTypeId) && dropdown.GetItemId(i) == (int)selection.PrimitiveType)
 			{
 				return i;
 			}
@@ -149,12 +187,27 @@ internal static partial class StatescriptEditorControls
 	/// <summary>
 	/// Formats a variable type display name, optionally as an array.
 	/// </summary>
-	/// <param name="variableType">The base variable type.</param>
+	/// <param name="selection">The variable type selection.</param>
 	/// <param name="isArray">Whether the type represents an array.</param>
 	/// <returns>The formatted display string.</returns>
-	public static string FormatVariableTypeDisplayName(StatescriptVariableType variableType, bool isArray)
+	public static string FormatVariableTypeDisplayName(VariableTypeSelection selection, bool isArray)
 	{
-		return StatescriptVariableTypeConverter.GetDisplayName(variableType) + (isArray ? "[]" : string.Empty);
+		string name;
+
+		if (selection.IsObject)
+		{
+			name = StatescriptObjectVariableTypeRegistry.TryGet(
+				selection.ObjectTypeId,
+				out StatescriptObjectVariableType? descriptor)
+					? descriptor.DisplayName
+					: selection.ObjectTypeId;
+		}
+		else
+		{
+			name = StatescriptVariableTypeConverter.GetDisplayName(selection.PrimitiveType);
+		}
+
+		return name + (isArray ? "[]" : string.Empty);
 	}
 
 	/// <summary>

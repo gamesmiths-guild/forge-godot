@@ -2,8 +2,10 @@
 
 #if TOOLS
 using System;
+using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
@@ -13,6 +15,10 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 	private const string EffectIsArrayKey = "_effect_input_array";
 	private const string TargetIsArrayKey = "_target_input_array";
 	private const string InputFoldKey = "_fold_input";
+	private const string OutputFoldKey = "_fold_output";
+
+	// Object variable type id (see ActiveEffectHandleObjectVariableType) the handle output binds to.
+	private const string HandleObjectTypeId = "ActiveEffectHandle";
 
 	[NonSerialized]
 	private StatescriptNodeDiscovery.NodeTypeInfo? _cachedTypeInfo;
@@ -48,6 +54,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 		root.AddChild(_inputEditorsContainer);
 
 		RebuildInputEditors();
+		BuildHandleOutputSection();
 	}
 
 	/// <inheritdoc/>
@@ -107,6 +114,97 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 			1,
 			_inputEditorsContainer,
 			TargetIsArrayKey);
+	}
+
+	private void BuildHandleOutputSection()
+	{
+		if (_cachedTypeInfo is null || _cachedTypeInfo.OutputVariablesInfo.Length == 0)
+		{
+			return;
+		}
+
+		FoldableContainer outputContainer = AddPropertySectionDivider(
+			"Output Variables",
+			OutputVariableColor,
+			OutputFoldKey,
+			GetFoldState(OutputFoldKey));
+
+		var root = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		outputContainer.AddChild(root);
+
+		// The output shape follows the inputs: an array of handles when either input is an array, otherwise a single
+		// handle.
+		bool outputIsArray = _effectIsArray || _targetIsArray;
+		AddHandleOutputRow(root, _cachedTypeInfo.OutputVariablesInfo[0].Label, outputIsArray);
+	}
+
+	private void AddHandleOutputRow(VBoxContainer container, string label, bool isArray)
+	{
+		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		container.AddChild(row);
+
+		var nameLabel = new Label
+		{
+			Text = label,
+			CustomMinimumSize = new Vector2(60, 0),
+		};
+		nameLabel.AddThemeColorOverride("font_color", OutputVariableColor);
+		row.AddChild(nameLabel);
+
+		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		dropdown.SetMeta("is_variable_dropdown", true);
+
+		var variableNames = new List<string> { string.Empty };
+		dropdown.AddItem("(None)");
+
+		foreach (StatescriptGraphVariable variable in Graph.Variables)
+		{
+			if (variable.ObjectTypeId == HandleObjectTypeId
+				&& variable.IsArray == isArray
+				&& !string.IsNullOrEmpty(variable.VariableName))
+			{
+				dropdown.AddItem(variable.VariableName);
+				variableNames.Add(variable.VariableName);
+			}
+		}
+
+		int selectedIndex = 0;
+		if (FindBinding(StatescriptPropertyDirection.Output, 0)?.Resolver is VariableResolverResource resolver
+			&& !string.IsNullOrEmpty(resolver.VariableName))
+		{
+			int found = variableNames.IndexOf(resolver.VariableName);
+			selectedIndex = found > 0 ? found : 0;
+		}
+
+		dropdown.Selected = selectedIndex;
+		if (selectedIndex == 0)
+		{
+			RemoveBinding(StatescriptPropertyDirection.Output, 0);
+		}
+
+		dropdown.ItemSelected += index => OnHandleOutputSelected(variableNames, (int)index, isArray);
+		row.AddChild(dropdown);
+	}
+
+	private void OnHandleOutputSelected(List<string> variableNames, int index, bool isArray)
+	{
+		if (index <= 0 || index >= variableNames.Count)
+		{
+			RemoveBinding(StatescriptPropertyDirection.Output, 0);
+		}
+		else
+		{
+			EnsureBinding(StatescriptPropertyDirection.Output, 0).Resolver = new VariableResolverResource
+			{
+				VariableName = variableNames[index],
+				Scope = VariableScope.Graph,
+				ObjectTypeId = HandleObjectTypeId,
+				IsArray = isArray,
+			};
+		}
+
+		RaisePropertyBindingChanged();
+		ResetSize();
 	}
 }
 #endif

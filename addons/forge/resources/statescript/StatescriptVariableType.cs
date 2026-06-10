@@ -63,10 +63,4 @@ public enum StatescriptVariableType
 
 	/// <summary>Quaternion rotation.</summary>
 	Quaternion = 17,
-
-	/// <summary>Forge entity reference.</summary>
-	Entity = 18,
-
-	/// <summary>Forge effect instance reference.</summary>
-	Effect = 19,
 }

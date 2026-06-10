@@ -220,6 +220,13 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		button.AddThemeColorOverride("font_hover_pressed_color", _highlightColor.Lightened(0.2f));
 	}
 
+	private static VariableTypeSelection GetVariableSelection(StatescriptGraphVariable variable)
+	{
+		return string.IsNullOrEmpty(variable.ObjectTypeId)
+			? VariableTypeSelection.Primitive(variable.VariableType)
+			: VariableTypeSelection.Object(variable.ObjectTypeId);
+	}
+
 	private void EnsureControlsCached()
 	{
 		_addButton ??= GetNodeOrNull<Button>($"{HeaderRowNodeName}/{AddButtonNodeName}");
@@ -379,7 +386,7 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		var typeLabel = new Label
 		{
-			Text = $"({StatescriptVariableTypeConverter.GetDisplayName(variable.VariableType)}"
+			Text = $"({StatescriptEditorControls.FormatVariableTypeDisplayName(GetVariableSelection(variable), false)}"
 				+ (variable.IsArray ? "[])" : ")"),
 		};
 
@@ -496,7 +503,8 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 		typeRow.AddChild(new Label { Text = "Type:", CustomMinimumSize = new Vector2(60, 0) });
 
-		_newTypeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(StatescriptVariableType.Int);
+		_newTypeDropdown = StatescriptEditorControls.CreateVariableTypeDropdown(
+			VariableTypeSelection.Primitive(StatescriptVariableType.Int));
 		typeRow.AddChild(_newTypeDropdown);
 		_newValueShapeDropdown = StatescriptEditorControls.CreateValueShapeDropdown(false);
 		typeRow.AddChild(_newValueShapeDropdown);
@@ -529,15 +537,18 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			return;
 		}
 
-		int selectedId = _newTypeDropdown.GetItemId(selectedIndex);
-		var varType = (StatescriptVariableType)selectedId;
+		VariableTypeSelection selection =
+			StatescriptEditorControls.GetVariableTypeSelection(_newTypeDropdown, selectedIndex);
 
 		var newVariable = new StatescriptGraphVariable
 		{
 			VariableName = name,
-			VariableType = varType,
+			VariableType = selection.IsObject ? StatescriptVariableType.Int : selection.PrimitiveType,
+			ObjectTypeId = selection.ObjectTypeId,
 			IsArray = _newValueShapeDropdown.GetSelectedId() == 1,
-			InitialValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(varType),
+			InitialValue = selection.IsObject
+				? default
+				: StatescriptVariableTypeConverter.CreateDefaultGodotVariant(selection.PrimitiveType),
 		};
 
 		EditorUndoRedoUtils.Record(
