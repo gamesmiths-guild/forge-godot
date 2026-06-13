@@ -28,7 +28,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 [Tool]
 [GlobalClass]
 [Icon("uid://b6yrjb46fluw3")]
-public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior, ISerializationListener
+public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 {
 	private readonly Callable _statescriptChangedCallable;
 
@@ -64,7 +64,7 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior, ISeriali
 
 	public StatescriptAbilityBehavior()
 	{
-		_statescriptChangedCallable = Callable.From(OnStatescriptChanged);
+		_statescriptChangedCallable = new Callable(this, nameof(OnStatescriptChanged));
 	}
 
 	public static IActivationDataProvider? InstantiateProvider(string className)
@@ -137,16 +137,6 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior, ISeriali
 		}
 
 		return new GraphAbilityBehavior(_cachedGraph);
-	}
-
-	public void OnBeforeSerialize()
-	{
-		UnsubscribeFromStatescriptChanged(_statescript);
-	}
-
-	public void OnAfterDeserialize()
-	{
-		SubscribeToStatescriptChanged(_statescript);
 	}
 
 	private static IActivationDataProvider? FindActivationDataProvider(StatescriptGraph graph)
