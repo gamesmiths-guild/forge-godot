@@ -114,6 +114,20 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 			1,
 			_inputEditorsContainer,
 			TargetIsArrayKey);
+
+		// The optional context-data input (index 2) is scalar-only, so it has no single/array shape toggle.
+		if (_cachedTypeInfo.InputPropertiesInfo.Length > 2)
+		{
+			StatescriptNodeDiscovery.InputPropertyInfo contextInfo = _cachedTypeInfo.InputPropertiesInfo[2];
+
+			AddInputPropertyRow(
+				new StatescriptNodeDiscovery.InputPropertyInfo(
+					contextInfo.Label,
+					contextInfo.ExpectedType,
+					false),
+				2,
+				_inputEditorsContainer);
+		}
 	}
 
 	private void BuildHandleOutputSection()
