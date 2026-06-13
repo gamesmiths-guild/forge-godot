@@ -143,7 +143,7 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior, ISeriali
 	{
 		UnsubscribeFromStatescriptChanged(_statescript);
 	}
-	
+
 	public void OnAfterDeserialize()
 	{
 		SubscribeToStatescriptChanged(_statescript);
