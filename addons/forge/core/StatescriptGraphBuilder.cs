@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
@@ -115,23 +116,26 @@ public static class StatescriptGraphBuilder
 				continue;
 			}
 
-			Type clrType = StatescriptVariableTypeConverter.ToSystemType(variable.VariableType);
-
-			if (variable.VariableType == StatescriptVariableType.Entity)
+			if (!string.IsNullOrEmpty(variable.ObjectTypeId)
+				&& StatescriptObjectVariableTypeRegistry.TryGet(
+					variable.ObjectTypeId,
+					out StatescriptObjectVariableType? descriptor))
 			{
+				var objectVariableName = new StringKey(variable.VariableName);
+
 				if (variable.IsArray)
 				{
-					graph.VariableDefinitions.DefineObjectArrayVariable<IForgeEntity>(
-						new StringKey(variable.VariableName));
+					descriptor.DefineGraphArrayVariable(graph.VariableDefinitions, objectVariableName);
 				}
 				else
 				{
-					graph.VariableDefinitions.DefineObjectVariable<IForgeEntity>(
-						new StringKey(variable.VariableName));
+					descriptor.DefineGraphVariable(graph.VariableDefinitions, objectVariableName);
 				}
 
 				continue;
 			}
+
+			Type clrType = StatescriptVariableTypeConverter.ToSystemType(variable.VariableType);
 
 			if (variable.IsArray)
 			{

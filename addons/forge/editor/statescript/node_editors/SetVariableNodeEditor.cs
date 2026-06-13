@@ -932,13 +932,6 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			0,
 			container);
 
-		var inputKey = new PropertySlotKey(StatescriptPropertyDirection.Input, 0);
-		if (FindBinding(StatescriptPropertyDirection.Input, 0)?.Resolver is null
-			&& ActiveResolverEditors.TryGetValue(inputKey, out NodeEditorProperty? resolverEditor))
-		{
-			resolverEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, 0));
-		}
-
 		ResetSize();
 	}
 }

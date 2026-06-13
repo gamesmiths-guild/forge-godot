@@ -64,7 +64,7 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 
 	public StatescriptAbilityBehavior()
 	{
-		_statescriptChangedCallable = Callable.From(OnStatescriptChanged);
+		_statescriptChangedCallable = new Callable(this, nameof(OnStatescriptChanged));
 	}
 
 	public static IActivationDataProvider? InstantiateProvider(string className)

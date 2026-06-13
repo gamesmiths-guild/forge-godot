@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -17,14 +18,19 @@ namespace Gamesmiths.Forge.Statescript.Nodes.Action;
 public sealed class DebugNode : ActionNode
 {
 	private readonly StatescriptVariableType _valueType;
+	private readonly string _objectTypeId;
 	private readonly bool _isArray;
 
 	/// <inheritdoc/>
 	public override string Description => "Prints the resolved input value to the Godot console for debugging.";
 
-	public DebugNode(StatescriptVariableType valueType = StatescriptVariableType.Int, bool isArray = false)
+	public DebugNode(
+		StatescriptVariableType valueType = StatescriptVariableType.Int,
+		bool isArray = false,
+		string objectTypeId = "")
 	{
 		_valueType = valueType;
+		_objectTypeId = objectTypeId ?? string.Empty;
 		_isArray = isArray;
 	}
 
@@ -33,7 +39,13 @@ public sealed class DebugNode : ActionNode
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		Type valueType = StatescriptVariableTypeConverter.ToSystemType(_valueType);
+		Type valueType =
+			!string.IsNullOrEmpty(_objectTypeId)
+			&& StatescriptObjectVariableTypeRegistry.TryGet(
+				_objectTypeId,
+				out StatescriptObjectVariableType? descriptor)
+					? descriptor.ClrType
+					: StatescriptVariableTypeConverter.ToSystemType(_valueType);
 		inputProperties.Add(new InputProperty("Value", _isArray ? valueType.MakeArrayType() : valueType));
 	}
 
@@ -42,17 +54,18 @@ public sealed class DebugNode : ActionNode
 	{
 		StringKey boundName = InputProperties[0].BoundName;
 
-		if (_valueType == StatescriptVariableType.Entity)
+		if (!string.IsNullOrEmpty(_objectTypeId)
+			&& StatescriptObjectVariableTypeRegistry.TryGet(_objectTypeId, out StatescriptObjectVariableType? descriptor))
 		{
-			if (graphContext.TryResolveObjectArray(boundName, out IForgeEntity?[]? entities))
+			if (graphContext.TryResolveObjectArray(boundName, descriptor.ClrType, out object?[]? objectValues))
 			{
-				GD.Print("[Statescript Debug] ", FormatEntityArray(entities));
+				GD.Print("[Statescript Debug] ", FormatObjectArray(descriptor, objectValues));
 				return;
 			}
 
-			if (graphContext.TryResolveObject(boundName, out IForgeEntity? entity))
+			if (graphContext.TryResolveObject(boundName, descriptor.ClrType, out object? objectValue))
 			{
-				GD.Print("[Statescript Debug] ", FormatEntity(entity));
+				GD.Print("[Statescript Debug] ", descriptor.FormatDebugValue(objectValue));
 				return;
 			}
 
@@ -75,7 +88,7 @@ public sealed class DebugNode : ActionNode
 		GD.Print("[Statescript Debug] <unresolved>");
 	}
 
-	private static string FormatEntityArray(IForgeEntity?[]? values)
+	private static string FormatObjectArray(StatescriptObjectVariableType descriptor, object?[]? values)
 	{
 		if (values is null || values.Length == 0)
 		{
@@ -85,25 +98,10 @@ public sealed class DebugNode : ActionNode
 		string[] formatted = new string[values.Length];
 		for (int i = 0; i < values.Length; i++)
 		{
-			formatted[i] = FormatEntity(values[i]);
+			formatted[i] = descriptor.FormatDebugValue(values[i]);
 		}
 
 		return $"[{string.Join(", ", formatted)}]";
-	}
-
-	private static string FormatEntity(IForgeEntity? entity)
-	{
-		if (entity is null)
-		{
-			return "<null>";
-		}
-
-		if (entity is global::Godot.Node node)
-		{
-			return node.GetPath().ToString();
-		}
-
-		return entity.GetType().FullName ?? entity.GetType().Name;
 	}
 
 	private string FormatValue(Variant128 value)

@@ -16,6 +16,24 @@ In the Godot editor, `Float` is the single designer-facing floating-point choice
 
 **Array variables** are also supported. These hold a fixed-length list of `Variant128` values.
 
+**Reference (object-backed) types:** In addition to the value types above, the editor exposes object variable types for storing Forge reference objects. The built-in ones are `Entity`, `Effect`, and `Active Effect`. These have no inline initial value (they are assigned at runtime) and are read with the **Variable** resolver (or `ObjectVariableResolver<T>` in code).
+
+#### Adding a custom object variable type
+
+Object variable types are discovered automatically, so you can add your own (for any reference type) **without modifying the plugin or editor**. Derive from `StatescriptObjectVariableType<T>` and provide a unique `TypeId` and a `DisplayName`:
+
+```csharp
+using Gamesmiths.Forge.Godot.Core.Statescript;
+
+public sealed class TargetGroupVariableType : StatescriptObjectVariableType<TargetGroup>
+{
+    public override string TypeId => "TargetGroup";
+    public override string DisplayName => "Target Group";
+}
+```
+
+The new type then appears in the variable type dropdown (graph and shared variables), is defined and resolved at runtime through the generic object lane, and works with the **Variable** resolver wherever a `TargetGroup` input or variable is expected. No enum entry or editor change is required. Override `FormatDebugValue` to customize how the `Debug` node prints values of your type.
+
 ### Defining Variables in Godot
 
 In the Statescript graph editor, use the **Variables panel** to add, remove, and configure graph variables. Each variable has:

@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Godot;
@@ -40,15 +41,18 @@ public partial class ForgeSharedVariableSet : Resource
 
 			var key = new StringKey(definition.VariableName);
 
-			if (definition.VariableType == StatescriptVariableType.Entity)
+			if (!string.IsNullOrEmpty(definition.ObjectTypeId)
+				&& StatescriptObjectVariableTypeRegistry.TryGet(
+					definition.ObjectTypeId,
+					out StatescriptObjectVariableType? descriptor))
 			{
 				if (definition.IsArray)
 				{
-					target.DefineObjectArrayVariable<IForgeEntity>(key, []);
+					descriptor.DefineSharedArrayVariable(target, key);
 				}
 				else
 				{
-					target.DefineObjectVariable<IForgeEntity>(key);
+					descriptor.DefineSharedVariable(target, key);
 				}
 
 				continue;

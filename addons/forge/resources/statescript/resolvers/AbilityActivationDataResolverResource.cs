@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -97,6 +98,16 @@ public partial class AbilityActivationDataResolverResource : StatescriptResolver
 				$"Statescript: Could not instantiate activation data provider '{ProviderClassName}'{location}. " +
 				"The resolver will return a default value.");
 			return new VariantResolver(default, typeof(int));
+		}
+
+		// Godot math-typed fields (e.g. Godot.Vector3) are not Variant128-constructable, so convert them in the Godot
+		// layer before falling back to the core resolver for natively supported types.
+		if (GodotActivationDataResolver.TryCreate(
+			provider.ActivationDataType,
+			FieldName,
+			out IPropertyResolver resolver))
+		{
+			return resolver;
 		}
 
 		return new AbilityActivationDataResolver(provider.ActivationDataType, FieldName);

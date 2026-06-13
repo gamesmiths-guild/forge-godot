@@ -345,7 +345,61 @@ Once defined:
 2. Nodes can bind input properties to the provider's fields.
 3. At runtime, when the ability is activated with `DashData`, the resolver reads the selected public field or property directly from that payload.
 
+> **Field types:** Fields may be any type `Variant128` supports (numbers and `System.Numerics` `Vector2`/`Vector3`/`Vector4`/`Quaternion`/`Plane`), plus the matching **Godot** math types (`Godot.Vector3`, etc.), which Forge for Godot converts automatically. Other types need a graph-variable binder or a custom resolver.
+
 > **Constraint:** A graph supports only one activation data provider. If nodes already reference a provider, subsequent nodes are restricted to the same one.
+
+## Effect Context Data Providers
+
+This is the inverse of an activation data provider. Instead of reading values *out* of ability activation data, an effect context-data provider builds typed data *from* the current graph state and passes it *into* the effect pipeline when `ApplyEffectNode`/`EffectNode` apply an effect. Custom calculators and executions then read it with `EffectEvaluatedData.TryGetContextData<TData>`.
+
+Derive from `EffectContextDataProvider<TData>` and override `CreateData`:
+
+```csharp
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Statescript;
+
+public sealed record DamageContext(float Damage, bool IsCritical);
+
+public sealed class DamageContextProvider : EffectContextDataProvider<DamageContext>
+{
+    public override DamageContext CreateData(GraphContext graphContext, EffectContextDataInputs inputs)
+    {
+        graphContext.TryResolve("damage", out float damage);
+        graphContext.TryResolve("isCritical", out bool isCritical);
+        return new DamageContext(damage, isCritical);
+    }
+}
+```
+
+Once defined:
+
+1. The provider appears automatically in the **Context Data** input dropdown on `ApplyEffectNode` and `EffectNode`.
+2. Select it to wrap the provider's value in an `EffectApplicationContext` that is passed to every application; leave the dropdown on **(None)** to apply effects without context data.
+3. At runtime, calculators and executions read the value through `EffectEvaluatedData.TryGetContextData<DamageContext>`.
+
+### Authored inputs
+
+To let designers author values directly on the node instead of pulling them from graph variables, declare **inputs**. Each declared input renders its own nested resolver dropdown under the provider, and the resolved values arrive through the `EffectContextDataInputs` bag:
+
+```csharp
+public sealed record DirectionContext(System.Numerics.Vector3 Direction);
+
+public sealed class DirectionContextProvider : EffectContextDataProvider<DirectionContext>
+{
+    public override IReadOnlyList<EffectContextDataInput> Inputs =>
+        [new EffectContextDataInput("Direction", typeof(System.Numerics.Vector3))];
+
+    public override DirectionContext CreateData(GraphContext graphContext, EffectContextDataInputs inputs)
+    {
+        return new DirectionContext(inputs.Get<System.Numerics.Vector3>("Direction"));
+    }
+}
+```
+
+Selecting `DirectionContextProvider` shows a **Direction** section with a Vector3 resolver (constant, variable, activation data, ...). Input value types must be supported by `Variant128`. Note that graph values use `System.Numerics` math types, so convert to Godot's (`new Vector3(v.X, v.Y, v.Z)`) when your `TData` stores Godot types.
+
+Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `EffectContextDataInputs` inside `CreateData`. See [EffectContextDataResolver](../resolvers/effect-context-data-resolver.md).
 
 ## Best Practices
 

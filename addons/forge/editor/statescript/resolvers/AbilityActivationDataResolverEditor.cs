@@ -148,7 +148,8 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 					continue;
 				}
 
-				if (binding.Resolver is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+				if (binding.Resolver
+					is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
 				{
 					return resolver.ProviderClassName;
 				}

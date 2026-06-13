@@ -45,7 +45,12 @@ public partial class OwnershipResolverResource : StatescriptResolverResource
 		runtimeNode.BindInput(index, propertyKey);
 	}
 
-	private OwnershipResolver BuildOwnershipResolver(Graph graph)
+	/// <summary>
+	/// Builds the core <see cref="OwnershipResolver"/> from the nested owner and source entity resolvers.
+	/// </summary>
+	/// <param name="graph">The runtime graph being built.</param>
+	/// <returns>The composed ownership resolver.</returns>
+	public OwnershipResolver BuildOwnershipResolver(Graph graph)
 	{
 		return new OwnershipResolver(
 			Owner?.BuildEntityResolver(graph),

@@ -43,9 +43,10 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
+		// Object-backed (reference) types are not represented by StatescriptVariableType, so TryFromSystemType already
+		// excludes them here.
 		return expectedType == typeof(object)
-			|| (StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out StatescriptVariableType valueType)
-				&& valueType != StatescriptVariableType.Entity);
+			|| StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _);
 	}
 
 	/// <inheritdoc/>

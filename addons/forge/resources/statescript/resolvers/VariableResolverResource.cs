@@ -2,6 +2,7 @@
 
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -40,11 +41,18 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 	public string SharedVariableSetPath { get; set; } = string.Empty;
 
 	/// <summary>
-	/// Gets or sets the authored variable type. This is primarily needed for shared-scope lookups whose definitions are
-	/// not stored inside the runtime graph.
+	/// Gets or sets the authored Variant128 (primitive) variable type. Used for shared-scope lookups whose definitions
+	/// are not stored inside the runtime graph. Ignored when <see cref="ObjectTypeId"/> is set.
 	/// </summary>
 	[Export]
 	public StatescriptVariableType VariableType { get; set; } = StatescriptVariableType.Int;
+
+	/// <summary>
+	/// Gets or sets the object variable type id when the bound variable is object-backed; empty for primitive
+	/// variables. Used for shared-scope lookups whose definitions are not stored inside the runtime graph.
+	/// </summary>
+	[Export]
+	public string ObjectTypeId { get; set; } = string.Empty;
 
 	/// <summary>
 	/// Gets or sets a value indicating whether the selected variable is an array. This is primarily editor metadata for
@@ -70,9 +78,15 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			return;
 		}
 
-		if (metadata.ValueType == typeof(IForgeEntity))
+		if (StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			metadata.ValueType,
+			out StatescriptObjectVariableType? descriptor))
 		{
-			base.BindInput(graph, runtimeNode, nodeId, index);
+			var propertyKey = new StringKey($"__object_{nodeId}_{index}");
+			graph.VariableDefinitions.DefineObjectProperty(
+				propertyKey,
+				descriptor.BuildVariableResolver(variableKey, Scope));
+			runtimeNode.BindInput(index, propertyKey);
 			return;
 		}
 
@@ -119,10 +133,10 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 			return new VariantResolver(default, typeof(int));
 		}
 
-		if (metadata.ValueType == typeof(IForgeEntity))
+		if (StatescriptObjectVariableTypeRegistry.IsObjectType(metadata.ValueType))
 		{
 			GD.PushError(
-				$"Statescript: Variable resolver '{VariableName}' targets an entity reference and cannot be used " +
+				$"Statescript: Variable resolver '{VariableName}' targets an object reference and cannot be used " +
 				"where a Variant-based property resolver is required.");
 			return new VariantResolver(default, typeof(int));
 		}
@@ -159,11 +173,13 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 
 		var propertyName = new StringKey($"__var_{nodeId}_{index}");
 
-		if (elementType == typeof(IForgeEntity))
+		if (StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			elementType,
+			out StatescriptObjectVariableType? descriptor))
 		{
 			graph.VariableDefinitions.DefineObjectArrayProperty(
 				propertyName,
-				new ObjectArrayVariableResolver<IForgeEntity>(variableKey, VariableScope.Shared));
+				descriptor.BuildArrayVariableResolver(variableKey, VariableScope.Shared));
 		}
 		else
 		{
@@ -179,6 +195,14 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 	{
 		if (Scope == VariableScope.Shared)
 		{
+			if (!string.IsNullOrEmpty(ObjectTypeId)
+				&& StatescriptObjectVariableTypeRegistry.TryGet(
+					ObjectTypeId,
+					out StatescriptObjectVariableType? descriptor))
+			{
+				return new VariableMetadata(descriptor.ClrType, IsArray);
+			}
+
 			return new VariableMetadata(
 				StatescriptVariableTypeConverter.ToSystemType(VariableType),
 				IsArray);
