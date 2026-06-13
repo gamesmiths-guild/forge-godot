@@ -16,7 +16,7 @@ In the Godot editor, `Float` is the single designer-facing floating-point choice
 
 **Array variables** are also supported. These hold a fixed-length list of `Variant128` values.
 
-**Reference (object-backed) types:** In addition to the value types above, the editor exposes object variable types for storing Forge reference objects. The built-in ones are `Entity`, `Effect`, and `Active Effect Handle`. These have no inline initial value (they are assigned at runtime) and are read with the **Variable** resolver (or `ObjectVariableResolver<T>` in code).
+**Reference (object-backed) types:** In addition to the value types above, the editor exposes object variable types for storing Forge reference objects. The built-in ones are `Entity`, `Effect`, and `Active Effect`. These have no inline initial value (they are assigned at runtime) and are read with the **Variable** resolver (or `ObjectVariableResolver<T>` in code).
 
 #### Adding a custom object variable type
 
