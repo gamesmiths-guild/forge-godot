@@ -11,7 +11,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// <summary>
 /// Shared node editor for the cue nodes. Renders the cue-tag input (a multi-tag picker, no shape toggle), the target
 /// input (with a single/array shape toggle), and any remaining scalar inputs (magnitude / normalized magnitude /
-/// source) as standard rows.
+/// source / custom parameters) as standard rows.
 /// </summary>
 internal abstract partial class CueNodeEditorBase : CustomNodeEditor
 {
@@ -103,7 +103,7 @@ internal abstract partial class CueNodeEditorBase : CustomNodeEditor
 			_inputEditorsContainer,
 			TargetIsArrayKey);
 
-		// Remaining inputs (magnitude / normalized magnitude / source) are optional scalar values.
+		// Remaining inputs (magnitude / normalized magnitude / source / custom parameters) are optional scalar values.
 		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
 		{
 			StatescriptNodeDiscovery.InputPropertyInfo info = _cachedTypeInfo.InputPropertiesInfo[i];
