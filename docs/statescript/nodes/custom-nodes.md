@@ -401,6 +401,64 @@ Selecting `DirectionContextProvider` shows a **Direction** section with a Vector
 
 Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `EffectContextDataInputs` inside `CreateData`. See [EffectContextDataResolver](../resolvers/effect-context-data-resolver.md).
 
+## Cue Custom Parameters Providers
+
+A cue custom-parameters provider is the cue-side analog of an effect context-data provider. It builds the `CueParameters.CustomParameters` bag *from* the current graph state and attaches it to every cue the [ExecuteCueNode](execute-cue-node.md), [UpdateCueNode](update-cue-node.md), or [CueNode](cue-node.md) fires. The cue handler then reads the values back by key.
+
+Derive from `CueCustomParametersProvider` and override `CreateCustomParameters`:
+
+```csharp
+using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Statescript;
+
+public sealed class DamageCueParametersProvider : CueCustomParametersProvider
+{
+    public override Dictionary<StringKey, object> CreateCustomParameters(
+        GraphContext graphContext,
+        CueCustomParameterInputs inputs)
+    {
+        graphContext.TryResolve("damage", out int damage);
+        graphContext.TryResolve("isCritical", out bool isCritical);
+
+        return new Dictionary<StringKey, object>
+        {
+            ["damage"] = damage,
+            ["isCritical"] = isCritical,
+        };
+    }
+}
+```
+
+Once defined:
+
+1. The provider appears automatically in the **Custom Parameters** input dropdown on the cue nodes.
+2. Select it to attach the dictionary it produces to every fired cue; leave the dropdown on **(None)** to fire cues without custom parameters.
+3. At runtime, the cue handler reads the values back from `CueParameters.CustomParameters`.
+
+### Authored inputs
+
+To let designers author values directly on the node instead of pulling them from graph variables, declare **inputs**. Each declared input renders its own nested resolver dropdown under the provider, and the resolved values arrive through the `CueCustomParameterInputs` bag:
+
+```csharp
+public sealed class StrengthCueParametersProvider : CueCustomParametersProvider
+{
+    public override IReadOnlyList<CueCustomParameterInput> Inputs =>
+        [new CueCustomParameterInput("Strength", typeof(int))];
+
+    public override Dictionary<StringKey, object> CreateCustomParameters(
+        GraphContext graphContext,
+        CueCustomParameterInputs inputs)
+    {
+        return new Dictionary<StringKey, object> { ["strength"] = inputs.Get<int>("Strength") };
+    }
+}
+```
+
+Selecting `StrengthCueParametersProvider` shows a **Strength** section with an int resolver (constant, variable, activation data, ...). Declared input value types must be supported by `Variant128`; a provider that needs object-lane values (entities, tags) can read them directly from the `GraphContext` instead.
+
+Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `CueCustomParameterInputs` inside `CreateCustomParameters`. See [CueCustomParametersResolver](../resolvers/cue-custom-parameters-resolver.md).
+
 ## Best Practices
 
 1. **Prefer built-in nodes and resolvers**: Before creating a custom node, check if the built-in `ExpressionNode` with resolvers can achieve the same result. For custom data sources, consider creating a [custom resolver](../custom-resolvers.md) instead of a custom node.
