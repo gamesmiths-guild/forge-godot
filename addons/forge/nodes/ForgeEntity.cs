@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
@@ -29,6 +30,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public EffectsManager EffectsManager { get; set; } = null!;
 
+	public CuesManager CuesManager { get; set; } = null!;
+
 	public EntityAbilities Abilities { get; set; } = null!;
 
 	public EventManager Events { get; set; } = null!;
@@ -40,7 +43,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._Ready();
 
 		Tags = new(BaseTags.GetTagContainer());
-		EffectsManager = new EffectsManager(this, ForgeManagers.Instance.CuesManager);
+		CuesManager = ForgeManagers.Instance.CuesManager;
+		EffectsManager = new EffectsManager(this, CuesManager);
 		Abilities = new EntityAbilities(this);
 		Events = new EventManager();
 		SharedVariables = new Variables();
