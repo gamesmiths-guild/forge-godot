@@ -8,6 +8,7 @@ using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 using Godot.Collections;
 

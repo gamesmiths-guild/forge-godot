@@ -4,6 +4,7 @@ using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
+using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 using Godot.Collections;
 

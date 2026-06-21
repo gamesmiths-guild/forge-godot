@@ -358,6 +358,7 @@ Derive from `EffectContextDataProvider<TData>` and override `CreateData`:
 ```csharp
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed record DamageContext(float Damage, bool IsCritical);
 
@@ -411,6 +412,7 @@ Derive from `CueCustomParametersProvider` and override `CreateCustomParameters`:
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed class DamageCueParametersProvider : CueCustomParametersProvider
 {
@@ -468,6 +470,7 @@ Derive from `EventPayloadProvider<TPayload>` and override `CreatePayload` (build
 ```csharp
 using System.Collections.Generic;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed record HitEventPayload(int Damage, bool IsCritical);
 

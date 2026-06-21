@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript;
 

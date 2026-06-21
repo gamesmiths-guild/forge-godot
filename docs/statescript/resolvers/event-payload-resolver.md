@@ -16,6 +16,7 @@ To make a provider appear in either dropdown, derive from `EventPayloadProvider<
 ```csharp
 using System.Collections.Generic;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed record HitEventPayload(int Damage, bool IsCritical);
 
