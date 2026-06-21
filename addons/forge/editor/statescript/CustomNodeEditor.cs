@@ -195,6 +195,85 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	}
 
 	/// <summary>
+	/// Renders an output-variable row as a foldable whose title carries a variable badge with the selected name when
+	/// collapsed, matching the built-in nodes' visual (for example <c>SetVariableNode</c>). The caller supplies the
+	/// selectable graph-variable names and is notified when the selection changes so it can update the node's binding.
+	/// </summary>
+	/// <param name="container">The container to add the row to.</param>
+	/// <param name="label">The output's display label (without a trailing colon).</param>
+	/// <param name="foldKey">The per-node key used to persist this row's fold state.</param>
+	/// <param name="candidateVariableNames">The selectable graph-variable names; a <c>(None)</c> entry is prepended.
+	/// </param>
+	/// <param name="selectedVariableName">The currently bound variable name, or <see langword="null"/> for none.
+	/// </param>
+	/// <param name="onSelectionChanged">Invoked with the newly selected variable name (<see langword="null"/> for
+	/// none).
+	/// </param>
+	protected void AddOutputVariableBadgeRow(
+		VBoxContainer container,
+		string label,
+		string foldKey,
+		IReadOnlyList<string> candidateVariableNames,
+		string? selectedVariableName,
+		Action<string?> onSelectionChanged)
+	{
+		string title = $"{label}:";
+
+		var foldable = new FoldableContainer
+		{
+			Title = title,
+			Folded = GetFoldState(foldKey, true),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+		};
+		container.AddChild(foldable);
+
+		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		dropdown.SetMeta("is_variable_dropdown", true);
+		dropdown.AddItem("(None)");
+
+		int selectedIndex = 0;
+		for (int i = 0; i < candidateVariableNames.Count; i++)
+		{
+			dropdown.AddItem(candidateVariableNames[i]);
+
+			if (!string.IsNullOrEmpty(selectedVariableName) && candidateVariableNames[i] == selectedVariableName)
+			{
+				selectedIndex = i + 1;
+			}
+		}
+
+		dropdown.Selected = selectedIndex;
+		foldable.AddChild(dropdown);
+
+		void UpdateBadge()
+		{
+			string selectedName = dropdown.Selected > 0 ? dropdown.GetItemText(dropdown.Selected) : string.Empty;
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				title,
+				foldable,
+				string.IsNullOrEmpty(selectedName) ? "(None)" : selectedName,
+				InlineSummaryBadgeKind.Variable,
+				highlightedVariableName: selectedName);
+		}
+
+		foldable.FoldingChanged += folded =>
+		{
+			SetFoldStateWithUndo(foldKey, folded);
+			UpdateBadge();
+			RaisePropertyBindingChanged();
+			ResetSize();
+		};
+
+		dropdown.ItemSelected += selected =>
+		{
+			onSelectionChanged(selected > 0 ? dropdown.GetItemText((int)selected) : null);
+			UpdateBadge();
+		};
+
+		UpdateBadge();
+	}
+
+	/// <summary>
 	/// Gets the persisted fold state for a given key.
 	/// </summary>
 	/// <param name="key">The key used to persist the fold state.</param>

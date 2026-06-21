@@ -16,6 +16,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 	private const string TargetIsArrayKey = "_target_input_array";
 	private const string InputFoldKey = "_fold_input";
 	private const string OutputFoldKey = "_fold_output";
+	private const string HandleOutputFoldKey = "_fold_output_handle";
 
 	// Object variable type id (see ActiveEffectHandleObjectVariableType) the handle output binds to.
 	private const string HandleObjectTypeId = "ActiveEffectHandle";
@@ -154,22 +155,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 
 	private void AddHandleOutputRow(VBoxContainer container, string label, bool isArray)
 	{
-		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		container.AddChild(row);
-
-		var nameLabel = new Label
-		{
-			Text = label,
-			CustomMinimumSize = new Vector2(60, 0),
-		};
-		nameLabel.AddThemeColorOverride("font_color", OutputVariableColor);
-		row.AddChild(nameLabel);
-
-		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		dropdown.SetMeta("is_variable_dropdown", true);
-
-		var variableNames = new List<string> { string.Empty };
-		dropdown.AddItem("(None)");
+		var candidates = new List<string>();
 
 		foreach (StatescriptGraphVariable variable in Graph.Variables)
 		{
@@ -177,32 +163,33 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 				&& variable.IsArray == isArray
 				&& !string.IsNullOrEmpty(variable.VariableName))
 			{
-				dropdown.AddItem(variable.VariableName);
-				variableNames.Add(variable.VariableName);
+				candidates.Add(variable.VariableName);
 			}
 		}
 
-		int selectedIndex = 0;
-		if (FindBinding(StatescriptPropertyDirection.Output, 0)?.Resolver is VariableResolverResource resolver
-			&& !string.IsNullOrEmpty(resolver.VariableName))
-		{
-			int found = variableNames.IndexOf(resolver.VariableName);
-			selectedIndex = found > 0 ? found : 0;
-		}
+		string? current =
+			FindBinding(StatescriptPropertyDirection.Output, 0)?.Resolver is VariableResolverResource resolver
+				? resolver.VariableName
+				: null;
 
-		dropdown.Selected = selectedIndex;
-		if (selectedIndex == 0)
+		if (!string.IsNullOrEmpty(current) && !candidates.Contains(current))
 		{
+			current = null;
 			RemoveBinding(StatescriptPropertyDirection.Output, 0);
 		}
 
-		dropdown.ItemSelected += index => OnHandleOutputSelected(variableNames, (int)index, isArray);
-		row.AddChild(dropdown);
+		AddOutputVariableBadgeRow(
+			container,
+			label,
+			HandleOutputFoldKey,
+			candidates,
+			current,
+			variableName => OnHandleOutputSelected(variableName, isArray));
 	}
 
-	private void OnHandleOutputSelected(List<string> variableNames, int index, bool isArray)
+	private void OnHandleOutputSelected(string? variableName, bool isArray)
 	{
-		if (index <= 0 || index >= variableNames.Count)
+		if (string.IsNullOrEmpty(variableName))
 		{
 			RemoveBinding(StatescriptPropertyDirection.Output, 0);
 		}
@@ -210,7 +197,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 		{
 			EnsureBinding(StatescriptPropertyDirection.Output, 0).Resolver = new VariableResolverResource
 			{
-				VariableName = variableNames[index],
+				VariableName = variableName,
 				Scope = VariableScope.Graph,
 				ObjectTypeId = HandleObjectTypeId,
 				IsArray = isArray,
