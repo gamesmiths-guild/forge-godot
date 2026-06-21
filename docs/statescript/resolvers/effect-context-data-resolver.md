@@ -20,6 +20,7 @@ To make a provider appear in the dropdown, derive from `EffectContextDataProvide
 ```csharp
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed record DamageContext(float Damage, bool IsCritical);
 

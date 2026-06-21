@@ -14,25 +14,25 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds a node's optional context-data input to an <see cref="IEffectContextDataProvider"/>.
+/// Resolver resource that binds the raise-event node's optional payload input to an
+/// <see cref="IEventPayloadProvider"/>.
 /// </summary>
 /// <remarks>
 /// At graph-build time this resource looks up the selected provider and binds Forge's core
-/// <see cref="EffectContextDataResolver"/>, which produces the <c>EffectApplicationContext</c> passed through the
-/// effect pipeline. When the provider declares authored inputs, the stored per-input resolvers are wired into the core
-/// resolver keyed by input name. When no provider is selected the input is left unbound, so effects apply without
-/// context data.
+/// <see cref="EventPayloadResolver"/>, which produces the object attached to the event's <c>EventData.Payload</c>. When
+/// the provider declares authored inputs, the stored per-input resolvers are wired into the core resolver keyed by
+/// input name. When no provider is selected the input is left unbound, so events are raised without a payload.
 /// </remarks>
 [Tool]
 [GlobalClass]
-public partial class EffectContextDataResolverResource : StatescriptResolverResource
+public partial class EventPayloadResolverResource : StatescriptResolverResource
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "EffectContextData";
+	public override string ResolverTypeId => "EventPayload";
 
 	/// <summary>
-	/// Gets or sets the identifier of the <see cref="IEffectContextDataProvider"/> implementation that builds the
-	/// context data. Empty means no provider is selected and the input stays unbound.
+	/// Gets or sets the identifier of the <see cref="IEventPayloadProvider"/> implementation that builds the payload.
+	/// Empty means no provider is selected and the input stays unbound.
 	/// </summary>
 	[Export]
 	public string ProviderClassName { get; set; } = string.Empty;
@@ -55,38 +55,38 @@ public partial class EffectContextDataResolverResource : StatescriptResolverReso
 	{
 		if (string.IsNullOrEmpty(ProviderClassName))
 		{
-			// Optional input: no provider selected means no context data is passed.
+			// Optional input: no provider selected means no payload is attached.
 			return;
 		}
 
-		if (!EffectContextDataProviderRegistry.TryGet(ProviderClassName, out IEffectContextDataProvider provider))
+		if (!EventPayloadProviderRegistry.TryGet(ProviderClassName, out IEventPayloadProvider provider))
 		{
 			GD.PushError(
-				$"Statescript: Could not find effect context-data provider '{ProviderClassName}' on node '{nodeId}' " +
-				$"(input {index}). The effect will be applied without context data.");
+				$"Statescript: Could not find event payload provider '{ProviderClassName}' on node '{nodeId}' " +
+				$"(input {index}). The event will be raised without a payload.");
 			return;
 		}
 
 		System.Collections.Generic.Dictionary<string, IPropertyResolver> inputResolvers =
 			BuildInputResolvers(graph, provider);
 
-		var propertyName = new StringKey($"__contextdata_{nodeId}_{index}");
+		var propertyName = new StringKey($"__eventpayload_{nodeId}_{index}");
 		graph.VariableDefinitions.DefineObjectProperty(
 			propertyName,
-			new EffectContextDataResolver(provider, inputResolvers));
+			new EventPayloadResolver(provider, inputResolvers));
 		runtimeNode.BindInput(index, propertyName);
 	}
 
 	private System.Collections.Generic.Dictionary<string, IPropertyResolver> BuildInputResolvers(
 		Graph graph,
-		IEffectContextDataProvider provider)
+		IEventPayloadProvider provider)
 	{
 		var inputResolvers = new System.Collections.Generic.Dictionary<string, IPropertyResolver>();
-		IReadOnlyList<EffectContextDataInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<EventPayloadInput> declaredInputs = provider.Inputs;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
-			EffectContextDataInput declaredInput = declaredInputs[i];
+			EventPayloadInput declaredInput = declaredInputs[i];
 			StatescriptResolverResource? resource = FindInputResolver(declaredInput.Name);
 
 			if (resource is null)

@@ -358,6 +358,7 @@ Derive from `EffectContextDataProvider<TData>` and override `CreateData`:
 ```csharp
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed record DamageContext(float Damage, bool IsCritical);
 
@@ -411,6 +412,7 @@ Derive from `CueCustomParametersProvider` and override `CreateCustomParameters`:
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed class DamageCueParametersProvider : CueCustomParametersProvider
 {
@@ -458,6 +460,50 @@ public sealed class StrengthCueParametersProvider : CueCustomParametersProvider
 Selecting `StrengthCueParametersProvider` shows a **Strength** section with an int resolver (constant, variable, activation data, ...). Declared input value types must be supported by `Variant128`; a provider that needs object-lane values (entities, tags) can read them directly from the `GraphContext` instead.
 
 Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `CueCustomParameterInputs` inside `CreateCustomParameters`. See [CueCustomParametersResolver](../resolvers/cue-custom-parameters-resolver.md).
+
+## Event Payload Providers
+
+An event payload provider builds the custom `EventData.Payload` for the [RaiseEventNode](raise-event-node.md) and decomposes a received payload into graph variables for the [EventListenerNode](event-listener-node.md). The same provider serves both directions.
+
+Derive from `EventPayloadProvider<TPayload>` and override `CreatePayload` (build) and `WriteOutputs` (decompose):
+
+```csharp
+using System.Collections.Generic;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
+
+public sealed record HitEventPayload(int Damage, bool IsCritical);
+
+public sealed class HitEventPayloadProvider : EventPayloadProvider<HitEventPayload>
+{
+    public override IReadOnlyList<EventPayloadInput> Inputs =>
+        [new EventPayloadInput("Damage", typeof(int)), new EventPayloadInput("IsCritical", typeof(bool))];
+
+    public override IReadOnlyList<EventPayloadOutput> Outputs =>
+        [new EventPayloadOutput("Damage", typeof(int)), new EventPayloadOutput("IsCritical", typeof(bool))];
+
+    public override HitEventPayload CreatePayload(GraphContext graphContext, EventPayloadInputs inputs)
+        => new(inputs.Get<int>("Damage"), inputs.Get<bool>("IsCritical"));
+
+    public override void WriteOutputs(HitEventPayload payload, EventPayloadOutputs outputs)
+    {
+        outputs.Set("Damage", payload.Damage);
+        outputs.Set("IsCritical", payload.IsCritical);
+    }
+}
+```
+
+Once defined:
+
+1. The provider appears automatically in the **Payload** input dropdown on both event nodes.
+2. On `RaiseEventNode`, the declared `Inputs` render as nested resolver sections and the provider builds the payload from them. On `EventListenerNode`, the declared `Outputs` each render as a graph-variable dropdown and the provider writes the received payload's values into them.
+3. Leave the dropdown on **(None)** to raise or listen without a payload.
+
+When a provider is bound, both event nodes use the typed (non-boxing) path: `RaiseEventNode` raises the provider's typed `EventData<TPayload>` (`EventManager.Raise<TPayload>`), and `EventListenerNode` subscribes through the provider's payload type (`EventManager.Subscribe<TPayload>`) and decomposes the typed payload directly, so a raise node and a listener sharing a provider connect with **no boxing**. Use a typed provider for hot, value-type payloads. A provider-less listener falls back to the non-generic catch-all (receives any payload type, boxed); a payload-less raise is non-generic.
+
+`EventPayloadInputs.Get<T>` reads a declared input (`default` when unbound); `EventPayloadOutputs.Set<T>` / `SetObject` write declared outputs to the bound graph variables. Declared input/output types must be supported by `Variant128`; read or write object-lane values (entities, tags) directly through the `GraphContext` or `SetObject`.
+
+Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build and decompose everything fresh from the supplied arguments. See [EventPayloadResolver](../resolvers/event-payload-resolver.md).
 
 ## Best Practices
 

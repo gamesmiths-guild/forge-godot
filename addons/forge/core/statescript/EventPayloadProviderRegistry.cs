@@ -10,38 +10,38 @@ using Gamesmiths.Forge.Statescript.Providers;
 namespace Gamesmiths.Forge.Godot.Core.Statescript;
 
 /// <summary>
-/// Registry of <see cref="ICueCustomParametersProvider"/> implementations. All non-abstract providers with a
-/// parameterless constructor in the project assembly are discovered automatically, including ones defined in game code,
-/// so new cue custom-parameter providers can be selected on the cue nodes without modifying the plugin or editor.
+/// Registry of <see cref="IEventPayloadProvider"/> implementations. All non-abstract providers with a parameterless
+/// constructor in the project assembly are discovered automatically, including ones defined in game code, so new event
+/// payload providers can be selected on the event nodes without modifying the plugin or editor.
 /// </summary>
 /// <remarks>
-/// Provider instances are cached and shared. Implementations must be stateless:
-/// <see cref="ICueCustomParametersProvider"/> builds a fresh dictionary from the supplied <see cref="GraphContext"/> on
-/// every call, so providers should not hold mutable per-application state.
+/// Provider instances are cached and shared. Implementations must be stateless: <see cref="IEventPayloadProvider"/>
+/// builds and decomposes payloads from the supplied <see cref="GraphContext"/> on every call, so providers should not
+/// hold mutable per-event state.
 /// </remarks>
-public static class CueCustomParametersProviderRegistry
+public static class EventPayloadProviderRegistry
 {
 	private static readonly List<ProviderEntry> _all = [];
-	private static readonly Dictionary<string, ICueCustomParametersProvider> _byIdentifier = [];
+	private static readonly Dictionary<string, IEventPayloadProvider> _byIdentifier = [];
 
 	/// <summary>
-	/// Gets all registered cue custom-parameter providers.
+	/// Gets all registered event payload providers.
 	/// </summary>
 	public static IReadOnlyList<ProviderEntry> All => _all;
 
-	static CueCustomParametersProviderRegistry()
+	static EventPayloadProviderRegistry()
 	{
 		foreach (Type type in GetLoadableTypes(Assembly.GetExecutingAssembly()))
 		{
 			if (type.IsAbstract
 				|| type.IsInterface
-				|| !typeof(ICueCustomParametersProvider).IsAssignableFrom(type)
+				|| !typeof(IEventPayloadProvider).IsAssignableFrom(type)
 				|| type.GetConstructor(Type.EmptyTypes) is null)
 			{
 				continue;
 			}
 
-			var provider = (ICueCustomParametersProvider)Activator.CreateInstance(type)!;
+			var provider = (IEventPayloadProvider)Activator.CreateInstance(type)!;
 			string identifier = GetIdentifier(type);
 			_all.Add(new ProviderEntry(identifier, type.Name, provider));
 			_byIdentifier[identifier] = provider;
@@ -64,7 +64,7 @@ public static class CueCustomParametersProviderRegistry
 	/// <param name="identifier">The provider identifier (full name or simple name).</param>
 	/// <param name="provider">The matching provider when found.</param>
 	/// <returns><see langword="true"/> when a provider is registered for the identifier.</returns>
-	public static bool TryGet(string identifier, out ICueCustomParametersProvider provider)
+	public static bool TryGet(string identifier, out IEventPayloadProvider provider)
 	{
 		string resolved = ResolveIdentifier(identifier);
 		return _byIdentifier.TryGetValue(resolved, out provider!);
@@ -112,10 +112,10 @@ public static class CueCustomParametersProviderRegistry
 	}
 
 	/// <summary>
-	/// Describes a discovered cue custom-parameter provider for editor display and runtime lookup.
+	/// Describes a discovered event payload provider for editor display and runtime lookup.
 	/// </summary>
 	/// <param name="Identifier">The stable identifier stored in resources.</param>
 	/// <param name="DisplayName">The human-readable name shown in the editor dropdown.</param>
 	/// <param name="Provider">The cached provider instance.</param>
-	public sealed record ProviderEntry(string Identifier, string DisplayName, ICueCustomParametersProvider Provider);
+	public sealed record ProviderEntry(string Identifier, string DisplayName, IEventPayloadProvider Provider);
 }

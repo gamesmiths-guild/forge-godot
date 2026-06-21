@@ -3,12 +3,12 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Properties;
 using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 using Godot.Collections;
@@ -16,13 +16,13 @@ using Godot.Collections;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver editor that binds a node's optional context-data input to an <c>IEffectContextDataProvider</c>. The
+/// Resolver editor that binds the raise-event node's optional payload input to an <c>IEventPayloadProvider</c>. The
 /// provider dropdown lists every provider discovered in the project assembly, plus a <c>(None)</c> option that leaves
 /// the input unbound. When the selected provider declares inputs, each one is rendered as a nested resolver section so
-/// designers can author the value (a constant, a variable, activation data, and so on) that the provider receives.
+/// designers can author the value the provider receives.
 /// </summary>
 [Tool]
-internal sealed partial class EffectContextDataResolverEditor : NodeEditorProperty
+internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 {
 	private readonly List<string> _providerClassNames = [];
 	private readonly List<InputSection> _inputSections = [];
@@ -36,15 +36,15 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 	private string _selectedProviderClassName = string.Empty;
 
 	/// <inheritdoc/>
-	public override string DisplayName => "Context Data";
+	public override string DisplayName => "Event Payload";
 
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "EffectContextData";
+	public override string ResolverTypeId => "EventPayload";
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return expectedType == typeof(EffectApplicationContext);
+		return expectedType == typeof(EventPayloadRaiser);
 	}
 
 	/// <inheritdoc/>
@@ -62,11 +62,11 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		if (property?.Resolver is EffectContextDataResolverResource contextRes)
+		if (property?.Resolver is EventPayloadResolverResource payloadRes)
 		{
 			_selectedProviderClassName =
-				EffectContextDataProviderRegistry.ResolveIdentifier(contextRes.ProviderClassName);
-			LoadStoredResolvers(contextRes);
+				EventPayloadProviderRegistry.ResolveIdentifier(payloadRes.ProviderClassName);
+			LoadStoredResolvers(payloadRes);
 		}
 
 		var providerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -95,7 +95,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 	{
 		CaptureCurrentResolvers();
 
-		var resource = new EffectContextDataResolverResource
+		var resource = new EventPayloadResolverResource
 		{
 			ProviderClassName = _selectedProviderClassName,
 		};
@@ -148,7 +148,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (EffectContextDataProviderRegistry.ProviderEntry entry in EffectContextDataProviderRegistry.All)
+		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -159,7 +159,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		return identifier;
 	}
 
-	private void LoadStoredResolvers(EffectContextDataResolverResource resource)
+	private void LoadStoredResolvers(EventPayloadResolverResource resource)
 	{
 		_storedResolvers.Clear();
 
@@ -183,7 +183,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (EffectContextDataProviderRegistry.ProviderEntry entry in EffectContextDataProviderRegistry.All)
+		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);
@@ -238,14 +238,12 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		_inputSections.Clear();
 
 		if (string.IsNullOrEmpty(_selectedProviderClassName)
-			|| !EffectContextDataProviderRegistry.TryGet(
-				_selectedProviderClassName,
-				out IEffectContextDataProvider provider))
+			|| !EventPayloadProviderRegistry.TryGet(_selectedProviderClassName, out IEventPayloadProvider provider))
 		{
 			return;
 		}
 
-		IReadOnlyList<EffectContextDataInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<EventPayloadInput> declaredInputs = provider.Inputs;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
@@ -253,7 +251,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		}
 	}
 
-	private void BuildInputSection(EffectContextDataInput input)
+	private void BuildInputSection(EventPayloadInput input)
 	{
 		if (_inputsContainer is null)
 		{

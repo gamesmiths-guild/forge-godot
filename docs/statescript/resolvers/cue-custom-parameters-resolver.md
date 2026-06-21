@@ -21,6 +21,7 @@ To make a provider appear in the dropdown, derive from `CueCustomParametersProvi
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public sealed class DamageCueParametersProvider : CueCustomParametersProvider
 {
