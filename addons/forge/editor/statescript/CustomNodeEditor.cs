@@ -217,15 +217,10 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 		string? selectedVariableName,
 		Action<string?> onSelectionChanged)
 	{
-		string title = $"{label}:";
-
-		var foldable = new FoldableContainer
-		{
-			Title = title,
-			Folded = GetFoldState(foldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-		container.AddChild(foldable);
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			container,
+			label,
+			GetFoldState(foldKey, true));
 
 		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		dropdown.SetMeta("is_variable_dropdown", true);
@@ -249,7 +244,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 		{
 			string selectedName = dropdown.Selected > 0 ? dropdown.GetItemText(dropdown.Selected) : string.Empty;
 			InlineConstantSummaryFormatter.ApplyFoldableTitle(
-				title,
+				string.Empty,
 				foldable,
 				string.IsNullOrEmpty(selectedName) ? "(None)" : selectedName,
 				InlineSummaryBadgeKind.Variable,

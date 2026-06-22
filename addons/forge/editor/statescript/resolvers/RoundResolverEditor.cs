@@ -142,7 +142,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title, Folded = folded };
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(title, folded);
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}

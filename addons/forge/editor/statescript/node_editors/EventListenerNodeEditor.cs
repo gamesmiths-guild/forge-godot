@@ -210,13 +210,10 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			LoadPayloadBindings(resource);
 		}
 
-		_payloadFoldable = new FoldableContainer
-		{
-			Title = "Payload:",
-			Folded = GetFoldState(PayloadFoldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-		container.AddChild(_payloadFoldable);
+		_payloadFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			container,
+			"Payload",
+			GetFoldState(PayloadFoldKey, true));
 
 		_payloadProviderDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		PopulatePayloadProviderDropdown();
@@ -253,7 +250,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			: "(None)";
 
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(
-			"Payload:",
+			string.Empty,
 			_payloadFoldable,
 			summary,
 			InlineSummaryBadgeKind.Resolver);

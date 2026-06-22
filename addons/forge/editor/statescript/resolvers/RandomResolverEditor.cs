@@ -116,14 +116,12 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			out _maxEditorContainer,
 			x => _maxEditor = x);
 
-		_inclusiveMaxFoldable = new FoldableContainer
-		{
-			Title = "Inclusive Max:",
-			Folded = existing?.InclusiveMaxFolded ?? true,
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
+		_inclusiveMaxFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Inclusive Max:",
+			existing?.InclusiveMaxFolded ?? true);
+
 		_inclusiveMaxFoldable.FoldingChanged += OnInclusiveMaxFoldableFoldingChanged;
-		root.AddChild(_inclusiveMaxFoldable);
 
 		var inclusiveMaxRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_inclusiveMaxFoldable.AddChild(inclusiveMaxRow);
@@ -246,9 +244,8 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		out VBoxContainer editorContainer,
 		Action<NodeEditorProperty?> setEditor)
 	{
-		foldable = new FoldableContainer { Title = title, Folded = folded };
+		foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(root, title, folded);
 		foldable.FoldingChanged += OnResolverSlotFoldableFoldingChanged;
-		root.AddChild(foldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foldable.AddChild(container);

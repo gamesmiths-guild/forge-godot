@@ -185,14 +185,11 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 		sectionContainer.AddChild(outerVBox);
 
-		_scopeFoldable = new FoldableContainer
-		{
-			Title = "Scope:",
-			Folded = GetFoldState(ScopeFoldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
+		_scopeFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			outerVBox,
+			"Scope:",
+			GetFoldState(ScopeFoldKey, true));
 		_scopeFoldable.FoldingChanged += OnScopeFoldableFoldingChanged;
-		outerVBox.AddChild(_scopeFoldable);
 
 		// Scope toggle row.
 		var scopeRow = new HBoxContainer
@@ -223,14 +220,11 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		scopeRow.AddChild(graphButton);
 		scopeRow.AddChild(sharedButton);
 
-		_targetFoldable = new FoldableContainer
-		{
-			Title = $"{varInfo.Label}:",
-			Folded = GetFoldState(TargetFoldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
+		_targetFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			outerVBox,
+			$"{varInfo.Label}:",
+			GetFoldState(TargetFoldKey, true));
 		_targetFoldable.FoldingChanged += OnTargetFoldableFoldingChanged;
-		outerVBox.AddChild(_targetFoldable);
 
 		// Target variable container (rebuilt when scope changes).
 		var targetContainer = new VBoxContainer

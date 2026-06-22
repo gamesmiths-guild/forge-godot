@@ -79,27 +79,21 @@ internal sealed partial class EffectResolverEditor : NodeEditorProperty
 		AddChild(root);
 
 		// Effect Data section.
-		_effectDataFoldable = new FoldableContainer
-		{
-			Title = "Effect Data:",
-			Folded = resolver?.EffectDataFolded ?? true,
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
+		_effectDataFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Effect Data:",
+			resolver?.EffectDataFolded ?? true);
 		_effectDataFoldable.FoldingChanged += OnFoldableChanged;
-		root.AddChild(_effectDataFoldable);
 		_effectContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_effectDataFoldable.AddChild(_effectContainer);
 		RebuildEffectContent();
 
 		// Level section.
-		_levelFoldable = new FoldableContainer
-		{
-			Title = "Level:",
-			Folded = resolver?.LevelFolded ?? true,
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
+		_levelFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Level:",
+			resolver?.LevelFolded ?? true);
 		_levelFoldable.FoldingChanged += OnFoldableChanged;
-		root.AddChild(_levelFoldable);
 		var levelContent = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_levelFoldable.AddChild(levelContent);
 		_levelEditorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -110,14 +104,11 @@ internal sealed partial class EffectResolverEditor : NodeEditorProperty
 		_levelResolverDropdown.ItemSelected += OnLevelResolverDropdownItemSelected;
 
 		// Ownership section.
-		_ownershipFoldable = new FoldableContainer
-		{
-			Title = "Ownership:",
-			Folded = resolver?.OwnershipFolded ?? true,
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
+		_ownershipFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Ownership:",
+			resolver?.OwnershipFolded ?? true);
 		_ownershipFoldable.FoldingChanged += OnFoldableChanged;
-		root.AddChild(_ownershipFoldable);
 		_ownershipEditor = new OwnershipResolverEditor();
 		StatescriptNodeProperty? ownershipProperty = resolver?.Ownership is null
 			? null

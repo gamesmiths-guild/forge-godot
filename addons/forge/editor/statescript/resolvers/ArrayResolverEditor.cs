@@ -284,18 +284,16 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 		for (int i = 0; i < _elementResolverResources.Count; i++)
 		{
 			int capturedIndex = i;
-			var foldable = new FoldableContainer
-			{
-				Title = GetElementTitle(i),
-				Folded = i < _elementFoldedStates.Count && _elementFoldedStates[i],
-			};
+			FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+				_elementsContainer,
+				GetElementTitle(i),
+				i < _elementFoldedStates.Count && _elementFoldedStates[i]);
 			foldable.FoldingChanged += _ =>
 			{
 				OnElementFoldStateChanged(capturedIndex);
 			};
 
 			_elementFoldables.Add(foldable);
-			_elementsContainer.AddChild(foldable);
 
 			var content = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 			foldable.AddChild(content);

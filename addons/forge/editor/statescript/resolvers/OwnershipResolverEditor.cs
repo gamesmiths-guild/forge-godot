@@ -59,13 +59,12 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 
 		var ownershipResolver = property?.Resolver as OwnershipResolverResource;
 
-		_ownerFoldable = new FoldableContainer
-		{
-			Title = "Owner:",
-			Folded = ownershipResolver?.OwnerFolded ?? true,
-		};
+		_ownerFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Owner:",
+			ownershipResolver?.OwnerFolded ?? true);
+
 		_ownerFoldable.FoldingChanged += OnFoldableChanged;
-		root.AddChild(_ownerFoldable);
 
 		var ownerContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_ownerFoldable.AddChild(ownerContainer);
@@ -80,13 +79,12 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 			editor => _ownerEditor = editor);
 		_ownerResolverDropdown.ItemSelected += OnOwnerResolverDropdownItemSelected;
 
-		_sourceFoldable = new FoldableContainer
-		{
-			Title = "Source:",
-			Folded = ownershipResolver?.SourceFolded ?? true,
-		};
+		_sourceFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Source:",
+			ownershipResolver?.SourceFolded ?? true);
+
 		_sourceFoldable.FoldingChanged += OnFoldableChanged;
-		root.AddChild(_sourceFoldable);
 
 		var sourceContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_sourceFoldable.AddChild(sourceContainer);

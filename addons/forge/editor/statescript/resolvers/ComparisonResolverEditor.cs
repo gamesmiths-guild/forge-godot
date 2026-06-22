@@ -20,6 +20,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 {
 	private static readonly Type[] _numericExpectedTypes = [typeof(int), typeof(float), typeof(double)];
+	private static readonly string[] _operationSymbols = ["==", "!=", "<", "<=", ">", ">="];
 
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
@@ -29,6 +30,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	private VBoxContainer? _rightContainer;
 	private FoldableContainer? _leftFoldable;
 	private FoldableContainer? _rightFoldable;
+	private FoldableContainer? _operationFoldable;
 	private OptionButton? _leftResolverDropdown;
 	private OptionButton? _rightResolverDropdown;
 
@@ -79,14 +81,11 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 			_operation = comparisonResolver.Operation;
 		}
 
-		_leftFoldable = new FoldableContainer
-		{
-			Title = "Left:",
-			Folded = comparisonResolver?.LeftFolded ?? true,
-		};
-
+		_leftFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			vBox,
+			"Left:",
+			comparisonResolver?.LeftFolded ?? true);
 		_leftFoldable.FoldingChanged += OnFoldingChanged;
-		vBox.AddChild(_leftFoldable);
 
 		_leftContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_leftFoldable.AddChild(_leftContainer);
@@ -103,33 +102,31 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 		_leftResolverDropdown.ItemSelected += OnLeftResolverDropdownItemSelected;
 
-		var opRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		vBox.AddChild(opRow);
+		_operationFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			vBox,
+			"Operator:",
+			comparisonResolver?.OperationFolded ?? true);
+		_operationFoldable.FoldingChanged += OnOperationFoldableFoldingChanged;
 
-		opRow.AddChild(new Label { Text = "Op:" });
+		var opContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_operationFoldable.AddChild(opContainer);
 
 		_operationDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
-		_operationDropdown.AddItem("==");
-		_operationDropdown.AddItem("!=");
-		_operationDropdown.AddItem("<");
-		_operationDropdown.AddItem("<=");
-		_operationDropdown.AddItem(">");
-		_operationDropdown.AddItem(">=");
+		foreach (string symbol in _operationSymbols)
+		{
+			_operationDropdown.AddItem(symbol);
+		}
 
 		_operationDropdown.Selected = (int)_operation;
-
 		_operationDropdown.ItemSelected += OnOperationDropdownItemSelected;
+		opContainer.AddChild(_operationDropdown);
 
-		opRow.AddChild(_operationDropdown);
-
-		_rightFoldable = new FoldableContainer
-		{
-			Title = "Right:",
-			Folded = comparisonResolver?.RightFolded ?? true,
-		};
+		_rightFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			vBox,
+			"Right:",
+			comparisonResolver?.RightFolded ?? true);
 		_rightFoldable.FoldingChanged += OnFoldingChanged;
-		vBox.AddChild(_rightFoldable);
 
 		_rightContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_rightFoldable.AddChild(_rightContainer);
@@ -155,6 +152,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		{
 			Operation = _operation,
 			LeftFolded = _leftFoldable?.Folded ?? false,
+			OperationFolded = _operationFoldable?.Folded ?? false,
 			RightFolded = _rightFoldable?.Folded ?? false,
 		};
 
@@ -188,6 +186,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		_rightContainer = null;
 		_leftFoldable = null;
 		_rightFoldable = null;
+		_operationFoldable = null;
 		_leftResolverDropdown = null;
 		_rightResolverDropdown = null;
 		_leftEditor = null;
@@ -203,9 +202,17 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		RaiseLayoutSizeChanged();
 	}
 
+	private void OnOperationFoldableFoldingChanged(bool isFolded)
+	{
+		UpdateOperationFoldableTitle();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
 	private void OnOperationDropdownItemSelected(long x)
 	{
 		_operation = (ComparisonOperation)(int)x;
+		UpdateOperationFoldableTitle();
 		_onChanged?.Invoke();
 	}
 
@@ -306,6 +313,20 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		if (_rightFoldable is not null)
 		{
 			InlineConstantSummaryFormatter.ApplyFoldableTitle("Right:", _rightFoldable, _rightEditor);
+		}
+
+		UpdateOperationFoldableTitle();
+	}
+
+	private void UpdateOperationFoldableTitle()
+	{
+		if (_operationFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				string.Empty,
+				_operationFoldable,
+				_operationSymbols[(int)_operation],
+				InlineSummaryBadgeKind.Enum);
 		}
 	}
 }
