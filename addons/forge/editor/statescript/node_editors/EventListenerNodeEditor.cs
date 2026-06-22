@@ -215,13 +215,23 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			"Payload",
 			GetFoldState(PayloadFoldKey, true));
 
+		var providerRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_payloadFoldable.AddChild(providerRow);
+		providerRow.AddChild(new Label
+		{
+			Text = "Provider:",
+			CustomMinimumSize = new Vector2(75, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+		});
+
 		_payloadProviderDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		PopulatePayloadProviderDropdown();
-		_payloadFoldable.AddChild(_payloadProviderDropdown);
+		providerRow.AddChild(_payloadProviderDropdown);
 
-		// The provider's declared outputs render as sibling badge rows below the provider foldable.
+		// The provider's declared outputs render nested inside the payload foldable so collapsing Payload hides them
+		// behind the pill.
 		_payloadOutputsContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		container.AddChild(_payloadOutputsContainer);
+		_payloadFoldable.AddChild(_payloadOutputsContainer);
 		RebuildPayloadOutputRows();
 
 		UpdatePayloadBadge();
