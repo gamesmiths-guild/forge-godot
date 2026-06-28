@@ -215,8 +215,11 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			"Payload",
 			GetFoldState(PayloadFoldKey, true));
 
+		var payloadBody = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_payloadFoldable.AddChild(payloadBody);
+
 		var providerRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		_payloadFoldable.AddChild(providerRow);
+		payloadBody.AddChild(providerRow);
 		providerRow.AddChild(new Label
 		{
 			Text = "Provider:",
@@ -231,7 +234,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 		// The provider's declared outputs render nested inside the payload foldable so collapsing Payload hides them
 		// behind the pill.
 		_payloadOutputsContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		_payloadFoldable.AddChild(_payloadOutputsContainer);
+		payloadBody.AddChild(_payloadOutputsContainer);
 		RebuildPayloadOutputRows();
 
 		UpdatePayloadBadge();
