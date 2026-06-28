@@ -191,34 +191,14 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			GetFoldState(ScopeFoldKey, true));
 		_scopeFoldable.FoldingChanged += OnScopeFoldableFoldingChanged;
 
-		// Scope toggle row.
-		var scopeRow = new HBoxContainer
+		var scopeDropdown = new OptionButton
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
-
-		_scopeFoldable.AddChild(scopeRow);
-
-		var graphButton = new CheckBox
-		{
-			Text = "Graph",
-			ButtonPressed = !_isSharedScope,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-
-		var sharedButton = new CheckBox
-		{
-			Text = "Shared",
-			ButtonPressed = _isSharedScope,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-
-		var buttonGroup = new ButtonGroup();
-		graphButton.ButtonGroup = buttonGroup;
-		sharedButton.ButtonGroup = buttonGroup;
-
-		scopeRow.AddChild(graphButton);
-		scopeRow.AddChild(sharedButton);
+		scopeDropdown.AddItem("Graph");
+		scopeDropdown.AddItem("Shared");
+		scopeDropdown.Selected = _isSharedScope ? 1 : 0;
+		_scopeFoldable.AddChild(scopeDropdown);
 
 		_targetFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
 			outerVBox,
@@ -239,8 +219,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		UpdateScopeFoldableTitle();
 		UpdateTargetFoldableTitle(varInfo.Label);
 
-		graphButton.Pressed += () => OnScopeChanged(false, varInfo, index);
-		sharedButton.Pressed += () => OnScopeChanged(true, varInfo, index);
+		scopeDropdown.ItemSelected += selectedScope => OnScopeChanged(selectedScope == 1, varInfo, index);
 	}
 
 	private void OnScopeChanged(
