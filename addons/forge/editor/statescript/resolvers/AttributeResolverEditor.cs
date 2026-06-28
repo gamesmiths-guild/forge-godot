@@ -58,11 +58,11 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_setDropdown.ItemSelected += OnSetChanged;
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth));
 
-		_attributeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_attributeDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_attributeDropdown.ItemSelected += OnAttributeChanged;
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Attr:", _attributeDropdown, LabelWidth));
 

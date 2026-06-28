@@ -78,7 +78,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_providerDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_providerDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateProviderDropdown();
 		providerRow.AddChild(_providerDropdown);
 

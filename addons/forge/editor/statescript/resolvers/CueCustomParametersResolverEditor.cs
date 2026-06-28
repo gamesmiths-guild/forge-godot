@@ -79,7 +79,7 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_providerDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_providerDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateProviderDropdown();
 		providerRow.AddChild(_providerDropdown);
 

@@ -120,7 +120,7 @@ public partial class QueryExpressionEditorControl : VBoxContainer
 			return;
 		}
 
-		_expressionTypeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_expressionTypeDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (TagQueryExpressionType value in Enum.GetValues<TagQueryExpressionType>())
 		{
 			_expressionTypeDropdown.AddItem(value.ToString());

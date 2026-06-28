@@ -22,7 +22,7 @@ internal static class NestedResolverEditorUtilities
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 
 		foreach (Func<NodeEditorProperty> factory in factories)
 		{

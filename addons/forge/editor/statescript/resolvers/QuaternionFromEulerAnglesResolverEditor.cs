@@ -163,7 +163,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 
 	private OptionButton CreateResolverDropdown(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
 			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));

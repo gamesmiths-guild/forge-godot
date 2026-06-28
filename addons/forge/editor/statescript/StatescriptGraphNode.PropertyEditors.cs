@@ -89,7 +89,7 @@ public partial class StatescriptGraphNode
 			return;
 		}
 
-		var resolverDropdown = new OptionButton
+		var resolverDropdown = new SearchableOptionButton
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			CustomMinimumSize = new Vector2(80, 0),
@@ -258,7 +258,7 @@ public partial class StatescriptGraphNode
 			varInfo.Label,
 			GetFoldState(foldKey, true));
 
-		var variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		var variableDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		variableDropdown.SetMeta("is_variable_dropdown", true);
 		variableDropdown.SetMeta("output_index", index);
 

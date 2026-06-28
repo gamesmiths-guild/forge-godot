@@ -88,7 +88,7 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_providerDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_providerDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateProviderDropdown();
 		providerRow.AddChild(_providerDropdown);
 
@@ -105,7 +105,7 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_fieldDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_fieldDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateFieldDropdown();
 		fieldRow.AddChild(_fieldDropdown);
 

@@ -256,7 +256,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 
 	private OptionButton CreateResolverDropdownControl(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
 		foreach (Func<NodeEditorProperty> factory in _numericFactories)
 		{

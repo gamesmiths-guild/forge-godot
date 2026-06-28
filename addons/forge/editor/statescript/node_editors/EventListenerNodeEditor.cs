@@ -27,7 +27,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 	private const string OutputFoldKey = "_fold_output";
 	private const string PayloadFoldKey = "_fold_payload_provider";
 
-	// EventListenerNode.PayloadOutputInput — the input slot that stores the payload provider and its output bindings.
+	// EventListenerNode.PayloadOutputInput, the input slot that stores the payload provider and its output bindings.
 	private const int PayloadInputIndex = 2;
 
 	private readonly List<string> _payloadProviderClassNames = [];
@@ -227,7 +227,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_payloadProviderDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_payloadProviderDropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		PopulatePayloadProviderDropdown();
 		providerRow.AddChild(_payloadProviderDropdown);
 

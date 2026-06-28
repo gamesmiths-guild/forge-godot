@@ -222,7 +222,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 			label,
 			GetFoldState(foldKey, true));
 
-		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		dropdown.SetMeta("is_variable_dropdown", true);
 		dropdown.AddItem("(None)");
 

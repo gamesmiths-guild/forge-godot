@@ -78,7 +78,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_providerDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_providerDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateProviderDropdown();
 		providerRow.AddChild(_providerDropdown);
 

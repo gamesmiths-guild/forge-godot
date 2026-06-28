@@ -335,7 +335,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		nameLabel.AddThemeColorOverride("font_color", OutputVariableColor);
 		hBox.AddChild(nameLabel);
 
-		var dropdown = new OptionButton
+		OptionButton dropdown = new SearchableOptionButton
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
@@ -401,7 +401,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_setDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		PopulateSetDropdown();
 		setRow.AddChild(_setDropdown);
 
@@ -416,7 +416,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_sharedVarDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_sharedVarDropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		_sharedVarDropdown.SetMeta("is_shared_variable_dropdown", true);
 		PopulateSharedVariableDropdown();
 		varRow.AddChild(_sharedVarDropdown);

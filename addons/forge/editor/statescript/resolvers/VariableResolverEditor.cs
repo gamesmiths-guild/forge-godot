@@ -89,18 +89,18 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		_scopeDropdown.ItemSelected += OnScopeChanged;
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Scope:", _scopeDropdown, LabelWidth));
 
-		_graphVariableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_graphVariableDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_graphVariableDropdown.SetMeta("is_variable_dropdown", true);
 		_graphVariableDropdown.ItemSelected += OnGraphVariableChanged;
 		_graphRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Var:", _graphVariableDropdown, LabelWidth);
 		root.AddChild(_graphRow);
 
-		_setDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_setDropdown.ItemSelected += OnSetChanged;
 		_setRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth);
 		root.AddChild(_setRow);
 
-		_sharedVariableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_sharedVariableDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_sharedVariableDropdown.SetMeta("is_shared_variable_dropdown", true);
 		_sharedVariableDropdown.ItemSelected += OnSharedVariableChanged;
 		_sharedVariableRow = ResolverEditorLayoutUtilities.CreateLabeledRow(

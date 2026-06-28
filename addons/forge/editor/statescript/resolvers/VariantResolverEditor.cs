@@ -190,7 +190,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
 		for (int i = 0; i < _allowedValueTypes.Length; i++)
 		{

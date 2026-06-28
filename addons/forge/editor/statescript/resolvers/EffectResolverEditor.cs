@@ -231,7 +231,7 @@ internal sealed partial class EffectResolverEditor : NodeEditorProperty
 
 	private OptionButton CreateLevelDropdown(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
 		foreach (Func<NodeEditorProperty> factory in _levelFactories)
 		{
