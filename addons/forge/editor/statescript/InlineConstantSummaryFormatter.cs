@@ -29,6 +29,8 @@ internal static class InlineConstantSummaryFormatter
 	private const float FoldableTitleChromeWidth = 30f;
 	private const float FoldableTitleBadgeGap = 6f;
 	private const float FoldableTitleRightPadding = 8f;
+	private const float LabelColumnGap = 6f;
+	private const float LabelColumnCenterNudge = 18f;
 
 	private static readonly Color _numericIconColor = new(0x3dbcc9ff);
 	private static readonly Color _numericBackgroundColor = new(0x3dbcc918);
@@ -69,7 +71,7 @@ internal static class InlineConstantSummaryFormatter
 		SummaryBadgeData badgeData = GetBadgeData(foldable, editor);
 		PanelContainer badge = GetOrCreateSummaryBadge(foldable);
 		ConfigureSummaryBadge(badge, badgeData);
-		SynchronizeSiblingBadgeWidths(foldable);
+		ScheduleSync(foldable);
 	}
 
 	public static void ApplyFoldableTitle(
@@ -92,18 +94,18 @@ internal static class InlineConstantSummaryFormatter
 		}
 
 		SummaryBadgeData badgeData = foldable.Folded && !string.IsNullOrWhiteSpace(summary)
-			   ? CreateBadgeData(
-				   summary,
-				   badgeKind,
-				   isConstant,
-				   highlightedVariableName,
-				   highlightedSharedVariableSetPath,
-				   highlightedSharedVariableName)
-			   : SummaryBadgeData.Hidden;
+			? CreateBadgeData(
+				summary,
+				badgeKind,
+				isConstant,
+				highlightedVariableName,
+				highlightedSharedVariableSetPath,
+				highlightedSharedVariableName)
+			: SummaryBadgeData.Hidden;
 
 		PanelContainer badge = GetOrCreateSummaryBadge(foldable);
 		ConfigureSummaryBadge(badge, badgeData);
-		SynchronizeSiblingBadgeWidths(foldable);
+		ScheduleSync(foldable);
 	}
 
 	/// <summary>
@@ -350,7 +352,7 @@ internal static class InlineConstantSummaryFormatter
 			return;
 		}
 
-		foldable.Resized += () => SynchronizeSiblingBadgeWidths(foldable);
+		foldable.Resized += () => ScheduleSync(foldable);
 		foldable.SetMeta(SummaryBadgeResizeHookMetaKey, Variant.From(true));
 	}
 
@@ -491,57 +493,165 @@ internal static class InlineConstantSummaryFormatter
 		return false;
 	}
 
+	private static void ScheduleSync(FoldableContainer foldable)
+	{
+		// Defer to idle so the rows are measured after this change's layout has settled. Without this, adding a nested
+		// resolver (or any rebuild) measures stale sizes and the pills render past the node edge until the next resize.
+		Callable.From(() =>
+		{
+			if (GodotObject.IsInstanceValid(foldable))
+			{
+				SynchronizeSiblingBadgeWidths(foldable);
+			}
+		}).CallDeferred();
+	}
+
 	private static void SynchronizeSiblingBadgeWidths(FoldableContainer foldable)
 	{
-		if (foldable.GetParent() is not Node parent)
+		// Gather every collapsed (pill-showing) property foldable in the whole node, across both the Input Properties
+		// and Output Variables sections and any nesting depth, so the label/pill split is computed once and the pills
+		// line up node-wide rather than per section.
+		Node root = foldable;
+		while (root.GetParent() is Node parent)
 		{
-			return;
-		}
-
-		var siblingBadges = new List<PanelContainer>();
-		foreach (Node child in parent.GetChildren())
-		{
-			if (child is FoldableContainer siblingFoldable
-				&& TryGetSummaryBadge(siblingFoldable, out PanelContainer? badge))
+			root = parent;
+			if (root is GraphNode)
 			{
-				siblingBadges.Add(badge);
+				break;
 			}
 		}
 
-		if (siblingBadges.Count == 0)
+		var columnedFoldables = new List<FoldableContainer>();
+		CollectColumnedFoldables(root, columnedFoldables);
+
+		if (columnedFoldables.Count == 0)
 		{
 			return;
 		}
 
-		foreach (PanelContainer badge in siblingBadges)
+		// Clear current minimums so a stale pill width can't skew the row measurements below.
+		foreach (FoldableContainer columned in columnedFoldables)
 		{
-			badge.CustomMinimumSize = Vector2.Zero;
+			if (TryGetSummaryBadge(columned, out PanelContainer? badge))
+			{
+				badge.CustomMinimumSize = Vector2.Zero;
+			}
 		}
 
-		float availableWidth = parent is Control parentControl
-			? parentControl.Size.X
-				- FoldableTitleChromeWidth
-				- FoldableTitleBadgeGap
-				- FoldableTitleRightPadding
-			: float.MaxValue;
-
-		float columnWidth = MinimumBadgeWidth;
-		if (!float.IsPositiveInfinity(availableWidth) && !float.IsNaN(availableWidth))
+		// Group rows by nesting level: top-level rows (no badged-foldable ancestor) span both sections and align as one
+		// group; each nested resolver's rows form their own group, aligned among themselves and naturally indented.
+		// This also stops a narrow nested row from shrinking the top-level label column and clipping the outer labels.
+		var rowsByGroup = new Dictionary<ulong, List<FoldableContainer>>();
+		foreach (FoldableContainer columned in columnedFoldables)
 		{
-			// The pill is sized by its minimum (the title bar doesn't stretch it), and the built-in title fills the
-			// rest of the row. Half the row plus this nudge keeps the columns even: the fold arrow sits on the label
-			// side, so without the nudge the label reads wider than the pill. This single constant tunes the
-			// label/pill balance for every node at once.
-			const float labelPillBalanceNudge = 18f;
-			columnWidth = Math.Max(0f, (availableWidth / 2f) + labelPillBalanceNudge);
+			ulong groupKey = FindBadgedAncestorFoldable(columned)?.GetInstanceId() ?? 0UL;
+			if (!rowsByGroup.TryGetValue(groupKey, out List<FoldableContainer>? group))
+			{
+				group = [];
+				rowsByGroup[groupKey] = group;
+			}
+
+			group.Add(columned);
 		}
 
-		foreach (PanelContainer badge in siblingBadges)
+		foreach (List<FoldableContainer> group in rowsByGroup.Values)
 		{
-			badge.CustomMinimumSize = badge.Visible
-				? new Vector2(columnWidth, 0)
-				: Vector2.Zero;
+			ApplyColumnedLayout(group);
 		}
+	}
+
+	private static void ApplyColumnedLayout(List<FoldableContainer> group)
+	{
+		float longestLabelWidth = 0f;
+		float narrowestRowWidth = float.MaxValue;
+		foreach (FoldableContainer columned in group)
+		{
+			longestLabelWidth = Math.Max(longestLabelWidth, MeasureFoldableTitleWidth(columned));
+			float rowWidth = RowContentWidth(columned);
+			if (rowWidth > 0f)
+			{
+				narrowestRowWidth = Math.Min(narrowestRowWidth, rowWidth);
+			}
+		}
+
+		if (float.IsPositiveInfinity(narrowestRowWidth) || narrowestRowWidth <= 0f)
+		{
+			// Rows are not laid out yet; the resize hook re-runs this once they have a real width.
+			return;
+		}
+
+		// The label column takes only what the longest label in this group needs (plus a small gap), but never more
+		// than half the narrowest row so it can't starve the pill. The pill column then gets whatever width is left
+		// over. So once every label fits, extra node width flows into the pills instead of padding the labels. When
+		// labels don't fit, this clamps near 50/50, with the center nudge shifting the split toward the pill to offset
+		// the fold arrow on the label side (so the two columns read evenly); labels ellipsize.
+		float labelColumnWidth = Math.Min(
+			longestLabelWidth + LabelColumnGap,
+			Math.Max(0f, (narrowestRowWidth / 2f) - LabelColumnCenterNudge));
+
+		foreach (FoldableContainer columned in group)
+		{
+			if (!TryGetSummaryBadge(columned, out PanelContainer? badge))
+			{
+				continue;
+			}
+
+			badge.CustomMinimumSize = new Vector2(
+				Math.Max(MinimumBadgeWidth, RowContentWidth(columned) - labelColumnWidth),
+				0);
+		}
+	}
+
+	private static FoldableContainer? FindBadgedAncestorFoldable(FoldableContainer foldable)
+	{
+		for (Node? ancestor = foldable.GetParent(); ancestor is not null; ancestor = ancestor.GetParent())
+		{
+			if (ancestor is FoldableContainer ancestorFoldable && TryGetSummaryBadge(ancestorFoldable, out _))
+			{
+				return ancestorFoldable;
+			}
+		}
+
+		return null;
+	}
+
+	private static void CollectColumnedFoldables(Node node, List<FoldableContainer> result)
+	{
+		foreach (Node child in node.GetChildren())
+		{
+			if (child is FoldableContainer foldable
+				&& TryGetSummaryBadge(foldable, out PanelContainer? badge)
+				&& badge.Visible)
+			{
+				result.Add(foldable);
+			}
+
+			CollectColumnedFoldables(child, result);
+		}
+	}
+
+	private static float RowContentWidth(FoldableContainer foldable)
+	{
+		return foldable.Size.X - FoldableTitleChromeWidth - FoldableTitleBadgeGap - FoldableTitleRightPadding;
+	}
+
+	private static float MeasureFoldableTitleWidth(FoldableContainer foldable)
+	{
+		Font? font = foldable.GetThemeDefaultFont();
+		if (font is null)
+		{
+			return 0f;
+		}
+
+		int fontSize = foldable.GetThemeDefaultFontSize();
+		return font.GetStringSize(
+			foldable.Title,
+			HorizontalAlignment.Left,
+			-1,
+			fontSize,
+			TextServer.JustificationFlag.None,
+			TextServer.Direction.Auto,
+			TextServer.Orientation.Horizontal).X;
 	}
 
 	private static BadgeVisualStyle GetBadgeStyle(InlineSummaryBadgeKind badgeKind)
