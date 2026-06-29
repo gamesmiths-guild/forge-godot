@@ -80,15 +80,11 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		_typeDropdown.ItemSelected += OnTypeDropdownItemSelected;
 		typeRow.AddChild(_typeDropdown);
 
-		_operandFoldable = new FoldableContainer
-		{
-			Title = "Vector:",
-			Folded = existing?.OperandFolded ?? true,
-		};
-
+		_operandFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Vector:",
+			existing?.OperandFolded ?? true);
 		_operandFoldable.FoldingChanged += OnOperandFoldableFoldingChanged;
-
-		root.AddChild(_operandFoldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_operandFoldable.AddChild(container);
 
@@ -168,6 +164,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 
 	private void OnOperandFoldableFoldingChanged(bool folded)
 	{
+		UpdateOperandFoldableTitle();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
 	}
@@ -265,7 +262,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 
 	private OptionButton CreateResolverDropdown(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
 			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
@@ -289,11 +286,21 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		_editorContainer.AddChild(editor);
 		_operandEditor = editor;
+		UpdateOperandFoldableTitle();
 	}
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateOperandFoldableTitle();
 		_onChanged?.Invoke();
+	}
+
+	private void UpdateOperandFoldableTitle()
+	{
+		if (_operandFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Vector:", _operandFoldable, _operandEditor);
+		}
 	}
 
 	private Type GetOperandClrType()

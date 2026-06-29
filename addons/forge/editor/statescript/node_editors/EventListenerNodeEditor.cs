@@ -25,12 +25,16 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 {
 	private const string InputFoldKey = "_fold_input";
 	private const string OutputFoldKey = "_fold_output";
+	private const string PayloadFoldKey = "_fold_payload_provider";
 
-	// EventListenerNode.PayloadOutputInput — the input slot that stores the payload provider and its output bindings.
+	// EventListenerNode.PayloadOutputInput, the input slot that stores the payload provider and its output bindings.
 	private const int PayloadInputIndex = 2;
 
 	private readonly List<string> _payloadProviderClassNames = [];
 	private readonly System.Collections.Generic.Dictionary<string, string> _payloadVariableByOutput = [];
+
+	[NonSerialized]
+	private FoldableContainer? _payloadFoldable;
 
 	[NonSerialized]
 	private OptionButton? _payloadProviderDropdown;
@@ -89,6 +93,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 	internal override void Unbind()
 	{
 		base.Unbind();
+		_payloadFoldable = null;
 		_payloadProviderDropdown = null;
 		_payloadOutputsContainer = null;
 	}
@@ -116,56 +121,33 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 				: string.Empty;
 	}
 
-	private static OptionButton CreateVariableRow(VBoxContainer container, string label, out List<string> variableNames)
-	{
-		var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		container.AddChild(row);
-
-		var nameLabel = new Label
-		{
-			Text = label,
-			CustomMinimumSize = new Vector2(90, 0),
-		};
-		nameLabel.AddThemeColorOverride("font_color", OutputVariableColor);
-		row.AddChild(nameLabel);
-
-		var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		dropdown.SetMeta("is_variable_dropdown", true);
-		dropdown.AddItem("(None)");
-		row.AddChild(dropdown);
-
-		variableNames = [string.Empty];
-		return dropdown;
-	}
-
 	private void AddBuiltInOutputRow(VBoxContainer container, string label, int index, Type valueType)
 	{
-		OptionButton dropdown = CreateVariableRow(container, label, out List<string> variableNames);
-		PopulateVariableDropdown(dropdown, variableNames, valueType);
+		List<string> candidates = GetCandidateVariableNames(valueType);
 
-		int selectedIndex = 0;
-		if (FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver is VariableResolverResource resolver
-			&& !string.IsNullOrEmpty(resolver.VariableName))
-		{
-			int found = variableNames.IndexOf(resolver.VariableName);
-			selectedIndex = found > 0 ? found : 0;
-		}
+		string? current =
+			FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver is VariableResolverResource resolver
+				? resolver.VariableName
+				: null;
 
-		dropdown.Selected = selectedIndex;
-		if (selectedIndex == 0)
+		if (!string.IsNullOrEmpty(current) && !candidates.Contains(current))
 		{
+			current = null;
 			RemoveBinding(StatescriptPropertyDirection.Output, index);
 		}
 
-		int capturedIndex = index;
-		Type capturedType = valueType;
-		dropdown.ItemSelected += selected =>
-			OnBuiltInOutputSelected(variableNames, (int)selected, capturedIndex, capturedType);
+		AddOutputVariableBadgeRow(
+			container,
+			label,
+			$"_fold_output_{index}",
+			candidates,
+			current,
+			variableName => OnBuiltInOutputSelected(variableName, index, valueType));
 	}
 
-	private void OnBuiltInOutputSelected(List<string> variableNames, int selected, int index, Type valueType)
+	private void OnBuiltInOutputSelected(string? variableName, int index, Type valueType)
 	{
-		if (selected <= 0 || selected >= variableNames.Count)
+		if (string.IsNullOrEmpty(variableName))
 		{
 			RemoveBinding(StatescriptPropertyDirection.Output, index);
 		}
@@ -177,7 +159,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = new VariableResolverResource
 			{
-				VariableName = variableNames[selected],
+				VariableName = variableName,
 				Scope = VariableScope.Graph,
 				ObjectTypeId = isScalar ? string.Empty : ResolveObjectTypeId(valueType),
 				VariableType = isScalar ? variableType : StatescriptVariableType.Int,
@@ -189,12 +171,14 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 		ResetSize();
 	}
 
-	private void PopulateVariableDropdown(OptionButton dropdown, List<string> variableNames, Type valueType)
+	private List<string> GetCandidateVariableNames(Type valueType)
 	{
 		bool isScalar = StatescriptVariableTypeConverter.TryFromSystemType(
 			valueType,
 			out StatescriptVariableType targetType);
 		string objectTypeId = isScalar ? string.Empty : ResolveObjectTypeId(valueType);
+
+		var names = new List<string>();
 
 		foreach (StatescriptGraphVariable variable in Graph.Variables)
 		{
@@ -210,10 +194,11 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 			if (matches)
 			{
-				dropdown.AddItem(variable.VariableName);
-				variableNames.Add(variable.VariableName);
+				names.Add(variable.VariableName);
 			}
 		}
+
+		return names;
 	}
 
 	private void BuildPayloadSection(VBoxContainer container)
@@ -225,26 +210,63 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			LoadPayloadBindings(resource);
 		}
 
+		_payloadFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			container,
+			"Payload",
+			GetFoldState(PayloadFoldKey, true));
+
+		var payloadBody = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_payloadFoldable.AddChild(payloadBody);
+
 		var providerRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		container.AddChild(providerRow);
-
-		var providerLabel = new Label
+		payloadBody.AddChild(providerRow);
+		providerRow.AddChild(new Label
 		{
-			Text = "Payload:",
-			CustomMinimumSize = new Vector2(90, 0),
-		};
-		providerLabel.AddThemeColorOverride("font_color", OutputVariableColor);
-		providerRow.AddChild(providerLabel);
+			Text = "Provider:",
+			CustomMinimumSize = new Vector2(75, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+		});
 
-		_payloadProviderDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_payloadProviderDropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		PopulatePayloadProviderDropdown();
 		providerRow.AddChild(_payloadProviderDropdown);
 
+		// The provider's declared outputs render nested inside the payload foldable so collapsing Payload hides them
+		// behind the pill.
 		_payloadOutputsContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-		container.AddChild(_payloadOutputsContainer);
+		payloadBody.AddChild(_payloadOutputsContainer);
 		RebuildPayloadOutputRows();
 
+		UpdatePayloadBadge();
+
+		_payloadFoldable.FoldingChanged += folded =>
+		{
+			SetFoldStateWithUndo(PayloadFoldKey, folded);
+			UpdatePayloadBadge();
+			RaisePropertyBindingChanged();
+			ResetSize();
+		};
 		_payloadProviderDropdown.ItemSelected += OnPayloadProviderSelected;
+	}
+
+	private void UpdatePayloadBadge()
+	{
+		if (_payloadFoldable is null)
+		{
+			return;
+		}
+
+		// The provider selection reads as a resolver-style choice, so it uses the resolver badge (matching the raise
+		// node's payload input) rather than the variable badge of the output rows.
+		string summary = _payloadProviderDropdown is { Selected: > 0 } dropdown
+			? dropdown.GetItemText(dropdown.Selected)
+			: "(None)";
+
+		InlineConstantSummaryFormatter.ApplyFoldableTitle(
+			string.Empty,
+			_payloadFoldable,
+			summary,
+			InlineSummaryBadgeKind.Resolver);
 	}
 
 	private void LoadPayloadBindings(EventPayloadOutputResolverResource resource)
@@ -305,6 +327,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			: string.Empty;
 
 		RebuildPayloadOutputRows();
+		UpdatePayloadBadge();
 		SavePayloadResource();
 		ResetSize();
 	}
@@ -339,24 +362,22 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		OptionButton dropdown = CreateVariableRow(
-			_payloadOutputsContainer,
-			$"{outputName}:",
-			out List<string> variableNames);
-		PopulateVariableDropdown(dropdown, variableNames, valueType);
-
+		List<string> candidates = GetCandidateVariableNames(valueType);
 		string stored = _payloadVariableByOutput.GetValueOrDefault(outputName, string.Empty);
-		int found = variableNames.IndexOf(stored);
-		dropdown.Selected = found > 0 ? found : 0;
+		string? current = candidates.Contains(stored) ? stored : null;
 
 		string capturedName = outputName;
-		dropdown.ItemSelected += selected =>
-		{
-			_payloadVariableByOutput[capturedName] = selected > 0 && selected < variableNames.Count
-				? variableNames[(int)selected]
-				: string.Empty;
-			SavePayloadResource();
-		};
+		AddOutputVariableBadgeRow(
+			_payloadOutputsContainer,
+			outputName,
+			$"_fold_payload_{outputName}",
+			candidates,
+			current,
+			variableName =>
+			{
+				_payloadVariableByOutput[capturedName] = variableName ?? string.Empty;
+				SavePayloadResource();
+			});
 	}
 
 	private void SavePayloadResource()

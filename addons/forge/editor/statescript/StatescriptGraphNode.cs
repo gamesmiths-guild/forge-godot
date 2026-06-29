@@ -128,7 +128,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		Name = resource.NodeId;
 		Title = resource.Title;
 		PositionOffset = resource.PositionOffset;
-		CustomMinimumSize = new Vector2(240, 0);
+		CustomMinimumSize = new Vector2(260, 0);
 		Resizable = true;
 
 		RestoreCustomWidth();

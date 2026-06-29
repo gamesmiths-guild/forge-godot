@@ -18,7 +18,7 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 
 	public override void _Ready()
 	{
-		_optionButton = new OptionButton();
+		_optionButton = new SearchableOptionButton();
 		AddChild(_optionButton);
 
 		_optionButton.AddItem("Select AttributeSet Class");

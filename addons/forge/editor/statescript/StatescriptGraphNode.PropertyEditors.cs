@@ -27,21 +27,18 @@ public partial class StatescriptGraphNode
 			return;
 		}
 
-		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		var key = new PropertySlotKey(StatescriptPropertyDirection.Input, index);
-		string baseTitle = $"{propInfo.Label}:";
 
-		var propertyFoldable = new FoldableContainer
-		{
-			Title = baseTitle,
-			Folded = GetFoldState(GetInputPropertyFoldKey(index), true),
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
+		FoldableContainer propertyFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			sectionContainer,
+			propInfo.Label,
+			GetFoldState(GetInputPropertyFoldKey(index), true));
 
 		_foldableKeys[propertyFoldable] = GetInputPropertyFoldKey(index);
-		_inputPropertyFoldables[key] = new InputPropertyFoldableContext(propertyFoldable, baseTitle);
+		_inputPropertyFoldables[key] = new InputPropertyFoldableContext(propertyFoldable, string.Empty);
 		propertyFoldable.FoldingChanged += OnSectionFoldingChanged;
-		sectionContainer.AddChild(propertyFoldable);
+
+		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		propertyFoldable.AddChild(container);
 
 		var headerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -92,7 +89,7 @@ public partial class StatescriptGraphNode
 			return;
 		}
 
-		var resolverDropdown = new OptionButton
+		var resolverDropdown = new SearchableOptionButton
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			CustomMinimumSize = new Vector2(80, 0),
@@ -255,19 +252,13 @@ public partial class StatescriptGraphNode
 			return;
 		}
 
-		var hBox = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		sectionContainer.AddChild(hBox);
+		string foldKey = $"_fold_output_{index}";
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			sectionContainer,
+			varInfo.Label,
+			GetFoldState(foldKey, true));
 
-		var nameLabel = new Label
-		{
-			Text = varInfo.Label,
-			CustomMinimumSize = new Vector2(60, 0),
-		};
-
-		nameLabel.AddThemeColorOverride("font_color", _outputVariableColor);
-		hBox.AddChild(nameLabel);
-
-		var variableDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		var variableDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		variableDropdown.SetMeta("is_variable_dropdown", true);
 		variableDropdown.SetMeta("output_index", index);
 
@@ -311,11 +302,37 @@ public partial class StatescriptGraphNode
 			}
 		}
 
-		int capturedIndex = index;
-		variableDropdown.ItemSelected +=
-			selectedItem => OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
+		void UpdateOutputVariableBadge()
+		{
+			string selectedName = _graph.Variables.Count > 0 && variableDropdown.Selected >= 0
+				? variableDropdown.GetItemText(variableDropdown.Selected)
+				: string.Empty;
 
-		hBox.AddChild(variableDropdown);
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				string.Empty,
+				foldable,
+				string.IsNullOrEmpty(selectedName) ? "(None)" : selectedName,
+				InlineSummaryBadgeKind.Variable,
+				highlightedVariableName: selectedName);
+		}
+
+		int capturedIndex = index;
+		variableDropdown.ItemSelected += selectedItem =>
+		{
+			OnOutputVariableDropdownItemSelected(selectedItem, capturedIndex);
+			UpdateOutputVariableBadge();
+		};
+
+		foldable.AddChild(variableDropdown);
+
+		foldable.FoldingChanged += folded =>
+		{
+			SetFoldStateWithUndo(foldKey, folded);
+			UpdateOutputVariableBadge();
+			ResetSize();
+		};
+
+		UpdateOutputVariableBadge();
 	}
 
 	private void OnOutputVariableDropdownItemSelected(long x, int index)

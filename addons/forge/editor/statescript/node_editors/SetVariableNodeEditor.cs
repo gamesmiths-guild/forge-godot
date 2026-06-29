@@ -185,52 +185,26 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 		sectionContainer.AddChild(outerVBox);
 
-		_scopeFoldable = new FoldableContainer
-		{
-			Title = "Scope:",
-			Folded = GetFoldState(ScopeFoldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
+		_scopeFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			outerVBox,
+			"Scope:",
+			GetFoldState(ScopeFoldKey, true));
 		_scopeFoldable.FoldingChanged += OnScopeFoldableFoldingChanged;
-		outerVBox.AddChild(_scopeFoldable);
 
-		// Scope toggle row.
-		var scopeRow = new HBoxContainer
+		var scopeDropdown = new OptionButton
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
+		scopeDropdown.AddItem("Graph");
+		scopeDropdown.AddItem("Shared");
+		scopeDropdown.Selected = _isSharedScope ? 1 : 0;
+		_scopeFoldable.AddChild(scopeDropdown);
 
-		_scopeFoldable.AddChild(scopeRow);
-
-		var graphButton = new CheckBox
-		{
-			Text = "Graph",
-			ButtonPressed = !_isSharedScope,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-
-		var sharedButton = new CheckBox
-		{
-			Text = "Shared",
-			ButtonPressed = _isSharedScope,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-
-		var buttonGroup = new ButtonGroup();
-		graphButton.ButtonGroup = buttonGroup;
-		sharedButton.ButtonGroup = buttonGroup;
-
-		scopeRow.AddChild(graphButton);
-		scopeRow.AddChild(sharedButton);
-
-		_targetFoldable = new FoldableContainer
-		{
-			Title = $"{varInfo.Label}:",
-			Folded = GetFoldState(TargetFoldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
+		_targetFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			outerVBox,
+			$"{varInfo.Label}:",
+			GetFoldState(TargetFoldKey, true));
 		_targetFoldable.FoldingChanged += OnTargetFoldableFoldingChanged;
-		outerVBox.AddChild(_targetFoldable);
 
 		// Target variable container (rebuilt when scope changes).
 		var targetContainer = new VBoxContainer
@@ -245,8 +219,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		UpdateScopeFoldableTitle();
 		UpdateTargetFoldableTitle(varInfo.Label);
 
-		graphButton.Pressed += () => OnScopeChanged(false, varInfo, index);
-		sharedButton.Pressed += () => OnScopeChanged(true, varInfo, index);
+		scopeDropdown.ItemSelected += selectedScope => OnScopeChanged(selectedScope == 1, varInfo, index);
 	}
 
 	private void OnScopeChanged(
@@ -362,7 +335,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		nameLabel.AddThemeColorOverride("font_color", OutputVariableColor);
 		hBox.AddChild(nameLabel);
 
-		var dropdown = new OptionButton
+		OptionButton dropdown = new SearchableOptionButton
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
@@ -428,7 +401,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_setDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		PopulateSetDropdown();
 		setRow.AddChild(_setDropdown);
 
@@ -443,7 +416,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_sharedVarDropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+		_sharedVarDropdown = new SearchableOptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		_sharedVarDropdown.SetMeta("is_shared_variable_dropdown", true);
 		PopulateSharedVariableDropdown();
 		varRow.AddChild(_sharedVarDropdown);

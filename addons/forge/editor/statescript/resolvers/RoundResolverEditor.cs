@@ -142,7 +142,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title, Folded = folded };
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(title, folded);
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}
@@ -193,7 +193,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 
 	private OptionButton CreateResolverDropdown(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _operandFactories)
 		{
 			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));

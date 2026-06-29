@@ -80,14 +80,11 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 	private void BuildTypeRow(VBoxContainer root)
 	{
-		_typeFoldable = new FoldableContainer
-		{
-			Title = "Type:",
-			Folded = GetFoldState(TypeFoldKey, true),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
+		_typeFoldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			root,
+			"Type",
+			GetFoldState(TypeFoldKey, true));
 		_typeFoldable.FoldingChanged += OnTypeFoldableFoldingChanged;
-		root.AddChild(_typeFoldable);
 
 		var container = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		_typeFoldable.AddChild(container);
@@ -167,7 +164,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 		}
 
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(
-			"Type:",
+			string.Empty,
 			_typeFoldable,
 			StatescriptEditorControls.FormatVariableTypeDisplayName(CurrentSelection(), _selectedIsArray),
 			InlineSummaryBadgeKind.Enum);

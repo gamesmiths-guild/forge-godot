@@ -93,7 +93,7 @@ internal static partial class StatescriptEditorControls
 		VariableTypeSelection selectedType,
 		Action<VariableTypeSelection>? onChanged = null)
 	{
-		var dropdown = new OptionButton
+		OptionButton dropdown = new SearchableOptionButton
 		{
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};

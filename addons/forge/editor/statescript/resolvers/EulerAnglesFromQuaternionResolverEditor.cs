@@ -22,6 +22,7 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 	private Action? _onChanged;
 	private VBoxContainer? _editorContainer;
 	private NodeEditorProperty? _quaternionEditor;
+	private FoldableContainer? _operandFoldable;
 	private List<Func<NodeEditorProperty>> _factories = [];
 	private ForgeEulerOrder _order = ForgeEulerOrder.XYZ;
 
@@ -51,10 +52,10 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		FoldableContainer foldable = CreateFoldable("Quaternion:");
-		root.AddChild(foldable);
+		_operandFoldable = CreateFoldable("Quaternion:", existing?.OperandFolded ?? true);
+		root.AddChild(_operandFoldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		foldable.AddChild(container);
+		_operandFoldable.AddChild(container);
 
 		OptionButton dropdown = CreateResolverDropdown(existing?.Operand);
 		_editorContainer = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -97,6 +98,7 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 		{
 			Operand = operand,
 			Order = _order,
+			OperandFolded = _operandFoldable?.Folded ?? false,
 		};
 	}
 
@@ -107,11 +109,26 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 		_quaternionEditor?.ClearCallbacks();
 	}
 
-	private FoldableContainer CreateFoldable(string title)
+	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title };
-		foldable.FoldingChanged += _ => RaiseLayoutSizeChanged();
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(title, folded);
+		foldable.FoldingChanged += OnOperandFoldableFoldingChanged;
 		return foldable;
+	}
+
+	private void OnOperandFoldableFoldingChanged(bool folded)
+	{
+		UpdateOperandFoldableTitle();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
+	}
+
+	private void UpdateOperandFoldableTitle()
+	{
+		if (_operandFoldable is not null)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Quaternion:", _operandFoldable, _quaternionEditor);
+		}
 	}
 
 	private void OnResolverDropdownItemSelected(long index)
@@ -146,7 +163,7 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 
 	private OptionButton CreateResolverDropdown(StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in _factories)
 		{
 			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
@@ -170,10 +187,12 @@ internal sealed partial class EulerAnglesFromQuaternionResolverEditor : NodeEdit
 		editor.LayoutSizeChanged += RaiseLayoutSizeChanged;
 		_editorContainer.AddChild(editor);
 		_quaternionEditor = editor;
+		UpdateOperandFoldableTitle();
 	}
 
 	private void OnNestedEditorChanged()
 	{
+		UpdateOperandFoldableTitle();
 		_onChanged?.Invoke();
 	}
 }

@@ -170,7 +170,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 		List<Func<NodeEditorProperty>> factories,
 		StatescriptResolverResource? existingResolver)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (Func<NodeEditorProperty> factory in factories)
 		{
 			dropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
@@ -314,7 +314,7 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 
 	private FoldableContainer CreateFoldable(string title, bool folded)
 	{
-		var foldable = new FoldableContainer { Title = title, Folded = folded };
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(title, folded);
 		foldable.FoldingChanged += OnFoldingChanged;
 		return foldable;
 	}

@@ -7,7 +7,6 @@ using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
@@ -79,7 +78,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 			HorizontalAlignment = HorizontalAlignment.Right,
 		});
 
-		_providerDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_providerDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		PopulateProviderDropdown();
 		providerRow.AddChild(_providerDropdown);
 
@@ -261,14 +260,12 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		List<Func<NodeEditorProperty>> factories = StatescriptResolverRegistry.GetCompatibleFactories(input.ValueType);
 		factories.RemoveAll(factory => !StatescriptResolverRegistry.SupportsScalarValues(factory));
 
-		var foldable = new FoldableContainer
-		{
-			Title = $"{input.Name}:",
-			Folded = false,
-			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-		};
+		FoldableContainer foldable = InlineConstantSummaryFormatter.BuildColumnedFoldable(
+			_inputsContainer,
+			$"{input.Name}:",
+			false);
+
 		foldable.FoldingChanged += OnFoldableChanged;
-		_inputsContainer.AddChild(foldable);
 
 		var content = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foldable.AddChild(content);
@@ -288,10 +285,15 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		content.AddChild(NestedResolverEditorUtilities.CreateResolverSelectorRow(dropdown));
 		content.AddChild(editorContainer);
 
-		var section = new InputSection(input.Name, input.ValueType, factories, editorContainer);
+		var section = new InputSection(input.Name, input.ValueType, factories, editorContainer)
+		{
+			Foldable = foldable,
+		};
+
 		_inputSections.Add(section);
 
 		ShowInputEditor(section, dropdown.Selected, existing);
+		UpdateAllInputSectionTitles();
 
 		dropdown.ItemSelected += selected => OnInputResolverDropdownItemSelected(section, (int)selected);
 	}
@@ -321,18 +323,34 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		NestedResolverEditorUtilities.ClearContainer(section.EditorContainer);
 		section.Editor = null;
 		ShowInputEditor(section, index, null);
+		UpdateAllInputSectionTitles();
 		NotifyChanged();
 		RaiseLayoutSizeChanged();
 	}
 
 	private void OnFoldableChanged(bool folded)
 	{
+		UpdateAllInputSectionTitles();
 		RaiseLayoutSizeChanged();
 	}
 
 	private void OnNestedChanged()
 	{
+		UpdateAllInputSectionTitles();
 		NotifyChanged();
+	}
+
+	private void UpdateAllInputSectionTitles()
+	{
+		for (int i = 0; i < _inputSections.Count; i++)
+		{
+			InputSection section = _inputSections[i];
+
+			if (section.Foldable is not null)
+			{
+				InlineConstantSummaryFormatter.ApplyFoldableTitle($"{section.Name}:", section.Foldable, section.Editor);
+			}
+		}
 	}
 
 	private void CaptureCurrentResolvers()
@@ -372,6 +390,8 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		public VBoxContainer EditorContainer { get; } = editorContainer;
 
 		public NodeEditorProperty? Editor { get; set; }
+
+		public FoldableContainer? Foldable { get; set; }
 	}
 }
 #endif
