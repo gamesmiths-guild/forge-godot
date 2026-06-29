@@ -189,9 +189,13 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 
 		for (int i = 0; i < _attributeDropdown.ItemCount; i++)
 		{
-			if (_attributeDropdown.GetItemText(i) == _selectedAttribute)
+			if (string.Equals(
+				_attributeDropdown.GetItemText(i),
+				_selectedAttribute,
+				StringComparison.OrdinalIgnoreCase))
 			{
 				_attributeDropdown.Selected = i;
+				_selectedAttribute = _attributeDropdown.GetItemText(i);
 				return;
 			}
 		}
