@@ -41,6 +41,9 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	[NonSerialized]
 	private Dictionary<PropertySlotKey, NodeEditorProperty>? _activeResolverEditors;
 
+	[NonSerialized]
+	private Action? _bindingChangedHandler;
+
 	/// <summary>
 	/// Gets the runtime type name this editor handles (e.g.,
 	/// <c>"Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"</c>).
@@ -119,6 +122,12 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// </summary>
 	internal virtual void Unbind()
 	{
+		if (_graphNode is not null && _bindingChangedHandler is not null)
+		{
+			_graphNode.PropertyBindingChanged -= _bindingChangedHandler;
+		}
+
+		_bindingChangedHandler = null;
 		_graphNode = null;
 		_graph = null;
 		_nodeResource = null;
@@ -152,6 +161,39 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 		bool folded)
 	{
 		return _graphNode!.AddPropertySectionDividerInternal(sectionTitle, color, foldKey, folded);
+	}
+
+	/// <summary>
+	/// Adds an arbitrary control directly to the node body. Content is appended in call order, so a control added
+	/// before any <see cref="AddPropertySectionDivider"/> call renders above the standard property sections (for
+	/// example a formula preview placed before the <c>Input Properties</c> section).
+	/// </summary>
+	/// <param name="content">The control to add to the node body.</param>
+	protected void AddNodeBodyContent(Control content)
+	{
+		_graphNode!.AddNodeBodyContentInternal(content);
+	}
+
+	/// <summary>
+	/// Registers a handler invoked whenever any of this node's property bindings change, for editors that render
+	/// content derived from those bindings (for example a live formula preview). The handler is automatically
+	/// disconnected on <see cref="Unbind"/>. Registering again replaces any previously registered handler.
+	/// </summary>
+	/// <param name="handler">The handler to invoke when a property binding changes.</param>
+	protected void SetBindingChangedHandler(Action handler)
+	{
+		if (_graphNode is null)
+		{
+			return;
+		}
+
+		if (_bindingChangedHandler is not null)
+		{
+			_graphNode.PropertyBindingChanged -= _bindingChangedHandler;
+		}
+
+		_bindingChangedHandler = handler;
+		_graphNode.PropertyBindingChanged += handler;
 	}
 
 	/// <summary>

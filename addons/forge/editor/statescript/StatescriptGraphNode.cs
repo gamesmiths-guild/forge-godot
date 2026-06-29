@@ -204,6 +204,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		return AddPropertySectionDivider(sectionTitle, color, foldKey, folded);
 	}
 
+	internal void AddNodeBodyContentInternal(Control content)
+	{
+		AddChild(content);
+	}
+
 	internal void AddInputPropertyRowInternal(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
