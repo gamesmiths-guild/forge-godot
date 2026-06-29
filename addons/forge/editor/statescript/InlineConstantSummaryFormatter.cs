@@ -497,12 +497,34 @@ internal static class InlineConstantSummaryFormatter
 	{
 		// Defer to idle so the rows are measured after this change's layout has settled. Without this, adding a nested
 		// resolver (or any rebuild) measures stale sizes and the pills render past the node edge until the next resize.
+		const string syncMetaKey = "forge_inline_summary_badge_sync_scheduled";
+
+		Node root = foldable;
+		while (root.GetParent() is Node parent)
+		{
+			root = parent;
+			if (root is GraphNode)
+			{
+				break;
+			}
+		}
+
+		if (root.HasMeta(syncMetaKey))
+		{
+			return;
+		}
+
+		root.SetMeta(syncMetaKey, Variant.From(true));
+
 		Callable.From(() =>
 		{
-			if (GodotObject.IsInstanceValid(foldable))
+			if (!GodotObject.IsInstanceValid(foldable) || !GodotObject.IsInstanceValid(root))
 			{
-				SynchronizeSiblingBadgeWidths(foldable);
+				return;
 			}
+
+			root.RemoveMeta(syncMetaKey);
+			SynchronizeSiblingBadgeWidths(foldable);
 		}).CallDeferred();
 	}
 

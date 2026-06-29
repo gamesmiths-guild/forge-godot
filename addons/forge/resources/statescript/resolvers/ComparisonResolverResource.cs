@@ -41,7 +41,7 @@ public partial class ComparisonResolverResource : StatescriptResolverResource
 	public bool LeftFolded { get; set; }
 
 	[Export]
-	public bool OperationFolded { get; set; }
+	public bool OperationFolded { get; set; } = true;
 
 	[Export]
 	public bool RightFolded { get; set; }

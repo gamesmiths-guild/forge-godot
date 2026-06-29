@@ -322,11 +322,22 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	{
 		if (_operationFoldable is not null)
 		{
-			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+			if ((int)_operation >= 0 && (int)_operation < _operationSymbols.Length)
+			{
+				InlineConstantSummaryFormatter.ApplyFoldableTitle(
 				string.Empty,
 				_operationFoldable,
 				_operationSymbols[(int)_operation],
 				InlineSummaryBadgeKind.Enum);
+			}
+			else
+			{
+				InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				string.Empty,
+				_operationFoldable,
+				_operation.ToString(),
+				InlineSummaryBadgeKind.Enum);
+			}
 		}
 	}
 }

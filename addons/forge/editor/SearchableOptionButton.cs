@@ -8,7 +8,7 @@ namespace Gamesmiths.Forge.Godot.Editor;
 /// <summary>
 /// A drop-in <see cref="OptionButton"/> that turns on Godot's popup search bar (4.7+) so long pickers, such as the
 /// resolver list on a numeric input, can be filtered by typing. The bar only appears once the list reaches
-/// <see cref="SearchBarMinItemCount"/> items, so short dropdowns look and behave exactly like a plain
+/// <see cref="MinItemCountForSearch"/> items, so short dropdowns look and behave exactly like a plain
 /// <see cref="OptionButton"/>.
 /// </summary>
 [Tool]
