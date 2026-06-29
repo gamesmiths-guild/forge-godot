@@ -93,12 +93,13 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 				.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 				.Where(x => x.PropertyType == typeof(EntityAttribute));
 
+			AttributeSet? attributeSet = (@object as ForgeAttributeSet)?.GetAttributeSet();
+
 			foreach (PropertyInfo property in attributeProperties)
 			{
 				string propertyName = property.Name;
 
-				if (@object is not ForgeAttributeSet forgeAttributeSet
-					|| forgeAttributeSet.GetAttributeSet() is not AttributeSet attributeSet
+				if (attributeSet is null
 					|| property.GetValue(attributeSet) is not EntityAttribute attribute)
 				{
 					dictionary[propertyName] = new AttributeValues(0, 0, int.MaxValue);

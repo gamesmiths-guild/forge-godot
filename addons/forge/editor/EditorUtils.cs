@@ -49,7 +49,13 @@ internal static class EditorUtils
 			.SelectMany(a => a.GetTypes())
 			.FirstOrDefault(x => x.IsSubclassOf(typeof(AttributeSet)) && x.Name == attributeSet);
 
-		if (type is null || Activator.CreateInstance(type) is not AttributeSet instance)
+		if (type is null)
+		{
+			return [];
+		}
+
+		AttributeSet? instance = TryInstantiate(type);
+		if (instance is null)
 		{
 			return [];
 		}
@@ -63,6 +69,18 @@ internal static class EditorUtils
 					? key[prefix.Length..]
 					: key),
 		];
+	}
+
+	private static AttributeSet? TryInstantiate(Type type)
+	{
+		try
+		{
+			return Activator.CreateInstance(type) as AttributeSet;
+		}
+		catch (Exception)
+		{
+			return null;
+		}
 	}
 }
 #endif
