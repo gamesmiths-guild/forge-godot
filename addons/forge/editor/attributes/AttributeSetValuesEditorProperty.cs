@@ -53,11 +53,15 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
 			.Where(x => x.PropertyType == typeof(EntityAttribute));
 
-		foreach (string? attributeName in attributeProperties.Select(x => x.Name))
+		AttributeSet? attributeSetInstance = obj.GetAttributeSet();
+
+		foreach (PropertyInfo property in attributeProperties)
 		{
+			string attributeName = property.Name;
+
 			var groupVBox = new VBoxContainer();
 
-			groupVBox.AddChild(AttributeHeader(attributeName));
+			groupVBox.AddChild(AttributeHeader(GetHeaderText(property, attributeSetInstance)));
 
 			AttributeValues value = obj.InitialAttributeValues.TryGetValue(attributeName, out AttributeValues? v)
 				? v
@@ -110,6 +114,27 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 
 	public void OnAfterDeserialize()
 	{
+	}
+
+	private static string GetHeaderText(PropertyInfo property, AttributeSet? attributeSetInstance)
+	{
+		string propertyName = property.Name;
+
+		if (attributeSetInstance is null
+			|| property.GetValue(attributeSetInstance) is not EntityAttribute attribute)
+		{
+			return propertyName;
+		}
+
+		string key = attribute.Key.ToString();
+		string prefix = $"{attributeSetInstance.GetType().Name}.";
+		string registeredName = key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+			? key[prefix.Length..]
+			: key;
+
+		return string.Equals(propertyName, registeredName, StringComparison.OrdinalIgnoreCase)
+			? propertyName
+			: $"{propertyName}  ({registeredName})";
 	}
 
 	private static PanelContainer AttributeHeader(string text)
