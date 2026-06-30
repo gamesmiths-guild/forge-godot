@@ -146,7 +146,7 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 
 		var style = new StyleBoxFlat
 		{
-			BgColor = new Color(0.16f, 0.17f, 0.20f),
+			BgColor = EditorInterface.Singleton.GetEditorTheme().GetColor("dark_color_2", "Editor"),
 		};
 
 		headerPanel.AddThemeStyleboxOverride("panel", style);
