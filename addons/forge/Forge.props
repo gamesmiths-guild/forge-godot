@@ -7,6 +7,6 @@
     <ProjectReference Include="$(LocalForgeProjectPath)" Condition="Exists('$(LocalForgeProjectPath)')" />
   </ItemGroup>
   <ItemGroup Condition="!Exists('$(LocalForgeProjectPath)')">
-    <PackageReference Include="Gamesmiths.Forge" Version="0.3.4" />
+    <PackageReference Include="Gamesmiths.Forge" Version="0.3.5" />
   </ItemGroup>
 </Project>
