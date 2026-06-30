@@ -24,7 +24,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 	private const string VariableNameButtonMetaKey = "_shared_variable_name_button";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
-	private static readonly Color _highlightColor = new(0x56b6c2ff);
 
 	private readonly HashSet<string> _expandedArrays = [];
 
@@ -165,7 +164,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
 	{
-		Color buttonColor = isSelected ? _highlightColor : _variableColor;
+		Color highlightColor = StatescriptEditorControls.GetHighlightColor();
+		Color buttonColor = isSelected ? highlightColor : _variableColor;
 		button.AddThemeColorOverride("font_color", buttonColor);
 		button.AddThemeColorOverride("font_pressed_color", buttonColor);
 		button.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));

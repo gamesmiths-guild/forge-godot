@@ -53,6 +53,15 @@ internal static partial class StatescriptEditorControls
 	}
 
 	/// <summary>
+	/// Returns the editor's configured accent color, used to highlight the selected variable (and the nodes that
+	/// reference it) in the variable panels and the graph.
+	/// </summary>
+	public static Color GetHighlightColor()
+	{
+		return EditorInterface.Singleton.GetEditorTheme().GetColor("accent_color", "Editor");
+	}
+
+	/// <summary>
 	/// Creates a <see cref="PanelContainer"/> wrapping a <see cref="CheckBox"/> for boolean editing.
 	/// </summary>
 	/// <param name="value">The initial value of the boolean.</param>
