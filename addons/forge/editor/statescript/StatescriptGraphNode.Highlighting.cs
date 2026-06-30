@@ -157,13 +157,14 @@ public partial class StatescriptGraphNode
 		if (_isHighlighted)
 		{
 			StyleBoxFlat baseStyle = _basePanelStyle;
+			Color highlightColor = StatescriptEditorControls.GetHighlightColor();
 			var highlightStyle = (StyleBoxFlat)baseStyle.Duplicate();
-			highlightStyle.BorderColor = _highlightColor;
+			highlightStyle.BorderColor = highlightColor;
 			highlightStyle.BorderWidthTop = 2;
 			highlightStyle.BorderWidthBottom = 2;
 			highlightStyle.BorderWidthLeft = 2;
 			highlightStyle.BorderWidthRight = 2;
-			highlightStyle.BgColor = baseStyle.BgColor.Lerp(_highlightColor, 0.15f);
+			highlightStyle.BgColor = baseStyle.BgColor.Lerp(highlightColor, 0.15f);
 
 			AddThemeStyleboxOverride("panel", highlightStyle);
 			AddThemeStyleboxOverride("panel_selected", highlightStyle);
@@ -259,8 +260,9 @@ public partial class StatescriptGraphNode
 
 		if (isMatch)
 		{
+			Color highlightColor = StatescriptEditorControls.GetHighlightColor();
 			var highlightStyle = (StyleBoxFlat)baseStyle.Duplicate();
-			highlightStyle.BgColor = baseStyle.BgColor.Lerp(_highlightColor, 0.25f);
+			highlightStyle.BgColor = baseStyle.BgColor.Lerp(highlightColor, 0.25f);
 			dropdown.AddThemeStyleboxOverride("normal", highlightStyle);
 		}
 		else
@@ -311,7 +313,7 @@ public partial class StatescriptGraphNode
 
 		if (label.Text == _highlightedVariableName)
 		{
-			label.AddThemeColorOverride("font_color", _highlightColor);
+			label.AddThemeColorOverride("font_color", StatescriptEditorControls.GetHighlightColor());
 			label.SetMeta("is_highlight_colored", true);
 		}
 		else if (label.HasMeta("is_highlight_colored"))
@@ -379,8 +381,9 @@ public partial class StatescriptGraphNode
 			style.BorderWidthTop = Math.Max(style.BorderWidthTop, 2);
 			style.BorderWidthRight = Math.Max(style.BorderWidthRight, 2);
 			style.BorderWidthBottom = Math.Max(style.BorderWidthBottom, 2);
-			style.BorderColor = _highlightColor;
-			style.BgColor = _highlightColor;
+			Color highlightColor = StatescriptEditorControls.GetHighlightColor();
+			style.BorderColor = highlightColor;
+			style.BgColor = highlightColor;
 			iconLabel.AddThemeColorOverride("font_color", Colors.Black);
 			textLabel.AddThemeColorOverride("font_color", Colors.Black);
 		}

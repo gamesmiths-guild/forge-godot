@@ -55,10 +55,11 @@ internal sealed partial class ExpressionNodeEditor : CustomNodeEditor
 
 	private static StyleBoxFlat CreateFormulaStyleBox()
 	{
+		Theme editorTheme = EditorInterface.Singleton.GetEditorTheme();
 		var style = new StyleBoxFlat
 		{
-			BgColor = new Color(0x1b1e24ff),
-			BorderColor = new Color(0x2c313aff),
+			BgColor = editorTheme.GetColor("dark_color_1", "Editor"),
+			BorderColor = editorTheme.GetColor("dark_color_3", "Editor"),
 		};
 
 		style.SetBorderWidthAll(1);

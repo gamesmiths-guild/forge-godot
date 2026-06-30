@@ -18,8 +18,6 @@ internal static partial class StatescriptEditorControls
 	private static readonly Color _axisZColor = new(0.33f, 0.55f, 0.96f);
 	private static readonly Color _axisWColor = new(0.66f, 0.66f, 0.66f);
 
-	private static StyleBox? _cachedPanelStyle;
-
 	/// <summary>
 	/// Returns <see langword="true"/> for integer-like variable types.
 	/// </summary>
@@ -52,6 +50,15 @@ internal static partial class StatescriptEditorControls
 		return type is StatescriptVariableType.Vector2 or StatescriptVariableType.Vector3
 			or StatescriptVariableType.Vector4 or StatescriptVariableType.Plane
 			or StatescriptVariableType.Quaternion;
+	}
+
+	/// <summary>
+	/// Returns the editor's configured accent color, used to highlight the selected variable (and the nodes that
+	/// reference it) in the variable panels and the graph.
+	/// </summary>
+	public static Color GetHighlightColor()
+	{
+		return EditorInterface.Singleton.GetEditorTheme().GetColor("accent_color", "Editor");
 	}
 
 	/// <summary>
@@ -606,14 +613,10 @@ internal static partial class StatescriptEditorControls
 
 	private static StyleBox GetPanelStyle()
 	{
-		if (_cachedPanelStyle is null || !GodotObject.IsInstanceValid(_cachedPanelStyle))
-		{
-			Control baseControl = EditorInterface.Singleton.GetBaseControl();
-			_cachedPanelStyle = (StyleBox)baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate();
-			_cachedPanelStyle.SetContentMarginAll(0);
-		}
-
-		return _cachedPanelStyle;
+		Control baseControl = EditorInterface.Singleton.GetBaseControl();
+		var panelStyle = (StyleBox)baseControl.GetThemeStylebox("normal", "LineEdit").Duplicate();
+		panelStyle.SetContentMarginAll(0);
+		return panelStyle;
 	}
 
 	private static void UpdateValueShapeDropdownTooltip(OptionButton dropdown)

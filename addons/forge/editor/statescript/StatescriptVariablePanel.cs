@@ -24,7 +24,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	private const string VariableNameButtonMetaKey = "_variable_name_button";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
-	private static readonly Color _highlightColor = new(0x56b6c2ff);
 
 	private readonly HashSet<string> _expandedArrays = [];
 
@@ -213,11 +212,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 
 	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
 	{
-		Color buttonColor = isSelected ? _highlightColor : _variableColor;
+		Color highlightColor = StatescriptEditorControls.GetHighlightColor();
+		Color buttonColor = isSelected ? highlightColor : _variableColor;
 		button.AddThemeColorOverride("font_color", buttonColor);
-		button.AddThemeColorOverride("font_pressed_color", _highlightColor);
+		button.AddThemeColorOverride("font_pressed_color", highlightColor);
 		button.AddThemeColorOverride("font_hover_color", buttonColor.Lightened(0.2f));
-		button.AddThemeColorOverride("font_hover_pressed_color", _highlightColor.Lightened(0.2f));
+		button.AddThemeColorOverride("font_hover_pressed_color", highlightColor.Lightened(0.2f));
 	}
 
 	private static VariableTypeSelection GetVariableSelection(StatescriptGraphVariable variable)

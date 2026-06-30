@@ -32,7 +32,6 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private static readonly Color _subgraphColor = new(0xc678ddff);
 	private static readonly Color _inputPropertyColor = new(0x61afefff);
 	private static readonly Color _outputVariableColor = new(0xe5c07bff);
-	private static readonly Color _highlightColor = new(0x56b6c2ff);
 
 	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
