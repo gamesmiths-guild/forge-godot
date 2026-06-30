@@ -10,7 +10,7 @@ If you'd like to see sample scenes demonstrating the system in action, you can c
 
 ### Requirements
 
-- Godot 4.6 or later with .NET support.
+- Godot 4.7 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps

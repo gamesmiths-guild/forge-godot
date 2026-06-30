@@ -85,7 +85,7 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 
 ### Requirements
 
-- Godot 4.6 or later with .NET support.
+- Godot 4.7 or later with .NET support.
 - .NET SDK 8.0 or later.
 
 ### Steps
