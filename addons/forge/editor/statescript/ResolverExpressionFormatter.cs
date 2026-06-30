@@ -84,9 +84,14 @@ internal static class ResolverExpressionFormatter
 		if (arithmeticSymbol is not null)
 		{
 			int precedence = Precedence(binary);
+
+			int rightPrecedence = binary.ResolverTypeId is "Subtract" or "Divide" or "Modulo"
+				? precedence + 1
+				: precedence;
+
 			return FormatOperand(binary.Left, precedence)
 				+ " " + Keyword(arithmeticSymbol) + " "
-				+ FormatOperand(binary.Right, precedence);
+				+ FormatOperand(binary.Right, rightPrecedence);
 		}
 
 		return FormatFunction(
