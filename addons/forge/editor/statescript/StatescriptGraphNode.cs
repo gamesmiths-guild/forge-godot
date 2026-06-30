@@ -121,6 +121,9 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		NodeResource = resource;
 		_graph = graph;
+
+		_activeCustomEditor?.Unbind();
+		_activeCustomEditor = null;
 		_activeResolverEditors.Clear();
 		_foldableKeys.Clear();
 		_inputPropertyFoldables.Clear();
@@ -202,6 +205,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		bool folded)
 	{
 		return AddPropertySectionDivider(sectionTitle, color, foldKey, folded);
+	}
+
+	internal void AddNodeBodyContentInternal(Control content)
+	{
+		AddChild(content);
 	}
 
 	internal void AddInputPropertyRowInternal(

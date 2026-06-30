@@ -495,7 +495,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	{
 		if (expectedType == typeof(ForgeVariant128))
 		{
-			return StatescriptVariableType.Int;
+			return _allowedValueTypes.Length == 0 || IsAllowedValueType(StatescriptVariableType.Int)
+				? StatescriptVariableType.Int
+				: _allowedValueTypes[0];
 		}
 
 		if (_allowedValueTypes.Length > 0)
