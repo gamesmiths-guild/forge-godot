@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;

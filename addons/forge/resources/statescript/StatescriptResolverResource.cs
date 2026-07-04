@@ -65,6 +65,42 @@ public partial class StatescriptResolverResource : Resource
 		return new VariantResolver(default, typeof(int));
 	}
 
+	/// <summary>
+	/// Tries to create an object-backed (reference) resolver from this resolver resource. Used when this resolver
+	/// appears as a nested object operand of another resolver (e.g. the sides of an object-equality check or the
+	/// source of a validity check).
+	/// </summary>
+	/// <param name="graph">The runtime graph being built, used for looking up variable type information.</param>
+	/// <param name="objectResolver">The object-backed resolver, when this resource produces one.</param>
+	/// <returns><see langword="true"/> when this resource produces an object-backed value; otherwise,
+	/// <see langword="false"/>.</returns>
+	public virtual bool TryBuildObjectResolver(Graph graph, out IObjectResolver? objectResolver)
+	{
+		objectResolver = null;
+		return false;
+	}
+
+	/// <summary>
+	/// Tries to create an array resolver from this resolver resource. Used when this resolver appears as the nested
+	/// array source of an array-operation resolver (filter, sort, reduction, etc.). Exactly one of the outputs is set
+	/// on success: <paramref name="valueArrayResolver"/> for <see cref="Variant128"/>-element arrays or
+	/// <paramref name="objectArrayResolver"/> for object-backed (reference) arrays.
+	/// </summary>
+	/// <param name="graph">The runtime graph being built, used for looking up variable type information.</param>
+	/// <param name="valueArrayResolver">The value-lane array resolver, when this resource produces one.</param>
+	/// <param name="objectArrayResolver">The object-lane array resolver, when this resource produces one.</param>
+	/// <returns><see langword="true"/> when this resource produces an array; otherwise, <see langword="false"/>.
+	/// </returns>
+	public virtual bool TryBuildArrayResolver(
+		Graph graph,
+		out IArrayPropertyResolver? valueArrayResolver,
+		out IObjectArrayResolver? objectArrayResolver)
+	{
+		valueArrayResolver = null;
+		objectArrayResolver = null;
+		return false;
+	}
+
 	protected static void DefineAndBindInputProperty(
 		Graph graph,
 		ForgeNode runtimeNode,
