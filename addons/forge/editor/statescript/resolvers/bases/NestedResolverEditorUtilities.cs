@@ -105,12 +105,58 @@ internal static class NestedResolverEditorUtilities
 		Action onChanged,
 		Action layoutSizeChanged)
 	{
+		return CreateNestedEditor(
+			graph,
+			factories,
+			factoryIndex,
+			existingResolver,
+			allowedExpectedTypes,
+			onChanged,
+			layoutSizeChanged,
+			isArray: false);
+	}
+
+	public static NodeEditorProperty? CreateNestedEditor(
+		StatescriptGraph? graph,
+		List<Func<NodeEditorProperty>> factories,
+		int factoryIndex,
+		StatescriptResolverResource? existingResolver,
+		Type[] allowedExpectedTypes,
+		Action onChanged,
+		Action layoutSizeChanged,
+		bool isArray)
+	{
+		return CreateNestedEditor(
+			graph,
+			factories,
+			factoryIndex,
+			existingResolver,
+			allowedExpectedTypes,
+			onChanged,
+			layoutSizeChanged,
+			isArray,
+			iterationScope: false);
+	}
+
+	public static NodeEditorProperty? CreateNestedEditor(
+		StatescriptGraph? graph,
+		List<Func<NodeEditorProperty>> factories,
+		int factoryIndex,
+		StatescriptResolverResource? existingResolver,
+		Type[] allowedExpectedTypes,
+		Action onChanged,
+		Action layoutSizeChanged,
+		bool isArray,
+		bool iterationScope)
+	{
 		if (graph is null || factoryIndex < 0 || factoryIndex >= factories.Count)
 		{
 			return null;
 		}
 
 		NodeEditorProperty editor = factories[factoryIndex]();
+		editor.IterationScope = iterationScope
+			|| factories is ResolverEditorFactoryList { IterationScope: true };
 		Type[] compatibleExpectedTypes = GetCompatibleExpectedTypes(editor, allowedExpectedTypes);
 		Type[] effectiveAllowedExpectedTypes = compatibleExpectedTypes.Length > 0
 			? compatibleExpectedTypes
@@ -127,7 +173,7 @@ internal static class NestedResolverEditorUtilities
 			tempProperty,
 			GetEffectiveExpectedType(effectiveAllowedExpectedTypes),
 			onChanged,
-			false);
+			isArray);
 		editor.LayoutSizeChanged += layoutSizeChanged;
 		return editor;
 	}

@@ -3,6 +3,7 @@
 using System;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -155,6 +156,65 @@ public partial class VariableResolverResource : EntityResolverResourceBase
 		}
 
 		return new EntityVariableResolver(new StringKey(VariableName), Scope);
+	}
+
+	/// <inheritdoc/>
+	public override bool TryBuildObjectResolver(Graph graph, out IObjectResolver? objectResolver)
+	{
+		objectResolver = null;
+
+		if (string.IsNullOrEmpty(VariableName))
+		{
+			return false;
+		}
+
+		VariableMetadata metadata = ResolveVariableMetadata(graph, VariableName);
+
+		if (metadata.IsArray
+			|| !StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+				metadata.ValueType,
+				out StatescriptObjectVariableType? descriptor))
+		{
+			return false;
+		}
+
+		objectResolver = descriptor.BuildVariableResolver(new StringKey(VariableName), Scope);
+		return true;
+	}
+
+	/// <inheritdoc/>
+	public override bool TryBuildArrayResolver(
+		Graph graph,
+		out IArrayPropertyResolver? valueArrayResolver,
+		out IObjectArrayResolver? objectArrayResolver)
+	{
+		valueArrayResolver = null;
+		objectArrayResolver = null;
+
+		if (string.IsNullOrEmpty(VariableName))
+		{
+			return false;
+		}
+
+		VariableMetadata metadata = ResolveVariableMetadata(graph, VariableName);
+
+		if (!metadata.IsArray)
+		{
+			return false;
+		}
+
+		var variableKey = new StringKey(VariableName);
+
+		if (StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			metadata.ValueType,
+			out StatescriptObjectVariableType? descriptor))
+		{
+			objectArrayResolver = descriptor.BuildArrayVariableResolver(variableKey, Scope);
+			return true;
+		}
+
+		valueArrayResolver = new ArrayVariableResolver(variableKey, metadata.ValueType, Scope);
+		return true;
 	}
 
 	private void BindArrayInput(

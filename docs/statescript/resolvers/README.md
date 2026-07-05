@@ -11,12 +11,15 @@ Use the **core Forge documentation** for runtime resolver behavior and API detai
 | Built-in Resolvers | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#built-in-resolvers) | Constants, arrays, variables, activation data, attributes, tags, and other general-purpose resolvers. |
 | Entity Resolvers | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#entity-resolvers) | Resolvers that read owner/source/target entities and entity-typed values. |
 | Effect Resolvers | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#effect-resolvers) | Runtime `EffectFromDataResolver`, `EffectArrayFromDataResolver`, and the effect-variable resolvers. |
+| Object Utilities | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#object-utilities) | Validity (non-null) and reference-identity checks over object-backed variables. |
 | Boolean Expressions | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#boolean-expressions) | Logical composition and comparison resolvers. |
 | Math | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#math) | Numeric, vector, interpolation, and magnitude helpers. |
 | Spatial Math | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#spatial-math) | Direction, angle, quaternion, plane, and vector-space helpers. |
 | Random | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#random) | Random scalar and spatial resolvers. |
 
 ## Godot Resolver Resources
+
+These pages cover authoring details that the Godot editor adds on top of the core resolver behavior.
 
 | Resolver | Output Type | Description |
 |----------|-------------|-------------|
@@ -27,6 +30,8 @@ Use the **core Forge documentation** for runtime resolver behavior and API detai
 | [EffectResolver](effect-resolver.md) | `Effect` / `Effect[]` | Authors `Effect` instances (effect data + level + ownership) for `ApplyEffectNode` and `EffectNode`. |
 | [EventPayloadOutputResolver](event-payload-resolver.md#listener-side-eventpayloadoutputresolver) | `EventPayloadWriter` | Selects an `IEventPayloadProvider` to write a received payload to graph variables for `EventListenerNode`. |
 | [EventPayloadResolver](event-payload-resolver.md#raise-side-eventpayloadresolver) | `EventPayloadRaiser` | Selects an `IEventPayloadProvider` to build and raise a typed event payload for `RaiseEventNode`. |
+| [IsValidResolver](is-valid-resolver.md) | `bool` | Authors a validity (non-null) check over an object-backed variable of any registered type. |
+| [ObjectEqualsResolver](object-equals-resolver.md) | `bool` | Authors a reference-identity check between two object-backed variables of any registered type. |
 | [OwnershipResolver](ownership-resolver.md) | `EffectOwnership` | Composes effect ownership from two nested entity resolvers. |
 | [TagResolver](tag-resolver.md) | `Tag` | Selects one or more registered tags for any tag input (e.g. the cue nodes). |
 

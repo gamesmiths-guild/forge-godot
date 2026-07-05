@@ -6,7 +6,7 @@ using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
 using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 
-namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 
 [Tool]
 public abstract partial class EntityResolverResourceBase : StatescriptResolverResource
@@ -18,5 +18,12 @@ public abstract partial class EntityResolverResourceBase : StatescriptResolverRe
 		var propertyKey = new StringKey($"__entity_{nodeId}_{index}");
 		graph.VariableDefinitions.DefineObjectProperty(propertyKey, BuildEntityResolver(graph));
 		runtimeNode.BindInput(index, propertyKey);
+	}
+
+	/// <inheritdoc/>
+	public override bool TryBuildObjectResolver(Graph graph, out IObjectResolver? objectResolver)
+	{
+		objectResolver = BuildEntityResolver(graph);
+		return true;
 	}
 }

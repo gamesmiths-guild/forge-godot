@@ -71,6 +71,20 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	public virtual bool SupportsArrayValues => false;
 
 	/// <summary>
+	/// Gets a value indicating whether this editor only makes sense inside an array operation's per-element (lambda)
+	/// operand — e.g. the element resolvers that read the iterated value. Such editors are hidden from resolver
+	/// dropdowns outside iteration scope.
+	/// </summary>
+	public virtual bool RequiresIterationScope => false;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether this editor sits inside an array operation's per-element (lambda)
+	/// operand subtree. Assigned when the editor is created and propagated to child editors so iteration-scoped
+	/// resolvers stay available at any nesting depth.
+	/// </summary>
+	internal bool IterationScope { get; set; }
+
+	/// <summary>
 	/// Configures the concrete input types allowed for this editor when the surrounding context accepts more than one.
 	/// </summary>
 	/// <param name="allowedExpectedTypes">The allowed expected types.</param>
