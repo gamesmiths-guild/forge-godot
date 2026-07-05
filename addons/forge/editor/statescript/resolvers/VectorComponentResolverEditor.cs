@@ -52,7 +52,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 		var existing = property?.Resolver as VectorComponentResolverResource;
 		_operandType = existing?.OperandType ?? StatescriptVariableType.Vector3;
 		_component = existing?.Component ?? VectorComponent.X;
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetOperandClrType());
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(IterationScope, GetOperandClrType());
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -155,7 +155,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 			_ => StatescriptVariableType.Vector3,
 		};
 
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetOperandClrType());
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(IterationScope, GetOperandClrType());
 		PopulateResolverDropdown();
 		PopulateComponentDropdown();
 		_onChanged?.Invoke();

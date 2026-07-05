@@ -46,6 +46,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 		_graph = graph;
 		_onChanged = onChanged;
 		_operandFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
 			ResolverEditorCompatibility.FloatOperandExpectedTypes);
 		var existing = property?.Resolver as RoundResolverResource;
 		_digits = existing?.Digits ?? 0;

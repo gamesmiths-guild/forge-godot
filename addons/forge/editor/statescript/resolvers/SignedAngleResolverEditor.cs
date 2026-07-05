@@ -59,8 +59,13 @@ internal sealed partial class SignedAngleResolverEditor : NodeEditorProperty
 	{
 		_graph = graph;
 		_onChanged = onChanged;
-		_vectorFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(typeof(SysVector2), typeof(SysVector3));
-		_axisFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(typeof(SysVector3));
+		_vectorFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
+			typeof(SysVector2),
+			typeof(SysVector3));
+		_axisFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
+			typeof(SysVector3));
 		var existing = property?.Resolver as SignedAngleResolverResource;
 		_useAxis = existing?.Axis is not null;
 

@@ -44,7 +44,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 	{
 		_graph = graph;
 		_onChanged = onChanged;
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(typeof(SysVector3));
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(IterationScope, typeof(SysVector3));
 		var existing = property?.Resolver as QuaternionFromEulerAnglesResolverResource;
 		_order = existing?.Order ?? ForgeEulerOrder.XYZ;
 

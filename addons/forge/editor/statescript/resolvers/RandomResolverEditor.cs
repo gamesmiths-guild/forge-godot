@@ -68,7 +68,9 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		var existing = property?.Resolver as RandomResolverResource;
 		_valueType = existing?.ValueType ?? GetDefaultValueType(expectedType);
 		_isMaxInclusive = existing?.IsMaxInclusive ?? true;
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetBroadExpectedClrType(_valueType));
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
+			GetBroadExpectedClrType(_valueType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -274,7 +276,9 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 			_ => StatescriptVariableType.Int,
 		};
 
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetBroadExpectedClrType(_valueType));
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
+			GetBroadExpectedClrType(_valueType));
 		RebuildResolverSlot(_minEditorContainer, x => _minEditor = x);
 		RebuildResolverSlot(_maxEditorContainer, x => _maxEditor = x);
 		UpdateFoldableTitles();

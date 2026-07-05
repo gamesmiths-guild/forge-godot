@@ -68,6 +68,7 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 		_onChanged = onChanged;
 		_valueType = ResolveValueType(property, expectedType);
 		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
 			ResolverEditorCompatibility.FloatOperandExpectedTypes);
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;

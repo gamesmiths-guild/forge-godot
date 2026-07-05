@@ -44,7 +44,9 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 		_graph = graph;
 		_onChanged = onChanged;
 		_expectedType = expectedType;
-		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(GetConstrainedExpectedTypes(expectedType));
+		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
+			GetConstrainedExpectedTypes(expectedType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };

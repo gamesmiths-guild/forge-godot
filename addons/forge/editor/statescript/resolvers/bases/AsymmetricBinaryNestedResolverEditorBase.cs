@@ -50,8 +50,10 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		_onChanged = onChanged;
 		_expectedType = expectedType;
 		_leftFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
 			GetConstrainedExpectedTypes(GetLeftFactoryExpectedTypes(expectedType), expectedType));
 		_rightFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
+			IterationScope,
 			GetConstrainedExpectedTypes(GetRightFactoryExpectedTypes(expectedType), expectedType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;

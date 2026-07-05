@@ -60,12 +60,15 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		_onChanged = onChanged;
 		_firstFactories =
 			ResolverEditorFactoryCatalog.GetCompatibleFactories(
+				IterationScope,
 				GetConstrainedExpectedTypes(GetFirstFactoryExpectedTypes(expectedType), expectedType));
 		_secondFactories =
 			ResolverEditorFactoryCatalog.GetCompatibleFactories(
+				IterationScope,
 				GetConstrainedExpectedTypes(GetSecondFactoryExpectedTypes(expectedType), expectedType));
 		_thirdFactories =
 			ResolverEditorFactoryCatalog.GetCompatibleFactories(
+				IterationScope,
 				GetConstrainedExpectedTypes(GetThirdFactoryExpectedTypes(expectedType), expectedType));
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
