@@ -15,38 +15,39 @@ namespace Gamesmiths.Forge.Statescript.Nodes.Action;
 /// <see cref="GD.Print(params Variant[])"/>.
 /// Useful for validating resolver chains while testing Statescript graphs in the editor.
 /// </summary>
-public sealed class DebugNode : ActionNode
+/// <remarks>
+/// The configuration is captured through field initializers (not a constructor body) on purpose: the base node
+/// constructor invokes <see cref="DefineParameters"/>, so these fields must already be assigned when it runs. Field
+/// initializers execute before the base constructor; a constructor body would run too late.
+/// </remarks>
+/// <param name="valueType">The type of the value to be debugged.</param>
+/// <param name="isArray">Indicates whether the value is an array.</param>
+/// <param name="objectTypeId">The ID of the object type, if applicable.</param>
+public sealed class DebugNode(
+	StatescriptVariableType valueType = StatescriptVariableType.Int,
+	bool isArray = false,
+	string objectTypeId = "") : ActionNode
 {
-	private readonly StatescriptVariableType _valueType;
-	private readonly string _objectTypeId;
-	private readonly bool _isArray;
+	private readonly StatescriptVariableType _valueType = valueType;
+	private readonly string _objectTypeId = objectTypeId ?? string.Empty;
+	private readonly bool _isArray = isArray;
 
 	/// <inheritdoc/>
 	public override string Description => "Prints the resolved input value to the Godot console for debugging.";
-
-	public DebugNode(
-		StatescriptVariableType valueType = StatescriptVariableType.Int,
-		bool isArray = false,
-		string objectTypeId = "")
-	{
-		_valueType = valueType;
-		_objectTypeId = objectTypeId ?? string.Empty;
-		_isArray = isArray;
-	}
 
 	/// <inheritdoc/>
 	protected override void DefineParameters(
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		Type valueType =
+		Type clrType =
 			!string.IsNullOrEmpty(_objectTypeId)
 			&& StatescriptObjectVariableTypeRegistry.TryGet(
 				_objectTypeId,
 				out StatescriptObjectVariableType? descriptor)
 					? descriptor.ClrType
 					: StatescriptVariableTypeConverter.ToSystemType(_valueType);
-		inputProperties.Add(new InputProperty("Value", _isArray ? valueType.MakeArrayType() : valueType));
+		inputProperties.Add(new InputProperty("Value", _isArray ? clrType.MakeArrayType() : clrType));
 	}
 
 	/// <inheritdoc/>
