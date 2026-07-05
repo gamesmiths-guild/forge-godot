@@ -48,8 +48,9 @@ internal static class ResolverEditorFactoryCatalog
 		foreach (Type expectedType in expectedTypes)
 		{
 			result.AddRange(StatescriptResolverRegistry.GetCompatibleFactories(expectedType)
-				.Where(StatescriptResolverRegistry.SupportsArrayValues)
-				.Where(factory => seenTypeIds.Add(StatescriptResolverRegistry.GetResolverTypeId(factory))));
+				.Where(factory => StatescriptResolverRegistry.SupportsArrayValues(factory)
+					&& (iterationScope || !StatescriptResolverRegistry.RequiresIterationScope(factory))
+					&& seenTypeIds.Add(StatescriptResolverRegistry.GetResolverTypeId(factory))));
 		}
 
 		return result;

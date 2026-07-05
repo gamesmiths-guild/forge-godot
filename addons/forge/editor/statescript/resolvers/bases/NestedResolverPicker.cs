@@ -61,7 +61,7 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 		_title = title;
 
 		_factories = isArray
-			? ResolverEditorFactoryCatalog.GetArrayCompatibleFactories(expectedTypes)
+			? ResolverEditorFactoryCatalog.GetArrayCompatibleFactories(iterationScope, expectedTypes)
 			: ResolverEditorFactoryCatalog.GetCompatibleFactories(iterationScope, expectedTypes);
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
