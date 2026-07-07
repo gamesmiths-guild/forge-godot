@@ -162,13 +162,21 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 
 	private bool TryGetConfiguredElementType(Graph graph, out Type elementType)
 	{
-		if (!string.IsNullOrEmpty(ObjectElementTypeId)
-			&& StatescriptObjectVariableTypeRegistry.TryGet(
+		if (!string.IsNullOrEmpty(ObjectElementTypeId))
+		{
+			if (StatescriptObjectVariableTypeRegistry.TryGet(
 				ObjectElementTypeId,
 				out StatescriptObjectVariableType? descriptor))
-		{
-			elementType = descriptor.ClrType;
-			return true;
+			{
+				elementType = descriptor.ClrType;
+				return true;
+			}
+
+			GD.PushError(
+				$"Statescript: Array resolver has an unknown object element type id '{ObjectElementTypeId}'. " +
+				"Register the object type or clear the field.");
+			elementType = null!;
+			return false;
 		}
 
 		if (TryInferElementTypeFromResolvers(graph, out Type inferredElementType))

@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -13,7 +12,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver resource that appends nested-resolver elements to the end of a nested array source. Value-typed elements
-/// must resolve to the source element type; object-backed sources support entity elements.
+/// must resolve to the source element type; object-backed sources accept any registered object element type.
 /// </summary>
 [Tool]
 [GlobalClass]
@@ -66,33 +65,28 @@ public partial class AppendResolverResource : ArrayTransformResolverResourceBase
 
 	private IObjectArrayResolver BuildObjectAppend(Graph graph, IObjectArrayResolver source)
 	{
-		if (!typeof(IForgeEntity).IsAssignableFrom(source.ElementType))
-		{
-			GD.PushError(
-				"Statescript: Append resolver only supports entity elements for object-backed arrays. Got " +
-				$"'{source.ElementType.Name}'. Using the source unchanged.");
-			return source;
-		}
-
-		var elements = new List<IEntityResolver>(Elements.Count);
+		var elements = new List<IObjectResolver>(Elements.Count);
 
 		for (int i = 0; i < Elements.Count; i++)
 		{
-			if (Elements[i] is EntityResolverResourceBase entityElement)
+			if (Elements[i] is null)
 			{
-				elements.Add(entityElement.BuildEntityResolver(graph));
+				continue;
+			}
+
+			if (Elements[i].TryBuildObjectResolver(graph, out IObjectResolver? element) && element is not null)
+			{
+				elements.Add(element);
 			}
 			else
 			{
 				GD.PushError(
-					$"Statescript: Append resolver element {i} must be an entity resolver for entity arrays. " +
-					"Skipping it.");
+					$"Statescript: Append resolver element {i} does not produce an object reference for the " +
+					$"'{source.ElementType.Name}[]' array. Skipping it.");
 			}
 		}
 
-		return new ObjectAppendResolver<IForgeEntity>(
-			(IObjectArrayResolver<IForgeEntity>)source,
-			[.. elements]);
+		return ArrayResolverResourceUtilities.CreateObjectAppend(source, elements) ?? source;
 	}
 
 	private AppendResolver BuildValueAppend(Graph graph, IArrayPropertyResolver source)
