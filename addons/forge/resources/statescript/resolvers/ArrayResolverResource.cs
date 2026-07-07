@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -42,6 +43,13 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 	public bool HasExplicitElementType { get; set; }
 
 	/// <summary>
+	/// Gets or sets the registered object variable type id when this array holds object-backed (reference) elements;
+	/// empty for value-typed arrays. When set, it takes precedence over <see cref="ElementType"/>.
+	/// </summary>
+	[Export]
+	public string ObjectElementTypeId { get; set; } = string.Empty;
+
+	/// <summary>
 	/// Gets or sets a value indicating whether the overall array section is expanded in the editor.
 	/// </summary>
 	[Export]
@@ -73,9 +81,11 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 
 		var propertyName = new StringKey($"__array_{nodeId}_{index}");
 
-		if (elementType == typeof(IForgeEntity))
+		if (StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			elementType,
+			out StatescriptObjectVariableType? descriptor))
 		{
-			EntityArrayResolver? resolver = BuildEntityArrayResolver(graph);
+			IObjectArrayResolver? resolver = BuildObjectArrayResolver(graph, descriptor);
 			if (resolver is null)
 			{
 				return;
@@ -95,6 +105,32 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 		}
 
 		runtimeNode.BindInput(index, propertyName);
+	}
+
+	/// <inheritdoc/>
+	public override bool TryBuildArrayResolver(
+		Graph graph,
+		out IArrayPropertyResolver? valueArrayResolver,
+		out IObjectArrayResolver? objectArrayResolver)
+	{
+		valueArrayResolver = null;
+		objectArrayResolver = null;
+
+		if (!TryGetConfiguredElementType(graph, out Type elementType))
+		{
+			return false;
+		}
+
+		if (StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			elementType,
+			out StatescriptObjectVariableType? descriptor))
+		{
+			objectArrayResolver = BuildObjectArrayResolver(graph, descriptor);
+			return objectArrayResolver is not null;
+		}
+
+		valueArrayResolver = BuildValueArrayResolver(graph, elementType);
+		return valueArrayResolver is not null;
 	}
 
 	private bool TryResolveElementType(Graph graph, ForgeNode runtimeNode, byte index, out Type elementType)
@@ -126,6 +162,23 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 
 	private bool TryGetConfiguredElementType(Graph graph, out Type elementType)
 	{
+		if (!string.IsNullOrEmpty(ObjectElementTypeId))
+		{
+			if (StatescriptObjectVariableTypeRegistry.TryGet(
+				ObjectElementTypeId,
+				out StatescriptObjectVariableType? descriptor))
+			{
+				elementType = descriptor.ClrType;
+				return true;
+			}
+
+			GD.PushError(
+				$"Statescript: Array resolver has an unknown object element type id '{ObjectElementTypeId}'. " +
+				"Register the object type or clear the field.");
+			elementType = null!;
+			return false;
+		}
+
 		if (TryInferElementTypeFromResolvers(graph, out Type inferredElementType))
 		{
 			elementType = inferredElementType;
@@ -197,23 +250,25 @@ public partial class ArrayResolverResource : StatescriptResolverResource
 		return new ArrayResolver(elementType, [.. resolvers]);
 	}
 
-	private EntityArrayResolver? BuildEntityArrayResolver(Graph graph)
+	private IObjectArrayResolver? BuildObjectArrayResolver(Graph graph, StatescriptObjectVariableType descriptor)
 	{
-		var resolvers = new List<IEntityResolver>(ElementResolvers.Count);
+		var resolvers = new List<IObjectResolver>(ElementResolvers.Count);
 
 		for (int i = 0; i < ElementResolvers.Count; i++)
 		{
-			if (ElementResolvers[i] is not EntityResolverResourceBase entityResolver)
+			if (!ElementResolvers[i].TryBuildObjectResolver(graph, out IObjectResolver? elementResolver)
+				|| elementResolver is null)
 			{
 				GD.PushError(
-					$"Statescript: Array resolver element {i} must be entity-compatible when authoring " +
-					$"an '{nameof(IForgeEntity)}[]' array.");
+					$"Statescript: Array resolver element {i} uses resolver " +
+					$"'{ElementResolvers[i].ResolverTypeId}', which does not produce a '{descriptor.DisplayName}' " +
+					"value.");
 				return null;
 			}
 
-			resolvers.Add(entityResolver.BuildEntityResolver(graph));
+			resolvers.Add(elementResolver);
 		}
 
-		return new EntityArrayResolver([.. resolvers]);
+		return ArrayResolverResourceUtilities.CreateObjectArrayComposite(descriptor.ClrType, resolvers);
 	}
 }

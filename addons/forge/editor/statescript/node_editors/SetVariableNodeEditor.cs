@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -30,6 +31,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private readonly List<string> _variableNames = [];
 
 	private StatescriptVariableType? _resolvedType;
+	private string _resolvedObjectTypeId = string.Empty;
 	private bool _resolvedIsArray;
 
 	[NonSerialized]
@@ -58,6 +60,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private string _selectedSetPath = string.Empty;
 	private string _selectedSharedVarName = string.Empty;
 	private StatescriptVariableType _selectedSharedVarType = StatescriptVariableType.Int;
+	private string _selectedSharedVarObjectTypeId = string.Empty;
 	private bool _selectedSharedVarIsArray;
 
 	/// <inheritdoc/>
@@ -92,6 +95,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			outputFolded);
 
 		_resolvedType = null;
+		_resolvedObjectTypeId = string.Empty;
 		_resolvedIsArray = false;
 
 		StatescriptNodeProperty? outputBinding = FindBinding(StatescriptPropertyDirection.Output, 0);
@@ -142,6 +146,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	private void ResolveTypeFromBinding(StatescriptNodeProperty? outputBinding)
 	{
 		_resolvedType = null;
+		_resolvedObjectTypeId = string.Empty;
 		_resolvedIsArray = false;
 
 		if (outputBinding?.Resolver is VariableResolverResource varRes
@@ -152,9 +157,11 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				_selectedSetPath = varRes.SharedVariableSetPath;
 				_selectedSharedVarName = varRes.VariableName;
 				_selectedSharedVarType = varRes.VariableType;
+				_selectedSharedVarObjectTypeId = varRes.ObjectTypeId;
 				_selectedSharedVarIsArray = varRes.IsArray;
 				ResolveSharedVariableType();
 				_resolvedType = _selectedSharedVarType;
+				_resolvedObjectTypeId = _selectedSharedVarObjectTypeId;
 				_resolvedIsArray = _selectedSharedVarIsArray;
 				return;
 			}
@@ -164,6 +171,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				if (v.VariableName == varRes.VariableName)
 				{
 					_resolvedType = v.VariableType;
+					_resolvedObjectTypeId = v.ObjectTypeId;
 					_resolvedIsArray = v.IsArray;
 					return;
 				}
@@ -246,6 +254,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		// Clear the output binding since scope changed.
 		RemoveBinding(StatescriptPropertyDirection.Output, index);
 		_resolvedType = null;
+		_resolvedObjectTypeId = string.Empty;
 		_resolvedIsArray = false;
 
 		// Reset shared variable state when switching away.
@@ -532,6 +541,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 		StatescriptVariableType? previousType = _resolvedType;
 		_resolvedType = null;
+		_resolvedObjectTypeId = string.Empty;
 		_resolvedIsArray = false;
 
 		if (previousType != _resolvedType)
@@ -586,6 +596,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			as StatescriptResolverResource;
 
 		StatescriptVariableType? previousType = _resolvedType;
+		string previousObjectTypeId = _resolvedObjectTypeId;
 		bool previousIsArray = _resolvedIsArray;
 
 		if (idx >= 0 && idx < _variableNames.Count)
@@ -597,6 +608,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		{
 			_selectedSharedVarName = string.Empty;
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarObjectTypeId = string.Empty;
 			_selectedSharedVarIsArray = false;
 		}
 
@@ -605,15 +617,21 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (!string.IsNullOrEmpty(_selectedSharedVarName))
 		{
 			_resolvedType = _selectedSharedVarType;
+			_resolvedObjectTypeId = _selectedSharedVarObjectTypeId;
 			_resolvedIsArray = _selectedSharedVarIsArray;
 		}
 		else
 		{
 			_resolvedType = null;
+			_resolvedObjectTypeId = string.Empty;
 			_resolvedIsArray = false;
 		}
 
-		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+		bool typeChanged = previousType != _resolvedType
+			|| previousObjectTypeId != _resolvedObjectTypeId
+			|| previousIsArray != _resolvedIsArray;
+
+		if (typeChanged)
 		{
 			RemoveBinding(StatescriptPropertyDirection.Input, 0);
 			ActiveResolverEditors.Remove(new PropertySlotKey(StatescriptPropertyDirection.Input, 0));
@@ -638,7 +656,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			newResolver,
 			"Change Shared Target Variable");
 
-		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+		if (typeChanged)
 		{
 			RecordResolverBindingChange(
 				StatescriptPropertyDirection.Input,
@@ -672,6 +690,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 				SharedVariableSetPath = _selectedSetPath,
 				VariableName = _selectedSharedVarName,
 				VariableType = _selectedSharedVarType,
+				ObjectTypeId = _selectedSharedVarObjectTypeId,
 				IsArray = _selectedSharedVarIsArray,
 			};
 	}
@@ -683,6 +702,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			|| !ResourceLoader.Exists(_selectedSetPath))
 		{
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarObjectTypeId = string.Empty;
 			_selectedSharedVarIsArray = false;
 			return;
 		}
@@ -692,6 +712,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		if (set is null)
 		{
 			_selectedSharedVarType = StatescriptVariableType.Int;
+			_selectedSharedVarObjectTypeId = string.Empty;
 			_selectedSharedVarIsArray = false;
 			return;
 		}
@@ -701,12 +722,14 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			if (def.VariableName == _selectedSharedVarName)
 			{
 				_selectedSharedVarType = def.VariableType;
+				_selectedSharedVarObjectTypeId = def.ObjectTypeId;
 				_selectedSharedVarIsArray = def.IsArray;
 				return;
 			}
 		}
 
 		_selectedSharedVarType = StatescriptVariableType.Int;
+		_selectedSharedVarObjectTypeId = string.Empty;
 		_selectedSharedVarIsArray = false;
 	}
 
@@ -721,6 +744,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		int variableIndex = (int)x - 1;
 
 		StatescriptVariableType? previousType = _resolvedType;
+		string previousObjectTypeId = _resolvedObjectTypeId;
 		bool previousIsArray = _resolvedIsArray;
 
 		var oldOutputResolver = FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver?.Duplicate()
@@ -732,6 +756,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		{
 			RemoveBinding(StatescriptPropertyDirection.Output, index);
 			_resolvedType = null;
+			_resolvedObjectTypeId = string.Empty;
 			_resolvedIsArray = false;
 		}
 		else
@@ -743,14 +768,20 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 					VariableName = variable.VariableName,
 					Scope = VariableScope.Graph,
 					VariableType = variable.VariableType,
+					ObjectTypeId = variable.ObjectTypeId,
 					IsArray = variable.IsArray,
 				};
 
 			_resolvedType = variable.VariableType;
+			_resolvedObjectTypeId = variable.ObjectTypeId;
 			_resolvedIsArray = variable.IsArray;
 		}
 
-		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+		bool typeChanged = previousType != _resolvedType
+			|| previousObjectTypeId != _resolvedObjectTypeId
+			|| previousIsArray != _resolvedIsArray;
+
+		if (typeChanged)
 		{
 			RemoveBinding(StatescriptPropertyDirection.Input, 0);
 
@@ -776,7 +807,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			newOutputResolver,
 			"Change Target Variable");
 
-		if (previousType != _resolvedType || previousIsArray != _resolvedIsArray)
+		if (typeChanged)
 		{
 			RecordResolverBindingChange(
 				StatescriptPropertyDirection.Input,
@@ -883,7 +914,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 	{
 		ClearContainer(container);
 
-		if (_resolvedType is null)
+		if (!TryGetResolvedClrType(out Type resolvedClrType))
 		{
 			var placeholder = new Label
 			{
@@ -898,14 +929,33 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		Type resolvedClrType = StatescriptVariableTypeConverter.ToSystemType(_resolvedType.Value);
-
 		AddInputPropertyRow(
 			new StatescriptNodeDiscovery.InputPropertyInfo(propInfo.Label, resolvedClrType, _resolvedIsArray),
 			0,
 			container);
 
 		ResetSize();
+	}
+
+	private bool TryGetResolvedClrType(out Type clrType)
+	{
+		if (!string.IsNullOrEmpty(_resolvedObjectTypeId)
+			&& StatescriptObjectVariableTypeRegistry.TryGet(
+				_resolvedObjectTypeId,
+				out StatescriptObjectVariableType? descriptor))
+		{
+			clrType = descriptor.ClrType;
+			return true;
+		}
+
+		if (_resolvedType is not null)
+		{
+			clrType = StatescriptVariableTypeConverter.ToSystemType(_resolvedType.Value);
+			return true;
+		}
+
+		clrType = null!;
+		return false;
 	}
 }
 #endif

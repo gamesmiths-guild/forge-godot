@@ -641,7 +641,11 @@ internal static class InlineConstantSummaryFormatter
 	{
 		foreach (Node child in node.GetChildren())
 		{
+			// Only visible rows participate in the columned layout. A hidden row (e.g. an optional predicate picker
+			// toggled off) keeps a stale, partial width; including it would drag the shared column split narrower and
+			// squeeze every visible pill toward its minimum width.
 			if (child is FoldableContainer foldable
+				&& foldable.IsVisibleInTree()
 				&& TryGetSummaryBadge(foldable, out PanelContainer? badge)
 				&& badge.Visible)
 			{

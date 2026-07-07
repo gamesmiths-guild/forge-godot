@@ -44,8 +44,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 	public override bool IsCompatibleWith(Type expectedType)
 	{
 		// Object-backed (reference) types are not represented by StatescriptVariableType, so TryFromSystemType already
-		// excludes them here.
+		// excludes them here. The wildcard types offer every authorable value type through the type dropdown.
 		return expectedType == typeof(object)
+			|| expectedType == typeof(ForgeVariant128)
 			|| StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _);
 	}
 

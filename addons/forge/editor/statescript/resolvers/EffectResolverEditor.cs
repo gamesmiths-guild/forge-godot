@@ -46,7 +46,7 @@ internal sealed partial class EffectResolverEditor : NodeEditorProperty
 	public override string ResolverTypeId => "Effect";
 
 	/// <inheritdoc/>
-	public override bool SupportsArrayValues => true;
+	public override bool SupportsArrayValues => false;
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)

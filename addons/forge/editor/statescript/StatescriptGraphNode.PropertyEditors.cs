@@ -60,19 +60,17 @@ public partial class StatescriptGraphNode
 		List<Func<NodeEditorProperty>> resolverFactories =
 			StatescriptResolverRegistry.GetCompatibleFactories(propInfo.ExpectedType);
 
+		// Node-level inputs are never inside an array operation's per-element (lambda) operand, so the element
+		// resolvers that read the iterated value make no sense here.
+		resolverFactories.RemoveAll(StatescriptResolverRegistry.RequiresIterationScope);
+
 		if (propInfo.IsArray)
 		{
-			resolverFactories.RemoveAll(factory =>
-			{
-				return !StatescriptResolverRegistry.SupportsArrayValues(factory);
-			});
+			resolverFactories.RemoveAll(factory => !StatescriptResolverRegistry.SupportsArrayValues(factory));
 		}
 		else
 		{
-			resolverFactories.RemoveAll(factory =>
-			{
-				return !StatescriptResolverRegistry.SupportsScalarValues(factory);
-			});
+			resolverFactories.RemoveAll(factory => !StatescriptResolverRegistry.SupportsScalarValues(factory));
 		}
 
 		if (resolverFactories.Count == 0)

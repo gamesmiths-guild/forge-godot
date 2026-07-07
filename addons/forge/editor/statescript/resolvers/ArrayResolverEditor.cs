@@ -3,11 +3,13 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
 using Godot.Collections;
+using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 using GodotVector2 = Godot.Vector2;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
@@ -25,6 +27,8 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
 	private Type _expectedType = typeof(int);
+	private bool _hasAmbiguousElementType;
+	private string _objectElementTypeId = string.Empty;
 	private bool _isExpanded;
 
 	private Button? _toggleButton;
@@ -40,7 +44,11 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _);
+		// The wildcard type offers every authorable value element type through the type dropdown; object arrays
+		// (entities, effects, ...) are composed from nested object resolvers of the registered element type.
+		return expectedType == typeof(ForgeVariant128)
+			|| StatescriptObjectVariableTypeRegistry.IsObjectType(expectedType)
+			|| StatescriptVariableTypeConverter.TryFromSystemType(expectedType, out _);
 	}
 
 	public override void Setup(
@@ -52,25 +60,53 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 	{
 		_graph = graph;
 		_onChanged = onChanged;
-		_expectedType = expectedType;
 
-		_factories.Clear();
-		_factories.AddRange(ResolverEditorFactoryCatalog.GetCompatibleFactories(expectedType));
-		_factories.RemoveAll(factory => StatescriptResolverRegistry.GetResolverTypeId(factory) == ResolverTypeId);
+		var existingResource = property?.Resolver as ArrayResolverResource;
 
-		LoadExistingState(property?.Resolver as ArrayResolverResource);
+		if (StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			expectedType,
+			out StatescriptObjectVariableType? objectDescriptor))
+		{
+			// The context pins a concrete object element type (e.g. an IForgeEntity[] / Effect[] node input).
+			_objectElementTypeId = objectDescriptor.TypeId;
+			_expectedType = expectedType;
+		}
+		else
+		{
+			_hasAmbiguousElementType = expectedType == typeof(ForgeVariant128) || expectedType == typeof(object);
+
+			if (_hasAmbiguousElementType)
+			{
+				StatescriptVariableType initialElementType = existingResource?.HasExplicitElementType == true
+					? existingResource.ElementType
+					: StatescriptVariableType.Int;
+				_expectedType = StatescriptVariableTypeConverter.ToSystemType(initialElementType);
+			}
+			else
+			{
+				_expectedType = expectedType;
+			}
+		}
+
+		RefreshFactories();
+		LoadExistingState(existingResource);
 
 		CustomMinimumSize = new GodotVector2(220, 40);
 
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
+
+		if (_hasAmbiguousElementType)
+		{
+			root.AddChild(CreateElementTypeRow());
+		}
+
 		root.AddChild(CreateArrayEditor());
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
 		CaptureEditorState();
-		StatescriptVariableType elementType = ResolveElementVariableType();
 
 		var resolvers = new Array<StatescriptResolverResource>();
 		for (int i = 0; i < _elementResolverResources.Count; i++)
@@ -81,9 +117,21 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 			}
 		}
 
+		if (!string.IsNullOrEmpty(_objectElementTypeId))
+		{
+			property.Resolver = new ArrayResolverResource
+			{
+				ObjectElementTypeId = _objectElementTypeId,
+				ElementResolvers = resolvers,
+				IsExpanded = _isExpanded,
+				ElementFoldedStates = [.. _elementFoldedStates],
+			};
+			return;
+		}
+
 		property.Resolver = new ArrayResolverResource
 		{
-			ElementType = elementType,
+			ElementType = ResolveElementVariableType(),
 			HasExplicitElementType = true,
 			ElementResolvers = resolvers,
 			IsExpanded = _isExpanded,
@@ -160,6 +208,61 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 		var property = new StatescriptNodeProperty();
 		editor.SaveTo(property);
 		return property.Resolver;
+	}
+
+	private void RefreshFactories()
+	{
+		_factories.Clear();
+		_factories.AddRange(ResolverEditorFactoryCatalog.GetCompatibleFactories(IterationScope, _expectedType));
+		_factories.RemoveAll(factory => StatescriptResolverRegistry.GetResolverTypeId(factory) == ResolverTypeId);
+	}
+
+	private HBoxContainer CreateElementTypeRow()
+	{
+		var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+
+		row.AddChild(new Label
+		{
+			Text = "Type:",
+			CustomMinimumSize = new GodotVector2(45, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+		});
+
+		StatescriptVariableType[] selectableTypes = StatescriptVariableTypeConverter.GetAllTypes();
+		OptionButton dropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		int selectedIndex = 0;
+
+		for (int i = 0; i < selectableTypes.Length; i++)
+		{
+			dropdown.AddItem(StatescriptVariableTypeConverter.GetDisplayName(selectableTypes[i]));
+
+			if (StatescriptVariableTypeConverter.ToSystemType(selectableTypes[i]) == _expectedType)
+			{
+				selectedIndex = i;
+			}
+		}
+
+		dropdown.Selected = selectedIndex;
+		dropdown.ItemSelected += index => OnElementTypeChanged(selectableTypes[(int)index]);
+		row.AddChild(dropdown);
+		return row;
+	}
+
+	private void OnElementTypeChanged(StatescriptVariableType elementType)
+	{
+		Type clrType = StatescriptVariableTypeConverter.ToSystemType(elementType);
+
+		if (_expectedType == clrType)
+		{
+			return;
+		}
+
+		CaptureEditorState();
+		_expectedType = clrType;
+		RefreshFactories();
+		RebuildElementRows();
+		_onChanged?.Invoke();
+		RaiseLayoutSizeChanged();
 	}
 
 	private void LoadExistingState(ArrayResolverResource? existing)
@@ -476,6 +579,7 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 
 		try
 		{
+			editor.IterationScope = IterationScope;
 			editor.ConfigureAllowedExpectedTypes(_expectedType);
 			editor.Setup(_graph, null, _expectedType, static () => { }, false);
 			var property = new StatescriptNodeProperty();

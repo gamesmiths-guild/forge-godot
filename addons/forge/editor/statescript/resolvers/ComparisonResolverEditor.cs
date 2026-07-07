@@ -70,7 +70,7 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 		var vBox = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(vBox);
 
-		_numericFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(_numericExpectedTypes);
+		_numericFactories = ResolverEditorFactoryCatalog.GetCompatibleFactories(IterationScope, _numericExpectedTypes);
 
 		_numericFactories.RemoveAll(x => StatescriptResolverRegistry.GetResolverTypeId(x) == ResolverTypeId);
 

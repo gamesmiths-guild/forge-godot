@@ -18,6 +18,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 		Source = 1,
 		Target = 2,
 		Variable = 3,
+		Element = 4,
 	}
 
 	private Action? _onChanged;
@@ -52,6 +53,11 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 		dropdown.AddItem("Source");
 		dropdown.AddItem("Target");
 		dropdown.AddItem("Variable");
+		dropdown.AddItem("Element");
+
+		// The iterated element only exists inside an array operation's per-element (lambda) operand.
+		dropdown.SetItemDisabled((int)EntitySelection.Element, !IterationScope);
+
 		dropdown.Selected = (int)SelectedEntitySelection;
 		dropdown.ItemSelected += OnEntityChanged;
 		return ResolverEditorLayoutUtilities.CreateLabeledRow("Entity:", dropdown, labelWidth);
@@ -82,6 +88,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 			EntitySelection.Source => new AbilitySourceResolverResource(),
 			EntitySelection.Target => new AbilityTargetResolverResource(),
 			EntitySelection.Variable => BuildEntityVariableResolver(),
+			EntitySelection.Element => new ElementEntityResolverResource(),
 			_ => new AbilityOwnerResolverResource(),
 		};
 	}
@@ -93,6 +100,7 @@ internal abstract partial class EntityScopedResolverEditorBase : NodeEditorPrope
 			AbilitySourceResolverResource => EntitySelection.Source,
 			AbilityTargetResolverResource => EntitySelection.Target,
 			VariableResolverResource => EntitySelection.Variable,
+			ElementEntityResolverResource => EntitySelection.Element,
 			_ => EntitySelection.Owner,
 		};
 	}
