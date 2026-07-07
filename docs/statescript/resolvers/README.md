@@ -28,7 +28,7 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [AbilityOwnershipResolver](ability-ownership-resolver.md) | `EffectOwnership` | Authors the current ability owner/source pair as a node input. |
 | [CueCustomParametersResolver](cue-custom-parameters-resolver.md) | `Dictionary<StringKey, object>` | Selects an `ICueCustomParametersProvider` to author the `CueParameters.CustomParameters` bag for the cue nodes. |
 | [EffectContextDataResolver](effect-context-data-resolver.md) | `EffectApplicationContext` | Selects an `IEffectContextDataProvider` to pass custom context data into effect applications. |
-| [EffectResolver](effect-resolver.md) | `Effect` / `Effect[]` | Authors `Effect` instances (effect data + level + ownership) for `ApplyEffectNode` and `EffectNode`. |
+| [EffectResolver](effect-resolver.md) | `Effect` | Authors a single `Effect` (effect data + level + ownership) for `ApplyEffectNode` and `EffectNode`. |
 | [EventPayloadOutputResolver](event-payload-resolver.md#listener-side-eventpayloadoutputresolver) | `EventPayloadWriter` | Selects an `IEventPayloadProvider` to write a received payload to graph variables for `EventListenerNode`. |
 | [EventPayloadResolver](event-payload-resolver.md#raise-side-eventpayloadresolver) | `EventPayloadRaiser` | Selects an `IEventPayloadProvider` to build and raise a typed event payload for `RaiseEventNode`. |
 | [IsValidResolver](is-valid-resolver.md) | `bool` | Authors a validity (non-null) check over an object-backed variable of any registered type. |

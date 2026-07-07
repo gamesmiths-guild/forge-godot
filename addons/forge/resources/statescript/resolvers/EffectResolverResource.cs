@@ -101,6 +101,42 @@ public partial class EffectResolverResource : StatescriptResolverResource
 		runtimeNode.BindInput(index, propertyName);
 	}
 
+	/// <inheritdoc/>
+	public override bool TryBuildObjectResolver(Graph graph, out IObjectResolver? objectResolver)
+	{
+		objectResolver = null;
+
+		if (IsArray || Effect is null)
+		{
+			return false;
+		}
+
+		IPropertyResolver? levelResolver = LevelResolver?.BuildResolver(graph);
+		OwnershipResolver? ownershipResolver = Ownership?.BuildOwnershipResolver(graph);
+		objectResolver = new ForgeEffectResolver(Effect, levelResolver, ownershipResolver);
+		return true;
+	}
+
+	/// <inheritdoc/>
+	public override bool TryBuildArrayResolver(
+		Graph graph,
+		out IArrayPropertyResolver? valueArrayResolver,
+		out IObjectArrayResolver? objectArrayResolver)
+	{
+		valueArrayResolver = null;
+		objectArrayResolver = null;
+
+		if (!IsArray)
+		{
+			return false;
+		}
+
+		IPropertyResolver? levelResolver = LevelResolver?.BuildResolver(graph);
+		OwnershipResolver? ownershipResolver = Ownership?.BuildOwnershipResolver(graph);
+		objectArrayResolver = new ForgeEffectArrayResolver(BuildEffectResources(), levelResolver, ownershipResolver);
+		return true;
+	}
+
 	private List<ForgeEffectData> BuildEffectResources()
 	{
 		var effectResources = new List<ForgeEffectData>(Effects.Count);
