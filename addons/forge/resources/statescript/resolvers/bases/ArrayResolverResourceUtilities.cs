@@ -76,6 +76,38 @@ internal static class ArrayResolverResourceUtilities
 	}
 
 	/// <summary>
+	/// Instantiates an <c>ObjectAppendResolver&lt;T&gt;</c> closed over the source's element type, appending the given
+	/// per-element object resolvers. Each element resolver must resolve to a value assignable to the element type.
+	/// </summary>
+	/// <param name="source">The object-lane source array resolver.</param>
+	/// <param name="elements">The per-element object resolvers to append, in order.</param>
+	/// <returns>The composed append resolver, or <see langword="null"/> when an element is incompatible.</returns>
+	internal static IObjectArrayResolver? CreateObjectAppend(
+		IObjectArrayResolver source,
+		IReadOnlyList<IObjectResolver> elements)
+	{
+		Type elementType = source.ElementType;
+		Type resolverInterface = typeof(IObjectResolver<>).MakeGenericType(elementType);
+		var typedElements = Array.CreateInstance(resolverInterface, elements.Count);
+
+		for (int i = 0; i < elements.Count; i++)
+		{
+			if (!resolverInterface.IsInstanceOfType(elements[i]))
+			{
+				GD.PushError(
+					$"Statescript: Append resolver element {i} resolves to '{elements[i].ValueType.Name}', which is " +
+					$"not assignable to the array element type '{elementType.Name}'. Skipping the append.");
+				return null;
+			}
+
+			typedElements.SetValue(elements[i], i);
+		}
+
+		Type resolverType = typeof(ObjectAppendResolver<>).MakeGenericType(elementType);
+		return (IObjectArrayResolver)Activator.CreateInstance(resolverType, [source, typedElements])!;
+	}
+
+	/// <summary>
 	/// Instantiates an object-lane array operation (e.g. <c>ObjectWhereResolver&lt;T&gt;</c>) closed over the source's
 	/// element type. The source is always passed as the first constructor argument.
 	/// </summary>
@@ -94,6 +126,57 @@ internal static class ArrayResolverResourceUtilities
 		arguments[0] = source;
 		Array.Copy(additionalArguments, 0, arguments, 1, additionalArguments.Length);
 		return (IObjectArrayResolver)Activator.CreateInstance(closedType, arguments)!;
+	}
+
+	/// <summary>
+	/// Instantiates an object-lane array access resolver (e.g. <c>ObjectFirstResolver&lt;T&gt;</c>) closed over the
+	/// source's element type. The source is always passed as the first constructor argument. Unlike
+	/// <see cref="CreateObjectArrayOperation"/> the result is a scalar object resolver rather than an array.
+	/// </summary>
+	/// <param name="openGenericType">The open generic resolver type (e.g. <c>typeof(ObjectFirstResolver&lt;&gt;)</c>).
+	/// </param>
+	/// <param name="source">The object-lane source array resolver.</param>
+	/// <param name="additionalArguments">The remaining constructor arguments, in order.</param>
+	/// <returns>The closed access resolver.</returns>
+	internal static IObjectResolver CreateObjectAccessResolver(
+		Type openGenericType,
+		IObjectArrayResolver source,
+		params object?[] additionalArguments)
+	{
+		Type closedType = openGenericType.MakeGenericType(source.ElementType);
+		object?[] arguments = new object?[additionalArguments.Length + 1];
+		arguments[0] = source;
+		Array.Copy(additionalArguments, 0, arguments, 1, additionalArguments.Length);
+		return (IObjectResolver)Activator.CreateInstance(closedType, arguments)!;
+	}
+
+	/// <summary>
+	/// Resolves a nested source that must produce an object-backed (reference) array of any registered object type,
+	/// reporting an editor error otherwise.
+	/// </summary>
+	/// <param name="source">The nested source resource, may be <see langword="null"/>.</param>
+	/// <param name="resolverTypeId">The owning resolver's type id (for error messages).</param>
+	/// <param name="graph">The runtime graph being built.</param>
+	/// <param name="objectArrayResolver">The object array resolver when the source produces one.</param>
+	/// <returns><see langword="true"/> when the source produced an object array.</returns>
+	internal static bool TryResolveObjectArraySource(
+		StatescriptResolverResource? source,
+		string resolverTypeId,
+		Graph graph,
+		out IObjectArrayResolver? objectArrayResolver)
+	{
+		if (!TryResolveSource(source, resolverTypeId, graph, out _, out objectArrayResolver))
+		{
+			return false;
+		}
+
+		if (objectArrayResolver is null)
+		{
+			GD.PushError($"Statescript: {resolverTypeId} resolver requires an object array source.");
+			return false;
+		}
+
+		return true;
 	}
 
 	/// <summary>

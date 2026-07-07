@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -11,48 +12,51 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class ObjectIndexOfResolverEditor : ArrayReductionResolverEditorBase
+internal sealed partial class ObjectElementAtResolverEditor : ArrayReductionResolverEditorBase
 {
-	private EntityOperandPicker? _valuePicker;
+	private NestedResolverPicker? _indexPicker;
 
-	public override string DisplayName => "Index Of";
+	public override string DisplayName => "Element At";
 
-	public override string ResolverTypeId => "ObjectIndexOf";
+	public override string ResolverTypeId => "ObjectElementAt";
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return StatescriptVariableTypeConverter.IsCompatible(expectedType, StatescriptVariableType.Int);
+		// Entity arrays use the dedicated Entity At resolver (an entity resolver usable in attribute/tag reads).
+		return expectedType != typeof(IForgeEntity)
+			&& StatescriptObjectVariableTypeRegistry.IsObjectType(expectedType);
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new ObjectIndexOfResolverResource
+		property.Resolver = new ObjectElementAtResolverResource
 		{
 			Source = SourcePicker?.BuildResource(),
 			SourceFolded = SourcePicker?.Folded ?? true,
-			Value = _valuePicker?.BuildResource(),
+			Index = _indexPicker?.BuildResource(),
+			IndexFolded = _indexPicker?.Folded ?? true,
 		};
 	}
 
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
-		_valuePicker?.ClearCallbacks();
+		_indexPicker?.ClearCallbacks();
 	}
 
 	protected override StatescriptResolverResource? GetExistingSource(StatescriptNodeProperty? property)
 	{
-		return (property?.Resolver as ObjectIndexOfResolverResource)?.Source;
+		return (property?.Resolver as ObjectElementAtResolverResource)?.Source;
 	}
 
 	protected override bool GetExistingSourceFolded(StatescriptNodeProperty? property)
 	{
-		return (property?.Resolver as ObjectIndexOfResolverResource)?.SourceFolded ?? true;
+		return (property?.Resolver as ObjectElementAtResolverResource)?.SourceFolded ?? true;
 	}
 
 	protected override Type[] GetSourceExpectedTypes(Type expectedType)
 	{
-		return [typeof(IForgeEntity)];
+		return [expectedType];
 	}
 
 	protected override void BuildAdditionalRows(
@@ -62,17 +66,15 @@ internal sealed partial class ObjectIndexOfResolverEditor : ArrayReductionResolv
 		Type expectedType,
 		Action onChanged)
 	{
-		var existingResource = property?.Resolver as ObjectIndexOfResolverResource;
-		_valuePicker = new EntityOperandPicker();
-		_valuePicker.Initialize(
+		var existingResource = property?.Resolver as ObjectElementAtResolverResource;
+		_indexPicker = AddOperandPicker(
+			root,
 			graph,
-			existingResource?.Value,
-			"Entity:",
-			66.0f,
-			onChanged,
-			RaiseLayoutSizeChanged,
-			IterationScope);
-		root.AddChild(_valuePicker);
+			existingResource?.Index,
+			"Index:",
+			[typeof(int)],
+			existingResource?.IndexFolded ?? true,
+			onChanged);
 	}
 }
 #endif

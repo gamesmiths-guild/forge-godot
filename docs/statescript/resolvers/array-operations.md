@@ -32,7 +32,7 @@ The **Entity** dropdown on entity-aware resolvers (`Attribute`, `Is Valid`, `Sam
 
 The lane is chosen from the source's element type at build time, so most operations need no configuration. Element access and identity operations expose explicit entity-lane variants because their result is an entity resolver you can chain into attribute/tag reads:
 
-- **Access:** `First` / `Last` / `Element At` (value lane) and `First Entity` / `Last Entity` / `Entity At` (entity lane).
+- **Access:** `First` / `Last` / `Element At` cover value arrays **and** non-entity object arrays (e.g. `Effect[]`, `ActiveEffectHandle[]`), each producing the selected element; entity arrays additionally expose `First Entity` / `Last Entity` / `Entity At`, whose result is an entity resolver you can chain into attribute/tag reads.
 - **Search:** `Contains` / `Index Of` (value lane) and `Contains Entity` / `Entity Index Of` (entity lane).
 
 ### Chaining - the motivating example

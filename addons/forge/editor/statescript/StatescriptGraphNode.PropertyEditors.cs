@@ -66,17 +66,11 @@ public partial class StatescriptGraphNode
 
 		if (propInfo.IsArray)
 		{
-			resolverFactories.RemoveAll(factory =>
-			{
-				return !StatescriptResolverRegistry.SupportsArrayValues(factory);
-			});
+			resolverFactories.RemoveAll(factory => !StatescriptResolverRegistry.SupportsArrayValues(factory));
 		}
 		else
 		{
-			resolverFactories.RemoveAll(factory =>
-			{
-				return !StatescriptResolverRegistry.SupportsScalarValues(factory);
-			});
+			resolverFactories.RemoveAll(factory => !StatescriptResolverRegistry.SupportsScalarValues(factory));
 		}
 
 		if (resolverFactories.Count == 0)
