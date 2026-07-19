@@ -178,9 +178,9 @@ internal static class InlineConstantSummaryFormatter
 			StatescriptVariableType.Byte => value.AsInt32().ToString(CultureInfo.InvariantCulture),
 			StatescriptVariableType.SByte => value.AsInt32().ToString(CultureInfo.InvariantCulture),
 			StatescriptVariableType.Char => ((char)value.AsInt32()).ToString(),
-			StatescriptVariableType.Decimal => value.AsDouble().ToString("G", CultureInfo.InvariantCulture),
-			StatescriptVariableType.Double => value.AsDouble().ToString("G", CultureInfo.InvariantCulture),
-			StatescriptVariableType.Float => value.AsSingle().ToString("G", CultureInfo.InvariantCulture),
+			StatescriptVariableType.Decimal => FormatFloat(value.AsDouble()),
+			StatescriptVariableType.Double => FormatFloat(value.AsDouble()),
+			StatescriptVariableType.Float => FormatFloat(value.AsSingle()),
 			StatescriptVariableType.Int => value.AsInt32().ToString(CultureInfo.InvariantCulture),
 			StatescriptVariableType.UInt => value.AsInt64().ToString(CultureInfo.InvariantCulture),
 			StatescriptVariableType.Long => value.AsInt64().ToString(CultureInfo.InvariantCulture),
@@ -788,7 +788,18 @@ internal static class InlineConstantSummaryFormatter
 
 	private static string FormatNumber(float value)
 	{
-		return value.ToString("G", CultureInfo.InvariantCulture);
+		return FormatFloat(value);
+	}
+
+	/// <summary>
+	/// Formats a floating value with the same 4-decimal convention as the editor's numeric input fields, so a
+	/// collapsed pill always shows the same number as the expanded field.
+	/// </summary>
+	/// <param name="value">The value to format.</param>
+	/// <returns>The formatted value.</returns>
+	private static string FormatFloat(double value)
+	{
+		return value.ToString("0.####", CultureInfo.InvariantCulture);
 	}
 
 	private readonly record struct BadgeVisualStyle(
