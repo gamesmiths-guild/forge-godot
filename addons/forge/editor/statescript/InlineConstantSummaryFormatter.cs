@@ -210,6 +210,20 @@ internal static class InlineConstantSummaryFormatter
 		};
 	}
 
+	/// <summary>
+	/// Requests a deferred badge-width re-sync for every columned property row in the given graph node. Public so the
+	/// owning node can re-run the label/pill split when the layout basis changes without a resize event — most
+	/// importantly when the editor theme (and therefore the title-font metrics used to size the label column) is
+	/// applied after the node was first built, which is the case when the Statescript tab is the active tab on editor
+	/// startup.This only recomputes widths (no theme overrides are re-applied), so it is safe to call from a
+	/// theme-changed notification without re-entrancy.
+	/// </summary>
+	/// <param name="node">The graph node whose badge widths should be recomputed.</param>
+	public static void RequestBadgeWidthSync(GraphNode node)
+	{
+		ScheduleSyncFromRoot(node);
+	}
+
 	internal static bool TryGetSummaryBadgeForHighlighting(
 		FoldableContainer foldable,
 		[NotNullWhen(true)] out PanelContainer? badge)
@@ -495,19 +509,14 @@ internal static class InlineConstantSummaryFormatter
 
 	private static void ScheduleSync(FoldableContainer foldable)
 	{
+		ScheduleSyncFromRoot(FindGraphNodeRoot(foldable));
+	}
+
+	private static void ScheduleSyncFromRoot(Node root)
+	{
 		// Defer to idle so the rows are measured after this change's layout has settled. Without this, adding a nested
 		// resolver (or any rebuild) measures stale sizes and the pills render past the node edge until the next resize.
 		const string syncMetaKey = "forge_inline_summary_badge_sync_scheduled";
-
-		Node root = foldable;
-		while (root.GetParent() is Node parent)
-		{
-			root = parent;
-			if (root is GraphNode)
-			{
-				break;
-			}
-		}
 
 		if (root.HasMeta(syncMetaKey))
 		{
@@ -518,22 +527,32 @@ internal static class InlineConstantSummaryFormatter
 
 		Callable.From(() =>
 		{
-			if (!GodotObject.IsInstanceValid(foldable) || !GodotObject.IsInstanceValid(root))
+			if (!GodotObject.IsInstanceValid(root))
 			{
 				return;
 			}
 
 			root.RemoveMeta(syncMetaKey);
-			SynchronizeSiblingBadgeWidths(foldable);
+			SynchronizeSiblingBadgeWidths(root);
+
+			// The first pass sets pill widths, which changes the node's minimum size and therefore the row widths. On
+			// the initial open the rows are often still at a transient (narrow) width during that first pass, which
+			// sizes the pills too wide and over-truncates the longest label (e.g. "Ability Data:" collapsing to "Ab").
+			// Re-measure once more on the next idle, after the layout has settled, so the split is correct without a
+			// manual resize.
+			Callable.From(() =>
+			{
+				if (GodotObject.IsInstanceValid(root))
+				{
+					SynchronizeSiblingBadgeWidths(root);
+				}
+			}).CallDeferred();
 		}).CallDeferred();
 	}
 
-	private static void SynchronizeSiblingBadgeWidths(FoldableContainer foldable)
+	private static Node FindGraphNodeRoot(Node node)
 	{
-		// Gather every collapsed (pill-showing) property foldable in the whole node, across both the Input Properties
-		// and Output Variables sections and any nesting depth, so the label/pill split is computed once and the pills
-		// line up node-wide rather than per section.
-		Node root = foldable;
+		Node root = node;
 		while (root.GetParent() is Node parent)
 		{
 			root = parent;
@@ -543,6 +562,14 @@ internal static class InlineConstantSummaryFormatter
 			}
 		}
 
+		return root;
+	}
+
+	private static void SynchronizeSiblingBadgeWidths(Node root)
+	{
+		// Gather every collapsed (pill-showing) property foldable in the whole node, across both the Input Properties
+		// and Output Variables sections and any nesting depth, so the label/pill split is computed once and the pills
+		// line up node-wide rather than per section.
 		var columnedFoldables = new List<FoldableContainer>();
 		CollectColumnedFoldables(root, columnedFoldables);
 

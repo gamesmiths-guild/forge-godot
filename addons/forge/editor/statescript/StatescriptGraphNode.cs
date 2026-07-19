@@ -197,6 +197,22 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 	}
 
+	/// <inheritdoc/>
+	public override void _Notification(int what)
+	{
+		base._Notification(what);
+
+		// The collapsed-row label/pill split is measured from the title-font metrics and the row width. Both can change
+		// without a resize event: the editor theme (hence the title font) is applied after the node is first built when
+		// the Statescript tab is the active tab on editor startup, and the row width settles when the node is re-shown
+		// (switching back to the tab). Re-run the width sync in those cases. It only recomputes CustomMinimumSize (no
+		// theme overrides are re-applied), so responding to NotificationThemeChanged here does not re-enter.
+		if (what == NotificationThemeChanged || what == NotificationVisibilityChanged)
+		{
+			InlineConstantSummaryFormatter.RequestBadgeWidthSync(this);
+		}
+	}
+
 	internal FoldableContainer AddPropertySectionDividerInternal(
 		string sectionTitle,
 		Color color,

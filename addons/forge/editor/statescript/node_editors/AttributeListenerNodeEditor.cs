@@ -2,11 +2,7 @@
 
 #if TOOLS
 using System;
-using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
-using Gamesmiths.Forge.Godot.Resources.Statescript;
-using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-using Gamesmiths.Forge.Statescript;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
@@ -128,84 +124,8 @@ internal sealed partial class AttributeListenerNodeEditor : CustomNodeEditor
 		for (int i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 		{
 			StatescriptNodeDiscovery.OutputVariableInfo info = typeInfo.OutputVariablesInfo[i];
-			AddScalarOutputRow(root, info.Label, i, info.ValueType);
+			AddScalarOutputVariableRow(root, info.Label, i, info.ValueType);
 		}
-	}
-
-	private void AddScalarOutputRow(VBoxContainer container, string label, int index, Type valueType)
-	{
-		List<string> candidates = GetScalarCandidateVariableNames(valueType);
-
-		string? current =
-			FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver is VariableResolverResource resolver
-				? resolver.VariableName
-				: null;
-
-		// Drop a stale binding whose variable no longer matches the output's type so it is not silently kept.
-		if (!string.IsNullOrEmpty(current) && !candidates.Contains(current))
-		{
-			current = null;
-			RemoveBinding(StatescriptPropertyDirection.Output, index);
-		}
-
-		AddOutputVariableBadgeRow(
-			container,
-			label,
-			$"_fold_output_{index}",
-			candidates,
-			current,
-			variableName => OnScalarOutputSelected(variableName, index, valueType));
-	}
-
-	private void OnScalarOutputSelected(string? variableName, int index, Type valueType)
-	{
-		if (string.IsNullOrEmpty(variableName))
-		{
-			RemoveBinding(StatescriptPropertyDirection.Output, index);
-		}
-		else
-		{
-			StatescriptVariableTypeConverter.TryFromSystemType(valueType, out StatescriptVariableType variableType);
-
-			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = new VariableResolverResource
-			{
-				VariableName = variableName,
-				Scope = VariableScope.Graph,
-				ObjectTypeId = string.Empty,
-				VariableType = variableType,
-				IsArray = false,
-			};
-		}
-
-		RaisePropertyBindingChanged();
-		ResetSize();
-	}
-
-	private List<string> GetScalarCandidateVariableNames(Type valueType)
-	{
-		var names = new List<string>();
-
-		if (!StatescriptVariableTypeConverter.TryFromSystemType(valueType, out StatescriptVariableType targetType))
-		{
-			return names;
-		}
-
-		foreach (StatescriptGraphVariable variable in Graph.Variables)
-		{
-			if (variable.IsArray
-				|| string.IsNullOrEmpty(variable.VariableName)
-				|| !string.IsNullOrEmpty(variable.ObjectTypeId))
-			{
-				continue;
-			}
-
-			if (variable.VariableType == targetType)
-			{
-				names.Add(variable.VariableName);
-			}
-		}
-
-		return names;
 	}
 
 	private void OnSetChanged(long index)

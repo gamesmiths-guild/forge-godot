@@ -148,7 +148,8 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 			if (objectTypeId is null)
 			{
-				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, root);
+				StatescriptNodeDiscovery.OutputVariableInfo info = typeInfo.OutputVariablesInfo[i];
+				AddScalarOutputVariableRow(root, info.Label, i, info.ValueType);
 				continue;
 			}
 
@@ -190,23 +191,17 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 	private void OnObjectOutputSelected(string? variableName, int index, string objectTypeId)
 	{
-		if (string.IsNullOrEmpty(variableName))
-		{
-			RemoveBinding(StatescriptPropertyDirection.Output, index);
-		}
-		else
-		{
-			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = new VariableResolverResource
+		VariableResolverResource? newResolver = string.IsNullOrEmpty(variableName)
+			? null
+			: new VariableResolverResource
 			{
 				VariableName = variableName,
 				Scope = VariableScope.Graph,
 				ObjectTypeId = objectTypeId,
 				IsArray = false,
 			};
-		}
 
-		RaisePropertyBindingChanged();
-		ResetSize();
+		ApplyOutputVariableBinding(index, newResolver, "Change Output Variable");
 	}
 
 	private string ReadStringConfig(string key, string defaultValue)

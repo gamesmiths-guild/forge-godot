@@ -189,23 +189,17 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 
 	private void OnHandleOutputSelected(string? variableName, bool isArray)
 	{
-		if (string.IsNullOrEmpty(variableName))
-		{
-			RemoveBinding(StatescriptPropertyDirection.Output, 0);
-		}
-		else
-		{
-			EnsureBinding(StatescriptPropertyDirection.Output, 0).Resolver = new VariableResolverResource
+		VariableResolverResource? newResolver = string.IsNullOrEmpty(variableName)
+			? null
+			: new VariableResolverResource
 			{
 				VariableName = variableName,
 				Scope = VariableScope.Graph,
 				ObjectTypeId = HandleObjectTypeId,
 				IsArray = isArray,
 			};
-		}
 
-		RaisePropertyBindingChanged();
-		ResetSize();
+		ApplyOutputVariableBinding(0, newResolver, "Change Output Variable");
 	}
 }
 #endif
