@@ -25,7 +25,6 @@ public partial class RandomInsideSphereResolverResource : StatescriptResolverRes
 
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		using var random = new ForgeRandom();
-		return new RandomInsideSphereResolver(random);
+		return new RandomInsideSphereResolver(new ForgeRandom());
 	}
 }

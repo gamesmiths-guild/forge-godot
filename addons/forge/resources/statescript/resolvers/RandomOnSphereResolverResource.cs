@@ -25,7 +25,6 @@ public partial class RandomOnSphereResolverResource : StatescriptResolverResourc
 
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		using var random = new ForgeRandom();
-		return new RandomOnSphereResolver(random);
+		return new RandomOnSphereResolver(new ForgeRandom());
 	}
 }
