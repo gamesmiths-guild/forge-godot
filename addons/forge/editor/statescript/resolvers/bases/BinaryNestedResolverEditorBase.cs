@@ -95,6 +95,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			x => _rightEditor = x);
 
 		_rightResolverDropdown.ItemSelected += OnRightResolverDropdownItemSelected;
+		BuildAdditionalRows(vBox, existingResource);
 		UpdateFoldableTitles();
 	}
 
@@ -117,13 +118,16 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			right = rightProperty.Resolver;
 		}
 
-		property.Resolver = new TResource
+		var resource = new TResource
 		{
 			Left = left,
 			LeftFolded = _leftFoldable?.Folded ?? false,
 			Right = right,
 			RightFolded = _rightFoldable?.Folded ?? false,
 		};
+
+		ApplyAdditionalProperties(resource);
+		property.Resolver = resource;
 	}
 
 	public override void ClearCallbacks()
@@ -177,6 +181,31 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 	protected virtual Type GetNestedExpectedType(Type expectedType)
 	{
 		return NestedExpectedType;
+	}
+
+	/// <summary>
+	/// Adds editor rows below the two operand pickers. Override to expose extra resource properties.
+	/// </summary>
+	/// <param name="container">The root container of the editor.</param>
+	/// <param name="existingResource">The resource being edited, if any.</param>
+	protected virtual void BuildAdditionalRows(VBoxContainer container, TResource? existingResource)
+	{
+	}
+
+	/// <summary>
+	/// Writes extra properties onto the freshly built resource during <see cref="SaveTo"/>.
+	/// </summary>
+	/// <param name="resource">The resource about to be assigned to the property.</param>
+	protected virtual void ApplyAdditionalProperties(TResource resource)
+	{
+	}
+
+	/// <summary>
+	/// Notifies the host editor that a value owned by an additional row changed.
+	/// </summary>
+	protected void NotifyChanged()
+	{
+		_onChanged?.Invoke();
 	}
 
 	private FoldableContainer CreateFoldable(string title, bool folded)
