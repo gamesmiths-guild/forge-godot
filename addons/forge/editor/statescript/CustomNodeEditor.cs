@@ -150,6 +150,11 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <summary>
 	/// Adds a foldable section divider to the graph node.
 	/// </summary>
+	/// <remarks>
+	/// <see cref="FoldableContainer"/> fits every child into the same content rect, so multiple children added to the
+	/// returned section directly would overlap (only the last one is visible). When rendering more than one row, add a
+	/// single <see cref="VBoxContainer"/> child to the section and stack the rows inside it.
+	/// </remarks>
 	/// <param name="sectionTitle">Title displayed on the divider.</param>
 	/// <param name="color">Color of the divider.</param>
 	/// <param name="foldKey">Key used to persist the fold state.</param>
@@ -231,7 +236,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	protected void AddOutputVariableRow(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
-		FoldableContainer container)
+		Control container)
 	{
 		_graphNode!.AddOutputVariableRowInternal(varInfo, index, container);
 	}
@@ -337,6 +342,19 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	protected void SetFoldStateWithUndo(string key, bool folded)
 	{
 		_graphNode!.SetFoldStateWithUndoInternal(key, folded);
+	}
+
+	/// <summary>
+	/// Persists a node configuration value (a constructor parameter consumed at graph-build time) into the node's
+	/// <c>CustomData</c> with full undo/redo support. Use for node constructor arguments such as behavior-selecting
+	/// enums and flags that do not change the node's port layout.
+	/// </summary>
+	/// <param name="key">The CustomData key, matching the runtime node's constructor parameter name.</param>
+	/// <param name="value">The value to store.</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	protected void SetNodeConfig(string key, Variant value, string actionName)
+	{
+		_graphNode!.SetNodeConfigWithUndoInternal(key, value, actionName);
 	}
 
 	/// <summary>

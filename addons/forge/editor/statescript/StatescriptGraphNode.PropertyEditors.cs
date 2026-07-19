@@ -243,7 +243,7 @@ public partial class StatescriptGraphNode
 	private void AddOutputVariableRow(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
-		FoldableContainer sectionContainer)
+		Control sectionContainer)
 	{
 		if (NodeResource is null || _graph is null)
 		{

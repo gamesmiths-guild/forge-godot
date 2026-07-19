@@ -224,7 +224,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void AddOutputVariableRowInternal(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
-		FoldableContainer container)
+		Control container)
 	{
 		AddOutputVariableRow(varInfo, index, container);
 	}
@@ -242,6 +242,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void SetFoldStateWithUndoInternal(string key, bool folded)
 	{
 		SetFoldStateWithUndo(key, folded);
+	}
+
+	internal void SetNodeConfigWithUndoInternal(string key, Variant value, string actionName)
+	{
+		SetNodeConfigWithUndo(key, value, actionName);
 	}
 
 	internal StatescriptNodeProperty? FindBindingInternal(
@@ -476,9 +481,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				FoldInputKey,
 				folded);
 
+			// FoldableContainer fits every child into the same content rect (children overlap, last drawn on top), so
+			// rows must be stacked inside a single VBoxContainer child instead of being added to the section directly.
+			var inputRoot = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			inputContainer.AddChild(inputRoot);
+
 			for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
-				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
+				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputRoot);
 			}
 		}
 
@@ -491,9 +501,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				FoldOutputKey,
 				folded);
 
+			var outputRoot = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			outputContainer.AddChild(outputRoot);
+
 			for (int i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 			{
-				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
+				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputRoot);
 			}
 		}
 	}
@@ -669,6 +682,60 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 		SetFoldState(key, folded);
 		RebuildNode();
+	}
+
+	private void SetNodeConfigWithUndo(string key, Variant value, string actionName)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		bool had = NodeResource.CustomData.TryGetValue(key, out Variant oldValue);
+
+		if (had && VariantEquals(oldValue, value))
+		{
+			return;
+		}
+
+		NodeResource.CustomData[key] = value;
+		NotifyGraphResourceChanged();
+
+		Variant capturedOld = had ? oldValue : default;
+		bool hadOld = had;
+
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			actionName,
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyNodeConfig, key, value);
+				undo.AddUndoMethod(
+					this,
+					MethodName.ApplyNodeConfig,
+					key,
+					hadOld ? capturedOld : Variant.From<GodotObject?>(null));
+			});
+	}
+
+	private void ApplyNodeConfig(string key, Variant value)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		if (value.VariantType == Variant.Type.Nil)
+		{
+			NodeResource.CustomData.Remove(key);
+		}
+		else
+		{
+			NodeResource.CustomData[key] = value;
+		}
+
+		NotifyGraphResourceChanged();
 	}
 
 	private void OnResizeRequest(Vector2 newMinSize)

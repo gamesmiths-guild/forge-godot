@@ -37,9 +37,12 @@ internal sealed partial class ExpressionNodeEditor : CustomNodeEditor
 				InputFoldKey,
 				GetFoldState(InputFoldKey));
 
+			var inputRoot = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+			inputContainer.AddChild(inputRoot);
+
 			for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
-				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
+				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputRoot);
 			}
 		}
 
