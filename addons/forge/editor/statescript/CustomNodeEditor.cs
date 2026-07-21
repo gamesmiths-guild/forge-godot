@@ -214,19 +214,23 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// type/shape changes that persist the new shape under this CustomData key. When null the dropdown is disabled.
 	/// </param>
 	/// <param name="preferredDefaultResolverTypeId">The preferred default resolver type ID.</param>
+	/// <param name="defaultConstantValue">When provided and the slot has no binding yet, seeds the slot with a
+	/// constant resolver holding this value instead of the type's zero value.</param>
 	protected void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control container,
 		string? shapeCustomDataKey = null,
-		string? preferredDefaultResolverTypeId = null)
+		string? preferredDefaultResolverTypeId = null,
+		Variant? defaultConstantValue = null)
 	{
 		_graphNode!.AddInputPropertyRowInternal(
 			propInfo,
 			index,
 			container,
 			shapeCustomDataKey,
-			preferredDefaultResolverTypeId);
+			preferredDefaultResolverTypeId,
+			defaultConstantValue);
 	}
 
 	/// <summary>

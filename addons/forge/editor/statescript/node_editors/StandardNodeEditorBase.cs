@@ -2,7 +2,7 @@
 
 #if TOOLS
 using System.Collections.Generic;
-using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
@@ -24,6 +24,8 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 	private const string SettingsFoldKey = "_fold_settings";
 	private const string InputFoldKey = "_fold_input";
 	private const string OutputFoldKey = "_fold_output";
+
+	private const float SettingsLabelMinWidth = 96.0f;
 
 	/// <summary>
 	/// Gets the constructor parameters exposed as editor controls. Empty by default.
@@ -49,6 +51,17 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		return null;
 	}
 
+	/// <summary>
+	/// Gets the constant value a fresh input slot should be seeded with, or <see langword="null"/> to use the type's
+	/// zero value. Override for inputs whose conventional default is not zero (e.g. a level of 1).
+	/// </summary>
+	/// <param name="inputIndex">The input property index.</param>
+	/// <returns>The seed value, or <see langword="null"/> for the default behavior.</returns>
+	protected virtual Variant? GetDefaultInputConstant(int inputIndex)
+	{
+		return null;
+	}
+
 	private void BuildSettingsSection()
 	{
 		IReadOnlyList<NodeConfigParam> parameters = ConstructorParams;
@@ -67,16 +80,46 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		var root = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		container.AddChild(root);
 
+		// Bool-only sections stay a plain checkbox stack. When any dropdown is present the rows go into a two-column
+		// grid so the label column is sized to the widest label by the layout engine itself (using each label's real
+		// minimum size) and every dropdown starts at the same x — no fragile font measurement that can mismatch the
+		// node's actual render font and let a long label shove its dropdown right.
+		if (!parameters.Any(x => x.EnumNames is { Length: > 0 }))
+		{
+			foreach (NodeConfigParam parameter in parameters)
+			{
+				root.AddChild(BuildBoolRow(parameter));
+			}
+
+			return;
+		}
+
+		var grid = new GridContainer
+		{
+			Columns = 2,
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+		};
+		grid.AddThemeConstantOverride("h_separation", 5);
+		root.AddChild(grid);
+
 		foreach (NodeConfigParam parameter in parameters)
 		{
-			root.AddChild(BuildParamRow(parameter));
+			AddParamRow(grid, parameter);
 		}
 	}
 
-	private Control BuildParamRow(NodeConfigParam parameter)
+	private void AddParamRow(GridContainer grid, NodeConfigParam parameter)
 	{
 		if (parameter.EnumNames is { Length: > 0 } enumNames)
 		{
+			grid.AddChild(new Label
+			{
+				Text = $"{parameter.Label}:",
+				CustomMinimumSize = new Vector2(SettingsLabelMinWidth, 0),
+				HorizontalAlignment = HorizontalAlignment.Right,
+				VerticalAlignment = VerticalAlignment.Center,
+			});
+
 			string currentName = ReadStringConfig(parameter.Key, parameter.DefaultName ?? enumNames[0]);
 			int currentIndex = System.Array.IndexOf(enumNames, currentName);
 
@@ -92,13 +135,22 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			dropdown.ItemSelected += index =>
 				SetNodeConfig(parameter.Key, enumNames[(int)index], $"Change {parameter.Label}");
 
-			return ResolverEditorLayoutUtilities.CreateLabeledRow($"{parameter.Label}:", dropdown, 96.0f);
+			grid.AddChild(dropdown);
+			return;
 		}
 
+		// Empty label cell keeps a mixed section's checkbox aligned under the dropdown column.
+		grid.AddChild(new Control());
+		grid.AddChild(BuildBoolRow(parameter));
+	}
+
+	private CheckBox BuildBoolRow(NodeConfigParam parameter)
+	{
 		var checkBox = new CheckBox
 		{
 			Text = parameter.Label,
 			ButtonPressed = ReadBoolConfig(parameter.Key, parameter.DefaultBool),
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 		checkBox.Toggled += pressed => SetNodeConfig(parameter.Key, pressed, $"Change {parameter.Label}");
 		return checkBox;
@@ -122,7 +174,11 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 		for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 		{
-			AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, root);
+			AddInputPropertyRow(
+				typeInfo.InputPropertiesInfo[i],
+				i,
+				root,
+				defaultConstantValue: GetDefaultInputConstant(i));
 		}
 	}
 

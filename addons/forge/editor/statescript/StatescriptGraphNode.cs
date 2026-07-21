@@ -232,9 +232,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		int index,
 		Control container,
 		string? shapeCustomDataKey = null,
-		string? preferredDefaultResolverTypeId = null)
+		string? preferredDefaultResolverTypeId = null,
+		Variant? defaultConstantValue = null)
 	{
-		AddInputPropertyRow(propInfo, index, container, shapeCustomDataKey, preferredDefaultResolverTypeId);
+		AddInputPropertyRow(
+			propInfo,
+			index,
+			container,
+			shapeCustomDataKey,
+			preferredDefaultResolverTypeId,
+			defaultConstantValue);
 	}
 
 	internal void AddOutputVariableRowInternal(

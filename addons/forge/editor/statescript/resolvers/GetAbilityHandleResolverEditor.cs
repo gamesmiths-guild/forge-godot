@@ -7,6 +7,7 @@ using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
@@ -21,6 +22,8 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 	private const float LabelWidth = 60.0f;
 
 	private ForgeAbilityData? _selectedAbilityData;
+	private EntityResolverResourceBase? _sourceResolver;
+	private bool _exactSourceMatch;
 
 	public override string DisplayName => "Get Ability";
 
@@ -40,6 +43,8 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 	{
 		var existingResource = property?.Resolver as GetAbilityHandleResolverResource;
 		_selectedAbilityData = existingResource?.AbilityData;
+		_sourceResolver = existingResource?.SourceResolver;
+		_exactSourceMatch = existingResource?.ExactSourceMatch ?? false;
 
 		InitializeEntityScope(graph, onChanged, existingResource?.EntityResolver);
 
@@ -63,6 +68,20 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 		root.AddChild(CreateEntitySelectorRow(LabelWidth));
 		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
 
+		var exactSourceCheckBox = new CheckBox
+		{
+			Text = "Exact source match",
+			ButtonPressed = _exactSourceMatch,
+			TooltipText = "Match only the instance granted by exactly the resolved source. Without a source, " +
+				"finds only abilities granted without a source.",
+		};
+		exactSourceCheckBox.Toggled += toggledOn =>
+		{
+			_exactSourceMatch = toggledOn;
+			NotifyChanged();
+		};
+		root.AddChild(exactSourceCheckBox);
+
 		PopulateEntityScopeEditor(existingResource?.EntityResolver);
 	}
 
@@ -72,6 +91,8 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 		{
 			AbilityData = _selectedAbilityData,
 			EntityResolver = BuildEntityResolverResource(),
+			SourceResolver = _sourceResolver,
+			ExactSourceMatch = _exactSourceMatch,
 		};
 	}
 }

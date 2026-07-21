@@ -42,10 +42,18 @@ public partial class GetAbilityHandleResolverResource : StatescriptResolverResou
 
 	/// <summary>
 	/// Gets or sets the optional entity used to filter the lookup by granting source. When unset, the lookup matches
-	/// the ability regardless of its granting source.
+	/// the ability regardless of its granting source, unless <see cref="ExactSourceMatch"/> is enabled.
 	/// </summary>
 	[Export]
 	public EntityResolverResourceBase? SourceResolver { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the granting source must match exactly. When enabled, only the
+	/// instance whose granting source is exactly the resolved source matches — including <see langword="null"/>,
+	/// which then finds only abilities granted without a source.
+	/// </summary>
+	[Export]
+	public bool ExactSourceMatch { get; set; }
 
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
@@ -74,9 +82,14 @@ public partial class GetAbilityHandleResolverResource : StatescriptResolverResou
 		ForgeAbilityData abilityDataResource = AbilityData;
 		IEntityResolver? entityResolver = EntityResolver?.BuildEntityResolver(graph);
 		IEntityResolver? sourceResolver = SourceResolver?.BuildEntityResolver(graph);
+		bool exactSourceMatch = ExactSourceMatch;
 
 		objectResolver = new LazyObjectResolver<AbilityHandle>(
-			() => new GetAbilityHandleResolver(abilityDataResource.GetAbilityData(), entityResolver, sourceResolver));
+			() => new GetAbilityHandleResolver(
+				abilityDataResource.GetAbilityData(),
+				entityResolver,
+				sourceResolver,
+				exactSourceMatch));
 
 		return true;
 	}

@@ -20,7 +20,8 @@ public partial class StatescriptGraphNode
 		int index,
 		Control sectionContainer,
 		string? shapeCustomDataKey = null,
-		string? preferredDefaultResolverTypeId = null)
+		string? preferredDefaultResolverTypeId = null,
+		Variant? defaultConstantValue = null)
 	{
 		if (NodeResource is null)
 		{
@@ -99,6 +100,23 @@ public partial class StatescriptGraphNode
 		}
 
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Input, index);
+
+		// Pre-seed a constant binding for inputs whose conventional default is not the type's zero value (e.g.
+		// Level = 1), so a fresh slot starts from it and the dropdown selects the constant resolver.
+		if (binding?.Resolver is null
+			&& defaultConstantValue is { } seededValue
+			&& StatescriptVariableTypeConverter.TryFromSystemType(
+				propInfo.ExpectedType, out StatescriptVariableType seededType))
+		{
+			binding = EnsureBinding(StatescriptPropertyDirection.Input, index);
+			binding.Resolver = new VariantResolverResource
+			{
+				Value = seededValue,
+				ValueType = seededType,
+			};
+			NotifyGraphResourceChanged();
+		}
+
 		int selectedIndex = 0;
 
 		if (binding?.Resolver is not null)
