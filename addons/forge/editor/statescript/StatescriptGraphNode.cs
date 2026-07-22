@@ -267,9 +267,9 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		SetFoldStateWithUndo(key, folded);
 	}
 
-	internal void SetNodeConfigWithUndoInternal(string key, Variant value, string actionName)
+	internal void SetNodeConfigWithUndoInternal(string key, Variant value, string actionName, bool rebuildOnChange)
 	{
-		SetNodeConfigWithUndo(key, value, actionName);
+		SetNodeConfigWithUndo(key, value, actionName, rebuildOnChange);
 	}
 
 	internal StatescriptNodeProperty? FindBindingInternal(
@@ -707,7 +707,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		RebuildNode();
 	}
 
-	private void SetNodeConfigWithUndo(string key, Variant value, string actionName)
+	private void SetNodeConfigWithUndo(string key, Variant value, string actionName, bool rebuildOnChange)
 	{
 		if (NodeResource is null)
 		{
@@ -727,19 +727,30 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		Variant capturedOld = had ? oldValue : default;
 		bool hadOld = had;
 
+		// Layout-affecting config rebuilds the node on do/undo/redo so shown/hidden rows track the value; other config
+		// just persists the value in place.
+		StringName applyMethod = rebuildOnChange ? MethodName.ApplyNodeConfigAndRebuild : MethodName.ApplyNodeConfig;
+
 		EditorUndoRedoUtils.Record(
 			_undoRedo,
 			actionName,
 			_graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyNodeConfig, key, value);
+				undo.AddDoMethod(this, applyMethod, key, value);
 				undo.AddUndoMethod(
 					this,
-					MethodName.ApplyNodeConfig,
+					applyMethod,
 					key,
 					hadOld ? capturedOld : Variant.From<GodotObject?>(null));
 			});
+
+		if (rebuildOnChange)
+		{
+			// The value is already applied above; the deferred rebuild reflects it without freeing the dropdown or
+			// checkbox that is still emitting the change signal.
+			Callable.From(RebuildNode).CallDeferred();
+		}
 	}
 
 	private void ApplyNodeConfig(string key, Variant value)
@@ -759,6 +770,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		NotifyGraphResourceChanged();
+	}
+
+	private void ApplyNodeConfigAndRebuild(string key, Variant value)
+	{
+		ApplyNodeConfig(key, value);
+		RebuildNode();
 	}
 
 	private void OnResizeRequest(Vector2 newMinSize)

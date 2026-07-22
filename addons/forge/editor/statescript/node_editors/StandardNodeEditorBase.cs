@@ -62,6 +62,45 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		return null;
 	}
 
+	/// <summary>
+	/// Gets whether the input property at the given index is rendered for the node's current configuration. Returns
+	/// <see langword="true"/> by default. Override to hide an input the runtime does not read under the current
+	/// settings (for example a value consumed by only one branch of a mode-selecting enum), so an unused row is not
+	/// shown. The config parameter that drives the decision must be declared with
+	/// <see cref="NodeConfigParam.AffectsLayout"/> set so the panel rebuilds when it changes. A hidden input keeps its
+	/// existing binding, so the value returns unchanged when the input becomes relevant again.
+	/// </summary>
+	/// <param name="inputIndex">The input property index.</param>
+	/// <returns><see langword="true"/> to render the input; <see langword="false"/> to hide it.</returns>
+	protected virtual bool IsInputVisible(int inputIndex)
+	{
+		return true;
+	}
+
+	/// <summary>
+	/// Reads a string-valued config entry (a constructor parameter persisted in the node's <c>CustomData</c>),
+	/// returning <paramref name="defaultValue"/> when it is unset. Use from an <see cref="IsInputVisible"/> override to
+	/// read the enum member name that drives an input's visibility.
+	/// </summary>
+	/// <param name="key">The CustomData key, matching the runtime node constructor parameter name.</param>
+	/// <param name="defaultValue">The value returned when the entry is unset.</param>
+	protected string ReadStringConfig(string key, string defaultValue)
+	{
+		return NodeResource.CustomData.TryGetValue(key, out Variant value) ? value.AsString() : defaultValue;
+	}
+
+	/// <summary>
+	/// Reads a boolean-valued config entry (a constructor parameter persisted in the node's <c>CustomData</c>),
+	/// returning <paramref name="defaultValue"/> when it is unset. Use from an <see cref="IsInputVisible"/> override to
+	/// read the flag that drives an input's visibility.
+	/// </summary>
+	/// <param name="key">The CustomData key, matching the runtime node constructor parameter name.</param>
+	/// <param name="defaultValue">The value returned when the entry is unset.</param>
+	protected bool ReadBoolConfig(string key, bool defaultValue)
+	{
+		return NodeResource.CustomData.TryGetValue(key, out Variant value) ? value.AsBool() : defaultValue;
+	}
+
 	private void BuildSettingsSection()
 	{
 		IReadOnlyList<NodeConfigParam> parameters = ConstructorParams;
@@ -133,7 +172,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 			// Enum members are stored by name so flags enums parse correctly at graph-build time.
 			dropdown.ItemSelected += index =>
-				SetNodeConfig(parameter.Key, enumNames[(int)index], $"Change {parameter.Label}");
+				SetNodeConfig(parameter.Key, enumNames[(int)index], $"Change {parameter.Label}", parameter.AffectsLayout);
 
 			grid.AddChild(dropdown);
 			return;
@@ -152,13 +191,31 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			ButtonPressed = ReadBoolConfig(parameter.Key, parameter.DefaultBool),
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
-		checkBox.Toggled += pressed => SetNodeConfig(parameter.Key, pressed, $"Change {parameter.Label}");
+		checkBox.Toggled += pressed =>
+			SetNodeConfig(parameter.Key, pressed, $"Change {parameter.Label}", parameter.AffectsLayout);
 		return checkBox;
 	}
 
 	private void BuildInputSection(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
 		if (typeInfo.InputPropertiesInfo.Length == 0)
+		{
+			return;
+		}
+
+		// Resolve visibility up front so a section whose inputs are all hidden by the current configuration renders no
+		// header either. The row index passed to AddInputPropertyRow stays the true runtime input index so bindings
+		// still map correctly across the skipped rows.
+		var visibleIndices = new List<int>();
+		for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+		{
+			if (IsInputVisible(i))
+			{
+				visibleIndices.Add(i);
+			}
+		}
+
+		if (visibleIndices.Count == 0)
 		{
 			return;
 		}
@@ -172,7 +229,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		var root = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		container.AddChild(root);
 
-		for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+		foreach (int i in visibleIndices)
 		{
 			AddInputPropertyRow(
 				typeInfo.InputPropertiesInfo[i],
@@ -258,16 +315,6 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			};
 
 		ApplyOutputVariableBinding(index, newResolver, "Change Output Variable");
-	}
-
-	private string ReadStringConfig(string key, string defaultValue)
-	{
-		return NodeResource.CustomData.TryGetValue(key, out Variant value) ? value.AsString() : defaultValue;
-	}
-
-	private bool ReadBoolConfig(string key, bool defaultValue)
-	{
-		return NodeResource.CustomData.TryGetValue(key, out Variant value) ? value.AsBool() : defaultValue;
 	}
 }
 #endif

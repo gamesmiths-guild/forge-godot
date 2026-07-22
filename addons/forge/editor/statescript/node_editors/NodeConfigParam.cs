@@ -19,10 +19,14 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// <param name="DefaultName">The default enum member name, used when no value is stored yet (matches the constructor
 /// default).</param>
 /// <param name="DefaultBool">The default boolean value, used when no value is stored yet.</param>
+/// <param name="AffectsLayout">When <see langword="true"/>, changing this parameter rebuilds the node so an editor
+/// that shows or hides input rows based on it (see <see cref="StandardNodeEditorBase.IsInputVisible"/>) updates
+/// immediately. Leave <see langword="false"/> for config that does not change which rows are rendered.</param>
 internal readonly record struct NodeConfigParam(
 	string Key,
 	string Label,
 	string[]? EnumNames = null,
 	string? DefaultName = null,
-	bool DefaultBool = false);
+	bool DefaultBool = false,
+	bool AffectsLayout = false);
 #endif

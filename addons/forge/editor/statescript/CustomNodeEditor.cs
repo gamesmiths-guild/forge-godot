@@ -441,14 +441,18 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <summary>
 	/// Persists a node configuration value (a constructor parameter consumed at graph-build time) into the node's
 	/// <c>CustomData</c> with full undo/redo support. Use for node constructor arguments such as behavior-selecting
-	/// enums and flags that do not change the node's port layout.
+	/// enums and flags.
 	/// </summary>
 	/// <param name="key">The CustomData key, matching the runtime node's constructor parameter name.</param>
 	/// <param name="value">The value to store.</param>
 	/// <param name="actionName">The undo/redo action label.</param>
-	protected void SetNodeConfig(string key, Variant value, string actionName)
+	/// <param name="rebuildOnChange">When <see langword="true"/>, the node's property sections are rebuilt after the
+	/// value changes (and on undo/redo), so an editor that shows or hides rows based on this config reflects the new
+	/// value immediately. Leave <see langword="false"/> for config that does not affect which rows are rendered.
+	/// </param>
+	protected void SetNodeConfig(string key, Variant value, string actionName, bool rebuildOnChange = false)
 	{
-		_graphNode!.SetNodeConfigWithUndoInternal(key, value, actionName);
+		_graphNode!.SetNodeConfigWithUndoInternal(key, value, actionName, rebuildOnChange);
 	}
 
 	/// <summary>
