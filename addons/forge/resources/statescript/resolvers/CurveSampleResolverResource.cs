@@ -40,6 +40,12 @@ public partial class CurveSampleResolverResource : StatescriptResolverResource
 	/// <inheritdoc/>
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
+		if (Curve is null)
+		{
+			GD.PushError("Statescript: Curve Sample resolver requires a Curve resource.");
+			return new VariantResolver(default, typeof(float));
+		}
+
 		IPropertyResolver timeResolver = Time?.BuildResolver(graph) ?? new VariantResolver(default, typeof(float));
 
 		return new CurveSampleResolver(new ForgeCurve(Curve), timeResolver);

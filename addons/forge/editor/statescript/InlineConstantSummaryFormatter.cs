@@ -215,7 +215,7 @@ internal static class InlineConstantSummaryFormatter
 	/// owning node can re-run the label/pill split when the layout basis changes without a resize event — most
 	/// importantly when the editor theme (and therefore the title-font metrics used to size the label column) is
 	/// applied after the node was first built, which is the case when the Statescript tab is the active tab on editor
-	/// startup.This only recomputes widths (no theme overrides are re-applied), so it is safe to call from a
+	/// startup. This only recomputes widths (no theme overrides are re-applied), so it is safe to call from a
 	/// theme-changed notification without re-entrancy.
 	/// </summary>
 	/// <param name="node">The graph node whose badge widths should be recomputed.</param>
