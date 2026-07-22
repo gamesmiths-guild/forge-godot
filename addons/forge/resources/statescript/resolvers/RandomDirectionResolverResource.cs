@@ -25,7 +25,6 @@ public partial class RandomDirectionResolverResource : StatescriptResolverResour
 
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		using var random = new ForgeRandom();
-		return new RandomDirectionResolver(random);
+		return new RandomDirectionResolver(new ForgeRandom());
 	}
 }

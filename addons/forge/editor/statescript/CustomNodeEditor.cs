@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
 using GodotCollections = Godot.Collections;
+using VariableScope = Gamesmiths.Forge.Statescript.VariableScope;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -150,6 +152,11 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <summary>
 	/// Adds a foldable section divider to the graph node.
 	/// </summary>
+	/// <remarks>
+	/// <see cref="FoldableContainer"/> fits every child into the same content rect, so multiple children added to the
+	/// returned section directly would overlap (only the last one is visible). When rendering more than one row, add a
+	/// single <see cref="VBoxContainer"/> child to the section and stack the rows inside it.
+	/// </remarks>
 	/// <param name="sectionTitle">Title displayed on the divider.</param>
 	/// <param name="color">Color of the divider.</param>
 	/// <param name="foldKey">Key used to persist the fold state.</param>
@@ -207,19 +214,23 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// type/shape changes that persist the new shape under this CustomData key. When null the dropdown is disabled.
 	/// </param>
 	/// <param name="preferredDefaultResolverTypeId">The preferred default resolver type ID.</param>
+	/// <param name="defaultConstantValue">When provided and the slot has no binding yet, seeds the slot with a
+	/// constant resolver holding this value instead of the type's zero value.</param>
 	protected void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control container,
 		string? shapeCustomDataKey = null,
-		string? preferredDefaultResolverTypeId = null)
+		string? preferredDefaultResolverTypeId = null,
+		Variant? defaultConstantValue = null)
 	{
 		_graphNode!.AddInputPropertyRowInternal(
 			propInfo,
 			index,
 			container,
 			shapeCustomDataKey,
-			preferredDefaultResolverTypeId);
+			preferredDefaultResolverTypeId,
+			defaultConstantValue);
 	}
 
 	/// <summary>
@@ -231,7 +242,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	protected void AddOutputVariableRow(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
-		FoldableContainer container)
+		Control container)
 	{
 		_graphNode!.AddOutputVariableRowInternal(varInfo, index, container);
 	}
@@ -311,6 +322,94 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	}
 
 	/// <summary>
+	/// Renders a value-lane output-variable row (a variable badge dropdown) whose candidates are limited to graph
+	/// variables matching the output's declared scalar type, binding the selection through a
+	/// <see cref="VariableResolverResource"/>. Object-backed outputs must not use this; bind those through their object
+	/// variable type instead.
+	/// </summary>
+	/// <param name="container">The container to add the row to.</param>
+	/// <param name="label">The output's display label (without a trailing colon).</param>
+	/// <param name="index">The output variable index.</param>
+	/// <param name="valueType">The type the node writes to this output.</param>
+	protected void AddScalarOutputVariableRow(VBoxContainer container, string label, int index, Type valueType)
+	{
+		List<string> candidates = GetScalarCandidateVariableNames(valueType);
+
+		string? current =
+			FindBinding(StatescriptPropertyDirection.Output, index)?.Resolver is VariableResolverResource resolver
+				? resolver.VariableName
+				: null;
+
+		// Drop a stale binding whose variable no longer matches the output's type so it is not silently kept.
+		if (!string.IsNullOrEmpty(current) && !candidates.Contains(current))
+		{
+			current = null;
+			RemoveBinding(StatescriptPropertyDirection.Output, index);
+		}
+
+		AddOutputVariableBadgeRow(
+			container,
+			label,
+			$"_fold_output_{index}",
+			candidates,
+			current,
+			variableName => OnScalarOutputSelected(variableName, index, valueType));
+	}
+
+	/// <summary>
+	/// Applies a resolver binding change to the given slot and records it as a single undo/redo step. The change is
+	/// applied immediately; undo and redo replay it through the node's rebuild path. Pass <see langword="null"/> as
+	/// <paramref name="newResolver"/> to clear the binding.
+	/// </summary>
+	/// <param name="direction">The direction of the property (input or output).</param>
+	/// <param name="propertyIndex">The index of the property.</param>
+	/// <param name="newResolver">The resolver to bind, or <see langword="null"/> to clear the binding.</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	protected void ApplyResolverBindingWithUndo(
+		StatescriptPropertyDirection direction,
+		int propertyIndex,
+		StatescriptResolverResource? newResolver,
+		string actionName)
+	{
+		var oldResolver =
+			FindBinding(direction, propertyIndex)?.Resolver?.Duplicate() as StatescriptResolverResource;
+
+		if (newResolver is null)
+		{
+			RemoveBinding(direction, propertyIndex);
+		}
+		else
+		{
+			EnsureBinding(direction, propertyIndex).Resolver = newResolver;
+		}
+
+		NotifyGraphResourceChanged();
+
+		// The change is already applied above, so this records the undo/redo step without re-executing it.
+		RecordResolverBindingChange(
+			direction,
+			propertyIndex,
+			oldResolver,
+			newResolver?.Duplicate() as StatescriptResolverResource,
+			actionName);
+
+		RaisePropertyBindingChanged();
+	}
+
+	/// <summary>
+	/// Applies an output-variable binding change with undo support (see <see cref="ApplyResolverBindingWithUndo"/>) and
+	/// recalculates the node size, matching the standard output-variable row behavior.
+	/// </summary>
+	/// <param name="index">The output variable index.</param>
+	/// <param name="newResolver">The variable resolver to bind, or <see langword="null"/> to clear the binding.</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	protected void ApplyOutputVariableBinding(int index, VariableResolverResource? newResolver, string actionName)
+	{
+		ApplyResolverBindingWithUndo(StatescriptPropertyDirection.Output, index, newResolver, actionName);
+		ResetSize();
+	}
+
+	/// <summary>
 	/// Gets the persisted fold state for a given key.
 	/// </summary>
 	/// <param name="key">The key used to persist the fold state.</param>
@@ -337,6 +436,23 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	protected void SetFoldStateWithUndo(string key, bool folded)
 	{
 		_graphNode!.SetFoldStateWithUndoInternal(key, folded);
+	}
+
+	/// <summary>
+	/// Persists a node configuration value (a constructor parameter consumed at graph-build time) into the node's
+	/// <c>CustomData</c> with full undo/redo support. Use for node constructor arguments such as behavior-selecting
+	/// enums and flags.
+	/// </summary>
+	/// <param name="key">The CustomData key, matching the runtime node's constructor parameter name.</param>
+	/// <param name="value">The value to store.</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	/// <param name="rebuildOnChange">When <see langword="true"/>, the node's property sections are rebuilt after the
+	/// value changes (and on undo/redo), so an editor that shows or hides rows based on this config reflects the new
+	/// value immediately. Leave <see langword="false"/> for config that does not affect which rows are rendered.
+	/// </param>
+	protected void SetNodeConfig(string key, Variant value, string actionName, bool rebuildOnChange = false)
+	{
+		_graphNode!.SetNodeConfigWithUndoInternal(key, value, actionName, rebuildOnChange);
 	}
 
 	/// <summary>
@@ -477,6 +593,54 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 		string actionName)
 	{
 		_graphNode!.ChangeInputPropertyConfigInternal(propertyIndex, customData, actionName);
+	}
+
+	private void OnScalarOutputSelected(string? variableName, int index, Type valueType)
+	{
+		VariableResolverResource? newResolver = null;
+
+		if (!string.IsNullOrEmpty(variableName))
+		{
+			StatescriptVariableTypeConverter.TryFromSystemType(valueType, out StatescriptVariableType variableType);
+
+			newResolver = new VariableResolverResource
+			{
+				VariableName = variableName,
+				Scope = VariableScope.Graph,
+				ObjectTypeId = string.Empty,
+				VariableType = variableType,
+				IsArray = false,
+			};
+		}
+
+		ApplyOutputVariableBinding(index, newResolver, "Change Output Variable");
+	}
+
+	private List<string> GetScalarCandidateVariableNames(Type valueType)
+	{
+		var names = new List<string>();
+
+		if (!StatescriptVariableTypeConverter.TryFromSystemType(valueType, out StatescriptVariableType targetType))
+		{
+			return names;
+		}
+
+		foreach (StatescriptGraphVariable variable in Graph.Variables)
+		{
+			if (variable.IsArray
+				|| string.IsNullOrEmpty(variable.VariableName)
+				|| !string.IsNullOrEmpty(variable.ObjectTypeId))
+			{
+				continue;
+			}
+
+			if (variable.VariableType == targetType)
+			{
+				names.Add(variable.VariableName);
+			}
+		}
+
+		return names;
 	}
 }
 #endif

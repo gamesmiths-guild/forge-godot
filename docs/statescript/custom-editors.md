@@ -62,7 +62,8 @@ internal sealed partial class MyCustomNodeEditor : CustomNodeEditor
     public override void BuildPropertySections(
         StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
     {
-        // Add a foldable "Input Properties" section.
+        // Add a foldable "Input Properties" section. FoldableContainer fits every
+        // child into the same rect, so rows are stacked inside a single VBoxContainer.
         var inputFolded = GetFoldState("_fold_input");
         FoldableContainer inputContainer = AddPropertySectionDivider(
             "Input Properties",
@@ -70,17 +71,23 @@ internal sealed partial class MyCustomNodeEditor : CustomNodeEditor
             "_fold_input",
             inputFolded);
 
+        var inputRoot = new VBoxContainer
+        {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        inputContainer.AddChild(inputRoot);
+
         // Render the first input with the standard layout.
         if (typeInfo.InputProperties.Count > 0)
         {
-            AddInputPropertyRow(typeInfo.InputProperties[0], 0, inputContainer);
+            AddInputPropertyRow(typeInfo.InputProperties[0], 0, inputRoot);
         }
 
         // Render a custom UI for the second input.
         if (typeInfo.InputProperties.Count > 1)
         {
             var customRow = new HBoxContainer();
-            inputContainer.AddChild(customRow);
+            inputRoot.AddChild(customRow);
 
             customRow.AddChild(new Label { Text = "Custom:" });
 
@@ -101,9 +108,15 @@ internal sealed partial class MyCustomNodeEditor : CustomNodeEditor
             "_fold_output",
             outputFolded);
 
+        var outputRoot = new VBoxContainer
+        {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        outputContainer.AddChild(outputRoot);
+
         for (var i = 0; i < typeInfo.OutputVariables.Count; i++)
         {
-            AddOutputVariableRow(typeInfo.OutputVariables[i], i, outputContainer);
+            AddOutputVariableRow(typeInfo.OutputVariables[i], i, outputRoot);
         }
     }
 }

@@ -197,6 +197,22 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	{
 	}
 
+	/// <inheritdoc/>
+	public override void _Notification(int what)
+	{
+		base._Notification(what);
+
+		// The collapsed-row label/pill split is measured from the title-font metrics and the row width. Both can change
+		// without a resize event: the editor theme (hence the title font) is applied after the node is first built when
+		// the Statescript tab is the active tab on editor startup, and the row width settles when the node is re-shown
+		// (switching back to the tab). Re-run the width sync in those cases. It only recomputes CustomMinimumSize (no
+		// theme overrides are re-applied), so responding to NotificationThemeChanged here does not re-enter.
+		if (what == NotificationThemeChanged || what == NotificationVisibilityChanged)
+		{
+			InlineConstantSummaryFormatter.RequestBadgeWidthSync(this);
+		}
+	}
+
 	internal FoldableContainer AddPropertySectionDividerInternal(
 		string sectionTitle,
 		Color color,
@@ -216,15 +232,22 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		int index,
 		Control container,
 		string? shapeCustomDataKey = null,
-		string? preferredDefaultResolverTypeId = null)
+		string? preferredDefaultResolverTypeId = null,
+		Variant? defaultConstantValue = null)
 	{
-		AddInputPropertyRow(propInfo, index, container, shapeCustomDataKey, preferredDefaultResolverTypeId);
+		AddInputPropertyRow(
+			propInfo,
+			index,
+			container,
+			shapeCustomDataKey,
+			preferredDefaultResolverTypeId,
+			defaultConstantValue);
 	}
 
 	internal void AddOutputVariableRowInternal(
 		StatescriptNodeDiscovery.OutputVariableInfo varInfo,
 		int index,
-		FoldableContainer container)
+		Control container)
 	{
 		AddOutputVariableRow(varInfo, index, container);
 	}
@@ -242,6 +265,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void SetFoldStateWithUndoInternal(string key, bool folded)
 	{
 		SetFoldStateWithUndo(key, folded);
+	}
+
+	internal void SetNodeConfigWithUndoInternal(string key, Variant value, string actionName, bool rebuildOnChange)
+	{
+		SetNodeConfigWithUndo(key, value, actionName, rebuildOnChange);
 	}
 
 	internal StatescriptNodeProperty? FindBindingInternal(
@@ -476,9 +504,14 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				FoldInputKey,
 				folded);
 
+			// FoldableContainer fits every child into the same content rect (children overlap, last drawn on top), so
+			// rows must be stacked inside a single VBoxContainer child instead of being added to the section directly.
+			var inputRoot = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			inputContainer.AddChild(inputRoot);
+
 			for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
 			{
-				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputContainer);
+				AddInputPropertyRow(typeInfo.InputPropertiesInfo[i], i, inputRoot);
 			}
 		}
 
@@ -491,9 +524,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				FoldOutputKey,
 				folded);
 
+			var outputRoot = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+			outputContainer.AddChild(outputRoot);
+
 			for (int i = 0; i < typeInfo.OutputVariablesInfo.Length; i++)
 			{
-				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputContainer);
+				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputRoot);
 			}
 		}
 	}
@@ -668,6 +704,77 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private void ApplyFoldState(string key, bool folded)
 	{
 		SetFoldState(key, folded);
+		RebuildNode();
+	}
+
+	private void SetNodeConfigWithUndo(string key, Variant value, string actionName, bool rebuildOnChange)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		bool had = NodeResource.CustomData.TryGetValue(key, out Variant oldValue);
+
+		if (had && VariantEquals(oldValue, value))
+		{
+			return;
+		}
+
+		NodeResource.CustomData[key] = value;
+		NotifyGraphResourceChanged();
+
+		Variant capturedOld = had ? oldValue : default;
+		bool hadOld = had;
+
+		// Layout-affecting config rebuilds the node on do/undo/redo so shown/hidden rows track the value; other config
+		// just persists the value in place.
+		StringName applyMethod = rebuildOnChange ? MethodName.ApplyNodeConfigAndRebuild : MethodName.ApplyNodeConfig;
+
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			actionName,
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, applyMethod, key, value);
+				undo.AddUndoMethod(
+					this,
+					applyMethod,
+					key,
+					hadOld ? capturedOld : Variant.From<GodotObject?>(null));
+			});
+
+		if (rebuildOnChange)
+		{
+			// The value is already applied above; the deferred rebuild reflects it without freeing the dropdown or
+			// checkbox that is still emitting the change signal.
+			Callable.From(RebuildNode).CallDeferred();
+		}
+	}
+
+	private void ApplyNodeConfig(string key, Variant value)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		if (value.VariantType == Variant.Type.Nil)
+		{
+			NodeResource.CustomData.Remove(key);
+		}
+		else
+		{
+			NodeResource.CustomData[key] = value;
+		}
+
+		NotifyGraphResourceChanged();
+	}
+
+	private void ApplyNodeConfigAndRebuild(string key, Variant value)
+	{
+		ApplyNodeConfig(key, value);
 		RebuildNode();
 	}
 

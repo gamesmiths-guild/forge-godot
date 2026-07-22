@@ -147,17 +147,15 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 	private void OnBuiltInOutputSelected(string? variableName, int index, Type valueType)
 	{
-		if (string.IsNullOrEmpty(variableName))
-		{
-			RemoveBinding(StatescriptPropertyDirection.Output, index);
-		}
-		else
+		VariableResolverResource? newResolver = null;
+
+		if (!string.IsNullOrEmpty(variableName))
 		{
 			bool isScalar = StatescriptVariableTypeConverter.TryFromSystemType(
 				valueType,
 				out StatescriptVariableType variableType);
 
-			EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = new VariableResolverResource
+			newResolver = new VariableResolverResource
 			{
 				VariableName = variableName,
 				Scope = VariableScope.Graph,
@@ -167,8 +165,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			};
 		}
 
-		RaisePropertyBindingChanged();
-		ResetSize();
+		ApplyOutputVariableBinding(index, newResolver, "Change Output Variable");
 	}
 
 	private List<string> GetCandidateVariableNames(Type valueType)
@@ -328,7 +325,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 		RebuildPayloadOutputRows();
 		UpdatePayloadBadge();
-		SavePayloadResource();
+		SavePayloadResource("Change Payload Provider");
 		ResetSize();
 	}
 
@@ -376,43 +373,41 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			variableName =>
 			{
 				_payloadVariableByOutput[capturedName] = variableName ?? string.Empty;
-				SavePayloadResource();
+				SavePayloadResource("Change Payload Output Variable");
 			});
 	}
 
-	private void SavePayloadResource()
+	private void SavePayloadResource(string actionName)
 	{
-		if (string.IsNullOrEmpty(_selectedPayloadProvider))
-		{
-			RemoveBinding(StatescriptPropertyDirection.Input, PayloadInputIndex);
-			RaisePropertyBindingChanged();
-			return;
-		}
+		EventPayloadOutputResolverResource? resource = null;
 
-		var resource = new EventPayloadOutputResolverResource { ProviderClassName = _selectedPayloadProvider };
-		var outputNames = new Array<string>();
-		var variableNames = new Array<string>();
-
-		if (EventPayloadProviderRegistry.TryGet(_selectedPayloadProvider, out IEventPayloadProvider provider))
+		if (!string.IsNullOrEmpty(_selectedPayloadProvider))
 		{
-			foreach (string outputName in provider.Outputs.Select(output => output.Name))
+			resource = new EventPayloadOutputResolverResource { ProviderClassName = _selectedPayloadProvider };
+			var outputNames = new Array<string>();
+			var variableNames = new Array<string>();
+
+			if (EventPayloadProviderRegistry.TryGet(_selectedPayloadProvider, out IEventPayloadProvider provider))
 			{
-				string variableName = _payloadVariableByOutput.GetValueOrDefault(outputName, string.Empty);
-
-				if (string.IsNullOrEmpty(variableName))
+				foreach (string outputName in provider.Outputs.Select(output => output.Name))
 				{
-					continue;
-				}
+					string variableName = _payloadVariableByOutput.GetValueOrDefault(outputName, string.Empty);
 
-				outputNames.Add(outputName);
-				variableNames.Add(variableName);
+					if (string.IsNullOrEmpty(variableName))
+					{
+						continue;
+					}
+
+					outputNames.Add(outputName);
+					variableNames.Add(variableName);
+				}
 			}
+
+			resource.OutputNames = outputNames;
+			resource.VariableNames = variableNames;
 		}
 
-		resource.OutputNames = outputNames;
-		resource.VariableNames = variableNames;
-		EnsureBinding(StatescriptPropertyDirection.Input, PayloadInputIndex).Resolver = resource;
-		RaisePropertyBindingChanged();
+		ApplyResolverBindingWithUndo(StatescriptPropertyDirection.Input, PayloadInputIndex, resource, actionName);
 	}
 }
 #endif

@@ -369,7 +369,7 @@ internal static partial class StatescriptEditorControls
 			var spin = new EditorSpinSlider
 			{
 				Label = labels[i],
-				Step = 0.001,
+				Step = 0.0001,
 				Rounded = false,
 				EditingInteger = false,
 				AllowGreater = true,
@@ -591,16 +591,20 @@ internal static partial class StatescriptEditorControls
 			// 9e18 which should be sufficient for most use cases.
 			StatescriptVariableType.Long => new NumericConfig(-9e18, 9e18, 1, true, false),
 			StatescriptVariableType.ULong => new NumericConfig(0, 9e18, 1, true, false),
-			StatescriptVariableType.Float => new NumericConfig(-1e10, 1e10, 0.001, false, true),
-			StatescriptVariableType.Double => new NumericConfig(-1e10, 1e10, 0.001, false, true),
-			StatescriptVariableType.Decimal => new NumericConfig(-1e10, 1e10, 0.001, false, true),
+
+			// The step is both the typed-value snap and the displayed decimal count. Step 0 (no snapping) is
+			// not used because it renders the full 16-decimal double representation (3.1415 shows as
+			// 3.1415000000000002); Godot's own inspector default is 0.001 for the same reason.
+			StatescriptVariableType.Float => new NumericConfig(-1e10, 1e10, 0.0001, false, true),
+			StatescriptVariableType.Double => new NumericConfig(-1e10, 1e10, 0.0001, false, true),
+			StatescriptVariableType.Decimal => new NumericConfig(-1e10, 1e10, 0.0001, false, true),
 			StatescriptVariableType.Bool => throw new NotImplementedException(),
 			StatescriptVariableType.Vector2 => throw new NotImplementedException(),
 			StatescriptVariableType.Vector3 => throw new NotImplementedException(),
 			StatescriptVariableType.Vector4 => throw new NotImplementedException(),
 			StatescriptVariableType.Plane => throw new NotImplementedException(),
 			StatescriptVariableType.Quaternion => throw new NotImplementedException(),
-			_ => new NumericConfig(-1e10, 1e10, 0.001, false, true),
+			_ => new NumericConfig(-1e10, 1e10, 0.0001, false, true),
 		};
 	}
 

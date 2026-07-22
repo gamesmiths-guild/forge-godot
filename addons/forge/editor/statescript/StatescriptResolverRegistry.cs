@@ -5,7 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Tags;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -17,6 +20,18 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 internal static class StatescriptResolverRegistry
 {
 	private static readonly List<Func<NodeEditorProperty>> _factories = [];
+
+	// Intentional default resolver per scalar input type. Types not listed here fall back to the Variant constant
+	// editor when available, otherwise the first compatible editor in registration order.
+	private static readonly Dictionary<Type, string> _defaultScalarResolverIds = new()
+	{
+		[typeof(IForgeEntity)] = "AbilityOwner",
+		[typeof(AbilityData)] = "AbilityData",
+		[typeof(AbilityHandle)] = "GetAbilityHandle",
+		[typeof(ActiveEffectHandle)] = "Variable",
+		[typeof(Effect)] = "Effect",
+		[typeof(Tag)] = "Tag",
+	};
 
 	static StatescriptResolverRegistry()
 	{
@@ -42,23 +57,24 @@ internal static class StatescriptResolverRegistry
 
 	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, Type expectedType, bool isArray)
 	{
+		if (!isArray && _defaultScalarResolverIds.TryGetValue(expectedType, out string? preferredResolverId))
+		{
+			for (int i = 0; i < factories.Count; i++)
+			{
+				if (GetResolverTypeId(factories[i]) == preferredResolverId)
+				{
+					return i;
+				}
+			}
+		}
+
 		for (int i = 0; i < factories.Count; i++)
 		{
 			string resolverTypeId = GetResolverTypeId(factories[i]);
 
-			if (!isArray && expectedType == typeof(IForgeEntity) && resolverTypeId == "AbilityOwner")
-			{
-				return i;
-			}
-
 			if (isArray)
 			{
-				if (resolverTypeId == "Variant")
-				{
-					return i;
-				}
-
-				if (resolverTypeId == "Variable")
+				if (resolverTypeId is "Variant" or "Variable")
 				{
 					return i;
 				}

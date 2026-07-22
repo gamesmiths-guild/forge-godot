@@ -31,7 +31,7 @@ public partial class VariantResolverResource : StatescriptResolverResource
 	/// Gets or sets the type interpretation for the value.
 	/// </summary>
 	[Export]
-	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Int;
+	public StatescriptVariableType ValueType { get; set; } = StatescriptVariableType.Double;
 
 	/// <summary>
 	/// Gets or sets a value indicating whether this resolver holds an array of values.
