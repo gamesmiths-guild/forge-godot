@@ -209,7 +209,18 @@ public partial class StatescriptGraphEditorDock
 			}
 
 			Node? child = _graphEdit.GetNodeOrNull(nodeResource.NodeId);
-			child?.QueueFree();
+			if (child is StatescriptGraphNode graphNode)
+			{
+				ReleaseGraphNodeVisualDeferred(graphNode);
+			}
+			else
+			{
+				child?.QueueFree();
+			}
+		}
+		else
+		{
+			InvalidateCachedGraphVisuals(graph);
 		}
 
 		graph.Nodes.Remove(nodeResource);
@@ -227,10 +238,26 @@ public partial class StatescriptGraphEditorDock
 		graph.Connections.AddRange(affectedConnections);
 		graph.EmitChanged();
 
-		if (CurrentGraph == graph)
+		if (CurrentGraph == graph && _graphEdit is not null)
+		{
+			GraphTab? tab = FindTab(graph);
+			StatescriptGraphNode graphNode = AddGraphNodeVisual(nodeResource, graph);
+			tab?.CachedGraphNodes.Add(graphNode);
+
+			foreach (StatescriptConnection connection in affectedConnections)
+			{
+				_graphEdit.ConnectNode(
+					connection.FromNode,
+					ToVisualOutputPort(connection.FromNode, connection.OutputPort),
+					connection.ToNode,
+					connection.InputPort);
+			}
+
+			ReapplyCurrentNodeHighlights();
+		}
+		else
 		{
 			InvalidateCachedGraphVisuals(graph);
-			LoadGraphIntoEditor(graph);
 		}
 	}
 
@@ -379,8 +406,44 @@ public partial class StatescriptGraphEditorDock
 
 		if (CurrentGraph == graph)
 		{
+			RemoveNodeVisualWithConnections(nodeResource.NodeId);
+		}
+		else
+		{
 			InvalidateCachedGraphVisuals(graph);
-			LoadGraphIntoEditor(graph);
+		}
+	}
+
+	/// <summary>
+	/// Removes a single node's visual from the current graph view, disconnecting any visual connections that still
+	/// touch it, without rebuilding the rest of the graph.
+	/// </summary>
+	/// <param name="nodeId">The id of the node whose visual should be removed.</param>
+	private void RemoveNodeVisualWithConnections(string nodeId)
+	{
+		if (_graphEdit is null)
+		{
+			return;
+		}
+
+		foreach (GodotCollections.Dictionary connection in _graphEdit.GetConnectionList())
+		{
+			string fromNode = connection["from_node"].AsString();
+			string toNode = connection["to_node"].AsString();
+
+			if (fromNode == nodeId || toNode == nodeId)
+			{
+				_graphEdit.DisconnectNode(
+					fromNode,
+					connection["from_port"].AsInt32(),
+					toNode,
+					connection["to_port"].AsInt32());
+			}
+		}
+
+		if (_graphEdit.GetNodeOrNull(nodeId) is StatescriptGraphNode graphNode)
+		{
+			RemoveGraphNodeVisual(graphNode);
 		}
 	}
 
@@ -494,11 +557,31 @@ public partial class StatescriptGraphEditorDock
 		graph.Connections.AddRange(connections);
 		graph.EmitChanged();
 
-		if (CurrentGraph == graph)
+		if (CurrentGraph == graph && _graphEdit is not null)
+		{
+			GraphTab? tab = FindTab(graph);
+
+			foreach (StatescriptNode nodeResource in nodes)
+			{
+				StatescriptGraphNode graphNode = AddGraphNodeVisual(nodeResource, graph);
+				tab?.CachedGraphNodes.Add(graphNode);
+			}
+
+			foreach (StatescriptConnection connection in connections)
+			{
+				_graphEdit.ConnectNode(
+					connection.FromNode,
+					ToVisualOutputPort(connection.FromNode, connection.OutputPort),
+					connection.ToNode,
+					connection.InputPort);
+			}
+
+			SelectGraphNodes(graph, nodes);
+			ReapplyCurrentNodeHighlights();
+		}
+		else
 		{
 			InvalidateCachedGraphVisuals(graph);
-			LoadGraphIntoEditor(graph);
-			SelectGraphNodes(graph, nodes);
 		}
 	}
 
@@ -521,8 +604,14 @@ public partial class StatescriptGraphEditorDock
 
 		if (CurrentGraph == graph)
 		{
+			foreach (StatescriptNode node in nodes)
+			{
+				RemoveNodeVisualWithConnections(node.NodeId);
+			}
+		}
+		else
+		{
 			InvalidateCachedGraphVisuals(graph);
-			LoadGraphIntoEditor(graph);
 		}
 	}
 

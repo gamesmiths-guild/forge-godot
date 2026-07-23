@@ -1125,6 +1125,31 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		graphNode.Free();
 	}
 
+	/// <summary>
+	/// Unsubscribes a node visual's callbacks and drops it from the tab caches, then queues it for deletion at the end
+	/// of the frame. Used when the removal happens inside a <see cref="GraphEdit"/> signal callback, where detaching or
+	/// freeing the emitting hierarchy synchronously is not safe.
+	/// </summary>
+	/// <remarks>
+	/// Unlike <see cref="RemoveGraphNodeVisual"/>, this does <em>not</em> reparent the node: it stays a child of the
+	/// <see cref="GraphEdit"/> — and so remains visible to child iteration such as
+	/// <see cref="SyncVisualNodePositionsToGraph"/> — until Godot processes the queued deletion. Callers that need the
+	/// node gone from the scene tree within the current frame must use <see cref="RemoveGraphNodeVisual"/> instead.
+	/// </remarks>
+	/// <param name="graphNode">The node visual to release.</param>
+	private void ReleaseGraphNodeVisualDeferred(StatescriptGraphNode graphNode)
+	{
+		graphNode.PropertyBindingChanged -= OnGraphNodePropertyBindingChanged;
+		graphNode.OnBeforeSerialize();
+
+		for (int i = 0; i < _openTabs.Count; i++)
+		{
+			_openTabs[i].CachedGraphNodes.Remove(graphNode);
+		}
+
+		graphNode.QueueFree();
+	}
+
 	private void DisposeCachedGraphVisuals()
 	{
 		for (int i = 0; i < _openTabs.Count; i++)
