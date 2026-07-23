@@ -1125,6 +1125,25 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		graphNode.Free();
 	}
 
+	/// <summary>
+	/// Detaches a node visual from callbacks and tab caches like <see cref="RemoveGraphNodeVisual"/>, but frees it at
+	/// the end of the frame. Used when the removal happens inside a <see cref="GraphEdit"/> signal callback, where
+	/// freeing the emitting hierarchy synchronously is not safe.
+	/// </summary>
+	/// <param name="graphNode">The node visual to release.</param>
+	private void ReleaseGraphNodeVisualDeferred(StatescriptGraphNode graphNode)
+	{
+		graphNode.PropertyBindingChanged -= OnGraphNodePropertyBindingChanged;
+		graphNode.OnBeforeSerialize();
+
+		for (int i = 0; i < _openTabs.Count; i++)
+		{
+			_openTabs[i].CachedGraphNodes.Remove(graphNode);
+		}
+
+		graphNode.QueueFree();
+	}
+
 	private void DisposeCachedGraphVisuals()
 	{
 		for (int i = 0; i < _openTabs.Count; i++)

@@ -51,6 +51,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private string? _highlightedSharedVariableSetPath;
 	private string? _highlightedSharedVariableName;
 	private bool _isHighlighted;
+	private bool _highlightStylesApplied;
 
 	/// <summary>
 	/// Raised when a property binding has been modified in the UI.
@@ -1010,11 +1011,24 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void RefreshHighlightState()
 	{
+		bool hasActiveSelection = !string.IsNullOrEmpty(_highlightedVariableName)
+			|| (!string.IsNullOrEmpty(_highlightedSharedVariableSetPath)
+				&& !string.IsNullOrEmpty(_highlightedSharedVariableName));
+
+		// Refreshes run on every binding change across all visible nodes. When no variable is selected and the last
+		// pass already cleared the styles, the recursive re-style walk would be a no-op, so skip it entirely.
+		if (!hasActiveSelection && !_highlightStylesApplied)
+		{
+			_isHighlighted = false;
+			return;
+		}
+
 		_isHighlighted = (!string.IsNullOrEmpty(_highlightedVariableName)
 			&& ReferencesVariable(_highlightedVariableName))
 			|| ReferencesSharedVariable(_highlightedSharedVariableSetPath, _highlightedSharedVariableName);
 		ApplyHighlightBorder();
 		UpdateChildHighlights();
+		_highlightStylesApplied = hasActiveSelection;
 	}
 
 	private StatescriptNodeProperty? FindBinding(

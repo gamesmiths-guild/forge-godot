@@ -17,9 +17,18 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// automatically via reflection. Any concrete subclass of <see cref="NodeEditorProperty"/> in the executing assembly is
 /// registered and becomes available in node input property dropdowns.
 /// </summary>
+/// <remarks>
+/// Metadata (display name, type id, shape support, per-type compatibility) is probed once per editor type and cached.
+/// Probing instantiates a temporary editor control, so uncached queries are costly; the caches keep dropdown population
+/// and node rebuilds from re-instantiating every registered editor per query.
+/// </remarks>
 internal static class StatescriptResolverRegistry
 {
 	private static readonly List<Func<NodeEditorProperty>> _factories = [];
+
+	private static readonly Dictionary<Func<NodeEditorProperty>, ResolverEditorFactoryMetadata> _metadataByFactory = [];
+
+	private static readonly Dictionary<Type, Func<NodeEditorProperty>[]> _compatibleFactoriesByType = [];
 
 	// Intentional default resolver per scalar input type. Types not listed here fall back to the Variant constant
 	// editor when available, otherwise the first compatible editor in registration order.
@@ -52,7 +61,14 @@ internal static class StatescriptResolverRegistry
 	/// <returns>A list of compatible resolver editor factories.</returns>
 	public static List<Func<NodeEditorProperty>> GetCompatibleFactories(Type expectedType)
 	{
-		return [.. _factories.Where(factory => IsCompatibleFactory(factory, expectedType))];
+		if (!_compatibleFactoriesByType.TryGetValue(expectedType, out Func<NodeEditorProperty>[]? compatible))
+		{
+			compatible = [.. _factories.Where(factory => IsCompatibleFactory(factory, expectedType))];
+			_compatibleFactoriesByType[expectedType] = compatible;
+		}
+
+		// Callers filter the result in place (RemoveAll), so hand out a fresh copy of the cached set.
+		return [.. compatible];
 	}
 
 	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, Type expectedType, bool isArray)
@@ -90,32 +106,60 @@ internal static class StatescriptResolverRegistry
 
 	public static string GetDisplayName(Func<NodeEditorProperty> factory)
 	{
-		return UseTemporaryEditor(factory, static editor => editor.DisplayName);
+		return GetMetadata(factory).DisplayName;
 	}
 
 	public static string GetResolverTypeId(Func<NodeEditorProperty> factory)
 	{
-		return UseTemporaryEditor(factory, static editor => editor.ResolverTypeId);
+		return GetMetadata(factory).ResolverTypeId;
 	}
 
 	public static bool IsCompatibleFactory(Func<NodeEditorProperty> factory, Type expectedType)
 	{
-		return UseTemporaryEditor(factory, editor => editor.IsCompatibleWith(expectedType));
+		ResolverEditorFactoryMetadata metadata = GetMetadata(factory);
+
+		if (!metadata.CompatibilityByType.TryGetValue(expectedType, out bool compatible))
+		{
+			compatible = UseTemporaryEditor(factory, editor => editor.IsCompatibleWith(expectedType));
+			metadata.CompatibilityByType[expectedType] = compatible;
+		}
+
+		return compatible;
 	}
 
 	public static bool SupportsArrayValues(Func<NodeEditorProperty> factory)
 	{
-		return UseTemporaryEditor(factory, static editor => editor.SupportsArrayValues);
+		return GetMetadata(factory).SupportsArrayValues;
 	}
 
 	public static bool SupportsScalarValues(Func<NodeEditorProperty> factory)
 	{
-		return UseTemporaryEditor(factory, static editor => editor.SupportsScalarValues);
+		return GetMetadata(factory).SupportsScalarValues;
 	}
 
 	public static bool RequiresIterationScope(Func<NodeEditorProperty> factory)
 	{
-		return UseTemporaryEditor(factory, static editor => editor.RequiresIterationScope);
+		return GetMetadata(factory).RequiresIterationScope;
+	}
+
+	private static ResolverEditorFactoryMetadata GetMetadata(Func<NodeEditorProperty> factory)
+	{
+		if (_metadataByFactory.TryGetValue(factory, out ResolverEditorFactoryMetadata? metadata))
+		{
+			return metadata;
+		}
+
+		metadata = UseTemporaryEditor(
+			factory,
+			static editor => new ResolverEditorFactoryMetadata(
+				editor.DisplayName,
+				editor.ResolverTypeId,
+				editor.SupportsScalarValues,
+				editor.SupportsArrayValues,
+				editor.RequiresIterationScope));
+
+		_metadataByFactory[factory] = metadata;
+		return metadata;
 	}
 
 	private static TResult UseTemporaryEditor<TResult>(
