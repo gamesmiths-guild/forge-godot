@@ -213,6 +213,10 @@ public partial class StatescriptGraphEditorDock
 			{
 				ReleaseGraphNodeVisualDeferred(graphNode);
 			}
+			else
+			{
+				child?.QueueFree();
+			}
 		}
 		else
 		{
