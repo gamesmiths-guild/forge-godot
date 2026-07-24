@@ -54,6 +54,7 @@ Messages flow from output ports to input ports. This propagation is **synchronou
 | **Action** | Instant operation | Executes immediately and passes the message forward. |
 | **Condition** | Branches execution | Evaluates a test and routes the message to True or False. |
 | **State** | Maintains active state over time | Activates on input, remains active, deactivates based on internal logic. |
+| **Flow** | Routes messages | Derives straight from `Node` and declares its own ports, like the Switch node's case ports. |
 
 For the built-in node index and links to the core per-node documentation, see [Nodes](nodes/README.md).
 
@@ -116,6 +117,7 @@ Statescript graphs must be **acyclic**. The framework validates this at graph co
 - [Nodes](nodes/README.md): Built-in node index for Forge for Godot, with Godot-specific node pages where needed.
 - [Subgraphs](subgraphs.md): Deep dive into subgraph lifetime, patterns, and common pitfalls.
 - [Variables and Data](variables.md): Variables, shared variables, and property resolvers.
+- [Statescript Enums](enums.md): Authoring integers by name, and naming a Switch's cases or a State Machine's states.
 - [Property Resolvers](resolvers/README.md): Index of the resolver set available in Forge for Godot, with local pages for Godot-specific resolver resources.
 - [Custom Statescript Nodes](nodes/custom-nodes.md): How to create custom Action, Condition, and State nodes for Godot.
 - [Custom Resolvers](custom-resolvers.md): Creating custom property resolvers to expose game-specific data.
