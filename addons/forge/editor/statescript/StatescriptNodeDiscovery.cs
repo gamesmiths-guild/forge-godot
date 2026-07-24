@@ -5,10 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Gamesmiths.Forge.Statescript.Ports;
+using Godot;
+using ForgeNode = Gamesmiths.Forge.Statescript.Node;
+using GodotDictionary = Godot.Collections.Dictionary<string, Godot.Variant>;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -16,14 +21,19 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// Discovers concrete Statescript node types from loaded assemblies using reflection.
 /// </summary>
 /// <remarks>
-/// Provides port layout information for the editor without requiring node instantiation.
+/// Provides the port layout, description and parameter metadata the editor needs. Layouts come from a node instance
+/// built through <see cref="StatescriptNodeFactory"/>, the same path the graph builder uses, so the ports drawn in the
+/// editor always match the ports of the built graph.
 /// </remarks>
 internal static class StatescriptNodeDiscovery
 {
+	private static readonly Dictionary<string, NodeTypeInfo> _configuredLayoutCache = [];
+
 	private static List<NodeTypeInfo>? _cachedNodeTypes;
 
 	/// <summary>
-	/// Gets all discovered concrete node types. Results are cached after first discovery.
+	/// Gets all discovered concrete node types, each with the port layout of its default configuration. Results are
+	/// cached after first discovery.
 	/// </summary>
 	/// <returns>A read-only list of node type info.</returns>
 	internal static IReadOnlyList<NodeTypeInfo> GetDiscoveredNodeTypes()
@@ -38,6 +48,64 @@ internal static class StatescriptNodeDiscovery
 	internal static void InvalidateCache()
 	{
 		_cachedNodeTypes = null;
+		_configuredLayoutCache.Clear();
+	}
+
+	/// <summary>
+	/// Finds the <see cref="NodeTypeInfo"/> describing a specific node resource, honoring the constructor arguments
+	/// stored in its <c>CustomData</c>.
+	/// </summary>
+	/// <remarks>
+	/// Nodes whose constructor arguments change their port layout (<c>SwitchNode</c>'s case count,
+	/// <c>StateMachineNode</c>'s state count) report the layout of that specific configuration rather than the type's
+	/// default one. Results are cached per configuration.
+	/// </remarks>
+	/// <param name="nodeResource">The node resource to describe.</param>
+	/// <returns>The matching node type info, or <see langword="null"/> if the runtime type is not discovered.</returns>
+	internal static NodeTypeInfo? FindForNode(StatescriptNode nodeResource)
+	{
+		return FindForConfiguration(nodeResource.RuntimeTypeName, nodeResource.CustomData);
+	}
+
+	/// <summary>
+	/// Finds the <see cref="NodeTypeInfo"/> a node of the given runtime type would have with the given custom data.
+	/// </summary>
+	/// <param name="runtimeTypeName">The full type name stored in the resource.</param>
+	/// <param name="customData">The custom data holding the node's constructor arguments.</param>
+	/// <returns>The matching node type info, or <see langword="null"/> if the runtime type is not discovered.</returns>
+	internal static NodeTypeInfo? FindForConfiguration(string runtimeTypeName, GodotDictionary customData)
+	{
+		NodeTypeInfo? defaultInfo = FindByRuntimeTypeName(runtimeTypeName);
+
+		if (defaultInfo is null || defaultInfo.ConstructorParameterNames.Length == 0)
+		{
+			return defaultInfo;
+		}
+
+		string signature = BuildConfigurationSignature(defaultInfo, customData);
+
+		if (signature.Length == 0)
+		{
+			return defaultInfo;
+		}
+
+		string cacheKey = $"{runtimeTypeName}#{signature}";
+
+		if (_configuredLayoutCache.TryGetValue(cacheKey, out NodeTypeInfo? cached))
+		{
+			return cached;
+		}
+
+		Type? nodeType = StatescriptNodeFactory.ResolveType(runtimeTypeName);
+
+		if (nodeType is null)
+		{
+			return defaultInfo;
+		}
+
+		NodeTypeInfo configured = BuildNodeTypeInfo(nodeType, defaultInfo.NodeType, customData);
+		_configuredLayoutCache[cacheKey] = configured;
+		return configured;
 	}
 
 	/// <summary>
@@ -64,6 +132,7 @@ internal static class StatescriptNodeDiscovery
 	{
 		var results = new List<NodeTypeInfo>();
 
+		Type flowNodeType = typeof(ForgeNode);
 		Type actionNodeType = typeof(ActionNode);
 		Type conditionNodeType = typeof(ConditionNode);
 		Type stateNodeOpenType = typeof(StateNode<>);
@@ -106,6 +175,13 @@ internal static class StatescriptNodeDiscovery
 				{
 					results.Add(BuildNodeTypeInfo(type, StatescriptNodeType.State));
 				}
+				else if (flowNodeType.IsAssignableFrom(type))
+				{
+					// Nodes deriving straight from the base Node define their own port layout (SwitchNode and any
+					// custom flow node), so they get their own palette category instead of being forced into an
+					// archetype.
+					results.Add(BuildNodeTypeInfo(type, StatescriptNodeType.Flow));
+				}
 			}
 		}
 
@@ -129,13 +205,37 @@ internal static class StatescriptNodeDiscovery
 		return false;
 	}
 
+	private static string BuildConfigurationSignature(NodeTypeInfo defaultInfo, GodotDictionary customData)
+	{
+		var signature = new StringBuilder();
+
+		// Only constructor arguments can change the layout; the rest of CustomData (fold states, custom width, editor-
+		// only settings) must not fragment the cache.
+		foreach (string parameterName in defaultInfo.ConstructorParameterNames)
+		{
+			if (!customData.TryGetValue(parameterName, out Variant value))
+			{
+				continue;
+			}
+
+			signature.Append(parameterName).Append('=').Append(value.ToString()).Append(';');
+		}
+
+		return signature.ToString();
+	}
+
 	private static NodeTypeInfo BuildNodeTypeInfo(Type type, StatescriptNodeType nodeType)
+	{
+		return BuildNodeTypeInfo(type, nodeType, customData: null);
+	}
+
+	private static NodeTypeInfo BuildNodeTypeInfo(Type type, StatescriptNodeType nodeType, GodotDictionary? customData)
 	{
 		string displayName = FormatDisplayName(type.Name);
 		string runtimeTypeName = type.FullName!;
 
 		// Get constructor parameter names.
-		string[] constructorParamNames = GetConstructorParameterNames(type);
+		string[] constructorParamNames = StatescriptNodeFactory.GetConstructorParameterNames(type);
 
 		// Determine ports and description by instantiating a temporary node.
 		string[] inputLabels;
@@ -147,7 +247,7 @@ internal static class StatescriptNodeDiscovery
 
 		try
 		{
-			Node tempNode = CreateTemporaryNode(type);
+			ForgeNode tempNode = StatescriptNodeFactory.Create(type, customData);
 			inputLabels = GetInputPortLabels(tempNode, nodeType);
 			outputLabels = GetOutputPortLabels(tempNode, nodeType);
 			isSubgraph = GetSubgraphFlags(tempNode);
@@ -180,66 +280,12 @@ internal static class StatescriptNodeDiscovery
 			outputVariablesInfo);
 	}
 
-	private static Node CreateTemporaryNode(Type type)
-	{
-		// Try to find the primary constructor or the one with the fewest parameters.
-		ConstructorInfo[] constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
-
-		if (constructors.Length == 0)
-		{
-			return (Node)Activator.CreateInstance(type)!;
-		}
-
-		// Sort by parameter count, prefer the fewest.
-		ConstructorInfo constructor = constructors.OrderBy(x => x.GetParameters().Length).First();
-		ParameterInfo[] parameters = constructor.GetParameters();
-
-		object[] args = new object[parameters.Length];
-		for (int i = 0; i < parameters.Length; i++)
-		{
-			Type paramType = parameters[i].ParameterType;
-
-			if (paramType == typeof(Forge.Core.StringKey))
-			{
-				args[i] = new Forge.Core.StringKey("_placeholder_");
-			}
-			else if (paramType == typeof(string))
-			{
-				args[i] = string.Empty;
-			}
-			else if (paramType.IsValueType)
-			{
-				args[i] = Activator.CreateInstance(paramType)!;
-			}
-			else
-			{
-				args[i] = null!;
-			}
-		}
-
-		return (Node)constructor.Invoke(args);
-	}
-
-	private static string[] GetConstructorParameterNames(Type type)
-	{
-		ConstructorInfo[] constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
-
-		if (constructors.Length == 0)
-		{
-			return [];
-		}
-
-		// Use the constructor with the most parameters (primary constructor).
-		ConstructorInfo constructor = constructors.OrderByDescending(x => x.GetParameters().Length).First();
-		return [.. constructor.GetParameters().Select(x => x.Name ?? string.Empty)];
-	}
-
-	private static string[] GetInputPortLabels(Node node, StatescriptNodeType nodeType)
+	private static string[] GetInputPortLabels(ForgeNode node, StatescriptNodeType nodeType)
 	{
 		return GetPortLabels(node.InputPorts, index => GetFallbackInputPortLabel(nodeType, index));
 	}
 
-	private static string[] GetOutputPortLabels(Node node, StatescriptNodeType nodeType)
+	private static string[] GetOutputPortLabels(ForgeNode node, StatescriptNodeType nodeType)
 	{
 		return GetPortLabels(node.OutputPorts, index => GetFallbackOutputPortLabel(nodeType, index));
 	}
@@ -288,7 +334,7 @@ internal static class StatescriptNodeDiscovery
 		};
 	}
 
-	private static bool[] GetSubgraphFlags(Node node)
+	private static bool[] GetSubgraphFlags(ForgeNode node)
 	{
 		int count = node.OutputPorts.Length;
 		bool[] flags = new bool[count];
@@ -301,7 +347,7 @@ internal static class StatescriptNodeDiscovery
 		return flags;
 	}
 
-	private static InputPropertyInfo[] GetInputPropertiesInfo(Node node)
+	private static InputPropertyInfo[] GetInputPropertiesInfo(ForgeNode node)
 	{
 		var propertiesInfo = new InputPropertyInfo[node.InputProperties.Length];
 		for (int i = 0; i < node.InputProperties.Length; i++)
@@ -322,7 +368,7 @@ internal static class StatescriptNodeDiscovery
 		return propertiesInfo;
 	}
 
-	private static OutputVariableInfo[] GetOutputVariablesInfo(Node node)
+	private static OutputVariableInfo[] GetOutputVariablesInfo(ForgeNode node)
 	{
 		var variablesInfo = new OutputVariableInfo[node.OutputVariables.Length];
 		for (int i = 0; i < node.OutputVariables.Length; i++)
@@ -352,6 +398,8 @@ internal static class StatescriptNodeDiscovery
 				new PortLayout(string.Empty, "Subgraph", true)],
 			StatescriptNodeType.Entry => throw new NotImplementedException(),
 			StatescriptNodeType.Exit => throw new NotImplementedException(),
+
+			// Flow nodes define their own layout, so a single pass-through pair is all that can be assumed here.
 			_ => [new PortLayout("Input", "Output", false)],
 		};
 	}
@@ -365,7 +413,7 @@ internal static class StatescriptNodeDiscovery
 		}
 
 		// Insert spaces before capital letters for camelCase names.
-		var result = new System.Text.StringBuilder();
+		var result = new StringBuilder();
 		for (int i = 0; i < typeName.Length; i++)
 		{
 			if (i > 0 && char.IsUpper(typeName[i]) && !char.IsUpper(typeName[i - 1]))

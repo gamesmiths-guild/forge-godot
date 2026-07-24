@@ -35,6 +35,12 @@ public enum StatescriptNodeType
 	/// custom). Color: Red.
 	/// </summary>
 	State = 4,
+
+	/// <summary>
+	/// Flow node: a node deriving straight from the base <c>Node</c> rather than one of the Action/Condition/State
+	/// archetypes, defining its own port layout (for example <c>SwitchNode</c>). Color: Teal.
+	/// </summary>
+	Flow = 5,
 }
 
 /// <summary>
