@@ -1608,6 +1608,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 	private void OnFilesystemChanged()
 	{
+		// Enum assets are scanned once and cached, since every node that follows one re-reads the list as it is drawn.
+		StatescriptEnumUtilities.InvalidateCache();
+
 		for (int i = 0; i < _openTabs.Count; i++)
 		{
 			_openTabs[i].UpdateCachedPathIfMissing();
