@@ -48,7 +48,7 @@ internal static class StatescriptEnumUtilities
 
 	/// <summary>
 	/// Fills a dropdown with <c>(None)</c> followed by every enum asset in the project, selecting the given one. Each
-	/// item carries its resource path as metadata; read it back with <see cref="GetSelectedPath"/>.
+	/// item carries its resource path as metadata; read the selection back with <see cref="GetSelectedEnum"/>.
 	/// </summary>
 	/// <param name="dropdown">The dropdown to populate.</param>
 	/// <param name="selected">The enum currently bound, if any.</param>
@@ -87,12 +87,16 @@ internal static class StatescriptEnumUtilities
 	}
 
 	/// <summary>
-	/// Reads the enum a dropdown populated by <see cref="PopulateEnumDropdown"/> currently points at.
+	/// Loads the enum a dropdown populated by <see cref="PopulateEnumDropdown"/> currently points at, from the resource
+	/// path stored on the selected item.
 	/// </summary>
 	/// <param name="dropdown">The dropdown to read.</param>
 	/// <param name="index">The selected item index.</param>
-	/// <returns>The selected enum, or <see langword="null"/> for <c>(None)</c>.</returns>
-	public static ForgeStatescriptEnum? GetSelectedPath(OptionButton dropdown, int index)
+	/// <returns>
+	/// The selected enum; <see langword="null"/> for <c>(None)</c>, and also when the stored path no longer holds an
+	/// enum, which callers distinguish by <paramref name="index"/>.
+	/// </returns>
+	public static ForgeStatescriptEnum? GetSelectedEnum(OptionButton dropdown, int index)
 	{
 		if (index <= 0 || index >= dropdown.ItemCount)
 		{

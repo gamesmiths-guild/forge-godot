@@ -232,7 +232,7 @@ internal abstract partial class PortCountNodeEditorBase : CustomNodeEditor
 
 	private void OnEnumSelected(OptionButton dropdown, int index)
 	{
-		ForgeStatescriptEnum? enumDefinition = StatescriptEnumUtilities.GetSelectedPath(dropdown, index);
+		ForgeStatescriptEnum? enumDefinition = StatescriptEnumUtilities.GetSelectedEnum(dropdown, index);
 
 		// Index 0 is (None) and means unbind; any other index that resolves to nothing is an enum that has moved or
 		// been deleted, where leaving the node as it is beats silently unbinding it.
