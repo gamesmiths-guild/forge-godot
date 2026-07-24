@@ -248,6 +248,64 @@ public class TickingNode : StateNode<TickingNodeContext>
 
 > **Important:** Use `DeactivateNodeAndEmitMessage` when you need to deactivate the node **and** emit custom event messages in one atomic operation. This ensures the messages fire before the node's Subgraph ports are disabled. Use `EmitMessage` for events that happen while the node remains active (like tick events).
 
+## Creating a Custom Flow Node
+
+Action, Condition, and State cover nodes that *do* something. A node that only decides *where a message goes* fits none of them — it wants its own port layout. Derive straight from `Node`, declare the ports in `DefinePorts`, and route in `HandleMessage`. The built-in `SwitchNode` is exactly this.
+
+Such nodes are discovered automatically and appear under the **Flow** category in the Add Node dialog, drawn with the ports they declare.
+
+**Example — Route to a random output:**
+
+```csharp
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Nodes;
+using Gamesmiths.Forge.Statescript.Ports;
+
+public class RandomRouteNode(int outputCount = 2) : Node
+{
+    public const byte InputPort = 0;
+
+    private readonly int _outputCount = outputCount;
+
+    public override string Description => "Routes the incoming message to a random output port.";
+
+    // Tells the graph which ports a message can reach, for loop validation.
+    internal override IEnumerable<int> GetReachableOutputPorts(byte inputPortIndex)
+    {
+        for (var i = 0; i < _outputCount; i++)
+        {
+            yield return i;
+        }
+    }
+
+    protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
+    {
+        inputPorts.Add(CreatePort<InputPort>(InputPort, "Input"));
+
+        for (var i = 0; i < _outputCount; i++)
+        {
+            outputPorts.Add(CreatePort<EventPort>((byte)i, $"Route {i}"));
+        }
+    }
+
+    protected override void HandleMessage(InputPort receiverPort, GraphContext graphContext)
+    {
+        OutputPorts[Random.Shared.Next(_outputCount)].EmitMessage(graphContext);
+    }
+}
+```
+
+### Ports That Depend on Constructor Arguments
+
+As in the example above, the number of ports a node has can come from a constructor argument. The editor builds each node instance through the same factory the graph builder uses, feeding it the node's `CustomData`, so the ports drawn on the canvas are always the ports the built graph will have.
+
+For a designer to *change* that argument, the node needs a custom node editor that persists it — see [Custom Editors](../custom-editors.md#nodes-with-configurable-port-counts). Without one, the node is created with the constructor's default and stays there.
+
+Two rules keep this predictable:
+
+- **Give the argument a default value.** The palette builds each type once from its constructor defaults to read its description and port layout, so an argument with no usable default leaves the node with a generic fallback layout.
+- **Append new ports at the end.** Ports are referenced by index, so a layout that grows at the end leaves existing connections untouched. A port that moves when the count changes (like `SwitchNode`'s trailing Default) needs its editor to say so, or connections will land on the wrong port.
+
 ## Node Parameters: Input Properties and Output Variables
 
 ### Input Properties
@@ -313,7 +371,7 @@ Port labels also come from the runtime node definition. When creating ports, pas
 
 **Constructor parameter mapping:**
 
-Constructor parameters are matched by name to entries in the node's `CustomData` dictionary. Parameter types that can be converted from Godot `Variant` values are supported (strings, numbers, `StringKey`, etc.).
+Constructor parameters are matched by name to entries in the node's `CustomData` dictionary. Parameter types that can be converted from Godot `Variant` values are supported (strings, numbers, `StringKey`, etc.). A parameter with no matching entry falls back to its declared default value.
 
 ## Activation Data Providers
 

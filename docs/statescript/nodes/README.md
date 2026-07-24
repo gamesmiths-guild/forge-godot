@@ -23,8 +23,8 @@ Use the local pages here when a node needs Godot editor, resource, or authoring 
 | **Action** | `SetEffectInhibitionNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/set-effect-inhibition-node.md) | — | Sets the inhibition state of active effects. |
 | **Action** | `SetEffectLevelNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/set-effect-level-node.md) | — | Levels up effects or sets their level (operation dropdown). |
 | **Action** | `SetVariableNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/set-variable-node.md) | — | Copies a resolved value into a graph or shared variable. |
-| **Action** | `SwitchNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/switch-node.md) | — | Routes by an integer selector. **Not yet in the palette** (custom flow node — see below). |
 | **Action** | `UpdateCueNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/update-cue-node.md) | [UpdateCueNode](update-cue-node.md) | Updates one or more active cues on one or more targets. |
+| **Flow** | `SwitchNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/action/switch-node.md) | [SwitchNode](switch-node.md) | Routes by an integer selector to one of N case ports, or to Default. |
 | **Condition** | `ExpressionNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/condition/expression-node.md) | — | Branches execution based on a boolean resolver tree. |
 | **Condition** | `GrantAbilityAndActivateOnceNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/condition/grant-ability-and-activate-once-node.md) | — | Grants an ability transiently and activates it once (level-override dropdown). |
 | **Condition** | `RandomBranchNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/condition/random-branch-node.md) | — | Routes to True with a resolved probability. |
@@ -39,11 +39,32 @@ Use the local pages here when a node needs Godot editor, resource, or authoring 
 | **State** | `EventListenerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/event-listener-node.md) | [EventListenerNode](event-listener-node.md) | Listens for events while active and emits OnEvent each time a matching event fires. |
 | **State** | `GrantAbilityNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/grant-ability-node.md) | — | Grants an ability while active; policy dropdowns + `AbilityHandle` object output. |
 | **State** | `LoopTimerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/loop-timer-node.md) | — | Emits an interval event every period, optionally finishing after N loops. |
-| **State** | `StateMachineNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/state-machine-node.md) | — | Keeps one state subgraph active by an integer selector. **Fixed at 2 states in the palette** (see below). |
+| **State** | `StateMachineNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/state-machine-node.md) | [StateMachineNode](state-machine-node.md) | Keeps one state subgraph active by an integer selector. |
 | **State** | `TagListenerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/tag-listener-node.md) | — | Emits when watched tags are added/removed; writes the changed `Tag` to an object output. |
 | **State** | `TimerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/timer-node.md) | — | Keeps a state active for a configured duration and exposes an OnTimerEnd event for natural completion. |
 
 Nodes with an object-lane output (the grant nodes' `AbilityHandle` output, the tag listener's `Tag` output) use a dedicated editor so the output binds to a variable of the matching object type. The attribute listener's dedicated editor additionally filters its `int` New Value / Delta output dropdowns to matching scalar variables. Nodes with constructor arguments (commit mode, effect-level operation, grant policies, monitor flags, the attribute listener's observed-attribute key) expose those as dropdowns/checkboxes/pickers that persist into the node's `CustomData`.
+
+## Node Categories in the Palette
+
+The **Add Node** dialog groups nodes by the archetype they derive from:
+
+| Category | Derives from | Ports |
+|----------|--------------|-------|
+| **Action** | `ActionNode` | Execute in, Done out. |
+| **Condition** | `ConditionNode` | Condition in, True / False out. |
+| **State** | `StateNode<T>` | Begin / Abort in, OnActivate / OnDeactivate / OnAbort / Subgraph out, plus any ports the node adds. |
+| **Flow** | `Node` | Whatever the node declares. For nodes that route messages rather than doing work — `SwitchNode` is the built-in one. |
+
+Any concrete node type in a loaded assembly is discovered and categorized automatically, so a custom flow node deriving straight from `Node` appears under **Flow** with no plugin change. See [Custom Statescript Nodes](custom-nodes.md).
+
+## Configurable Port Counts
+
+A node whose constructor argument decides how many ports it has — `SwitchNode`'s `caseCount`, `StateMachineNode`'s `stateCount` — is authored with that count on the node itself, and the editor draws exactly the ports the built graph will have. The count is persisted in `CustomData` under the constructor parameter name and passed to the constructor at build time.
+
+Both of those nodes select their ports with an integer, so both can follow a [Statescript enum](../enums.md) instead of a bare number: bind one and the node gets a port per member, named after it.
+
+Lowering a count removes the ports past the new end, and the connections attached to them are removed with it — as one undoable action, so a single undo brings both back.
 
 ## Future Godot-specific Nodes
 
@@ -52,4 +73,5 @@ Add new Godot-only node pages to this folder as they are implemented, and keep t
 ## Related Docs
 
 - [Custom Statescript Nodes](custom-nodes.md)
+- [Statescript Enums](../enums.md)
 - [Node Template](../templates/node-template.md)

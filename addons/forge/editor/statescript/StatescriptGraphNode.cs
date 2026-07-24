@@ -28,6 +28,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private static readonly Color _actionColor = new(0x3a7856ff);
 	private static readonly Color _conditionColor = new(0x99811fff);
 	private static readonly Color _stateColor = new(0xa52c38ff);
+	private static readonly Color _flowColor = new(0x2c7a8cff);
 	private static readonly Color _eventColor = new(0xabb2bfff);
 	private static readonly Color _subgraphColor = new(0xc678ddff);
 	private static readonly Color _inputPropertyColor = new(0x61afefff);
@@ -37,6 +38,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
 	private readonly Dictionary<PropertySlotKey, InputPropertyFoldableContext> _inputPropertyFoldables = [];
 	private readonly Dictionary<int, PendingInputConfig> _pendingInputConfigs = [];
+
+	private PendingInputConfig? _pendingLayoutConfig;
 
 	private int[] _visualToRuntimeOutputPortMap = [];
 	private int[] _runtimeToVisualOutputPortMap = [];
@@ -160,7 +163,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
-		_typeInfo = StatescriptNodeDiscovery.FindByRuntimeTypeName(resource.RuntimeTypeName);
+		_typeInfo = StatescriptNodeDiscovery.FindForNode(resource);
 		if (_typeInfo is not null)
 		{
 			SetupFromTypeInfo(_typeInfo);
@@ -180,6 +183,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		_foldableKeys.Clear();
 		_inputPropertyFoldables.Clear();
 		_pendingInputConfigs.Clear();
+		_pendingLayoutConfig = null;
 
 		_activeCustomEditor?.Unbind();
 		_activeCustomEditor = null;
@@ -387,6 +391,40 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		CallDeferred(MethodName.FlushInputPropertyConfig, propertyIndex);
 	}
 
+	/// <summary>
+	/// Requests a change to the node configuration that drives its port layout (a <c>SwitchNode</c>'s case count, a
+	/// <c>StateMachineNode</c>'s state count, or the enum those counts follow), with full undo/redo support.
+	/// </summary>
+	/// <remarks>
+	/// Connections attached to ports the new layout no longer has are removed as part of the same undoable action, and
+	/// restored on undo, so shrinking a node never leaves the graph holding connections to ports that are gone. The
+	/// mutation is deferred so the control that emitted the change is not freed mid-signal by the node rebuild.
+	/// </remarks>
+	/// <param name="customData">The CustomData entries to store (the constructor argument driving the layout, plus any
+	/// editor-only settings that go with it).</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	internal void ChangeNodeLayoutConfigInternal(GodotCollections.Dictionary customData, string actionName)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		// Merge into any change already queued this frame so none is lost before the deferred flush.
+		if (_pendingLayoutConfig is not null)
+		{
+			foreach (KeyValuePair<Variant, Variant> entry in customData)
+			{
+				_pendingLayoutConfig.CustomData[entry.Key] = entry.Value;
+			}
+
+			return;
+		}
+
+		_pendingLayoutConfig = new PendingInputConfig(customData, actionName);
+		CallDeferred(MethodName.FlushLayoutConfig);
+	}
+
 	private static string GetResolverTypeId(StatescriptResolverResource resolver)
 	{
 		return resolver.ResolverTypeId;
@@ -423,6 +461,22 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void SetupFromTypeInfo(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
+		// The custom editor is created before the port rows so it can rename ports (an enum-driven Switch or State
+		// Machine labels its ports with the enum's member names). Its property sections are still built afterwards, so
+		// they keep rendering below the ports.
+		if (CustomNodeEditorRegistry.TryCreate(typeInfo.RuntimeTypeName, out CustomNodeEditor? customEditor))
+		{
+			Debug.Assert(_graph is not null, "Graph context is required for custom node editors.");
+			Debug.Assert(NodeResource is not null, "Node resource is required for custom node editors.");
+
+			_activeCustomEditor = customEditor;
+			customEditor.Bind(this, _graph, NodeResource, _activeResolverEditors);
+		}
+		else
+		{
+			_activeCustomEditor = null;
+		}
+
 		BuildOutputPortMappings(typeInfo);
 		int maxSlots = Math.Max(typeInfo.InputPortLabels.Length, _visualToRuntimeOutputPortMap.Length);
 
@@ -454,7 +508,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				int runtimeOutputSlot = VisualToRuntimeOutputPort(slot);
 				var outputLabel = new Label
 				{
-					Text = typeInfo.OutputPortLabels[runtimeOutputSlot],
+					Text = _activeCustomEditor?.GetOutputPortLabel(runtimeOutputSlot, typeInfo)
+						?? typeInfo.OutputPortLabels[runtimeOutputSlot],
 					HorizontalAlignment = HorizontalAlignment.Right,
 					SizeFlagsHorizontal = SizeFlags.ExpandFill,
 				};
@@ -466,18 +521,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			}
 		}
 
-		if (CustomNodeEditorRegistry.TryCreate(typeInfo.RuntimeTypeName, out CustomNodeEditor? customEditor))
+		if (_activeCustomEditor is not null)
 		{
-			Debug.Assert(_graph is not null, "Graph context is required for custom node editors.");
-			Debug.Assert(NodeResource is not null, "Node resource is required for custom node editors.");
-
-			_activeCustomEditor = customEditor;
-			customEditor.Bind(this, _graph, NodeResource, _activeResolverEditors);
-			customEditor.BuildPropertySections(typeInfo);
+			_activeCustomEditor.BuildPropertySections(typeInfo);
 		}
 		else
 		{
-			_activeCustomEditor = null;
 			BuildDefaultPropertySections(typeInfo);
 		}
 
@@ -486,6 +535,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			StatescriptNodeType.Action => _actionColor,
 			StatescriptNodeType.Condition => _conditionColor,
 			StatescriptNodeType.State => _stateColor,
+			StatescriptNodeType.Flow => _flowColor,
 			StatescriptNodeType.Entry => _entryColor,
 			StatescriptNodeType.Exit => _exitColor,
 			_ => _entryColor,
@@ -951,6 +1001,249 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		PropertyBindingChanged?.Invoke();
 	}
 
+	private void FlushLayoutConfig()
+	{
+		if (_pendingLayoutConfig is null || NodeResource is null)
+		{
+			return;
+		}
+
+		PendingInputConfig pending = _pendingLayoutConfig;
+		_pendingLayoutConfig = null;
+
+		GodotCollections.Dictionary newData = pending.CustomData;
+
+		// Snapshot the current values of exactly the keys being changed so they can be restored on undo, and detect
+		// whether anything actually changes (controls can re-emit the already-selected value).
+		var oldData = new GodotCollections.Dictionary();
+		bool changed = false;
+
+		foreach (KeyValuePair<Variant, Variant> entry in newData)
+		{
+			string key = entry.Key.AsString();
+			bool had = NodeResource.CustomData.TryGetValue(key, out Variant existing);
+			oldData[key] = had ? existing : default;
+
+			if (!had || !VariantEquals(existing, entry.Value))
+			{
+				changed = true;
+			}
+		}
+
+		if (!changed)
+		{
+			return;
+		}
+
+		var connectionsToRemove = new GodotCollections.Array<StatescriptConnection>();
+		var connectionsToAdd = new GodotCollections.Array<StatescriptConnection>();
+		CollectConnectionChanges(newData, connectionsToRemove, connectionsToAdd);
+
+		ApplyLayoutConfig(newData, connectionsToRemove, connectionsToAdd);
+
+		// Undo is the same operation mirrored: restore the old configuration and swap the two connection sets back.
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			pending.ActionName,
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.ApplyLayoutConfig, newData, connectionsToRemove, connectionsToAdd);
+				undo.AddUndoMethod(this, MethodName.ApplyLayoutConfig, oldData, connectionsToAdd, connectionsToRemove);
+			});
+
+		PropertyBindingChanged?.Invoke();
+	}
+
+	/// <summary>
+	/// Works out what has to happen to this node's connections for the given configuration change: connections whose
+	/// port the new layout does not have are removed, and connections whose port merely moves (a Switch node's Default
+	/// port, which always sits after the cases) are replaced by the same connection on its new port.
+	/// </summary>
+	/// <param name="newData">The CustomData entries about to be written.</param>
+	/// <param name="connectionsToRemove">Receives the connections to detach.</param>
+	/// <param name="connectionsToAdd">Receives the connections to attach in their place.</param>
+	private void CollectConnectionChanges(
+		GodotCollections.Dictionary newData,
+		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
+		GodotCollections.Array<StatescriptConnection> connectionsToAdd)
+	{
+		if (_graph is null || NodeResource is null || _typeInfo is null)
+		{
+			return;
+		}
+
+		var merged = new GodotCollections.Dictionary<string, Variant>();
+
+		foreach (KeyValuePair<string, Variant> entry in NodeResource.CustomData)
+		{
+			merged[entry.Key] = entry.Value;
+		}
+
+		foreach (KeyValuePair<Variant, Variant> entry in newData)
+		{
+			string key = entry.Key.AsString();
+
+			if (entry.Value.VariantType == Variant.Type.Nil)
+			{
+				merged.Remove(key);
+				continue;
+			}
+
+			merged[key] = entry.Value;
+		}
+
+		StatescriptNodeDiscovery.NodeTypeInfo? newTypeInfo =
+			StatescriptNodeDiscovery.FindForConfiguration(NodeResource.RuntimeTypeName, merged);
+
+		if (newTypeInfo is null)
+		{
+			return;
+		}
+
+		int inputCount = newTypeInfo.InputPortLabels.Length;
+		int outputCount = newTypeInfo.OutputPortLabels.Length;
+		string nodeId = NodeResource.NodeId;
+
+		foreach (StatescriptConnection connection in _graph.Connections)
+		{
+			if (connection.ToNode == nodeId && connection.InputPort >= inputCount)
+			{
+				connectionsToRemove.Add(connection);
+				continue;
+			}
+
+			if (connection.FromNode != nodeId)
+			{
+				continue;
+			}
+
+			int newOutputPort = _activeCustomEditor?.RemapOutputPort(connection.OutputPort, _typeInfo, newTypeInfo)
+				?? connection.OutputPort;
+
+			if (newOutputPort == connection.OutputPort && newOutputPort < outputCount)
+			{
+				continue;
+			}
+
+			connectionsToRemove.Add(connection);
+
+			if (newOutputPort < 0 || newOutputPort >= outputCount)
+			{
+				continue;
+			}
+
+			connectionsToAdd.Add(new StatescriptConnection
+			{
+				FromNode = connection.FromNode,
+				OutputPort = newOutputPort,
+				ToNode = connection.ToNode,
+				InputPort = connection.InputPort,
+			});
+		}
+	}
+
+	/// <summary>
+	/// Applies a port-layout configuration together with the connection changes it implies. Detaching runs against the
+	/// layout in place when the call starts and attaching against the one it leaves behind, which is what lets undo
+	/// reuse this method with the two connection sets swapped.
+	/// </summary>
+	/// <param name="customData">The CustomData entries to write.</param>
+	/// <param name="connectionsToRemove">Connections to detach before the node is laid out again.</param>
+	/// <param name="connectionsToAdd">Connections to attach once it has been.</param>
+	private void ApplyLayoutConfig(
+		GodotCollections.Dictionary customData,
+		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
+		GodotCollections.Array<StatescriptConnection> connectionsToAdd)
+	{
+		SetVisualConnections(connectionsToRemove, connected: false);
+
+		foreach (StatescriptConnection connection in connectionsToRemove)
+		{
+			_graph?.Connections.Remove(connection);
+		}
+
+		WriteCustomDataEntries(customData);
+		NotifyGraphResourceChanged();
+		RebuildNode();
+
+		if (_graph is not null)
+		{
+			foreach (StatescriptConnection connection in connectionsToAdd)
+			{
+				if (!_graph.Connections.Contains(connection))
+				{
+					_graph.Connections.Add(connection);
+				}
+			}
+		}
+
+		SetVisualConnections(connectionsToAdd, connected: true);
+		NotifyGraphResourceChanged();
+	}
+
+	/// <summary>
+	/// Connects or disconnects the given connections in the owning <see cref="GraphEdit"/>, translating runtime port
+	/// indices through each source node's current visual mapping. Does nothing while the node is detached (a background
+	/// tab), where the visuals are rebuilt from the resource when the tab is shown again.
+	/// </summary>
+	/// <param name="connections">The connections to apply.</param>
+	/// <param name="connected">Whether to connect or disconnect them.</param>
+	private void SetVisualConnections(
+		GodotCollections.Array<StatescriptConnection> connections,
+		bool connected)
+	{
+		if (connections.Count == 0 || GetParent() is not GraphEdit graphEdit)
+		{
+			return;
+		}
+
+		foreach (StatescriptConnection connection in connections)
+		{
+			int visualOutputPort = graphEdit.GetNodeOrNull(connection.FromNode) is StatescriptGraphNode fromNode
+				? fromNode.RuntimeToVisualOutputPort(connection.OutputPort)
+				: connection.OutputPort;
+
+			if (connected)
+			{
+				graphEdit.ConnectNode(
+					connection.FromNode,
+					visualOutputPort,
+					connection.ToNode,
+					connection.InputPort);
+			}
+			else
+			{
+				graphEdit.DisconnectNode(
+					connection.FromNode,
+					visualOutputPort,
+					connection.ToNode,
+					connection.InputPort);
+			}
+		}
+	}
+
+	private void WriteCustomDataEntries(GodotCollections.Dictionary customData)
+	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		foreach (KeyValuePair<Variant, Variant> entry in customData)
+		{
+			string key = entry.Key.AsString();
+
+			if (entry.Value.VariantType == Variant.Type.Nil)
+			{
+				NodeResource.CustomData.Remove(key);
+				continue;
+			}
+
+			NodeResource.CustomData[key] = entry.Value;
+		}
+	}
+
 	private void ApplyInputPropertyConfig(
 		GodotCollections.Dictionary customData,
 		int propertyIndex,
@@ -961,17 +1254,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
-		foreach (KeyValuePair<Variant, Variant> entry in customData)
-		{
-			string key = entry.Key.AsString();
-			if (entry.Value.VariantType == Variant.Type.Nil)
-			{
-				NodeResource.CustomData.Remove(key);
-				continue;
-			}
-
-			NodeResource.CustomData[key] = entry.Value;
-		}
+		WriteCustomDataEntries(customData);
 
 		if (resolverVariant.VariantType == Variant.Type.Nil)
 		{

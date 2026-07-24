@@ -57,6 +57,8 @@ internal static class ResolverExpressionFormatter
 			AttributeResolverResource attribute => FormatAttribute(attribute),
 			VariableResolverResource variable => Reference(VariableLabel(variable)),
 			VariantResolverResource constant => FormatConstant(constant),
+			EnumConstantResolverResource enumConstant => Value(
+				StatescriptEnumUtilities.FormatValue(enumConstant.EnumDefinition, enumConstant.Value)),
 			TagQueryResolverResource tagQuery => FormatTagQuery(tagQuery),
 			EntityResolverResourceBase entity => Reference(EntityLabel(entity)),
 			_ => Reference(ReadableName(resolver.ResolverTypeId)),

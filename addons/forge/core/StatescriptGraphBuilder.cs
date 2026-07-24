@@ -2,9 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -13,7 +10,6 @@ using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
 using ForgeNode = Gamesmiths.Forge.Statescript.Node;
-using GodotVariant = Godot.Variant;
 
 namespace Gamesmiths.Forge.Godot.Core;
 
@@ -253,7 +249,7 @@ public static class StatescriptGraphBuilder
 				$"Node '{nodeResource.NodeId}' of type {nodeResource.NodeType} has no RuntimeTypeName set.");
 		}
 
-		Type? nodeType = ResolveType(nodeResource.RuntimeTypeName);
+		Type? nodeType = StatescriptNodeFactory.ResolveType(nodeResource.RuntimeTypeName);
 
 		if (nodeType is null)
 		{
@@ -262,162 +258,6 @@ public static class StatescriptGraphBuilder
 				$"'{nodeResource.NodeId}'.");
 		}
 
-		ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
-
-		if (constructors.Length == 0)
-		{
-			return (ForgeNode)Activator.CreateInstance(nodeType)!;
-		}
-
-		ConstructorInfo constructor = constructors.OrderByDescending(x => x.GetParameters().Length).First();
-		ParameterInfo[] parameters = constructor.GetParameters();
-
-		object[] args = new object[parameters.Length];
-		for (int i = 0; i < parameters.Length; i++)
-		{
-			ParameterInfo param = parameters[i];
-			string paramName = param.Name ?? string.Empty;
-
-			if (nodeResource.CustomData.TryGetValue(paramName, out GodotVariant value))
-			{
-				args[i] = ConvertParameter(value, param.ParameterType);
-			}
-			else
-			{
-				args[i] = GetParameterDefaultValue(param);
-			}
-		}
-
-		return (ForgeNode)constructor.Invoke(args);
-	}
-
-	private static Type? ResolveType(string typeName)
-	{
-		var type = Type.GetType(typeName);
-		if (type is not null)
-		{
-			return type;
-		}
-
-		foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-		{
-			type = assembly.GetType(typeName);
-			if (type is not null)
-			{
-				return type;
-			}
-		}
-
-		return null;
-	}
-
-	private static object ConvertParameter(GodotVariant value, Type targetType)
-	{
-		if (targetType.IsEnum)
-		{
-			if (value.VariantType == GodotVariant.Type.Int || value.VariantType == GodotVariant.Type.Float)
-			{
-				return Enum.ToObject(targetType, value.AsInt32());
-			}
-
-			string enumText = value.AsString();
-			if (!string.IsNullOrEmpty(enumText))
-			{
-				return Enum.Parse(targetType, enumText, ignoreCase: true);
-			}
-		}
-
-		if (targetType == typeof(StringKey))
-		{
-			return new StringKey(value.AsString());
-		}
-
-		if (targetType == typeof(string))
-		{
-			return value.AsString();
-		}
-
-		if (targetType == typeof(int))
-		{
-			return value.AsInt32();
-		}
-
-		if (targetType == typeof(float))
-		{
-			return value.AsSingle();
-		}
-
-		if (targetType == typeof(double))
-		{
-			return value.AsDouble();
-		}
-
-		if (targetType == typeof(bool))
-		{
-			return value.AsBool();
-		}
-
-		if (targetType == typeof(long))
-		{
-			return value.AsInt64();
-		}
-
-		return Convert.ChangeType(value.AsString(), targetType, CultureInfo.InvariantCulture);
-	}
-
-	private static object GetParameterDefaultValue(ParameterInfo parameter)
-	{
-		if (!parameter.HasDefaultValue || parameter.DefaultValue is DBNull)
-		{
-			return GetDefaultValue(parameter.ParameterType);
-		}
-
-		object? defaultValue = parameter.DefaultValue;
-
-		if (defaultValue is null)
-		{
-			return null!;
-		}
-
-		Type parameterType = parameter.ParameterType;
-
-		if (parameterType.IsEnum)
-		{
-			return defaultValue.GetType().IsEnum
-				? defaultValue
-				: Enum.ToObject(parameterType, defaultValue);
-		}
-
-		if (parameterType == typeof(StringKey) && defaultValue is string stringKeyValue)
-		{
-			return new StringKey(stringKeyValue);
-		}
-
-		if (parameterType.IsInstanceOfType(defaultValue))
-		{
-			return defaultValue;
-		}
-
-		return Convert.ChangeType(defaultValue, parameterType, CultureInfo.InvariantCulture);
-	}
-
-	private static object GetDefaultValue(Type type)
-	{
-		if (type == typeof(StringKey))
-		{
-			return new StringKey("_default_");
-		}
-
-		if (type == typeof(string))
-		{
-			return string.Empty;
-		}
-
-		if (type.IsValueType)
-		{
-			return Activator.CreateInstance(type)!;
-		}
-
-		return null!;
+		return StatescriptNodeFactory.Create(nodeType, nodeResource.CustomData);
 	}
 }

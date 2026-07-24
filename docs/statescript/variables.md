@@ -16,6 +16,8 @@ In the Godot editor, `Float` is the single designer-facing floating-point choice
 
 **Array variables** are also supported. These hold a fixed-length list of `Variant128` values.
 
+**Named integer values:** an `Int` value is often really a mode, a stance, or a state index. Define a [Statescript enum](enums.md) and author those values by name with the **Enum** resolver — the graph still stores a plain `int`, so nothing about the variable itself changes.
+
 **Reference (object-backed) types:** In addition to the value types above, the editor exposes object variable types for storing Forge reference objects. The built-in ones are `Entity`, `Effect`, and `Active Effect`. These have no inline initial value (they are assigned at runtime) and are read with the **Variable** resolver (or `ObjectVariableResolver<T>` in code).
 
 #### Adding a custom object variable type
@@ -103,7 +105,7 @@ This means a graph variable can "shadow" a property definition with the same nam
 
 Forge for Godot includes a large built-in resolver set covering:
 
-- **Core data access**: Variable (graph/shared, including entity-typed variables), Variant, Attribute, Tag, Magnitude, and Activation Data.
+- **Core data access**: Variable (graph/shared, including entity-typed variables), Variant, Enum, Attribute, Tag, Magnitude, and Activation Data.
 - **Boolean expressions**: `And`, `Or`, `Not`, `Xor`, and `Comparison`.
 - **Math**: Scalar math, generic numeric/vector math, interpolation, clamping, rounding, and conversion helpers.
 - **Spatial math**: Vector, quaternion, plane, and transform operations.

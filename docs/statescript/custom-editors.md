@@ -41,6 +41,8 @@ The `CustomNodeEditor` base class provides helper methods that mirror the defaul
 | `RecordResolverBindingChange` | Records an undo/redo action for a resolver change. |
 | `ResetSize` | Requests the graph node to recalculate its size. |
 | `RaisePropertyBindingChanged` | Notifies the graph that a binding has changed. |
+| `SetNodeConfig` | Persists a constructor argument into the node's `CustomData` with undo support. |
+| `SetNodeLayoutConfig` | Same, for arguments that change the node's **port layout**. See below. |
 
 **Example — Custom Editor with Dependent Inputs:**
 
@@ -122,6 +124,44 @@ internal sealed partial class MyCustomNodeEditor : CustomNodeEditor
 }
 #endif
 ```
+
+### Nodes with Configurable Port Counts
+
+When a constructor argument decides how many ports a node has — `SwitchNode`'s `caseCount`, `StateMachineNode`'s `stateCount` — the editor needs to do more than store a number: adding or removing ports affects the connections already attached to them.
+
+Persist that kind of argument with **`SetNodeLayoutConfig`** rather than `SetNodeConfig`. It writes the `CustomData` entries, re-reads the node's layout, rebuilds the node, and removes the connections attached to ports the new layout no longer has — all as one undoable action, so a single undo restores the count *and* the connections. Pass every key that changes together in one call:
+
+```csharp
+private void OnCaseCountChanged(double value)
+{
+    SetNodeLayoutConfig(
+        new Godot.Collections.Dictionary { { "caseCount", (int)value } },
+        "Change Case Count");
+}
+```
+
+Two optional overrides tune how ports behave:
+
+| Override | Purpose |
+|----------|---------|
+| `GetOutputPortLabel(runtimePortIndex, typeInfo)` | Renames a port from editor-only configuration. Return `null` to keep the label the runtime node declared. Called while the ports are laid out, before `BuildPropertySections`. |
+| `RemapOutputPort(runtimePortIndex, oldTypeInfo, newTypeInfo)` | Maps a port index from the current layout to the equivalent port in the layout the node is about to have, so connections follow a port that *moves*. Only needed when ports are not purely appended as the count grows. |
+
+`RemapOutputPort` is what keeps `SwitchNode` honest: its Default port always sits after the last case, so it shifts with every case added or removed, and without the remap a wire on Default would silently become a wire on the case that inherited its index.
+
+```csharp
+internal override int RemapOutputPort(
+    int runtimePortIndex,
+    StatescriptNodeDiscovery.NodeTypeInfo oldTypeInfo,
+    StatescriptNodeDiscovery.NodeTypeInfo newTypeInfo)
+{
+    return runtimePortIndex == oldTypeInfo.OutputPortLabels.Length - 1
+        ? newTypeInfo.OutputPortLabels.Length - 1
+        : runtimePortIndex;
+}
+```
+
+The built-in `PortCountNodeEditorBase` implements this whole pattern (count spin box, optional [enum](enums.md) binding, port naming, connection handling) for the Switch and State Machine nodes; a custom node with the same shape can extend it instead of rebuilding it.
 
 ### How Discovery Works
 
