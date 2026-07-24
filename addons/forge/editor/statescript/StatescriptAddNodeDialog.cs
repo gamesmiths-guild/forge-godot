@@ -217,6 +217,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		TreeItem? actionCategory = null;
 		TreeItem? conditionCategory = null;
 		TreeItem? stateCategory = null;
+		TreeItem? flowCategory = null;
 
 		foreach (StatescriptNodeDiscovery.NodeTypeInfo typeInfo in discoveredTypes)
 		{
@@ -240,6 +241,10 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 				case StatescriptNodeType.State:
 					stateCategory ??= CreateCategoryItem(root, "State");
 					categoryItem = stateCategory;
+					break;
+				case StatescriptNodeType.Flow:
+					flowCategory ??= CreateCategoryItem(root, "Flow");
+					categoryItem = flowCategory;
 					break;
 				default:
 					continue;

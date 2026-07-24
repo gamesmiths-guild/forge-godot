@@ -137,6 +137,45 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	}
 
 	/// <summary>
+	/// Gets the label to draw next to an output port, or <see langword="null"/> to keep the label the runtime node
+	/// declared. Override to rename ports from editor-only configuration — for example naming a Switch node's case
+	/// ports after the members of the enum bound to it.
+	/// </summary>
+	/// <remarks>
+	/// This is called while the node's ports are being laid out, before <see cref="BuildPropertySections"/>, so it must
+	/// read only the node resource and the given type info.
+	/// </remarks>
+	/// <param name="runtimePortIndex">The runtime output port index.</param>
+	/// <param name="typeInfo">Discovered metadata about the node type in its current configuration.</param>
+	/// <returns>The replacement label, or <see langword="null"/> for the declared one.</returns>
+	internal virtual string? GetOutputPortLabel(int runtimePortIndex, StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		return null;
+	}
+
+	/// <summary>
+	/// Maps an output port index from the node's current layout to the equivalent port in the layout it is about to
+	/// have, so connections follow a port that merely moves instead of silently landing on whatever port inherits its
+	/// index. Return the index unchanged when the port does not move, or a negative value to drop its connections.
+	/// </summary>
+	/// <remarks>
+	/// Only override this for a node whose ports are not purely appended as the count grows — a Switch node's Default
+	/// port, for instance, always sits after the last case and therefore shifts with every case added or removed. Ports
+	/// that fall outside the new layout are dropped regardless of what this returns.
+	/// </remarks>
+	/// <param name="runtimePortIndex">The output port index in the current layout.</param>
+	/// <param name="oldTypeInfo">The node's current layout.</param>
+	/// <param name="newTypeInfo">The layout the node is about to have.</param>
+	/// <returns>The equivalent output port index in the new layout.</returns>
+	internal virtual int RemapOutputPort(
+		int runtimePortIndex,
+		StatescriptNodeDiscovery.NodeTypeInfo oldTypeInfo,
+		StatescriptNodeDiscovery.NodeTypeInfo newTypeInfo)
+	{
+		return runtimePortIndex;
+	}
+
+	/// <summary>
 	/// Clears all children from a container control.
 	/// </summary>
 	/// <param name="container">The container control to clear.</param>
@@ -453,6 +492,36 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	protected void SetNodeConfig(string key, Variant value, string actionName, bool rebuildOnChange = false)
 	{
 		_graphNode!.SetNodeConfigWithUndoInternal(key, value, actionName, rebuildOnChange);
+	}
+
+	/// <summary>
+	/// Persists node configuration that changes the node's <b>port layout</b> (a Switch node's case count, a State
+	/// Machine's state count, or the enum those follow) with full undo/redo support, and rebuilds the node.
+	/// </summary>
+	/// <remarks>
+	/// Use this instead of <see cref="SetNodeConfig"/> whenever a constructor argument adds or removes ports: it drops
+	/// the connections attached to ports the new layout no longer has as part of the same undoable action, and restores
+	/// them on undo. Pass every key that changes together in one call so they are applied as a single action.
+	/// </remarks>
+	/// <param name="customData">The CustomData entries to store.</param>
+	/// <param name="actionName">The undo/redo action label.</param>
+	protected void SetNodeLayoutConfig(GodotCollections.Dictionary customData, string actionName)
+	{
+		_graphNode!.ChangeNodeLayoutConfigInternal(customData, actionName);
+	}
+
+	/// <summary>
+	/// Writes a configuration value straight into the node's <c>CustomData</c> without recording an undo step, for
+	/// keeping stored configuration in sync with what the editor resolved (for example a port count that has to follow
+	/// the bound enum's member count). Use <see cref="SetNodeConfig"/> or <see cref="SetNodeLayoutConfig"/> for
+	/// user-driven edits.
+	/// </summary>
+	/// <param name="key">The CustomData key.</param>
+	/// <param name="value">The value to store.</param>
+	protected void SyncNodeConfig(string key, Variant value)
+	{
+		NodeResource.CustomData[key] = value;
+		NotifyGraphResourceChanged();
 	}
 
 	/// <summary>

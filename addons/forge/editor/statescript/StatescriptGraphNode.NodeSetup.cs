@@ -27,6 +27,9 @@ public partial class StatescriptGraphNode
 			case StatescriptNodeType.State:
 				SetupStateNode();
 				break;
+			case StatescriptNodeType.Flow:
+				SetupFlowNode();
+				break;
 		}
 	}
 
@@ -64,6 +67,33 @@ public partial class StatescriptGraphNode
 		SetSlotColorRight(0, _eventColor);
 
 		ApplyTitleBarColor(_actionColor);
+	}
+
+	// Fallback layout for a flow node whose runtime type could not be resolved (a renamed or removed custom node). The
+	// real layout comes from the node instance itself, since flow nodes declare their own ports.
+	private void SetupFlowNode()
+	{
+		var hBox = new HBoxContainer();
+		hBox.AddThemeConstantOverride("separation", 16);
+		AddChild(hBox);
+
+		var inputLabel = new Label { Text = "Input" };
+		hBox.AddChild(inputLabel);
+		SetSlotEnabledLeft(0, true);
+		SetSlotColorLeft(0, _eventColor);
+
+		var outputLabel = new Label
+		{
+			Text = "Output",
+			HorizontalAlignment = HorizontalAlignment.Right,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		hBox.AddChild(outputLabel);
+		SetSlotEnabledRight(0, true);
+		SetSlotColorRight(0, _eventColor);
+
+		ApplyTitleBarColor(_flowColor);
 	}
 
 	private void SetupConditionNode()
@@ -170,6 +200,10 @@ public partial class StatescriptGraphNode
 
 	private void ClearSlots()
 	{
+		// Slot state is keyed by child index and outlives the children, so a node that rebuilds with fewer port rows
+		// than before would keep drawing the leftover slots next to whatever control now sits at those indices.
+		ClearAllSlots();
+
 		foreach (Node child in GetChildren())
 		{
 			RemoveChild(child);
