@@ -17,16 +17,16 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// applications of an effect on an entity.
 /// </summary>
 [Tool]
-internal sealed partial class EffectInfoResolverEditor : EntityScopedResolverEditorBase
+internal sealed partial class EffectStackDataResolverEditor : EntityScopedResolverEditorBase
 {
 	private const float LabelWidth = 60.0f;
 
 	private ForgeEffectData? _selectedEffectData;
-	private EffectInfoType _infoType;
+	private EffectStackDataType _dataType;
 
-	public override string DisplayName => "Effect Info";
+	public override string DisplayName => "Effect Stack Data";
 
-	public override string ResolverTypeId => "EffectInfo";
+	public override string ResolverTypeId => "EffectStackData";
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
@@ -40,9 +40,9 @@ internal sealed partial class EffectInfoResolverEditor : EntityScopedResolverEdi
 		Action onChanged,
 		bool isArray)
 	{
-		var existingResource = property?.Resolver as EffectInfoResolverResource;
+		var existingResource = property?.Resolver as EffectStackDataResolverResource;
 		_selectedEffectData = existingResource?.EffectData;
-		_infoType = existingResource?.InfoType ?? EffectInfoType.TotalStackCount;
+		_dataType = existingResource?.DataType ?? EffectStackDataType.TotalStackCount;
 
 		InitializeEntityScope(graph, onChanged, existingResource?.EntityResolver);
 
@@ -63,19 +63,19 @@ internal sealed partial class EffectInfoResolverEditor : EntityScopedResolverEdi
 		};
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Effect:", effectPicker, LabelWidth));
 
-		var infoDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		foreach (EffectInfoType value in Enum.GetValues<EffectInfoType>())
+		var dataDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		foreach (EffectStackDataType value in Enum.GetValues<EffectStackDataType>())
 		{
-			infoDropdown.AddItem(value.ToString());
+			dataDropdown.AddItem(value.ToString());
 		}
 
-		infoDropdown.Selected = (int)_infoType;
-		infoDropdown.ItemSelected += index =>
+		dataDropdown.Selected = (int)_dataType;
+		dataDropdown.ItemSelected += index =>
 		{
-			_infoType = (EffectInfoType)(int)index;
+			_dataType = (EffectStackDataType)(int)index;
 			NotifyChanged();
 		};
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Info:", infoDropdown, LabelWidth));
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Data:", dataDropdown, LabelWidth));
 
 		root.AddChild(CreateEntitySelectorRow(LabelWidth));
 		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
@@ -85,10 +85,10 @@ internal sealed partial class EffectInfoResolverEditor : EntityScopedResolverEdi
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new EffectInfoResolverResource
+		property.Resolver = new EffectStackDataResolverResource
 		{
 			EffectData = _selectedEffectData,
-			InfoType = _infoType,
+			DataType = _dataType,
 			EntityResolver = BuildEntityResolverResource(),
 		};
 	}

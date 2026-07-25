@@ -37,8 +37,8 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [CueCustomParametersResolver](cue-custom-parameters-resolver.md) | `Dictionary<StringKey, object>` | Selects an `ICueCustomParametersProvider` to author the `CueParameters.CustomParameters` bag for the cue nodes. |
 | [CurveSampleResolver](curve-sample-resolver.md) | `float` | Samples a Godot `Curve` resource at a resolved position. |
 | [EffectContextDataResolver](effect-context-data-resolver.md) | `EffectApplicationContext` | Selects an `IEffectContextDataProvider` to pass custom context data into effect applications. |
-| [EffectInfoResolver](effect-info-resolver.md) | `int` | Aggregates stack/instance/level info (dropdown) over active applications of a `ForgeEffectData`. |
 | [EffectResolver](effect-resolver.md) | `Effect` | Authors a single `Effect` (effect data + level + ownership) for `ApplyEffectNode` and `EffectNode`. |
+| [EffectStackDataResolver](effect-stack-data-resolver.md) | `int` | Aggregates stack/instance/level data (dropdown) over active applications of a `ForgeEffectData`. |
 | [EnumConstantResolver](../enums.md#authoring-values-the-enum-resolver) | `int` | Authors an integer constant by picking a member of a `ForgeStatescriptEnum` by name. |
 | [GetAbilityHandleResolver](get-ability-handle-resolver.md) | `AbilityHandle` | Looks up a granted ability by its `ForgeAbilityData` resource (cross-ability queries). |
 | [QueryActiveEffectsResolver](query-active-effects-resolver.md) | `ActiveEffectHandle[]` | Queries active effect handles on an entity, optionally filtered by a `ForgeEffectData`. |
