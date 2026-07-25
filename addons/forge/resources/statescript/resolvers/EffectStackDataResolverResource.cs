@@ -20,10 +20,10 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </remarks>
 [Tool]
 [GlobalClass]
-public partial class EffectInfoResolverResource : StatescriptResolverResource
+public partial class EffectStackDataResolverResource : StatescriptResolverResource
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "EffectInfo";
+	public override string ResolverTypeId => "EffectStackData";
 
 	/// <summary>
 	/// Gets or sets the effect data to query for.
@@ -35,7 +35,7 @@ public partial class EffectInfoResolverResource : StatescriptResolverResource
 	/// Gets or sets which aggregate to compute.
 	/// </summary>
 	[Export]
-	public EffectInfoType InfoType { get; set; }
+	public EffectStackDataType DataType { get; set; }
 
 	/// <summary>
 	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
@@ -46,7 +46,12 @@ public partial class EffectInfoResolverResource : StatescriptResolverResource
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
-		DefineAndBindInputProperty(graph, runtimeNode, $"__effectinfo_{nodeId}_{index}", index, BuildResolver(graph));
+		DefineAndBindInputProperty(
+			graph,
+			runtimeNode,
+			$"__effectstackdata_{nodeId}_{index}",
+			index,
+			BuildResolver(graph));
 	}
 
 	/// <inheritdoc/>
@@ -54,16 +59,16 @@ public partial class EffectInfoResolverResource : StatescriptResolverResource
 	{
 		if (EffectData is null)
 		{
-			GD.PushError("Statescript: Effect Info resolver requires an effect data resource.");
+			GD.PushError("Statescript: Effect Stack Data resolver requires an effect data resource.");
 			return new VariantResolver(default, typeof(int));
 		}
 
 		ForgeEffectData effectDataResource = EffectData;
-		EffectInfoType infoType = InfoType;
+		EffectStackDataType dataType = DataType;
 		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
 
 		return new LazyPropertyResolver(
 			typeof(int),
-			() => new EffectInfoResolver(effectDataResource.GetEffectData(), infoType, entityResolver));
+			() => new EffectStackDataResolver(effectDataResource.GetEffectData(), dataType, entityResolver));
 	}
 }
