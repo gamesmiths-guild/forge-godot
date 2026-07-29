@@ -6,7 +6,7 @@
 
 Authors the optional **Activation Data** input of `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, and `GrantAbilityAndActivateOnceNode`. It selects an `IAbilityActivationDataProvider` that builds custom typed data from the current graph state and passes it into the activation, where the activated ability's behavior receives it through `IAbilityBehavior<TData>.OnStarted`.
 
-> **Not to be confused with** the [Activation Data resolver](../nodes/custom-nodes.md#activation-data-providers) backed by `IActivationDataProvider`. That one **reads** fields *out* of the data the current ability was activated with. This one **builds** the data a graph *sends* when it activates another ability. They are the two ends of the same channel and are frequently used together.
+> The **Activation Data** resolver is the other end of this same channel: it **reads** members *out* of the data the current ability was activated with, while this one **builds** the data a graph *sends*. Both are driven by the same `IAbilityActivationDataProvider`, so implementing one covers both. See [Ability Activation Data Providers](../nodes/custom-nodes.md#ability-activation-data-providers).
 
 ## Authoring in Godot
 
@@ -36,7 +36,7 @@ public sealed class DashDataProvider : AbilityActivationDataProvider<DashData>
 }
 ```
 
-Override `Inputs` to expose authored resolvers in the editor and read them from the `AbilityActivationDataInputs` bag. See [Custom Statescript Nodes](../nodes/custom-nodes.md#ability-activation-data-providers) for the full provider workflow, including the authored-inputs example.
+Override `Members` to declare the data's members once. On this side each renders as an authored resolver, read from the `AbilityActivationDataInputs` bag; on the reading side the same entries are what the Activation Data resolver offers to bind. See [Custom Statescript Nodes](../nodes/custom-nodes.md#ability-activation-data-providers) for the full provider workflow.
 
 ## Mismatched Data
 

@@ -118,15 +118,15 @@ Use the [Property Resolvers](resolvers/README.md) reference for the resolver cat
 Reads a field from custom activation data passed when the ability was activated.
 
 **Configuration:**
-- **Provider Class**: The `IActivationDataProvider` implementation that declares the field and activation-data type.
-- **Field Name**: The name of the field to read.
-- **Field Type**: The expected type of the field.
+- **Provider Class**: The `IAbilityActivationDataProvider` implementation that declares the activation-data type. This is the same provider a graph uses to *send* the data, so implementing it once covers both directions.
+- **Field Name**: The member to read, chosen from the provider's declared members — the same list the sending side authors.
+- **Field Type**: The expected type of the member.
 
 **Behavior:** At graph build time, the resolver builds Forge's core `AbilityActivationDataResolver`. At runtime, `StatescriptAbilityBehavior` creates the matching `GraphAbilityBehavior<TData>` and the resolver reads the selected public field or property directly from the typed activation-data payload.
 
-> **Note:** A graph supports only one activation data provider at a time. If you need multiple data types, combine them into a single provider.
+> **Note:** A graph supports only one activation data provider at a time. If you need multiple data types, combine them into a single provider. This limit applies to reading only — a graph may *send* several different data types, since each activation targets its own ability.
 
-For implementation details on creating activation data providers, see [Custom Statescript Nodes](nodes/custom-nodes.md#activation-data-providers).
+For implementation details on creating activation data providers, see [Custom Statescript Nodes](nodes/custom-nodes.md#ability-activation-data-providers).
 
 ## Data Flow Summary
 
