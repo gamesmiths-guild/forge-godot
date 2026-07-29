@@ -279,8 +279,8 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		_factories = ResolverEditorFactoryCatalog.GetCompatibleFactories(
 			IterationScope,
 			GetBroadExpectedClrType(_valueType));
-		RebuildResolverSlot(_minEditorContainer, x => _minEditor = x);
-		RebuildResolverSlot(_maxEditorContainer, x => _maxEditor = x);
+		RebuildResolverSlot(_minResolverDropdown, _minEditorContainer, x => _minEditor = x);
+		RebuildResolverSlot(_maxResolverDropdown, _maxEditorContainer, x => _maxEditor = x);
 		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
@@ -332,14 +332,12 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 		RaiseLayoutSizeChanged();
 	}
 
-	private void RebuildResolverSlot(VBoxContainer? editorContainer, Action<NodeEditorProperty?> setEditor)
+	private void RebuildResolverSlot(
+		OptionButton? dropdown,
+		VBoxContainer? editorContainer,
+		Action<NodeEditorProperty?> setEditor)
 	{
-		if (editorContainer?.GetParent() is not VBoxContainer slotContainer)
-		{
-			return;
-		}
-
-		if (slotContainer.GetChildCount() == 0 || slotContainer.GetChild(0) is not OptionButton dropdown)
+		if (dropdown is null || editorContainer is null)
 		{
 			return;
 		}
