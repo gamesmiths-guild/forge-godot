@@ -24,10 +24,11 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 
 | Resolver | Output Type | Description |
 |----------|-------------|-------------|
-| [AbilityLevelResolver](ability-level-resolver.md) | `int` | Authors the current ability level as a node input. |
+| [AbilityActivatorResolver](ability-activator-resolver.md) | `AbilityActivator` | Selects an `IAbilityActivationDataProvider` to pass custom typed data into ability activations. |
 | [AbilityCooldownResolver](ability-cooldown-resolver.md) | `float` | Reads a cooldown value (remaining/total/fraction dropdown) from an ability, with an optional tag filter and ability source. |
 | [AbilityCostResolver](ability-cost-resolver.md) | `int` | Reads the evaluated ability cost for a selected attribute. |
 | [AbilityDataResolver](ability-data-resolver.md) | `AbilityData` | Selects a `ForgeAbilityData` resource for the grant/lookup node inputs. |
+| [AbilityLevelResolver](ability-level-resolver.md) | `int` | Authors the current ability level as a node input. |
 | [AbilityOwnershipResolver](ability-ownership-resolver.md) | `EffectOwnership` | Authors the current ability owner/source pair as a node input. |
 | [AbilityStateResolver](ability-state-resolver.md) | `bool` | Reads a state flag (is active/inhibited/valid dropdown) from an ability. |
 | [ActiveEffectDataResolver](active-effect-data-resolver.md) | `double`/`int`/`bool` | Reads a selected runtime value (remaining duration, stacks, level, ... dropdown) from an active effect handle. |

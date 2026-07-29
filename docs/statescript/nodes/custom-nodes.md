@@ -407,6 +407,59 @@ Once defined:
 
 > **Constraint:** A graph supports only one activation data provider. If nodes already reference a provider, subsequent nodes are restricted to the same one.
 
+## Ability Activation Data Providers
+
+This is the inverse of the `IActivationDataProvider` above. Instead of describing how to read fields *out* of the data the current ability was activated with, an **ability activation-data provider** builds typed data *from* the current graph state and passes it *into* the activation when `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, or `GrantAbilityAndActivateOnceNode` activates an ability. The activated ability's behavior receives it through `IAbilityBehavior<TData>.OnStarted`.
+
+Derive from `AbilityActivationDataProvider<TData>` and override `CreateData`:
+
+```csharp
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
+
+public record struct DashData(float Distance, float Speed);
+
+public sealed class DashDataProvider : AbilityActivationDataProvider<DashData>
+{
+    public override DashData CreateData(GraphContext graphContext, AbilityActivationDataInputs inputs)
+    {
+        graphContext.TryResolve("distance", out float distance);
+        graphContext.TryResolve("speed", out float speed);
+        return new DashData(distance, speed);
+    }
+}
+```
+
+Once defined:
+
+1. The provider appears automatically in the **Activation Data** input dropdown on the three ability activation nodes.
+2. Select it to pass the provider's value to every activation the node performs; leave the dropdown on **(None)** to activate without custom data.
+3. At runtime, the activated ability's `IAbilityBehavior<DashData>` receives the value. When that ability is itself graph-driven (`GraphAbilityBehavior<DashData>`), the *other* graph reads the fields back through its own **Activation Data** resolver — the `IActivationDataProvider` described above.
+
+An ability whose behavior does not accept `TData` still activates and simply ignores the data, which is what makes `TryActivateAbilitiesByTagNode` safe when one tag selects abilities with different activation-data types.
+
+### Authored inputs
+
+Declare **inputs** to let designers author values directly on the node instead of pulling them from graph variables. Each declared input renders its own nested resolver dropdown under the provider, and the resolved values arrive through the `AbilityActivationDataInputs` bag:
+
+```csharp
+public sealed class AimedDashProvider : AbilityActivationDataProvider<DashData>
+{
+    public override IReadOnlyList<AbilityActivationDataInput> Inputs =>
+        [new AbilityActivationDataInput("Distance", typeof(float))];
+
+    public override DashData CreateData(GraphContext graphContext, AbilityActivationDataInputs inputs)
+    {
+        graphContext.TryResolve("speed", out float speed);
+        return new DashData(inputs.Get<float>("Distance"), speed);
+    }
+}
+```
+
+Input value types must be supported by `Variant128`. Graph values use `System.Numerics` math types, so convert to Godot's (`new Vector3(v.X, v.Y, v.Z)`) when your `TData` stores Godot types.
+
+Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `AbilityActivationDataInputs` inside `CreateData`. See [AbilityActivatorResolver](../resolvers/ability-activator-resolver.md).
+
 ## Effect Context Data Providers
 
 This is the inverse of an activation data provider. Instead of reading values *out* of ability activation data, an effect context-data provider builds typed data *from* the current graph state and passes it *into* the effect pipeline when `ApplyEffectNode`/`EffectNode` apply an effect. Custom calculators and executions then read it with `EffectEvaluatedData.TryGetContextData<TData>`.
