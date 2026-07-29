@@ -246,7 +246,7 @@ internal sealed partial class AbilityActivatorResolverEditor : NodeEditorPropert
 			return;
 		}
 
-		IReadOnlyList<AbilityActivationDataInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<AbilityActivationDataMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
@@ -254,7 +254,7 @@ internal sealed partial class AbilityActivatorResolverEditor : NodeEditorPropert
 		}
 	}
 
-	private void BuildInputSection(AbilityActivationDataInput input)
+	private void BuildInputSection(AbilityActivationDataMember input)
 	{
 		if (_inputsContainer is null)
 		{

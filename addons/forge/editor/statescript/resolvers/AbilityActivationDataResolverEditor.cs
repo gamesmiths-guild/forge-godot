@@ -3,24 +3,26 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver editor that binds a node input property to an activation data field. Uses a two-step selection: first
-/// select the <see cref="IActivationDataProvider"/> implementation, then select a compatible field from that provider.
-/// Providers are discovered via reflection.
+/// select the <see cref="IAbilityActivationDataProvider"/> implementation, then select a compatible field from that
+/// provider's declared outputs.
 /// </summary>
 /// <remarks>
-/// A graph supports only one activation data provider. Once any other node in the graph references a provider, the
-/// provider dropdown is locked to that provider. The user only needs to clear the bindings on other nodes to unlock
-/// the dropdown.
+/// <para>This is the read side of the same provider that builds the data on the sending graph, so one implementation
+/// covers both directions. Providers are discovered through <see cref="AbilityActivationDataProviderRegistry"/>.</para>
+/// <para>A graph supports only one activation data provider. Once any other node in the graph references a provider,
+/// the provider dropdown is locked to that provider. The user only needs to clear the bindings on other nodes to unlock
+/// the dropdown.</para>
 /// </remarks>
 [Tool]
 internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorProperty
@@ -159,58 +161,34 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 		return string.Empty;
 	}
 
-	private static IActivationDataProvider? InstantiateProvider(string className)
+	private static string GetProviderDisplayName(string identifier)
 	{
-		if (string.IsNullOrEmpty(className))
+		foreach (AbilityActivationDataProviderRegistry.ProviderEntry entry
+			in AbilityActivationDataProviderRegistry.All)
 		{
-			return null;
+			if (entry.Identifier == identifier)
+			{
+				return entry.DisplayName;
+			}
 		}
 
-		Type? type = ResolveProviderType(className);
-
-		if (type is null)
-		{
-			return null;
-		}
-
-		return Activator.CreateInstance(type) as IActivationDataProvider;
+		return identifier;
 	}
 
-	private static IEnumerable<Type> GetProviderTypes()
+	private static IAbilityActivationDataProvider? InstantiateProvider(string className)
 	{
-		return AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(a => a.GetTypes())
-			.Where(x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-				&& !x.IsAbstract
-				&& !x.IsInterface);
-	}
-
-	private static string GetProviderIdentifier(Type type)
-	{
-		return type.FullName ?? type.Name;
-	}
-
-	private static bool ProviderMatches(Type type, string providerIdentifier)
-	{
-		return type.AssemblyQualifiedName == providerIdentifier
-			|| type.FullName == providerIdentifier
-			|| type.Name == providerIdentifier;
-	}
-
-	private static Type? ResolveProviderType(string providerIdentifier)
-	{
-		return GetProviderTypes().FirstOrDefault(x => ProviderMatches(x, providerIdentifier));
+		return AbilityActivationDataProviderRegistry.TryGet(
+			className,
+			out IAbilityActivationDataProvider provider)
+			? provider
+			: null;
 	}
 
 	private static bool ProviderIdentifiersMatch(string left, string right)
 	{
-		if (left == right)
-		{
-			return true;
-		}
-
-		Type? leftType = ResolveProviderType(left);
-		return leftType is not null && ProviderMatches(leftType, right);
+		return left == right
+			|| AbilityActivationDataProviderRegistry.ResolveIdentifier(left)
+				== AbilityActivationDataProviderRegistry.ResolveIdentifier(right);
 	}
 
 	private void OnProviderDropdownItemSelected(long index)
@@ -285,21 +263,19 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 		if (!string.IsNullOrEmpty(graphLockedProvider))
 		{
 			// Another node already uses a provider: only show that one (plus None).
-			Type? lockedProviderType = ResolveProviderType(graphLockedProvider);
-			string lockedProviderIdentifier = lockedProviderType is null
-				? graphLockedProvider
-				: GetProviderIdentifier(lockedProviderType);
-			string lockedProviderDisplayName = lockedProviderType?.Name ?? graphLockedProvider;
+			string lockedProviderIdentifier =
+				AbilityActivationDataProviderRegistry.ResolveIdentifier(graphLockedProvider);
 
-			_providerDropdown.AddItem(lockedProviderDisplayName);
+			_providerDropdown.AddItem(GetProviderDisplayName(lockedProviderIdentifier));
 			_providerClassNames.Add(lockedProviderIdentifier);
 		}
 		else
 		{
-			foreach (Type providerType in GetProviderTypes())
+			foreach (AbilityActivationDataProviderRegistry.ProviderEntry entry
+				in AbilityActivationDataProviderRegistry.All)
 			{
-				_providerDropdown.AddItem(providerType.Name);
-				_providerClassNames.Add(GetProviderIdentifier(providerType));
+				_providerDropdown.AddItem(entry.DisplayName);
+				_providerClassNames.Add(entry.Identifier);
 			}
 		}
 
@@ -336,24 +312,24 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 		_fieldDropdown.AddItem("(None)");
 		_fieldNames.Add(string.Empty);
 
-		IActivationDataProvider? provider = InstantiateProvider(_selectedProviderClassName);
+		IAbilityActivationDataProvider? provider = InstantiateProvider(_selectedProviderClassName);
 
 		if (provider is not null)
 		{
-			foreach (ForgeActivationDataField field in provider.GetFields())
+			foreach (AbilityActivationDataMember member in provider.Members)
 			{
-				if (string.IsNullOrEmpty(field.FieldName))
+				// Members the graph has no variable type for (and so cannot bind) are simply not offered.
+				if (string.IsNullOrEmpty(member.Name)
+					|| !StatescriptVariableTypeConverter.TryFromSystemType(
+						member.ValueType,
+						out StatescriptVariableType fieldType)
+					|| !IsCompatibleType(_expectedType, fieldType))
 				{
 					continue;
 				}
 
-				if (!IsCompatibleType(_expectedType, field.FieldType))
-				{
-					continue;
-				}
-
-				_fieldDropdown.AddItem(field.FieldName);
-				_fieldNames.Add(field.FieldName);
+				_fieldDropdown.AddItem(member.Name);
+				_fieldNames.Add(member.Name);
 			}
 		}
 
@@ -383,7 +359,7 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 			return;
 		}
 
-		IActivationDataProvider? provider = InstantiateProvider(_selectedProviderClassName);
+		IAbilityActivationDataProvider? provider = InstantiateProvider(_selectedProviderClassName);
 
 		if (provider is null)
 		{
@@ -391,11 +367,14 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 			return;
 		}
 
-		foreach (ForgeActivationDataField field in provider.GetFields())
+		foreach (AbilityActivationDataMember member in provider.Members)
 		{
-			if (field.FieldName == _selectedFieldName)
+			if (member.Name == _selectedFieldName
+				&& StatescriptVariableTypeConverter.TryFromSystemType(
+					member.ValueType,
+					out StatescriptVariableType fieldType))
 			{
-				_selectedFieldType = field.FieldType;
+				_selectedFieldType = fieldType;
 				return;
 			}
 		}

@@ -85,11 +85,11 @@ public partial class AbilityActivatorResolverResource : StatescriptResolverResou
 		IAbilityActivationDataProvider provider)
 	{
 		var inputResolvers = new System.Collections.Generic.Dictionary<string, IPropertyResolver>();
-		IReadOnlyList<AbilityActivationDataInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<AbilityActivationDataMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
-			AbilityActivationDataInput declaredInput = declaredInputs[i];
+			AbilityActivationDataMember declaredInput = declaredInputs[i];
 			StatescriptResolverResource? resource = FindInputResolver(declaredInput.Name);
 
 			if (resource is null)
