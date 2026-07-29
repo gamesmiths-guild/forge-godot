@@ -82,11 +82,11 @@ public partial class EventPayloadResolverResource : StatescriptResolverResource
 		IEventPayloadProvider provider)
 	{
 		var inputResolvers = new System.Collections.Generic.Dictionary<string, IPropertyResolver>();
-		IReadOnlyList<EventPayloadInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<EventPayloadMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
-			EventPayloadInput declaredInput = declaredInputs[i];
+			EventPayloadMember declaredInput = declaredInputs[i];
 			StatescriptResolverResource? resource = FindInputResolver(declaredInput.Name);
 
 			if (resource is null)

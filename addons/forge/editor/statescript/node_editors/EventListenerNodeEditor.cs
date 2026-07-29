@@ -344,7 +344,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		IReadOnlyList<EventPayloadOutput> declaredOutputs = provider.Outputs;
+		IReadOnlyList<EventPayloadMember> declaredOutputs = provider.Members;
 
 		for (int i = 0; i < declaredOutputs.Count; i++)
 		{
@@ -389,7 +389,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 			if (EventPayloadProviderRegistry.TryGet(_selectedPayloadProvider, out IEventPayloadProvider provider))
 			{
-				foreach (string outputName in provider.Outputs.Select(output => output.Name))
+				foreach (string outputName in provider.Members.Select(member => member.Name))
 				{
 					string variableName = _payloadVariableByOutput.GetValueOrDefault(outputName, string.Empty);
 

@@ -242,7 +242,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		IReadOnlyList<EventPayloadInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<EventPayloadMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
@@ -250,7 +250,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		}
 	}
 
-	private void BuildInputSection(EventPayloadInput input)
+	private void BuildInputSection(EventPayloadMember input)
 	{
 		if (_inputsContainer is null)
 		{
