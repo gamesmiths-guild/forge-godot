@@ -362,7 +362,8 @@ internal static class StatescriptNodeDiscovery
 			propertiesInfo[i] = new InputPropertyInfo(
 				node.InputProperties[i].Label,
 				expectedType,
-				isArray);
+				isArray,
+				node.InputProperties[i].IsOptional);
 		}
 
 		return propertiesInfo;
@@ -514,7 +515,14 @@ internal static class StatescriptNodeDiscovery
 	/// <param name="Label">The human-readable label for this input property.</param>
 	/// <param name="ExpectedType">The type the node expects to read.</param>
 	/// <param name="IsArray">Whether the input expects an array of values.</param>
-	internal readonly record struct InputPropertyInfo(string Label, Type ExpectedType, bool IsArray = false);
+	/// <param name="IsOptional">Whether leaving the input unbound is a meaningful authoring choice, mirroring the
+	/// runtime <see cref="InputProperty.IsOptional"/>. Such rows offer an explicit <c>(None)</c> entry and start
+	/// unbound instead of being seeded with a default resolver.</param>
+	internal readonly record struct InputPropertyInfo(
+		string Label,
+		Type ExpectedType,
+		bool IsArray = false,
+		bool IsOptional = false);
 
 	/// <summary>
 	/// Describes an output variable declared by a node type.

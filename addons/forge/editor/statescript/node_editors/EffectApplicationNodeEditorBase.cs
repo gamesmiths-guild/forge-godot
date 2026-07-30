@@ -99,19 +99,14 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 		StatescriptNodeDiscovery.InputPropertyInfo effectInfo = _cachedTypeInfo.InputPropertiesInfo[0];
 		StatescriptNodeDiscovery.InputPropertyInfo targetInfo = _cachedTypeInfo.InputPropertiesInfo[1];
 
+		// Overriding only the shape with `with` keeps every other declared trait (notably IsOptional) intact.
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(
-				effectInfo.Label,
-				effectInfo.ExpectedType,
-				_effectIsArray),
+			effectInfo with { IsArray = _effectIsArray },
 			0,
 			_inputEditorsContainer,
 			EffectIsArrayKey);
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(
-				targetInfo.Label,
-				targetInfo.ExpectedType,
-				_targetIsArray),
+			targetInfo with { IsArray = _targetIsArray },
 			1,
 			_inputEditorsContainer,
 			TargetIsArrayKey);
@@ -122,10 +117,7 @@ internal abstract partial class EffectApplicationNodeEditorBase : CustomNodeEdit
 			StatescriptNodeDiscovery.InputPropertyInfo contextInfo = _cachedTypeInfo.InputPropertiesInfo[2];
 
 			AddInputPropertyRow(
-				new StatescriptNodeDiscovery.InputPropertyInfo(
-					contextInfo.Label,
-					contextInfo.ExpectedType,
-					false),
+				contextInfo with { IsArray = false },
 				2,
 				_inputEditorsContainer);
 		}

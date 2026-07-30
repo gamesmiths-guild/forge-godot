@@ -930,7 +930,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		}
 
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(propInfo.Label, resolvedClrType, _resolvedIsArray),
+			propInfo with { ExpectedType = resolvedClrType, IsArray = _resolvedIsArray },
 			0,
 			container);
 

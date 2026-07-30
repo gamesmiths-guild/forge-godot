@@ -66,7 +66,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			StatescriptNodeDiscovery.InputPropertyInfo info = typeInfo.InputPropertiesInfo[i];
 
 			AddInputPropertyRow(
-				new StatescriptNodeDiscovery.InputPropertyInfo(info.Label, info.ExpectedType, false),
+				info with { IsArray = false },
 				i,
 				inputRoot);
 		}

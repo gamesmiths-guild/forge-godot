@@ -88,28 +88,26 @@ internal abstract partial class CueNodeEditorBase : CustomNodeEditor
 		StatescriptNodeDiscovery.InputPropertyInfo cueTagInfo = _cachedTypeInfo.InputPropertiesInfo[0];
 		StatescriptNodeDiscovery.InputPropertyInfo targetInfo = _cachedTypeInfo.InputPropertiesInfo[1];
 
-		// Cue tags are authored as a multi-tag set, so this row has no single/array shape toggle.
+		// Cue tags are authored as a multi-tag set, so this row has no single/array shape toggle. Overriding only the
+		// shape with `with` keeps every other declared trait (notably IsOptional) intact.
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(cueTagInfo.Label, cueTagInfo.ExpectedType, false),
+			cueTagInfo with { IsArray = false },
 			0,
 			_inputEditorsContainer);
 
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(
-				targetInfo.Label,
-				targetInfo.ExpectedType,
-				_targetIsArray),
+			targetInfo with { IsArray = _targetIsArray },
 			1,
 			_inputEditorsContainer,
 			TargetIsArrayKey);
 
-		// Remaining inputs (magnitude / normalized magnitude / source / custom parameters) are optional scalar values.
+		// Remaining inputs (magnitude, normalized magnitude, source, custom parameters) are optional scalar values.
 		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
 		{
 			StatescriptNodeDiscovery.InputPropertyInfo info = _cachedTypeInfo.InputPropertiesInfo[i];
 
 			AddInputPropertyRow(
-				new StatescriptNodeDiscovery.InputPropertyInfo(info.Label, info.ExpectedType, false),
+				info with { IsArray = false },
 				i,
 				_inputEditorsContainer);
 		}

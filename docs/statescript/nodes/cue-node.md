@@ -9,6 +9,7 @@ Use the core Forge docs for runtime behavior and lifecycle details. This page co
 ## Authoring in Godot
 
 - The node has a `Cue Tags` input and a `Target` input, plus optional `Magnitude`, `Normalized Magnitude`, `Source`, and `Custom Parameters` inputs (used for the apply).
+- All four optional inputs start at **(None)** and offer it in their resolver dropdown. Leaving **all four** on (None) applies the cue with no parameter set at all, which is not the same as binding zeros and no source — bind only the ones the cue handler reads. See [The `(None)` Input Option](../README.md#the-none-input-option).
 - The `Cue Tags` input is authored through [TagResolver](../resolvers/tag-resolver.md): check one or more registered cue tags. The node applies every selected tag on every target.
 - `Custom Parameters` is authored through [CueCustomParametersResolver](../resolvers/cue-custom-parameters-resolver.md): pick an `ICueCustomParametersProvider` to attach a custom parameter bag to the applied cues.
 - The `Target` input uses the standard entity resolver flow and supports single or array bindings via the input-row shape toggle.

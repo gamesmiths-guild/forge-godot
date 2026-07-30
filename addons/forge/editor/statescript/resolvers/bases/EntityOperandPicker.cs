@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -24,7 +25,10 @@ internal sealed partial class EntityOperandPicker : VBoxContainer
 		Target = 2,
 		Variable = 3,
 		Element = 4,
+		None = 5,
 	}
+
+	private readonly List<EntitySelection> _dropdownSelections = [];
 
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
@@ -34,6 +38,22 @@ internal sealed partial class EntityOperandPicker : VBoxContainer
 	private VariableResolverEditor? _variableEditor;
 	private EntitySelection _selection = EntitySelection.Owner;
 
+	/// <summary>
+	/// Initializes the entity operand picker.
+	/// </summary>
+	/// <param name="graph">The graph the operand is authored against.</param>
+	/// <param name="existingResolver">The stored operand, or <see langword="null"/> for a fresh one.</param>
+	/// <param name="label">The row's display label.</param>
+	/// <param name="labelWidth">The label column width.</param>
+	/// <param name="onChanged">Invoked whenever the authored operand changes.</param>
+	/// <param name="layoutSizeChanged">Invoked when the row's height changes.</param>
+	/// <param name="iterationScope">Whether the iterated element is in scope (inside an array operation's lambda).
+	/// </param>
+	/// <param name="allowNone">Whether the operand may be left empty. Pass <see langword="true"/> only where an absent
+	/// entity is a meaningful state distinct from every selectable entity — a source used to filter a lookup, where
+	/// absent means "match any source". A None selection makes <see cref="BuildResource"/> return
+	/// <see langword="null"/>, and an unset stored operand then reads back as None instead of falling back to Owner.
+	/// </param>
 	public void Initialize(
 		StatescriptGraph graph,
 		EntityResolverResourceBase? existingResolver,
@@ -41,26 +61,35 @@ internal sealed partial class EntityOperandPicker : VBoxContainer
 		float labelWidth,
 		Action onChanged,
 		Action layoutSizeChanged,
-		bool iterationScope = false)
+		bool iterationScope = false,
+		bool allowNone = false)
 	{
 		_graph = graph;
 		_onChanged = onChanged;
 		_layoutSizeChanged = layoutSizeChanged;
-		_selection = ResolveEntitySelection(existingResolver);
+		_selection = ResolveEntitySelection(existingResolver, allowNone);
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		dropdown.AddItem("Owner");
-		dropdown.AddItem("Source");
-		dropdown.AddItem("Target");
-		dropdown.AddItem("Variable");
-		dropdown.AddItem("Element");
+
+		_dropdownSelections.Clear();
+
+		if (allowNone)
+		{
+			AddSelectionItem(dropdown, EntitySelection.None, "None");
+		}
+
+		AddSelectionItem(dropdown, EntitySelection.Owner, "Owner");
+		AddSelectionItem(dropdown, EntitySelection.Source, "Source");
+		AddSelectionItem(dropdown, EntitySelection.Target, "Target");
+		AddSelectionItem(dropdown, EntitySelection.Variable, "Variable");
+		AddSelectionItem(dropdown, EntitySelection.Element, "Element");
 
 		// The iterated element only exists inside an array operation's per-element (lambda) operand.
-		dropdown.SetItemDisabled((int)EntitySelection.Element, !iterationScope);
+		dropdown.SetItemDisabled(_dropdownSelections.IndexOf(EntitySelection.Element), !iterationScope);
 
-		dropdown.Selected = (int)_selection;
+		dropdown.Selected = _dropdownSelections.IndexOf(_selection);
 		dropdown.ItemSelected += OnEntityChanged;
 		AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow(label, dropdown, labelWidth));
 
@@ -72,10 +101,15 @@ internal sealed partial class EntityOperandPicker : VBoxContainer
 		RebuildVariableEditor(existingResolver);
 	}
 
-	public EntityResolverResourceBase BuildResource()
+	/// <summary>
+	/// Builds the authored operand, or <see langword="null"/> when the picker allows None and rests on it.
+	/// </summary>
+	/// <returns>The entity resolver resource, or <see langword="null"/> for None.</returns>
+	public EntityResolverResourceBase? BuildResource()
 	{
 		return _selection switch
 		{
+			EntitySelection.None => null,
 			EntitySelection.Source => new AbilitySourceResolverResource(),
 			EntitySelection.Target => new AbilityTargetResolverResource(),
 			EntitySelection.Variable => BuildVariableResolverResource(),
@@ -91,7 +125,7 @@ internal sealed partial class EntityOperandPicker : VBoxContainer
 		_variableEditor?.ClearCallbacks();
 	}
 
-	private static EntitySelection ResolveEntitySelection(EntityResolverResourceBase? resource)
+	private static EntitySelection ResolveEntitySelection(EntityResolverResourceBase? resource, bool allowNone)
 	{
 		return resource switch
 		{
@@ -99,13 +133,20 @@ internal sealed partial class EntityOperandPicker : VBoxContainer
 			AbilityTargetResolverResource => EntitySelection.Target,
 			VariableResolverResource => EntitySelection.Variable,
 			ElementEntityResolverResource => EntitySelection.Element,
+			null when allowNone => EntitySelection.None,
 			_ => EntitySelection.Owner,
 		};
 	}
 
+	private void AddSelectionItem(OptionButton dropdown, EntitySelection selection, string label)
+	{
+		dropdown.AddItem(label);
+		_dropdownSelections.Add(selection);
+	}
+
 	private void OnEntityChanged(long index)
 	{
-		_selection = (EntitySelection)(int)index;
+		_selection = _dropdownSelections[(int)index];
 		RebuildVariableEditor(null);
 		_onChanged?.Invoke();
 	}
