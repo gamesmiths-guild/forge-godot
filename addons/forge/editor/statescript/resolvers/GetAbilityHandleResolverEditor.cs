@@ -21,6 +21,7 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 	private const float LabelWidth = 60.0f;
 
 	private ForgeAbilityData? _selectedAbilityData;
+	private EntityOperandPicker? _sourcePicker;
 	private bool _exactSourceMatch;
 
 	public override string DisplayName => "Get Ability";
@@ -65,12 +66,27 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 		root.AddChild(CreateEntitySelectorRow(LabelWidth));
 		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
 
+		// The source filter is genuinely three-state, so it needs a None entry the other entity pickers do not have:
+		// None matches any granting source, a selected entity narrows the lookup to grants from that entity, and None
+		// combined with "Exact source match" finds only grants made without a source at all.
+		_sourcePicker = new EntityOperandPicker();
+		_sourcePicker.Initialize(
+			graph,
+			existingResource?.SourceResolver,
+			"Source:",
+			LabelWidth,
+			NotifyChanged,
+			RaiseLayoutSizeChanged,
+			IterationScope,
+			allowNone: true);
+		root.AddChild(_sourcePicker);
+
 		var exactSourceCheckBox = new CheckBox
 		{
 			Text = "Exact source match",
 			ButtonPressed = _exactSourceMatch,
-			TooltipText = "Match only the instance granted by exactly the resolved source. Without a source, " +
-				"finds only abilities granted without a source.",
+			TooltipText = "Match only the instance granted by exactly the resolved source. With the source set to " +
+				"None, finds only abilities granted without a source.",
 		};
 		exactSourceCheckBox.Toggled += toggledOn =>
 		{
@@ -88,8 +104,15 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 		{
 			AbilityData = _selectedAbilityData,
 			EntityResolver = BuildEntityResolverResource(),
+			SourceResolver = _sourcePicker?.BuildResource(),
 			ExactSourceMatch = _exactSourceMatch,
 		};
+	}
+
+	public override void ClearCallbacks()
+	{
+		base.ClearCallbacks();
+		_sourcePicker?.ClearCallbacks();
 	}
 }
 #endif

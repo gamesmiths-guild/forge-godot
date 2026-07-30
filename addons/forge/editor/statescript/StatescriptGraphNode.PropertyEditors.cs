@@ -13,6 +13,11 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 public partial class StatescriptGraphNode
 {
+	/// <summary>
+	/// Dropdown entry that leaves an optional input unbound. Matches the wording used by the output-variable rows.
+	/// </summary>
+	internal const string NoneResolverItemText = "(None)";
+
 	private readonly Dictionary<PropertySlotKey, InputPropertyContext> _inputPropertyContexts = [];
 
 	private void AddInputPropertyRow(
@@ -94,6 +99,18 @@ public partial class StatescriptGraphNode
 			CustomMinimumSize = new Vector2(80, 0),
 		};
 
+		// An optional input gets an explicit (None) entry ahead of the resolvers. Leaving the slot unbound is the only
+		// way to reach the runtime's "input absent" behavior (a null grant source, a cue fired with no parameters at
+		// all), which no resolver can produce — an object resolver returning null is indistinguishable from a bound
+		// value, and the value lane has no null at all. Item 0 is (None) on those rows, so every factory lookup shifts
+		// by this offset.
+		int noneOffset = propInfo.IsOptional ? 1 : 0;
+
+		if (propInfo.IsOptional)
+		{
+			resolverDropdown.AddItem(NoneResolverItemText);
+		}
+
 		foreach (Func<NodeEditorProperty> factory in resolverFactories)
 		{
 			resolverDropdown.AddItem(StatescriptResolverRegistry.GetDisplayName(factory));
@@ -102,8 +119,10 @@ public partial class StatescriptGraphNode
 		StatescriptNodeProperty? binding = FindBinding(StatescriptPropertyDirection.Input, index);
 
 		// Pre-seed a constant binding for inputs whose conventional default is not the type's zero value (e.g.
-		// Level = 1), so a fresh slot starts from it and the dropdown selects the constant resolver.
+		// Level = 1), so a fresh slot starts from it and the dropdown selects the constant resolver. Optional inputs
+		// are never seeded: their fresh state is (None), which is what the runtime documents as their default.
 		if (binding?.Resolver is null
+			&& !propInfo.IsOptional
 			&& defaultConstantValue is { } seededValue
 			&& StatescriptVariableTypeConverter.TryFromSystemType(
 				propInfo.ExpectedType, out StatescriptVariableType seededType))
@@ -117,7 +136,7 @@ public partial class StatescriptGraphNode
 			NotifyGraphResourceChanged();
 		}
 
-		int selectedIndex = 0;
+		int factoryIndex = 0;
 
 		if (binding?.Resolver is not null)
 		{
@@ -126,14 +145,14 @@ public partial class StatescriptGraphNode
 				if (StatescriptResolverRegistry.GetResolverTypeId(resolverFactories[i])
 					== GetResolverTypeId(binding.Resolver))
 				{
-					selectedIndex = i;
+					factoryIndex = i;
 					break;
 				}
 			}
 		}
-		else
+		else if (!propInfo.IsOptional)
 		{
-			selectedIndex = -1;
+			factoryIndex = -1;
 
 			if (!string.IsNullOrEmpty(preferredDefaultResolverTypeId))
 			{
@@ -142,22 +161,27 @@ public partial class StatescriptGraphNode
 					if (StatescriptResolverRegistry.GetResolverTypeId(resolverFactories[i])
 						== preferredDefaultResolverTypeId)
 					{
-						selectedIndex = i;
+						factoryIndex = i;
 						break;
 					}
 				}
 			}
 
-			if (selectedIndex < 0)
+			if (factoryIndex < 0)
 			{
-				selectedIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
+				factoryIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
 					resolverFactories,
 					propInfo.ExpectedType,
 					propInfo.IsArray);
 			}
 		}
+		else
+		{
+			// Optional and unbound: rest on (None) rather than falling into a default resolver.
+			factoryIndex = -1;
+		}
 
-		resolverDropdown.Selected = selectedIndex;
+		resolverDropdown.Selected = factoryIndex < 0 ? 0 : factoryIndex + noneOffset;
 		headerRow.AddChild(resolverDropdown);
 		headerRow.AddChild(valueShapeDropdown);
 
@@ -166,22 +190,25 @@ public partial class StatescriptGraphNode
 
 		_inputPropertyContexts[key] = new InputPropertyContext(resolverFactories, propInfo, editorContainer);
 
-		ShowResolverEditorUI(
-			resolverFactories[selectedIndex],
-			binding,
-			propInfo.ExpectedType,
-			editorContainer,
-			StatescriptPropertyDirection.Input,
-			index,
-			propInfo.IsArray);
-
-		// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
-		// used at runtime, without requiring the user to interact with the slot first.
-		if (binding?.Resolver is null
-			&& _activeResolverEditors.TryGetValue(key, out NodeEditorProperty? defaultEditor))
+		if (factoryIndex >= 0)
 		{
-			defaultEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
-			NotifyGraphResourceChanged();
+			ShowResolverEditorUI(
+				resolverFactories[factoryIndex],
+				binding,
+				propInfo.ExpectedType,
+				editorContainer,
+				StatescriptPropertyDirection.Input,
+				index,
+				propInfo.IsArray);
+
+			// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
+			// used at runtime, without requiring the user to interact with the slot first.
+			if (binding?.Resolver is null
+				&& _activeResolverEditors.TryGetValue(key, out NodeEditorProperty? defaultEditor))
+			{
+				defaultEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
+				NotifyGraphResourceChanged();
+			}
 		}
 
 		UpdateInputPropertyFoldableTitle(key);
@@ -215,18 +242,31 @@ public partial class StatescriptGraphNode
 			return;
 		}
 
-		ShowResolverEditorUI(
-			ctx.ResolverFactories[(int)x],
-			null,
-			ctx.PropInfo.ExpectedType,
-			ctx.EditorContainer,
-			StatescriptPropertyDirection.Input,
-			index,
-			ctx.PropInfo.IsArray);
+		// Item 0 is the (None) entry on an optional row; every real factory sits one place later.
+		int noneOffset = ctx.PropInfo.IsOptional ? 1 : 0;
+		int factoryIndex = (int)x - noneOffset;
 
-		if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
+		if (factoryIndex < 0)
 		{
-			SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+			// (None): drop the binding entirely so the runtime sees an unbound input.
+			RemoveBinding(StatescriptPropertyDirection.Input, index);
+			NotifyGraphResourceChanged();
+		}
+		else
+		{
+			ShowResolverEditorUI(
+				ctx.ResolverFactories[factoryIndex],
+				null,
+				ctx.PropInfo.ExpectedType,
+				ctx.EditorContainer,
+				StatescriptPropertyDirection.Input,
+				index,
+				ctx.PropInfo.IsArray);
+
+			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
+			{
+				SaveResolverEditor(editor, StatescriptPropertyDirection.Input, index);
+			}
 		}
 
 		UpdateInputPropertyFoldableTitle(key);

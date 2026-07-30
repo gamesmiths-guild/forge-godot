@@ -186,7 +186,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 					? descriptor.ClrType
 					: StatescriptVariableTypeConverter.ToSystemType(_selectedType);
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(originalInfo.Label, clrType, _selectedIsArray),
+			originalInfo with { ExpectedType = clrType, IsArray = _selectedIsArray },
 			0,
 			_inputRootContainer);
 	}

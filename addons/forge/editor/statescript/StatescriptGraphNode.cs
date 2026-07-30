@@ -131,6 +131,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		_foldableKeys.Clear();
 		_inputPropertyFoldables.Clear();
 
+		_inputPropertyContexts.Clear();
+
 		Name = resource.NodeId;
 		Title = resource.Title;
 		PositionOffset = resource.PositionOffset;
@@ -688,6 +690,22 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor);
+
+		// An optional slot resting on (None) has no resolver editor at all, so there is nothing for the editor-driven
+		// badge to summarize. Label it explicitly instead of leaving the collapsed row blank, matching how the
+		// output-variable rows badge their own (None).
+		if (editor is null
+			&& _inputPropertyContexts.TryGetValue(key, out InputPropertyContext? inputContext)
+			&& inputContext.PropInfo.IsOptional)
+		{
+			InlineConstantSummaryFormatter.ApplyFoldableTitle(
+				context.BaseTitle,
+				context.Foldable,
+				NoneResolverItemText,
+				InlineSummaryBadgeKind.Resolver);
+			return;
+		}
+
 		InlineConstantSummaryFormatter.ApplyFoldableTitle(context.BaseTitle, context.Foldable, editor);
 	}
 

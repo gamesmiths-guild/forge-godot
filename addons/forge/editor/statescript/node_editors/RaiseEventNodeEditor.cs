@@ -92,30 +92,29 @@ internal sealed partial class RaiseEventNodeEditor : CustomNodeEditor
 		StatescriptNodeDiscovery.InputPropertyInfo eventTagInfo = _cachedTypeInfo.InputPropertiesInfo[0];
 		StatescriptNodeDiscovery.InputPropertyInfo targetInfo = _cachedTypeInfo.InputPropertiesInfo[1];
 
-		// Event tags are authored as a multi-tag set, so this row has no single/array shape toggle.
+		// Event tags are authored as a multi-tag set, so this row has no single/array shape toggle. Overriding only the
+		// shape with `with` keeps every other declared trait (notably IsOptional) intact.
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(eventTagInfo.Label, eventTagInfo.ExpectedType, false),
+			eventTagInfo with { IsArray = false },
 			0,
 			_inputEditorsContainer);
 
 		AddInputPropertyRow(
-			new StatescriptNodeDiscovery.InputPropertyInfo(
-				targetInfo.Label,
-				targetInfo.ExpectedType,
-				_targetIsArray),
+			targetInfo with { IsArray = _targetIsArray },
 			1,
 			_inputEditorsContainer,
 			TargetIsArrayKey);
 
-		// Remaining inputs (source / magnitude / payload) are optional scalar values. The payload input defaults to
-		// the event payload provider editor through StatescriptResolverRegistry's per-type default for
+		// Remaining inputs are scalar. Source and payload are optional, so their rows offer a (None) entry; magnitude
+		// is not, because leaving it unbound resolves to the same zero a constant resolver produces. The payload input
+		// defaults to the event payload provider editor through StatescriptResolverRegistry's per-type default for
 		// EventPayloadRaiser, alongside the other provider-backed inputs.
 		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
 		{
 			StatescriptNodeDiscovery.InputPropertyInfo info = _cachedTypeInfo.InputPropertiesInfo[i];
 
 			AddInputPropertyRow(
-				new StatescriptNodeDiscovery.InputPropertyInfo(info.Label, info.ExpectedType, false),
+				info with { IsArray = false },
 				i,
 				_inputEditorsContainer);
 		}
