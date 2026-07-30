@@ -333,6 +333,27 @@ if (graphContext.TryResolve(InputProperties[0].BoundName, out double duration))
 
 The actual value source depends on which resolver is bound to the input in the graph editor.
 
+#### Optional Inputs
+
+If your node treats an *unbound* input as a meaningful state rather than just reading a default, declare it with `IsOptional: true`:
+
+```csharp
+inputProperties.Add(new InputProperty("Source", typeof(IForgeEntity), IsOptional: true));
+```
+
+The editor reads that flag and gives the input row a `(None)` entry, leaving a fresh slot unbound instead of seeding it with a default resolver. Check for the unbound state through `BoundName`:
+
+```csharp
+StringKey sourceName = InputProperties[SourceInput].BoundName;
+
+if (sourceName == StringKey.Empty)
+{
+    // Authored as (None): behave as if there is no source at all.
+}
+```
+
+Only set it when being unbound does something no resolver choice can reproduce. If your node would simply substitute a value the author could have bound themselves (an owner fallback, a zero magnitude), leave the flag off so the editor does not offer two ways to say the same thing. See [The `(None)` Input Option](../README.md#the-none-input-option).
+
 ### Output Variables
 
 Output variables declare what data a node writes. Define them in `DefineParameters`:

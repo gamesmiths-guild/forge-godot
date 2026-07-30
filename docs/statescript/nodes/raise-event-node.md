@@ -11,7 +11,7 @@ Use the core Forge docs for runtime behavior and port details. This page covers 
 - The node has an `Event Tags` input and a `Target` input, plus optional `Source`, `Magnitude`, and `Payload` inputs.
 - The `Event Tags` input is authored through [TagResolver](../resolvers/tag-resolver.md): check one or more registered tags. They are combined into the event's tag container, so a single raise carries every selected tag.
 - The `Target` input uses the standard entity resolver flow and supports single or array bindings via the input-row shape toggle. The event is raised on every target.
-- `Source` (entity) and `Magnitude` (float) are optional and map to `EventData.Source` / `EventData.EventMagnitude`.
+- `Source` (entity) and `Magnitude` (float) map to `EventData.Source` / `EventData.EventMagnitude`. `Source` starts at **(None)** and offers it in its dropdown, so an event can be raised with no source rather than the owner. `Magnitude` does not, because leaving it unbound resolves to the same `0` a constant does. See [The `(None)` Input Option](../README.md#the-none-input-option).
 - `Payload` is optional and authored through [EventPayloadResolver](../resolvers/event-payload-resolver.md): pick an `IEventPayloadProvider` to build and raise a typed payload (with no boxing) from the graph state. Binding a provider makes the node raise the provider's typed `EventData<TPayload>`, so a typed listener with the same provider receives it.
 - The node has no output, events are addressed entirely by tag.
 

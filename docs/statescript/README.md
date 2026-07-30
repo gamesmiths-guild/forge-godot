@@ -85,6 +85,16 @@ Nodes read data through **input properties** resolved at runtime by **property r
 
 For details, see [Variables and Data](variables.md).
 
+### The `(None)` Input Option
+
+Most input rows always hold a resolver: a fresh slot is seeded with a sensible default (an entity input starts at `Owner`, a numeric input at a constant) so what the editor shows is what runs.
+
+Some inputs instead treat *being unbound* as a state of its own, and those rows offer a `(None)` entry at the top of the resolver dropdown. Picking it removes the binding entirely, which is the only way to author that state — a grant with no source at all rather than the owner, a cue fired with no parameter set rather than zeros, an event raised with no payload. These rows start at `(None)`, so their default matches what the runtime documents, and a collapsed row badges as `(None)`.
+
+The distinction comes from the runtime: a node declares such an input with `IsOptional: true`, and the editor derives the `(None)` entry from that rather than from a per-editor list. An input that merely falls back to a default when unbound (`Entity` → the owner, `Level` → the context level) does *not* get a `(None)` entry, because selecting the equivalent resolver expresses the same thing.
+
+For the full rationale, see the [core Unbound Inputs documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/README.md#unbound-inputs).
+
 ## Ability Integration
 
 Statescript integrates with the Abilities system through `GraphAbilityBehavior`:
