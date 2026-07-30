@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver editor that binds a node's optional context-data input to an <c>IEffectContextDataProvider</c>. The
-/// provider dropdown lists every provider discovered in the project assembly, plus a <c>(None)</c> option that leaves
+/// provider dropdown lists every provider discovered in any loaded assembly, plus a <c>(None)</c> option that leaves
 /// the input unbound. When the selected provider declares inputs, each one is rendered as a nested resolver section so
 /// designers can author the value (a constant, a variable, activation data, and so on) that the provider receives.
 /// </summary>

@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver editor that binds a cue node's optional custom-parameters input to an
-/// <c>ICueCustomParametersProvider</c>. The provider dropdown lists every provider discovered in the project assembly,
+/// <c>ICueCustomParametersProvider</c>. The provider dropdown lists every provider discovered in any loaded assembly,
 /// plus a <c>(None)</c> option that leaves the input unbound. When the selected provider declares inputs, each one is
 /// rendered as a nested resolver section so designers can author the value (a constant, a variable, activation data,
 /// and so on) that the provider receives.

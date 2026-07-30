@@ -26,6 +26,10 @@ public sealed class ProviderCatalog<TProvider>
 {
 	private List<ProviderEntry<TProvider>> _all = [];
 	private Dictionary<string, TProvider> _byIdentifier = [];
+
+	// Simple type name to the identifier of the only provider using it, or null when several share it.
+	private Dictionary<string, string?> _identifierByDisplayName = [];
+
 	private int _scannedAssemblyCount;
 
 	/// <summary>
@@ -48,15 +52,25 @@ public sealed class ProviderCatalog<TProvider>
 	/// <returns><see langword="true"/> when a provider is registered for the identifier.</returns>
 	public bool TryGet(string identifier, out TProvider provider)
 	{
-		return _byIdentifier.TryGetValue(ResolveIdentifier(identifier), out provider!);
+		// Resolve first, as a statement: it is what triggers the scan, and the scan replaces the lookup dictionary.
+		// Passing it inline would read the field before the swap and miss every provider on the first lookup.
+		string resolved = ResolveIdentifier(identifier);
+
+		return _byIdentifier.TryGetValue(resolved, out provider!);
 	}
 
 	/// <summary>
-	/// Resolves a stored identifier to the canonical identifier of a discovered provider, tolerating values stored as a
-	/// simple type name instead of the full name.
+	/// Resolves a stored identifier to the canonical identifier of a discovered provider, tolerating values stored as
+	/// a simple type name instead of the full name.
 	/// </summary>
+	/// <remarks>
+	/// The simple-name fallback only resolves when exactly one provider carries that name. Because discovery spans
+	/// every loaded assembly, two providers in different namespaces can share a simple name; resolving one of them
+	/// arbitrarily would silently bind the wrong provider and vary with assembly load order, so an ambiguous name is
+	/// reported and left unresolved instead. Store the full name to disambiguate.
+	/// </remarks>
 	/// <param name="identifier">The stored identifier.</param>
-	/// <returns>The canonical identifier when a match is found; otherwise the original value.</returns>
+	/// <returns>The canonical identifier when a single match is found; otherwise the original value.</returns>
 	public string ResolveIdentifier(string identifier)
 	{
 		if (string.IsNullOrEmpty(identifier))
@@ -71,15 +85,22 @@ public sealed class ProviderCatalog<TProvider>
 			return identifier;
 		}
 
-		foreach (ProviderEntry<TProvider> entry in _all)
+		if (!_identifierByDisplayName.TryGetValue(identifier, out string? resolved))
 		{
-			if (entry.DisplayName == identifier)
-			{
-				return entry.Identifier;
-			}
+			return identifier;
 		}
 
-		return identifier;
+		if (resolved is null)
+		{
+			GD.PushError(
+				$"Statescript: Provider name '{identifier}' is ambiguous across loaded assemblies " +
+				$"({string.Join(", ", _all.Where(entry => entry.DisplayName == identifier)
+					.Select(entry => entry.Identifier))}). " +
+				"Store the full type name to select one.");
+			return identifier;
+		}
+
+		return resolved;
 	}
 
 	private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
@@ -140,25 +161,47 @@ public sealed class ProviderCatalog<TProvider>
 
 		var all = new List<ProviderEntry<TProvider>>();
 		var byIdentifier = new Dictionary<string, TProvider>();
+		var identifierByDisplayName = new Dictionary<string, string?>();
 
 		foreach (Assembly assembly in assemblies)
 		{
 			foreach (Type type in GetLoadableTypes(assembly))
 			{
-				if (!IsCandidate(type) || !TryCreate(type, out TProvider? provider))
+				if (!IsCandidate(type))
 				{
 					continue;
 				}
 
 				string identifier = ProviderIdentifiers.For(type);
+
+				if (byIdentifier.ContainsKey(identifier))
+				{
+					// Two assemblies declaring the same full type name cannot be told apart by anything a resource
+					// stores, so keep the first and say so rather than letting load order decide.
+					GD.PushError(
+						$"Statescript: Provider '{identifier}' is declared in more than one loaded assembly. " +
+						"Only the first is registered; remove the duplicate to make the choice deterministic.");
+					continue;
+				}
+
+				if (!TryCreate(type, out TProvider? provider))
+				{
+					continue;
+				}
+
 				all.Add(new ProviderEntry<TProvider>(identifier, type.Name, provider!));
 				byIdentifier[identifier] = provider!;
+
+				// A simple name shared by several providers resolves to none of them; see ResolveIdentifier.
+				identifierByDisplayName[type.Name] =
+					identifierByDisplayName.ContainsKey(type.Name) ? null : identifier;
 			}
 		}
 
 		// Swap in complete collections, then record the scan, so a reader never observes a half-built catalog.
 		_all = all;
 		_byIdentifier = byIdentifier;
+		_identifierByDisplayName = identifierByDisplayName;
 		_scannedAssemblyCount = assemblies.Length;
 	}
 }

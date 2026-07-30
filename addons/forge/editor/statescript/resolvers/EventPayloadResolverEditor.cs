@@ -16,8 +16,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver editor that binds the raise-event node's optional payload input to an <c>IEventPayloadProvider</c>. The
-/// provider dropdown lists every provider discovered in the project assembly, plus a <c>(None)</c> option that leaves
-/// the input unbound. When the selected provider declares inputs, each one is rendered as a nested resolver section so
+/// provider dropdown lists every provider discovered in any loaded assembly, plus a <c>(None)</c> option that leaves
+/// the input unbound. When the selected provider declares members, each one is rendered as a nested resolver section so
 /// designers can author the value the provider receives.
 /// </summary>
 [Tool]

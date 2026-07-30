@@ -12,8 +12,8 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds a node property to a member declared by an
-/// <see cref="IAbilityActivationDataProvider"/>'s outputs.
+/// Resolver resource that binds a node property to one of an <see cref="IAbilityActivationDataProvider"/>'s declared
+/// members.
 /// </summary>
 /// <remarks>
 /// At build time this resource constructs Forge's core <see cref="AbilityActivationDataResolver"/> so the selected

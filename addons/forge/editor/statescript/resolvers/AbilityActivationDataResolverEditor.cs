@@ -15,7 +15,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// <summary>
 /// Resolver editor that binds a node input property to an activation data field. Uses a two-step selection: first
 /// select the <see cref="IAbilityActivationDataProvider"/> implementation, then select a compatible field from that
-/// provider's declared outputs.
+/// provider's declared members.
 /// </summary>
 /// <remarks>
 /// <para>This is the read side of the same provider that builds the data on the sending graph, so one implementation
