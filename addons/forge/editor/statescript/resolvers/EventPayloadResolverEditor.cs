@@ -147,7 +147,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
+		foreach (ProviderEntry<IEventPayloadProvider> entry in EventPayloadProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -182,7 +182,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
+		foreach (ProviderEntry<IEventPayloadProvider> entry in EventPayloadProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);

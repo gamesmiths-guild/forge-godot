@@ -289,7 +289,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 		_payloadProviderDropdown.AddItem("(None)");
 		_payloadProviderClassNames.Add(string.Empty);
 
-		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
+		foreach (ProviderEntry<IEventPayloadProvider> entry in EventPayloadProviderRegistry.All)
 		{
 			_payloadProviderDropdown.AddItem(entry.DisplayName);
 			_payloadProviderClassNames.Add(entry.Identifier);

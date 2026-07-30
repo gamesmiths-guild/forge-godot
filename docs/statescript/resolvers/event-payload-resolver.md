@@ -9,7 +9,7 @@ Authors the custom typed payload of an event for the event nodes. A single `IEve
 
 ## Authoring in Godot
 
-Both sides expose a single **Provider** dropdown listing every `IEventPayloadProvider` discovered in the project assembly, plus a **(None)** option that leaves the input unbound.
+Both sides expose a single **Provider** dropdown listing every `IEventPayloadProvider` discovered in any loaded assembly, plus a **(None)** option that leaves the input unbound.
 
 To make a provider appear in either dropdown, derive from `EventPayloadProvider<TPayload>`, declare `Members` once, and override `CreatePayload` (build) and `WriteOutputs` (decompose):
 

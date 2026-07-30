@@ -163,7 +163,7 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (AbilityActivationDataProviderRegistry.ProviderEntry entry
+		foreach (ProviderEntry<IAbilityActivationDataProvider> entry
 			in AbilityActivationDataProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
@@ -271,7 +271,7 @@ internal sealed partial class AbilityActivationDataResolverEditor : NodeEditorPr
 		}
 		else
 		{
-			foreach (AbilityActivationDataProviderRegistry.ProviderEntry entry
+			foreach (ProviderEntry<IAbilityActivationDataProvider> entry
 				in AbilityActivationDataProviderRegistry.All)
 			{
 				_providerDropdown.AddItem(entry.DisplayName);

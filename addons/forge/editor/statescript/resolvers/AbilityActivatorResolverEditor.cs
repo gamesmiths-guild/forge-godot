@@ -147,7 +147,7 @@ internal sealed partial class AbilityActivatorResolverEditor : NodeEditorPropert
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (AbilityActivationDataProviderRegistry.ProviderEntry entry
+		foreach (ProviderEntry<IAbilityActivationDataProvider> entry
 			in AbilityActivationDataProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
@@ -183,7 +183,7 @@ internal sealed partial class AbilityActivatorResolverEditor : NodeEditorPropert
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (AbilityActivationDataProviderRegistry.ProviderEntry entry
+		foreach (ProviderEntry<IAbilityActivationDataProvider> entry
 			in AbilityActivationDataProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);

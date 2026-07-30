@@ -148,7 +148,7 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (CueCustomParametersProviderRegistry.ProviderEntry entry in CueCustomParametersProviderRegistry.All)
+		foreach (ProviderEntry<ICueCustomParametersProvider> entry in CueCustomParametersProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -183,7 +183,7 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (CueCustomParametersProviderRegistry.ProviderEntry entry in CueCustomParametersProviderRegistry.All)
+		foreach (ProviderEntry<ICueCustomParametersProvider> entry in CueCustomParametersProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);

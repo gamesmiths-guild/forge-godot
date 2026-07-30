@@ -147,7 +147,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (EffectContextDataProviderRegistry.ProviderEntry entry in EffectContextDataProviderRegistry.All)
+		foreach (ProviderEntry<IEffectContextDataProvider> entry in EffectContextDataProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -182,7 +182,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (EffectContextDataProviderRegistry.ProviderEntry entry in EffectContextDataProviderRegistry.All)
+		foreach (ProviderEntry<IEffectContextDataProvider> entry in EffectContextDataProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);

@@ -10,7 +10,7 @@ Authors the optional **Custom Parameters** input of [ExecuteCueNode](../nodes/ex
 
 The editor exposes a single **Provider** dropdown.
 
-- The dropdown lists every `ICueCustomParametersProvider` discovered in the project assembly, plus a **(None)** option.
+- The dropdown lists every `ICueCustomParametersProvider` discovered in any loaded assembly, plus a **(None)** option.
 - Choosing **(None)** leaves the input unbound, so cues fire without custom parameters.
 - Choosing a provider attaches the dictionary it produces to every cue the node fires.
 - If the provider declares authored inputs, each one renders below the dropdown as its own foldable resolver section (constant, variable, activation data, math, ...), so designers can author the values the provider receives.

@@ -12,7 +12,7 @@ Authors the optional **Activation Data** input of `TryActivateAbilityNode`, `Try
 
 The editor exposes a single **Provider** dropdown.
 
-- The dropdown lists every `IAbilityActivationDataProvider` discovered in the project assembly, plus a **(None)** option.
+- The dropdown lists every `IAbilityActivationDataProvider` discovered in any loaded assembly, plus a **(None)** option.
 - Choosing **(None)** leaves the input unbound, so abilities are activated without custom data.
 - Choosing a provider passes the value it produces to every activation the node performs.
 - If the provider declares authored inputs, each one renders below the dropdown as its own foldable resolver section (constant, variable, activation data, math, …), so designers can author the values the provider receives.

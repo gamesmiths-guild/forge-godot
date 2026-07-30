@@ -10,7 +10,7 @@ Authors the optional **Context Data** input of [ApplyEffectNode](../nodes/apply-
 
 The editor exposes a single **Provider** dropdown.
 
-- The dropdown lists every `IEffectContextDataProvider` discovered in the project assembly, plus a **(None)** option.
+- The dropdown lists every `IEffectContextDataProvider` discovered in any loaded assembly, plus a **(None)** option.
 - Choosing **(None)** leaves the input unbound, so effects are applied without context data.
 - Choosing a provider passes the value it produces (wrapped in an `EffectApplicationContext`) to every application the node performs.
 - If the provider declares authored inputs, each one renders below the dropdown as its own foldable resolver section (constant, variable, activation data, math, …), so designers can author the values the provider receives.
