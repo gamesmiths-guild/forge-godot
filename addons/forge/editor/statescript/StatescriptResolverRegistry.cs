@@ -8,6 +8,7 @@ using System.Reflection;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Statescript.Properties;
 using Gamesmiths.Forge.Tags;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
@@ -40,6 +41,16 @@ internal static class StatescriptResolverRegistry
 		[typeof(ActiveEffectHandle)] = "Variable",
 		[typeof(Effect)] = "Effect",
 		[typeof(Tag)] = "Tag",
+
+		// Provider-backed marker types, one per optional provider input. Every one of these MUST be listed:
+		// RandomElementResolverEditor reports compatibility with any reference type, so it lands in these dropdowns
+		// too, and without a pin the selection would fall through to reflection registration order rather than the
+		// provider editor the input exists for. Only the listener-side EventPayloadWriter is absent, because
+		// EventListenerNodeEditor renders that slot itself instead of as a resolver row.
+		[typeof(AbilityActivator)] = "AbilityActivator",
+		[typeof(Dictionary<StringKey, object>)] = "CueCustomParameters",
+		[typeof(EffectApplicationContext)] = "EffectContextData",
+		[typeof(EventPayloadRaiser)] = "EventPayload",
 	};
 
 	static StatescriptResolverRegistry()

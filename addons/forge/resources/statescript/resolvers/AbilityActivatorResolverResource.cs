@@ -14,25 +14,26 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds the raise-event node's optional payload input to an
-/// <see cref="IEventPayloadProvider"/>.
+/// Resolver resource that binds a node's optional activation-data input to an
+/// <see cref="IAbilityActivationDataProvider"/>.
 /// </summary>
 /// <remarks>
 /// At graph-build time this resource looks up the selected provider and binds Forge's core
-/// <see cref="EventPayloadResolver"/>, which produces the object attached to the event's <c>EventData.Payload</c>. When
-/// the provider declares authored inputs, the stored per-input resolvers are wired into the core resolver keyed by
-/// input name. When no provider is selected the input is left unbound, so events are raised without a payload.
+/// <see cref="AbilityActivatorResolver"/>, which produces the <c>AbilityActivator</c> the node uses to reach the
+/// generic activation APIs. When the provider declares authored inputs, the stored per-input resolvers are wired into
+/// the core resolver keyed by input name. When no provider is selected the input is left unbound, so abilities are
+/// activated without custom data.
 /// </remarks>
 [Tool]
 [GlobalClass]
-public partial class EventPayloadResolverResource : StatescriptResolverResource
+public partial class AbilityActivatorResolverResource : StatescriptResolverResource
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "EventPayload";
+	public override string ResolverTypeId => "AbilityActivator";
 
 	/// <summary>
-	/// Gets or sets the identifier of the <see cref="IEventPayloadProvider"/> implementation that builds the payload.
-	/// Empty means no provider is selected and the input stays unbound.
+	/// Gets or sets the identifier of the <see cref="IAbilityActivationDataProvider"/> implementation that builds the
+	/// activation data. Empty means no provider is selected and the input stays unbound.
 	/// </summary>
 	[Export]
 	public string ProviderClassName { get; set; } = string.Empty;
@@ -55,38 +56,40 @@ public partial class EventPayloadResolverResource : StatescriptResolverResource
 	{
 		if (string.IsNullOrEmpty(ProviderClassName))
 		{
-			// Optional input: no provider selected means no payload is attached.
+			// Optional input: no provider selected means no activation data is passed.
 			return;
 		}
 
-		if (!EventPayloadProviderRegistry.TryGet(ProviderClassName, out IEventPayloadProvider provider))
+		if (!AbilityActivationDataProviderRegistry.TryGet(
+			ProviderClassName,
+			out IAbilityActivationDataProvider provider))
 		{
 			GD.PushError(
-				$"Statescript: Could not find event payload provider '{ProviderClassName}' on node '{nodeId}' " +
-				$"(input {index}). The event will be raised without a payload.");
+				$"Statescript: Could not find ability activation-data provider '{ProviderClassName}' on node " +
+				$"'{nodeId}' (input {index}). The ability will be activated without activation data.");
 			return;
 		}
 
 		System.Collections.Generic.Dictionary<string, IPropertyResolver> inputResolvers =
 			BuildInputResolvers(graph, provider);
 
-		var propertyName = new StringKey($"__eventpayload_{nodeId}_{index}");
+		var propertyName = new StringKey($"__activationdata_{nodeId}_{index}");
 		graph.VariableDefinitions.DefineObjectProperty(
 			propertyName,
-			new EventPayloadResolver(provider, inputResolvers));
+			new AbilityActivatorResolver(provider, inputResolvers));
 		runtimeNode.BindInput(index, propertyName);
 	}
 
 	private System.Collections.Generic.Dictionary<string, IPropertyResolver> BuildInputResolvers(
 		Graph graph,
-		IEventPayloadProvider provider)
+		IAbilityActivationDataProvider provider)
 	{
 		var inputResolvers = new System.Collections.Generic.Dictionary<string, IPropertyResolver>();
-		IReadOnlyList<EventPayloadMember> declaredInputs = provider.Members;
+		IReadOnlyList<AbilityActivationDataMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
-			EventPayloadMember declaredInput = declaredInputs[i];
+			AbilityActivationDataMember declaredInput = declaredInputs[i];
 			StatescriptResolverResource? resource = FindInputResolver(declaredInput.Name);
 
 			if (resource is null)

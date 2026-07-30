@@ -3,11 +3,11 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Statescript.Properties;
 using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 using Godot.Collections;
@@ -15,14 +15,13 @@ using Godot.Collections;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver editor that binds a cue node's optional custom-parameters input to an
-/// <c>ICueCustomParametersProvider</c>. The provider dropdown lists every provider discovered in any loaded assembly,
-/// plus a <c>(None)</c> option that leaves the input unbound. When the selected provider declares inputs, each one is
-/// rendered as a nested resolver section so designers can author the value (a constant, a variable, activation data,
-/// and so on) that the provider receives.
+/// Resolver editor that binds a node's optional activation-data input to an <c>IAbilityActivationDataProvider</c>. The
+/// provider dropdown lists every provider discovered in any loaded assembly, plus a <c>(None)</c> option that leaves
+/// the input unbound. When the selected provider declares members, each one is rendered as a nested resolver section so
+/// designers can author the value (a constant, a variable, activation data, and so on) that the provider receives.
 /// </summary>
 [Tool]
-internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProperty
+internal sealed partial class AbilityActivatorResolverEditor : NodeEditorProperty
 {
 	private readonly List<string> _providerClassNames = [];
 	private readonly List<InputSection> _inputSections = [];
@@ -36,15 +35,15 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 	private string _selectedProviderClassName = string.Empty;
 
 	/// <inheritdoc/>
-	public override string DisplayName => "Custom Parameters";
+	public override string DisplayName => "Activation Data";
 
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "CueCustomParameters";
+	public override string ResolverTypeId => "AbilityActivator";
 
 	/// <inheritdoc/>
 	public override bool IsCompatibleWith(Type expectedType)
 	{
-		return expectedType == typeof(System.Collections.Generic.Dictionary<StringKey, object>);
+		return expectedType == typeof(AbilityActivator);
 	}
 
 	/// <inheritdoc/>
@@ -62,11 +61,11 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		if (property?.Resolver is CueCustomParametersResolverResource paramsRes)
+		if (property?.Resolver is AbilityActivatorResolverResource activatorRes)
 		{
 			_selectedProviderClassName =
-				CueCustomParametersProviderRegistry.ResolveIdentifier(paramsRes.ProviderClassName);
-			LoadStoredResolvers(paramsRes);
+				AbilityActivationDataProviderRegistry.ResolveIdentifier(activatorRes.ProviderClassName);
+			LoadStoredResolvers(activatorRes);
 		}
 
 		var providerRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -95,7 +94,7 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 	{
 		CaptureCurrentResolvers();
 
-		var resource = new CueCustomParametersResolverResource
+		var resource = new AbilityActivatorResolverResource
 		{
 			ProviderClassName = _selectedProviderClassName,
 		};
@@ -148,7 +147,8 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (ProviderEntry<ICueCustomParametersProvider> entry in CueCustomParametersProviderRegistry.All)
+		foreach (ProviderEntry<IAbilityActivationDataProvider> entry
+			in AbilityActivationDataProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -159,7 +159,7 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 		return identifier;
 	}
 
-	private void LoadStoredResolvers(CueCustomParametersResolverResource resource)
+	private void LoadStoredResolvers(AbilityActivatorResolverResource resource)
 	{
 		_storedResolvers.Clear();
 
@@ -183,7 +183,8 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (ProviderEntry<ICueCustomParametersProvider> entry in CueCustomParametersProviderRegistry.All)
+		foreach (ProviderEntry<IAbilityActivationDataProvider> entry
+			in AbilityActivationDataProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);
@@ -238,14 +239,14 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 		_inputSections.Clear();
 
 		if (string.IsNullOrEmpty(_selectedProviderClassName)
-			|| !CueCustomParametersProviderRegistry.TryGet(
+			|| !AbilityActivationDataProviderRegistry.TryGet(
 				_selectedProviderClassName,
-				out ICueCustomParametersProvider provider))
+				out IAbilityActivationDataProvider provider))
 		{
 			return;
 		}
 
-		IReadOnlyList<CueCustomParameterInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<AbilityActivationDataMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
@@ -253,7 +254,7 @@ internal sealed partial class CueCustomParametersResolverEditor : NodeEditorProp
 		}
 	}
 
-	private void BuildInputSection(CueCustomParameterInput input)
+	private void BuildInputSection(AbilityActivationDataMember input)
 	{
 		if (_inputsContainer is null)
 		{

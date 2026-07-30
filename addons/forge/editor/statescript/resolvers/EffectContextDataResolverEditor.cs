@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver editor that binds a node's optional context-data input to an <c>IEffectContextDataProvider</c>. The
-/// provider dropdown lists every provider discovered in the project assembly, plus a <c>(None)</c> option that leaves
+/// provider dropdown lists every provider discovered in any loaded assembly, plus a <c>(None)</c> option that leaves
 /// the input unbound. When the selected provider declares inputs, each one is rendered as a nested resolver section so
 /// designers can author the value (a constant, a variable, activation data, and so on) that the provider receives.
 /// </summary>
@@ -147,7 +147,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (EffectContextDataProviderRegistry.ProviderEntry entry in EffectContextDataProviderRegistry.All)
+		foreach (ProviderEntry<IEffectContextDataProvider> entry in EffectContextDataProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -182,7 +182,7 @@ internal sealed partial class EffectContextDataResolverEditor : NodeEditorProper
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (EffectContextDataProviderRegistry.ProviderEntry entry in EffectContextDataProviderRegistry.All)
+		foreach (ProviderEntry<IEffectContextDataProvider> entry in EffectContextDataProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);

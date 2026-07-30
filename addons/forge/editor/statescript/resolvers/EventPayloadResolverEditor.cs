@@ -16,8 +16,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
 /// Resolver editor that binds the raise-event node's optional payload input to an <c>IEventPayloadProvider</c>. The
-/// provider dropdown lists every provider discovered in the project assembly, plus a <c>(None)</c> option that leaves
-/// the input unbound. When the selected provider declares inputs, each one is rendered as a nested resolver section so
+/// provider dropdown lists every provider discovered in any loaded assembly, plus a <c>(None)</c> option that leaves
+/// the input unbound. When the selected provider declares members, each one is rendered as a nested resolver section so
 /// designers can author the value the provider receives.
 /// </summary>
 [Tool]
@@ -147,7 +147,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 
 	private static string GetProviderDisplayName(string identifier)
 	{
-		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
+		foreach (ProviderEntry<IEventPayloadProvider> entry in EventPayloadProviderRegistry.All)
 		{
 			if (entry.Identifier == identifier)
 			{
@@ -182,7 +182,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		_providerDropdown.AddItem("(None)");
 		_providerClassNames.Add(string.Empty);
 
-		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
+		foreach (ProviderEntry<IEventPayloadProvider> entry in EventPayloadProviderRegistry.All)
 		{
 			_providerDropdown.AddItem(entry.DisplayName);
 			_providerClassNames.Add(entry.Identifier);
@@ -242,7 +242,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		IReadOnlyList<EventPayloadInput> declaredInputs = provider.Inputs;
+		IReadOnlyList<EventPayloadMember> declaredInputs = provider.Members;
 
 		for (int i = 0; i < declaredInputs.Count; i++)
 		{
@@ -250,7 +250,7 @@ internal sealed partial class EventPayloadResolverEditor : NodeEditorProperty
 		}
 	}
 
-	private void BuildInputSection(EventPayloadInput input)
+	private void BuildInputSection(EventPayloadMember input)
 	{
 		if (_inputsContainer is null)
 		{

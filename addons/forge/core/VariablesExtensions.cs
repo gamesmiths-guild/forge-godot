@@ -21,9 +21,8 @@ namespace Gamesmiths.Forge.Godot.Core;
 /// before storing them in the variable bag.
 /// </summary>
 /// <remarks>
-/// Use these overloads in data binder delegates (e.g., when implementing
-/// <see cref="Resources.IActivationDataProvider.CreateBehavior"/>) to avoid manual Godot-to-System.Numerics
-/// conversions.
+/// Use these overloads wherever game-side Godot values are written into a graph, such as a
+/// <c>GraphAbilityBehavior&lt;TData&gt;</c> data binder, to avoid manual Godot-to-System.Numerics conversions.
 /// </remarks>
 public static class VariablesExtensions
 {

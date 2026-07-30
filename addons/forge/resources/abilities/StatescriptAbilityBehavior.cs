@@ -1,14 +1,13 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Resources.Abilities;
@@ -21,7 +20,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 /// </summary>
 /// <remarks>
 /// If any node in the graph uses an <see cref="AbilityActivationDataResolverResource"/>, the behavior automatically
-/// detects the associated <see cref="IActivationDataProvider"/> implementation and produces the matching
+/// detects the associated <see cref="IAbilityActivationDataProvider"/> implementation and produces the matching
 /// <see cref="GraphAbilityBehavior{TData}"/> directly. When no activation data resolver is present, a plain
 /// <see cref="GraphAbilityBehavior"/> is created.
 /// </remarks>
@@ -34,7 +33,7 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 
 	private Graph? _cachedGraph;
 
-	private IActivationDataProvider? _cachedProvider;
+	private IAbilityActivationDataProvider? _cachedProvider;
 
 	private StatescriptGraph? _statescript;
 
@@ -67,51 +66,6 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		_statescriptChangedCallable = new Callable(this, nameof(OnStatescriptChanged));
 	}
 
-	public static IActivationDataProvider? InstantiateProvider(string className)
-	{
-		Type? type = AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(GetLoadableTypes)
-			.FirstOrDefault(
-				x => typeof(IActivationDataProvider).IsAssignableFrom(x)
-					&& !x.IsAbstract
-					&& !x.IsInterface
-					&& (x.AssemblyQualifiedName == className
-						|| x.FullName == className
-						|| x.Name == className));
-
-		if (type is null)
-		{
-			return null;
-		}
-
-		try
-		{
-			return Activator.CreateInstance(type) as IActivationDataProvider;
-		}
-		catch (MissingMethodException)
-		{
-			GD.PushError(
-				$"StatescriptAbilityBehavior: Activation data provider '{type.FullName}' must have a public " +
-				"parameterless constructor.");
-			return null;
-		}
-		catch (MemberAccessException)
-		{
-			GD.PushError(
-				$"StatescriptAbilityBehavior: Activation data provider '{type.FullName}' could not be instantiated " +
-				"because its constructor is not accessible.");
-			return null;
-		}
-		catch (TargetInvocationException ex)
-		{
-			string message = ex.InnerException?.Message ?? ex.Message;
-			GD.PushError(
-				$"StatescriptAbilityBehavior: Activation data provider '{type.FullName}' threw during " +
-				$"construction: {message}");
-			return null;
-		}
-	}
-
 	/// <inheritdoc/>
 	public override IAbilityBehavior GetBehavior()
 	{
@@ -131,41 +85,34 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 
 		if (_cachedProvider is not null)
 		{
-			Type activationDataType = _cachedProvider.ActivationDataType;
-			Type behaviorType = typeof(GraphAbilityBehavior<>).MakeGenericType(activationDataType);
+			Type behaviorType = typeof(GraphAbilityBehavior<>).MakeGenericType(_cachedProvider.DataType);
 			return (IAbilityBehavior)Activator.CreateInstance(behaviorType, _cachedGraph)!;
 		}
 
 		return new GraphAbilityBehavior(_cachedGraph);
 	}
 
-	private static IActivationDataProvider? FindActivationDataProvider(StatescriptGraph graph)
+	// Only the read-side resolver counts: it means this graph reads the data its own ability was activated with, so the
+	// behavior must be the typed one. A send-side AbilityActivatorResolverResource describes data going out to some
+	// other ability and says nothing about this graph's own activation data.
+	private static IAbilityActivationDataProvider? FindActivationDataProvider(StatescriptGraph graph)
 	{
 		foreach (StatescriptNode node in graph.Nodes)
 		{
 			foreach (StatescriptNodeProperty binding in node.PropertyBindings)
 			{
 				if (binding.Resolver
-					is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver)
+						is AbilityActivationDataResolverResource { ProviderClassName.Length: > 0 } resolver
+					&& AbilityActivationDataProviderRegistry.TryGet(
+						resolver.ProviderClassName,
+						out IAbilityActivationDataProvider provider))
 				{
-					return InstantiateProvider(resolver.ProviderClassName);
+					return provider;
 				}
 			}
 		}
 
 		return null;
-	}
-
-	private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
-	{
-		try
-		{
-			return assembly.GetTypes();
-		}
-		catch (ReflectionTypeLoadException ex)
-		{
-			return ex.Types.Where(type => type is not null)!;
-		}
 	}
 
 	private void InvalidateCachedBehavior()

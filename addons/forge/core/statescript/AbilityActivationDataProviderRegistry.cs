@@ -7,21 +7,21 @@ using Gamesmiths.Forge.Statescript.Providers;
 namespace Gamesmiths.Forge.Godot.Core.Statescript;
 
 /// <summary>
-/// Registry of <see cref="IEventPayloadProvider"/> implementations, so new event payload providers can be selected on
-/// the event nodes without modifying the plugin or editor.
+/// Registry of <see cref="IAbilityActivationDataProvider"/> implementations, so new activation-data types can be
+/// selected on the ability activation nodes and on the activation-data resolver without modifying the plugin or editor.
 /// </summary>
 /// <remarks>
 /// Discovery, caching and identifier resolution are shared with the other provider registries through
 /// <see cref="ProviderCatalog{TProvider}"/>; see it for the discovery rules and the stateless-provider requirement.
 /// </remarks>
-public static class EventPayloadProviderRegistry
+public static class AbilityActivationDataProviderRegistry
 {
-	private static readonly ProviderCatalog<IEventPayloadProvider> _catalog = new();
+	private static readonly ProviderCatalog<IAbilityActivationDataProvider> _catalog = new();
 
 	/// <summary>
-	/// Gets all registered event payload providers.
+	/// Gets all registered activation-data providers.
 	/// </summary>
-	public static IReadOnlyList<ProviderEntry<IEventPayloadProvider>> All => _catalog.All;
+	public static IReadOnlyList<ProviderEntry<IAbilityActivationDataProvider>> All => _catalog.All;
 
 	/// <summary>
 	/// Gets the stable identifier stored in resources for the given provider type.
@@ -39,7 +39,7 @@ public static class EventPayloadProviderRegistry
 	/// <param name="identifier">The provider identifier (full name or simple name).</param>
 	/// <param name="provider">The matching provider when found.</param>
 	/// <returns><see langword="true"/> when a provider is registered for the identifier.</returns>
-	public static bool TryGet(string identifier, out IEventPayloadProvider provider)
+	public static bool TryGet(string identifier, out IAbilityActivationDataProvider provider)
 	{
 		return _catalog.TryGet(identifier, out provider);
 	}

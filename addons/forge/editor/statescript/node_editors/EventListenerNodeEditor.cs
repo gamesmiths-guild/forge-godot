@@ -17,7 +17,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// <summary>
 /// Node editor for the <c>EventListenerNode</c>. Renders the event-tag and listen-on inputs, then an Output Variables
 /// section with the built-in Source/Target (entity) and Magnitude (float) outputs plus a payload provider whose
-/// declared outputs each bind to a graph variable of the matching type. Variable dropdowns are filtered by the output's
+/// declared members each bind to a graph variable of the matching type. Variable dropdowns are filtered by the member's
 /// type, and the default editor cannot bind object-lane outputs, so this node needs its own editor.
 /// </summary>
 [Tool]
@@ -228,7 +228,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 		PopulatePayloadProviderDropdown();
 		providerRow.AddChild(_payloadProviderDropdown);
 
-		// The provider's declared outputs render nested inside the payload foldable so collapsing Payload hides them
+		// The provider's declared members render nested inside the payload foldable so collapsing Payload hides them
 		// behind the pill.
 		_payloadOutputsContainer = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 		payloadBody.AddChild(_payloadOutputsContainer);
@@ -289,7 +289,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 		_payloadProviderDropdown.AddItem("(None)");
 		_payloadProviderClassNames.Add(string.Empty);
 
-		foreach (EventPayloadProviderRegistry.ProviderEntry entry in EventPayloadProviderRegistry.All)
+		foreach (ProviderEntry<IEventPayloadProvider> entry in EventPayloadProviderRegistry.All)
 		{
 			_payloadProviderDropdown.AddItem(entry.DisplayName);
 			_payloadProviderClassNames.Add(entry.Identifier);
@@ -344,7 +344,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 			return;
 		}
 
-		IReadOnlyList<EventPayloadOutput> declaredOutputs = provider.Outputs;
+		IReadOnlyList<EventPayloadMember> declaredOutputs = provider.Members;
 
 		for (int i = 0; i < declaredOutputs.Count; i++)
 		{
@@ -389,7 +389,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 			if (EventPayloadProviderRegistry.TryGet(_selectedPayloadProvider, out IEventPayloadProvider provider))
 			{
-				foreach (string outputName in provider.Outputs.Select(output => output.Name))
+				foreach (string outputName in provider.Members.Select(member => member.Name))
 				{
 					string variableName = _payloadVariableByOutput.GetValueOrDefault(outputName, string.Empty);
 

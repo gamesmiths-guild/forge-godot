@@ -4,7 +4,6 @@
 using System;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
-using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
@@ -108,19 +107,17 @@ internal sealed partial class RaiseEventNodeEditor : CustomNodeEditor
 			_inputEditorsContainer,
 			TargetIsArrayKey);
 
-		// Remaining inputs (source / magnitude / payload) are optional scalar values.
+		// Remaining inputs (source / magnitude / payload) are optional scalar values. The payload input defaults to
+		// the event payload provider editor through StatescriptResolverRegistry's per-type default for
+		// EventPayloadRaiser, alongside the other provider-backed inputs.
 		for (int i = 2; i < _cachedTypeInfo.InputPropertiesInfo.Length; i++)
 		{
 			StatescriptNodeDiscovery.InputPropertyInfo info = _cachedTypeInfo.InputPropertiesInfo[i];
 
-			// Default the payload input (an EventPayloadRaiser) to the event payload provider editor.
-			string? preferred = info.ExpectedType == typeof(EventPayloadRaiser) ? "EventPayload" : null;
-
 			AddInputPropertyRow(
 				new StatescriptNodeDiscovery.InputPropertyInfo(info.Label, info.ExpectedType, false),
 				i,
-				_inputEditorsContainer,
-				preferredDefaultResolverTypeId: preferred);
+				_inputEditorsContainer);
 		}
 	}
 }

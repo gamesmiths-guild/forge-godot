@@ -9,9 +9,9 @@ Authors the custom typed payload of an event for the event nodes. A single `IEve
 
 ## Authoring in Godot
 
-Both sides expose a single **Provider** dropdown listing every `IEventPayloadProvider` discovered in the project assembly, plus a **(None)** option that leaves the input unbound.
+Both sides expose a single **Provider** dropdown listing every `IEventPayloadProvider` discovered in any loaded assembly, plus a **(None)** option that leaves the input unbound.
 
-To make a provider appear in either dropdown, derive from `EventPayloadProvider<TPayload>` and override `CreatePayload` (build) and `WriteOutputs` (decompose):
+To make a provider appear in either dropdown, derive from `EventPayloadProvider<TPayload>`, declare `Members` once, and override `CreatePayload` (build) and `WriteOutputs` (decompose):
 
 ```csharp
 using System.Collections.Generic;
@@ -22,11 +22,8 @@ public sealed record HitEventPayload(int Damage, bool IsCritical);
 
 public sealed class HitEventPayloadProvider : EventPayloadProvider<HitEventPayload>
 {
-    public override IReadOnlyList<EventPayloadInput> Inputs =>
-        [new EventPayloadInput("Damage", typeof(int)), new EventPayloadInput("IsCritical", typeof(bool))];
-
-    public override IReadOnlyList<EventPayloadOutput> Outputs =>
-        [new EventPayloadOutput("Damage", typeof(int)), new EventPayloadOutput("IsCritical", typeof(bool))];
+    public override IReadOnlyList<EventPayloadMember> Members =>
+        [new EventPayloadMember("Damage", typeof(int)), new EventPayloadMember("IsCritical", typeof(bool))];
 
     public override HitEventPayload CreatePayload(GraphContext graphContext, EventPayloadInputs inputs)
         => new(inputs.Get<int>("Damage"), inputs.Get<bool>("IsCritical"));
@@ -38,6 +35,8 @@ public sealed class HitEventPayloadProvider : EventPayloadProvider<HitEventPaylo
     }
 }
 ```
+
+The one member list drives both nodes: authored resolvers on the raise side, graph-variable bindings on the listener side.
 
 See [Custom Statescript Nodes](../nodes/custom-nodes.md#event-payload-providers) for the full provider workflow.
 

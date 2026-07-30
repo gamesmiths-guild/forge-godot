@@ -373,39 +373,59 @@ Port labels also come from the runtime node definition. When creating ports, pas
 
 Constructor parameters are matched by name to entries in the node's `CustomData` dictionary. Parameter types that can be converted from Godot `Variant` values are supported (strings, numbers, `StringKey`, etc.). A parameter with no matching entry falls back to its declared default value.
 
-## Activation Data Providers
+## Ability Activation Data Providers
 
-For abilities that receive custom typed data on activation, you can create an `IActivationDataProvider` that declares which fields the graph can bind to:
+Custom typed data passed when an ability is activated travels in two directions, and **one provider covers both**:
+
+- **Sending** — a graph builds the data and passes it when `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, or `GrantAbilityAndActivateOnceNode` activates an ability.
+- **Reading** — the activated ability's own graph reads members back out through the **Activation Data** resolver.
+
+Derive from `AbilityActivationDataProvider<TData>`, declare `Members` once, and override `CreateData`:
 
 ```csharp
-using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Providers;
 
 public record struct DashData(float Distance, float Speed);
 
-public class DashDataProvider : IActivationDataProvider
+public sealed class DashDataProvider : AbilityActivationDataProvider<DashData>
 {
-    public Type ActivationDataType => typeof(DashData);
+    public override IReadOnlyList<AbilityActivationDataMember> Members =>
+    [
+        new AbilityActivationDataMember("Distance", typeof(float)),
+        new AbilityActivationDataMember("Speed", typeof(float)),
+    ];
 
-    public ForgeActivationDataField[] GetFields()
+    public override DashData CreateData(GraphContext graphContext, AbilityActivationDataInputs inputs)
     {
-        return
-        [
-            new ForgeActivationDataField("Distance", StatescriptVariableType.Float),
-            new ForgeActivationDataField("Speed", StatescriptVariableType.Float),
-        ];
+        return new DashData(inputs.Get<float>("Distance"), inputs.Get<float>("Speed"));
     }
 }
 ```
 
-Once defined:
+Once defined, on the **sending** side:
 
-1. The provider appears automatically in the Activation Data resolver dropdown in the graph editor.
-2. Nodes can bind input properties to the provider's fields.
-3. At runtime, when the ability is activated with `DashData`, the resolver reads the selected public field or property directly from that payload.
+1. The provider appears automatically in the **Activation Data** input dropdown on the three ability activation nodes.
+2. Each declared member renders its own nested resolver dropdown under the provider, so designers author the values directly on the node; `CreateData` reads them from the `AbilityActivationDataInputs` bag. Leave the provider dropdown on **(None)** to activate without custom data.
+3. At runtime, the activated ability's `IAbilityBehavior<DashData>` receives the value.
 
-> **Field types:** Fields may be any type `Variant128` supports (numbers and `System.Numerics` `Vector2`/`Vector3`/`Vector4`/`Quaternion`/`Plane`), plus the matching **Godot** math types (`Godot.Vector3`, etc.), which Forge for Godot converts automatically. Other types need a graph-variable binder or a custom resolver.
+An ability whose behavior does not accept `TData` still activates and simply ignores the data, which is what makes `TryActivateAbilitiesByTagNode` safe when one tag selects abilities with different activation-data types.
 
-> **Constraint:** A graph supports only one activation data provider. If nodes already reference a provider, subsequent nodes are restricted to the same one.
+And on the **reading** side, from the same declaration:
+
+1. The provider appears in the **Activation Data** resolver's provider dropdown, and its field dropdown lists the declared members — `Distance` and `Speed` here.
+2. `StatescriptAbilityBehavior` sees the resolver, reads the provider's data type, and builds a `GraphAbilityBehavior<DashData>` so the graph receives the typed payload.
+3. The resolver reads the selected member straight off that payload.
+
+Because the reading side resolves members on `TData` by name, each `Name` must match a public field or property there — it cannot be an alias. A provider that builds its data purely from graph state, with nothing to author or read back, simply declares no members.
+
+> **Member types:** Declare the type **as the graph sees it** — any type `Variant128` supports (numbers and `System.Numerics` `Vector2`/`Vector3`/`Vector4`/`Quaternion`/`Plane`). Members declared as other types are not offered in either dropdown; reach them with a graph-variable binder or a custom resolver.
+>
+> When `TData` stores **Godot** math types, still declare the `System.Numerics` equivalent: convert on the way in inside `CreateData` (`new Vector3(v.X, v.Y, v.Z)`), and Forge for Godot converts on the way out automatically when the member is read.
+
+> **Constraint:** A graph supports only one activation data provider on the reading side. If nodes already reference a provider, subsequent nodes are restricted to the same one. This does not limit the sending side, where a graph may activate several abilities with different data types.
+
+Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `AbilityActivationDataInputs` inside `CreateData`. See [AbilityActivatorResolver](../resolvers/ability-activator-resolver.md).
 
 ## Effect Context Data Providers
 
@@ -523,7 +543,7 @@ Providers are discovered via reflection and shared as cached instances, so keep 
 
 An event payload provider builds the custom `EventData.Payload` for the [RaiseEventNode](raise-event-node.md) and decomposes a received payload into graph variables for the [EventListenerNode](event-listener-node.md). The same provider serves both directions.
 
-Derive from `EventPayloadProvider<TPayload>` and override `CreatePayload` (build) and `WriteOutputs` (decompose):
+Derive from `EventPayloadProvider<TPayload>`, declare `Members` once, and override `CreatePayload` (build) and `WriteOutputs` (decompose):
 
 ```csharp
 using System.Collections.Generic;
@@ -534,11 +554,8 @@ public sealed record HitEventPayload(int Damage, bool IsCritical);
 
 public sealed class HitEventPayloadProvider : EventPayloadProvider<HitEventPayload>
 {
-    public override IReadOnlyList<EventPayloadInput> Inputs =>
-        [new EventPayloadInput("Damage", typeof(int)), new EventPayloadInput("IsCritical", typeof(bool))];
-
-    public override IReadOnlyList<EventPayloadOutput> Outputs =>
-        [new EventPayloadOutput("Damage", typeof(int)), new EventPayloadOutput("IsCritical", typeof(bool))];
+    public override IReadOnlyList<EventPayloadMember> Members =>
+        [new EventPayloadMember("Damage", typeof(int)), new EventPayloadMember("IsCritical", typeof(bool))];
 
     public override HitEventPayload CreatePayload(GraphContext graphContext, EventPayloadInputs inputs)
         => new(inputs.Get<int>("Damage"), inputs.Get<bool>("IsCritical"));
@@ -554,12 +571,14 @@ public sealed class HitEventPayloadProvider : EventPayloadProvider<HitEventPaylo
 Once defined:
 
 1. The provider appears automatically in the **Payload** input dropdown on both event nodes.
-2. On `RaiseEventNode`, the declared `Inputs` render as nested resolver sections and the provider builds the payload from them. On `EventListenerNode`, the declared `Outputs` each render as a graph-variable dropdown and the provider writes the received payload's values into them.
+2. On `RaiseEventNode`, each declared member renders as a nested resolver section and `CreatePayload` builds the payload from them. On `EventListenerNode`, the same members each render as a graph-variable dropdown, which `WriteOutputs` writes into.
 3. Leave the dropdown on **(None)** to raise or listen without a payload.
+
+Both methods key off the declared names, so the two nodes stay in step by construction.
 
 When a provider is bound, both event nodes use the typed (non-boxing) path: `RaiseEventNode` raises the provider's typed `EventData<TPayload>` (`EventManager.Raise<TPayload>`), and `EventListenerNode` subscribes through the provider's payload type (`EventManager.Subscribe<TPayload>`) and decomposes the typed payload directly, so a raise node and a listener sharing a provider connect with **no boxing**. Use a typed provider for hot, value-type payloads. A provider-less listener falls back to the non-generic catch-all (receives any payload type, boxed); a payload-less raise is non-generic.
 
-`EventPayloadInputs.Get<T>` reads a declared input (`default` when unbound); `EventPayloadOutputs.Set<T>` / `SetObject` write declared outputs to the bound graph variables. Declared input/output types must be supported by `Variant128`; read or write object-lane values (entities, tags) directly through the `GraphContext` or `SetObject`.
+`EventPayloadInputs.Get<T>` reads a declared member on the raise side (`default` when unbound); `EventPayloadOutputs.Set<T>` / `SetObject` write it on the listener side. Declared types must be supported by `Variant128`; read or write object-lane values (entities, tags) directly through the `GraphContext` or `SetObject`.
 
 Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build and decompose everything fresh from the supplied arguments. See [EventPayloadResolver](../resolvers/event-payload-resolver.md).
 

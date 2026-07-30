@@ -1,9 +1,10 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
-using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
+using Gamesmiths.Forge.Statescript.Providers;
 using Godot;
 
 using ForgeNode = Gamesmiths.Forge.Statescript.Node;
@@ -11,11 +12,13 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that binds a node property to a field declared by an <see cref="IActivationDataProvider"/>.
+/// Resolver resource that binds a node property to one of an <see cref="IAbilityActivationDataProvider"/>'s declared
+/// members.
 /// </summary>
 /// <remarks>
 /// At build time this resource constructs Forge's core <see cref="AbilityActivationDataResolver"/> so the selected
-/// member is read directly from the typed activation-data payload.
+/// member is read directly from the typed activation-data payload. It reads the same provider that builds the data on
+/// the sending side (see <c>AbilityActivatorResolverResource</c>).
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -25,7 +28,8 @@ public partial class AbilityActivationDataResolverResource : StatescriptResolver
 	public override string ResolverTypeId => "AbilityActivationData";
 
 	/// <summary>
-	/// Gets or sets the class name of the <see cref="IActivationDataProvider"/> implementation that declares the field.
+	/// Gets or sets the class name of the <see cref="IAbilityActivationDataProvider"/> implementation that declares the
+	/// field.
 	/// </summary>
 	[Export]
 	public string ProviderClassName { get; set; } = string.Empty;
@@ -87,29 +91,27 @@ public partial class AbilityActivationDataResolverResource : StatescriptResolver
 
 	private IPropertyResolver BuildAbilityActivationDataResolver(string? nodeId = null, byte? index = null)
 	{
-		IActivationDataProvider? provider = StatescriptAbilityBehavior.InstantiateProvider(ProviderClassName);
-		if (provider is null)
+		if (!AbilityActivationDataProviderRegistry.TryGet(
+			ProviderClassName,
+			out IAbilityActivationDataProvider provider))
 		{
 			string location = nodeId is not null && index is not null
 				? $" on node '{nodeId}' (input {index})"
 				: string.Empty;
 
 			GD.PushError(
-				$"Statescript: Could not instantiate activation data provider '{ProviderClassName}'{location}. " +
+				$"Statescript: Could not find activation data provider '{ProviderClassName}'{location}. " +
 				"The resolver will return a default value.");
 			return new VariantResolver(default, typeof(int));
 		}
 
 		// Godot math-typed fields (e.g. Godot.Vector3) are not Variant128-constructable, so convert them in the Godot
 		// layer before falling back to the core resolver for natively supported types.
-		if (GodotActivationDataResolver.TryCreate(
-			provider.ActivationDataType,
-			FieldName,
-			out IPropertyResolver resolver))
+		if (GodotActivationDataResolver.TryCreate(provider.DataType, FieldName, out IPropertyResolver resolver))
 		{
 			return resolver;
 		}
 
-		return new AbilityActivationDataResolver(provider.ActivationDataType, FieldName);
+		return new AbilityActivationDataResolver(provider.DataType, FieldName);
 	}
 }
