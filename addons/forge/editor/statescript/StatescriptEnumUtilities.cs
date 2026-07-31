@@ -175,8 +175,8 @@ internal static class StatescriptEnumUtilities
 		{
 			string path = directory.GetFilePath(i);
 
-			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
+			if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)
+				&& !path.EndsWith(".res", StringComparison.OrdinalIgnoreCase))
 			{
 				continue;
 			}

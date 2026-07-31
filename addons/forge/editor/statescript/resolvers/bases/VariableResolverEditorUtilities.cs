@@ -36,8 +36,8 @@ internal static class VariableResolverEditorUtilities
 		for (int i = 0; i < dir.GetFileCount(); i++)
 		{
 			string path = dir.GetFilePath(i);
-			if (!path.EndsWith(".tres", StringComparison.InvariantCultureIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.InvariantCultureIgnoreCase))
+			if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)
+				&& !path.EndsWith(".res", StringComparison.OrdinalIgnoreCase))
 			{
 				continue;
 			}
