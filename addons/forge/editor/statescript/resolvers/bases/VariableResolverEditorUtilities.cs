@@ -42,11 +42,16 @@ internal static class VariableResolverEditorUtilities
 				continue;
 			}
 
-			Resource resource = ResourceLoader.Load(path);
-			if (resource is ForgeSharedVariableSet)
+			// The recorded script class comes from the resource header, so the type is known without opening the
+			// file. Loading every resource in the project here crashed the editor whenever this ran during layout
+			// restore, while the C# script instances were still being bound.
+			if (dir.GetFileScriptClassName(i) != nameof(ForgeSharedVariableSet)
+				&& dir.GetFileType(i) != nameof(ForgeSharedVariableSet))
 			{
-				results.Add(path);
+				continue;
 			}
+
+			results.Add(path);
 		}
 
 		for (int i = 0; i < dir.GetSubdirCount(); i++)
