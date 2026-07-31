@@ -10,7 +10,9 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 {
 	public override bool _CanHandle(GodotObject @object)
 	{
-		return @object is Resources.ForgeModifier || @object is Resources.ForgeCue;
+		return @object is Resources.ForgeModifier
+			|| @object is Resources.ForgeCue
+			|| @object is Resources.Components.ForgeAttributeRequirement;
 	}
 
 	public override bool _ParseProperty(

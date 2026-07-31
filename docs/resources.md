@@ -128,12 +128,29 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 
 ### Built-in Effect Components
 
+- **AttributeRequirements**: Sets attribute-value based application/ongoing/removal requirements on the target.
+- **BlockAbilityTags**: Blocks abilities carrying the given tags from activating while the effect is active.
+- **CancelAbilityTags**: Cancels active abilities selected by tag, on application or on each execution.
 - **ChanceToApplyEffect**: Adds a chance for an effect to be applied.
 - **GrantAbility**: Grants one or more abilities when active.
 - **ModifierTags**: Adds tags to the target when the effect is applied.
+- **SourceAttributeRequirements**: The same gates as AttributeRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
+- **SourceTagRequirements**: The same gates as TargetTagRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **TargetTagRequirements**: Sets tag/query-based application/ongoing/removal requirements.
 
 All of these extend `ForgeEffectComponent` and can be added to effect data in the inspector.
+
+#### ForgeAttributeRequirement
+
+The two requirements components above take arrays of `ForgeAttributeRequirement` sub-resources, one per condition.
+
+**Properties:**
+
+- **Attribute**: The attribute to inspect. Picked from a dropdown tree of the project's scanned attribute sets, the same picker `ForgeModifier` uses, so there is nothing to type and nothing to mistype.
+- **HasMinValue** / **MinValue**, **HasMaxValue** / **MaxValue**: The inclusive bounds. Godot cannot export a nullable float, so each bound is a toggle plus its value, and the value field only appears once its toggle is on.
+- **ThresholdType**: Whether the bounds are raw values or percentages of the attribute's max.
+- **CalculationType**: Which value to read from the attribute.
+- **FinalChannel**: Only shown when CalculationType is `MagnitudeEvaluatedUpToChannel`.
 
 ## Cue Resources
 
