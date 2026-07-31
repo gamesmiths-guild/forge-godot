@@ -36,6 +36,11 @@ public partial class AttributeRequirements : ForgeEffectComponent
 
 		foreach (ForgeAttributeRequirement requirement in requirements)
 		{
+			if (requirement is null)
+			{
+				continue;
+			}
+
 			converted.Add(requirement.GetAttributeRequirement());
 		}
 

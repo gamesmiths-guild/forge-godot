@@ -134,8 +134,8 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 - **ChanceToApplyEffect**: Adds a chance for an effect to be applied.
 - **GrantAbility**: Grants one or more abilities when active.
 - **ModifierTags**: Adds tags to the target when the effect is applied.
-- **SourceAttributeRequirements**: The same gates as AttributeRequirements, read from the effect's source or owner.
-- **SourceTagRequirements**: The same gates as TargetTagRequirements, read from the effect's source or owner.
+- **SourceAttributeRequirements**: The same gates as AttributeRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
+- **SourceTagRequirements**: The same gates as TargetTagRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **TargetTagRequirements**: Sets tag/query-based application/ongoing/removal requirements.
 
 All of these extend `ForgeEffectComponent` and can be added to effect data in the inspector.
