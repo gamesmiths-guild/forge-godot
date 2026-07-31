@@ -1,0 +1,19 @@
+# Disable MSBuild node reuse for command-line builds of this repo.
+#
+# Roslyn matches .editorconfig sections to source files by comparing absolute paths CASE-SENSITIVELY. MSBuild caches
+# its directory walk inside worker nodes, and those nodes are reused across builds by default. If one build refers to
+# these repos as c:\projects\... and the next as C:\Projects\..., the reused node hands the compiler an .editorconfig
+# whose path casing does not match the source files. No section matches, every dotnet_diagnostic severity in
+# .editorconfig is silently ignored, and the build floods with thousands of default-severity analyzer warnings
+# (SA1101, SA1200, SA1309, ...) on files nobody touched.
+#
+# This solution also compiles ../forge/Forge/Forge.csproj, so it can poison or be poisoned by builds of that repo.
+# Godot launches builds with a lowercase project path, while a shell or IDE typically uses the real on-disk casing.
+# Not reusing nodes means each build derives the path once, from its own command line, so the casing stays
+# self-consistent.
+#
+# Cost: a small startup penalty per build, since worker nodes are not kept alive between invocations.
+#
+# If a build ever does report thousands of analyzer warnings on untouched files, run `dotnet build-server shutdown`
+# to clear the poisoned node pool.
+-nodeReuse:false
