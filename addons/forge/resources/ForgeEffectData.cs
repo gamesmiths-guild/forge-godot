@@ -42,6 +42,9 @@ public partial class ForgeEffectData : Resource
 	[Export]
 	public bool SnapshotLevel { get; set; } = true;
 
+	[Export]
+	public ForgeTagContainer? EffectTags { get; set; }
+
 	[ExportGroup("Modifier Data")]
 
 	[Export(PropertyHint.ResourceType, "ForgeModifier")]
@@ -260,7 +263,8 @@ public partial class ForgeEffectData : Resource
 			RequireModifierSuccessToTriggerCue,
 			SuppressStackingCues,
 			[.. executions],
-			[.. cues]);
+			[.. cues],
+			EffectTags?.GetTagContainer());
 
 		return _data.Value;
 	}
