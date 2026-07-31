@@ -33,16 +33,20 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [AbilityStateResolver](ability-state-resolver.md) | `bool` | Reads a state flag (is active/inhibited/valid dropdown) from an ability. |
 | [ActiveEffectDataResolver](active-effect-data-resolver.md) | `double`/`int`/`bool` | Reads a selected runtime value (remaining duration, stacks, level, ... dropdown) from an active effect handle. |
 | [ActiveEffectEffectResolver](active-effect-effect-resolver.md) | `Effect?` | Reads the live `Effect` behind an active effect handle. |
+| [ActiveEffectOwnerResolver](active-effect-source-resolver.md) | `IForgeEntity?` | Reads the entity that triggered an active effect. |
+| [ActiveEffectSourceResolver](active-effect-source-resolver.md) | `IForgeEntity?` | Reads the entity that applied an active effect. |
+| [ActiveEffectTagQueryResolver](active-effect-tag-query-resolver.md) | `bool` | Evaluates a tag query against an active effect's own tags, granted tags, or both. |
 | [ActiveEffectTargetResolver](active-effect-target-resolver.md) | `IForgeEntity?` | Reads the entity an active effect is applied to. |
 | [CanActivateAbilityResolver](can-activate-ability-resolver.md) | `bool` | Checks whether an ability can currently activate. |
 | [CueCustomParametersResolver](cue-custom-parameters-resolver.md) | `Dictionary<StringKey, object>` | Selects an `ICueCustomParametersProvider` to author the `CueParameters.CustomParameters` bag for the cue nodes. |
 | [CurveSampleResolver](curve-sample-resolver.md) | `float` | Samples a Godot `Curve` resource at a resolved position. |
 | [EffectContextDataResolver](effect-context-data-resolver.md) | `EffectApplicationContext` | Selects an `IEffectContextDataProvider` to pass custom context data into effect applications. |
+| [EffectQueryMatchResolver](effect-query-match-resolver.md) | `bool` | Matches a full `ForgeEffectQuery` against an active effect handle. |
 | [EffectResolver](effect-resolver.md) | `Effect` | Authors a single `Effect` (effect data + level + ownership) for `ApplyEffectNode` and `EffectNode`. |
 | [EffectStackDataResolver](effect-stack-data-resolver.md) | `int` | Aggregates stack/instance/level data (dropdown) over active applications of a `ForgeEffectData`. |
 | [EnumConstantResolver](../enums.md#authoring-values-the-enum-resolver) | `int` | Authors an integer constant by picking a member of a `ForgeStatescriptEnum` by name. |
 | [GetAbilityHandleResolver](get-ability-handle-resolver.md) | `AbilityHandle` | Looks up a granted ability by its `ForgeAbilityData` resource (cross-ability queries). |
-| [QueryActiveEffectsResolver](query-active-effects-resolver.md) | `ActiveEffectHandle[]` | Queries active effect handles on an entity, optionally filtered by a `ForgeEffectData`. |
+| [QueryActiveEffectsResolver](query-active-effects-resolver.md) | `ActiveEffectHandle[]` | Queries active effect handles on an entity, filtered by a `ForgeEffectQuery`. |
 | [SetByCallerMagnitudeResolver](set-by-caller-magnitude-resolver.md) | `float` | Reads the SetByCaller magnitude stored on an `Effect` for a selected tag. |
 | [EventPayloadOutputResolver](event-payload-resolver.md#listener-side-eventpayloadoutputresolver) | `EventPayloadWriter` | Selects an `IEventPayloadProvider` to write a received payload to graph variables for `EventListenerNode`. |
 | [EventPayloadResolver](event-payload-resolver.md#raise-side-eventpayloadresolver) | `EventPayloadRaiser` | Selects an `IEventPayloadProvider` to build and raise a typed event payload for `RaiseEventNode`. |

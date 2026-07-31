@@ -12,7 +12,12 @@ namespace Gamesmiths.Forge.Godot.Editor.Tags;
 [Tool]
 public partial class QueryExpressionEditorControl : VBoxContainer
 {
-	private const float LabelWidth = 66.0f;
+	/// <summary>
+	/// Width of the label column in the rows this control emits. Editors that place their own rows above or below an
+	/// embedded expression editor must use this same width, and keep their label text short enough to fit inside it —
+	/// a label wider than this grows its column and pushes its editor out of alignment with these rows.
+	/// </summary>
+	public const float LabelWidth = 66.0f;
 
 	private ForgeQueryExpression? _query;
 	private Action? _onChanged;

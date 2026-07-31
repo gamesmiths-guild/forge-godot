@@ -20,7 +20,7 @@ internal sealed partial class QueryActiveEffectsResolverEditor : EntityScopedRes
 {
 	private const float LabelWidth = 60.0f;
 
-	private ForgeEffectData? _selectedEffectData;
+	private ForgeEffectQuery? _selectedQuery;
 
 	public override string DisplayName => "Query Active Effects";
 
@@ -43,7 +43,7 @@ internal sealed partial class QueryActiveEffectsResolverEditor : EntityScopedRes
 		bool isArray)
 	{
 		var existingResource = property?.Resolver as QueryActiveEffectsResolverResource;
-		_selectedEffectData = existingResource?.EffectData;
+		_selectedQuery = existingResource?.Query;
 
 		InitializeEntityScope(graph, onChanged, existingResource?.EntityResolver);
 
@@ -51,18 +51,18 @@ internal sealed partial class QueryActiveEffectsResolverEditor : EntityScopedRes
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		var effectPicker = new EditorResourcePicker
+		var queryPicker = new EditorResourcePicker
 		{
-			BaseType = nameof(ForgeEffectData),
-			EditedResource = _selectedEffectData,
+			BaseType = nameof(ForgeEffectQuery),
+			EditedResource = _selectedQuery,
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
-		effectPicker.ResourceChanged += resource =>
+		queryPicker.ResourceChanged += resource =>
 		{
-			_selectedEffectData = resource as ForgeEffectData;
+			_selectedQuery = resource as ForgeEffectQuery;
 			NotifyChanged();
 		};
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Filter:", effectPicker, LabelWidth));
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Query:", queryPicker, LabelWidth));
 
 		root.AddChild(CreateEntitySelectorRow(LabelWidth));
 		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
@@ -74,7 +74,7 @@ internal sealed partial class QueryActiveEffectsResolverEditor : EntityScopedRes
 	{
 		property.Resolver = new QueryActiveEffectsResolverResource
 		{
-			EffectData = _selectedEffectData,
+			Query = _selectedQuery,
 			EntityResolver = BuildEntityResolverResource(),
 		};
 	}

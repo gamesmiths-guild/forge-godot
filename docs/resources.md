@@ -58,10 +58,30 @@ Describes all aspects of an effect: what it does and how it behaves.
 - `CanStack`, `StackPolicy`, etc.: How multiple applications interact.
 - `Cues` (Array\<ForgeCue\>): Audio/visual feedback links.
 - `SnapshotLevel` (bool): If the effect's level is fixed at application time.
+- `EffectTags` (ForgeTagContainer?): Identity tags for the effect itself. **Never granted to the target** — they classify the effect so `ForgeEffectQuery` can select it by category. The rule: granted tags (a ModifierTags component) for entity state, effect tags for identity.
 
 **Usage:**
 
 Assign to ForgeEffect nodes, ability costs/cooldowns, or code-driven effects.
+
+### ForgeEffectQuery
+
+Selects effects by identity, by the tags they grant, by their source, or by what they modify. Every field is optional and all filled-in fields are combined with **AND**; a query with nothing set matches every effect.
+
+**Properties:**
+
+- `EffectDefinition` (ForgeEffectData?): The exact effect data the effect was built from.
+- `EffectTagQuery` (ForgeQueryExpression?): Matched against the effect's own identity tags.
+- `GrantedTagQuery` (ForgeQueryExpression?): Matched against the tags the effect grants to its target.
+- `OwningTagQuery` (ForgeQueryExpression?): Matched against both sets together.
+- `SourceRequiredTags`, `SourceIgnoredTags` (ForgeTagContainer?), `SourceTagQuery` (ForgeQueryExpression?): Matched against the tags of the entity that applied the effect.
+- `ModifyingAttribute` (string): An attribute at least one of the effect's modifiers must target (full path). Leave empty to ignore.
+
+**Usage:**
+
+Assign to a [QueryActiveEffectsResolver](statescript/resolvers/query-active-effects-resolver.md) to dispel by category, or to an [EffectQueryMatchResolver](statescript/resolvers/effect-query-match-resolver.md) to test a single handle.
+
+The runtime `EffectQuery` also supports matching a specific source entity instance and an arbitrary predicate; neither can be authored as a resource, so both stay code-only.
 
 ### ForgeModifier
 

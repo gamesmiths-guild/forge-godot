@@ -17,7 +17,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class TagQueryResolverEditor : EntityScopedResolverEditorBase
 {
-	private const float LabelWidth = 66.0f;
+	// Shared with the embedded expression editor so our rows line up with the ones it contributes.
+	private const float LabelWidth = QueryExpressionEditorControl.LabelWidth;
 
 	private ForgeQueryExpression? _query;
 	private TagQuerySource _querySource = TagQuerySource.AllTags;

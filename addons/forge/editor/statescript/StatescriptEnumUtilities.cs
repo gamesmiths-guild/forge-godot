@@ -173,21 +173,24 @@ internal static class StatescriptEnumUtilities
 	{
 		for (int i = 0; i < directory.GetFileCount(); i++)
 		{
-			// The recorded type rules out most of a project's resources without loading them. Script-backed global
-			// classes are not always recorded by name, so plain "Resource" files still have to be opened to be sure.
-			string fileType = directory.GetFileType(i);
+			string path = directory.GetFilePath(i);
 
-			if (fileType != nameof(ForgeStatescriptEnum) && fileType != "Resource")
+			if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)
+				&& !path.EndsWith(".res", StringComparison.OrdinalIgnoreCase))
 			{
 				continue;
 			}
 
-			string path = directory.GetFilePath(i);
-
-			if (ResourceLoader.Load(path) is ForgeStatescriptEnum)
+			// The recorded type and script class both come from the resource header, so a script-backed global class
+			// is recognized without opening the file. Loading every candidate here crashed the editor whenever this
+			// ran during layout restore, while the C# script instances were still being bound.
+			if (directory.GetFileScriptClassName(i) != nameof(ForgeStatescriptEnum)
+				&& directory.GetFileType(i) != nameof(ForgeStatescriptEnum))
 			{
-				results.Add(path);
+				continue;
 			}
+
+			results.Add(path);
 		}
 
 		for (int i = 0; i < directory.GetSubdirCount(); i++)

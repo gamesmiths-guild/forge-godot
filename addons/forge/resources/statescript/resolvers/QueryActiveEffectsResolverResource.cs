@@ -13,12 +13,13 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that queries the handles of the active effects on an entity, optionally filtered by an effect
-/// data resource. Feed the result into a Remove Effect node for dispel patterns, or into array operations.
+/// Resolver resource that queries the handles of the active effects on an entity, filtered by an effect query. Feed
+/// the result into a Remove Effect node for dispel patterns, or into array operations.
 /// </summary>
 /// <remarks>
-/// The effect data is materialized lazily on first resolve, so editor-time graph builds never touch the runtime
-/// managers.
+/// <para>The query is materialized lazily on first resolve, so editor-time graph builds never touch the runtime
+/// managers.</para>
+/// <para>To select the applications of one specific effect, set the query's Effect Definition.</para>
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -28,10 +29,10 @@ public partial class QueryActiveEffectsResolverResource : StatescriptResolverRes
 	public override string ResolverTypeId => "QueryActiveEffects";
 
 	/// <summary>
-	/// Gets or sets the effect data to filter by. When unset, every active effect is returned.
+	/// Gets or sets the effect query to filter by. When unset, every active effect is returned.
 	/// </summary>
 	[Export]
-	public ForgeEffectData? EffectData { get; set; }
+	public ForgeEffectQuery? Query { get; set; }
 
 	/// <summary>
 	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
@@ -61,11 +62,11 @@ public partial class QueryActiveEffectsResolverResource : StatescriptResolverRes
 	{
 		valueArrayResolver = null;
 
-		ForgeEffectData? effectDataResource = EffectData;
+		ForgeEffectQuery? queryResource = Query;
 		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
 
 		objectArrayResolver = new LazyObjectArrayResolver<ActiveEffectHandle>(
-			() => new QueryActiveEffectsResolver(effectDataResource?.GetEffectData(), entityResolver));
+			() => new QueryActiveEffectsResolver(queryResource?.GetEffectQuery() ?? default, entityResolver));
 
 		return true;
 	}
