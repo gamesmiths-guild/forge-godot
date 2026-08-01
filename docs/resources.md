@@ -75,7 +75,7 @@ Selects effects by identity, by the tags they grant, by their source, or by what
 - `GrantedTagQuery` (ForgeQueryExpression?): Matched against the tags the effect grants to its target.
 - `OwningTagQuery` (ForgeQueryExpression?): Matched against both sets together.
 - `SourceRequiredTags`, `SourceIgnoredTags` (ForgeTagContainer?), `SourceTagQuery` (ForgeQueryExpression?): Matched against the tags of the entity that applied the effect.
-- `ModifyingAttribute` (string): An attribute at least one of the effect's modifiers must target (full path). Leave empty to ignore.
+- `ModifyingAttribute` (string): An attribute at least one of the effect's modifiers must target. Picked from the same dropdown tree of scanned attribute sets that `ForgeModifier` uses, which here also offers a **None** entry, since leaving the filter unset is a valid query rather than a missing value.
 
 **Usage:**
 
@@ -153,7 +153,9 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 - **CancelAbilityTags**: Cancels active abilities selected by tag, on application or on each execution.
 - **ChanceToApplyEffect**: Adds a chance for an effect to be applied.
 - **GrantAbility**: Grants one or more abilities when active.
+- **Immunity**: Blocks incoming effects matching its `ForgeEffectQuery` array while the effect is active. Duration effects only.
 - **ModifierTags**: Adds tags to the target when the effect is applied.
+- **RemoveOther**: Removes active effects matching its `ForgeEffectQuery` array when applied, never itself. `RemoveAllStacks`, on by default, removes each match outright; turn it off to reveal `StacksToRemove` and take that many stacks instead. Not allowed on periodic effects.
 - **SourceAttributeRequirements**: The same gates as AttributeRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **SourceTagRequirements**: The same gates as TargetTagRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **TargetTagRequirements**: Sets tag/query-based application/ongoing/removal requirements.

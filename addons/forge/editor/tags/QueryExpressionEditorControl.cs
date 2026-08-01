@@ -10,7 +10,7 @@ using Godot.Collections;
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
-public partial class QueryExpressionEditorControl : VBoxContainer
+public partial class QueryExpressionEditorControl : VBoxContainer, ISerializationListener
 {
 	/// <summary>
 	/// Width of the label column in the rows this control emits. Editors that place their own rows above or below an
@@ -48,16 +48,21 @@ public partial class QueryExpressionEditorControl : VBoxContainer
 
 	public override void _ExitTree()
 	{
-		if (_expressionTypeDropdown is not null && IsInstanceValid(_expressionTypeDropdown))
-		{
-			_expressionTypeDropdown.ItemSelected -= OnExpressionTypeChanged;
-		}
-
-		LayoutChanged = null;
-		_onChanged = null;
-		_expressionTypeDropdown = null;
-		_contentContainer = null;
+		ReleaseUiState();
 		base._ExitTree();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		// An assembly reload drops every delegate-backed signal connection, so they have to be released here, while
+		// they still exist. Doing it from _ExitTree alone means the disconnect runs against connections Godot already
+		// took away, which it reports as an error.
+		ReleaseUiState();
+	}
+
+	public void OnAfterDeserialize()
+	{
+		// This method is intentionally left blank.
 	}
 
 	private static HBoxContainer CreateLabeledRow(string labelText, Control editor)
@@ -116,6 +121,19 @@ public partial class QueryExpressionEditorControl : VBoxContainer
 			ExpressionType = TagQueryExpressionType.AnyTagsMatch,
 			TagContainer = new ForgeTagContainer(),
 		};
+	}
+
+	private void ReleaseUiState()
+	{
+		if (_expressionTypeDropdown is not null && IsInstanceValid(_expressionTypeDropdown))
+		{
+			_expressionTypeDropdown.ItemSelected -= OnExpressionTypeChanged;
+		}
+
+		LayoutChanged = null;
+		_onChanged = null;
+		_expressionTypeDropdown = null;
+		_contentContainer = null;
 	}
 
 	private void EnsureUi()

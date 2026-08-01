@@ -12,6 +12,7 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 	{
 		return @object is Resources.ForgeModifier
 			|| @object is Resources.ForgeCue
+			|| @object is Resources.ForgeEffectQuery
 			|| @object is Resources.Components.ForgeAttributeRequirement;
 	}
 
@@ -24,9 +25,15 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		if (name == "Attribute" || name == "CapturedAttribute" || name == "MagnitudeAttribute")
+		if (name is "Attribute" or "CapturedAttribute" or "MagnitudeAttribute" or "ModifyingAttribute")
 		{
-			AddPropertyEditor(name, new AttributeEditorProperty());
+			// MagnitudeAttribute and ModifyingAttribute are filters rather than targets: leaving either unset is a
+			// valid configuration, so the picker has to offer a way back to it. Attribute and CapturedAttribute are
+			// required, and stay unclearable.
+			AddPropertyEditor(name, new AttributeEditorProperty
+			{
+				AllowNone = name is "MagnitudeAttribute" or "ModifyingAttribute",
+			});
 			return true;
 		}
 

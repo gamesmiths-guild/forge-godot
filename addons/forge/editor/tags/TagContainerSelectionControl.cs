@@ -12,7 +12,7 @@ using GodotStringArray = Godot.Collections.Array<string>;
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
 [Tool]
-public partial class TagContainerSelectionControl : VBoxContainer
+public partial class TagContainerSelectionControl : VBoxContainer, ISerializationListener
 {
 	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
 
@@ -68,6 +68,39 @@ public partial class TagContainerSelectionControl : VBoxContainer
 
 	public override void _ExitTree()
 	{
+		ReleaseUiState();
+		base._ExitTree();
+	}
+
+	public void OnBeforeSerialize()
+	{
+		// An assembly reload drops every delegate-backed signal connection, so they have to be released here, while
+		// they still exist. Doing it from _ExitTree alone means the disconnect runs against connections Godot already
+		// took away, which it reports as an error.
+		ReleaseUiState();
+	}
+
+	public void OnAfterDeserialize()
+	{
+		// This method is intentionally left blank.
+	}
+
+	public void SetValue(GodotStringArray? value)
+	{
+		_currentValue = [];
+		if (value is not null)
+		{
+			_currentValue.AddRange(value);
+		}
+
+		if (_tree is not null)
+		{
+			RebuildTree();
+		}
+	}
+
+	private void ReleaseUiState()
+	{
 		if (_containerButton is not null && IsInstanceValid(_containerButton))
 		{
 			_containerButton.Toggled -= OnToggled;
@@ -85,21 +118,6 @@ public partial class TagContainerSelectionControl : VBoxContainer
 		_tree = null;
 		_checkedIcon = null;
 		_uncheckedIcon = null;
-		base._ExitTree();
-	}
-
-	public void SetValue(GodotStringArray? value)
-	{
-		_currentValue = [];
-		if (value is not null)
-		{
-			_currentValue.AddRange(value);
-		}
-
-		if (_tree is not null)
-		{
-			RebuildTree();
-		}
 	}
 
 	private void RebuildTree()
