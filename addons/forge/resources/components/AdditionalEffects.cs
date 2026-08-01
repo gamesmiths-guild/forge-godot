@@ -10,12 +10,12 @@ namespace Gamesmiths.Forge.Godot.Resources.Components;
 [GlobalClass]
 public partial class AdditionalEffects : ForgeEffectComponent
 {
+	[Export]
+	public bool CopyDataFromOriginalEffect { get; set; }
+
 	[ExportGroup("On Application")]
 	[Export]
 	public ForgeConditionalEffect[] OnApplication { get; set; } = [];
-
-	[Export]
-	public bool CopyDataFromOriginalEffect { get; set; }
 
 	[ExportGroup("On Complete")]
 	[Export]
