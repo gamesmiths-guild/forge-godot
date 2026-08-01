@@ -10,11 +10,18 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 {
 	private const int ButtonSize = 26;
 	private const int PopupSize = 300;
+	private const string NoneLabel = "None";
 
 	private Label? _label;
 	private Button? _button;
 	private Popup? _popup;
 	private Tree? _tree;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the picker offers a "None" entry, for properties where leaving the
+	/// attribute unset is a valid configuration rather than a missing one. Set before the editor enters the tree.
+	/// </summary>
+	public bool AllowNone { get; set; }
 
 	public override void _Ready()
 	{
@@ -61,7 +68,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		}
 
 		string value = GetEditedObject().Get(GetEditedProperty()).AsString();
-		_label.Text = string.IsNullOrEmpty(value) ? "None" : value;
+		_label.Text = string.IsNullOrEmpty(value) ? NoneLabel : value;
 	}
 
 	public override void _ExitTree()
@@ -82,9 +89,16 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		// This method was intentionally left blank.
 	}
 
-	private static void BuildAttributeTree(Tree tree)
+	private void BuildAttributeTree(Tree tree)
 	{
 		TreeItem root = tree.CreateItem();
+
+		if (AllowNone)
+		{
+			TreeItem noneItem = tree.CreateItem(root);
+			noneItem.SetText(0, NoneLabel);
+			noneItem.SetMeta("attribute_path", string.Empty);
+		}
 
 		foreach (string attributeSet in EditorUtils.GetAttributeSetOptions())
 		{
@@ -131,7 +145,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		}
 
 		string fullPath = item.GetMeta("attribute_path").AsString();
-		_label.Text = fullPath;
+		_label.Text = string.IsNullOrEmpty(fullPath) ? NoneLabel : fullPath;
 		EmitChanged(GetEditedProperty(), fullPath);
 		_popup.Hide();
 	}
