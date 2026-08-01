@@ -26,6 +26,7 @@ namespace Gamesmiths.Forge.Godot.Resources;
 public partial class ForgeEffectData : Resource
 {
 	private EffectData? _data;
+	private bool _building;
 
 	private DurationType _durationType;
 	private bool _hasPeriodicApplication;
@@ -221,52 +222,28 @@ public partial class ForgeEffectData : Resource
 			return _data.Value;
 		}
 
-		Modifiers ??= [];
-		Components ??= [];
-		Executions ??= [];
-		Cues ??= [];
-
-		var modifiers = new List<Modifier>();
-		foreach (ForgeModifier modifier in Modifiers)
+		// Components can reference other effects — AdditionalEffects above all — and nothing stops those references
+		// from closing into a loop. Building one would then recurse until the stack gives out, so the cycle is cut
+		// here and resolved to an inert effect instead.
+		if (_building)
 		{
-			modifiers.Add(modifier.GetModifier());
+			GD.PushError(
+				$"Effect '{Name}' references itself through its components, directly or by way of another effect. " +
+				"The cycle was cut and this reference resolved to an empty instant effect. Break the loop.");
+
+			return new EffectData(Name, new DurationData(DurationType.Instant));
 		}
 
-		var components = new List<IEffectComponent>();
-		foreach (ForgeEffectComponent component in Components)
+		_building = true;
+
+		try
 		{
-			components.Add(component.GetComponent());
+			return BuildEffectData();
 		}
-
-		var executions = new List<CustomExecution>();
-		foreach (ForgeCustomExecution execution in Executions)
+		finally
 		{
-			executions.Add(execution.GetExecutionClass());
+			_building = false;
 		}
-
-		var cues = new List<CueData>();
-		foreach (ForgeCue cue in Cues)
-		{
-			cues.Add(cue.GetCueData());
-		}
-
-		Debug.Assert(Name is not null, $"{nameof(Duration)} is not set.");
-
-		_data = new EffectData(
-			Name,
-			GetDurationData(),
-			[.. modifiers],
-			GetStackingData(),
-			GetPeriodicData(),
-			SnapshotLevel,
-			[.. components],
-			RequireModifierSuccessToTriggerCue,
-			SuppressStackingCues,
-			[.. executions],
-			[.. cues],
-			EffectTags?.GetTagContainer());
-
-		return _data.Value;
 	}
 
 #if TOOLS
@@ -365,6 +342,56 @@ public partial class ForgeEffectData : Resource
 		}
 	}
 #endif
+
+	private EffectData BuildEffectData()
+	{
+		Modifiers ??= [];
+		Components ??= [];
+		Executions ??= [];
+		Cues ??= [];
+
+		var modifiers = new List<Modifier>();
+		foreach (ForgeModifier modifier in Modifiers)
+		{
+			modifiers.Add(modifier.GetModifier());
+		}
+
+		var components = new List<IEffectComponent>();
+		foreach (ForgeEffectComponent component in Components)
+		{
+			components.Add(component.GetComponent());
+		}
+
+		var executions = new List<CustomExecution>();
+		foreach (ForgeCustomExecution execution in Executions)
+		{
+			executions.Add(execution.GetExecutionClass());
+		}
+
+		var cues = new List<CueData>();
+		foreach (ForgeCue cue in Cues)
+		{
+			cues.Add(cue.GetCueData());
+		}
+
+		Debug.Assert(Name is not null, $"{nameof(Duration)} is not set.");
+
+		_data = new EffectData(
+			Name,
+			GetDurationData(),
+			[.. modifiers],
+			GetStackingData(),
+			GetPeriodicData(),
+			SnapshotLevel,
+			[.. components],
+			RequireModifierSuccessToTriggerCue,
+			SuppressStackingCues,
+			[.. executions],
+			[.. cues],
+			EffectTags?.GetTagContainer());
+
+		return _data.Value;
+	}
 
 	private DurationData GetDurationData()
 	{

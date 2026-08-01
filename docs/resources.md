@@ -148,6 +148,7 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 
 ### Built-in Effect Components
 
+- **AdditionalEffects**: Applies further effects when the effect lands (`OnApplication`) and when it ends (`OnCompleteAlways` / `OnCompleteNormal` / `OnCompletePrematurely`). All four are arrays of `ForgeConditionalEffect`, so a completion effect can be gated on the source and aimed at it too — that is how a curse pays its caster back when it wears off. `CopyDataFromOriginalEffect` carries this effect's SetByCaller magnitudes over to everything it applies. The `OnComplete` arrays need a non-instant effect.
 - **AttributeRequirements**: Sets attribute-value based application/ongoing/removal requirements on the target.
 - **BlockAbilityTags**: Blocks abilities carrying the given tags from activating while the effect is active.
 - **CancelAbilityTags**: Cancels active abilities selected by tag, on application or on each execution.
@@ -161,6 +162,20 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 - **TargetTagRequirements**: Sets tag/query-based application/ongoing/removal requirements.
 
 All of these extend `ForgeEffectComponent` and can be added to effect data in the inspector.
+
+#### ForgeConditionalEffect
+
+`AdditionalEffects` takes an array of these in each of its four slots, one per effect it applies.
+
+**Properties:**
+
+- **EffectData**: The `ForgeEffectData` to apply. An entry without one is skipped and reported.
+- **ApplicationTarget**: Who receives it — `Target` (the default), `Source`, or `Owner`. Pointing it at `Source` is how lifesteal, recoil, and thorns are built without a custom execution.
+- **SourceRequiredTags** / **SourceIgnoredTags** / **SourceTagQuery**: Conditions read from the effect's **source**, not its target. Leave them empty to always apply.
+- **RemovalPolicy**: `Ignore` (the default) leaves the applied effect to live out its own duration; `RemoveOnEnd` takes it back when the applying effect ends. `RemoveOnEnd` needs both effects to be non-instant, and only means anything in `OnApplication` — the end it would take a completion effect back at is the one applying it. The field still shows in the inspector on a completion entry, since a resource cannot see which array holds it, but setting it there is rejected when the effect data is built.
+- **RemoveAllStacks** / **StacksToRemove**: Only shown under `RemoveOnEnd`. `RemoveAllStacks`, on by default, removes the applied effect outright; turn it off to reveal `StacksToRemove` and take that many stacks instead.
+
+> An effect that references itself through `AdditionalEffects`, directly or through another effect, is a loop. The cycle is cut when the effect data is built and reported through the editor's error log, but fix the configuration — the effects in the loop will not behave as authored.
 
 #### ForgeAttributeRequirement
 
