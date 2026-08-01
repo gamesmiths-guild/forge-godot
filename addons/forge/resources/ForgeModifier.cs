@@ -98,6 +98,9 @@ public partial class ForgeModifier : Resource
 	[Export]
 	public ForgeTag? CallerTargetTag { get; set; }
 
+	[Export]
+	public bool SnapshotSetByCaller { get; set; } = true;
+
 #if TOOLS
 	public bool IsInstantEffect { get; set; }
 #endif
@@ -161,7 +164,8 @@ public partial class ForgeModifier : Resource
 		}
 
 		if (CalculationType != MagnitudeCalculationType.SetByCaller
-			&& (property["name"].AsStringName() == PropertyName.CallerTargetTag))
+			&& (property["name"].AsStringName() == PropertyName.CallerTargetTag ||
+				property["name"].AsStringName() == PropertyName.SnapshotSetByCaller))
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
 		}
@@ -225,6 +229,6 @@ public partial class ForgeModifier : Resource
 			return null;
 		}
 
-		return new SetByCallerFloat(CallerTargetTag!.GetTag());
+		return new SetByCallerFloat(CallerTargetTag!.GetTag(), SnapshotSetByCaller);
 	}
 }
