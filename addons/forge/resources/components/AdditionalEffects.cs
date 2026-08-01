@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Components;
 using Godot;
 
@@ -20,13 +19,13 @@ public partial class AdditionalEffects : ForgeEffectComponent
 
 	[ExportGroup("On Complete")]
 	[Export]
-	public ForgeEffectData[] OnCompleteAlways { get; set; } = [];
+	public ForgeConditionalEffect[] OnCompleteAlways { get; set; } = [];
 
 	[Export]
-	public ForgeEffectData[] OnCompleteNormal { get; set; } = [];
+	public ForgeConditionalEffect[] OnCompleteNormal { get; set; } = [];
 
 	[Export]
-	public ForgeEffectData[] OnCompletePrematurely { get; set; } = [];
+	public ForgeConditionalEffect[] OnCompletePrematurely { get; set; } = [];
 
 	public override IEffectComponent GetComponent()
 	{
@@ -58,23 +57,6 @@ public partial class AdditionalEffects : ForgeEffectComponent
 			}
 
 			converted.Add(conditionalEffect.GetConditionalEffect());
-		}
-
-		return [.. converted];
-	}
-
-	private static EffectData[] Convert(ForgeEffectData[] effects)
-	{
-		List<EffectData> converted = [];
-
-		foreach (ForgeEffectData effect in effects)
-		{
-			if (effect is null)
-			{
-				continue;
-			}
-
-			converted.Add(effect.GetEffectData());
 		}
 
 		return [.. converted];
