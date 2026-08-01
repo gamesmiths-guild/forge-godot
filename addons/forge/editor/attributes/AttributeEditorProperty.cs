@@ -28,7 +28,7 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		Texture2D dropdownIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("GuiDropdown", "EditorIcons");
 
 		var hBox = new HBoxContainer();
-		_label = new Label { Text = "None", SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_label = new Label { Text = NoneLabel, SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_button = new Button { Icon = dropdownIcon, CustomMinimumSize = new Vector2(ButtonSize, 0) };
 
 		hBox.AddChild(_label);

@@ -27,8 +27,9 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 	{
 		if (name is "Attribute" or "CapturedAttribute" or "MagnitudeAttribute" or "ModifyingAttribute")
 		{
-			// Both of these are filters rather than targets: leaving them unset is a valid configuration, so the picker
-			// has to offer a way back to it.
+			// MagnitudeAttribute and ModifyingAttribute are filters rather than targets: leaving either unset is a
+			// valid configuration, so the picker has to offer a way back to it. Attribute and CapturedAttribute are
+			// required, and stay unclearable.
 			AddPropertyEditor(name, new AttributeEditorProperty
 			{
 				AllowNone = name is "MagnitudeAttribute" or "ModifyingAttribute",
