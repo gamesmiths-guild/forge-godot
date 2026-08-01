@@ -13,7 +13,9 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 		return @object is Resources.ForgeModifier
 			|| @object is Resources.ForgeCue
 			|| @object is Resources.ForgeEffectQuery
-			|| @object is Resources.Components.ForgeAttributeRequirement;
+			|| @object is Resources.ForgeModifierMagnitude
+			|| @object is Resources.Components.ForgeAttributeRequirement
+			|| @object is Resources.Components.AttributeAccumulator;
 	}
 
 	public override bool _ParseProperty(
