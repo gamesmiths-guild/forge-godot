@@ -8,33 +8,20 @@ namespace Gamesmiths.Forge.Godot.Resources.Components;
 
 [Tool]
 [GlobalClass]
-public partial class AdditionalEffects : ForgeEffectComponent
+public partial class StackThreshold : ForgeEffectComponent
 {
+	[Export(PropertyHint.Range, "2,10,1,or_greater")]
+	public int Threshold { get; set; } = 2;
+
 	[Export]
 	public bool CopyDataFromOriginalEffect { get; set; }
 
-	[ExportGroup("On Application")]
 	[Export]
-	public ForgeConditionalEffect[] OnApplication { get; set; } = [];
-
-	[ExportGroup("On Complete")]
-	[Export]
-	public ForgeConditionalEffect[] OnCompleteAlways { get; set; } = [];
-
-	[Export]
-	public ForgeConditionalEffect[] OnCompleteNormal { get; set; } = [];
-
-	[Export]
-	public ForgeConditionalEffect[] OnCompletePrematurely { get; set; } = [];
+	public ForgeConditionalEffect[] ThresholdEffects { get; set; } = [];
 
 	public override IEffectComponent GetComponent()
 	{
-		return new AdditionalEffectsEffectComponent(
-			Convert(OnApplication),
-			Convert(OnCompleteAlways),
-			Convert(OnCompleteNormal),
-			Convert(OnCompletePrematurely),
-			CopyDataFromOriginalEffect);
+		return new StackThresholdEffectComponent(Threshold, Convert(ThresholdEffects), CopyDataFromOriginalEffect);
 	}
 
 	private static ConditionalEffect[] Convert(ForgeConditionalEffect[] conditionalEffects)
@@ -52,7 +39,7 @@ public partial class AdditionalEffects : ForgeEffectComponent
 			// missing reference rather than say what is wrong.
 			if (conditionalEffect.EffectData is null)
 			{
-				GD.PushError($"{nameof(AdditionalEffects)}: a conditional effect is missing its effect data.");
+				GD.PushError($"{nameof(StackThreshold)}: a threshold effect is missing its effect data.");
 				continue;
 			}
 
