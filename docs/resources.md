@@ -163,7 +163,7 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 - **Immunity**: Blocks incoming effects matching its `ForgeEffectQuery` array while the effect is active. Duration effects only.
 - **ModifierTags**: Adds tags to the target when the effect is applied.
 - **RaiseEvent**: Raises Forge events at selected effect lifecycle points, optionally with a calculated magnitude.
-- **RemoveOther**: Removes active effects matching its ForgeEffectQuery array when applied, optionally removing only some stacks.
+- **RemoveOther**: Removes active effects matching its `ForgeEffectQuery` array when applied, optionally removing only some stacks.
 - **SourceAttributeRequirements**: The same gates as AttributeRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **SourceTagRequirements**: The same gates as TargetTagRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **StackThreshold**: Applies conditional effects once the effect reaches a configurable stack threshold.

@@ -86,8 +86,8 @@ public class PlayerAttributes : AttributeSet
 }
 ```
 
-> **Attribute values are integers**, by design — the simulation stays deterministic. When a stat needs decimals, store it scaled (`Speed = 475` meaning `4.75`) and divide when you read it for presentation or movement. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers).
-
+> **Attribute values are integers**, by design — the simulation stays deterministic. When a stat needs decimals, store it scaled (e.g., `Speed = 475` meaning `4.75`) and divide by your scaling factor (e.g., `speed / 100f`) when converting to a float for presentation or movement. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers).
+ 
 ### Step 4: Configure the Attribute Set
 
 1. Select the ForgeAttributeSet node in your scene.
@@ -383,7 +383,7 @@ public partial class Player : CharacterBody2D
 
 **Note:**
 
-You can also grant abilities via effects using the **GrantAbility** effect component, which links the ability's lifetime to the effect (for temporary or conditional grants). To use this method, add a ForgeEffectData with a GrantAbility component, apply the effect to the entity, and fetch the handle with `TryGetAbility()`.
+You can also grant abilities via effects using the **GrantAbility** effect component, which links the ability's lifetime to the effect (for temporary or conditional grants). To use this method, add a `ForgeEffectData` with a **GrantAbility** component, apply the effect to the entity, and fetch the handle with `TryGetAbility()`.
 
 **Summary:**
 - Create a `ForgeEffectData` for your damage.
