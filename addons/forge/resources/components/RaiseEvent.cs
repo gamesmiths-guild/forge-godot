@@ -21,8 +21,6 @@ public partial class RaiseEvent : ForgeEffectComponent
 	[Export]
 	public EffectEventTrigger Triggers { get; set; } = EffectEventTrigger.Applied;
 
-	// One toggle per entity rather than an array of enums: the set is fixed and small, and the inspector reads better
-	// as three checkboxes than as a list nothing stops you from filling with duplicates.
 	[ExportGroup("Raise On")]
 	[Export]
 	public bool RaiseOnTarget { get; set; } = true;
