@@ -90,13 +90,18 @@ Configures a single attribute change applied by an effect.
 **Properties:**
 
 - `Attribute` (string): Attribute to modify (full path, e.g. `"PlayerAttributes.Health"`).
-- `Operation` (ModifierOperation): Add, multiply, or override.
+- `Operation` (ModifierOperation): `FlatBonus` (add), `PercentBonus` (add a percentage), or `Override` (replace).
 - `CalculationType` (MagnitudeCalculationType): Magnitude method.
 - Calculation parameters: (`ScalableFloat`, `CapturedAttribute`, etc), depending on type.
+- `Channel` (int): Which attribute channel the modifier lands in.
 
 **Usage:**
 
 In the `Modifiers` array of a ForgeEffectData.
+
+Within a channel, flat bonuses are summed, then percent bonuses are summed and applied. An `Override` replaces the value entering that channel and skips its other modifiers; there is no priority between overrides — the most recently applied one wins, and removing it hands the channel back to the previously applied override. See [Effect Modifiers](https://github.com/gamesmiths-guild/forge/blob/main/docs/effects/modifiers.md) in the core docs for the full evaluation order.
+
+When `CalculationType` is `AttributeBased`, `CaptureSource` chooses which entity the attribute is read from: `Owner` (who triggered the effect), `Target` (who receives it), or `Source` (what caused it — useful when a weapon, turret or summon node is itself a `ForgeEntity` with its own attribute set). A capture whose entity is missing, or which lacks the attribute, yields `0`. `SnapshotAttribute` off keeps the magnitude live, re-evaluating whenever the captured attribute changes.
 
 ### ForgeModifierMagnitude
 
@@ -148,7 +153,8 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 
 ### Built-in Effect Components
 
-- **AdditionalEffects**: Applies further effects when the effect lands (`OnApplication`) and when it ends (`OnCompleteAlways` / `OnCompleteNormal` / `OnCompletePrematurely`). All four are arrays of `ForgeConditionalEffect`, so a completion effect can be gated on the source and aimed at it too — that is how a curse pays its caster back when it wears off. `CopyDataFromOriginalEffect` carries this effect's SetByCaller magnitudes over to everything it applies. The `OnComplete` arrays need a non-instant effect.
+- **AdditionalEffects**: Applies conditional effects when this effect is applied or completes, optionally copying its SetByCaller data.
+- **AttributeAccumulator**: Accumulates attribute changes and publishes the total as a SetByCaller magnitude.
 - **AttributeRequirements**: Sets attribute-value based application/ongoing/removal requirements on the target.
 - **BlockAbilityTags**: Blocks abilities carrying the given tags from activating while the effect is active.
 - **CancelAbilityTags**: Cancels active abilities selected by tag, on application or on each execution.
@@ -156,9 +162,11 @@ Attach your script as a resource to the `Components` array of any ForgeEffectDat
 - **GrantAbility**: Grants one or more abilities when active.
 - **Immunity**: Blocks incoming effects matching its `ForgeEffectQuery` array while the effect is active. Duration effects only.
 - **ModifierTags**: Adds tags to the target when the effect is applied.
-- **RemoveOther**: Removes active effects matching its `ForgeEffectQuery` array when applied, never itself. `RemoveAllStacks`, on by default, removes each match outright; turn it off to reveal `StacksToRemove` and take that many stacks instead. Not allowed on periodic effects.
+- **RaiseEvent**: Raises Forge events at selected effect lifecycle points, optionally with a calculated magnitude.
+- **RemoveOther**: Removes active effects matching its `ForgeEffectQuery` array when applied, optionally removing only some stacks.
 - **SourceAttributeRequirements**: The same gates as AttributeRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
 - **SourceTagRequirements**: The same gates as TargetTagRequirements, read from the effect's source or owner (controlled by `OwnershipEntity`).
+- **StackThreshold**: Applies conditional effects once the effect reaches a configurable stack threshold.
 - **TargetTagRequirements**: Sets tag/query-based application/ongoing/removal requirements.
 
 All of these extend `ForgeEffectComponent` and can be added to effect data in the inspector.
