@@ -74,11 +74,11 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 - **Statescript**: Visual state-based scripting system for implementing ability behaviors and custom logic with a built-in graph editor.
 - **Editor Extensions**: Custom inspector elements, tag editor, and Statescript graph editor with Godot integration.
 - **Custom Nodes**: Includes nodes like `ForgeEntity`, `ForgeAttributeSet`, `EffectArea2D`, and more.
+- **Built-in Content**: Godot resources, editors, and documentation for the full library of effect components, Statescript nodes, and resolvers.
 
 ### Planned Features 🚧
 
 - **Multiplayer Support**: Network replication for all systems, deterministic/authoritative support.
-- **More Built-in Content**: More built-in components, nodes and resolvers.
 - **More sample scenes**: Sample scenes for statescript and multiplayer integration.
 
 ## Installation

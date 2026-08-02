@@ -33,8 +33,8 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [AbilityStateResolver](ability-state-resolver.md) | `bool` | Reads a state flag (is active/inhibited/valid dropdown) from an ability. |
 | [ActiveEffectDataResolver](active-effect-data-resolver.md) | `double`/`int`/`bool` | Reads a selected runtime value (remaining duration, stacks, level, ... dropdown) from an active effect handle. |
 | [ActiveEffectEffectResolver](active-effect-effect-resolver.md) | `Effect?` | Reads the live `Effect` behind an active effect handle. |
-| [ActiveEffectOwnerResolver](active-effect-source-resolver.md) | `IForgeEntity?` | Reads the entity that triggered an active effect. |
-| [ActiveEffectSourceResolver](active-effect-source-resolver.md) | `IForgeEntity?` | Reads the entity that applied an active effect. |
+| [ActiveEffectOwnerResolver](active-effect-source-resolver.md) | `IForgeEntity?` | Reads `Ownership.Owner` — who triggered the action that caused the effect. |
+| [ActiveEffectSourceResolver](active-effect-source-resolver.md) | `IForgeEntity?` | Reads `Ownership.Source` — what actually caused the effect (weapon, projectile, trap). |
 | [ActiveEffectTagQueryResolver](active-effect-tag-query-resolver.md) | `bool` | Evaluates a tag query against an active effect's own tags, granted tags, or both. |
 | [ActiveEffectTargetResolver](active-effect-target-resolver.md) | `IForgeEntity?` | Reads the entity an active effect is applied to. |
 | [CanActivateAbilityResolver](can-activate-ability-resolver.md) | `bool` | Checks whether an ability can currently activate. |

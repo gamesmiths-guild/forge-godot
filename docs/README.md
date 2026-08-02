@@ -44,8 +44,8 @@ The plugin includes a Forge tab in the Godot editor that allows for easy managem
 
 Attributes represent numeric values that can be modified by effects:
 
-- Base values with configurable min/max ranges.
-- Various modifier operations (additive, multiplicative, etc.) that can be applied to attributes.
+- Integer values with configurable min/max ranges — see [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers) for why, and for the scaled-integer convention for fractional stats.
+- Flat, percentage, and override modifier operations, layered across calculation channels.
 - Support for modifiers that derive their values from other attributes.
 - Custom attribute sets for grouping related attributes.
 

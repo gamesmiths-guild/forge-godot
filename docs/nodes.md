@@ -40,11 +40,13 @@ Configuration node for attribute sets used with ForgeEntity.
 **Properties:**
 
 - `AttributeSetClass` (string): Name of the C# class extending AttributeSet.
-- `InitialAttributeValues` (Dictionary): Start values for attributes.
+- `InitialAttributeValues` (Dictionary): Per-attribute `Default`, `Min` and `Max` overrides for the values the attribute set's constructor declares.
 
 **Description:**
 
 `ForgeAttributeSet` lets you configure attribute sets directly in the Godot editor. It uses reflection to instantiate and apply initial values for any custom AttributeSet.
+
+> **Attribute values are integers.** `Default`, `Min` and `Max` are all `int`, as are `CurrentValue`, `BaseValue`, `Modifier` and `Overflow` at runtime — a deliberate choice for deterministic simulation. Store fractional stats scaled (a `Speed` of `475` meaning `4.75`) and divide only when displaying. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers) in the core docs.
 
 **Usage:**
 
