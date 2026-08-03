@@ -94,12 +94,15 @@ Configures a single attribute change applied by an effect.
 - `CalculationType` (MagnitudeCalculationType): Magnitude method.
 - Calculation parameters: (`ScalableFloat`, `CapturedAttribute`, etc), depending on type.
 - `Channel` (int): Which attribute channel the modifier lands in.
+- `AggregationMode` (AggregationMode): `Sum` (default), `Max` or `Min`. Greyed out on instant and periodic effects, which execute their modifiers against the base value and have nothing to aggregate.
 
 **Usage:**
 
 In the `Modifiers` array of a ForgeEffectData.
 
 Within a channel, flat bonuses are summed, then percent bonuses are summed and applied. An `Override` replaces the value entering that channel and skips its other modifiers; there is no priority between overrides — the most recently applied one wins, and removing it hands the channel back to the previously applied override. See [Effect Modifiers](https://github.com/gamesmiths-guild/forge/blob/main/docs/effects/modifiers.md) in the core docs for the full evaluation order.
+
+`AggregationMode` changes that summing. Modifiers are grouped by attribute, channel, operation and mode; a `Max` group contributes only its highest value and a `Min` group only its lowest, while the `Sum` group keeps adding up as usual, and the three contributions are then combined. Setting every movement speed buff to `Max` is the declarative way to build "only the strongest buff applies" — when the strongest is removed or expires, the next strongest takes over immediately. Use `Min` for the mirrored case, "only the strongest slow applies", since the comparison is on signed values. For `Override`, the most recently applied override picks the policy: a plain `Sum` override wins outright, while a `Max`/`Min` one hands the channel to the extreme override of that same mode.
 
 When `CalculationType` is `AttributeBased`, `CaptureSource` chooses which entity the attribute is read from: `Owner` (who triggered the effect), `Target` (who receives it), or `Source` (what caused it — useful when a weapon, turret or summon node is itself a `ForgeEntity` with its own attribute set). A capture whose entity is missing, or which lacks the attribute, yields `0`. `SnapshotAttribute` off keeps the magnitude live, re-evaluating whenever the captured attribute changes.
 
