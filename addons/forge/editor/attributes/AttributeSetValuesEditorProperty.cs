@@ -90,26 +90,54 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 			groupVBox.AddChild(AttributeFieldRow("Min", spinMin, readingMin));
 			groupVBox.AddChild(AttributeFieldRow("Max", spinMax, readingMax));
 
+			// Godot parses what is typed into a SpinBox through its expression evaluator, so an entry the Range cannot
+			// clamp — NaN — can reach these handlers. Casting that to int is undefined, so the edit is dropped instead
+			// of writing nonsense into the dictionary or the reading beside it.
 			spinDefault.ValueChanged += x =>
 			{
+				if (double.IsNaN(x))
+				{
+					return;
+				}
+
 				UpdateReading(readingDefault, x, decimalPlaces);
-				UpdateAndEmit(obj, attributeName, (int)x, (int)spinMin.Value, (int)spinMax.Value);
+				UpdateAndEmit(obj, attributeName, ToRawValue(x), ToRawValue(spinMin.Value), ToRawValue(spinMax.Value));
 			};
 
 			spinMin.ValueChanged += x =>
 			{
+				if (double.IsNaN(x))
+				{
+					return;
+				}
+
 				spinDefault.MinValue = x;
 				spinMax.MinValue = x;
 				UpdateReading(readingMin, x, decimalPlaces);
-				UpdateAndEmit(obj, attributeName, (int)spinDefault.Value, (int)x, (int)spinMax.Value);
+				UpdateAndEmit(
+					obj,
+					attributeName,
+					ToRawValue(spinDefault.Value),
+					ToRawValue(x),
+					ToRawValue(spinMax.Value));
 			};
 
 			spinMax.ValueChanged += x =>
 			{
+				if (double.IsNaN(x))
+				{
+					return;
+				}
+
 				spinDefault.MaxValue = x;
 				spinMin.MaxValue = x;
 				UpdateReading(readingMax, x, decimalPlaces);
-				UpdateAndEmit(obj, attributeName, (int)spinDefault.Value, (int)spinMin.Value, (int)x);
+				UpdateAndEmit(
+					obj,
+					attributeName,
+					ToRawValue(spinDefault.Value),
+					ToRawValue(spinMin.Value),
+					ToRawValue(x));
 			};
 
 			attributesRoot.AddChild(groupVBox);
@@ -237,8 +265,19 @@ public partial class AttributeSetValuesEditorProperty : EditorProperty, ISeriali
 	{
 		if (IsInstanceValid(readingLabel))
 		{
-			readingLabel.Text = ReadingText((int)rawValue, decimalPlaces);
+			readingLabel.Text = ReadingText(ToRawValue(rawValue), decimalPlaces);
 		}
+	}
+
+	/// <summary>
+	/// Narrows a SpinBox value to the integer the attribute stores. The Range keeps it inside the bounds it was given,
+	/// but those bounds reach out to <see cref="int.MinValue"/> and <see cref="int.MaxValue"/>, so the conversion is
+	/// clamped rather than trusted.
+	/// </summary>
+	/// <param name="value">The value to narrow to an integer.</param>
+	private static int ToRawValue(double value)
+	{
+		return double.IsNaN(value) ? 0 : (int)Math.Clamp(value, int.MinValue, int.MaxValue);
 	}
 
 	private static string ReadingText(int rawValue, int decimalPlaces)
