@@ -257,7 +257,7 @@ public partial class ForgeEffectData : Resource
 				SnapshotLevel = true;
 			}
 
-			// This is used to sure Modifiers are set as snapshot for instant effects, and that only effects applying
+			// This is used to ensure Modifiers are set as snapshot for instant effects, and that only effects applying
 			// active modifiers can aggregate them.
 			if (Modifiers is not null)
 			{
