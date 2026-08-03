@@ -86,7 +86,7 @@ public class PlayerAttributes : AttributeSet
 }
 ```
 
-> **Attribute values are integers**, by design — the simulation stays deterministic. When a stat needs decimals, store it scaled (e.g., `Speed = 475` meaning `4.75`) and divide by your scaling factor (e.g., `speed / 100f`) when converting to a float for presentation or movement. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers).
+> **Attribute values are integers**, by design — the simulation stays deterministic. When a stat needs decimals, store it scaled (e.g., `Speed = 475` meaning `4.75`) and declare the scale with `InitializeAttribute(nameof(Speed), 475, 0, 10_000, decimalPlaces: 2)`. The attribute then hands presentation code the converted value through `DisplayValue` / `ToDisplayString(...)`, and the `ForgeAttributeSet` inspector shows you what each raw number reads as. Everything you type in the editor — these values, modifier magnitudes, requirement bounds — stays raw. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers).
  
 ### Step 4: Configure the Attribute Set
 
