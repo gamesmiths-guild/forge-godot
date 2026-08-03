@@ -47,7 +47,7 @@ Use the local pages here when a node needs Godot editor, resource, or authoring 
 
 Nodes with an object-lane output (the grant nodes' `AbilityHandle` output, the tag listener's `Tag` output) use a dedicated editor so the output binds to a variable of the matching object type. The attribute listener's dedicated editor additionally filters its `int` New Value / Delta output dropdowns to matching scalar variables. Nodes with constructor arguments (commit mode, effect-level operation, grant policies, monitor flags, the attribute listener's observed-attribute key) expose those as dropdowns/checkboxes/pickers that persist into the node's `CustomData`.
 
-Two more editors exist for narrower reasons: `ForEachNode`'s types its `Array` input row from the variable bound to its `Element` output (the same "the bound variable types the read" rule `SetVariableNode` uses for its target), and both loop nodes seed a fresh `Condition` slot with a constant `true` — the loop's "keep going" default — instead of the bool zero value, which would leave a newly dropped node running no iterations at all.
+Two more editors exist for narrower reasons: the `ForEachNode` editor types its `Array` input row from the variable bound to its `Element` output (the same "the bound variable types the read" rule `SetVariableNode` uses for its target), and both loop nodes seed a fresh `Condition` slot with a constant `true` — the loop's "keep going" default — instead of the bool zero value, which would leave a newly dropped node running no iterations at all.
 
 ## Node Categories in the Palette
 
