@@ -46,7 +46,18 @@ Configuration node for attribute sets used with ForgeEntity.
 
 `ForgeAttributeSet` lets you configure attribute sets directly in the Godot editor. It uses reflection to instantiate and apply initial values for any custom AttributeSet.
 
-> **Attribute values are integers.** `Default`, `Min` and `Max` are all `int`, as are `CurrentValue`, `BaseValue`, `Modifier` and `Overflow` at runtime — a deliberate choice for deterministic simulation. Store fractional stats scaled (a `Speed` of `475` meaning `4.75`) and divide only when displaying. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers) in the core docs.
+> **Attribute values are integers.** `Default`, `Min` and `Max` are all `int`, as are `CurrentValue`, `BaseValue`, `Modifier` and `Overflow` at runtime — a deliberate choice for deterministic simulation. Store fractional stats scaled (a `Speed` of `475` meaning `4.75`) and declare the scale with `InitializeAttribute(..., decimalPlaces: 2)`. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers) in the core docs.
+
+**Everything in the inspector is authored raw**, including these fields — a `Speed` storing hundredths is typed as `475`, not `4.75`. That is deliberate: a modifier's `ScalableFloat`, an attribute requirement's bounds and a cue's magnitude bounds are all raw too, and several of them (a chance, a period, a coefficient) have no attribute to be scaled by in the first place. One unit everywhere beats a rule that holds in one panel and not the next.
+
+What the inspector does do is **tell you what the raw number reads as**. When the attribute set declares decimal places, the header gains a `— 2 decimals` suffix and each field gains a dimmed reading before it:
+
+```text
+Speed — 2 decimals
+  Default  (4.74) [  475 ]
+  Min      (0.00) [    0 ]
+  Max     (10.00) [ 1000 ]
+```
 
 **Usage:**
 
