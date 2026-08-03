@@ -257,12 +257,14 @@ public partial class ForgeEffectData : Resource
 				SnapshotLevel = true;
 			}
 
-			// This is used to sure Modifiers are set as snapshot for instant effects.
+			// This is used to sure Modifiers are set as snapshot for instant effects, and that only effects applying
+			// active modifiers can aggregate them.
 			if (Modifiers is not null)
 			{
 				foreach (ForgeModifier modifier in Modifiers)
 				{
 					modifier.IsInstantEffect = DurationType == DurationType.Instant;
+					modifier.IsExecutedEffect = DurationType == DurationType.Instant || HasPeriodicApplication;
 				}
 			}
 		}

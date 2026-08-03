@@ -28,6 +28,9 @@ public partial class ForgeModifier : Resource
 	[Export]
 	public int Channel { get; set; }
 
+	[Export]
+	public AggregationMode AggregationMode { get; set; }
+
 	[ExportGroup("Magnitude")]
 	[Export]
 	public MagnitudeCalculationType CalculationType
@@ -103,6 +106,12 @@ public partial class ForgeModifier : Resource
 
 #if TOOLS
 	public bool IsInstantEffect { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the owning effect executes its modifiers against the base value —
+	/// instant or periodic — instead of applying them as active modifiers.
+	/// </summary>
+	public bool IsExecutedEffect { get; set; }
 #endif
 
 	public Modifier GetModifier()
@@ -118,7 +127,8 @@ public partial class ForgeModifier : Resource
 				GetAttributeBasedFloat(),
 				GetCustomCalculationBasedFloat(),
 				GetSetByCallerFloat()),
-			Channel);
+			Channel,
+			AggregationMode);
 	}
 
 #if TOOLS
@@ -128,6 +138,13 @@ public partial class ForgeModifier : Resource
 			&& CalculationType != MagnitudeCalculationType.ScalableFloat)
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
+		}
+
+		// Executed effects change the base value permanently, so there's no group of active modifiers to aggregate.
+		if (property["name"].AsStringName() == PropertyName.AggregationMode && IsExecutedEffect)
+		{
+			property["usage"] = (int)(PropertyUsageFlags.Default | PropertyUsageFlags.ReadOnly);
+			AggregationMode = AggregationMode.Sum;
 		}
 
 		if (CalculationType != MagnitudeCalculationType.AttributeBased
