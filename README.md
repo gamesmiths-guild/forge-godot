@@ -79,6 +79,7 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 ### Planned Features 🚧
 
 - **Multiplayer Support**: Network replication for all systems, deterministic/authoritative support.
+- **Godot-specific Statescript Nodes**: Additional built-in nodes for Godot-specific functionality, such as scene instantiation and physics queries.
 - **More sample scenes**: Sample scenes for statescript and multiplayer integration.
 
 ## Installation
