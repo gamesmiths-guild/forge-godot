@@ -9,17 +9,17 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 [Tool]
 [GlobalClass]
-public partial class ConcatenateResolverResource : BinaryNestedResolverResourceBase
+public partial class QuaternionConcatenateResolverResource : BinaryNestedResolverResourceBase
 {
-	public override string ResolverTypeId => "Concatenate";
+	public override string ResolverTypeId => "QuaternionConcatenate";
 
-	protected override string PropertyNamePrefix => "__concat";
+	protected override string PropertyNamePrefix => "__quatConcat";
 
 	protected override IPropertyResolver CreateResolver(
 		IPropertyResolver leftResolver,
 		IPropertyResolver rightResolver,
 		Graph graph)
 	{
-		return new ConcatenateResolver(leftResolver, rightResolver);
+		return new QuaternionConcatenateResolver(leftResolver, rightResolver);
 	}
 }
