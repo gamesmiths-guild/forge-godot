@@ -120,7 +120,7 @@ public partial class EntityHud : Control
 Two Godot-specific points:
 
 - **Always unsubscribe in `_ExitTree`.** A `ForgeEntity` you observe from elsewhere — an enemy's health bar, a targeting frame — usually outlives the observer, and a handler on a freed node throws.
-- **`ForgeEntity` builds its managers in `_Ready`**, so a node that subscribes must run after it. Rely on Godot's bottom-up `_Ready` order (children first), or subscribe from `_Ready` on a node that is not an ancestor of the entity.
+- **`ForgeEntity` builds its managers in `_Ready`**, so a node that subscribes must run after it. Rely on Godot's bottom-up `_Ready` order (children first) by subscribing from `_Ready` on an ancestor of the entity, or otherwise defer subscription until after the entity is ready.
 
 Both `ActiveEffectHandle` and `AbilityHandle` are stable for the whole life of what they point at, which makes them good dictionary keys for the icon or slot they belong to. Each is still readable inside its removal handler and invalid immediately after, so read the name, stacks, level or duration there rather than storing the handle for later.
 
