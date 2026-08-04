@@ -58,6 +58,7 @@ Effects are the primary way to modify entity attributes and tags:
 - Periodic execution for damage-over-time style effects.
 - Sophisticated stacking rules for multiple effect instances.
 - Custom calculations and execution logic.
+- Change notifications a buff bar can subscribe to — see [Observing an Entity from a Godot Node](nodes.md#observing-an-entity-from-a-godot-node).
 
 ### Abilities System
 
@@ -66,6 +67,7 @@ Defines, grants, and activates gameplay powers or actions:
 - Supports cooldowns, resource costs, activation requirements, instancing policies, and custom behaviors.
 - Can be granted via effects or directly to entities.
 - Triggers automatically from events or tags, or manually from code.
+- Change notifications an ability bar can subscribe to — see [Observing an Entity from a Godot Node](nodes.md#observing-an-entity-from-a-godot-node).
 
 ### Events System
 

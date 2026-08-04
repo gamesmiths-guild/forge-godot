@@ -33,6 +33,99 @@ bool hasFireTag = forgeEntity.Tags.AllTags.HasTag(
     Tag.RequestTag(ForgeManagers.Instance.TagsManager, "element.fire"));
 ```
 
+#### Observing an Entity from a Godot Node
+
+Forge exposes its runtime state through plain C# `event` members rather than Godot signals, so a UI node subscribes to them directly on the manager that owns the state. These are change notifications — distinct from the Forge [Events system](https://github.com/gamesmiths-guild/forge/blob/main/docs/events.md), which is a tag-routed bus for simulation logic. Four feeds cover everything a HUD reads:
+
+| What you are drawing | Feed | Reached through |
+|---|---|---|
+| A single value — health bar, mana globe | [`EntityAttribute.OnValueChanged`](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#from-outside-the-attributeset) | `Entity.Attributes["Set.Attribute"]` |
+| Status icons, state-driven visuals | [`EntityTags.OnTagsChanged`](https://github.com/gamesmiths-guild/forge/blob/main/docs/tags.md#reacting-to-tag-changes) | `Entity.Tags` |
+| A buff bar | [`EffectsManager` change notifications](https://github.com/gamesmiths-guild/forge/blob/main/docs/effects/README.md#observing-effects) | `Entity.EffectsManager` |
+| An ability bar or action slots | [`EntityAbilities` change notifications](https://github.com/gamesmiths-guild/forge/blob/main/docs/abilities.md#observing-abilities) | `Entity.Abilities` |
+
+Each is a plain `event`, so the pattern is the same for all four — subscribe once the entity is ready, unsubscribe when the observer leaves the tree:
+
+```csharp
+public partial class EntityHud : Control
+{
+    [Export]
+    public ForgeEntity? Entity { get; set; }
+
+    private EntityAttribute? _health;
+
+    public override void _Ready()
+    {
+        if (Entity is null)
+        {
+            return;
+        }
+
+        _health = Entity.Attributes["CharacterAttributes.Health"];
+        _health.OnValueChanged += HandleHealthChanged;
+
+        Entity.Tags.OnTagsChanged += HandleTagsChanged;
+
+        Entity.EffectsManager.OnActiveEffectAdded += HandleEffectAdded;
+        Entity.EffectsManager.OnActiveEffectChanged += HandleEffectChanged;
+        Entity.EffectsManager.OnActiveEffectRemoved += HandleEffectRemoved;
+
+        Entity.Abilities.OnAbilityGranted += HandleAbilityGranted;
+        Entity.Abilities.OnAbilityChanged += HandleAbilityChanged;
+        Entity.Abilities.OnAbilityRemoved += HandleAbilityRemoved;
+    }
+
+    public override void _ExitTree()
+    {
+        if (Entity is null)
+        {
+            return;
+        }
+
+        if (_health is not null)
+        {
+            _health.OnValueChanged -= HandleHealthChanged;
+        }
+
+        Entity.Tags.OnTagsChanged -= HandleTagsChanged;
+
+        Entity.EffectsManager.OnActiveEffectAdded -= HandleEffectAdded;
+        Entity.EffectsManager.OnActiveEffectChanged -= HandleEffectChanged;
+        Entity.EffectsManager.OnActiveEffectRemoved -= HandleEffectRemoved;
+
+        Entity.Abilities.OnAbilityGranted -= HandleAbilityGranted;
+        Entity.Abilities.OnAbilityChanged -= HandleAbilityChanged;
+        Entity.Abilities.OnAbilityRemoved -= HandleAbilityRemoved;
+    }
+
+    private void HandleHealthChanged(EntityAttribute attribute, int change) =>
+        SetHealthBar(attribute.CurrentValue, attribute.Max);
+
+    private void HandleTagsChanged(TagContainer allTags) => RefreshStatusIcons(allTags);
+
+    private void HandleEffectAdded(ActiveEffectHandle handle) => AddBuffIcon(handle);
+
+    private void HandleEffectChanged(ActiveEffectHandle handle) => RefreshBuffIcon(handle);
+
+    private void HandleEffectRemoved(ActiveEffectHandle handle, EffectRemovalReason reason) => RemoveBuffIcon(handle);
+
+    private void HandleAbilityGranted(AbilityHandle handle) => AddAbilitySlot(handle);
+
+    private void HandleAbilityChanged(AbilityHandle handle) => SetSlotEnabled(handle, !handle.IsInhibited);
+
+    private void HandleAbilityRemoved(AbilityHandle handle) => RemoveAbilitySlot(handle);
+}
+```
+
+Two Godot-specific points:
+
+- **Always unsubscribe in `_ExitTree`.** A `ForgeEntity` you observe from elsewhere — an enemy's health bar, a targeting frame — usually outlives the observer, and a handler on a freed node throws.
+- **`ForgeEntity` builds its managers in `_Ready`**, so a node that subscribes must run after it. Rely on Godot's bottom-up `_Ready` order (children first), or subscribe from `_Ready` on a node that is not an ancestor of the entity.
+
+Both `ActiveEffectHandle` and `AbilityHandle` are stable for the whole life of what they point at, which makes them good dictionary keys for the icon or slot they belong to. Each is still readable inside its removal handler and invalid immediately after, so read the name, stacks, level or duration there rather than storing the handle for later.
+
+The feeds carry more than the lifecycle shown above. `EffectsManager` also reports applications, executions and denials; `EntityAbilities` reports activation, ending and refused activations — `OnAbilityActivationFailed` is the one to hook for "why did nothing happen when I pressed the button", since it also fires for activations driven by triggers and Statescript nodes. See the linked core pages for the full tables.
+
 ### ForgeAttributeSet
 
 Configuration node for attribute sets used with ForgeEntity.
