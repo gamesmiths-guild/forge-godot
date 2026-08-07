@@ -4,7 +4,7 @@ This guide will help you quickly set up and use the Forge system in your Godot p
 
 > **Note:** For detailed information about how specific Forge systems work (attributes, effects, tags, etc.), please refer to the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
-If you'd like to see sample scenes demonstrating the system in action, you can clone the repository directly and explore the examples included in the `examples` folder.
+If you'd like to see sample scenes demonstrating the system in action, install the optional `forge_samples` folder along with the plugin, or clone this repository and open it directly. See [The Sample Project](#the-sample-project) below.
 
 ## Installation
 

@@ -1,6 +1,6 @@
 # Forge for Godot
 
-[![Godot .NET](https://img.shields.io/badge/Godot-4.6%2B%20.NET-478cbf)](https://godotengine.org/download/)
+[![Godot .NET](https://img.shields.io/badge/Godot-4.7%2B%20.NET-478cbf)](https://godotengine.org/download/)
 [![License](https://img.shields.io/github/license/gamesmiths-guild/forge-godot)](LICENSE)
 
 Forge for Godot is an Unreal GAS-like gameplay framework built for the Godot Engine.
@@ -17,7 +17,7 @@ Forge for Godot is available via the [Godot Asset Library](https://godotengine.o
 
 New to Forge for Godot? Check out the [Quick Start Guide](docs/quick-start.md) to integrate Forge into your Godot project in minutes.
 
-If you'd like to see sample scenes demonstrating the system in action, you can clone the repository directly and explore the examples included in the `examples` folder.
+If you'd like to see sample scenes demonstrating the system in action, install the optional `forge_samples` folder along with the plugin, or clone this repository and open it directly. See [Sample Project](#sample-project) for details.
 
 ## Architecture Overview
 
