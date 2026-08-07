@@ -1,33 +1,15 @@
 <Project>
-  <PropertyGroup Label="Configure namespaces">
-    <DisableFolderNamespace>true</DisableFolderNamespace>
-	<RootNamespace>Gamesmiths.Forge.Godot</RootNamespace>
-  </PropertyGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="./stylecop.json" Link="stylecop.json" />
-  </ItemGroup>
+  <!--
+    Forge for Godot. MSBuild imports this file automatically for the .csproj beside it, so installing
+    the plugin requires no .csproj edit. It only forwards to addons/forge/Forge.props, which is where
+    the package reference actually lives.
 
-  <ItemGroup Label="Static Analysis">
-    <PackageReference Include="Roslynator.Analyzers" Version="4.12.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Roslynator.Formatting.Analyzers" Version="4.12.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="9.32.0.97167">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="SonarAnalyzer.CSharp.Styling" Version="9.32.0.97167">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" >
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    If you already have a Directory.Build.props - either here or further up the tree - keep yours and
+    add <Import Project="addons/forge/Forge.props" /> to it instead. MSBuild imports only the nearest
+    one, so this file would otherwise silently shadow it.
+  -->
+
+  <Import Project="$(MSBuildThisFileDirectory)addons/forge/Forge.props" />
+
 </Project>
