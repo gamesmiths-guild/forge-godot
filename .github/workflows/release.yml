@@ -16,11 +16,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
 
+      - name: Build plugin package
+        id: package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          name="forge-godot-${version}.zip"
+          git archive --format=zip --output="$name" HEAD
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
       - name: Publish Release
         uses: softprops/action-gh-release@v3.0.0
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           draft: false
+          files: ${{ steps.package.outputs.name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
