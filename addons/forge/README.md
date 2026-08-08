@@ -36,7 +36,7 @@ This plugin enables you to:
 
 ### Steps
 
-1. Install **Forge Gameplay System** from the Godot Asset Store, via the **AssetLib** tab in the Godot editor.
+1. Install **Forge Gameplay System** from the Godot Asset Store, via the **Asset Store** tab in the Godot editor.
 
    When choosing which files to import, keep `Directory.Build.props` selected. MSBuild imports it automatically, and it is what wires Forge into your build without any edit to your `.csproj`. The `forge_samples` folder is optional.
 
