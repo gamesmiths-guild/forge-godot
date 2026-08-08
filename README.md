@@ -9,7 +9,7 @@ It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/fo
 
 Forge for Godot provides custom nodes, resources, and editor extensions that make building scalable and maintainable gameplay systems straightforward, allowing developers to leverage Forge’s architecture without reimplementing complex gameplay logic from scratch.
 
-Forge for Godot is available via the [Godot Asset Library](https://godotengine.org/asset-library/asset/4239) or as a manual install from this repository.
+Forge for Godot is available from the Godot Asset Store — search for **Forge Gameplay System** in the editor's **Asset Store** tab — or as a manual install from this repository.
 
 **Keywords:** godot plugin, gameplay framework, C#, attributes, gameplay effects, abilities, gameplay tags
 
@@ -86,20 +86,42 @@ Forge for Godot includes specialized nodes and resources to integrate Forge conc
 
 ### Requirements
 
-- Godot 4.7 or later with .NET support.
+- Godot 4.7 or later, .NET version.
 - .NET SDK 8.0 or later.
+- **C# only.** Forge does not support GDScript-only projects.
 
 ### Steps
 
-1. Install the plugin via the Godot Asset Library or manually by copying the `addons` folder.
-   - [Godot Asset Library](https://godotengine.org/asset-library/asset/4239)
-   - [Manual installation guide](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)
-2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
-   ```xml
-   <Import Project="addons/forge/Forge.props" />
-   ```
-3. In the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
+1. Install **Forge Gameplay System** from the Godot Asset Store, via the **Asset Store** tab in the Godot editor.
+
+   When choosing which files to import, keep `Directory.Build.props` selected. MSBuild imports it automatically, and it is what wires Forge into your build without any edit to your `.csproj`. The `forge_samples` folder is optional; see [Sample Project](#sample-project).
+
+2. If your project has no C# solution yet, create one via `Project > Tools > C# > Create C# solution`.
+
+3. Build your project by clicking `Build` in the top-right corner of the editor.
+
 4. Enable **Forge Gameplay System** under `Project > Project Settings > Plugins`.
+
+> **Already have a `Directory.Build.props`?** Don't let Forge's copy replace it. Skip that file when importing, and add this line to your own instead:
+> ```xml
+> <Import Project="addons/forge/Forge.props" />
+>  ```
+
+### Manual installation
+
+Download the `.zip` attached to the [latest release](https://github.com/gamesmiths-guild/forge-godot/releases/latest) and extract it into your project root. It contains exactly the same files as the Asset Store package.
+
+Alternatively, copy the `addons/forge` folder and `Directory.Build.props` from this repository into your project. If you'd rather not add `Directory.Build.props`, add this line to your `.csproj` before the closing `</Project>` tag instead:
+
+```xml
+<Import Project="addons/forge/Forge.props" />
+```
+
+Then follow steps 2–4 above.
+
+### Sample Project
+
+The `forge_samples` folder contains 2D and 3D scenes demonstrating attributes, effects, abilities, cues, and Statescript in a running game. It is optional — skip it during import if you don't want sample code compiled into your project.
 
 ### Local Core Development (Optional)
 

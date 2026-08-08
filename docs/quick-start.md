@@ -10,20 +10,32 @@ If you'd like to see sample scenes demonstrating the system in action, install t
 
 ### Requirements
 
-- Godot 4.7 or later with .NET support.
+- Godot 4.7 or later, .NET version.
 - .NET SDK 8.0 or later.
+- **C# only.** Forge does not support GDScript-only projects.
 
 ### Steps
 
-1. Install the plugin via the Godot Asset Library or manually by copying the `addons` folder.
-   - [Godot Asset Library](https://godotengine.org/asset-library/asset/4239)
-   - [Manual installation guide](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)
-2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
-   ```xml
-   <Import Project="addons/forge/Forge.props" />
-   ```
-3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
+1. Install **Forge Gameplay System** from the Godot Asset Store, via the **Asset Store** tab in the Godot editor.
+
+   When choosing which files to import, keep `Directory.Build.props` selected. MSBuild imports it automatically, and it is what wires Forge into your build without any edit to your `.csproj`. The `forge_samples` folder is optional.
+
+2. If your project has no C# solution yet, create one via `Project > Tools > C# > Create C# solution`.
+
+3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the editor.
+
 4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
+
+> **Already have a `Directory.Build.props`?** Don't let Forge's copy replace it. Skip that file when importing, and add this line to your own instead:
+> ```xml
+> <Import Project="addons/forge/Forge.props" />
+> ```
+
+For manual installation, download the `.zip` attached to the [latest release](https://github.com/gamesmiths-guild/forge-godot/releases/latest) and extract it into your project root — it contains exactly the same files as the Asset Store package.
+
+### The Sample Project
+
+The `forge_samples` folder contains 2D and 3D scenes demonstrating attributes, effects, abilities, cues, and Statescript in a running game. It is optional — skip it during import if you don't want sample code compiled into your project.
 
 ## The ForgeManagers Singleton
 
@@ -60,7 +72,7 @@ By default, validation is **enabled** in the Godot editor and during development
 1. Add a ForgeEntity node as a child of your character.
 2. Add a ForgeAttributeSet node as a child of the ForgeEntity.
 
-Alternatively, you can implement the IForgeEntity interface directly. See the [CustomForgeEntity.cs](https://github.com/gamesmiths-guild/forge-godot/blob/main/examples/2d/scripts/CustomForgeEntity.cs) in the 2D sample scenes for an example. This approach requires more work but gives you more control over your entity.
+Alternatively, you can implement the IForgeEntity interface directly. See the [CustomForgeEntity.cs](https://github.com/gamesmiths-guild/forge-godot/blob/main/forge_samples/2d/scripts/CustomForgeEntity.cs) in the 2D sample scenes for an example. This approach requires more work but gives you more control over your entity.
 
 ### Step 3: Define an Attribute Set
 

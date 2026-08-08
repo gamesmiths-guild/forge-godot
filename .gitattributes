@@ -1,8 +1,43 @@
 # Normalize EOL for all files that Git considers text files.
 * text=auto eol=lf
 
-# Only include the addons folder when downloading from the Asset Library.
+# ---------------------------------------------------------------------------
+# Release packaging.
+#
+# `git archive` builds the distributable .zip from these rules, so this file is
+# the single source of truth for what ships to both the Godot Asset Store and
+# the Godot Asset Library. Everything is excluded by default and re-enabled
+# explicitly below - a denylist would silently ship new root files.
+#
+# Anything shipped at the project root lands directly in the user's project and
+# will overwrite a file of the same name, so add root entries with care.
+# ---------------------------------------------------------------------------
+
 /**                     export-ignore
+
+# The plugin itself.
 /addons                 !export-ignore
 /addons/**              !export-ignore
-/addons/forge/core/forge_data.tres export-ignore
+
+# Sample project. Users can skip this folder when importing from the Asset Store.
+/forge_samples          !export-ignore
+/forge_samples/**       !export-ignore
+
+# Auto-imported by MSBuild, so installing the plugin needs no .csproj edits.
+/Directory.Build.props  !export-ignore
+
+# Deliberately NOT shipped:
+#
+#   forge_data.tres      The project's primary (writable) tag source. It belongs to the user and is
+#                        created on demand when the plugin is enabled. Shipping it would overwrite
+#                        their tags on every install and update. The sample tags ship separately, in
+#                        forge_samples/forge_samples_tags.tres, to be attached as a read-only source.
+#   Forge.Dev.props      Analyzers and style rules for developing this repository.
+#   Forge Godot.csproj   This repository's own Godot project files - they would overwrite the user's.
+#   Forge Godot.sln
+#   project.godot
+#   export_presets.cfg
+#   icon.svg / icon.png
+#   README.md            The plugin's own README ships as addons/forge/README.md.
+#   LICENSE              Ships as addons/forge/LICENSE, so it cannot overwrite the user's LICENSE.
+#   docs/                Published on GitHub.

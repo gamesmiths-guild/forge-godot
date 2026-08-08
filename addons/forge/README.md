@@ -30,25 +30,32 @@ This plugin enables you to:
 
 ### Requirements
 
-- Godot 4.7 or later with .NET support.
+- Godot 4.7 or later, .NET version.
 - .NET SDK 8.0 or later.
+- **C# only.** Forge does not support GDScript-only projects.
 
 ### Steps
 
-1. Install the plugin via the Godot Asset Library or manually by copying the `addons` folder.
-   - [Godot Asset Library](https://godotengine.org/asset-library/asset/4239)
-   - [Manual installation guide](https://docs.godotengine.org/en/stable/tutorials/plugins/editor/installing_plugins.html)
-2. Add the following line in your `.csproj` file (before the closing `</Project>` tag). The `.csproj` file can be created through Godot by navigating to `Project > Tools > C# > Create C# solution`:
-   ```xml
-   <Import Project="addons/forge/Forge.props" />
-   ```
-3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the script editor.
+1. Install **Forge Gameplay System** from the Godot Asset Store, via the **Asset Store** tab in the Godot editor.
+
+   When choosing which files to import, keep `Directory.Build.props` selected. MSBuild imports it automatically, and it is what wires Forge into your build without any edit to your `.csproj`. The `forge_samples` folder is optional.
+
+2. If your project has no C# solution yet, create one via `Project > Tools > C# > Create C# solution`.
+
+3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the editor.
+
 4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
+
+> **Already have a `Directory.Build.props`?** Don't let Forge's copy replace it. Skip that file when importing, and add this line to your own instead:
+>
+> ```xml
+> <Import Project="addons/forge/Forge.props" />
+> ```
 
 ## Getting Started
 
 - See the [Quick Start Guide](https://github.com/gamesmiths-guild/forge-godot/blob/main/docs/quick-start.md) for a basic setup.
-- Explore [sample scenes](https://github.com/gamesmiths-guild/forge-godot/tree/main/examples) by cloning the full repo.
+- Install the optional `forge_samples` folder for 2D and 3D scenes demonstrating the system in action.
 
 ## Documentation
 
