@@ -59,7 +59,7 @@ public partial class SimpleEnemy3D : CharacterBody3D
 				continue;
 			}
 
-			_abilityHandle!.Activate(out AbilityActivationFailures _, _forgePlayer);
+			_abilityHandle!.TryActivate(out AbilityActivationFailures _, _forgePlayer);
 		}
 	}
 

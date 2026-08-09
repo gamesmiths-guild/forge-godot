@@ -31,7 +31,7 @@ public sealed class ReflectAbilityBehaviorImplementation : IAbilityBehavior<Dama
 
 		_reflectArea ??= ownerNode.GetNode<Area3D>("%ReflectArea");
 
-		context.AbilityHandle.CommitAbility();
+		context.AbilityHandle.TryCommitAbility();
 
 		foreach (Node3D? body in _reflectArea.GetOverlappingBodies())
 		{

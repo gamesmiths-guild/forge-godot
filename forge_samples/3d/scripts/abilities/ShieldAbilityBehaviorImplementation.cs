@@ -32,7 +32,7 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 
 		_abilityInstanceHandle = context.InstanceHandle;
 
-		context.AbilityHandle.CommitAbility();
+		context.AbilityHandle.TryCommitAbility();
 
 		_protectEffect ??= new Effect(_effectData, new EffectOwnership(context.Owner, context.Source));
 
@@ -47,7 +47,7 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 
 		_damageTakenSubscriptionToken = ownerNode.Events.Subscribe<DamageType>(
 			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.taken"),
-			_ => context.AbilityHandle.CommitCost());
+			_ => context.AbilityHandle.TryCommitCost());
 	}
 
 	public void OnEnded(AbilityBehaviorContext context)
