@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System.Collections.Generic;
-using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Tags;
 using Godot;
 
@@ -11,10 +10,11 @@ namespace Gamesmiths.Forge.Godot.Editor.Tags;
 [Tool]
 public partial class TagEditorProperty : EditorProperty, ISerializationListener
 {
-	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
+	private readonly Dictionary<TreeItem, string> _treeItemToTag = [];
 
 	private VBoxContainer? _root;
 	private Button? _containerButton;
+	private TagTreeSearchBar? _searchBar;
 	private ScrollContainer? _scroll;
 	private Tree? _tree;
 
@@ -37,6 +37,11 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 		};
 		_containerButton.Toggled += OnToggled;
 
+		_searchBar = new TagTreeSearchBar
+		{
+			Visible = false,
+		};
+
 		_scroll = new ScrollContainer
 		{
 			Visible = false,
@@ -55,6 +60,7 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 		_scroll.AddChild(_tree);
 
 		_root.AddChild(_containerButton);
+		_root.AddChild(_searchBar);
 		_root.AddChild(_scroll);
 
 		AddChild(_root);
@@ -69,6 +75,8 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 			.GetIcon("GuiRadioUnchecked", "EditorIcons");
 
 		_tree.ButtonClicked += OnTreeButtonClicked;
+		_searchBar.FilterChanged += OnFilterChanged;
+		ForgeTagsRegistry.Changed += OnRegisteredTagsChanged;
 	}
 
 	public override void _UpdateProperty()
@@ -104,46 +112,37 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	private void RebuildTree()
 	{
-		if (_tree is null || _containerButton is null || _checkedIcon is null || _uncheckedIcon is null)
+		if (_tree is null || _containerButton is null || _searchBar is null
+			|| _checkedIcon is null || _uncheckedIcon is null)
 		{
 			return;
 		}
 
 		_tree.Clear();
-		_treeItemToNode.Clear();
+		_treeItemToTag.Clear();
 
 		_containerButton.Text = string.IsNullOrEmpty(_currentValue) ? "(none)" : _currentValue;
 
+		_searchBar.RefreshSources();
+
+		TagsManager tags = _searchBar.ResolveTags();
 		TreeItem root = _tree.CreateItem();
 
-		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
-
-		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
-
-		BuildTreeRecursive(root, tagsManager.RootNode);
+		TagSourceTreeBuilder.Build(
+			_tree,
+			root,
+			tags.RootNode,
+			_searchBar.ResolveFilter(tags),
+			DecorateRow,
+			_treeItemToTag);
 
 		UpdateMinimumSize();
 		NotifyPropertyListChanged();
 	}
 
-	private void BuildTreeRecursive(TreeItem parent, TagNode node)
+	private void DecorateRow(TreeItem item, string completeTagKey)
 	{
-		if (_tree is null)
-		{
-			return;
-		}
-
-		foreach (TagNode child in node.ChildTags)
-		{
-			TreeItem item = _tree.CreateItem(parent);
-			item.SetText(0, child.TagKey);
-
-			bool selected = _currentValue == child.CompleteTagKey;
-			item.AddButton(0, selected ? _checkedIcon : _uncheckedIcon);
-
-			_treeItemToNode[item] = child;
-			BuildTreeRecursive(item, child);
-		}
+		item.AddButton(0, _currentValue == completeTagKey ? _checkedIcon : _uncheckedIcon);
 	}
 
 	private void OnTreeButtonClicked(
@@ -162,7 +161,7 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 			return;
 		}
 
-		string newValue = _treeItemToNode[item].CompleteTagKey;
+		string newValue = _treeItemToTag[item];
 
 		if (newValue == _currentValue)
 		{
@@ -174,19 +173,32 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 
 	private void OnToggled(bool toggled)
 	{
-		if (_scroll is null || !IsInstanceValid(_scroll))
+		if (_scroll is null || _searchBar is null || !IsInstanceValid(_scroll) || !IsInstanceValid(_searchBar))
 		{
 			return;
 		}
 
 		_scroll.Visible = toggled;
+		_searchBar.Visible = toggled;
 
 		UpdateMinimumSize();
 		NotifyPropertyListChanged();
 	}
 
+	private void OnFilterChanged()
+	{
+		RebuildTree();
+	}
+
+	private void OnRegisteredTagsChanged()
+	{
+		RebuildTree();
+	}
+
 	private void ReleaseUiState()
 	{
+		ForgeTagsRegistry.Changed -= OnRegisteredTagsChanged;
+
 		if (_containerButton is not null && IsInstanceValid(_containerButton))
 		{
 			_containerButton.Toggled -= OnToggled;
@@ -197,9 +209,15 @@ public partial class TagEditorProperty : EditorProperty, ISerializationListener
 			_tree.ButtonClicked -= OnTreeButtonClicked;
 		}
 
-		_treeItemToNode.Clear();
+		if (_searchBar is not null && IsInstanceValid(_searchBar))
+		{
+			_searchBar.FilterChanged -= OnFilterChanged;
+		}
+
+		_treeItemToTag.Clear();
 		_root = null;
 		_containerButton = null;
+		_searchBar = null;
 		_scroll = null;
 		_tree = null;
 		_checkedIcon = null;
