@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ForgeTagsSource" format=3 uid="uid://bkda38cuw3fp2"]
+
+[ext_resource type="Script" uid="uid://bq4vlbfx00hea" path="res://addons/forge/resources/ForgeTagsSource.cs" id="1_x0pne"]
+
+[resource]
+script = ExtResource("1_x0pne")
+RegisteredTags = Array[String](["cooldown", "cooldown.enemy.attack", "cooldown.skill", "cooldown.skill.dash", "cooldown.skill.projectile", "cooldown.skill.reflect", "cooldown.skill.shield", "cue.floating.text", "cue.vfx", "cue.vfx.fire", "cue.vfx.reflect", "cue.vfx.regen", "cue.vfx.shield", "cue.vfx.wet", "effect.fire", "effect.mana_shield", "effect.wet", "event", "event.damage", "event.damage.dealt", "event.damage.taken", "immunity.damage", "movement.block", "set_by_caller", "set_by_caller.damage", "trait.damageable", "trait.flammable", "trait.healable", "trait.wettable"])
