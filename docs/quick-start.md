@@ -317,7 +317,7 @@ public sealed class SimpleAttackBehavior : IAbilityBehavior
         );
 
         // (Optional) If using cooldowns via cooldown effect, commit here
-        context.AbilityHandle.CommitCooldown();
+        context.AbilityHandle.TryCommitCooldown();
 
         context.Target!.EffectsManager.ApplyEffect(_attackEffect);
 
@@ -382,7 +382,7 @@ public partial class Player : CharacterBody2D
             IForgeEntity? target = GetNearestEnemy();
             if (target != null)
             {
-                _attackHandle.Activate(out var failures, target);
+                _attackHandle.TryActivate(out var failures, target);
             }
         }
     }
