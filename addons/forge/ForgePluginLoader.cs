@@ -2,6 +2,10 @@
 
 #if TOOLS
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
@@ -9,6 +13,7 @@ using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
 using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Tags;
+using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -18,8 +23,14 @@ namespace Gamesmiths.Forge.Godot;
 public partial class ForgePluginLoader : EditorPlugin
 {
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
+	private const string RepairToolItemText = "Repair assets tags";
+	private const int RepairToolItemId = 0;
 
+	private static readonly Vector2I _repairDialogSize = new(700, 300);
+
+	private TagSourceEditingController? _tagEditingController;
 	private TagsEditorDock? _tagsEditorDock;
+	private TagsSourceInspectorPlugin? _tagsSourceInspectorPlugin;
 	private TagContainerInspectorPlugin? _tagContainerInspectorPlugin;
 	private QueryExpressionInspectorPlugin? _queryExpressionInspectorPlugin;
 	private TagInspectorPlugin? _tagInspectorPlugin;
@@ -29,16 +40,32 @@ public partial class ForgePluginLoader : EditorPlugin
 	private SharedVariableSetInspectorPlugin? _sharedVariableSetInspectorPlugin;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
+	private ConfirmationDialog? _repairConfirmDialog;
+	private PopupMenu? _toolsMenu;
+
 	private EditorFileSystem? _fileSystem;
 	private Callable _resourcesReimportedCallable;
+	private Callable _resourcesReloadCallable;
+	private Callable _toolsMenuIdPressedCallable;
 
 	public override void _EnterTree()
 	{
-		EnsureForgeDataExists();
+		ForgeSettings.EnsureRegistered();
+		EnsureTagSourceExists();
+
+		// One controller for the whole plugin lifetime: undo/redo entries call back into it, so it has to outlive the
+		// dock and every inspector that records an edit through it.
+		_tagEditingController = new TagSourceEditingController();
+		_tagEditingController.SetUndoRedo(GetUndoRedo());
+		AddChild(_tagEditingController);
 
 		_tagsEditorDock = new TagsEditorDock();
-		_tagsEditorDock.SetUndoRedo(GetUndoRedo());
+		_tagsEditorDock.SetEditingController(_tagEditingController);
 		AddDock(_tagsEditorDock);
+
+		_tagsSourceInspectorPlugin = new TagsSourceInspectorPlugin();
+		_tagsSourceInspectorPlugin.SetEditingController(_tagEditingController);
+		AddInspectorPlugin(_tagsSourceInspectorPlugin);
 
 		_tagContainerInspectorPlugin = new TagContainerInspectorPlugin();
 		AddInspectorPlugin(_tagContainerInspectorPlugin);
@@ -60,23 +87,52 @@ public partial class ForgePluginLoader : EditorPlugin
 		_statescriptGraphEditorDock.SetUndoRedo(GetUndoRedo());
 		AddDock(_statescriptGraphEditorDock);
 
-		AddToolMenuItem("Repair assets tags", new Callable(this, MethodName.CallAssetRepairTool));
+		_repairConfirmDialog = new ConfirmationDialog
+		{
+			Title = "Repair Assets Tags",
+			OkButtonText = "Repair",
+		};
+
+		_repairConfirmDialog.Confirmed += OnRepairConfirmed;
+		AddChild(_repairConfirmDialog);
+
+		_toolsMenu = new PopupMenu();
+		_toolsMenu.AddItem(RepairToolItemText, RepairToolItemId);
+
+		_toolsMenuIdPressedCallable = new Callable(this, MethodName.OnToolsMenuIdPressed);
+		_toolsMenu.Connect(PopupMenu.SignalName.IdPressed, _toolsMenuIdPressedCallable);
+
+		AddToolSubmenuItem("Forge", _toolsMenu);
 
 		_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
 		_resourcesReimportedCallable = new Callable(this, nameof(OnResourcesReimported));
+		_resourcesReloadCallable = new Callable(this, nameof(OnResourcesReload));
 
 		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
+
+		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReload, _resourcesReloadCallable);
+
+		ProjectSettings.SettingsChanged += OnProjectSettingsChanged;
 
 		Validation.Enabled = true;
 	}
 
 	public override void _ExitTree()
 	{
+		ProjectSettings.SettingsChanged -= OnProjectSettingsChanged;
+
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable)
 			== true)
 		{
 			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
 		}
+
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReload, _resourcesReloadCallable) == true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReload, _resourcesReloadCallable);
+		}
+
+		ForgeTagsRegistry.Release();
 
 		if (_tagsEditorDock is not null)
 		{
@@ -85,6 +141,7 @@ public partial class ForgePluginLoader : EditorPlugin
 			_tagsEditorDock = null;
 		}
 
+		RemoveInspectorPluginAndRelease(ref _tagsSourceInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _tagContainerInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _queryExpressionInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _tagInspectorPlugin);
@@ -101,10 +158,41 @@ public partial class ForgePluginLoader : EditorPlugin
 			_statescriptGraphEditorDock = null;
 		}
 
+		if (_tagEditingController is not null)
+		{
+			RemoveChild(_tagEditingController);
+			_tagEditingController.QueueFree();
+			_tagEditingController = null;
+		}
+
 		_fileSystem = null;
 		_resourcesReimportedCallable = default;
+		_resourcesReloadCallable = default;
 
-		RemoveToolMenuItem("Repair assets tags");
+		if (_toolsMenu is not null && IsInstanceValid(_toolsMenu)
+			&& _toolsMenu.IsConnected(PopupMenu.SignalName.IdPressed, _toolsMenuIdPressedCallable))
+		{
+			_toolsMenu.Disconnect(PopupMenu.SignalName.IdPressed, _toolsMenuIdPressedCallable);
+		}
+
+		_toolsMenuIdPressedCallable = default;
+
+		RemoveToolMenuItem("Forge");
+
+		if (_toolsMenu is not null && IsInstanceValid(_toolsMenu))
+		{
+			_toolsMenu.QueueFree();
+		}
+
+		_toolsMenu = null;
+
+		if (_repairConfirmDialog is not null)
+		{
+			_repairConfirmDialog.Confirmed -= OnRepairConfirmed;
+			RemoveChild(_repairConfirmDialog);
+			_repairConfirmDialog.QueueFree();
+			_repairConfirmDialog = null;
+		}
 	}
 
 	public override bool _Handles(GodotObject @object)
@@ -139,7 +227,8 @@ public partial class ForgePluginLoader : EditorPlugin
 	{
 		base._EnablePlugin();
 
-		EnsureForgeDataExists();
+		ForgeSettings.EnsureRegistered();
+		EnsureTagSourceExists();
 
 		bool config = ProjectSettings.LoadResourcePack(AutoloadPath);
 
@@ -232,29 +321,134 @@ public partial class ForgePluginLoader : EditorPlugin
 		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);
 	}
 
-	private static void EnsureForgeDataExists()
+	/// <summary>
+	/// Makes sure the project has somewhere to put its tags, by creating a first source when none is configured.
+	/// </summary>
+	/// <remarks>
+	/// A configured source that fails to resolve is left alone rather than pruned or replaced: it usually means the
+	/// file was moved or the UID cache has not rebuilt yet, and the Tags dock reports it as missing so the user can
+	/// decide. Silently manufacturing a replacement would hide the problem and orphan the real file.
+	/// </remarks>
+	private static void EnsureTagSourceExists()
 	{
-		if (ResourceLoader.Exists(ForgeData.ForgeDataResourcePath))
+		if (ForgeSettings.GetSourceReferences().Length > 0)
 		{
 			return;
 		}
 
-		var forgeData = new ForgeData();
-		Error error = ResourceSaver.Save(forgeData, ForgeData.ForgeDataResourcePath);
+		var tagsSource = new ForgeTagsSource();
+		Error error = ResourceSaver.Save(tagsSource, ForgeSettings.DefaultSourcePath);
 
 		if (error != Error.Ok)
 		{
-			GD.PrintErr($"Failed to create ForgeData resource: {error}");
+			GD.PrintErr($"Failed to create tag source at {ForgeSettings.DefaultSourcePath}: {error}");
 			return;
 		}
 
+		// The scan has to happen before the reference is taken: GetResourceUid has nothing to return for a file the
+		// filesystem has not indexed yet, which would quietly store a path instead of a UID.
 		EditorInterface.Singleton.GetResourceFilesystem().Scan();
-		GD.Print("Created default ForgeData resource at ", ForgeData.ForgeDataResourcePath);
+		ForgeSettings.SetSourceReferences([ForgeSettings.ToPreferredReference(ForgeSettings.DefaultSourcePath)]);
+
+		GD.Print("Created tag source at ", ForgeSettings.DefaultSourcePath);
 	}
 
-	private static void CallAssetRepairTool()
+	private static string BuildRepairPreview(List<AssetRepairTool.RepairFinding> findings)
 	{
-		AssetRepairTool.RepairAllAssetsTags();
+		const int MaxListedFindings = 40;
+
+		const char LineBreak = '\n';
+
+		var builder = new StringBuilder();
+		int assetCount = findings.Select(finding => finding.AssetPath).Distinct().Count();
+
+		string summary =
+			$"{findings.Count} tag reference(s) across {assetCount} asset(s) do not resolve against the "
+			+ "project's registered tags.";
+
+		builder.Append(summary)
+			.Append(LineBreak)
+			.Append(LineBreak)
+			.Append("Repairing removes them and saves the affected assets. This cannot be undone.")
+			.Append(LineBreak)
+			.Append(LineBreak);
+
+		foreach (IGrouping<string, AssetRepairTool.RepairFinding> asset in findings
+			.Take(MaxListedFindings)
+			.GroupBy(finding => finding.AssetPath))
+		{
+			builder.Append(asset.Key).Append(LineBreak);
+
+			foreach (AssetRepairTool.RepairFinding finding in asset)
+			{
+				builder.Append(CultureInfo.InvariantCulture, $"    {finding.Location}: {finding.Tag}")
+					.Append(LineBreak);
+			}
+		}
+
+		if (findings.Count > MaxListedFindings)
+		{
+			builder.Append(CultureInfo.InvariantCulture, $"    ... and {findings.Count - MaxListedFindings} more.")
+				.Append(LineBreak);
+		}
+
+		return builder.ToString();
+	}
+
+	private static void OnResourcesReload(string[] resources)
+	{
+		ForgeTagsRegistry.InvalidateIfAny(resources);
+	}
+
+	private static void OnProjectSettingsChanged()
+	{
+		ForgeTagsRegistry.InvalidateIfSourcesChanged();
+	}
+
+	private static void OnRepairConfirmed()
+	{
+		List<AssetRepairTool.RepairFinding> repaired = AssetRepairTool.Apply();
+
+		GD.Print($"Repaired {repaired.Count} tag reference(s).");
+	}
+
+	private void OnToolsMenuIdPressed(long id)
+	{
+		if (id == RepairToolItemId)
+		{
+			CallAssetRepairTool();
+		}
+	}
+
+	private void CallAssetRepairTool()
+	{
+		if (_repairConfirmDialog is null)
+		{
+			return;
+		}
+
+		// Scan first and show what would change: this rewrites every scene in the project, so it must never be a single
+		// unconfirmed click.
+		List<AssetRepairTool.RepairFinding> findings = AssetRepairTool.Scan();
+
+		if (findings.Count == 0)
+		{
+			_repairConfirmDialog.DialogText =
+				"Every tag reference in this project resolves. Nothing to repair.";
+			_repairConfirmDialog.GetOkButton().Visible = false;
+			_repairConfirmDialog.CancelButtonText = "Close";
+			_repairConfirmDialog.PopupCentered(_repairDialogSize);
+
+			return;
+		}
+
+		_repairConfirmDialog.DialogText = BuildRepairPreview(findings);
+		_repairConfirmDialog.GetOkButton().Visible = true;
+		_repairConfirmDialog.CancelButtonText = "Cancel";
+
+		// An explicit size is required, not just polite: MinSize is a floor, so a long findings list would otherwise
+		// grow the dialog past the screen and push its own buttons out of reach.
+		_repairConfirmDialog.PopupCentered(_repairDialogSize);
 	}
 
 	private void RemoveInspectorPluginAndRelease<TPlugin>(ref TPlugin? plugin)
@@ -271,6 +465,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private void OnResourcesReimported(string[] resources)
 	{
+		ForgeTagsRegistry.InvalidateIfAny(resources);
+
 		foreach (string path in resources)
 		{
 			if (!ResourceLoader.Exists(path))
