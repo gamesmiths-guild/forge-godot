@@ -28,10 +28,10 @@
 
 # Deliberately NOT shipped:
 #
-#   forge_data.tres      The project's primary (writable) tag source. It belongs to the user and is
-#                        created on demand when the plugin is enabled. Shipping it would overwrite
+#   forge_tags.tres      This repository's own tag source. Tag sources belong to the user and one is
+#                        created on demand when the plugin is enabled. Shipping ours would overwrite
 #                        their tags on every install and update. The sample tags ship separately, in
-#                        forge_samples/forge_samples_tags.tres, to be attached as a read-only source.
+#                        forge_samples/forge_samples_tags.tres, to be added as a source of its own.
 #   Forge.Dev.props      Analyzers and style rules for developing this repository.
 #   Forge Godot.csproj   This repository's own Godot project files - they would overwrite the user's.
 #   Forge Godot.sln
