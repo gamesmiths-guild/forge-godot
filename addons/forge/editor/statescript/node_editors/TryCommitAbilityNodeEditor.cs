@@ -7,10 +7,10 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
 [Tool]
-internal sealed partial class CommitAbilityNodeEditor : StandardNodeEditorBase
+internal sealed partial class TryCommitAbilityNodeEditor : StandardNodeEditorBase
 {
 	public override string HandledRuntimeTypeName =>
-		"Gamesmiths.Forge.Statescript.Nodes.Action.CommitAbilityNode";
+		"Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode";
 
 	protected override IReadOnlyList<NodeConfigParam> ConstructorParams =>
 	[
