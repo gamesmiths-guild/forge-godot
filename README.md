@@ -123,6 +123,8 @@ Then follow steps 2–4 above.
 
 The `forge_samples` folder contains 2D and 3D scenes demonstrating attributes, effects, abilities, cues, and Statescript in a running game. It is optional — skip it during import if you don't want sample code compiled into your project.
 
+The samples declare their own gameplay tags in `forge_samples/forge_samples_tags.tres`. To run them, open the **Tags** dock and click **Find Sources**, which will offer to add it.
+
 ### Local Core Development (Optional)
 
 When developing `forge-godot` together with the core `forge` repository, `Forge.props` automatically switches to local project references when both repositories are cloned as sibling folders:
@@ -141,6 +143,7 @@ For comprehensive documentation, explore the [docs](docs) directory:
 
 - [Documentation Overview](docs/README.md)
 - [Quick Start Guide](docs/quick-start.md)
+- [Gameplay Tags](docs/gameplay-tags.md)
 - [Forge Nodes](docs/nodes.md)
 - [Forge Resources](docs/resources.md)
 - [Helper Classes](docs/helper-classes.md)

@@ -37,6 +37,8 @@ For manual installation, download the `.zip` attached to the [latest release](ht
 
 The `forge_samples` folder contains 2D and 3D scenes demonstrating attributes, effects, abilities, cues, and Statescript in a running game. It is optional — skip it during import if you don't want sample code compiled into your project.
 
+The samples declare their own gameplay tags in `forge_samples/forge_samples_tags.tres`. To run them, open the **Tags** dock and click **Find Sources**, which will offer to add it.
+
 ## The ForgeManagers Singleton
 
 When you enable the plugin, it automatically registers a `ForgeBootstrap` autoload that initializes the `ForgeManagers` singleton. This singleton provides access to core system managers:
@@ -152,11 +154,11 @@ Tags are hierarchical identifiers used throughout the Forge system for classific
 
 ### Using the Tags Editor
 
-1. Open the "Forge" tab in the right panel of the Godot editor.
-2. Enter a tag name in the text field (using dot notation, e.g., "character.player").
-3. Click "Add Tag" to register it with the system.
-4. Click the "+" button next to a tag to autofill the Tag Name field to easily add a child tag to it.
-5. Click the trash bin icon next to a tag to delete it.
+Open the **Tags** dock in the right panel of the Godot editor. To add a tag, type its key in the **Tag Name** field using dot notation — for example `character.player` — pick the destination source beside it if the project has more than one, and press Enter.
+
+To remove a tag, click the **🗑️** on its row. That takes it out of *that source only*; if another source also declares it, the tag still exists.
+
+For everything else — organizing tags across sources, the Merged view, and repairing broken references — see [Gameplay Tags](gameplay-tags.md).
 
 ### Configuring Entity Tags
 
@@ -469,5 +471,5 @@ public partial class DamageCueHandler : ForgeCueHandler
 - Browse all available [Forge resources](resources.md) for configuring effects, abilities, tags, and more.
 - Build ability behaviors visually with [Statescript](statescript/README.md).
 - Discover [helper classes](helper-classes.md) for streamlining common Forge workflows in Godot.
-- Clone and explore the examples in the repository.
+- Explore the scenes in the `forge_samples` folder.
 - Check out the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) for advanced topics and reference.

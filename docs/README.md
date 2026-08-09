@@ -38,7 +38,7 @@ Forge for Godot connects the Forge system to Godot's node architecture through:
 
 A hierarchical classification system for entities, effects, and abilities. Tags use dot notation and inheritance for flexible matching (e.g., `"ability.damage.fire"`).
 
-The plugin includes a Forge tab in the Godot editor that allows for easy management of tags.
+Tags are stored in tag source resources and managed from the **Tags** dock in the Godot editor. See [Gameplay Tags](gameplay-tags.md).
 
 ### Attributes System
 
@@ -136,6 +136,7 @@ Refer to your IDE's documentation for the specific settings locations. Most mode
 ## Next Steps
 
 - [Quick Start Guide](quick-start.md): Get started with Forge for Godot in minutes.
+- [Gameplay Tags](gameplay-tags.md): Organize tags across sources, use the Tags dock, and repair broken references.
 - [Forge Nodes Documentation](nodes.md): Learn about the Forge nodes provided by the plugin.
 - [Resources Documentation](resources.md): Explore all configurable resource types—effects, abilities, tags, cues, and more.
 - [Statescript Documentation](statescript/README.md): Learn how to build ability behaviors visually with Statescript graphs.
