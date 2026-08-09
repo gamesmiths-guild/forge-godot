@@ -2,7 +2,7 @@
 
 #if TOOLS
 using System.Collections.Generic;
-using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Editor.Tags;
 using Gamesmiths.Forge.Tags;
 using Godot;
 
@@ -14,9 +14,12 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 	private const int ButtonSize = 26;
 	private const int PopupSize = 300;
 
+	private readonly Dictionary<TreeItem, string> _treeItemToTag = [];
+
 	private Label? _label;
 	private Button? _button;
 	private Popup? _popup;
+	private TagTreeSearchBar? _searchBar;
 	private Tree? _tree;
 
 	public override void _Ready()
@@ -34,29 +37,41 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 		AddChild(hbox);
 
 		_popup = new Popup { Size = new Vector2I(PopupSize, PopupSize) };
-		_tree = new Tree
+
+		var popupBox = new VBoxContainer
 		{
-			HideRoot = true,
 			AnchorRight = 1,
 			AnchorBottom = 1,
 		};
-		_popup.AddChild(_tree);
+
+		_searchBar = new TagTreeSearchBar();
+
+		_tree = new Tree
+		{
+			HideRoot = true,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+			SizeFlagsVertical = SizeFlags.ExpandFill,
+		};
+
+		popupBox.AddChild(_searchBar);
+		popupBox.AddChild(_tree);
+		_popup.AddChild(popupBox);
 
 		var backgroundStyle = new StyleBoxFlat
 		{
 			BgColor = EditorInterface.Singleton.GetEditorTheme().GetColor("base_color", "Editor"),
 		};
 		_tree.AddThemeStyleboxOverride("panel", backgroundStyle);
+		_popup.AddThemeStyleboxOverride("panel", backgroundStyle);
 
 		AddChild(_popup);
 
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
-		var tagsManager = new TagsManager([.. pluginData.RegisteredTags]);
-		TreeItem root = _tree.CreateItem();
-		BuildTreeRecursively(_tree, root, tagsManager.RootNode);
+		RebuildTree();
 
 		_button.Pressed += OnButtonPressed;
 		_tree.ItemActivated += OnTreeItemActivated;
+		_searchBar.FilterChanged += OnRegisteredTagsChanged;
+		ForgeTagsRegistry.Changed += OnRegisteredTagsChanged;
 	}
 
 	public override void _UpdateProperty()
@@ -86,15 +101,38 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 	{
 	}
 
-	private static void BuildTreeRecursively(Tree tree, TreeItem currentTreeItem, TagNode currentNode)
+	private static void CollapseRow(TreeItem item, string completeTagKey)
 	{
-		foreach (TagNode childTagNode in currentNode.ChildTags)
+		item.Collapsed = true;
+	}
+
+	private void RebuildTree()
+	{
+		if (_tree is null || !IsInstanceValid(_tree))
 		{
-			TreeItem childTreeNode = tree.CreateItem(currentTreeItem);
-			childTreeNode.SetText(0, childTagNode.TagKey);
-			childTreeNode.Collapsed = true;
-			BuildTreeRecursively(tree, childTreeNode, childTagNode);
+			return;
 		}
+
+		_tree.Clear();
+		_treeItemToTag.Clear();
+
+		_searchBar?.RefreshSources();
+
+		TagsManager tags = _searchBar?.ResolveTags() ?? ForgeTagsRegistry.MergedTags;
+		TreeItem root = _tree.CreateItem();
+
+		TagSourceTreeBuilder.Build(
+			_tree,
+			root,
+			tags.RootNode,
+			_searchBar?.ResolveFilter(tags),
+			CollapseRow,
+			_treeItemToTag);
+	}
+
+	private void OnRegisteredTagsChanged()
+	{
+		RebuildTree();
 	}
 
 	private void OnButtonPressed()
@@ -120,28 +158,21 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 		}
 
 		TreeItem item = _tree.GetSelected();
-		if (item is null)
+
+		if (item is null || !_treeItemToTag.TryGetValue(item, out string? cueKey))
 		{
 			return;
 		}
 
-		var segments = new List<string>();
-		TreeItem current = item;
-		while (current.GetParent() is not null)
-		{
-			segments.Insert(0, current.GetText(0));
-			current = current.GetParent();
-		}
-
-		string fullPath = string.Join(".", segments);
-
-		_label.Text = fullPath;
-		EmitChanged(GetEditedProperty(), fullPath);
+		_label.Text = cueKey;
+		EmitChanged(GetEditedProperty(), cueKey);
 		_popup.Hide();
 	}
 
 	private void ReleaseUiState()
 	{
+		ForgeTagsRegistry.Changed -= OnRegisteredTagsChanged;
+
 		if (_button is not null && IsInstanceValid(_button))
 		{
 			_button.Pressed -= OnButtonPressed;
@@ -152,9 +183,16 @@ public partial class CueKeyEditorProperty : EditorProperty, ISerializationListen
 			_tree.ItemActivated -= OnTreeItemActivated;
 		}
 
+		if (_searchBar is not null && IsInstanceValid(_searchBar))
+		{
+			_searchBar.FilterChanged -= OnRegisteredTagsChanged;
+		}
+
+		_treeItemToTag.Clear();
 		_label = null;
 		_button = null;
 		_popup = null;
+		_searchBar = null;
 		_tree = null;
 	}
 

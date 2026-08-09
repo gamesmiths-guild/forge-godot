@@ -6,15 +6,14 @@ This folder is optional. Deleting it has no effect on the plugin.
 
 ## Registering the sample tags
 
-The samples rely on gameplay tags such as `cooldown.skill.dash` and `cue.vfx.fire`, declared in `forge_samples_tags.tres`. 
+The samples rely on gameplay tags such as `cooldown.skill.dash` and `cue.vfx.fire`, declared in `forge_samples_tags.tres`.
 
-Attach that file as a read-only tag source, once:
+Add that file as a tag source, once:
 
 1. Open the **Tags** dock in the Godot editor.
-2. Click the sources button next to `Add Tag`.
-3. Choose **Add Source...** and select `forge_samples/forge_samples_tags.tres`.
+2. Click **Find Sources** and confirm, or use **Add Existing** and select `forge_samples/forge_samples_tags.tres`.
 
-The sample tags then resolve everywhere and show up in the tag tree, dimmed to mark them read-only. They are never copied into your project's own tag file, and detaching the source removes them again in one click.
+The sample tags then resolve everywhere and appear under their own header in the dock, next to your own. They are never copied into your project's other tag files, and removing the source takes them out again in one click without deleting anything.
 
 Without this step the sample scenes will fail to resolve their tags at runtime.
 

@@ -55,7 +55,8 @@ This plugin enables you to:
 ## Getting Started
 
 - See the [Quick Start Guide](https://github.com/gamesmiths-guild/forge-godot/blob/main/docs/quick-start.md) for a basic setup.
-- Install the optional `forge_samples` folder for 2D and 3D scenes demonstrating the system in action.
+- See the [Gameplay Tags guide](https://github.com/gamesmiths-guild/forge-godot/blob/main/docs/gameplay-tags.md) for managing tags and tag sources.
+- Install the optional `forge_samples` folder for 2D and 3D scenes demonstrating the system in action. To run them, open the **Tags** dock and click **Find Sources** to pick up `forge_samples/forge_samples_tags.tres`.
 
 ## Documentation
 

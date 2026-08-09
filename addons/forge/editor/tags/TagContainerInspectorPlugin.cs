@@ -6,6 +6,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Tags;
 
+[Tool]
 public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 {
 	public override bool _CanHandle(GodotObject @object)
@@ -22,7 +23,7 @@ public partial class TagContainerInspectorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		if (name != "ContainerTags")
+		if (name != nameof(ForgeTagContainer.ContainerTags))
 		{
 			return false;
 		}

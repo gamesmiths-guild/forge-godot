@@ -4,207 +4,217 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Editor.Tags;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Tags;
 using Godot;
-using Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor;
 
+/// <summary>
+/// Finds and strips tag references that no configured tag source declares any more.
+/// </summary>
+/// <remarks>
+/// Assets are read, and rewritten, as text - never loaded and never instantiated. See <see cref="AssetTagParser"/>
+/// for why that is the only safe option in Godot 4.7.
+/// </remarks>
 [Tool]
 public partial class AssetRepairTool : EditorPlugin
 {
-	public static void RepairAllAssetsTags()
+	/// <summary>
+	/// A tag reference that no longer resolves against the project's registered tags, and would therefore be stripped
+	/// by a repair.
+	/// </summary>
+	/// <param name="AssetPath">The scene or resource holding the reference.</param>
+	/// <param name="Location">Where in that asset the reference lives.</param>
+	/// <param name="Tag">The unregistered tag.</param>
+	public readonly record struct RepairFinding(string AssetPath, string Location, string Tag);
+
+	// Fallbacks for the moment before the global class list exists, which is only the very first build.
+	private const string ForgeTagScriptUid = "uid://dpakv7agvir6y";
+	private const string ForgeTagContainerScriptUid = "uid://cw525n4mjqgw0";
+
+	/// <summary>
+	/// Reports every tag reference a repair would remove, without modifying anything.
+	/// </summary>
+	/// <returns>What was found, and what could not be inspected.</returns>
+	internal static RepairReport Scan()
 	{
-		ForgeData pluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
-		var tagsManager = new TagsManager([.. pluginData.RegisteredTags]);
-
-		List<string> scenes = GetScenePaths("res://");
-		GD.Print($"Found {scenes.Count} scene(s) to process.");
-
-		string[] openedScenes = EditorInterface.Singleton.GetOpenScenes();
-
-		foreach (string originalScenePath in scenes)
-		{
-			// For some weird reason scenes from the GetScenePath are coming with 3 slashes instead of just two.
-			string scenePath = originalScenePath.Replace("res:///", "res://");
-
-			GD.Print($"Processing scene: {scenePath}.");
-			PackedScene? packedScene = ResourceLoader.Load<PackedScene>(scenePath);
-
-			if (packedScene is null)
-			{
-				GD.PrintErr($"Failed to load scene: {scenePath}.");
-				continue;
-			}
-
-			Node sceneInstance = packedScene.Instantiate();
-			bool modified = ProcessNode(sceneInstance, tagsManager);
-
-			if (!modified)
-			{
-				GD.Print($"No changes needed for {scenePath}.");
-				continue;
-			}
-
-			// 'sceneInstance' is the modified scene instance in memory, need to save to disk and reload if needed.
-			var newScene = new PackedScene();
-			Error error = newScene.Pack(sceneInstance);
-			if (error != Error.Ok)
-			{
-				GD.PrintErr($"Failed to pack scene: {error}.");
-				continue;
-			}
-
-			error = ResourceSaver.Save(newScene, scenePath);
-			if (error != Error.Ok)
-			{
-				GD.PrintErr($"Failed to save scene: {error}.");
-				continue;
-			}
-
-			if (openedScenes.Contains(scenePath))
-			{
-				GD.Print($"Scene was opened, reloading background scene: {scenePath}.");
-				EditorInterface.Singleton.ReloadSceneFromPath(scenePath);
-			}
-		}
+		return Process(applyChanges: false);
 	}
 
 	/// <summary>
-	/// Recursively get scene files from a folder.
+	/// Strips unregistered tags from every scene and resource in the project, and saves what it changed.
 	/// </summary>
-	/// <param name="basePath">Current path iteration.</param>
-	/// <returns>List of scenes found.</returns>
-	private static List<string> GetScenePaths(string basePath)
+	/// <returns>What was actually repaired, and what could not be inspected.</returns>
+	internal static RepairReport Apply()
 	{
-		var scenePaths = new List<string>();
-		var dir = DirAccess.Open(basePath);
-
-		if (dir is null)
-		{
-			GD.PrintErr($"Failed to open directory: {basePath}");
-			return scenePaths;
-		}
-
-		// Start listing directory entries; skip navigational and hidden files.
-		dir.ListDirBegin();
-		while (true)
-		{
-			string fileName = dir.GetNext();
-			if (string.IsNullOrEmpty(fileName))
-			{
-				break;
-			}
-
-			string filePath = $"{basePath}/{fileName}";
-			if (dir.CurrentIsDir())
-			{
-				// Recursively scan subdirectories.
-				scenePaths.AddRange(GetScenePaths(filePath));
-			}
-			else if (fileName.EndsWith(".tscn", StringComparison.InvariantCultureIgnoreCase)
-				|| fileName.EndsWith(".scn", StringComparison.InvariantCultureIgnoreCase))
-			{
-				scenePaths.Add(filePath);
-			}
-		}
-
-		dir.ListDirEnd();
-		return scenePaths;
+		return Process(applyChanges: true);
 	}
 
 	/// <summary>
-	/// Recursively process nodes; returns true if any ForgeEntity was modified.
+	/// Every way a tag key is stored in an asset.
 	/// </summary>
-	/// <param name="node">Current node iteration.</param>
-	/// <param name="tagsManager">The tags manager used to validate tags.</param>
-	/// <returns><see langword="true"/> if any ForgeEntity was modified.</returns>
-	private static bool ProcessNode(Node node, TagsManager tagsManager)
+	/// <remarks>
+	/// Not just <c>ForgeTag</c> and <c>ForgeTagContainer</c>: several types keep a tag key as a plain string, and a
+	/// repair that ignored them would leave exactly the dangling references it claims to remove. Anything that gains a
+	/// tag-valued property belongs in this list.
+	/// </remarks>
+	private static List<TagPropertyDescriptor> BuildDescriptors()
 	{
-		bool modified = ValidateNode(node, tagsManager);
+		return
+		[
+			Describe(nameof(ForgeTagContainer), ForgeTagContainerScriptUid, "ContainerTags", isList: true),
+			Describe(nameof(ForgeTag), ForgeTagScriptUid, "Tag", isList: false),
+			Describe("TagResolverResource", string.Empty, "Tags", isList: true),
+			Describe("SetByCallerMagnitudeResolverResource", string.Empty, "IdentifierTag", isList: false),
+			Describe("AbilityCooldownResolverResource", string.Empty, "CooldownTag", isList: false),
 
-		foreach (Node child in node.GetChildren())
-		{
-			modified |= ProcessNode(child, tagsManager);
-		}
-
-		return modified;
+			// ForgeCueHandler is a node type users derive from, so the script written into a scene is their own and
+			// cannot be resolved in advance. The property name is distinctive enough to match on by itself.
+			new TagPropertyDescriptor(default, "CueTag", IsList: false, OnNodes: true),
+		];
 	}
 
-	private static bool ValidateNode(Node node, TagsManager tagsManager)
+	private static TagPropertyDescriptor Describe(
+		string globalClassName,
+		string fallbackUid,
+		string propertyName,
+		bool isList)
 	{
+		return new TagPropertyDescriptor(
+			TagsSourceScanner.ResolveScriptIdentity(globalClassName, fallbackUid),
+			propertyName,
+			isList,
+			OnNodes: false);
+	}
+
+	private static RepairReport Process(bool applyChanges)
+	{
+		// Tags resolve against every configured source, so which source declares a tag is irrelevant here.
+		TagsManager tagsManager = ForgeTagsRegistry.MergedTags;
+		List<TagPropertyDescriptor> descriptors = BuildDescriptors();
+		var findings = new List<RepairFinding>();
+		var skippedAssets = new List<string>();
+
+		List<string> assets =
+		[
+			.. ProjectFileIndex.CollectByType("PackedScene", ".tscn", ".scn"),
+			.. ProjectFileIndex.CollectByType("Resource", ".tres", ".res"),
+		];
+
+		foreach (string assetPath in assets)
+		{
+			if (!IsTextAsset(assetPath))
+			{
+				// A binary asset is not text, so its tags cannot be read this way.
+				skippedAssets.Add(assetPath);
+				continue;
+			}
+
+			ProcessAsset(assetPath, tagsManager, descriptors, applyChanges, findings);
+		}
+
+		return new RepairReport(findings, skippedAssets);
+	}
+
+	private static bool IsTextAsset(string assetPath)
+	{
+		return assetPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)
+			|| assetPath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase);
+	}
+
+	private static void ProcessAsset(
+		string assetPath,
+		TagsManager tagsManager,
+		List<TagPropertyDescriptor> descriptors,
+		bool applyChanges,
+		List<RepairFinding> findings)
+	{
+		List<string>? lines = ReadLines(assetPath);
+
+		if (lines is null)
+		{
+			GD.PrintErr($"Failed to read asset: {assetPath}.");
+			return;
+		}
+
+		List<AssetTagReference> references = AssetTagParser.Parse(lines, descriptors);
+		var assetFindings = new List<RepairFinding>();
 		bool modified = false;
-		foreach (Dictionary propertyInfo in node.GetPropertyList())
+
+		foreach (AssetTagReference reference in references)
 		{
-			if (!propertyInfo.TryGetValue("class_name", out Variant className))
+			string[] kept = [.. reference.Tags.Where(tag => IsRegistered(tagsManager, tag))];
+
+			foreach (string tag in reference.Tags.Where(tag => !IsRegistered(tagsManager, tag)))
+			{
+				assetFindings.Add(new RepairFinding(assetPath, reference.Location, tag));
+			}
+
+			if (!applyChanges || kept.Length == reference.Tags.Length)
 			{
 				continue;
 			}
 
-			if (className.AsString() != "TagContainer")
-			{
-				continue;
-			}
-
-			if (!propertyInfo.TryGetValue("name", out Variant nameObj))
-			{
-				continue;
-			}
-
-			string propertyName = nameObj.AsString();
-			Variant value = node.Get(propertyName);
-
-			if (value.VariantType != Variant.Type.Object)
-			{
-				continue;
-			}
-
-			if (value.As<Resource>() is ForgeTagContainer tagContainer)
-			{
-				modified |= ValidateTagContainerProperty(tagContainer, node.Name, tagsManager);
-			}
+			lines[reference.LineIndex] = AssetTagParser.BuildLine(reference, kept);
+			modified = true;
 		}
 
-		return modified;
+		// A failed write leaves every tag exactly where it was, so reporting them as repaired would be a lie - and the
+		// caller counts what comes back as the number of references it fixed.
+		if (applyChanges && modified && !WriteLines(assetPath, lines))
+		{
+			return;
+		}
+
+		findings.AddRange(assetFindings);
+
+		if (applyChanges && modified)
+		{
+			GD.Print($"Repaired tag references in {assetPath}.");
+		}
 	}
 
-	private static bool ValidateTagContainerProperty(
-		ForgeTagContainer container,
-		string nodeName,
-		TagsManager tagsManager)
+	private static List<string>? ReadLines(string path)
 	{
-		if (container.ContainerTags is null)
+		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+
+		return file is null ? null : [.. file.GetAsText(true).Split('\n')];
+	}
+
+	private static bool WriteLines(string path, List<string> lines)
+	{
+		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+
+		if (file is null)
 		{
+			GD.PrintErr($"Failed to write asset: {path}.");
 			return false;
 		}
 
-		Array<string> originalTags = container.ContainerTags;
-		var newTags = new Array<string>();
-		bool modified = false;
+		file.StoreString(string.Join('\n', lines));
 
-		foreach (string tag in originalTags)
+		return true;
+	}
+
+	private static bool IsRegistered(TagsManager tagsManager, string? tagKey)
+	{
+		// An unset tag is not a dangling reference, just an empty slot; removing it would change nothing.
+		if (string.IsNullOrWhiteSpace(tagKey))
 		{
-			try
-			{
-				Tag.RequestTag(tagsManager, tag);
-				newTags.Add(tag);
-			}
-			catch (TagNotRegisteredException)
-			{
-				GD.PrintRich(
-					$"[color=LIGHT_STEEL_BLUE][RepairTool] Removing invalid tag [{tag}] from node {nodeName}.");
-				modified = true;
-			}
+			return true;
 		}
 
-		if (modified)
+		try
 		{
-			container.ContainerTags = newTags;
+			Tag.RequestTag(tagsManager, tagKey);
+			return true;
 		}
-
-		return modified;
+		catch (TagNotRegisteredException)
+		{
+			return false;
+		}
 	}
 }
 #endif

@@ -3,7 +3,6 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Tags;
 using Godot;
 
@@ -14,9 +13,10 @@ namespace Gamesmiths.Forge.Godot.Editor.Tags;
 [Tool]
 public partial class TagContainerSelectionControl : VBoxContainer, ISerializationListener
 {
-	private readonly Dictionary<TreeItem, TagNode> _treeItemToNode = [];
+	private readonly Dictionary<TreeItem, string> _treeItemToTag = [];
 
 	private Button? _containerButton;
+	private TagTreeSearchBar? _searchBar;
 	private ScrollContainer? _scroll;
 	private Tree? _tree;
 	private Texture2D? _checkedIcon;
@@ -36,6 +36,14 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 		};
 		_containerButton.Toggled += OnToggled;
 		AddChild(_containerButton);
+
+		_searchBar = new TagTreeSearchBar
+		{
+			Visible = false,
+		};
+
+		_searchBar.FilterChanged += OnFilterChanged;
+		AddChild(_searchBar);
 
 		_scroll = new ScrollContainer
 		{
@@ -62,6 +70,8 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 		_uncheckedIcon = EditorInterface.Singleton
 			.GetEditorTheme()
 			.GetIcon("GuiUnchecked", "EditorIcons");
+
+		ForgeTagsRegistry.Changed += OnRegisteredTagsChanged;
 
 		RebuildTree();
 	}
@@ -99,8 +109,15 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 		}
 	}
 
+	private void OnRegisteredTagsChanged()
+	{
+		RebuildTree();
+	}
+
 	private void ReleaseUiState()
 	{
+		ForgeTagsRegistry.Changed -= OnRegisteredTagsChanged;
+
 		if (_containerButton is not null && IsInstanceValid(_containerButton))
 		{
 			_containerButton.Toggled -= OnToggled;
@@ -111,9 +128,15 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 			_tree.ButtonClicked -= OnTreeButtonClicked;
 		}
 
+		if (_searchBar is not null && IsInstanceValid(_searchBar))
+		{
+			_searchBar.FilterChanged -= OnFilterChanged;
+		}
+
 		ValueChanged = null;
-		_treeItemToNode.Clear();
+		_treeItemToTag.Clear();
 		_containerButton = null;
+		_searchBar = null;
 		_scroll = null;
 		_tree = null;
 		_checkedIcon = null;
@@ -128,30 +151,26 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 		}
 
 		_tree.Clear();
-		_treeItemToNode.Clear();
+		_treeItemToTag.Clear();
 		_containerButton.Text = $"Container (size: {_currentValue.Count})";
 
-		ForgeData forgePluginData = ResourceLoader.Load<ForgeData>(ForgeData.ForgeDataResourcePath);
-		var tagsManager = new TagsManager([.. forgePluginData.RegisteredTags]);
+		_searchBar?.RefreshSources();
+
+		TagsManager tags = _searchBar?.ResolveTags() ?? ForgeTagsRegistry.MergedTags;
 		TreeItem root = _tree.CreateItem();
-		BuildTreeRecursive(root, tagsManager.RootNode);
+
+		TagSourceTreeBuilder.Build(
+			_tree,
+			root,
+			tags.RootNode,
+			_searchBar?.ResolveFilter(tags),
+			DecorateRow,
+			_treeItemToTag);
 	}
 
-	private void BuildTreeRecursive(TreeItem parent, TagNode node)
+	private void DecorateRow(TreeItem item, string completeTagKey)
 	{
-		if (_tree is null)
-		{
-			return;
-		}
-
-		foreach (TagNode child in node.ChildTags)
-		{
-			TreeItem item = _tree.CreateItem(parent);
-			item.SetText(0, child.TagKey);
-			item.AddButton(0, _currentValue.Contains(child.CompleteTagKey) ? _checkedIcon : _uncheckedIcon);
-			_treeItemToNode[item] = child;
-			BuildTreeRecursive(item, child);
-		}
+		item.AddButton(0, _currentValue.Contains(completeTagKey) ? _checkedIcon : _uncheckedIcon);
 	}
 
 	private void OnTreeButtonClicked(
@@ -170,7 +189,7 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 			return;
 		}
 
-		string tag = _treeItemToNode[item].CompleteTagKey;
+		string tag = _treeItemToTag[item];
 		var newValue = new GodotStringArray();
 		newValue.AddRange(_currentValue);
 
@@ -185,12 +204,18 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 
 	private void OnToggled(bool toggled)
 	{
-		if (_scroll is null || !IsInstanceValid(_scroll))
+		if (_scroll is null || _searchBar is null || !IsInstanceValid(_scroll) || !IsInstanceValid(_searchBar))
 		{
 			return;
 		}
 
 		_scroll.Visible = toggled;
+		_searchBar.Visible = toggled;
+	}
+
+	private void OnFilterChanged()
+	{
+		RebuildTree();
 	}
 }
 #endif
