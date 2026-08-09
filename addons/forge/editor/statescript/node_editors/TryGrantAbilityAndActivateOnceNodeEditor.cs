@@ -8,10 +8,10 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
 [Tool]
-internal sealed partial class GrantAbilityAndActivateOnceNodeEditor : StandardNodeEditorBase
+internal sealed partial class TryGrantAbilityAndActivateOnceNodeEditor : StandardNodeEditorBase
 {
 	public override string HandledRuntimeTypeName =>
-		"Gamesmiths.Forge.Statescript.Nodes.Condition.GrantAbilityAndActivateOnceNode";
+		"Gamesmiths.Forge.Statescript.Nodes.Condition.TryGrantAbilityAndActivateOnceNode";
 
 	protected override IReadOnlyList<NodeConfigParam> ConstructorParams =>
 	[
@@ -22,9 +22,14 @@ internal sealed partial class GrantAbilityAndActivateOnceNodeEditor : StandardNo
 			DefaultName: "None"),
 	];
 
+	protected override string? GetOutputObjectTypeId(int outputIndex)
+	{
+		return outputIndex == TryGrantAbilityAndActivateOnceNode.AbilityOutput ? "AbilityHandle" : null;
+	}
+
 	protected override Variant? GetDefaultInputConstant(int inputIndex)
 	{
-		return inputIndex == GrantAbilityAndActivateOnceNode.LevelInput ? 1 : null;
+		return inputIndex == TryGrantAbilityAndActivateOnceNode.LevelInput ? 1 : null;
 	}
 }
 #endif
