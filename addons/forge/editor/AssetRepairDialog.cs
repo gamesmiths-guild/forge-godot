@@ -46,17 +46,17 @@ public sealed partial class AssetRepairDialog : ConfirmationDialog
 	{
 		// Scan first and show what would change: a repair rewrites assets across the whole project, so it must never
 		// be a single unconfirmed click.
-		List<AssetRepairTool.RepairFinding> findings = AssetRepairTool.Scan();
+		RepairReport report = AssetRepairTool.Scan();
 
-		if (findings.Count == 0)
+		if (report.Findings.Count == 0)
 		{
-			DialogText = "Every tag reference in this project resolves. Nothing to repair.";
+			DialogText = DescribeNothingFound(report.SkippedAssets);
 			GetOkButton().Visible = false;
 			CancelButtonText = "Close";
 		}
 		else
 		{
-			DialogText = BuildPreview(findings);
+			DialogText = BuildPreview(report);
 			GetOkButton().Visible = true;
 			CancelButtonText = "Cancel";
 		}
@@ -66,8 +66,53 @@ public sealed partial class AssetRepairDialog : ConfirmationDialog
 		PopupCentered(_dialogSize);
 	}
 
-	private static string BuildPreview(List<AssetRepairTool.RepairFinding> findings)
+	/// <summary>
+	/// Describes an empty result, qualified by anything the scan could not look at.
+	/// </summary>
+	/// <param name="skippedAssets">Assets that were not inspected.</param>
+	/// <returns>The message to show.</returns>
+	/// <remarks>
+	/// A bare all-clear would be untrue when part of the project was never read, and that is exactly the case someone
+	/// would go on to trust.
+	/// </remarks>
+	private static string DescribeNothingFound(List<string> skippedAssets)
 	{
+		if (skippedAssets.Count == 0)
+		{
+			return "Every tag reference in this project resolves. Nothing to repair.";
+		}
+
+		var builder = new StringBuilder();
+
+		builder.Append("Every tag reference that could be read resolves. Nothing to repair.")
+			.Append(LineBreak)
+			.Append(LineBreak)
+			.Append(CultureInfo.InvariantCulture, $"{skippedAssets.Count} binary asset(s) were not inspected, ")
+			.Append("because tags can only be read from text scenes and resources:")
+			.Append(LineBreak);
+
+		AppendSkipped(builder, skippedAssets);
+
+		return builder.ToString();
+	}
+
+	private static void AppendSkipped(StringBuilder builder, List<string> skippedAssets)
+	{
+		foreach (string asset in skippedAssets.Take(MaxListedFindings))
+		{
+			builder.Append(CultureInfo.InvariantCulture, $"    {asset}").Append(LineBreak);
+		}
+
+		if (skippedAssets.Count > MaxListedFindings)
+		{
+			builder.Append(CultureInfo.InvariantCulture, $"    ... and {skippedAssets.Count - MaxListedFindings} more.")
+				.Append(LineBreak);
+		}
+	}
+
+	private static string BuildPreview(RepairReport report)
+	{
+		List<AssetRepairTool.RepairFinding> findings = report.Findings;
 		var builder = new StringBuilder();
 		int assetCount = findings.Select(finding => finding.AssetPath).Distinct().Count();
 
@@ -101,6 +146,16 @@ public sealed partial class AssetRepairDialog : ConfirmationDialog
 				.Append(LineBreak);
 		}
 
+		if (report.SkippedAssets.Count > 0)
+		{
+			builder.Append(LineBreak)
+				.Append(CultureInfo.InvariantCulture, $"{report.SkippedAssets.Count} binary asset(s) were not ")
+				.Append("inspected and will be left alone:")
+				.Append(LineBreak);
+
+			AppendSkipped(builder, report.SkippedAssets);
+		}
+
 		return builder.ToString();
 	}
 
@@ -109,9 +164,9 @@ public sealed partial class AssetRepairDialog : ConfirmationDialog
 	private void OnConfirmed()
 #pragma warning restore CA1822, S2325
 	{
-		List<AssetRepairTool.RepairFinding> repaired = AssetRepairTool.Apply();
+		RepairReport report = AssetRepairTool.Apply();
 
-		GD.Print($"Repaired {repaired.Count} tag reference(s).");
+		GD.Print($"Repaired {report.Findings.Count} tag reference(s).");
 	}
 }
 #endif

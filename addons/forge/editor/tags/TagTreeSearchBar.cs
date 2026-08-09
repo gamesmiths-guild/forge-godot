@@ -48,6 +48,15 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 	public TagsManager? FixedTags { get; set; }
 
 	/// <summary>
+	/// Gets the reference of the source the user narrowed to, or <see langword="null"/> for all sources.
+	/// </summary>
+	/// <remarks>
+	/// Hosts that render sources themselves - the dock's By Source view - need this rather than
+	/// <see cref="ResolveTags"/>, which merges the selection away.
+	/// </remarks>
+	public string? SelectedReference => FixedTags is null && SourcePickerEnabled ? _selectedReference : null;
+
+	/// <summary>
 	/// Gets or sets a value indicating whether the source picker can be used.
 	/// </summary>
 	/// <remarks>

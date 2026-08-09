@@ -17,6 +17,10 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 	private SearchableOptionButton? _destinationPicker;
 	private Button? _addButton;
 
+	// Remembered by reference, not by index: reordering sources renumbers them, and holding the old number would
+	// silently point new tags at a different file.
+	private string? _selectedReference;
+
 	/// <summary>
 	/// Raised with the destination source index and the typed key when the user asks to add a tag.
 	/// </summary>
@@ -60,6 +64,7 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 
 		_tagField.TextSubmitted += OnTagSubmitted;
 		_addButton.Pressed += OnAddPressed;
+		_destinationPicker.ItemSelected += OnDestinationSelected;
 	}
 
 	public override void _ExitTree()
@@ -88,20 +93,29 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 			return;
 		}
 
-		int previous = _destinationPicker.Selected;
-
 		_destinationPicker.Clear();
 
 		IReadOnlyList<SourceEntry> sources = ForgeTagsRegistry.Sources;
+		int selectedIndex = 0;
 
-		foreach (SourceEntry entry in sources)
+		for (int i = 0; i < sources.Count; i++)
 		{
-			_destinationPicker.AddItem(entry.DisplayName);
+			_destinationPicker.AddItem(sources[i].DisplayName);
+
+			if (sources[i].Reference == _selectedReference)
+			{
+				selectedIndex = i;
+			}
 		}
 
 		if (sources.Count > 0)
 		{
-			_destinationPicker.Selected = previous >= 0 && previous < sources.Count ? previous : 0;
+			_destinationPicker.Selected = selectedIndex;
+			_selectedReference = sources[selectedIndex].Reference;
+		}
+		else
+		{
+			_selectedReference = null;
 		}
 
 		// With a single source there is nothing to choose, and the picker would just be noise next to the field.
@@ -124,6 +138,7 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 			&& sourceIndex < _destinationPicker.ItemCount)
 		{
 			_destinationPicker.Selected = sourceIndex;
+			RememberSelection(sourceIndex);
 		}
 
 		_tagField.Text = prefill;
@@ -140,6 +155,18 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 		{
 			_tagField.Text = string.Empty;
 		}
+	}
+
+	private void OnDestinationSelected(long index)
+	{
+		RememberSelection((int)index);
+	}
+
+	private void RememberSelection(int index)
+	{
+		IReadOnlyList<SourceEntry> sources = ForgeTagsRegistry.Sources;
+
+		_selectedReference = index >= 0 && index < sources.Count ? sources[index].Reference : null;
 	}
 
 	private void OnTagSubmitted(string text)
@@ -176,6 +203,11 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 		if (_addButton is not null && IsInstanceValid(_addButton))
 		{
 			_addButton.Pressed -= OnAddPressed;
+		}
+
+		if (_destinationPicker is not null && IsInstanceValid(_destinationPicker))
+		{
+			_destinationPicker.ItemSelected -= OnDestinationSelected;
 		}
 
 		AddRequested = null;

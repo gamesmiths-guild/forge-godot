@@ -325,21 +325,41 @@ public partial class ForgePluginLoader : EditorPlugin
 			return;
 		}
 
-		var tagsSource = new ForgeTagsSource();
-		Error error = ResourceSaver.Save(tagsSource, ForgeSettings.DefaultSourcePath);
+		const string path = ForgeSettings.DefaultSourcePath;
 
-		if (error != Error.Ok)
+		if (ResourceLoader.Exists(path))
 		{
-			GD.PrintErr($"Failed to create tag source at {ForgeSettings.DefaultSourcePath}: {error}");
+			// Never overwrite. An empty setting does not mean an empty project: the file may have been authored before
+			// it was attached, or the setting reset, and replacing it would destroy every tag in it.
+			if (ResourceLoader.Load(path) is not ForgeTagsSource)
+			{
+				GD.PushError(
+					$"'{path}' already exists and is not a Forge tag source. Move it aside, or point "
+					+ $"'{ForgeSettings.SourcesSetting}' at a tag source yourself.");
+				return;
+			}
+
+			ForgeSettings.SetSourceReferences([ForgeSettings.ToPreferredReference(path)]);
+			GD.Print("Using the existing tag source at ", path);
+
 			return;
 		}
 
-		// The scan has to happen before the reference is taken: GetResourceUid has nothing to return for a file the
-		// filesystem has not indexed yet, which would quietly store a path instead of a UID.
-		EditorInterface.Singleton.GetResourceFilesystem().Scan();
-		ForgeSettings.SetSourceReferences([ForgeSettings.ToPreferredReference(ForgeSettings.DefaultSourcePath)]);
+		var tagsSource = new ForgeTagsSource();
+		Error error = ResourceSaver.Save(tagsSource, path);
 
-		GD.Print("Created tag source at ", ForgeSettings.DefaultSourcePath);
+		if (error != Error.Ok)
+		{
+			GD.PrintErr($"Failed to create tag source at {path}: {error}");
+			return;
+		}
+
+		// UpdateFile registers the new file, and its UID, synchronously. Scan only queues a rescan, so the reference
+		// taken below could still be a plain path - which then breaks the moment the file is moved.
+		EditorInterface.Singleton.GetResourceFilesystem().UpdateFile(path);
+		ForgeSettings.SetSourceReferences([ForgeSettings.ToPreferredReference(path)]);
+
+		GD.Print("Created tag source at ", path);
 	}
 
 	private static void OnResourcesReload(string[] resources)

@@ -13,11 +13,16 @@ Tags live in **tag source** resources (`ForgeTagsSource`), and a project can rea
 
 That makes sources purely an organizational tool. Split tags by feature — cooldowns in one file, effects in another — or keep a shared set you copy between projects. Nothing at runtime depends on which file a tag came from; the game sees one merged registry.
 
-### The hierarchy is implicit
+### Parents come for free, but can also be declared
 
-Declaring `cooldown.skill.dash` also creates `cooldown` and `cooldown.skill`. You never declare parents yourself, and they exist only as long as something beneath them does — remove the last child and the parent goes with it.
+Declaring `cooldown.skill.dash` also creates `cooldown` and `cooldown.skill` — you never have to declare a parent to use one beneath it.
 
-In the Tags dock, implicit parents appear greyed out with their delete button disabled, because there is nothing stored to delete.
+A parent can still be declared in its own right, and that changes how it behaves:
+
+- **Implied** parents exist only while something beneath them does. Remove the last child and the parent goes with it. In the Tags dock they appear greyed out with their delete button disabled, because there is nothing stored to delete.
+- **Declared** parents are ordinary tags. They survive their last child, can be matched and assigned on their own, and are removed like any other tag.
+
+Both are useful. Declare a parent when it is a tag in its own right — the sample source declares `cooldown`, `cooldown.skill`, `cue.vfx`, `event`, `event.damage` and `set_by_caller` for exactly that reason — and leave it implied when it is only a grouping.
 
 ### Where sources are configured
 
@@ -91,6 +96,8 @@ Both read from the merged registry and update immediately when tags change, so a
 Removing a tag that assets still reference leaves those references dangling. Two places find them and offer to strip them — the **Repair** button in the Tags dock, right where tags get removed, and **Project → Tools → Forge → Repair assets tags**. Both run the same check.
 
 It reports what it found before changing anything, listing each asset and where inside it the reference lives. Repairing rewrites the affected scenes and resources and **cannot be undone**, so commit or back up first.
+
+It looks everywhere a tag key is stored, not just at `ForgeTag` and `ForgeTagContainer`: cue tags on cue handler nodes, and the tag keys Statescript resolvers hold as plain strings — tag resolvers, set-by-caller identifiers and ability cooldowns. A type that gains a tag-valued property has to be added to that list, or a repair will quietly walk past it.
 
 Scenes are read and rewritten as text, never loaded, so scanning cannot run scene scripts or disturb anything. Binary `.scn` scenes are not text and are reported as skipped rather than silently ignored.
 

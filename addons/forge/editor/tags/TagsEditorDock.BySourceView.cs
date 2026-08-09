@@ -96,8 +96,17 @@ public partial class TagsEditorDock
 			return;
 		}
 
+		string? selectedReference = _searchBar?.SelectedReference;
+
 		for (int i = 0; i < sources.Count; i++)
 		{
+			// The index is the registry position, not the display position, so row actions still address the right
+			// source when the view is narrowed to one of them.
+			if (selectedReference is not null && sources[i].Reference != selectedReference)
+			{
+				continue;
+			}
+
 			BuildSourceSection(tree, root, sources[i], i, sources.Count);
 		}
 	}

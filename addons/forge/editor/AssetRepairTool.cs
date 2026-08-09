@@ -37,8 +37,8 @@ public partial class AssetRepairTool : EditorPlugin
 	/// <summary>
 	/// Reports every tag reference a repair would remove, without modifying anything.
 	/// </summary>
-	/// <returns>The tags that would be stripped.</returns>
-	public static List<RepairFinding> Scan()
+	/// <returns>What was found, and what could not be inspected.</returns>
+	internal static RepairReport Scan()
 	{
 		return Process(applyChanges: false);
 	}
@@ -46,22 +46,56 @@ public partial class AssetRepairTool : EditorPlugin
 	/// <summary>
 	/// Strips unregistered tags from every scene and resource in the project, and saves what it changed.
 	/// </summary>
-	/// <returns>The tags that were removed.</returns>
-	public static List<RepairFinding> Apply()
+	/// <returns>What was actually repaired, and what could not be inspected.</returns>
+	internal static RepairReport Apply()
 	{
 		return Process(applyChanges: true);
 	}
 
-	private static List<RepairFinding> Process(bool applyChanges)
+	/// <summary>
+	/// Every way a tag key is stored in an asset.
+	/// </summary>
+	/// <remarks>
+	/// Not just <c>ForgeTag</c> and <c>ForgeTagContainer</c>: several types keep a tag key as a plain string, and a
+	/// repair that ignored them would leave exactly the dangling references it claims to remove. Anything that gains a
+	/// tag-valued property belongs in this list.
+	/// </remarks>
+	private static List<TagPropertyDescriptor> BuildDescriptors()
+	{
+		return
+		[
+			Describe(nameof(ForgeTagContainer), ForgeTagContainerScriptUid, "ContainerTags", isList: true),
+			Describe(nameof(ForgeTag), ForgeTagScriptUid, "Tag", isList: false),
+			Describe("TagResolverResource", string.Empty, "Tags", isList: true),
+			Describe("SetByCallerMagnitudeResolverResource", string.Empty, "IdentifierTag", isList: false),
+			Describe("AbilityCooldownResolverResource", string.Empty, "CooldownTag", isList: false),
+
+			// ForgeCueHandler is a node type users derive from, so the script written into a scene is their own and
+			// cannot be resolved in advance. The property name is distinctive enough to match on by itself.
+			new TagPropertyDescriptor(default, "CueTag", IsList: false, OnNodes: true),
+		];
+	}
+
+	private static TagPropertyDescriptor Describe(
+		string globalClassName,
+		string fallbackUid,
+		string propertyName,
+		bool isList)
+	{
+		return new TagPropertyDescriptor(
+			TagsSourceScanner.ResolveScriptIdentity(globalClassName, fallbackUid),
+			propertyName,
+			isList,
+			OnNodes: false);
+	}
+
+	private static RepairReport Process(bool applyChanges)
 	{
 		// Tags resolve against every configured source, so which source declares a tag is irrelevant here.
 		TagsManager tagsManager = ForgeTagsRegistry.MergedTags;
+		List<TagPropertyDescriptor> descriptors = BuildDescriptors();
 		var findings = new List<RepairFinding>();
 		var skippedAssets = new List<string>();
-
-		ScriptIdentity tagScript = TagsSourceScanner.ResolveScriptIdentity(nameof(ForgeTag), ForgeTagScriptUid);
-		ScriptIdentity containerScript =
-			TagsSourceScanner.ResolveScriptIdentity(nameof(ForgeTagContainer), ForgeTagContainerScriptUid);
 
 		List<string> assets =
 		[
@@ -71,11 +105,6 @@ public partial class AssetRepairTool : EditorPlugin
 
 		foreach (string assetPath in assets)
 		{
-			if (!MayContainTags(assetPath, tagScript, containerScript))
-			{
-				continue;
-			}
-
 			if (!IsTextAsset(assetPath))
 			{
 				// A binary asset is not text, so its tags cannot be read this way.
@@ -83,12 +112,10 @@ public partial class AssetRepairTool : EditorPlugin
 				continue;
 			}
 
-			ProcessAsset(assetPath, tagsManager, tagScript, containerScript, applyChanges, findings);
+			ProcessAsset(assetPath, tagsManager, descriptors, applyChanges, findings);
 		}
 
-		ReportSkipped(skippedAssets);
-
-		return findings;
+		return new RepairReport(findings, skippedAssets);
 	}
 
 	private static bool IsTextAsset(string assetPath)
@@ -97,29 +124,10 @@ public partial class AssetRepairTool : EditorPlugin
 			|| assetPath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase);
 	}
 
-	/// <summary>
-	/// Determines whether an asset is worth reading, by checking its dependency header for a tag-bearing script.
-	/// </summary>
-	/// <param name="assetPath">The asset to test.</param>
-	/// <param name="tagScript">The <c>ForgeTag</c> script identity.</param>
-	/// <param name="containerScript">The <c>ForgeTagContainer</c> script identity.</param>
-	/// <returns><see langword="true"/> when the asset could contain tags.</returns>
-	/// <remarks>
-	/// The dependency header is a bounded read that stops before the body, so this narrows a whole project down to the
-	/// handful of files that actually embed a tag. An asset that merely references an external tag resource is passed
-	/// over safely, because that resource is itself examined as its own file.
-	/// </remarks>
-	private static bool MayContainTags(string assetPath, ScriptIdentity tagScript, ScriptIdentity containerScript)
-	{
-		return TagsSourceScanner.ReferencesScript(assetPath, tagScript)
-			|| TagsSourceScanner.ReferencesScript(assetPath, containerScript);
-	}
-
 	private static void ProcessAsset(
 		string assetPath,
 		TagsManager tagsManager,
-		ScriptIdentity tagScript,
-		ScriptIdentity containerScript,
+		List<TagPropertyDescriptor> descriptors,
 		bool applyChanges,
 		List<RepairFinding> findings)
 	{
@@ -131,7 +139,8 @@ public partial class AssetRepairTool : EditorPlugin
 			return;
 		}
 
-		List<AssetTagReference> references = AssetTagParser.Parse(lines, tagScript, containerScript);
+		List<AssetTagReference> references = AssetTagParser.Parse(lines, descriptors);
+		var assetFindings = new List<RepairFinding>();
 		bool modified = false;
 
 		foreach (AssetTagReference reference in references)
@@ -140,7 +149,7 @@ public partial class AssetRepairTool : EditorPlugin
 
 			foreach (string tag in reference.Tags.Where(tag => !IsRegistered(tagsManager, tag)))
 			{
-				findings.Add(new RepairFinding(assetPath, reference.Location, tag));
+				assetFindings.Add(new RepairFinding(assetPath, reference.Location, tag));
 			}
 
 			if (!applyChanges || kept.Length == reference.Tags.Length)
@@ -152,22 +161,19 @@ public partial class AssetRepairTool : EditorPlugin
 			modified = true;
 		}
 
-		if (modified && WriteLines(assetPath, lines))
-		{
-			GD.Print($"Repaired tag references in {assetPath}.");
-		}
-	}
-
-	private static void ReportSkipped(List<string> skippedAssets)
-	{
-		if (skippedAssets.Count == 0)
+		// A failed write leaves every tag exactly where it was, so reporting them as repaired would be a lie - and the
+		// caller counts what comes back as the number of references it fixed.
+		if (applyChanges && modified && !WriteLines(assetPath, lines))
 		{
 			return;
 		}
 
-		GD.PushWarning(
-			$"Skipped {skippedAssets.Count} binary asset(s) whose tags could not be read: "
-			+ string.Join(", ", skippedAssets));
+		findings.AddRange(assetFindings);
+
+		if (applyChanges && modified)
+		{
+			GD.Print($"Repaired tag references in {assetPath}.");
+		}
 	}
 
 	private static List<string>? ReadLines(string path)

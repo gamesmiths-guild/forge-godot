@@ -26,8 +26,6 @@ namespace Gamesmiths.Forge.Godot.Editor;
 /// </remarks>
 internal static class AssetTagParser
 {
-	private const string ContainerProperty = "ContainerTags";
-	private const string TagProperty = "Tag";
 	private const string TypedArrayPrefix = "Array[String](";
 	private const int MaxOwnerDepth = 16;
 
@@ -35,16 +33,21 @@ internal static class AssetTagParser
 	/// Finds every tag-bearing property written into an asset file.
 	/// </summary>
 	/// <param name="lines">The file's lines.</param>
-	/// <param name="tagScript">The <c>ForgeTag</c> script identity.</param>
-	/// <param name="containerScript">The <c>ForgeTagContainer</c> script identity.</param>
+	/// <param name="descriptors">Every way a tag key can be stored.</param>
 	/// <returns>The tag properties found, in file order.</returns>
 	public static List<AssetTagReference> Parse(
 		IReadOnlyList<string> lines,
-		ScriptIdentity tagScript,
-		ScriptIdentity containerScript)
+		IReadOnlyList<TagPropertyDescriptor> descriptors)
 	{
-		HashSet<string> tagScriptIds = CollectScriptIds(lines, tagScript);
-		HashSet<string> containerScriptIds = CollectScriptIds(lines, containerScript);
+		// Each descriptor's script maps to the local ext_resource ids this file uses for it, so a property line only
+		// counts when it sits in a section scripted by the type that declares it. Keyed by the descriptor rather than
+		// by property name, so two types declaring the same property name cannot overwrite each other.
+		var scriptIds = new Dictionary<TagPropertyDescriptor, HashSet<string>>();
+
+		foreach (TagPropertyDescriptor descriptor in descriptors.Where(descriptor => !descriptor.OnNodes))
+		{
+			scriptIds[descriptor] = CollectScriptIds(lines, descriptor.Script);
+		}
 
 		var references = new List<AssetTagReference>();
 		var owners = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -52,8 +55,7 @@ internal static class AssetTagParser
 		string section = string.Empty;
 		string sectionId = string.Empty;
 		string ownerName = string.Empty;
-		bool isTagScript = false;
-		bool isContainerScript = false;
+		string sectionScriptId = string.Empty;
 
 		for (int i = 0; i < lines.Count; i++)
 		{
@@ -66,23 +68,29 @@ internal static class AssetTagParser
 				// A scene names its owners by node; a resource file has a single unnamed [resource] section.
 				sectionId = section == "sub_resource" ? ExtractQuoted(line, "id") : string.Empty;
 				ownerName = ResolveOwnerName(section, sectionId, line);
-				isTagScript = false;
-				isContainerScript = false;
+				sectionScriptId = string.Empty;
 				continue;
 			}
 
-			if (section is "sub_resource" or "resource")
+			string propertyName = PropertyName(line);
+
+			if (propertyName == "script")
 			{
-				ReadTagLine(
-					line,
-					i,
-					sectionId,
-					tagScriptIds,
-					containerScriptIds,
-					ref isTagScript,
-					ref isContainerScript,
-					references);
+				sectionScriptId = ExtractCall(line, "ExtResource");
+				continue;
 			}
+
+			ReadTagLine(
+				line,
+				i,
+				section,
+				sectionId,
+				ownerName,
+				sectionScriptId,
+				propertyName,
+				descriptors,
+				scriptIds,
+				references);
 
 			if (string.IsNullOrEmpty(ownerName))
 			{
@@ -93,7 +101,7 @@ internal static class AssetTagParser
 
 			if (!string.IsNullOrEmpty(referencedId))
 			{
-				owners[referencedId] = $"{ownerName}/{PropertyName(line)}";
+				owners[referencedId] = $"{ownerName}/{propertyName}";
 			}
 		}
 
@@ -130,53 +138,80 @@ internal static class AssetTagParser
 	private static void ReadTagLine(
 		string line,
 		int lineIndex,
+		string section,
 		string sectionId,
-		HashSet<string> tagScriptIds,
-		HashSet<string> containerScriptIds,
-		ref bool isTagScript,
-		ref bool isContainerScript,
+		string ownerName,
+		string sectionScriptId,
+		string propertyName,
+		IReadOnlyList<TagPropertyDescriptor> descriptors,
+		Dictionary<TagPropertyDescriptor, HashSet<string>> scriptIds,
 		List<AssetTagReference> references)
 	{
-		string propertyName = PropertyName(line);
-
-		if (propertyName == "script")
+		foreach (TagPropertyDescriptor descriptor in descriptors)
 		{
-			string scriptId = ExtractCall(line, "ExtResource");
+			if (descriptor.PropertyName != propertyName || !Matches(descriptor, section, sectionScriptId, scriptIds))
+			{
+				continue;
+			}
 
-			isTagScript = tagScriptIds.Contains(scriptId);
-			isContainerScript = containerScriptIds.Contains(scriptId);
+			string[] tags = descriptor.IsList ? ParseStringList(line) : ReadSingleTag(line);
 
-			return;
-		}
+			if (tags.Length == 0)
+			{
+				return;
+			}
 
-		if (isContainerScript && propertyName == ContainerProperty)
-		{
 			references.Add(new AssetTagReference(
 				lineIndex,
 				propertyName,
-				string.IsNullOrEmpty(sectionId) ? "resource" : sectionId,
-				IsContainer: true,
+				ResolveInitialLocation(section, sectionId, ownerName, propertyName),
+				descriptor.IsList,
 				line.Contains(TypedArrayPrefix, StringComparison.Ordinal),
-				ParseStringList(line)));
+				tags));
 
 			return;
 		}
+	}
 
-		if (isTagScript && propertyName == TagProperty)
+	private static bool Matches(
+		TagPropertyDescriptor descriptor,
+		string section,
+		string sectionScriptId,
+		Dictionary<TagPropertyDescriptor, HashSet<string>> scriptIds)
+	{
+		// A node-scoped property is matched by name alone: the script written into the scene belongs to the user's own
+		// subclass, so there is no fixed script id to compare against.
+		if (descriptor.OnNodes)
 		{
-			string value = ExtractFirstQuoted(line);
-
-			if (!string.IsNullOrEmpty(value))
-			{
-				references.Add(new AssetTagReference(
-					lineIndex,
-					propertyName,
-					string.IsNullOrEmpty(sectionId) ? "resource" : sectionId,
-					IsContainer: false,
-					UsesTypedArray: false,
-					[value]));
-			}
+			return section == "node";
 		}
+
+		return section is "sub_resource" or "resource"
+			&& scriptIds.TryGetValue(descriptor, out HashSet<string>? ids)
+			&& ids.Contains(sectionScriptId);
+	}
+
+	private static string ResolveInitialLocation(
+		string section,
+		string sectionId,
+		string ownerName,
+		string propertyName)
+	{
+		// A node property is already where it lives, so it names itself. A resource property is reported by the id of
+		// the section holding it, which the owner chain later turns into a readable path.
+		if (section == "node")
+		{
+			return $"{ownerName}/{propertyName}";
+		}
+
+		return string.IsNullOrEmpty(sectionId) ? "resource" : sectionId;
+	}
+
+	private static string[] ReadSingleTag(string line)
+	{
+		string value = ExtractFirstQuoted(line);
+
+		return string.IsNullOrEmpty(value) ? [] : [value];
 	}
 
 	private static HashSet<string> CollectScriptIds(IReadOnlyList<string> lines, ScriptIdentity script)

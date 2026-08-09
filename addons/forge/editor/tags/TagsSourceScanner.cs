@@ -43,20 +43,13 @@ internal static class TagsSourceScanner
 	{
 		ScriptIdentity identity = ResolveScriptIdentity(nameof(ForgeTagsSource), TagsSourceScriptUid);
 
-		return [.. CollectResourceCandidates().Where(path => ReferencesScript(path, identity))];
-	}
-
-	/// <summary>
-	/// Collects every plain resource file in the project, straight from the editor's in-memory index.
-	/// </summary>
-	/// <returns>The candidate resource paths.</returns>
-	/// <remarks>
-	/// Anything with a more specific base type is an engine resource and cannot be a scripted one, so filtering on
-	/// <c>"Resource"</c> prunes most of the project for free.
-	/// </remarks>
-	public static List<string> CollectResourceCandidates()
-	{
-		return ProjectFileIndex.CollectByType("Resource", ".tres", ".res");
+		// Anything with a more specific base type is an engine resource and cannot be a scripted one, so filtering on
+		// "Resource" prunes most of the project before a single dependency header is read.
+		return
+		[
+			.. ProjectFileIndex.CollectByType("Resource", ".tres", ".res")
+				.Where(path => ReferencesScript(path, identity)),
+		];
 	}
 
 	/// <summary>
@@ -93,7 +86,7 @@ internal static class TagsSourceScanner
 	/// <param name="resourcePath">The resource file to inspect.</param>
 	/// <param name="identity">The script to look for.</param>
 	/// <returns><see langword="true"/> when the resource is scripted by it.</returns>
-	public static bool ReferencesScript(string resourcePath, ScriptIdentity identity)
+	private static bool ReferencesScript(string resourcePath, ScriptIdentity identity)
 	{
 		foreach (string dependency in ResourceLoader.GetDependencies(resourcePath))
 		{
