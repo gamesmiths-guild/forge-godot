@@ -32,7 +32,11 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 
 		_abilityInstanceHandle = context.InstanceHandle;
 
-		context.AbilityHandle.TryCommitAbility();
+		if (!context.AbilityHandle.TryCommitAbility())
+		{
+			context.InstanceHandle.End();
+			return;
+		}
 
 		_protectEffect ??= new Effect(_effectData, new EffectOwnership(context.Owner, context.Source));
 

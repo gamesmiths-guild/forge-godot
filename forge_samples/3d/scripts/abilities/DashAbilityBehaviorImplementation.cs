@@ -23,7 +23,11 @@ public sealed class DashAbilityBehaviorImplementation : IAbilityBehavior<Charact
 		_delayTimer = new AbilityDelayTimer();
 		_delayTimer.Initialize(context, 0.25f);
 
-		context.AbilityHandle.TryCommitAbility();
+		if (!context.AbilityHandle.TryCommitAbility())
+		{
+			context.InstanceHandle.End();
+			return;
+		}
 
 		CharacterBody3D parentNode = ownerNode.GetParent<CharacterBody3D>();
 
