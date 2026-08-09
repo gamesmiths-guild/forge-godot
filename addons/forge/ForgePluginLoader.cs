@@ -2,10 +2,6 @@
 
 #if TOOLS
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
@@ -26,8 +22,6 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string RepairToolItemText = "Repair assets tags";
 	private const int RepairToolItemId = 0;
 
-	private static readonly Vector2I _repairDialogSize = new(700, 300);
-
 	private TagSourceEditingController? _tagEditingController;
 	private TagsEditorDock? _tagsEditorDock;
 	private TagsSourceInspectorPlugin? _tagsSourceInspectorPlugin;
@@ -40,7 +34,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private SharedVariableSetInspectorPlugin? _sharedVariableSetInspectorPlugin;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
-	private ConfirmationDialog? _repairConfirmDialog;
+	private AssetRepairDialog? _repairDialog;
 	private PopupMenu? _toolsMenu;
 
 	private EditorFileSystem? _fileSystem;
@@ -87,14 +81,10 @@ public partial class ForgePluginLoader : EditorPlugin
 		_statescriptGraphEditorDock.SetUndoRedo(GetUndoRedo());
 		AddDock(_statescriptGraphEditorDock);
 
-		_repairConfirmDialog = new ConfirmationDialog
-		{
-			Title = "Repair Assets Tags",
-			OkButtonText = "Repair",
-		};
+		_repairDialog = new AssetRepairDialog();
+		AddChild(_repairDialog);
 
-		_repairConfirmDialog.Confirmed += OnRepairConfirmed;
-		AddChild(_repairConfirmDialog);
+		_tagsEditorDock.SetRepairDialog(_repairDialog);
 
 		_toolsMenu = new PopupMenu();
 		_toolsMenu.AddItem(RepairToolItemText, RepairToolItemId);
@@ -186,12 +176,11 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		_toolsMenu = null;
 
-		if (_repairConfirmDialog is not null)
+		if (_repairDialog is not null)
 		{
-			_repairConfirmDialog.Confirmed -= OnRepairConfirmed;
-			RemoveChild(_repairConfirmDialog);
-			_repairConfirmDialog.QueueFree();
-			_repairConfirmDialog = null;
+			RemoveChild(_repairDialog);
+			_repairDialog.QueueFree();
+			_repairDialog = null;
 		}
 	}
 
@@ -353,48 +342,6 @@ public partial class ForgePluginLoader : EditorPlugin
 		GD.Print("Created tag source at ", ForgeSettings.DefaultSourcePath);
 	}
 
-	private static string BuildRepairPreview(List<AssetRepairTool.RepairFinding> findings)
-	{
-		const int MaxListedFindings = 40;
-
-		const char LineBreak = '\n';
-
-		var builder = new StringBuilder();
-		int assetCount = findings.Select(finding => finding.AssetPath).Distinct().Count();
-
-		string summary =
-			$"{findings.Count} tag reference(s) across {assetCount} asset(s) do not resolve against the "
-			+ "project's registered tags.";
-
-		builder.Append(summary)
-			.Append(LineBreak)
-			.Append(LineBreak)
-			.Append("Repairing removes them and saves the affected assets. This cannot be undone.")
-			.Append(LineBreak)
-			.Append(LineBreak);
-
-		foreach (IGrouping<string, AssetRepairTool.RepairFinding> asset in findings
-			.Take(MaxListedFindings)
-			.GroupBy(finding => finding.AssetPath))
-		{
-			builder.Append(asset.Key).Append(LineBreak);
-
-			foreach (AssetRepairTool.RepairFinding finding in asset)
-			{
-				builder.Append(CultureInfo.InvariantCulture, $"    {finding.Location}: {finding.Tag}")
-					.Append(LineBreak);
-			}
-		}
-
-		if (findings.Count > MaxListedFindings)
-		{
-			builder.Append(CultureInfo.InvariantCulture, $"    ... and {findings.Count - MaxListedFindings} more.")
-				.Append(LineBreak);
-		}
-
-		return builder.ToString();
-	}
-
 	private static void OnResourcesReload(string[] resources)
 	{
 		ForgeTagsRegistry.InvalidateIfAny(resources);
@@ -405,50 +352,12 @@ public partial class ForgePluginLoader : EditorPlugin
 		ForgeTagsRegistry.InvalidateIfSourcesChanged();
 	}
 
-	private static void OnRepairConfirmed()
-	{
-		List<AssetRepairTool.RepairFinding> repaired = AssetRepairTool.Apply();
-
-		GD.Print($"Repaired {repaired.Count} tag reference(s).");
-	}
-
 	private void OnToolsMenuIdPressed(long id)
 	{
 		if (id == RepairToolItemId)
 		{
-			CallAssetRepairTool();
+			_repairDialog?.Open();
 		}
-	}
-
-	private void CallAssetRepairTool()
-	{
-		if (_repairConfirmDialog is null)
-		{
-			return;
-		}
-
-		// Scan first and show what would change: this rewrites every scene in the project, so it must never be a single
-		// unconfirmed click.
-		List<AssetRepairTool.RepairFinding> findings = AssetRepairTool.Scan();
-
-		if (findings.Count == 0)
-		{
-			_repairConfirmDialog.DialogText =
-				"Every tag reference in this project resolves. Nothing to repair.";
-			_repairConfirmDialog.GetOkButton().Visible = false;
-			_repairConfirmDialog.CancelButtonText = "Close";
-			_repairConfirmDialog.PopupCentered(_repairDialogSize);
-
-			return;
-		}
-
-		_repairConfirmDialog.DialogText = BuildRepairPreview(findings);
-		_repairConfirmDialog.GetOkButton().Visible = true;
-		_repairConfirmDialog.CancelButtonText = "Cancel";
-
-		// An explicit size is required, not just polite: MinSize is a floor, so a long findings list would otherwise
-		// grow the dialog past the screen and push its own buttons out of reach.
-		_repairConfirmDialog.PopupCentered(_repairDialogSize);
 	}
 
 	private void RemoveInspectorPluginAndRelease<TPlugin>(ref TPlugin? plugin)

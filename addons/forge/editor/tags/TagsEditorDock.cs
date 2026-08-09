@@ -69,6 +69,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	private readonly HashSet<string> _collapsedKeys = [];
 
 	private TagSourceEditingController? _controller;
+	private AssetRepairDialog? _repairDialog;
 
 	private Tree? _tree;
 	private TabBar? _viewTabs;
@@ -77,6 +78,7 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	private Button? _newSourceButton;
 	private Button? _addExistingButton;
 	private Button? _findSourcesButton;
+	private Button? _repairButton;
 	private Label? _readOnlyHint;
 
 	private AddTagBar? _addTagBar;
@@ -112,6 +114,18 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	public void SetEditingController(TagSourceEditingController controller)
 	{
 		_controller = controller;
+	}
+
+	/// <summary>
+	/// Sets the dialog used to review and apply asset repairs.
+	/// </summary>
+	/// <param name="dialog">The plugin's shared repair dialog.</param>
+	/// <remarks>
+	/// Shared with the Tools menu rather than rebuilt here, so both entry points scan, report and repair identically.
+	/// </remarks>
+	public void SetRepairDialog(AssetRepairDialog dialog)
+	{
+		_repairDialog = dialog;
 	}
 
 	public override void _Ready()
@@ -374,6 +388,19 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 
 		sourceActions.AddChild(_findSourcesButton);
 
+		// Pushed to the far end: the buttons before it manage sources, this one acts on the rest of the project, and
+		// the gap keeps that distinction visible.
+		sourceActions.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+
+		_repairButton = new Button
+		{
+			Text = "Repair",
+			Icon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Tools", "EditorIcons"),
+			TooltipText = "Find assets referencing tags that no source declares any more, and offer to strip them.",
+		};
+
+		sourceActions.AddChild(_repairButton);
+
 		_addTagBar = new AddTagBar();
 		headerBox.AddChild(_addTagBar);
 
@@ -497,6 +524,11 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 			_findSourcesButton.Pressed += OnFindSourcesPressed;
 		}
 
+		if (_repairButton is not null)
+		{
+			_repairButton.Pressed += OnRepairPressed;
+		}
+
 		if (_scanDialog is not null)
 		{
 			_scanDialog.Confirmed += OnScanConfirmed;
@@ -553,6 +585,11 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 			_findSourcesButton.Pressed -= OnFindSourcesPressed;
 		}
 
+		if (_repairButton is not null)
+		{
+			_repairButton.Pressed -= OnRepairPressed;
+		}
+
 		if (_scanDialog is not null)
 		{
 			_scanDialog.Confirmed -= OnScanConfirmed;
@@ -579,6 +616,11 @@ public partial class TagsEditorDock : EditorDock, ISerializationListener
 	private void OnNewSourcePressed()
 	{
 		_newSourceDialog?.PopupCentered(new Vector2I(700, 500));
+	}
+
+	private void OnRepairPressed()
+	{
+		_repairDialog?.Open();
 	}
 
 	private void OnAddExistingPressed()
