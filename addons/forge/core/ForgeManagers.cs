@@ -14,7 +14,7 @@ public class ForgeManagers
 
 	public CuesManager CuesManager { get; private set; }
 
-	public ForgeManagers(ForgeData pluginData)
+	public ForgeManagers(string[] registeredTags)
 	{
 		Instance = this;
 
@@ -24,7 +24,7 @@ public class ForgeManagers
 		Validation.Enabled = false;
 #endif
 
-		TagsManager = new TagsManager([.. pluginData.RegisteredTags]);
+		TagsManager = new TagsManager(registeredTags);
 		CuesManager = new CuesManager();
 	}
 }
