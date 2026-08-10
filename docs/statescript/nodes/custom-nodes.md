@@ -398,7 +398,7 @@ Constructor parameters are matched by name to entries in the node's `CustomData`
 
 Custom typed data passed when an ability is activated travels in two directions, and **one provider covers both**:
 
-- **Sending** — a graph builds the data and passes it when `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, or `GrantAbilityAndActivateOnceNode` activates an ability.
+- **Sending** — a graph builds the data and passes it when `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, or `TryGrantAbilityAndActivateOnceNode` activates an ability.
 - **Reading** — the activated ability's own graph reads members back out through the **Activation Data** resolver.
 
 Derive from `AbilityActivationDataProvider<TData>`, declare `Members` once, and override `CreateData`:

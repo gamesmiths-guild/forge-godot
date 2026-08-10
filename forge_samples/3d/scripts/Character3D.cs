@@ -121,7 +121,7 @@ public partial class Character3D : CharacterBody3D
 	{
 		if (!handle.IsActive)
 		{
-			handle.Activate(out AbilityActivationFailures activationResult);
+			handle.TryActivate(out AbilityActivationFailures activationResult);
 			GD.Print($"{handle} activation result: {activationResult}");
 		}
 		else
@@ -186,7 +186,7 @@ public partial class Character3D : CharacterBody3D
 
 	private void ActivateDirectionalAbility(AbilityHandle handle)
 	{
-		handle.Activate(
+		handle.TryActivate(
 			new TargetData { Direction = GetMouseDirection() },
 			out AbilityActivationFailures activationResult);
 

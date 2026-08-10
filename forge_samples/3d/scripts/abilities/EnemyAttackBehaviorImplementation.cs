@@ -19,7 +19,11 @@ public sealed class EnemyAttackBehaviorImplementation : IAbilityBehavior
 	{
 		_damageEffect ??= new Effect(_effectData, new EffectOwnership(context.Owner, context.Source));
 
-		context.AbilityHandle.CommitCooldown();
+		if (!context.AbilityHandle.TryCommitCooldown())
+		{
+			context.InstanceHandle.End();
+			return;
+		}
 
 		context.Target!.EffectsManager.ApplyEffect(_damageEffect);
 

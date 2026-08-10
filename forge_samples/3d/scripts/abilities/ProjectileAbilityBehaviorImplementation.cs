@@ -23,7 +23,11 @@ public sealed class ProjectileAbilityBehaviorImplementation : IAbilityBehavior<C
 			return;
 		}
 
-		context.AbilityHandle.CommitAbility();
+		if (!context.AbilityHandle.TryCommitAbility())
+		{
+			context.InstanceHandle.End();
+			return;
+		}
 
 		Projectile projectile = _projectileScene.Instantiate<Projectile>();
 		ownerNode.GetTree().Root.AddChild(projectile);

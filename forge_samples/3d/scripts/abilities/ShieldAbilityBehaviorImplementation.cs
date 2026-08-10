@@ -32,7 +32,11 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 
 		_abilityInstanceHandle = context.InstanceHandle;
 
-		context.AbilityHandle.CommitAbility();
+		if (!context.AbilityHandle.TryCommitAbility())
+		{
+			context.InstanceHandle.End();
+			return;
+		}
 
 		_protectEffect ??= new Effect(_effectData, new EffectOwnership(context.Owner, context.Source));
 
@@ -47,7 +51,7 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 
 		_damageTakenSubscriptionToken = ownerNode.Events.Subscribe<DamageType>(
 			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "event.damage.taken"),
-			_ => context.AbilityHandle.CommitCost());
+			_ => context.AbilityHandle.TryCommitCost());
 	}
 
 	public void OnEnded(AbilityBehaviorContext context)
@@ -60,11 +64,19 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 		ForgeManagers.Instance.CuesManager.RemoveCue(
 			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.shield"), ownerNode, false);
 
-		ownerNode.EffectsManager.RemoveEffect(_activeEffectHandle!);
+		if (_activeEffectHandle is not null)
+		{
+			ownerNode.EffectsManager.RemoveEffect(_activeEffectHandle);
+			_activeEffectHandle = null;
+		}
 
 		ownerNode.Attributes["CharacterAttributes.Mana"].OnValueChanged -= Mana_OnValueChanged;
 
-		ownerNode.Events.Unsubscribe(_damageTakenSubscriptionToken!.Value);
+		if (_damageTakenSubscriptionToken is not null)
+		{
+			ownerNode.Events.Unsubscribe(_damageTakenSubscriptionToken.Value);
+			_damageTakenSubscriptionToken = null;
+		}
 	}
 
 	private void Mana_OnValueChanged(Attributes.EntityAttribute attribute, int change)

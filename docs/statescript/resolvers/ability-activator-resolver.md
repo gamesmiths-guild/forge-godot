@@ -4,7 +4,7 @@
 >
 > **Output Type:** `AbilityActivator`
 
-Authors the optional **Activation Data** input of `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, and `GrantAbilityAndActivateOnceNode`. It selects an `IAbilityActivationDataProvider` that builds custom typed data from the current graph state and passes it into the activation, where the activated ability's behavior receives it through `IAbilityBehavior<TData>.OnStarted`.
+Authors the optional **Activation Data** input of `TryActivateAbilityNode`, `TryActivateAbilitiesByTagNode`, and `TryGrantAbilityAndActivateOnceNode`. It selects an `IAbilityActivationDataProvider` that builds custom typed data from the current graph state and passes it into the activation, where the activated ability's behavior receives it through `IAbilityBehavior<TData>.OnStarted`.
 
 > The **Activation Data** resolver is the other end of this same channel: it **reads** members *out* of the data the current ability was activated with, while this one **builds** the data a graph *sends*. Both are driven by the same `IAbilityActivationDataProvider`, so implementing one covers both. See [Ability Activation Data Providers](../nodes/custom-nodes.md#ability-activation-data-providers).
 

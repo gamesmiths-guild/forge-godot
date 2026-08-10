@@ -316,10 +316,11 @@ public sealed class SimpleAttackBehavior : IAbilityBehavior
             new EffectOwnership(context.Owner, context.Source)
         );
 
-        // (Optional) If using cooldowns via cooldown effect, commit here
-        context.AbilityHandle.CommitCooldown();
-
-        context.Target!.EffectsManager.ApplyEffect(_attackEffect);
+        // (Optional) If using cooldowns via cooldown effect, try commit here
+        if (context.AbilityHandle.TryCommitCooldown())
+        {
+            context.Target!.EffectsManager.ApplyEffect(_attackEffect);
+        }
 
         context.InstanceHandle.End();
     }
@@ -382,7 +383,7 @@ public partial class Player : CharacterBody2D
             IForgeEntity? target = GetNearestEnemy();
             if (target != null)
             {
-                _attackHandle.Activate(out var failures, target);
+                _attackHandle.TryActivate(out var failures, target);
             }
         }
     }
