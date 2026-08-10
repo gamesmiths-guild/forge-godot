@@ -20,8 +20,10 @@ public sealed class DashAbilityBehaviorImplementation : IAbilityBehavior<Charact
 			return;
 		}
 
-		_delayTimer = new AbilityDelayTimer();
-		_delayTimer.Initialize(context, 0.25f);
+		CharacterBody3D parentNode = ownerNode.GetParent<CharacterBody3D>();
+
+		// Store original collision mask and disable enemy collision layer
+		_originalCollisionMask = parentNode.CollisionMask;
 
 		if (!context.AbilityHandle.TryCommitAbility())
 		{
@@ -29,11 +31,11 @@ public sealed class DashAbilityBehaviorImplementation : IAbilityBehavior<Charact
 			return;
 		}
 
-		CharacterBody3D parentNode = ownerNode.GetParent<CharacterBody3D>();
+		_delayTimer = new AbilityDelayTimer();
+		_delayTimer.Initialize(context, 0.25f);
 
-		// Store original collision mask and disable enemy collision layer (adjust layer number as needed)
-		_originalCollisionMask = parentNode.CollisionMask;
-		parentNode.CollisionMask &= ~1u; // Assuming enemies are on layer 3 (index 2)
+		// Disable the enemy collision layer
+		parentNode.CollisionMask &= ~1u;
 
 		parentNode.Velocity = data.Direction * 20f;
 

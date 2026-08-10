@@ -64,11 +64,19 @@ public sealed class ShieldAbilityBehaviorImplementation : IAbilityBehavior
 		ForgeManagers.Instance.CuesManager.RemoveCue(
 			Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.vfx.shield"), ownerNode, false);
 
-		ownerNode.EffectsManager.RemoveEffect(_activeEffectHandle!);
+		if (_activeEffectHandle is not null)
+		{
+			ownerNode.EffectsManager.RemoveEffect(_activeEffectHandle);
+			_activeEffectHandle = null;
+		}
 
 		ownerNode.Attributes["CharacterAttributes.Mana"].OnValueChanged -= Mana_OnValueChanged;
 
-		ownerNode.Events.Unsubscribe(_damageTakenSubscriptionToken!.Value);
+		if (_damageTakenSubscriptionToken is not null)
+		{
+			ownerNode.Events.Unsubscribe(_damageTakenSubscriptionToken.Value);
+			_damageTakenSubscriptionToken = null;
+		}
 	}
 
 	private void Mana_OnValueChanged(Attributes.EntityAttribute attribute, int change)

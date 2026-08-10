@@ -319,7 +319,7 @@ public sealed class SimpleAttackBehavior : IAbilityBehavior
         // (Optional) If using cooldowns via cooldown effect, try commit here
         if (context.AbilityHandle.TryCommitCooldown())
         {
-        	context.Target!.EffectsManager.ApplyEffect(_attackEffect);
+            context.Target!.EffectsManager.ApplyEffect(_attackEffect);
         }
 
         context.InstanceHandle.End();
