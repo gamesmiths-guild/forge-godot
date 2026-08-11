@@ -67,7 +67,7 @@ public partial class CustomForgeEntity : CharacterBody2D, IForgeEntity
 			}
 		}
 
-		Attributes = new EntityAttributes([.. attributeSetList]);
+		Attributes = new EntityAttributes(this, [.. attributeSetList]);
 
 		var effectApplier = new EffectApplier(this);
 		effectApplier.ApplyEffects(this, this, this);

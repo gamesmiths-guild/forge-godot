@@ -66,7 +66,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 			}
 		}
 
-		Attributes = new EntityAttributes([.. attributeSetList]);
+		Attributes = new EntityAttributes(this, [.. attributeSetList]);
 
 		var effectApplier = new EffectApplier(this);
 		effectApplier.ApplyEffects(this, this, this);
