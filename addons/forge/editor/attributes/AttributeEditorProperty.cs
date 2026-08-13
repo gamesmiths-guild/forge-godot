@@ -5,17 +5,24 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Attributes;
 
+/// <summary>
+/// Inspector editor for a fully qualified <c>Set.Attribute</c> string property. The picker itself lives in the shared
+/// <see cref="AttributeSelectionControl"/>, so the inspector and the statescript editors offer the same experience.
+/// </summary>
 [Tool]
 public partial class AttributeEditorProperty : EditorProperty, ISerializationListener
 {
-	private const int ButtonSize = 26;
-	private const int PopupSize = 300;
-	private const string NoneLabel = "None";
+	// Zero means "split each row evenly", matching how the inspector lays out its own properties.
+	private const float LabelWidth = 0.0f;
 
-	private Label? _label;
-	private Button? _button;
-	private Popup? _popup;
-	private Tree? _tree;
+	// The inspector builds nested resource boxes named sub_inspector_bg0 through sub_inspector_bg16, one per nesting
+	// level, and stops deepening the tint past the last one.
+	private const int MaxNestingLevel = 16;
+
+	private AttributeSelectionControl? _selectionControl;
+	private PanelContainer? _groupPanel;
+	private StyleBoxFlat? _groupOutline;
+	private AttributePropertyHeader? _header;
 
 	/// <summary>
 	/// Gets or sets a value indicating whether the picker offers a "None" entry, for properties where leaving the
@@ -23,54 +30,102 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 	/// </summary>
 	public bool AllowNone { get; set; }
 
+	/// <inheritdoc/>
 	public override void _Ready()
 	{
-		Texture2D dropdownIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("GuiDropdown", "EditorIcons");
-
-		var hBox = new HBoxContainer();
-		_label = new Label { Text = NoneLabel, SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_button = new Button { Icon = dropdownIcon, CustomMinimumSize = new Vector2(ButtonSize, 0) };
-
-		hBox.AddChild(_label);
-		hBox.AddChild(_button);
-		AddChild(hBox);
-
-		_popup = new Popup { Size = new Vector2I(PopupSize, PopupSize) };
-		_tree = new Tree
+		_selectionControl = new AttributeSelectionControl
 		{
-			HideRoot = true,
-			AnchorRight = 1,
-			AnchorBottom = 1,
+			AllowNone = AllowNone,
+			LabelWidth = LabelWidth,
+			UseInspectorStyling = true,
+			SetLabel = "Attribute Set:",
+			AttributeLabel = "Attribute:",
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 		};
-		_popup.AddChild(_tree);
 
-		var bg = new StyleBoxFlat
+		_selectionControl.ValueChanged += OnSelectionChanged;
+
+		// The rows are wrapped so the group can carry the inspector's nested resource box as its own panel, which is
+		// how the inspector itself styles a sub-resource: the box brings the tint for the nesting level and the content
+		// margins that keep the border clear of the dropdowns. The property draws the border on top of that, so that it
+		// encloses the property name as well.
+		_groupPanel = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		_groupPanel.AddChild(_selectionControl);
+
+		StyleBoxFlat? fill = CreateNestedResourceBox(outline: false);
+
+		if (fill is not null)
 		{
-			BgColor = EditorInterface.Singleton
-				.GetEditorTheme()
-				.GetColor("dark_color_2", "Editor"),
-		};
-		_tree.AddThemeStyleboxOverride("panel", bg);
+			_groupPanel.AddThemeStyleboxOverride("panel", fill);
+		}
 
-		AddChild(_popup);
+		_groupOutline = CreateNestedResourceBox(outline: true);
+		Resized += QueueRedraw;
 
-		BuildAttributeTree(_tree);
+		AddChild(_groupPanel);
 
-		_button.Pressed += OnButtonPressed;
-		_tree.ItemActivated += OnTreeItemActivated;
+		// Added last so it sits behind nothing of its own, and painted behind the property's own drawing so the name
+		// the engine writes on top of it stays visible.
+		_header = new AttributePropertyHeader();
+		_header.SetStyle(GetHeaderStyle());
+		AddChild(_header);
+
+		// The picker is two full-width rows, so it belongs under the property name rather than squeezed beside it.
+		SetBottomEditor(_groupPanel);
+
+		// EditorProperty fills the bottom editor's rect with its "child_bg" stylebox, which reads as a lighter band
+		// behind the two rows. That stylebox cannot be overridden locally - the inspector copies its theme cache down
+		// to every property - so the draw itself is switched off, letting the group's own box stand on its own.
+		DrawBackground = false;
 	}
 
+	/// <inheritdoc/>
+	public override void _Notification(int what)
+	{
+		// The name row runs from the top of the property down to wherever the bottom editor was just placed, so the
+		// band can only be sized once the engine has finished laying the children out.
+		if (what == NotificationSortChildren
+			&& _header is not null && IsInstanceValid(_header)
+			&& _groupPanel is not null && IsInstanceValid(_groupPanel))
+		{
+			_header.SetHeaderSize(new Vector2(Size.X, _groupPanel.Position.Y));
+		}
+	}
+
+	/// <inheritdoc/>
+	public override void _Draw()
+	{
+		if (_groupOutline is null)
+		{
+			return;
+		}
+
+		// Drawn from the property because it is the only node spanning both the name row and the picker; the panel
+		// below covers just the two dropdown rows.
+		DrawStyleBox(_groupOutline, new Rect2(Vector2.Zero, Size));
+	}
+
+	/// <inheritdoc/>
 	public override void _UpdateProperty()
 	{
-		if (_label is null || !IsInstanceValid(_label))
+		if (_selectionControl is null || !IsInstanceValid(_selectionControl))
 		{
 			return;
 		}
 
 		string value = GetEditedObject().Get(GetEditedProperty()).AsString();
-		_label.Text = string.IsNullOrEmpty(value) ? NoneLabel : value;
+
+		// Picking a set clears the attribute and writes an empty key back, which lands here as an update. Reapplying it
+		// would throw away the set the user just chose, so only push values that actually differ from what is shown.
+		if (value == _selectionControl.AttributeKey)
+		{
+			return;
+		}
+
+		_selectionControl.SetValue(value);
 	}
 
+	/// <inheritdoc/>
 	public override void _ExitTree()
 	{
 		ReleaseUiState();
@@ -78,94 +133,120 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		base._ExitTree();
 	}
 
+	/// <inheritdoc/>
 	public void OnBeforeSerialize()
 	{
 		ReleaseUiState();
 		FreeAllChildren();
 	}
 
+	/// <inheritdoc/>
 	public void OnAfterDeserialize()
 	{
 		// This method was intentionally left blank.
 	}
 
-	private void BuildAttributeTree(Tree tree)
+	/// <summary>
+	/// Takes the box the inspector draws around a nested resource, tinted for the depth this property sits at, so the
+	/// group reads like the sub-resources it shares a panel with.
+	/// </summary>
+	/// <param name="outline">
+	/// True for the border enclosing the whole property, false for the tinted body behind the picker rows. The two are
+	/// split because only the property spans the name row, while only the panel can supply the padding.
+	/// </param>
+	/// <returns>The stylebox, or null when the editor theme has no nested resource box.</returns>
+	private StyleBoxFlat? CreateNestedResourceBox(bool outline)
 	{
-		TreeItem root = tree.CreateItem();
+		Theme editorTheme = EditorInterface.Singleton.GetEditorTheme();
+		string styleboxName = $"sub_inspector_bg{GetNestingLevel()}";
 
-		if (AllowNone)
+		if (!editorTheme.HasStylebox(styleboxName, "EditorStyles")
+			|| editorTheme.GetStylebox(styleboxName, "EditorStyles") is not StyleBoxFlat nestedBox)
 		{
-			TreeItem noneItem = tree.CreateItem(root);
-			noneItem.SetText(0, NoneLabel);
-			noneItem.SetMeta("attribute_path", string.Empty);
+			return null;
 		}
 
-		foreach (string attributeSet in EditorUtils.GetAttributeSetOptions())
-		{
-			TreeItem setItem = tree.CreateItem(root);
-			setItem.SetText(0, attributeSet);
-			setItem.Collapsed = true;
+		var style = (StyleBoxFlat)nestedBox.Duplicate();
 
-			foreach (string attribute in EditorUtils.GetAttributeOptions(attributeSet))
+		if (outline)
+		{
+			// No center, so the property name the engine draws underneath stays readable.
+			style.DrawCenter = false;
+		}
+		else
+		{
+			// The panel keeps its sides and bottom. It is a child, so it paints over the property's border wherever the
+			// two overlap; drawing the same border itself is what keeps the box unbroken down the picker rows. Only the
+			// top goes, since that edge falls between the name row and the rows below, where there is no box to close.
+			style.BorderWidthTop = 0;
+		}
+
+		return style;
+	}
+
+	/// <summary>
+	/// Takes the band the inspector paints behind a property whose sub-inspector is open - the accent header above a
+	/// nested resource such as ScalableFloat - so the name row reads as this group's header.
+	/// </summary>
+	/// <returns>The stylebox, or null when the editor theme has no such band.</returns>
+	private StyleBox? GetHeaderStyle()
+	{
+		Theme editorTheme = EditorInterface.Singleton.GetEditorTheme();
+		string styleboxName = $"sub_inspector_property_bg{GetNestingLevel()}";
+
+		return editorTheme.HasStylebox(styleboxName, "EditorStyles")
+			? editorTheme.GetStylebox(styleboxName, "EditorStyles")
+			: null;
+	}
+
+	/// <summary>
+	/// Counts how deeply this property is nested, the way the inspector does when it picks a nested resource's color:
+	/// by walking up the tree and counting the editor properties above it, this one included.
+	/// </summary>
+	/// <returns>The nesting level, clamped to the deepest box the theme provides.</returns>
+	private int GetNestingLevel()
+	{
+		int level = 0;
+
+		for (Node? node = this; node is not null; node = node.GetParent())
+		{
+			if (node is EditorProperty)
 			{
-				TreeItem attributeItem = tree.CreateItem(setItem);
-				string attributePath = $"{attributeSet}.{attribute}";
-				attributeItem.SetText(0, attribute);
-				attributeItem.SetMeta("attribute_path", attributePath);
+				level++;
+
+				if (level == MaxNestingLevel)
+				{
+					break;
+				}
 			}
 		}
+
+		return level;
 	}
 
-	private void OnButtonPressed()
+	private void OnSelectionChanged()
 	{
-		if (_button is null || _popup is null || !IsInstanceValid(_button) || !IsInstanceValid(_popup))
+		if (_selectionControl is null || !IsInstanceValid(_selectionControl))
 		{
 			return;
 		}
 
-		Window win = GetWindow();
-		_popup.Position = (Vector2I)_button.GlobalPosition
-			+ win.Position
-			- new Vector2I(PopupSize - ButtonSize, -30);
-		_popup.Popup();
-	}
-
-	private void OnTreeItemActivated()
-	{
-		if (_tree is null || _popup is null || _label is null
-			|| !IsInstanceValid(_tree) || !IsInstanceValid(_popup) || !IsInstanceValid(_label))
-		{
-			return;
-		}
-
-		TreeItem item = _tree.GetSelected();
-		if (item?.HasMeta("attribute_path") != true)
-		{
-			return;
-		}
-
-		string fullPath = item.GetMeta("attribute_path").AsString();
-		_label.Text = string.IsNullOrEmpty(fullPath) ? NoneLabel : fullPath;
-		EmitChanged(GetEditedProperty(), fullPath);
-		_popup.Hide();
+		EmitChanged(GetEditedProperty(), _selectionControl.AttributeKey);
 	}
 
 	private void ReleaseUiState()
 	{
-		if (_button is not null && IsInstanceValid(_button))
+		Resized -= QueueRedraw;
+
+		if (_selectionControl is not null && IsInstanceValid(_selectionControl))
 		{
-			_button.Pressed -= OnButtonPressed;
+			_selectionControl.ValueChanged -= OnSelectionChanged;
 		}
 
-		if (_tree is not null && IsInstanceValid(_tree))
-		{
-			_tree.ItemActivated -= OnTreeItemActivated;
-		}
-
-		_label = null;
-		_button = null;
-		_popup = null;
-		_tree = null;
+		_selectionControl = null;
+		_groupPanel = null;
+		_groupOutline = null;
+		_header = null;
 	}
 
 	private void FreeAllChildren()
