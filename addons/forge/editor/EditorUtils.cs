@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Gamesmiths.Forge.Attributes;
+using Gamesmiths.Forge.Godot.Editor.Attributes;
+using Gamesmiths.Forge.Godot.Resources.Attributes;
 
 namespace Gamesmiths.Forge.Godot.Editor;
 
@@ -25,6 +27,12 @@ internal static class EditorUtils
 		{
 			options.Add(attributeSetType.Name);
 		}
+
+		// A set defined as a resource does not exist as a type until the project is rebuilt. Offering it anyway lets a
+		// designer define a set and reference it straight away, instead of having to build before the set can be used.
+		options.AddRange(AttributeSetCodeGenerator.LoadDefinitions()
+			.Select(definition => definition.AttributeSetName)
+			.Where(name => name.Length > 0 && !options.Contains(name)));
 
 		return [.. options];
 	}
@@ -46,6 +54,39 @@ internal static class EditorUtils
 	/// <param name="attributeSet">The attribute set used to search for the attributes.</param>
 	/// <returns>An array with the available attributes.</returns>
 	public static string[] GetAttributeOptions(string? attributeSet)
+	{
+		string[] compiled = GetCompiledAttributeOptions(attributeSet);
+
+		if (compiled.Length > 0)
+		{
+			return compiled;
+		}
+
+		// Nothing compiled under that name, so fall back to a definition still waiting on a build. Its attributes are
+		// already known, which keeps the second dropdown usable in the meantime.
+		foreach (ForgeAttributeSetDefinition definition in AttributeSetCodeGenerator.LoadDefinitions())
+		{
+			if (definition.AttributeSetName == attributeSet)
+			{
+				return
+				[
+					.. definition.Attributes
+						.Where(attribute => attribute?.AttributeName.Length > 0)
+						.Select(attribute => attribute.AttributeName),
+				];
+			}
+		}
+
+		return [];
+	}
+
+	/// <summary>
+	/// Gathers the attributes of a set that exists as a compiled type, ignoring definitions that are still waiting on a
+	/// build. This is what tells a definition apart from the class generated for it.
+	/// </summary>
+	/// <param name="attributeSet">The attribute set used to search for the attributes.</param>
+	/// <returns>An array with the available attributes, empty when the set is not compiled.</returns>
+	public static string[] GetCompiledAttributeOptions(string? attributeSet)
 	{
 		if (string.IsNullOrEmpty(attributeSet))
 		{

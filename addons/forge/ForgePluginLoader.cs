@@ -10,6 +10,7 @@ using Gamesmiths.Forge.Godot.Editor.Cues;
 using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Tags;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Godot.Resources.Attributes;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -31,6 +32,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private AttributeSetInspectorPlugin? _attributeSetInspectorPlugin;
 	private CueHandlerInspectorPlugin? _cueHandlerInspectorPlugin;
 	private AttributeEditorPlugin? _attributeEditorPlugin;
+	private AttributeSetDefinitionInspectorPlugin? _attributeSetDefinitionInspectorPlugin;
 	private SharedVariableSetInspectorPlugin? _sharedVariableSetInspectorPlugin;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
@@ -73,6 +75,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddInspectorPlugin(_cueHandlerInspectorPlugin);
 		_attributeEditorPlugin = new AttributeEditorPlugin();
 		AddInspectorPlugin(_attributeEditorPlugin);
+		_attributeSetDefinitionInspectorPlugin = new AttributeSetDefinitionInspectorPlugin();
+		AddInspectorPlugin(_attributeSetDefinitionInspectorPlugin);
 		_sharedVariableSetInspectorPlugin = new SharedVariableSetInspectorPlugin();
 		_sharedVariableSetInspectorPlugin.SetUndoRedo(GetUndoRedo());
 		AddInspectorPlugin(_sharedVariableSetInspectorPlugin);
@@ -104,12 +108,17 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		ProjectSettings.SettingsChanged += OnProjectSettingsChanged;
 
+		// Saving an attribute set definition rewrites its generated class, so the code follows the resource without the
+		// user having to remember to regenerate.
+		ResourceSaved += OnResourceSaved;
+
 		Validation.Enabled = true;
 	}
 
 	public override void _ExitTree()
 	{
 		ProjectSettings.SettingsChanged -= OnProjectSettingsChanged;
+		ResourceSaved -= OnResourceSaved;
 
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable)
 			== true)
@@ -138,6 +147,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		RemoveInspectorPluginAndRelease(ref _attributeSetInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _cueHandlerInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _attributeEditorPlugin);
+		RemoveInspectorPluginAndRelease(ref _attributeSetDefinitionInspectorPlugin);
 		RemoveInspectorPluginAndRelease(ref _sharedVariableSetInspectorPlugin);
 
 		if (_statescriptGraphEditorDock is not null)
@@ -370,6 +380,26 @@ public partial class ForgePluginLoader : EditorPlugin
 	private static void OnProjectSettingsChanged()
 	{
 		ForgeTagsRegistry.InvalidateIfSourcesChanged();
+	}
+
+	private static void OnResourceSaved(Resource resource)
+	{
+		if (resource is not ForgeAttributeSetDefinition)
+		{
+			return;
+		}
+
+		AttributeSetGenerationReport report = AttributeSetCodeGenerator.RegenerateAll();
+
+		foreach (string error in report.Errors)
+		{
+			GD.PushWarning($"Forge attribute set generation: {error}");
+		}
+
+		if (report.GeneratedSets.Count > 0 || report.RemovedFiles.Count > 0)
+		{
+			GD.Print("Forge attribute sets regenerated. Build the project for the changes to take effect.");
+		}
 	}
 
 	private void OnToolsMenuIdPressed(long id)
