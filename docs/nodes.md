@@ -139,6 +139,8 @@ Configuration node for attribute sets used with ForgeEntity.
 
 `ForgeAttributeSet` lets you configure attribute sets directly in the Godot editor. It uses reflection to instantiate and apply initial values for any custom AttributeSet.
 
+The class named by `AttributeSetClass` can be one you wrote or one generated from an [attribute set definition](attribute-set-definitions.md) — this node cannot tell the two apart, and neither can anything else that consumes attributes.
+
 > **Attribute values are integers.** `Default`, `Min` and `Max` are all `int`, as are `CurrentValue`, `BaseValue`, `Modifier` and `Overflow` at runtime — a deliberate choice for deterministic simulation. Store fractional stats scaled (a `Speed` of `475` meaning `4.75`) and declare the scale with `InitializeAttribute(..., decimalPlaces: 2)`. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers) in the core docs.
 
 **Everything in the inspector is authored raw**, including these fields — a `Speed` storing hundredths is typed as `475`, not `4.75`. That is deliberate: a modifier's `ScalableFloat`, an attribute requirement's bounds and a cue's magnitude bounds are all raw too, and several of them (a chance, a period, a coefficient) have no attribute to be scaled by in the first place. One unit everywhere beats a rule that holds in one panel and not the next.
