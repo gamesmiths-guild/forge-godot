@@ -80,16 +80,21 @@ The plugin cannot compile C# for you, so a definition becomes a real attribute s
 | Banner | Meaning |
 | --- | --- |
 | Green — *"This set is generated and built"* | The compiled class matches the definition. Nothing to do. |
-| Yellow — *"Build the project for this set to become available"* | The class does not exist yet, or exists but no longer matches the definition after an edit. Press **Build**. |
+| Yellow — *"Build the project for this set to take effect"* | The class does not exist yet, or exists but no longer matches the definition after an edit. Press **Build**. |
 | Red — validation errors | Nothing was generated. Fix the listed problems first. |
 
-Because the check compares the compiled class's actual attributes against the definition, the yellow banner also catches the easy-to-miss case where the class exists but you have since added or renamed an attribute.
+The check compares the compiled attributes by value — default, minimum, maximum and decimal places — not merely by name, so the yellow banner also catches the easy-to-miss case where you edited a bound or a default and the names stayed the same. Channel count is the one input it cannot verify, because `EntityAttribute` keeps it private.
 
 ### Before the Build
 
 You do not have to build before you can *reference* a new set. The attribute pickers list compiled sets **and** sets that only exist as definitions, so you can define `ItemAttributes` and immediately point a modifier at `ItemAttributes.Price`. The reference is stored as text and resolves normally once the class exists.
 
-This means a pending set looks the same in the picker as a built one. The definition's own inspector is where the build status lives.
+Only definitions that would actually generate are offered — one with a validation error never becomes a class, so it is kept out of the pickers rather than inviting a reference that could never resolve.
+
+Two consequences worth knowing:
+
+- A pending set looks the same in an attribute picker as a built one. The definition's own inspector is where build status lives.
+- The **`Attribute Set Class` dropdown on a `ForgeAttributeSet` node is the exception**: it lists compiled sets only. Choosing a class there reads its attributes to seed the node's initial values, which a set that does not exist yet cannot supply. Build first, then assign the set to a node.
 
 ## Using a Generated Set
 
@@ -136,6 +141,7 @@ A definition is skipped, with its problems listed in the inspector and in the Ou
 - a hand-written C# class extending `AttributeSet` already uses the set name,
 - two attributes in one set share a name,
 - an attribute's minimum is above its maximum,
+- an attribute's default value falls outside its own minimum and maximum,
 - an attribute slot is empty, or
 - the set has no attributes.
 

@@ -99,7 +99,7 @@ public partial class AttributeSetDefinitionInspectorPlugin : EditorInspectorPlug
 
 	private static void ShowCurrentState(Label status, ForgeAttributeSetDefinition definition)
 	{
-		string[] errors = AttributeSetCodeGenerator.Validate(definition);
+		string[] errors = AttributeSetCodeGenerator.ValidateInProject(definition);
 
 		if (errors.Length > 0)
 		{
@@ -107,10 +107,8 @@ public partial class AttributeSetDefinitionInspectorPlugin : EditorInspectorPlug
 		}
 		else if (!AttributeSetCodeGenerator.IsCompiledAndCurrent(definition))
 		{
-			// The pickers read attribute sets out of the loaded assemblies, so a definition only becomes selectable once
-			// the project has been built and the assemblies reloaded.
-			const string pending = "Build the project for this set to become available. Until then it is offered in "
-				+ "the attribute pickers marked as pending.";
+			const string pending = "Build the project for this set to take effect. Attribute pickers already offer it, "
+				+ "but nothing can use it at runtime until the class exists.";
 
 			SetStatus(status, pending, WarningColor);
 		}

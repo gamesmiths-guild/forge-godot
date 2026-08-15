@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Gamesmiths.Forge.Attributes;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Resources.Attributes;
 using Godot;
 
@@ -46,10 +47,11 @@ internal static class AttributeSetCodeGenerator
 
 		var writtenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> codeDefinedSets = GetCodeDefinedSetNames();
 
 		foreach (ForgeAttributeSetDefinition definition in definitions)
 		{
-			string[] errors = Validate(definition, usedNames);
+			string[] errors = Validate(definition, usedNames, codeDefinedSets);
 
 			if (errors.Length > 0)
 			{
@@ -112,9 +114,16 @@ internal static class AttributeSetCodeGenerator
 	/// another one.
 	/// </summary>
 	/// <param name="definition">The definition to check.</param>
-	/// <param name="takenNames">Set names already claimed by other definitions in this run. May be null.</param>
+	/// <param name="takenNames">Set names already claimed by other definitions. May be null.</param>
+	/// <param name="codeDefinedSets">
+	/// The names of hand-written attribute sets, from <see cref="GetCodeDefinedSetNames"/>. Pass it when validating
+	/// several definitions so the assemblies are only walked once; null computes it.
+	/// </param>
 	/// <returns>The problems found, empty when the definition is usable.</returns>
-	public static string[] Validate(ForgeAttributeSetDefinition definition, HashSet<string>? takenNames = null)
+	public static string[] Validate(
+		ForgeAttributeSetDefinition definition,
+		HashSet<string>? takenNames = null,
+		HashSet<string>? codeDefinedSets = null)
 	{
 		var errors = new List<string>();
 
@@ -131,7 +140,7 @@ internal static class AttributeSetCodeGenerator
 			errors.Add($"More than one definition is named \"{definition.AttributeSetName}\".");
 		}
 
-		if (CollidesWithCodeDefinedSet(definition.AttributeSetName))
+		if ((codeDefinedSets ?? GetCodeDefinedSetNames()).Contains(definition.AttributeSetName))
 		{
 			errors.Add($"A C# class named \"{definition.AttributeSetName}\" already extends AttributeSet. Attribute "
 				+ "keys are prefixed with the set name, so two sets cannot share one. Rename this definition, or "
@@ -164,6 +173,12 @@ internal static class AttributeSetCodeGenerator
 			{
 				errors.Add($"{definition.AttributeSetName}.{attribute.AttributeName}: minimum is above maximum.");
 			}
+			else if (attribute.DefaultValue < attribute.MinValue || attribute.DefaultValue > attribute.MaxValue)
+			{
+				errors.Add($"{definition.AttributeSetName}.{attribute.AttributeName}: default "
+					+ $"{Number(attribute.DefaultValue)} is outside the range {Number(attribute.MinValue)} to "
+					+ $"{Number(attribute.MaxValue)}.");
+			}
 		}
 
 		if (attributeNames.Count == 0 && errors.Count == 0)
@@ -175,9 +190,60 @@ internal static class AttributeSetCodeGenerator
 	}
 
 	/// <summary>
+	/// Names every attribute set that is written by hand rather than generated here.
+	/// </summary>
+	/// <remarks>
+	/// Two classes of the same name in different namespaces compile perfectly well, which is why a collision is not
+	/// caught by the build. It still breaks at runtime: <c>InitializeAttribute</c> prefixes every key with
+	/// <c>GetType().Name</c>, so both sets would register keys under the same prefix, and the editor resolves a set by
+	/// name and would pick whichever type reflection happened to return first.
+	/// <para>
+	/// Classes in the generated namespace are excluded, since those are this generator's own output.
+	/// </para>
+	/// </remarks>
+	/// <returns>The set names claimed by hand-written classes.</returns>
+	public static HashSet<string> GetCodeDefinedSetNames()
+	{
+		return new HashSet<string>(
+			AppDomain.CurrentDomain.GetAssemblies()
+				.SelectMany(assembly => assembly.GetTypes())
+				.Where(type => type.IsSubclassOf(typeof(AttributeSet)) && type.Namespace != GeneratedNamespace)
+				.Select(type => type.Name),
+			StringComparer.OrdinalIgnoreCase);
+	}
+
+	/// <summary>
+	/// Validates a definition against every other definition in the project, so a name shared with another resource is
+	/// reported wherever it is looked at rather than only when generation happens to reach the second one.
+	/// </summary>
+	/// <param name="definition">The definition to check.</param>
+	/// <returns>The problems found, empty when the definition is usable.</returns>
+	public static string[] ValidateInProject(ForgeAttributeSetDefinition definition)
+	{
+		var takenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (ForgeAttributeSetDefinition other in LoadDefinitions())
+		{
+			// Identified by path rather than by reference: the definition being inspected is not guaranteed to be the
+			// same instance the loader returns.
+			if (other.ResourcePath != definition.ResourcePath && other.AttributeSetName.Length > 0)
+			{
+				takenNames.Add(other.AttributeSetName);
+			}
+		}
+
+		return Validate(definition, takenNames);
+	}
+
+	/// <summary>
 	/// Checks whether a definition's generated class is present in the loaded assemblies and up to date, which is what
 	/// tells the user whether a build is still pending.
 	/// </summary>
+	/// <remarks>
+	/// The compiled attributes are compared by value, not just by name: editing a default, a bound or the decimal
+	/// places leaves the same names behind, and reporting that as built would hide the pending rebuild behind a green
+	/// banner. Channel count is the one input that cannot be checked, since <c>EntityAttribute</c> keeps it private.
+	/// </remarks>
 	/// <param name="definition">The definition to check.</param>
 	/// <returns>Whether the compiled set matches the definition.</returns>
 	public static bool IsCompiledAndCurrent(ForgeAttributeSetDefinition definition)
@@ -189,22 +255,34 @@ internal static class AttributeSetCodeGenerator
 
 		// Compiled-only on purpose: the general lookup falls back to definitions, which would make every definition
 		// report itself as built.
-		string[] compiled = EditorUtils.GetCompiledAttributeOptions(definition.AttributeSetName);
+		AttributeSet? compiled = EditorUtils.CreateCompiledAttributeSet(definition.AttributeSetName);
 
-		if (compiled.Length == 0)
+		if (compiled is null || compiled.AttributesMap.Count != definition.Attributes.Count)
 		{
 			return false;
 		}
 
-		HashSet<string> compiledNames = new(compiled, StringComparer.OrdinalIgnoreCase);
+		foreach (ForgeAttributeDefinition? attribute in definition.Attributes)
+		{
+			if (attribute is null)
+			{
+				return false;
+			}
 
-		HashSet<string> defined = new(
-			definition.Attributes
-				.Where(attribute => attribute is not null)
-				.Select(attribute => attribute.AttributeName),
-			StringComparer.OrdinalIgnoreCase);
+			var key = new StringKey($"{definition.AttributeSetName}.{attribute.AttributeName}");
 
-		return compiledNames.SetEquals(defined);
+			if (!compiled.AttributesMap.TryGetValue(key, out EntityAttribute? compiledAttribute)
+				|| compiledAttribute is null
+				|| compiledAttribute.BaseValue != attribute.DefaultValue
+				|| compiledAttribute.Min != attribute.MinValue
+				|| compiledAttribute.Max != attribute.MaxValue
+				|| compiledAttribute.DecimalPlaces != attribute.DecimalPlaces)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/// <summary>
@@ -304,29 +382,6 @@ internal static class AttributeSetCodeGenerator
 		lines.Add("}");
 
 		return string.Join("\n", lines) + "\n";
-	}
-
-	/// <summary>
-	/// Checks whether a hand-written attribute set already claims a name.
-	/// </summary>
-	/// <remarks>
-	/// Two classes of the same name in different namespaces compile perfectly well, which is why this is not caught by
-	/// the build. It still breaks at runtime: <c>InitializeAttribute</c> prefixes every key with
-	/// <c>GetType().Name</c>, so both sets would register keys under the same prefix, and the editor's lookups resolve
-	/// a set by name and would pick whichever type reflection happened to return first.
-	/// <para>
-	/// Classes in the generated namespace are ignored, since those are this generator's own output.
-	/// </para>
-	/// </remarks>
-	/// <param name="setName">The set name to check.</param>
-	/// <returns>Whether a set of that name exists outside the generated namespace.</returns>
-	private static bool CollidesWithCodeDefinedSet(string setName)
-	{
-		return AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(assembly => assembly.GetTypes())
-			.Any(type => type.IsSubclassOf(typeof(AttributeSet))
-				&& type.Name == setName
-				&& type.Namespace != GeneratedNamespace);
 	}
 
 	private static string DescribeInvalidName(string kind, string? name)

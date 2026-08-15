@@ -30,11 +30,48 @@ internal static class EditorUtils
 
 		// A set defined as a resource does not exist as a type until the project is rebuilt. Offering it anyway lets a
 		// designer define a set and reference it straight away, instead of having to build before the set can be used.
+		// Only definitions that will actually generate are offered: a definition that fails validation never becomes a
+		// class, so selecting it would create a reference that can never resolve.
+		HashSet<string> codeDefinedSets = AttributeSetCodeGenerator.GetCodeDefinedSetNames();
+
 		options.AddRange(AttributeSetCodeGenerator.LoadDefinitions()
+			.Where(definition => AttributeSetCodeGenerator.Validate(definition, null, codeDefinedSets).Length == 0)
 			.Select(definition => definition.AttributeSetName)
-			.Where(name => name.Length > 0 && !options.Contains(name)));
+			.Where(name => !options.Contains(name)));
 
 		return [.. options];
+	}
+
+	/// <summary>
+	/// Gathers only the attribute sets that exist as compiled types.
+	/// </summary>
+	/// <remarks>
+	/// Used where the name has to resolve to a real type right now rather than eventually — picking the class a
+	/// <c>ForgeAttributeSet</c> node instantiates, for instance, which reads the type's attributes to seed its initial
+	/// values and would otherwise store an empty set of them for a definition still awaiting a build.
+	/// </remarks>
+	/// <returns>An array with the compiled attribute set names.</returns>
+	public static string[] GetCompiledAttributeSetOptions()
+	{
+		return
+		[
+			.. AppDomain.CurrentDomain.GetAssemblies()
+				.SelectMany(a => a.GetTypes())
+				.Where(x => x.IsSubclassOf(typeof(AttributeSet)))
+				.Select(x => x.Name),
+		];
+	}
+
+	/// <summary>
+	/// Instantiates a compiled attribute set by name.
+	/// </summary>
+	/// <param name="attributeSet">The attribute set name.</param>
+	/// <returns>A new instance, or null when no such type is compiled or it cannot be constructed.</returns>
+	public static AttributeSet? CreateCompiledAttributeSet(string? attributeSet)
+	{
+		Type? type = FindCompiledSetType(attributeSet);
+
+		return type is null ? null : TryInstantiate(type);
 	}
 
 	/// <summary>
@@ -88,14 +125,7 @@ internal static class EditorUtils
 	/// <returns>An array with the available attributes, empty when the set is not compiled.</returns>
 	public static string[] GetCompiledAttributeOptions(string? attributeSet)
 	{
-		if (string.IsNullOrEmpty(attributeSet))
-		{
-			return [];
-		}
-
-		Type? type = AppDomain.CurrentDomain.GetAssemblies()
-			.SelectMany(a => a.GetTypes())
-			.FirstOrDefault(x => x.IsSubclassOf(typeof(AttributeSet)) && x.Name == attributeSet);
+		Type? type = FindCompiledSetType(attributeSet);
 
 		if (type is null)
 		{
@@ -151,6 +181,18 @@ internal static class EditorUtils
 		}
 
 		return names;
+	}
+
+	private static Type? FindCompiledSetType(string? attributeSet)
+	{
+		if (string.IsNullOrEmpty(attributeSet))
+		{
+			return null;
+		}
+
+		return AppDomain.CurrentDomain.GetAssemblies()
+			.SelectMany(a => a.GetTypes())
+			.FirstOrDefault(x => x.IsSubclassOf(typeof(AttributeSet)) && x.Name == attributeSet);
 	}
 
 	private static AttributeSet? TryInstantiate(Type type)
