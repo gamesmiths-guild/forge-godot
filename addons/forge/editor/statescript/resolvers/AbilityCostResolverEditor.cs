@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -21,8 +22,7 @@ internal sealed partial class AbilityCostResolverEditor : NodeEditorProperty
 	private const float LabelWidth = 60.0f;
 
 	private Action? _onChanged;
-	private OptionButton? _setDropdown;
-	private OptionButton? _attributeDropdown;
+	private AttributeSelectionControl? _attributePicker;
 	private string _selectedSetClass = string.Empty;
 	private string _selectedAttribute = string.Empty;
 	private NestedResolverPicker? _abilityPicker;
@@ -53,13 +53,13 @@ internal sealed partial class AbilityCostResolverEditor : NodeEditorProperty
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_setDropdown.ItemSelected += OnSetChanged;
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth));
-
-		_attributeDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_attributeDropdown.ItemSelected += OnAttributeChanged;
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Attr:", _attributeDropdown, LabelWidth));
+		_attributePicker = new AttributeSelectionControl
+		{
+			LabelWidth = LabelWidth,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+		_attributePicker.ValueChanged += OnAttributeSelectionChanged;
+		root.AddChild(_attributePicker);
 
 		_abilityPicker = new NestedResolverPicker();
 		_abilityPicker.Initialize(
@@ -74,8 +74,7 @@ internal sealed partial class AbilityCostResolverEditor : NodeEditorProperty
 			IterationScope);
 		root.AddChild(_abilityPicker);
 
-		PopulateSetDropdown();
-		PopulateAttributeDropdown();
+		_attributePicker.SetValue(_selectedSetClass, _selectedAttribute);
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
@@ -106,86 +105,16 @@ internal sealed partial class AbilityCostResolverEditor : NodeEditorProperty
 		return false;
 	}
 
-	private void OnSetChanged(long index)
+	private void OnAttributeSelectionChanged()
 	{
-		if (_setDropdown is null)
+		if (_attributePicker is null)
 		{
 			return;
 		}
 
-		_selectedSetClass = _setDropdown.GetItemText(_setDropdown.Selected);
-		_selectedAttribute = string.Empty;
-		PopulateAttributeDropdown();
+		_selectedSetClass = _attributePicker.SetClass;
+		_selectedAttribute = _attributePicker.AttributeName;
 		_onChanged?.Invoke();
-	}
-
-	private void OnAttributeChanged(long index)
-	{
-		if (_attributeDropdown is null)
-		{
-			return;
-		}
-
-		_selectedAttribute = _attributeDropdown.GetItemText(_attributeDropdown.Selected);
-		_onChanged?.Invoke();
-	}
-
-	private void PopulateSetDropdown()
-	{
-		if (_setDropdown is null)
-		{
-			return;
-		}
-
-		_setDropdown.Clear();
-		foreach (string option in EditorUtils.GetAttributeSetOptions())
-		{
-			_setDropdown.AddItem(option);
-		}
-
-		for (int i = 0; i < _setDropdown.ItemCount; i++)
-		{
-			if (_setDropdown.GetItemText(i) == _selectedSetClass)
-			{
-				_setDropdown.Selected = i;
-				return;
-			}
-		}
-
-		if (_setDropdown.ItemCount > 0)
-		{
-			_setDropdown.Selected = 0;
-			_selectedSetClass = _setDropdown.GetItemText(0);
-		}
-	}
-
-	private void PopulateAttributeDropdown()
-	{
-		if (_attributeDropdown is null)
-		{
-			return;
-		}
-
-		_attributeDropdown.Clear();
-		foreach (string option in EditorUtils.GetAttributeOptions(_selectedSetClass))
-		{
-			_attributeDropdown.AddItem(option);
-		}
-
-		for (int i = 0; i < _attributeDropdown.ItemCount; i++)
-		{
-			if (_attributeDropdown.GetItemText(i) == _selectedAttribute)
-			{
-				_attributeDropdown.Selected = i;
-				return;
-			}
-		}
-
-		if (_attributeDropdown.ItemCount > 0)
-		{
-			_attributeDropdown.Selected = 0;
-			_selectedAttribute = _attributeDropdown.GetItemText(0);
-		}
 	}
 }
 #endif

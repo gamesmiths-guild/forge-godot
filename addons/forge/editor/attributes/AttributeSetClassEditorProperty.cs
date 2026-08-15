@@ -22,7 +22,8 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 		AddChild(_optionButton);
 
 		_optionButton.AddItem("Select AttributeSet Class");
-		foreach (string option in EditorUtils.GetAttributeSetOptions())
+
+		foreach (string option in EditorUtils.GetCompiledAttributeSetOptions())
 		{
 			_optionButton.AddItem(option);
 		}

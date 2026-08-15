@@ -47,7 +47,7 @@ Attributes represent numeric values that can be modified by effects:
 - Integer values with configurable min/max ranges — see [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers) for why, and for the scaled-integer convention for fractional stats.
 - Flat, percentage, and override modifier operations, layered across calculation channels.
 - Support for modifiers that derive their values from other attributes.
-- Custom attribute sets for grouping related attributes.
+- Custom attribute sets for grouping related attributes, written as C# classes or described in the inspector and generated for you — see [Attribute Set Definitions](attribute-set-definitions.md).
 
 ### Effects System
 
@@ -137,6 +137,7 @@ Refer to your IDE's documentation for the specific settings locations. Most mode
 
 - [Quick Start Guide](quick-start.md): Get started with Forge for Godot in minutes.
 - [Gameplay Tags](gameplay-tags.md): Organize tags across sources, use the Tags dock, and repair broken references.
+- [Attribute Set Definitions](attribute-set-definitions.md): Define attribute sets in the inspector and have their C# class generated for you.
 - [Forge Nodes Documentation](nodes.md): Learn about the Forge nodes provided by the plugin.
 - [Resources Documentation](resources.md): Explore all configurable resource types—effects, abilities, tags, cues, and more.
 - [Statescript Documentation](statescript/README.md): Learn how to build ability behaviors visually with Statescript graphs.

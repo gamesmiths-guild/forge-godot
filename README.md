@@ -144,6 +144,7 @@ For comprehensive documentation, explore the [docs](docs) directory:
 - [Documentation Overview](docs/README.md)
 - [Quick Start Guide](docs/quick-start.md)
 - [Gameplay Tags](docs/gameplay-tags.md)
+- [Attribute Set Definitions](docs/attribute-set-definitions.md)
 - [Forge Nodes](docs/nodes.md)
 - [Forge Resources](docs/resources.md)
 - [Helper Classes](docs/helper-classes.md)

@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Effects.Magnitudes;
+using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -16,8 +17,7 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 {
 	private const float LabelWidth = 60.0f;
 
-	private OptionButton? _setDropdown;
-	private OptionButton? _attributeDropdown;
+	private AttributeSelectionControl? _attributePicker;
 	private OptionButton? _calculationDropdown;
 	private SpinBox? _finalChannelSpin;
 	private Control? _finalChannelRow;
@@ -58,13 +58,13 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_setDropdown.ItemSelected += OnSetChanged;
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth));
-
-		_attributeDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-		_attributeDropdown.ItemSelected += OnAttributeChanged;
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Attr:", _attributeDropdown, LabelWidth));
+		_attributePicker = new AttributeSelectionControl
+		{
+			LabelWidth = LabelWidth,
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+		_attributePicker.ValueChanged += OnAttributeSelectionChanged;
+		root.AddChild(_attributePicker);
 
 		_calculationDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		foreach (AttributeCalculationType value in Enum.GetValues<AttributeCalculationType>())
@@ -90,8 +90,7 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 		root.AddChild(CreateEntitySelectorRow(LabelWidth));
 		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
 
-		PopulateSetDropdown();
-		PopulateAttributeDropdown();
+		_attributePicker.SetValue(_selectedSetClass, _selectedAttribute);
 		PopulateEntityScopeEditor(existingResource?.EntityResolver);
 		UpdateFinalChannelVisibility();
 	}
@@ -108,27 +107,15 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 		};
 	}
 
-	private void OnSetChanged(long index)
+	private void OnAttributeSelectionChanged()
 	{
-		if (_setDropdown is null)
+		if (_attributePicker is null)
 		{
 			return;
 		}
 
-		_selectedSetClass = _setDropdown.GetItemText(_setDropdown.Selected);
-		_selectedAttribute = string.Empty;
-		PopulateAttributeDropdown();
-		NotifyChanged();
-	}
-
-	private void OnAttributeChanged(long index)
-	{
-		if (_attributeDropdown is null)
-		{
-			return;
-		}
-
-		_selectedAttribute = _attributeDropdown.GetItemText(_attributeDropdown.Selected);
+		_selectedSetClass = _attributePicker.SetClass;
+		_selectedAttribute = _attributePicker.AttributeName;
 		NotifyChanged();
 	}
 
@@ -143,68 +130,6 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 	{
 		_finalChannel = (int)value;
 		NotifyChanged();
-	}
-
-	private void PopulateSetDropdown()
-	{
-		if (_setDropdown is null)
-		{
-			return;
-		}
-
-		_setDropdown.Clear();
-		foreach (string option in EditorUtils.GetAttributeSetOptions())
-		{
-			_setDropdown.AddItem(option);
-		}
-
-		for (int i = 0; i < _setDropdown.ItemCount; i++)
-		{
-			if (_setDropdown.GetItemText(i) == _selectedSetClass)
-			{
-				_setDropdown.Selected = i;
-				return;
-			}
-		}
-
-		if (_setDropdown.ItemCount > 0)
-		{
-			_setDropdown.Selected = 0;
-			_selectedSetClass = _setDropdown.GetItemText(0);
-		}
-	}
-
-	private void PopulateAttributeDropdown()
-	{
-		if (_attributeDropdown is null)
-		{
-			return;
-		}
-
-		_attributeDropdown.Clear();
-		foreach (string option in EditorUtils.GetAttributeOptions(_selectedSetClass))
-		{
-			_attributeDropdown.AddItem(option);
-		}
-
-		for (int i = 0; i < _attributeDropdown.ItemCount; i++)
-		{
-			if (string.Equals(
-				_attributeDropdown.GetItemText(i),
-				_selectedAttribute,
-				StringComparison.OrdinalIgnoreCase))
-			{
-				_attributeDropdown.Selected = i;
-				_selectedAttribute = _attributeDropdown.GetItemText(i);
-				return;
-			}
-		}
-
-		if (_attributeDropdown.ItemCount > 0)
-		{
-			_attributeDropdown.Selected = 0;
-			_selectedAttribute = _attributeDropdown.GetItemText(0);
-		}
 	}
 
 	private void UpdateFinalChannelVisibility()

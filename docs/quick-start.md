@@ -78,6 +78,8 @@ Alternatively, you can implement the IForgeEntity interface directly. See the [C
 
 ### Step 3: Define an Attribute Set
 
+> **Prefer not to write code?** You can describe an attribute set in the inspector instead and have this class generated for you. See [Attribute Set Definitions](attribute-set-definitions.md). The rest of this guide works the same either way.
+
 1. Create a new C# script in your project (e.g., "PlayerAttributes.cs").
 2. Define your attribute set:
 
