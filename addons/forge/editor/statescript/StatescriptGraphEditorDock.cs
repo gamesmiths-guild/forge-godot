@@ -263,6 +263,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		LoadGraphIntoEditor(graph);
 		UpdateVisibility();
+
+		ApplyVariablesPanelState(_openTabs.Count - 1);
 	}
 
 	/// <summary>
