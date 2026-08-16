@@ -345,7 +345,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 
 		foldable.FoldingChanged += folded =>
 		{
-			SetFoldStateWithUndo(foldKey, folded);
+			PersistFoldState(foldKey, folded);
 			UpdateBadge();
 			RaisePropertyBindingChanged();
 			ResetSize();
@@ -379,8 +379,11 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 				? resolver.VariableName
 				: null;
 
-		// Drop a stale binding whose variable no longer matches the output's type so it is not silently kept.
-		if (!string.IsNullOrEmpty(current) && !candidates.Contains(current))
+		// Drop a stale binding whose variable no longer matches the output's type so it is not silently kept. Not
+		// during a replay, where the binding being restored is the authoritative one.
+		if (!string.IsNullOrEmpty(current)
+			&& !candidates.Contains(current)
+			&& !EditorUndoRedoUtils.IsReplaying)
 		{
 			current = null;
 			RemoveBinding(StatescriptPropertyDirection.Output, index);
@@ -472,9 +475,9 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// </summary>
 	/// <param name="key">The key used to persist the fold state.</param>
 	/// <param name="folded">The new folded state.</param>
-	protected void SetFoldStateWithUndo(string key, bool folded)
+	protected void PersistFoldState(string key, bool folded)
 	{
-		_graphNode!.SetFoldStateWithUndoInternal(key, folded);
+		_graphNode!.PersistFoldStateInternal(key, folded);
 	}
 
 	/// <summary>
@@ -486,8 +489,9 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <param name="value">The value to store.</param>
 	/// <param name="actionName">The undo/redo action label.</param>
 	/// <param name="rebuildOnChange">When <see langword="true"/>, the node's property sections are rebuilt after the
-	/// value changes (and on undo/redo), so an editor that shows or hides rows based on this config reflects the new
-	/// value immediately. Leave <see langword="false"/> for config that does not affect which rows are rendered.
+	/// user's own edit, so an editor that shows or hides rows based on this config reflects the new value immediately.
+	/// Leave <see langword="false"/> for config that does not affect which rows are rendered. This does not affect
+	/// undo/redo, which always rebuilds so the control re-reads the restored value.
 	/// </param>
 	protected void SetNodeConfig(string key, Variant value, string actionName, bool rebuildOnChange = false)
 	{

@@ -151,7 +151,7 @@ internal sealed partial class RoundResolverEditor : NodeEditorProperty
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitle();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

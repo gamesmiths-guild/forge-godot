@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
@@ -27,7 +28,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private readonly HashSet<string> _expandedArrays = [];
 
-	private EditorUndoRedoManager? _undoRedo;
+	private SharedVariableSetEditingController? _controller;
 
 	private VBoxContainer? _root;
 	private VBoxContainer? _variableList;
@@ -44,17 +45,23 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 	private bool _signalsConnected;
 
 	/// <summary>
-	/// Sets the <see cref="EditorUndoRedoManager"/> used for undo/redo support.
+	/// Sets the controller that hosts this editor's undo/redo replays.
 	/// </summary>
-	/// <param name="undoRedo">The undo/redo manager from the editor plugin.</param>
-	public void SetUndoRedo(EditorUndoRedoManager? undoRedo)
+	/// <remarks>
+	/// The controller outlives this editor, which the inspector frees and rebuilds on every refresh. Recorded actions
+	/// target it rather than this instance so they still replay after a refresh.
+	/// </remarks>
+	/// <param name="controller">The shared editing controller from the editor plugin.</param>
+	public void SetEditingController(SharedVariableSetEditingController? controller)
 	{
-		_undoRedo = undoRedo;
+		_controller = controller;
 	}
 
 	public override void _Ready()
 	{
 		base._Ready();
+
+		_controller?.RegisterEditor(this);
 
 		_addIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Add", "EditorIcons");
 		_removeIcon = EditorInterface.Singleton.GetEditorTheme().GetIcon("Remove", "EditorIcons");
@@ -134,6 +141,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	public override void _ExitTree()
 	{
+		_controller?.UnregisterEditor(this);
+
 		DisconnectSignals();
 
 		if (GetEditedObject() is ForgeSharedVariableSet sharedVariableSet)
@@ -160,6 +169,43 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		SyncSelectedVariableFromHighlightState();
 
 		RebuildList();
+	}
+
+	/// <summary>
+	/// Reports whether this editor is showing the given set, so a replay can refresh only the editors that matter.
+	/// </summary>
+	/// <param name="set">The set being replayed.</param>
+	/// <returns><see langword="true"/> when this editor edits that set.</returns>
+	internal bool EditsSetInternal(ForgeSharedVariableSet set)
+	{
+		return GetEditedObject() is ForgeSharedVariableSet edited && edited == set;
+	}
+
+	/// <summary>
+	/// Refreshes this editor after the controller replayed a change to the underlying set.
+	/// </summary>
+	internal void NotifyReplayedChangeInternal()
+	{
+		NotifyChanged();
+		RebuildList();
+	}
+
+	/// <summary>
+	/// Sets a variable's array row expanded state during a replay, so a restored element is not hidden in a collapsed
+	/// row. This is view state and is never recorded on its own.
+	/// </summary>
+	/// <param name="variableName">The variable whose row to expand or collapse.</param>
+	/// <param name="expanded">The expanded state to apply.</param>
+	internal void SetArrayExpandedInternal(string variableName, bool expanded)
+	{
+		if (expanded)
+		{
+			_expandedArrays.Add(variableName);
+		}
+		else
+		{
+			_expandedArrays.Remove(variableName);
+		}
 	}
 
 	private static void UpdateVariableNameButtonAppearance(Button button, bool isSelected)
@@ -558,8 +604,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			elementsContainer.Visible = x;
 
-			bool wasExpanded = !x;
-
 			if (x)
 			{
 				_expandedArrays.Add(def.VariableName);
@@ -569,15 +613,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 				_expandedArrays.Remove(def.VariableName);
 			}
 
-			EditorUndoRedoUtils.Record(
-				_undoRedo,
-				"Toggle Array Expand",
-				null,
-				undo =>
-				{
-					undo.AddDoMethod(this, MethodName.DoSetArrayExpanded, def.VariableName, x);
-					undo.AddUndoMethod(this, MethodName.DoSetArrayExpanded, def.VariableName, wasExpanded);
-				});
+			// Not recorded: expanding a row is view state, same as a collapsed foldable.
 		};
 
 		headerRow.AddChild(toggleButton);
@@ -692,55 +728,102 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void SetVariableValue(ForgeSharedVariableDefinition def, Variant newValue)
 	{
+		if (!TryGetReplayContext(out SharedVariableSetEditingController? controller, out ForgeSharedVariableSet? set))
+		{
+			return;
+		}
+
 		Variant oldValue = def.InitialValue;
 
 		def.InitialValue = newValue;
 		NotifyChanged();
 
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			controller.GetUndoRedo(),
 			$"Change Shared Variable '{def.VariableName}'",
-			null,
+			set,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyVariableValue, def, newValue);
-				undo.AddUndoMethod(this, MethodName.ApplyVariableValue, def, oldValue);
+				undo.AddDoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayVariableValue,
+					set,
+					def,
+					newValue);
+				undo.AddUndoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayVariableValue,
+					set,
+					def,
+					oldValue);
 			});
 	}
 
 	private void SetArrayElementValue(ForgeSharedVariableDefinition def, int index, Variant newValue)
 	{
+		if (!TryGetReplayContext(out SharedVariableSetEditingController? controller, out ForgeSharedVariableSet? set))
+		{
+			return;
+		}
+
 		Variant oldValue = def.InitialArrayValues[index];
 
 		def.InitialArrayValues[index] = newValue;
 		NotifyChanged();
 
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			controller.GetUndoRedo(),
 			$"Change Shared Variable '{def.VariableName}' Element [{index}]",
-			null,
+			set,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyArrayElementValue, def, index, newValue);
-				undo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, def, index, oldValue);
+				undo.AddDoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayArrayElementValue,
+					set,
+					def,
+					index,
+					newValue);
+				undo.AddUndoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayArrayElementValue,
+					set,
+					def,
+					index,
+					oldValue);
 			});
 	}
 
 	private void AddArrayElement(ForgeSharedVariableDefinition def, Variant value)
 	{
+		if (!TryGetReplayContext(out SharedVariableSetEditingController? controller, out ForgeSharedVariableSet? set))
+		{
+			return;
+		}
+
 		bool wasExpanded = _expandedArrays.Contains(def.VariableName);
 
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			controller.GetUndoRedo(),
 			$"Add Element to '{def.VariableName}'",
-			null,
+			set,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.DoAddArrayElement, def, value);
-				undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, def, wasExpanded);
+				undo.AddDoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayAddArrayElement,
+					set,
+					def,
+					value);
+				undo.AddUndoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayRemoveLastArrayElement,
+					set,
+					def,
+					wasExpanded);
 			},
 			execute: true,
-			fallback: () => DoAddArrayElement(def, value));
+			fallback: () => controller.ReplayAddArrayElement(set, def, value));
 	}
 
 	private void RemoveArrayElement(ForgeSharedVariableDefinition def, int index)
@@ -750,19 +833,35 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			return;
 		}
 
+		if (!TryGetReplayContext(out SharedVariableSetEditingController? controller, out ForgeSharedVariableSet? set))
+		{
+			return;
+		}
+
 		Variant oldValue = def.InitialArrayValues[index];
 
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			controller.GetUndoRedo(),
 			$"Remove Element [{index}] from '{def.VariableName}'",
-			null,
+			set,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, def, index);
-				undo.AddUndoMethod(this, MethodName.UndoRemoveArrayElement, def, index, oldValue);
+				undo.AddDoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayRemoveArrayElementAt,
+					set,
+					def,
+					index);
+				undo.AddUndoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayInsertArrayElement,
+					set,
+					def,
+					index,
+					oldValue);
 			},
 			execute: true,
-			fallback: () => DoRemoveArrayElement(def, index));
+			fallback: () => controller.ReplayRemoveArrayElementAt(set, def, index));
 	}
 
 	private void OnAddPressed()
@@ -842,19 +941,31 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 				: StatescriptVariableTypeConverter.CreateDefaultGodotVariant(selection.PrimitiveType),
 		};
 
-		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
+		if (!TryGetReplayContext(out SharedVariableSetEditingController? controller, out ForgeSharedVariableSet? set))
+		{
+			CleanupCreationDialog();
+			return;
+		}
 
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			controller.GetUndoRedo(),
 			"Add Shared Variable",
-			null,
+			set,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.DoAddVariable, definitions, newDef);
-				undo.AddUndoMethod(this, MethodName.UndoAddVariable, definitions, newDef);
+				undo.AddDoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayAddVariable,
+					set,
+					newDef);
+				undo.AddUndoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayRemoveVariable,
+					set,
+					newDef);
 			},
 			execute: true,
-			fallback: () => DoAddVariable(definitions, newDef));
+			fallback: () => controller.ReplayAddVariable(set, newDef));
 
 		CleanupCreationDialog();
 	}
@@ -884,135 +995,47 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 		ForgeSharedVariableDefinition variable = definitions[index];
 
+		if (!TryGetReplayContext(out SharedVariableSetEditingController? controller, out ForgeSharedVariableSet? set))
+		{
+			return;
+		}
+
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			controller.GetUndoRedo(),
 			"Remove Shared Variable",
-			null,
+			set,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.DoRemoveVariable, definitions, variable, index);
-				undo.AddUndoMethod(this, MethodName.UndoRemoveVariable, definitions, variable, index);
+				undo.AddDoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayRemoveVariable,
+					set,
+					variable);
+				undo.AddUndoMethod(
+					controller,
+					SharedVariableSetEditingController.MethodName.ReplayInsertVariable,
+					set,
+					variable,
+					index);
 			},
 			execute: true,
-			fallback: () => DoRemoveVariable(definitions, index));
+			fallback: () => controller.ReplayRemoveVariable(set, variable));
 	}
 
-	private void ApplyVariableValue(ForgeSharedVariableDefinition def, Variant value)
+	/// <summary>
+	/// Resolves the controller that hosts undo/redo replays and the set being edited.
+	/// </summary>
+	/// <param name="controller">The editing controller, when available.</param>
+	/// <param name="set">The set being edited, when available.</param>
+	/// <returns><see langword="true"/> when both are available.</returns>
+	private bool TryGetReplayContext(
+		[NotNullWhen(true)] out SharedVariableSetEditingController? controller,
+		[NotNullWhen(true)] out ForgeSharedVariableSet? set)
 	{
-		def.InitialValue = value;
-		NotifyChanged();
-		RebuildList();
-	}
+		controller = _controller;
+		set = GetEditedObject() as ForgeSharedVariableSet;
 
-	private void ApplyArrayElementValue(ForgeSharedVariableDefinition def, int index, Variant value)
-	{
-		def.InitialArrayValues[index] = value;
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void DoAddVariable(Array<ForgeSharedVariableDefinition> definitions, ForgeSharedVariableDefinition def)
-	{
-		definitions.Add(def);
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void UndoAddVariable(Array<ForgeSharedVariableDefinition> definitions, ForgeSharedVariableDefinition def)
-	{
-		definitions.Remove(def);
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void DoRemoveVariable(
-		Array<ForgeSharedVariableDefinition> definitions,
-		int index)
-	{
-		definitions.RemoveAt(index);
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void UndoRemoveVariable(
-		Array<ForgeSharedVariableDefinition> definitions,
-		ForgeSharedVariableDefinition sharedVariableDefinition,
-		int index)
-	{
-		if (index >= definitions.Count)
-		{
-			definitions.Add(sharedVariableDefinition);
-		}
-		else
-		{
-			definitions.Insert(index, sharedVariableDefinition);
-		}
-
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void DoAddArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, Variant value)
-	{
-		sharedVariableDefinition.InitialArrayValues.Add(value);
-		_expandedArrays.Add(sharedVariableDefinition.VariableName);
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void UndoAddArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, bool wasExpanded)
-	{
-		if (sharedVariableDefinition.InitialArrayValues.Count > 0)
-		{
-			sharedVariableDefinition.InitialArrayValues.RemoveAt(sharedVariableDefinition.InitialArrayValues.Count - 1);
-		}
-
-		if (!wasExpanded)
-		{
-			_expandedArrays.Remove(sharedVariableDefinition.VariableName);
-		}
-
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void DoRemoveArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, int index)
-	{
-		sharedVariableDefinition.InitialArrayValues.RemoveAt(index);
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void UndoRemoveArrayElement(
-		ForgeSharedVariableDefinition sharedVariableDefinition,
-		int index,
-		Variant value)
-	{
-		if (index >= sharedVariableDefinition.InitialArrayValues.Count)
-		{
-			sharedVariableDefinition.InitialArrayValues.Add(value);
-		}
-		else
-		{
-			sharedVariableDefinition.InitialArrayValues.Insert(index, value);
-		}
-
-		NotifyChanged();
-		RebuildList();
-	}
-
-	private void DoSetArrayExpanded(string variableName, bool expanded)
-	{
-		if (expanded)
-		{
-			_expandedArrays.Add(variableName);
-		}
-		else
-		{
-			_expandedArrays.Remove(variableName);
-		}
-
-		RebuildList();
+		return controller is not null && IsInstanceValid(controller) && set is not null;
 	}
 }
 #endif

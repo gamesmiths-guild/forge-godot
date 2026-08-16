@@ -121,7 +121,10 @@ public partial class StatescriptGraphNode
 		// Pre-seed a constant binding for inputs whose conventional default is not the type's zero value (e.g.
 		// Level = 1), so a fresh slot starts from it and the dropdown selects the constant resolver. Optional inputs
 		// are never seeded: their fresh state is (None), which is what the runtime documents as their default.
+		// Never during a replay: an undo that cleared this slot rebuilds the row, and seeding would put the binding
+		// straight back, making the undo look like it did nothing.
 		if (binding?.Resolver is null
+			&& !EditorUndoRedoUtils.IsReplaying
 			&& !propInfo.IsOptional
 			&& defaultConstantValue is { } seededValue
 			&& StatescriptVariableTypeConverter.TryFromSystemType(
@@ -204,6 +207,7 @@ public partial class StatescriptGraphNode
 			// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
 			// used at runtime, without requiring the user to interact with the slot first.
 			if (binding?.Resolver is null
+				&& !EditorUndoRedoUtils.IsReplaying
 				&& _activeResolverEditors.TryGetValue(key, out NodeEditorProperty? defaultEditor))
 			{
 				defaultEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
@@ -274,25 +278,12 @@ public partial class StatescriptGraphNode
 		StatescriptNodeProperty? updated = FindBinding(StatescriptPropertyDirection.Input, index);
 		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
 
-		EditorUndoRedoUtils.Record(
-			_undoRedo,
-			"Change Resolver Type",
-			_graph,
-			undo =>
-			{
-				undo.AddDoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Input,
-					index,
-					Variant.From(newResolver));
-				undo.AddUndoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Input,
-					index,
-					Variant.From(oldResolver));
-			});
+		RecordResolverBindingChangeInternal(
+			StatescriptPropertyDirection.Input,
+			index,
+			oldResolver,
+			newResolver,
+			"Change Resolver Type");
 
 		PropertyBindingChanged?.Invoke();
 		ResetSize();
@@ -343,7 +334,8 @@ public partial class StatescriptGraphNode
 		{
 			variableDropdown.Selected = selectedIndex;
 
-			if (binding is null)
+			// Auto-bind a fresh output row to the shown variable so the dropdown is not lying about what runs.
+			if (binding is null && !EditorUndoRedoUtils.IsReplaying)
 			{
 				StatescriptGraphVariable variable = _graph.Variables[selectedIndex];
 				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
@@ -383,7 +375,7 @@ public partial class StatescriptGraphNode
 
 		foldable.FoldingChanged += folded =>
 		{
-			SetFoldStateWithUndo(foldKey, folded);
+			PersistFoldState(foldKey, folded);
 			UpdateOutputVariableBadge();
 			ResetSize();
 		};
@@ -410,25 +402,12 @@ public partial class StatescriptGraphNode
 		EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver = newResolver;
 		NotifyGraphResourceChanged();
 
-		EditorUndoRedoUtils.Record(
-			_undoRedo,
-			"Change Output Variable",
-			_graph,
-			undo =>
-			{
-				undo.AddDoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Output,
-					index,
-					(StatescriptResolverResource)newResolver.Duplicate());
-				undo.AddUndoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)StatescriptPropertyDirection.Output,
-					index,
-					Variant.From(oldResolver));
-			});
+		RecordResolverBindingChangeInternal(
+			StatescriptPropertyDirection.Output,
+			index,
+			oldResolver,
+			(StatescriptResolverResource)newResolver.Duplicate(),
+			"Change Output Variable");
 
 		PropertyBindingChanged?.Invoke();
 	}
@@ -484,25 +463,7 @@ public partial class StatescriptGraphNode
 		StatescriptNodeProperty? updated = FindBinding(direction, propertyIndex);
 		var newResolver = updated?.Resolver?.Duplicate() as StatescriptResolverResource;
 
-		EditorUndoRedoUtils.Record(
-			_undoRedo,
-			"Change Node Property",
-			_graph,
-			undo =>
-			{
-				undo.AddDoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)direction,
-					propertyIndex,
-					Variant.From(newResolver));
-				undo.AddUndoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
-					(int)direction,
-					propertyIndex,
-					Variant.From(oldResolver));
-			});
+		RecordResolverBindingChangeInternal(direction, propertyIndex, oldResolver, newResolver, "Change Node Property");
 
 		if (direction == StatescriptPropertyDirection.Input)
 		{

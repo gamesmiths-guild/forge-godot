@@ -106,8 +106,6 @@ internal sealed partial class StatescriptVariablePanel
 		{
 			elementsContainer.Visible = x;
 
-			bool wasExpanded = !x;
-
 			if (x)
 			{
 				_expandedArrays.Add(variable.VariableName);
@@ -117,17 +115,8 @@ internal sealed partial class StatescriptVariablePanel
 				_expandedArrays.Remove(variable.VariableName);
 			}
 
+			// Persisted but not recorded: expanding a row is view state, same as a collapsed foldable.
 			SaveExpandedArrayState();
-
-			EditorUndoRedoUtils.Record(
-				_undoRedo,
-				"Toggle Array Expand",
-				_graph,
-				undo =>
-				{
-					undo.AddDoMethod(this, MethodName.DoSetArrayExpanded, variable.VariableName, x);
-					undo.AddUndoMethod(this, MethodName.DoSetArrayExpanded, variable.VariableName, wasExpanded);
-				});
 		};
 
 		headerRow.AddChild(toggleButton);

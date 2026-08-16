@@ -21,7 +21,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// <param name="DefaultBool">The default boolean value, used when no value is stored yet.</param>
 /// <param name="AffectsLayout">When <see langword="true"/>, changing this parameter rebuilds the node so an editor
 /// that shows or hides input rows based on it (see <see cref="StandardNodeEditorBase.IsInputVisible"/>) updates
-/// immediately. Leave <see langword="false"/> for config that does not change which rows are rendered.</param>
+/// immediately. Leave <see langword="false"/> for config that does not change which rows are rendered. This only
+/// affects the user's own edit; undo and redo always rebuild so the control re-reads the restored value.</param>
 internal readonly record struct NodeConfigParam(
 	string Key,
 	string Label,

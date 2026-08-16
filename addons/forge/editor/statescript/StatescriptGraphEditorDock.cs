@@ -1082,6 +1082,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_graphEdit!.AddChild(graphNode);
 		graphNode.Initialize(nodeResource, graph);
 		graphNode.SetUndoRedo(_undoRedo);
+		graphNode.SetReplayHost(this);
 		graphNode.PropertyBindingChanged += OnGraphNodePropertyBindingChanged;
 		return graphNode;
 	}

@@ -162,7 +162,13 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitle();
-		_onChanged?.Invoke();
+
+		// Persisted but not recorded: collapsing the picker is view state.
+		using (EditorUndoRedoUtils.EnterViewStateChange())
+		{
+			_onChanged?.Invoke();
+		}
+
 		_layoutSizeChanged?.Invoke();
 	}
 

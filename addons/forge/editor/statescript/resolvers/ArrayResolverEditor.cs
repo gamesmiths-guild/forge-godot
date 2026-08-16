@@ -492,7 +492,7 @@ internal sealed partial class ArrayResolverEditor : NodeEditorProperty
 
 		_elementFoldedStates[elementIndex] = _elementFoldables[elementIndex].Folded;
 		UpdateElementFoldableTitle(elementIndex);
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

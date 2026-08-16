@@ -140,7 +140,7 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitle();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

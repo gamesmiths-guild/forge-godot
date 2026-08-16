@@ -38,6 +38,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void ApplyArrayElementValue(StatescriptGraphVariable variable, int index, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (index >= 0 && index < variable.InitialArrayValues.Count)
 		{
 			variable.InitialArrayValues[index] = value;
@@ -71,6 +73,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void ApplyVariableValue(StatescriptGraphVariable variable, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		variable.InitialValue = value;
 		variable.EmitChanged();
 		RebuildList();
@@ -79,6 +83,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void DoAddVariable(StatescriptGraph graph, StatescriptGraphVariable variable)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Variables.Add(variable);
 		RebuildList();
 		VariablesChanged?.Invoke();
@@ -86,6 +92,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void UndoAddVariable(StatescriptGraph graph, StatescriptGraphVariable variable)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Variables.Remove(variable);
 		RebuildList();
 		VariablesChanged?.Invoke();
@@ -94,6 +102,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void DoRemoveVariable(StatescriptGraph graph, StatescriptGraphVariable variable, int index)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (_selectedVariableName == variable.VariableName)
 		{
 			_selectedVariableName = null;
@@ -108,6 +118,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void UndoRemoveVariable(StatescriptGraph graph, StatescriptGraphVariable variable, int index)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (index >= graph.Variables.Count)
 		{
 			graph.Variables.Add(variable);
@@ -124,6 +136,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void DoAddArrayElement(StatescriptGraphVariable variable, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		variable.InitialArrayValues.Add(value);
 		variable.EmitChanged();
 		EnsureArrayExpanded(variable.VariableName);
@@ -132,6 +146,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void UndoAddArrayElement(StatescriptGraphVariable variable)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (variable.InitialArrayValues.Count > 0)
 		{
 			variable.InitialArrayValues.RemoveAt(variable.InitialArrayValues.Count - 1);
@@ -145,6 +161,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void DoRemoveArrayElement(StatescriptGraphVariable variable, int index)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		variable.InitialArrayValues.RemoveAt(index);
 		variable.EmitChanged();
 		RebuildList();
@@ -152,6 +170,8 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void UndoRemoveArrayElement(StatescriptGraphVariable variable, int index, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (index >= variable.InitialArrayValues.Count)
 		{
 			variable.InitialArrayValues.Add(value);
@@ -175,22 +195,6 @@ internal sealed partial class StatescriptVariablePanel
 		{
 			SaveExpandedArrayState();
 		}
-	}
-
-	private void DoSetArrayExpanded(string variableName, bool expanded)
-	{
-		if (expanded)
-		{
-			_expandedArrays.Add(variableName);
-		}
-		else
-		{
-			_expandedArrays.Remove(variableName);
-		}
-
-		SaveExpandedArrayState();
-		RebuildList();
-		VariableUndoRedoPerformed?.Invoke();
 	}
 }
 #endif

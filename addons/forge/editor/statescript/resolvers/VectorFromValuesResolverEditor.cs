@@ -373,7 +373,7 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 	private void OnComponentFoldableFoldingChanged(bool folded)
 	{
 		UpdateFoldableTitles();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

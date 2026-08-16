@@ -314,7 +314,7 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 	private void OnFoldableFoldingChanged(bool folded)
 	{
 		UpdateFoldableTitles();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

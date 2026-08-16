@@ -119,7 +119,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 	private void OnOperandFoldableFoldingChanged(bool folded)
 	{
 		UpdateOperandFoldableTitle();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

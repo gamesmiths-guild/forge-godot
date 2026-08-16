@@ -146,6 +146,20 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	}
 
 	/// <summary>
+	/// Runs the editor's change callback for pure view state, writing it to the resolver without an undo step.
+	/// </summary>
+	/// <remarks>
+	/// These states are serialized inside the resolver, so the only way to persist them is the same save callback that
+	/// records edits; recording is suppressed for the call.
+	/// </remarks>
+	/// <param name="onChanged">The editor's change callback.</param>
+	protected static void SaveViewState(Action? onChanged)
+	{
+		using EditorUndoRedoUtils.ViewStateScope scope = EditorUndoRedoUtils.EnterViewStateChange();
+		onChanged?.Invoke();
+	}
+
+	/// <summary>
 	/// Notifies listeners that the editor layout has changed size.
 	/// </summary>
 	protected void RaiseLayoutSizeChanged()

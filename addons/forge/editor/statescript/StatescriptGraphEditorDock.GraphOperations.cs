@@ -79,12 +79,16 @@ public partial class StatescriptGraphEditorDock
 
 	private void DoConnect(string fromNode, int fromPort, string toNode, int toPort)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		_graphEdit?.ConnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
 
 	private void UndoConnect(string fromNode, int fromPort, string toNode, int toPort)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		_graphEdit?.DisconnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
@@ -127,122 +131,132 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
+		var nodesToDelete = new GodotCollections.Array<StatescriptNode>();
+		var deletedIds = new HashSet<string>();
+
 		foreach (StringName nodeName in deletedNodes)
 		{
-			Node? child = _graphEdit.GetNodeOrNull(nodeName.ToString());
-
-			if (child is not StatescriptGraphNode graphNode)
+			if (_graphEdit.GetNodeOrNull(nodeName.ToString()) is not StatescriptGraphNode graphNode
+				|| graphNode.NodeResource is null)
 			{
 				continue;
 			}
 
-			if (graphNode.NodeResource?.NodeType == StatescriptNodeType.Entry)
+			if (graphNode.NodeResource.NodeType == StatescriptNodeType.Entry)
 			{
 				GD.PushWarning("Cannot delete the Entry statescriptNode.");
 				continue;
 			}
 
-			if (graphNode.NodeResource is null)
-			{
-				continue;
-			}
-
-			var affectedConnections = new List<StatescriptConnection>();
-			foreach (GodotCollections.Dictionary connection in _graphEdit.GetConnectionList())
-			{
-				StringName from = connection["from_node"].AsStringName();
-				StringName to = connection["to_node"].AsStringName();
-
-				if (from == nodeName || to == nodeName)
-				{
-					affectedConnections.Add(new StatescriptConnection
-					{
-						FromNode = connection["from_node"].AsString(),
-						OutputPort = ToRuntimeOutputPort(
-							connection["from_node"].AsString(),
-							connection["from_port"].AsInt32()),
-						ToNode = connection["to_node"].AsString(),
-						InputPort = connection["to_port"].AsInt32(),
-					});
-				}
-			}
-
-			StatescriptNode nodeResource = graphNode.NodeResource;
-			EditorUndoRedoUtils.Record(
-				_undoRedo,
-				"Delete Statescript Node",
-				graph,
-				undo =>
-				{
-					undo.AddDoMethod(
-						this,
-						MethodName.DoDeleteNode,
-						graph,
-						nodeResource,
-						new GodotCollections.Array<StatescriptConnection>(affectedConnections));
-					undo.AddUndoMethod(
-						this,
-						MethodName.UndoDeleteNode,
-						graph,
-						nodeResource,
-						new GodotCollections.Array<StatescriptConnection>(affectedConnections));
-				},
-				execute: true,
-				fallback: () => DoDeleteNode(graph, nodeResource, [.. affectedConnections]));
+			nodesToDelete.Add(graphNode.NodeResource);
+			deletedIds.Add(graphNode.NodeResource.NodeId);
 		}
+
+		if (nodesToDelete.Count == 0)
+		{
+			return;
+		}
+
+		// Off the resource rather than the visual connection list: keeps the instances that have to be removed and
+		// restored, and captures a connection between two deleted nodes once instead of once per endpoint.
+		var affectedConnections = new GodotCollections.Array<StatescriptConnection>();
+		foreach (StatescriptConnection connection in graph.Connections)
+		{
+			if (deletedIds.Contains(connection.FromNode) || deletedIds.Contains(connection.ToNode))
+			{
+				affectedConnections.Add(connection);
+			}
+		}
+
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			nodesToDelete.Count > 1 ? "Delete Statescript Nodes" : "Delete Statescript Node",
+			graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoDeleteNodes, graph, nodesToDelete, affectedConnections);
+				undo.AddUndoMethod(this, MethodName.UndoDeleteNodes, graph, nodesToDelete, affectedConnections);
+			},
+			execute: true,
+			fallback: () => DoDeleteNodes(graph, nodesToDelete, affectedConnections));
 	}
 
-	private void DoDeleteNode(
+	private void DoDeleteNodes(
 		StatescriptGraph graph,
-		StatescriptNode nodeResource,
+		GodotCollections.Array<StatescriptNode> nodes,
 		GodotCollections.Array<StatescriptConnection> affectedConnections)
 	{
-		if (_graphEdit is not null && CurrentGraph == graph)
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
+		bool isCurrent = _graphEdit is not null && CurrentGraph == graph;
+
+		if (isCurrent)
 		{
+			// Must precede node removal: the runtime-to-visual port mapping is read off the live node.
 			foreach (StatescriptConnection connection in affectedConnections)
 			{
-				_graphEdit.DisconnectNode(
+				_graphEdit!.DisconnectNode(
 					connection.FromNode,
 					ToVisualOutputPort(connection.FromNode, connection.OutputPort),
 					connection.ToNode,
 					connection.InputPort);
 			}
-
-			Node? child = _graphEdit.GetNodeOrNull(nodeResource.NodeId);
-			if (child is StatescriptGraphNode graphNode)
-			{
-				ReleaseGraphNodeVisualDeferred(graphNode);
-			}
-			else
-			{
-				child?.QueueFree();
-			}
 		}
-		else
+
+		// Explicit, because SyncConnectionsToCurrentGraph only syncs the visible graph: deleting in a background tab
+		// used to leave these behind for good.
+		foreach (StatescriptConnection connection in affectedConnections)
+		{
+			graph.Connections.Remove(connection);
+		}
+
+		foreach (StatescriptNode nodeResource in nodes)
+		{
+			if (isCurrent)
+			{
+				Node? child = _graphEdit!.GetNodeOrNull(nodeResource.NodeId);
+				if (child is StatescriptGraphNode graphNode)
+				{
+					ReleaseGraphNodeVisualDeferred(graphNode);
+				}
+				else
+				{
+					child?.QueueFree();
+				}
+			}
+
+			graph.Nodes.Remove(nodeResource);
+		}
+
+		if (!isCurrent)
 		{
 			InvalidateCachedGraphVisuals(graph);
 		}
 
-		graph.Nodes.Remove(nodeResource);
 		graph.EmitChanged();
-		SyncConnectionsToCurrentGraph();
 	}
 
-	private void UndoDeleteNode(
+	private void UndoDeleteNodes(
 		StatescriptGraph graph,
-		StatescriptNode nodeResource,
+		GodotCollections.Array<StatescriptNode> nodes,
 		GodotCollections.Array<StatescriptConnection> affectedConnections)
 	{
-		graph.Nodes.Add(nodeResource);
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
+		// Every node goes back before any connection does, since a restored connection may span two of them.
+		graph.Nodes.AddRange(nodes);
 		graph.Connections.AddRange(affectedConnections);
 		graph.EmitChanged();
 
 		if (CurrentGraph == graph && _graphEdit is not null)
 		{
 			GraphTab? tab = FindTab(graph);
-			StatescriptGraphNode graphNode = AddGraphNodeVisual(nodeResource, graph);
-			tab?.CachedGraphNodes.Add(graphNode);
+
+			foreach (StatescriptNode nodeResource in nodes)
+			{
+				StatescriptGraphNode graphNode = AddGraphNodeVisual(nodeResource, graph);
+				tab?.CachedGraphNodes.Add(graphNode);
+			}
 
 			foreach (StatescriptConnection connection in affectedConnections)
 			{
@@ -328,6 +342,8 @@ public partial class StatescriptGraphEditorDock
 		StatescriptGraph graph,
 		GodotCollections.Dictionary<StringName, Vector2> positions)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		foreach (StatescriptNode node in graph.Nodes)
 		{
 			if (positions.TryGetValue(node.NodeId, out Vector2 pos))
@@ -388,6 +404,8 @@ public partial class StatescriptGraphEditorDock
 
 	private void DoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.Add(nodeResource);
 		graph.EmitChanged();
 
@@ -401,6 +419,8 @@ public partial class StatescriptGraphEditorDock
 
 	private void UndoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.Remove(nodeResource);
 		graph.EmitChanged();
 
@@ -552,6 +572,8 @@ public partial class StatescriptGraphEditorDock
 		GodotCollections.Array<StatescriptNode> nodes,
 		GodotCollections.Array<StatescriptConnection> connections)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.AddRange(nodes);
 
 		graph.Connections.AddRange(connections);
@@ -590,6 +612,8 @@ public partial class StatescriptGraphEditorDock
 		GodotCollections.Array<StatescriptNode> nodes,
 		GodotCollections.Array<StatescriptConnection> connections)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		foreach (StatescriptConnection connection in connections)
 		{
 			graph.Connections.Remove(connection);
