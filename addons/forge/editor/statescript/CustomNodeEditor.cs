@@ -379,8 +379,11 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 				? resolver.VariableName
 				: null;
 
-		// Drop a stale binding whose variable no longer matches the output's type so it is not silently kept.
-		if (!string.IsNullOrEmpty(current) && !candidates.Contains(current))
+		// Drop a stale binding whose variable no longer matches the output's type so it is not silently kept. Not
+		// during a replay, where the binding being restored is the authoritative one.
+		if (!string.IsNullOrEmpty(current)
+			&& !candidates.Contains(current)
+			&& !EditorUndoRedoUtils.IsReplaying)
 		{
 			current = null;
 			RemoveBinding(StatescriptPropertyDirection.Output, index);

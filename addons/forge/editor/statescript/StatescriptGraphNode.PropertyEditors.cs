@@ -121,7 +121,10 @@ public partial class StatescriptGraphNode
 		// Pre-seed a constant binding for inputs whose conventional default is not the type's zero value (e.g.
 		// Level = 1), so a fresh slot starts from it and the dropdown selects the constant resolver. Optional inputs
 		// are never seeded: their fresh state is (None), which is what the runtime documents as their default.
+		// Never during a replay: an undo that cleared this slot rebuilds the row, and seeding would put the binding
+		// straight back, making the undo look like it did nothing.
 		if (binding?.Resolver is null
+			&& !EditorUndoRedoUtils.IsReplaying
 			&& !propInfo.IsOptional
 			&& defaultConstantValue is { } seededValue
 			&& StatescriptVariableTypeConverter.TryFromSystemType(
@@ -204,6 +207,7 @@ public partial class StatescriptGraphNode
 			// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
 			// used at runtime, without requiring the user to interact with the slot first.
 			if (binding?.Resolver is null
+				&& !EditorUndoRedoUtils.IsReplaying
 				&& _activeResolverEditors.TryGetValue(key, out NodeEditorProperty? defaultEditor))
 			{
 				defaultEditor.SaveTo(EnsureBinding(StatescriptPropertyDirection.Input, index));
@@ -343,7 +347,8 @@ public partial class StatescriptGraphNode
 		{
 			variableDropdown.Selected = selectedIndex;
 
-			if (binding is null)
+			// Auto-bind a fresh output row to the shown variable so the dropdown is not lying about what runs.
+			if (binding is null && !EditorUndoRedoUtils.IsReplaying)
 			{
 				StatescriptGraphVariable variable = _graph.Variables[selectedIndex];
 				EnsureBinding(StatescriptPropertyDirection.Output, index).Resolver =
