@@ -321,14 +321,14 @@ internal sealed partial class RandomResolverEditor : NodeEditorProperty
 	private void OnInclusiveMaxFoldableFoldingChanged(bool folded)
 	{
 		UpdateInclusiveMaxFoldableTitle();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 
 	private void OnResolverSlotFoldableFoldingChanged(bool folded)
 	{
 		UpdateFoldableTitles();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

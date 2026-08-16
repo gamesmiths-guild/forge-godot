@@ -269,9 +269,9 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		return GetFoldState(key, defaultValue);
 	}
 
-	internal void SetFoldStateWithUndoInternal(string key, bool folded)
+	internal void PersistFoldStateInternal(string key, bool folded)
 	{
-		SetFoldStateWithUndo(key, folded);
+		PersistFoldState(key, folded);
 	}
 
 	internal void SetNodeConfigWithUndoInternal(string key, Variant value, string actionName, bool rebuildOnChange)
@@ -664,7 +664,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			bool stored = GetFoldState(kvp.Value);
 			if (kvp.Key.Folded != stored)
 			{
-				SetFoldStateWithUndo(kvp.Value, kvp.Key.Folded);
+				PersistFoldState(kvp.Value, kvp.Key.Folded);
 			}
 		}
 
@@ -755,39 +755,19 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		NotifyGraphResourceChanged();
 	}
 
-	private void SetFoldStateWithUndo(string key, bool folded)
+	/// <summary>
+	/// Persists a section's fold state without recording an undo step, since folding is view state.
+	/// </summary>
+	/// <param name="key">The CustomData key holding this section's fold state.</param>
+	/// <param name="folded">The new folded state.</param>
+	private void PersistFoldState(string key, bool folded)
 	{
-		if (NodeResource is null)
-		{
-			return;
-		}
-
-		bool oldFolded = GetFoldState(key);
-
-		if (oldFolded == folded)
+		if (NodeResource is null || GetFoldState(key) == folded)
 		{
 			return;
 		}
 
 		SetFoldState(key, folded);
-
-		EditorUndoRedoUtils.Record(
-			_undoRedo,
-			"Toggle Fold",
-			_graph,
-			undo =>
-			{
-				undo.AddDoMethod(this, MethodName.ApplyFoldState, key, folded);
-				undo.AddUndoMethod(this, MethodName.ApplyFoldState, key, oldFolded);
-			});
-	}
-
-	private void ApplyFoldState(string key, bool folded)
-	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
-		SetFoldState(key, folded);
-		RebuildNode();
 	}
 
 	private void SetNodeConfigWithUndo(string key, Variant value, string actionName, bool rebuildOnChange)

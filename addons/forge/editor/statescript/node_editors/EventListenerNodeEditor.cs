@@ -238,7 +238,7 @@ internal sealed partial class EventListenerNodeEditor : CustomNodeEditor
 
 		_payloadFoldable.FoldingChanged += folded =>
 		{
-			SetFoldStateWithUndo(PayloadFoldKey, folded);
+			PersistFoldState(PayloadFoldKey, folded);
 			UpdatePayloadBadge();
 			RaisePropertyBindingChanged();
 			ResetSize();

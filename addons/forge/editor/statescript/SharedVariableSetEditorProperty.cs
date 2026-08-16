@@ -558,8 +558,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		{
 			elementsContainer.Visible = x;
 
-			bool wasExpanded = !x;
-
 			if (x)
 			{
 				_expandedArrays.Add(def.VariableName);
@@ -569,15 +567,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 				_expandedArrays.Remove(def.VariableName);
 			}
 
-			EditorUndoRedoUtils.Record(
-				_undoRedo,
-				"Toggle Array Expand",
-				null,
-				undo =>
-				{
-					undo.AddDoMethod(this, MethodName.DoSetArrayExpanded, def.VariableName, x);
-					undo.AddUndoMethod(this, MethodName.DoSetArrayExpanded, def.VariableName, wasExpanded);
-				});
+			// Not recorded: expanding a row is view state, same as a collapsed foldable.
 		};
 
 		headerRow.AddChild(toggleButton);
@@ -1018,22 +1008,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		}
 
 		NotifyChanged();
-		RebuildList();
-	}
-
-	private void DoSetArrayExpanded(string variableName, bool expanded)
-	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
-		if (expanded)
-		{
-			_expandedArrays.Add(variableName);
-		}
-		else
-		{
-			_expandedArrays.Remove(variableName);
-		}
-
 		RebuildList();
 	}
 }

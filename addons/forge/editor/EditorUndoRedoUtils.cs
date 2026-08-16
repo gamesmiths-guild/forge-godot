@@ -33,6 +33,21 @@ internal static class EditorUndoRedoUtils
 	}
 
 	/// <summary>
+	/// Suppresses undo/redo recording for as long as the returned value is alive, while still letting the change reach
+	/// the resource.
+	/// </summary>
+	/// <remarks>
+	/// For view state that happens to be serialized, such as which foldable is collapsed: it belongs on disk so a
+	/// reopened graph looks the way it was left, but not on the undo stack. Neither Blender nor the Godot editor
+	/// undoes panel folding.
+	/// </remarks>
+	/// <returns>A scope that resumes recording when disposed.</returns>
+	public static ViewStateScope EnterViewStateChange()
+	{
+		return ViewStateScope.Enter();
+	}
+
+	/// <summary>
 	/// Records an undo/redo action. When <paramref name="undoRedo"/> is available, opens an action, lets
 	/// <paramref name="configure"/> register the do/undo methods, and commits it. When it is <see langword="null"/>,
 	/// the optional <paramref name="fallback"/> is invoked so the change still happens without undo support.
@@ -58,6 +73,12 @@ internal static class EditorUndoRedoUtils
 		{
 			// Recording here would clear the redo stack and strand every action after the one being replayed. The
 			// replay itself already puts the data in the right state, so there is nothing to record.
+			return;
+		}
+
+		if (ViewStateScope.Depth > 0)
+		{
+			// View state still reaches the resource, it just does not earn an undo step.
 			return;
 		}
 
@@ -96,6 +117,38 @@ internal static class EditorUndoRedoUtils
 		/// </summary>
 		/// <returns>The scope that ends the replay when disposed.</returns>
 		internal static ReplayScope Enter()
+		{
+			Depth++;
+			return default;
+		}
+
+		private static void Exit()
+		{
+			_depth--;
+		}
+	}
+
+	/// <summary>
+	/// Scope returned by <see cref="EnterViewStateChange"/>.
+	/// </summary>
+	internal readonly struct ViewStateScope : IDisposable
+	{
+		/// <summary>
+		/// Gets the number of view-state scopes currently open.
+		/// </summary>
+		internal static int Depth { get; private set; }
+
+		/// <inheritdoc/>
+		public void Dispose()
+		{
+			Exit();
+		}
+
+		/// <summary>
+		/// Opens a view-state scope.
+		/// </summary>
+		/// <returns>The scope that resumes recording when disposed.</returns>
+		internal static ViewStateScope Enter()
 		{
 			Depth++;
 			return default;

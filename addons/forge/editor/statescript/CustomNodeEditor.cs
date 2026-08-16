@@ -345,7 +345,7 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 
 		foldable.FoldingChanged += folded =>
 		{
-			SetFoldStateWithUndo(foldKey, folded);
+			PersistFoldState(foldKey, folded);
 			UpdateBadge();
 			RaisePropertyBindingChanged();
 			ResetSize();
@@ -475,9 +475,9 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// </summary>
 	/// <param name="key">The key used to persist the fold state.</param>
 	/// <param name="folded">The new folded state.</param>
-	protected void SetFoldStateWithUndo(string key, bool folded)
+	protected void PersistFoldState(string key, bool folded)
 	{
-		_graphNode!.SetFoldStateWithUndoInternal(key, folded);
+		_graphNode!.PersistFoldStateInternal(key, folded);
 	}
 
 	/// <summary>

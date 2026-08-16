@@ -180,7 +180,7 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitles();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

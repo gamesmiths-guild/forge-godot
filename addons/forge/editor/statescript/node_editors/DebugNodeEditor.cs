@@ -150,7 +150,7 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 
 	private void OnTypeFoldableFoldingChanged(bool folded)
 	{
-		SetFoldStateWithUndo(TypeFoldKey, folded);
+		PersistFoldState(TypeFoldKey, folded);
 		UpdateTypeFoldableTitle();
 		RefreshInputPropertyFoldableTitles();
 		ResetSize();

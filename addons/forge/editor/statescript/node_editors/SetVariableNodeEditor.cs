@@ -828,7 +828,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 	private void OnScopeFoldableFoldingChanged(bool folded)
 	{
-		SetFoldStateWithUndo(ScopeFoldKey, folded);
+		PersistFoldState(ScopeFoldKey, folded);
 		UpdateScopeFoldableTitle();
 		RaisePropertyBindingChanged();
 		ResetSize();
@@ -836,7 +836,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 
 	private void OnTargetFoldableFoldingChanged(bool folded)
 	{
-		SetFoldStateWithUndo(TargetFoldKey, folded);
+		PersistFoldState(TargetFoldKey, folded);
 
 		if (_cachedTypeInfo?.OutputVariablesInfo.Length > 0)
 		{

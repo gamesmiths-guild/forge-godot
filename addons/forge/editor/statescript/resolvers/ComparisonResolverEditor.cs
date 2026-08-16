@@ -198,14 +198,14 @@ internal sealed partial class ComparisonResolverEditor : NodeEditorProperty
 	private void OnFoldingChanged(bool isFolded)
 	{
 		UpdateFoldableTitles();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 
 	private void OnOperationFoldableFoldingChanged(bool isFolded)
 	{
 		UpdateOperationFoldableTitle();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

@@ -196,23 +196,5 @@ internal sealed partial class StatescriptVariablePanel
 			SaveExpandedArrayState();
 		}
 	}
-
-	private void DoSetArrayExpanded(string variableName, bool expanded)
-	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
-		if (expanded)
-		{
-			_expandedArrays.Add(variableName);
-		}
-		else
-		{
-			_expandedArrays.Remove(variableName);
-		}
-
-		SaveExpandedArrayState();
-		RebuildList();
-		VariableUndoRedoPerformed?.Invoke();
-	}
 }
 #endif

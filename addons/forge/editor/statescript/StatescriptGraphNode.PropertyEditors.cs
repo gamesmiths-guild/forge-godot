@@ -388,7 +388,7 @@ public partial class StatescriptGraphNode
 
 		foldable.FoldingChanged += folded =>
 		{
-			SetFoldStateWithUndo(foldKey, folded);
+			PersistFoldState(foldKey, folded);
 			UpdateOutputVariableBadge();
 			ResetSize();
 		};

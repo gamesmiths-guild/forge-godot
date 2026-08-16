@@ -165,7 +165,7 @@ internal sealed partial class VectorComponentResolverEditor : NodeEditorProperty
 	private void OnOperandFoldableFoldingChanged(bool folded)
 	{
 		UpdateOperandFoldableTitle();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

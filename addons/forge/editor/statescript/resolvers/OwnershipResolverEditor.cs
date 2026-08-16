@@ -158,7 +158,7 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 	private void OnFoldableChanged(bool isFolded)
 	{
 		UpdateFoldableTitles();
-		_onChanged?.Invoke();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 
