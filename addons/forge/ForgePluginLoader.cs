@@ -46,6 +46,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	public override void _EnterTree()
 	{
+		EditorUndoRedoUtils.ResetScopes();
+
 		ForgeSettings.EnsureRegistered();
 		EnsureTagSourceExists();
 

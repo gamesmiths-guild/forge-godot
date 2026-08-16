@@ -33,6 +33,19 @@ internal static class EditorUndoRedoUtils
 	}
 
 	/// <summary>
+	/// Clears any scope left open, so a fresh plugin session never starts with recording disabled.
+	/// </summary>
+	/// <remarks>
+	/// Depth is balanced by <c>using</c>, but an assembly reload can tear down a callback mid-flight and one leaked
+	/// scope would kill undo for the rest of the session, with no symptom beyond "Ctrl+Z does nothing".
+	/// </remarks>
+	public static void ResetScopes()
+	{
+		ReplayScope.Reset();
+		ViewStateScope.Reset();
+	}
+
+	/// <summary>
 	/// Suppresses undo/redo recording for as long as the returned value is alive, while still letting the change reach
 	/// the resource.
 	/// </summary>
@@ -69,21 +82,17 @@ internal static class EditorUndoRedoUtils
 		bool execute = false,
 		Action? fallback = null)
 	{
-		if (IsReplaying)
+		if (IsReplaying || ViewStateScope.Depth > 0)
 		{
-			// Recording here would clear the redo stack and strand every action after the one being replayed. The
-			// replay itself already puts the data in the right state, so there is nothing to record.
-			return;
-		}
-
-		if (ViewStateScope.Depth > 0)
-		{
-			// View state still reaches the resource, it just does not earn an undo step.
 			return;
 		}
 
 		if (undoRedo is null)
 		{
+			// The change still lands, so warn rather than let it look like an undo bug later.
+			GD.PushWarning(
+				$"Forge: '{actionName}' was applied without undo support because no undo manager is available. " +
+				"This usually means the editor plugin was reloaded without being re-initialized; reopen the project.");
 			fallback?.Invoke();
 			return;
 		}
@@ -94,19 +103,16 @@ internal static class EditorUndoRedoUtils
 	}
 
 	/// <summary>
-	/// Scope returned by <see cref="EnterReplay"/>. Ends the replay when disposed.
+	/// Scope returned by <see cref="EnterReplay"/>.
 	/// </summary>
 	internal readonly struct ReplayScope : IDisposable
 	{
 		/// <summary>
-		/// Gets the number of replay scopes currently open. Nested scopes are expected: a replay callback may call
-		/// another one directly.
+		/// Gets the number of replay scopes currently open. Nesting is expected: a replay callback may invoke another.
 		/// </summary>
 		internal static int Depth { get; private set; }
 
-		/// <summary>
-		/// Ends the replay scope.
-		/// </summary>
+		/// <inheritdoc/>
 		public void Dispose()
 		{
 			Exit();
@@ -122,9 +128,17 @@ internal static class EditorUndoRedoUtils
 			return default;
 		}
 
+		/// <summary>
+		/// Drops any scope left open by a callback that did not unwind normally.
+		/// </summary>
+		internal static void Reset()
+		{
+			Depth = 0;
+		}
+
 		private static void Exit()
 		{
-			_depth--;
+			Depth--;
 		}
 	}
 
@@ -154,9 +168,17 @@ internal static class EditorUndoRedoUtils
 			return default;
 		}
 
+		/// <summary>
+		/// Drops any scope left open by a callback that did not unwind normally.
+		/// </summary>
+		internal static void Reset()
+		{
+			Depth = 0;
+		}
+
 		private static void Exit()
 		{
-			_depth--;
+			Depth--;
 		}
 	}
 }
