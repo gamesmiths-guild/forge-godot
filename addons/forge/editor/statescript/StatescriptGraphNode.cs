@@ -18,10 +18,11 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 [Tool]
 public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 {
-	private const string FoldInputKey = "_fold_input";
-	private const string FoldOutputKey = "_fold_output";
-	private const string FoldInputPropertyKeyPrefix = "_fold_input_property_";
-	private const string CustomWidthKey = "_custom_width";
+	// Internal because the dock's replay path writes these straight to the resource when no visual exists.
+	internal const string FoldInputKey = "_fold_input";
+	internal const string FoldOutputKey = "_fold_output";
+	internal const string FoldInputPropertyKeyPrefix = "_fold_input_property_";
+	internal const string CustomWidthKey = "_custom_width";
 
 	private static readonly Color _entryColor = new(0x2a4a8dff);
 	private static readonly Color _exitColor = new(0x8a549aff);
@@ -46,6 +47,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private StatescriptGraph? _graph;
 	private EditorUndoRedoManager? _undoRedo;
+	private StatescriptGraphEditorDock? _replayHost;
 	private CustomNodeEditor? _activeCustomEditor;
 	private bool _resizeConnected;
 	private bool _refittingSize;
@@ -65,6 +67,13 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	/// Gets the underlying node resource.
 	/// </summary>
 	public StatescriptNode? NodeResource { get; private set; }
+
+	/// <summary>
+	/// Gets the undo/redo manager only when a replay host and graph are wired, since per-node actions must be
+	/// registered on the host.
+	/// </summary>
+	private EditorUndoRedoManager? ReplayableUndoRedo =>
+		_replayHost is not null && _graph is not null ? _undoRedo : null;
 
 	public int VisualToRuntimeOutputPort(int visualPort)
 	{
@@ -87,6 +96,20 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	public void SetUndoRedo(EditorUndoRedoManager? undoRedo)
 	{
 		_undoRedo = undoRedo;
+	}
+
+	/// <summary>
+	/// Sets the dock that hosts this node's undo/redo replay callbacks.
+	/// </summary>
+	/// <remarks>
+	/// Actions must never be registered on this visual: it is freed whenever the node is deleted, the tab closes, or
+	/// cached visuals are invalidated, and Godot silently skips do/undo operations whose target object is gone, which
+	/// broke redo across node re-creation. The dock outlives every visual.
+	/// </remarks>
+	/// <param name="replayHost">The dock owning this visual.</param>
+	public void SetReplayHost(StatescriptGraphEditorDock replayHost)
+	{
+		_replayHost = replayHost;
 	}
 
 	/// <summary>
@@ -279,6 +302,69 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		SetNodeConfigWithUndo(key, value, actionName, rebuildOnChange);
 	}
 
+	/// <summary>
+	/// Applies a node configuration change on this live visual during a replay.
+	/// </summary>
+	/// <remarks>
+	/// This and the sibling <c>Apply*Internal</c> methods are called by <c>StatescriptGraphEditorDock.NodeReplay</c>,
+	/// which owns the replay scope. They are never registered with the undo manager directly; see
+	/// <see cref="SetReplayHost"/>.
+	/// </remarks>
+	/// <param name="key">The CustomData key to restore.</param>
+	/// <param name="value">The value to restore, or a Nil variant to drop the key entirely.</param>
+	internal void ApplyNodeConfigInternal(string key, Variant value)
+	{
+		ApplyNodeConfigCore(key, value);
+	}
+
+	/// <summary>
+	/// Applies a width change on this live visual during a replay.
+	/// </summary>
+	/// <param name="width">The width to restore.</param>
+	internal void ApplyCustomWidthInternal(float width)
+	{
+		ApplyCustomWidthCore(width);
+	}
+
+	/// <summary>
+	/// Applies a resolver binding change on this live visual during a replay.
+	/// </summary>
+	/// <param name="directionInt">The direction of the property, as an int.</param>
+	/// <param name="propertyIndex">The index of the property.</param>
+	/// <param name="resolverVariant">The resolver to bind, or Nil to clear the binding.</param>
+	internal void ApplyResolverBindingInternal(int directionInt, int propertyIndex, Variant resolverVariant)
+	{
+		ApplyResolverBindingCore(directionInt, propertyIndex, resolverVariant);
+	}
+
+	/// <summary>
+	/// Applies an input-property config change on this live visual during a replay.
+	/// </summary>
+	/// <param name="customData">The CustomData entries to write.</param>
+	/// <param name="propertyIndex">The input slot being configured.</param>
+	/// <param name="resolverVariant">The resolver to bind, or Nil to clear the binding.</param>
+	internal void ApplyInputPropertyConfigInternal(
+		GodotCollections.Dictionary customData,
+		int propertyIndex,
+		Variant resolverVariant)
+	{
+		ApplyInputPropertyConfigCore(customData, propertyIndex, resolverVariant);
+	}
+
+	/// <summary>
+	/// Applies a port-layout config change on this live visual during a replay.
+	/// </summary>
+	/// <param name="customData">The CustomData entries to write.</param>
+	/// <param name="connectionsToRemove">Connections to detach before the node is laid out again.</param>
+	/// <param name="connectionsToAdd">Connections to attach once it has been.</param>
+	internal void ApplyLayoutConfigInternal(
+		GodotCollections.Dictionary customData,
+		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
+		GodotCollections.Array<StatescriptConnection> connectionsToAdd)
+	{
+		ApplyLayoutConfigCore(customData, connectionsToRemove, connectionsToAdd);
+	}
+
 	internal StatescriptNodeProperty? FindBindingInternal(
 		StatescriptPropertyDirection direction,
 		int propertyIndex)
@@ -307,21 +393,32 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		StatescriptResolverResource? newResolver,
 		string actionName)
 	{
+		if (NodeResource is null)
+		{
+			return;
+		}
+
+		string nodeId = NodeResource.NodeId;
+
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			ReplayableUndoRedo,
 			actionName,
 			_graph,
 			undo =>
 			{
 				undo.AddDoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayResolverBinding,
+					_graph!,
+					nodeId,
 					(int)direction,
 					propertyIndex,
 					Variant.From(newResolver));
 				undo.AddUndoMethod(
-					this,
-					MethodName.ApplyResolverBinding,
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayResolverBinding,
+					_graph!,
+					nodeId,
 					(int)direction,
 					propertyIndex,
 					Variant.From(oldResolver));
@@ -790,16 +887,26 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		Variant capturedOld = had ? oldValue : default;
 		bool hadOld = had;
 
+		string nodeId = NodeResource.NodeId;
+
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			ReplayableUndoRedo,
 			actionName,
 			_graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyNodeConfig, key, value);
+				undo.AddDoMethod(
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayNodeConfig,
+					_graph!,
+					nodeId,
+					key,
+					value);
 				undo.AddUndoMethod(
-					this,
-					MethodName.ApplyNodeConfig,
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayNodeConfig,
+					_graph!,
+					nodeId,
 					key,
 					hadOld ? capturedOld : Variant.From<GodotObject?>(null));
 			});
@@ -812,20 +919,17 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	}
 
 	/// <summary>
-	/// Replays a node configuration change for undo/redo. Only ever invoked from the undo manager: the user's own edit
-	/// writes <c>CustomData</c> directly and records the action without executing it.
+	/// Applies a node configuration change and rebuilds the node.
 	/// </summary>
 	/// <remarks>
-	/// The node is always rebuilt afterwards. The control showing this value (an attribute picker, an enum dropdown, a
-	/// checkbox) reads <c>CustomData</c> only while it is being built, so skipping the rebuild would restore the data
-	/// while leaving the old selection on screen — and the next save would then persist whatever the stale UI shows.
+	/// The rebuild is not optional. The control showing this value reads <c>CustomData</c> only while being built, so
+	/// skipping it would restore the data while leaving the old selection on screen, and the next save would then
+	/// persist whatever the stale UI shows.
 	/// </remarks>
 	/// <param name="key">The CustomData key to restore.</param>
 	/// <param name="value">The value to restore, or a Nil variant to drop the key entirely.</param>
-	private void ApplyNodeConfig(string key, Variant value)
+	private void ApplyNodeConfigCore(string key, Variant value)
 	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
 		if (NodeResource is null)
 		{
 			return;
@@ -858,25 +962,34 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		if (NodeResource is not null && !Mathf.IsEqualApprox(_widthBeforeResize, newWidth))
 		{
 			float oldWidth = _widthBeforeResize;
+			string nodeId = NodeResource.NodeId;
 
 			EditorUndoRedoUtils.Record(
-				_undoRedo,
+				ReplayableUndoRedo,
 				"Resize Node",
 				_graph,
 				undo =>
 				{
-					undo.AddDoMethod(this, MethodName.ApplyCustomWidth, newWidth);
-					undo.AddUndoMethod(this, MethodName.ApplyCustomWidth, oldWidth);
+					undo.AddDoMethod(
+						_replayHost!,
+						StatescriptGraphEditorDock.MethodName.ReplayNodeWidth,
+						_graph!,
+						nodeId,
+						newWidth);
+					undo.AddUndoMethod(
+						_replayHost!,
+						StatescriptGraphEditorDock.MethodName.ReplayNodeWidth,
+						_graph!,
+						nodeId,
+						oldWidth);
 				});
 		}
 
 		_widthBeforeResize = newWidth;
 	}
 
-	private void ApplyCustomWidth(float width)
+	private void ApplyCustomWidthCore(float width)
 	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
 		CustomMinimumSize = new Vector2(width, 0);
 		Size = new Vector2(width, 0);
 		SaveCustomWidth(width);
@@ -907,13 +1020,11 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		NotifyGraphResourceChanged();
 	}
 
-	private void ApplyResolverBinding(
+	private void ApplyResolverBindingCore(
 		int directionInt,
 		int propertyIndex,
 		Variant resolverVariant)
 	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
 		if (NodeResource is null)
 		{
 			return;
@@ -999,21 +1110,27 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		// new type.
 		ApplyInputPropertyConfigCore(newData, propertyIndex, default);
 
+		string nodeId = NodeResource.NodeId;
+
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			ReplayableUndoRedo,
 			pending.ActionName,
 			_graph,
 			undo =>
 			{
 				undo.AddDoMethod(
-					this,
-					MethodName.ApplyInputPropertyConfig,
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayInputPropertyConfig,
+					_graph!,
+					nodeId,
 					newData,
 					propertyIndex,
 					Variant.From((StatescriptResolverResource?)null));
 				undo.AddUndoMethod(
-					this,
-					MethodName.ApplyInputPropertyConfig,
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayInputPropertyConfig,
+					_graph!,
+					nodeId,
 					oldData,
 					propertyIndex,
 					Variant.From(oldResolver));
@@ -1063,15 +1180,31 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		// The core, not the replay wrapper: as a replay this would suppress the bindings the rebuild seeds.
 		ApplyLayoutConfigCore(newData, connectionsToRemove, connectionsToAdd);
 
+		string nodeId = NodeResource.NodeId;
+
 		// Undo is the same operation mirrored: restore the old configuration and swap the two connection sets back.
 		EditorUndoRedoUtils.Record(
-			_undoRedo,
+			ReplayableUndoRedo,
 			pending.ActionName,
 			_graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyLayoutConfig, newData, connectionsToRemove, connectionsToAdd);
-				undo.AddUndoMethod(this, MethodName.ApplyLayoutConfig, oldData, connectionsToAdd, connectionsToRemove);
+				undo.AddDoMethod(
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayLayoutConfig,
+					_graph!,
+					nodeId,
+					newData,
+					connectionsToRemove,
+					connectionsToAdd);
+				undo.AddUndoMethod(
+					_replayHost!,
+					StatescriptGraphEditorDock.MethodName.ReplayLayoutConfig,
+					_graph!,
+					nodeId,
+					oldData,
+					connectionsToAdd,
+					connectionsToRemove);
 			});
 
 		PropertyBindingChanged?.Invoke();
@@ -1173,16 +1306,6 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	/// <param name="customData">The CustomData entries to write.</param>
 	/// <param name="connectionsToRemove">Connections to detach before the node is laid out again.</param>
 	/// <param name="connectionsToAdd">Connections to attach once it has been.</param>
-	private void ApplyLayoutConfig(
-		GodotCollections.Dictionary customData,
-		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
-		GodotCollections.Array<StatescriptConnection> connectionsToAdd)
-	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
-		ApplyLayoutConfigCore(customData, connectionsToRemove, connectionsToAdd);
-	}
-
 	private void ApplyLayoutConfigCore(
 		GodotCollections.Dictionary customData,
 		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
@@ -1274,23 +1397,6 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 			NodeResource.CustomData[key] = entry.Value;
 		}
-	}
-
-	/// <summary>
-	/// Undo/redo entry point for an input-property config change. Only the replay goes through here; the user's own
-	/// edit calls <see cref="ApplyInputPropertyConfigCore"/> directly so it is not mistaken for a replay.
-	/// </summary>
-	/// <param name="customData">The CustomData entries to write.</param>
-	/// <param name="propertyIndex">The input slot being configured.</param>
-	/// <param name="resolverVariant">The resolver to bind, or Nil to clear the binding.</param>
-	private void ApplyInputPropertyConfig(
-		GodotCollections.Dictionary customData,
-		int propertyIndex,
-		Variant resolverVariant)
-	{
-		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
-
-		ApplyInputPropertyConfigCore(customData, propertyIndex, resolverVariant);
 	}
 
 	private void ApplyInputPropertyConfigCore(
