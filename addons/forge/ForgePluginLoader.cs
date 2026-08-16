@@ -34,6 +34,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private AttributeEditorPlugin? _attributeEditorPlugin;
 	private AttributeSetDefinitionInspectorPlugin? _attributeSetDefinitionInspectorPlugin;
 	private SharedVariableSetInspectorPlugin? _sharedVariableSetInspectorPlugin;
+	private SharedVariableSetEditingController? _sharedVariableSetEditingController;
 	private StatescriptGraphEditorDock? _statescriptGraphEditorDock;
 
 	private AssetRepairDialog? _repairDialog;
@@ -79,8 +80,14 @@ public partial class ForgePluginLoader : EditorPlugin
 		AddInspectorPlugin(_attributeEditorPlugin);
 		_attributeSetDefinitionInspectorPlugin = new AttributeSetDefinitionInspectorPlugin();
 		AddInspectorPlugin(_attributeSetDefinitionInspectorPlugin);
+
+		// Same reasoning as the tag controller: it has to outlive the property editors the inspector rebuilds.
+		_sharedVariableSetEditingController = new SharedVariableSetEditingController();
+		_sharedVariableSetEditingController.SetUndoRedo(GetUndoRedo());
+		AddChild(_sharedVariableSetEditingController);
+
 		_sharedVariableSetInspectorPlugin = new SharedVariableSetInspectorPlugin();
-		_sharedVariableSetInspectorPlugin.SetUndoRedo(GetUndoRedo());
+		_sharedVariableSetInspectorPlugin.SetEditingController(_sharedVariableSetEditingController);
 		AddInspectorPlugin(_sharedVariableSetInspectorPlugin);
 
 		_statescriptGraphEditorDock = new StatescriptGraphEditorDock();
