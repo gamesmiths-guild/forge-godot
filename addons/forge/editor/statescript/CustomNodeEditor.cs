@@ -486,8 +486,9 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <param name="value">The value to store.</param>
 	/// <param name="actionName">The undo/redo action label.</param>
 	/// <param name="rebuildOnChange">When <see langword="true"/>, the node's property sections are rebuilt after the
-	/// value changes (and on undo/redo), so an editor that shows or hides rows based on this config reflects the new
-	/// value immediately. Leave <see langword="false"/> for config that does not affect which rows are rendered.
+	/// user's own edit, so an editor that shows or hides rows based on this config reflects the new value immediately.
+	/// Leave <see langword="false"/> for config that does not affect which rows are rendered. This does not affect
+	/// undo/redo, which always rebuilds so the control re-reads the restored value.
 	/// </param>
 	protected void SetNodeConfig(string key, Variant value, string actionName, bool rebuildOnChange = false)
 	{

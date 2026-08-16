@@ -810,34 +810,42 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		Variant capturedOld = had ? oldValue : default;
 		bool hadOld = had;
 
-		// Layout-affecting config rebuilds the node on do/undo/redo so shown/hidden rows track the value; other config
-		// just persists the value in place.
-		StringName applyMethod = rebuildOnChange ? MethodName.ApplyNodeConfigAndRebuild : MethodName.ApplyNodeConfig;
-
 		EditorUndoRedoUtils.Record(
 			_undoRedo,
 			actionName,
 			_graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, applyMethod, key, value);
+				undo.AddDoMethod(this, MethodName.ApplyNodeConfig, key, value);
 				undo.AddUndoMethod(
 					this,
-					applyMethod,
+					MethodName.ApplyNodeConfig,
 					key,
 					hadOld ? capturedOld : Variant.From<GodotObject?>(null));
 			});
 
+		// Deferred so the control still emitting this change is not freed mid-signal. Replays rebuild unconditionally.
 		if (rebuildOnChange)
 		{
-			// The value is already applied above; the deferred rebuild reflects it without freeing the dropdown or
-			// checkbox that is still emitting the change signal.
 			Callable.From(RebuildNode).CallDeferred();
 		}
 	}
 
+	/// <summary>
+	/// Replays a node configuration change for undo/redo. Only ever invoked from the undo manager: the user's own edit
+	/// writes <c>CustomData</c> directly and records the action without executing it.
+	/// </summary>
+	/// <remarks>
+	/// The node is always rebuilt afterwards. The control showing this value (an attribute picker, an enum dropdown, a
+	/// checkbox) reads <c>CustomData</c> only while it is being built, so skipping the rebuild would restore the data
+	/// while leaving the old selection on screen — and the next save would then persist whatever the stale UI shows.
+	/// </remarks>
+	/// <param name="key">The CustomData key to restore.</param>
+	/// <param name="value">The value to restore, or a Nil variant to drop the key entirely.</param>
 	private void ApplyNodeConfig(string key, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (NodeResource is null)
 		{
 			return;
@@ -853,11 +861,6 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		NotifyGraphResourceChanged();
-	}
-
-	private void ApplyNodeConfigAndRebuild(string key, Variant value)
-	{
-		ApplyNodeConfig(key, value);
 		RebuildNode();
 	}
 
