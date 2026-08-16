@@ -307,7 +307,8 @@ internal sealed partial class EffectResolverEditor : NodeEditorProperty
 
 	private void OnFoldableChanged(bool folded)
 	{
-		NotifyChanged();
+		UpdateFoldableTitles();
+		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
 	}
 

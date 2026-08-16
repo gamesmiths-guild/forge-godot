@@ -356,7 +356,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	/// </summary>
 	/// <param name="customData">The CustomData entries to write.</param>
 	/// <param name="connectionsToRemove">Connections to detach before the node is laid out again.</param>
-	/// <param name="connectionsToAdd">Connections to attach once it has been.</param>
+	/// <param name="connectionsToAdd">Connections to attach after the node has been laid out.</param>
 	internal void ApplyLayoutConfigInternal(
 		GodotCollections.Dictionary customData,
 		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
@@ -1305,7 +1305,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	/// </summary>
 	/// <param name="customData">The CustomData entries to write.</param>
 	/// <param name="connectionsToRemove">Connections to detach before the node is laid out again.</param>
-	/// <param name="connectionsToAdd">Connections to attach once it has been.</param>
+	/// <param name="connectionsToAdd">Connections to attach after the node has been laid out.</param>
 	private void ApplyLayoutConfigCore(
 		GodotCollections.Dictionary customData,
 		GodotCollections.Array<StatescriptConnection> connectionsToRemove,

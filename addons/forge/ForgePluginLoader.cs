@@ -174,6 +174,13 @@ public partial class ForgePluginLoader : EditorPlugin
 			_tagEditingController = null;
 		}
 
+		if (_sharedVariableSetEditingController is not null)
+		{
+			RemoveChild(_sharedVariableSetEditingController);
+			_sharedVariableSetEditingController.QueueFree();
+			_sharedVariableSetEditingController = null;
+		}
+
 		_fileSystem = null;
 		_resourcesReimportedCallable = default;
 		_resourcesReloadCallable = default;
