@@ -79,12 +79,16 @@ public partial class StatescriptGraphEditorDock
 
 	private void DoConnect(string fromNode, int fromPort, string toNode, int toPort)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		_graphEdit?.ConnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
 
 	private void UndoConnect(string fromNode, int fromPort, string toNode, int toPort)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		_graphEdit?.DisconnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
@@ -197,6 +201,8 @@ public partial class StatescriptGraphEditorDock
 		StatescriptNode nodeResource,
 		GodotCollections.Array<StatescriptConnection> affectedConnections)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (_graphEdit is not null && CurrentGraph == graph)
 		{
 			foreach (StatescriptConnection connection in affectedConnections)
@@ -233,6 +239,8 @@ public partial class StatescriptGraphEditorDock
 		StatescriptNode nodeResource,
 		GodotCollections.Array<StatescriptConnection> affectedConnections)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.Add(nodeResource);
 
 		graph.Connections.AddRange(affectedConnections);
@@ -328,6 +336,8 @@ public partial class StatescriptGraphEditorDock
 		StatescriptGraph graph,
 		GodotCollections.Dictionary<StringName, Vector2> positions)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		foreach (StatescriptNode node in graph.Nodes)
 		{
 			if (positions.TryGetValue(node.NodeId, out Vector2 pos))
@@ -388,6 +398,8 @@ public partial class StatescriptGraphEditorDock
 
 	private void DoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.Add(nodeResource);
 		graph.EmitChanged();
 
@@ -401,6 +413,8 @@ public partial class StatescriptGraphEditorDock
 
 	private void UndoAddNode(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.Remove(nodeResource);
 		graph.EmitChanged();
 
@@ -552,6 +566,8 @@ public partial class StatescriptGraphEditorDock
 		GodotCollections.Array<StatescriptNode> nodes,
 		GodotCollections.Array<StatescriptConnection> connections)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		graph.Nodes.AddRange(nodes);
 
 		graph.Connections.AddRange(connections);
@@ -590,6 +606,8 @@ public partial class StatescriptGraphEditorDock
 		GodotCollections.Array<StatescriptNode> nodes,
 		GodotCollections.Array<StatescriptConnection> connections)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		foreach (StatescriptConnection connection in connections)
 		{
 			graph.Connections.Remove(connection);

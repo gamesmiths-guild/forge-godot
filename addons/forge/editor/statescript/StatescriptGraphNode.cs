@@ -378,6 +378,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			return;
 		}
 
+		// The flush records, and being deferred it would run after the replay scope closed, committing a stray action.
+		if (EditorUndoRedoUtils.IsReplaying)
+		{
+			return;
+		}
+
 		// Merge into any change already queued for this slot this frame so none is lost before the deferred flush.
 		if (_pendingInputConfigs.TryGetValue(propertyIndex, out PendingInputConfig? pending))
 		{
@@ -408,6 +414,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal void ChangeNodeLayoutConfigInternal(GodotCollections.Dictionary customData, string actionName)
 	{
 		if (NodeResource is null)
+		{
+			return;
+		}
+
+		// See ChangeInputPropertyConfigInternal: a replay-driven rebuild must not queue a recording flush.
+		if (EditorUndoRedoUtils.IsReplaying)
 		{
 			return;
 		}
@@ -772,6 +784,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void ApplyFoldState(string key, bool folded)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		SetFoldState(key, folded);
 		RebuildNode();
 	}
@@ -878,6 +892,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 	private void ApplyCustomWidth(float width)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		CustomMinimumSize = new Vector2(width, 0);
 		Size = new Vector2(width, 0);
 		SaveCustomWidth(width);
@@ -913,6 +929,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		int propertyIndex,
 		Variant resolverVariant)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (NodeResource is null)
 		{
 			return;
@@ -994,7 +1012,9 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			as StatescriptResolverResource;
 
 		// Changing an input's type/shape invalidates its resolver, so the binding is reset (passing a Nil resolver).
-		ApplyInputPropertyConfig(newData, propertyIndex, default);
+		// The core, not the replay wrapper: as a replay this would suppress the binding the rebuild seeds for the
+		// new type.
+		ApplyInputPropertyConfigCore(newData, propertyIndex, default);
 
 		EditorUndoRedoUtils.Record(
 			_undoRedo,
@@ -1057,7 +1077,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		var connectionsToAdd = new GodotCollections.Array<StatescriptConnection>();
 		CollectConnectionChanges(newData, connectionsToRemove, connectionsToAdd);
 
-		ApplyLayoutConfig(newData, connectionsToRemove, connectionsToAdd);
+		// The core, not the replay wrapper: as a replay this would suppress the bindings the rebuild seeds.
+		ApplyLayoutConfigCore(newData, connectionsToRemove, connectionsToAdd);
 
 		// Undo is the same operation mirrored: restore the old configuration and swap the two connection sets back.
 		EditorUndoRedoUtils.Record(
@@ -1174,6 +1195,16 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
 		GodotCollections.Array<StatescriptConnection> connectionsToAdd)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
+		ApplyLayoutConfigCore(customData, connectionsToRemove, connectionsToAdd);
+	}
+
+	private void ApplyLayoutConfigCore(
+		GodotCollections.Dictionary customData,
+		GodotCollections.Array<StatescriptConnection> connectionsToRemove,
+		GodotCollections.Array<StatescriptConnection> connectionsToAdd)
+	{
 		SetVisualConnections(connectionsToRemove, connected: false);
 
 		foreach (StatescriptConnection connection in connectionsToRemove)
@@ -1262,7 +1293,24 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 	}
 
+	/// <summary>
+	/// Undo/redo entry point for an input-property config change. Only the replay goes through here; the user's own
+	/// edit calls <see cref="ApplyInputPropertyConfigCore"/> directly so it is not mistaken for a replay.
+	/// </summary>
+	/// <param name="customData">The CustomData entries to write.</param>
+	/// <param name="propertyIndex">The input slot being configured.</param>
+	/// <param name="resolverVariant">The resolver to bind, or Nil to clear the binding.</param>
 	private void ApplyInputPropertyConfig(
+		GodotCollections.Dictionary customData,
+		int propertyIndex,
+		Variant resolverVariant)
+	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
+		ApplyInputPropertyConfigCore(customData, propertyIndex, resolverVariant);
+	}
+
+	private void ApplyInputPropertyConfigCore(
 		GodotCollections.Dictionary customData,
 		int propertyIndex,
 		Variant resolverVariant)

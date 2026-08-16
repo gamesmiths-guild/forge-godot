@@ -104,6 +104,8 @@ public sealed partial class TagSourceEditingController : Node
 	public void PersistSource(ForgeTagsSource source)
 #pragma warning restore CA1822, S2325
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (string.IsNullOrEmpty(source.ResourcePath))
 		{
 			GD.PushError("This tag source has never been saved, so its tags cannot be written anywhere.");

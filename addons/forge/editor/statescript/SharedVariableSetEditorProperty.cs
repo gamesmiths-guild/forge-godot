@@ -899,6 +899,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void ApplyVariableValue(ForgeSharedVariableDefinition def, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		def.InitialValue = value;
 		NotifyChanged();
 		RebuildList();
@@ -906,6 +908,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void ApplyArrayElementValue(ForgeSharedVariableDefinition def, int index, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		def.InitialArrayValues[index] = value;
 		NotifyChanged();
 		RebuildList();
@@ -913,6 +917,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void DoAddVariable(Array<ForgeSharedVariableDefinition> definitions, ForgeSharedVariableDefinition def)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		definitions.Add(def);
 		NotifyChanged();
 		RebuildList();
@@ -920,6 +926,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void UndoAddVariable(Array<ForgeSharedVariableDefinition> definitions, ForgeSharedVariableDefinition def)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		definitions.Remove(def);
 		NotifyChanged();
 		RebuildList();
@@ -929,6 +937,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		Array<ForgeSharedVariableDefinition> definitions,
 		int index)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		definitions.RemoveAt(index);
 		NotifyChanged();
 		RebuildList();
@@ -939,6 +949,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		ForgeSharedVariableDefinition sharedVariableDefinition,
 		int index)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (index >= definitions.Count)
 		{
 			definitions.Add(sharedVariableDefinition);
@@ -954,6 +966,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void DoAddArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		sharedVariableDefinition.InitialArrayValues.Add(value);
 		_expandedArrays.Add(sharedVariableDefinition.VariableName);
 		NotifyChanged();
@@ -962,6 +976,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void UndoAddArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, bool wasExpanded)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (sharedVariableDefinition.InitialArrayValues.Count > 0)
 		{
 			sharedVariableDefinition.InitialArrayValues.RemoveAt(sharedVariableDefinition.InitialArrayValues.Count - 1);
@@ -978,6 +994,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void DoRemoveArrayElement(ForgeSharedVariableDefinition sharedVariableDefinition, int index)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		sharedVariableDefinition.InitialArrayValues.RemoveAt(index);
 		NotifyChanged();
 		RebuildList();
@@ -988,6 +1006,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		int index,
 		Variant value)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (index >= sharedVariableDefinition.InitialArrayValues.Count)
 		{
 			sharedVariableDefinition.InitialArrayValues.Add(value);
@@ -1003,6 +1023,8 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 
 	private void DoSetArrayExpanded(string variableName, bool expanded)
 	{
+		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
 		if (expanded)
 		{
 			_expandedArrays.Add(variableName);
