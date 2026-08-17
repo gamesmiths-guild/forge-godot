@@ -648,6 +648,8 @@ internal static class InlineConstantSummaryFormatter
 			badge.CustomMinimumSize = new Vector2(
 				Math.Max(MinimumBadgeWidth, RowContentWidth(columned) - labelColumnWidth),
 				0);
+
+			columned.QueueRedraw();
 		}
 	}
 
