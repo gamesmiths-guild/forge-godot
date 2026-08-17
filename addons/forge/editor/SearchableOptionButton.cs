@@ -17,6 +17,8 @@ internal sealed partial class SearchableOptionButton : OptionButton
 	// Lists shorter than this keep the plain dropdown (no search bar), mirroring Godot's own threshold behavior.
 	private const int MinItemCountForSearch = 10;
 
+	private const int MaxPopupHeight = 400;
+
 	/// <inheritdoc/>
 	public override void _Ready()
 	{
@@ -25,6 +27,11 @@ internal sealed partial class SearchableOptionButton : OptionButton
 		PopupMenu popup = GetPopup();
 		popup.SearchBarEnabled = true;
 		popup.SearchBarMinItemCount = MinItemCountForSearch;
+
+		Rect2I usableScreen = DisplayServer.ScreenGetUsableRect(GetWindow().CurrentScreen);
+		popup.MaxSize = new Vector2I(
+			usableScreen.Size.X,
+			(int)(MaxPopupHeight * EditorInterface.Singleton.GetEditorScale()));
 	}
 }
 #endif
