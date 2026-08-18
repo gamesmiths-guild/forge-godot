@@ -11,7 +11,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// </summary>
 /// <remarks>
 /// Scenes cannot travel as node settings, because settings only carry primitives. Authoring one as a resolver is how a
-/// spawn node learns which scene to instantiate.
+/// scene node learns which scene to instantiate.
 /// </remarks>
 /// <param name="scene">The authored scene, or <see langword="null"/> when the picker was left empty.</param>
 internal sealed class SceneResolver(PackedScene? scene) : ObjectResolver<PackedScene>

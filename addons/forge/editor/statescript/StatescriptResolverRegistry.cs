@@ -44,8 +44,8 @@ internal static class StatescriptResolverRegistry
 		[typeof(Tag)] = "Tag",
 		[typeof(PackedScene)] = "ScenePicker",
 
-		// Node references are always produced at runtime - by a spawn node, or by a lookup resolver - so a variable
-		// read is the only sensible authoring default.
+		// Most node references are produced at runtime - by a scene node, or by a lookup resolver - so a variable read
+		// is the better default than the Node Path constant, which only reaches nodes that were placed by hand.
 		[typeof(Node)] = "Variable",
 
 		// Provider-backed marker types, one per optional provider input. Every one of these MUST be listed:
@@ -191,7 +191,7 @@ internal static class StatescriptResolverRegistry
 		}
 		finally
 		{
-			if (global::Godot.GodotObject.IsInstanceValid(editor))
+			if (GodotObject.IsInstanceValid(editor))
 			{
 				editor.Free();
 			}
