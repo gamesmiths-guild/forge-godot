@@ -80,7 +80,38 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 
 	public void OnAfterDeserialize()
 	{
-		// This method is intentionally left blank.
+		foreach (Node child in GetChildren())
+		{
+			switch (child)
+			{
+				case SearchableOptionButton picker:
+					_destinationPicker = picker;
+					break;
+
+				case LineEdit field:
+					_tagField = field;
+					break;
+
+				case Button button:
+					_addButton = button;
+					break;
+			}
+		}
+
+		if (_tagField is not null)
+		{
+			_tagField.TextSubmitted += OnTagSubmitted;
+		}
+
+		if (_addButton is not null)
+		{
+			_addButton.Pressed += OnAddPressed;
+		}
+
+		if (_destinationPicker is not null)
+		{
+			_destinationPicker.ItemSelected += OnDestinationSelected;
+		}
 	}
 
 	/// <summary>

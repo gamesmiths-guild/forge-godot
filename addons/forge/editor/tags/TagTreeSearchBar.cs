@@ -54,7 +54,7 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 	/// Hosts that render sources themselves - the dock's By Source view - need this rather than
 	/// <see cref="ResolveTags"/>, which merges the selection away.
 	/// </remarks>
-	public string? SelectedReference => FixedTags is null && SourcePickerEnabled ? _selectedReference : null;
+	public string? SelectedReference => FixedTags is null && SourcePickerEnabled ? NormalizedSelectedReference : null;
 
 	/// <summary>
 	/// Gets or sets a value indicating whether the source picker can be used.
@@ -65,6 +65,17 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 	/// change the row's height under the user.
 	/// </remarks>
 	public bool SourcePickerEnabled { get; set; } = true;
+
+	/// <summary>
+	/// Gets the selected reference, treating an empty one as no selection at all.
+	/// </summary>
+	/// <remarks>
+	/// Reloading the C# assembly round-trips this field through Godot, which hands a <see langword="null"/> string back
+	/// as an empty one. An empty reference matches no source, so without this every consumer would read it as "narrowed
+	/// to a source that does not exist" and show nothing.
+	/// </remarks>
+	private string? NormalizedSelectedReference =>
+		string.IsNullOrEmpty(_selectedReference) ? null : _selectedReference;
 
 	public override void _Ready()
 	{
@@ -118,7 +129,29 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 
 	public void OnAfterDeserialize()
 	{
-		// This method is intentionally left blank.
+		foreach (Node child in GetChildren())
+		{
+			switch (child)
+			{
+				case SearchableOptionButton picker:
+					_sourcePicker = picker;
+					break;
+
+				case LineEdit field:
+					_searchField = field;
+					break;
+			}
+		}
+
+		if (_searchField is not null)
+		{
+			_searchField.TextChanged += OnSearchTextChanged;
+		}
+
+		if (_sourcePicker is not null)
+		{
+			_sourcePicker.ItemSelected += OnSourceSelected;
+		}
 	}
 
 	/// <summary>
@@ -149,7 +182,7 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 			SourceEntry entry = sources[i];
 			_sourcePicker.AddItem(entry.DisplayName);
 
-			if (entry.Reference == _selectedReference)
+			if (entry.Reference == NormalizedSelectedReference)
 			{
 				selectedIndex = i + 1;
 			}
@@ -175,13 +208,15 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 			return FixedTags;
 		}
 
-		if (_selectedReference is null)
+		string? selectedReference = NormalizedSelectedReference;
+
+		if (selectedReference is null)
 		{
 			return ForgeTagsRegistry.MergedTags;
 		}
 
 		SourceEntry? entry = ForgeTagsRegistry.Sources
-			.FirstOrDefault(source => source.Reference == _selectedReference);
+			.FirstOrDefault(source => source.Reference == selectedReference);
 
 		return entry?.Tags ?? ForgeTagsRegistry.MergedTags;
 	}
