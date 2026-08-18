@@ -101,6 +101,17 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		return NodeResource.CustomData.TryGetValue(key, out Variant value) ? value.AsBool() : defaultValue;
 	}
 
+	private static Label BuildSettingsLabel(NodeConfigParam parameter)
+	{
+		return new Label
+		{
+			Text = $"{parameter.Label}:",
+			CustomMinimumSize = new Vector2(SettingsLabelMinWidth, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+			VerticalAlignment = VerticalAlignment.Center,
+		};
+	}
+
 	private void BuildSettingsSection()
 	{
 		IReadOnlyList<NodeConfigParam> parameters = ConstructorParams;
@@ -123,7 +134,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		// grid so the label column is sized to the widest label by the layout engine itself (using each label's real
 		// minimum size) and every dropdown starts at the same x — no fragile font measurement that can mismatch the
 		// node's actual render font and let a long label shove its dropdown right.
-		if (!parameters.Any(x => x.EnumNames is { Length: > 0 }))
+		if (!parameters.Any(x => x.EnumNames is { Length: > 0 } || x.IsText))
 		{
 			foreach (NodeConfigParam parameter in parameters)
 			{
@@ -149,15 +160,31 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 	private void AddParamRow(GridContainer grid, NodeConfigParam parameter)
 	{
+		if (parameter.IsText)
+		{
+			grid.AddChild(BuildSettingsLabel(parameter));
+
+			var lineEdit = new LineEdit
+			{
+				Text = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty),
+				PlaceholderText = parameter.Placeholder,
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			};
+
+			// Recorded on focus loss and on submit rather than per keystroke: one undo step per edit, not per
+			// character.
+			lineEdit.TextSubmitted += text =>
+				SetNodeConfig(parameter.Key, text, $"Change {parameter.Label}", parameter.AffectsLayout);
+			lineEdit.FocusExited += () =>
+				SetNodeConfig(parameter.Key, lineEdit.Text, $"Change {parameter.Label}", parameter.AffectsLayout);
+
+			grid.AddChild(lineEdit);
+			return;
+		}
+
 		if (parameter.EnumNames is { Length: > 0 } enumNames)
 		{
-			grid.AddChild(new Label
-			{
-				Text = $"{parameter.Label}:",
-				CustomMinimumSize = new Vector2(SettingsLabelMinWidth, 0),
-				HorizontalAlignment = HorizontalAlignment.Right,
-				VerticalAlignment = VerticalAlignment.Center,
-			});
+			grid.AddChild(BuildSettingsLabel(parameter));
 
 			string currentName = ReadStringConfig(parameter.Key, parameter.DefaultName ?? enumNames[0]);
 			int currentIndex = System.Array.IndexOf(enumNames, currentName);
