@@ -281,7 +281,7 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		foreach (Node child in _variableList.GetChildren())
 		{
 			_variableList.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 	}
 
