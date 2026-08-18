@@ -231,7 +231,9 @@ internal static class StatescriptNodeDiscovery
 
 	private static NodeTypeInfo BuildNodeTypeInfo(Type type, StatescriptNodeType nodeType, GodotDictionary? customData)
 	{
-		string displayName = FormatDisplayName(type.Name);
+		string displayName = type.GetCustomAttribute<StatescriptDisplayNameAttribute>()?.DisplayName
+			?? FormatDisplayName(type.Name);
+		string category = type.GetCustomAttribute<StatescriptCategoryAttribute>()?.Category ?? string.Empty;
 		string runtimeTypeName = type.FullName!;
 
 		// Get constructor parameter names.
@@ -277,7 +279,8 @@ internal static class StatescriptNodeDiscovery
 			constructorParamNames,
 			description,
 			inputPropertiesInfo,
-			outputVariablesInfo);
+			outputVariablesInfo,
+			category);
 	}
 
 	private static string[] GetInputPortLabels(ForgeNode node, StatescriptNodeType nodeType)
@@ -417,9 +420,25 @@ internal static class StatescriptNodeDiscovery
 		var result = new StringBuilder();
 		for (int i = 0; i < typeName.Length; i++)
 		{
-			if (i > 0 && char.IsUpper(typeName[i]) && !char.IsUpper(typeName[i - 1]))
+			if (i > 0)
 			{
-				result.Append(' ');
+				char previous = typeName[i - 1];
+
+				// A dimension suffix is one word: "SetPosition3D" reads "Set Position 3D", never "Set Position3 D".
+				bool continuesDimensionSuffix = typeName[i] == 'D' && char.IsDigit(previous);
+
+				if (continuesDimensionSuffix)
+				{
+					// No separator inside the suffix.
+				}
+				else if (char.IsUpper(typeName[i]) && !char.IsUpper(previous))
+				{
+					result.Append(' ');
+				}
+				else if (char.IsDigit(typeName[i]) && char.IsLetter(previous))
+				{
+					result.Append(' ');
+				}
 			}
 
 			result.Append(typeName[i]);
@@ -484,6 +503,12 @@ internal static class StatescriptNodeDiscovery
 		/// </summary>
 		public OutputVariableInfo[] OutputVariablesInfo { get; }
 
+		/// <summary>
+		/// Gets the subgroup this node is listed under inside its archetype in the Add Node dialog, or an empty string
+		/// when the node is listed directly under its archetype.
+		/// </summary>
+		public string Category { get; }
+
 		public NodeTypeInfo(
 			string displayName,
 			string runtimeTypeName,
@@ -494,7 +519,8 @@ internal static class StatescriptNodeDiscovery
 			string[] constructorParameterNames,
 			string description,
 			InputPropertyInfo[] inputPropertiesInfo,
-			OutputVariableInfo[] outputVariablesInfo)
+			OutputVariableInfo[] outputVariablesInfo,
+			string category = "")
 		{
 			DisplayName = displayName;
 			RuntimeTypeName = runtimeTypeName;
@@ -506,6 +532,7 @@ internal static class StatescriptNodeDiscovery
 			Description = description;
 			InputPropertiesInfo = inputPropertiesInfo;
 			OutputVariablesInfo = outputVariablesInfo;
+			Category = category;
 		}
 	}
 

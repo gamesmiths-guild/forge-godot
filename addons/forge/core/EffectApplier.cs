@@ -34,19 +34,9 @@ internal sealed class EffectApplier
 		IForgeEntity? effectSource,
 		int level = 1)
 	{
-		if (node is IForgeEntity forgeEntity)
+		if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? forgeEntity))
 		{
 			ApplyEffects(forgeEntity, effectOwner, effectSource, level);
-			return;
-		}
-
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntityChild)
-			{
-				ApplyEffects(forgeEntityChild, effectOwner, effectSource, level);
-				return;
-			}
 		}
 	}
 
@@ -57,19 +47,9 @@ internal sealed class EffectApplier
 		IForgeEntity? effectSource,
 		int level = 1)
 	{
-		if (node is IForgeEntity forgeEntity)
+		if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? forgeEntity))
 		{
 			ApplyEffects(forgeEntity, contextData, effectOwner, effectSource, level);
-			return;
-		}
-
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntityChild)
-			{
-				ApplyEffects(forgeEntityChild, contextData, effectOwner, effectSource, level);
-				return;
-			}
 		}
 	}
 
@@ -79,19 +59,9 @@ internal sealed class EffectApplier
 		IForgeEntity? effectSource,
 		int level)
 	{
-		if (node is IForgeEntity forgeEntity)
+		if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? forgeEntity))
 		{
 			AddEffects(forgeEntity, effectOwner, effectSource, level);
-			return;
-		}
-
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntityChild)
-			{
-				AddEffects(forgeEntityChild, effectOwner, effectSource, level);
-				return;
-			}
 		}
 	}
 
@@ -102,37 +72,17 @@ internal sealed class EffectApplier
 		IForgeEntity? effectSource,
 		int level)
 	{
-		if (node is IForgeEntity forgeEntity)
+		if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? forgeEntity))
 		{
 			AddEffects(forgeEntity, contextData, effectOwner, effectSource, level);
-			return;
-		}
-
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntityChild)
-			{
-				AddEffects(forgeEntityChild, contextData, effectOwner, effectSource, level);
-				return;
-			}
 		}
 	}
 
 	public void RemoveEffects(Node node)
 	{
-		if (node is IForgeEntity forgeEntity)
+		if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? forgeEntity))
 		{
 			RemoveEffects(forgeEntity);
-			return;
-		}
-
-		foreach (Node? child in node.GetChildren())
-		{
-			if (child is IForgeEntity forgeEntityChild)
-			{
-				RemoveEffects(forgeEntityChild);
-				return;
-			}
 		}
 	}
 

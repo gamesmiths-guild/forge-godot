@@ -10,6 +10,7 @@ using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Statescript.Properties;
 using Gamesmiths.Forge.Tags;
+using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -41,6 +42,11 @@ internal static class StatescriptResolverRegistry
 		[typeof(ActiveEffectHandle)] = "Variable",
 		[typeof(Effect)] = "Effect",
 		[typeof(Tag)] = "Tag",
+		[typeof(PackedScene)] = "ScenePicker",
+
+		// Node references are always produced at runtime - by a spawn node, or by a lookup resolver - so a variable
+		// read is the only sensible authoring default.
+		[typeof(Node)] = "Variable",
 
 		// Provider-backed marker types, one per optional provider input. Every one of these MUST be listed:
 		// RandomElementResolverEditor reports compatibility with any reference type, so it lands in these dropdowns

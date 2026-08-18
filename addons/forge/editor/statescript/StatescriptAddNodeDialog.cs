@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
@@ -20,6 +21,16 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 	private const int DialogHeight = 400;
 
 	private static readonly string _exitNodeDescription = new ExitNode().Description;
+
+	// The top level of the tree is the Statescript archetype, in a fixed order rather than alphabetical, because that
+	// is the order the archetypes are usually reached for.
+	private static readonly StatescriptNodeType[] _archetypeOrder =
+	[
+		StatescriptNodeType.Action,
+		StatescriptNodeType.Condition,
+		StatescriptNodeType.State,
+		StatescriptNodeType.Flow,
+	];
 
 	private LineEdit? _searchBar;
 	private MenuButton? _expandCollapseButton;
@@ -123,6 +134,18 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		_searchBar?.GrabFocus();
 	}
 
+	private static string GetArchetypeName(StatescriptNodeType archetype)
+	{
+		return archetype switch
+		{
+			StatescriptNodeType.Action => "Action",
+			StatescriptNodeType.Condition => "Condition",
+			StatescriptNodeType.State => "State",
+			StatescriptNodeType.Flow => "Flow",
+			_ => archetype.ToString(),
+		};
+	}
+
 	private static void SetAllCollapsed(TreeItem root, bool collapsed)
 	{
 		TreeItem? child = root.GetFirstChild();
@@ -214,45 +237,44 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 
 		string filterLower = filter.ToLowerInvariant();
 
-		TreeItem? actionCategory = null;
-		TreeItem? conditionCategory = null;
-		TreeItem? stateCategory = null;
-		TreeItem? flowCategory = null;
-
-		foreach (StatescriptNodeDiscovery.NodeTypeInfo typeInfo in discoveredTypes)
+		foreach (StatescriptNodeType archetype in _archetypeOrder)
 		{
-			if (_isFiltering && !typeInfo.DisplayName.Contains(filterLower, StringComparison.OrdinalIgnoreCase))
+			List<StatescriptNodeDiscovery.NodeTypeInfo> matches = [.. discoveredTypes.Where(
+				typeInfo => typeInfo.NodeType == archetype
+					&& (!_isFiltering
+						|| typeInfo.DisplayName.Contains(filterLower, StringComparison.OrdinalIgnoreCase)))];
+
+			if (matches.Count == 0)
 			{
 				continue;
 			}
 
-			TreeItem categoryItem;
+			TreeItem archetypeItem = CreateCategoryItem(root, GetArchetypeName(archetype));
 
-			switch (typeInfo.NodeType)
+			// Uncategorized nodes sit directly under the archetype, which keeps every core node exactly where it has
+			// always been. Subject-matter subgroups follow, in alphabetical order.
+			foreach (StatescriptNodeDiscovery.NodeTypeInfo typeInfo in matches.Where(
+				typeInfo => typeInfo.Category.Length == 0))
 			{
-				case StatescriptNodeType.Action:
-					actionCategory ??= CreateCategoryItem(root, "Action");
-					categoryItem = actionCategory;
-					break;
-				case StatescriptNodeType.Condition:
-					conditionCategory ??= CreateCategoryItem(root, "Condition");
-					categoryItem = conditionCategory;
-					break;
-				case StatescriptNodeType.State:
-					stateCategory ??= CreateCategoryItem(root, "State");
-					categoryItem = stateCategory;
-					break;
-				case StatescriptNodeType.Flow:
-					flowCategory ??= CreateCategoryItem(root, "Flow");
-					categoryItem = flowCategory;
-					break;
-				default:
-					continue;
+				CreateNodeItem(archetypeItem, typeInfo);
 			}
 
-			TreeItem item = _tree.CreateItem(categoryItem);
-			item.SetText(0, typeInfo.DisplayName);
-			item.SetMetadata(0, typeInfo.RuntimeTypeName);
+			IEnumerable<string> subgroupNames = matches
+				.Select(typeInfo => typeInfo.Category)
+				.Where(category => category.Length > 0)
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.OrderBy(category => category, StringComparer.OrdinalIgnoreCase);
+
+			foreach (string subgroupName in subgroupNames)
+			{
+				TreeItem subgroupItem = CreateCategoryItem(archetypeItem, subgroupName);
+
+				foreach (StatescriptNodeDiscovery.NodeTypeInfo typeInfo in matches.Where(
+					typeInfo => typeInfo.Category == subgroupName))
+				{
+					CreateNodeItem(subgroupItem, typeInfo);
+				}
+			}
 		}
 
 		if (!_isFiltering || "exit".Contains(filterLower, StringComparison.OrdinalIgnoreCase)
@@ -274,6 +296,13 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		item.SetText(0, name);
 		item.SetSelectable(0, false);
 		return item;
+	}
+
+	private void CreateNodeItem(TreeItem parent, StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		TreeItem item = _tree!.CreateItem(parent);
+		item.SetText(0, typeInfo.DisplayName);
+		item.SetMetadata(0, typeInfo.RuntimeTypeName);
 	}
 
 	private void OnSearchTextChanged(string newText)
