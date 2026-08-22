@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -10,8 +11,9 @@ using ForgeNode = Gamesmiths.Forge.Statescript.Node;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that checks whether a nested object-backed resolver produces a valid (non-null) value. Works
-/// with any registered object variable type: entities, effects, active effect handles, and game-registered types.
+/// Resolver resource that checks whether a nested object-backed resolver produces a usable value. Works with any
+/// registered object variable type. A value is usable when it is present, when a type that tracks its own validity - a
+/// handle whose effect was removed, say - still reports itself valid, and when a Godot object has not been freed.
 /// </summary>
 [Tool]
 [GlobalClass]
@@ -64,6 +66,6 @@ public partial class IsValidResolverResource : StatescriptResolverResource
 			return new VariantResolver(new Variant128(false), typeof(bool));
 		}
 
-		return new IsValidResolver(sourceResolver!);
+		return new GodotIsValidResolver(sourceResolver!);
 	}
 }

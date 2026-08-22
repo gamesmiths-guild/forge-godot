@@ -32,7 +32,8 @@ internal sealed partial class DebugNodeEditor : CustomNodeEditor
 	private FoldableContainer? _typeFoldable;
 
 	/// <inheritdoc/>
-	public override string HandledRuntimeTypeName => "Gamesmiths.Forge.Statescript.Nodes.Action.DebugNode";
+	public override string HandledRuntimeTypeName =>
+		"Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.DebugNode";
 
 	/// <inheritdoc/>
 	public override void BuildPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)

@@ -4,11 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
 
-namespace Gamesmiths.Forge.Statescript.Nodes.Action;
+namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 
 /// <summary>
 /// Action node that resolves an input value of any supported type and prints it through
@@ -23,6 +24,7 @@ namespace Gamesmiths.Forge.Statescript.Nodes.Action;
 /// <param name="valueType">The type of the value to be debugged.</param>
 /// <param name="isArray">Indicates whether the value is an array.</param>
 /// <param name="objectTypeId">The ID of the object type, if applicable.</param>
+[StatescriptCategory("Interop")]
 public sealed class DebugNode(
 	StatescriptVariableType valueType = StatescriptVariableType.Int,
 	bool isArray = false,
