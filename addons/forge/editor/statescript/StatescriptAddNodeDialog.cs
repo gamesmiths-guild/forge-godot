@@ -270,7 +270,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 				TreeItem subgroupItem = CreateCategoryItem(archetypeItem, subgroupName);
 
 				foreach (StatescriptNodeDiscovery.NodeTypeInfo typeInfo in matches.Where(
-					typeInfo => typeInfo.Category == subgroupName))
+					typeInfo => string.Equals(typeInfo.Category, subgroupName, StringComparison.OrdinalIgnoreCase)))
 				{
 					CreateNodeItem(subgroupItem, typeInfo);
 				}

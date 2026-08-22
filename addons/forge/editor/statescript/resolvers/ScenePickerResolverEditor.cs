@@ -27,7 +27,7 @@ internal sealed partial class ScenePickerResolverEditor : NodeEditorProperty
 
 	public override string ResolverTypeId => "ScenePicker";
 
-	public override bool SupportsArrayValues => false;
+	public override bool SupportsArrayValues => true;
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
@@ -67,10 +67,7 @@ internal sealed partial class ScenePickerResolverEditor : NodeEditorProperty
 
 			for (int i = 0; i < _selectedScenes.Count; i++)
 			{
-				if (_selectedScenes[i] is PackedScene scene)
-				{
-					scenes.Add(scene);
-				}
+				scenes.Add(_selectedScenes[i]!);
 			}
 
 			resolver.Scenes = scenes;
