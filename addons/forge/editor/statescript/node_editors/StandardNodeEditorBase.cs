@@ -101,6 +101,17 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		return NodeResource.CustomData.TryGetValue(key, out Variant value) ? value.AsBool() : defaultValue;
 	}
 
+	private static Label BuildSettingsLabel(NodeConfigParam parameter)
+	{
+		return new Label
+		{
+			Text = $"{parameter.Label}:",
+			CustomMinimumSize = new Vector2(SettingsLabelMinWidth, 0),
+			HorizontalAlignment = HorizontalAlignment.Right,
+			VerticalAlignment = VerticalAlignment.Center,
+		};
+	}
+
 	private void BuildSettingsSection()
 	{
 		IReadOnlyList<NodeConfigParam> parameters = ConstructorParams;
@@ -123,7 +134,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		// grid so the label column is sized to the widest label by the layout engine itself (using each label's real
 		// minimum size) and every dropdown starts at the same x — no fragile font measurement that can mismatch the
 		// node's actual render font and let a long label shove its dropdown right.
-		if (!parameters.Any(x => x.EnumNames is { Length: > 0 }))
+		if (!parameters.Any(x => x.EnumNames is { Length: > 0 } || x.IsText))
 		{
 			foreach (NodeConfigParam parameter in parameters)
 			{
@@ -147,17 +158,58 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		}
 	}
 
+	// Text is written straight into CustomData on every keystroke so a save or a run mid-edit can never drop what was
+	// typed - the field still owning focus is exactly when that happens. Those syncs record nothing, and the undo step
+	// is recorded once when the edit finishes, against the value the field held before it started. Without restoring
+	// that original first, the recording call would see no change from the keystroke syncs and register nothing at all.
+	private void BindTextRow(LineEdit lineEdit, NodeConfigParam parameter)
+	{
+		string originalValue = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty);
+
+		lineEdit.FocusEntered += () =>
+			originalValue = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty);
+		lineEdit.TextChanged += text => SyncNodeConfig(parameter.Key, text);
+
+		void CommitEdit()
+		{
+			string finalValue = lineEdit.Text;
+
+			if (finalValue == originalValue)
+			{
+				return;
+			}
+
+			SyncNodeConfig(parameter.Key, originalValue);
+			SetNodeConfig(parameter.Key, finalValue, $"Change {parameter.Label}", parameter.AffectsLayout);
+			originalValue = finalValue;
+		}
+
+		lineEdit.TextSubmitted += _ => CommitEdit();
+		lineEdit.FocusExited += CommitEdit;
+	}
+
 	private void AddParamRow(GridContainer grid, NodeConfigParam parameter)
 	{
+		if (parameter.IsText)
+		{
+			grid.AddChild(BuildSettingsLabel(parameter));
+
+			var lineEdit = new LineEdit
+			{
+				Text = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty),
+				PlaceholderText = parameter.Placeholder,
+				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			};
+
+			BindTextRow(lineEdit, parameter);
+
+			grid.AddChild(lineEdit);
+			return;
+		}
+
 		if (parameter.EnumNames is { Length: > 0 } enumNames)
 		{
-			grid.AddChild(new Label
-			{
-				Text = $"{parameter.Label}:",
-				CustomMinimumSize = new Vector2(SettingsLabelMinWidth, 0),
-				HorizontalAlignment = HorizontalAlignment.Right,
-				VerticalAlignment = VerticalAlignment.Center,
-			});
+			grid.AddChild(BuildSettingsLabel(parameter));
 
 			string currentName = ReadStringConfig(parameter.Key, parameter.DefaultName ?? enumNames[0]);
 			int currentIndex = System.Array.IndexOf(enumNames, currentName);

@@ -23,11 +23,17 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// that shows or hides input rows based on it (see <see cref="StandardNodeEditorBase.IsInputVisible"/>) updates
 /// immediately. Leave <see langword="false"/> for config that does not change which rows are rendered. This only
 /// affects the user's own edit; undo and redo always rebuild so the control re-reads the restored value.</param>
+/// <param name="IsText">When <see langword="true"/>, the parameter is a free-text string rendered as a line edit. Used
+/// for the names of things the graph cannot enumerate at authoring time - a node path into whichever scene the entity
+/// comes from, an animation name, an input action - which is why they are text rather than a picker.</param>
+/// <param name="Placeholder">The hint shown in an empty text field, ignored unless <see cref="IsText"/> is set.</param>
 internal readonly record struct NodeConfigParam(
 	string Key,
 	string Label,
 	string[]? EnumNames = null,
 	string? DefaultName = null,
 	bool DefaultBool = false,
-	bool AffectsLayout = false);
+	bool AffectsLayout = false,
+	bool IsText = false,
+	string Placeholder = "");
 #endif
