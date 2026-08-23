@@ -158,6 +158,36 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		}
 	}
 
+	// Text is written straight into CustomData on every keystroke so a save or a run mid-edit can never drop what was
+	// typed - the field still owning focus is exactly when that happens. Those syncs record nothing, and the undo step
+	// is recorded once when the edit finishes, against the value the field held before it started. Without restoring
+	// that original first, the recording call would see no change from the keystroke syncs and register nothing at all.
+	private void BindTextRow(LineEdit lineEdit, NodeConfigParam parameter)
+	{
+		string originalValue = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty);
+
+		lineEdit.FocusEntered += () =>
+			originalValue = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty);
+		lineEdit.TextChanged += text => SyncNodeConfig(parameter.Key, text);
+
+		void CommitEdit()
+		{
+			string finalValue = lineEdit.Text;
+
+			if (finalValue == originalValue)
+			{
+				return;
+			}
+
+			SyncNodeConfig(parameter.Key, originalValue);
+			SetNodeConfig(parameter.Key, finalValue, $"Change {parameter.Label}", parameter.AffectsLayout);
+			originalValue = finalValue;
+		}
+
+		lineEdit.TextSubmitted += _ => CommitEdit();
+		lineEdit.FocusExited += CommitEdit;
+	}
+
 	private void AddParamRow(GridContainer grid, NodeConfigParam parameter)
 	{
 		if (parameter.IsText)
@@ -171,12 +201,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 			};
 
-			// Recorded on focus loss and on submit rather than per keystroke: one undo step per edit, not per
-			// character.
-			lineEdit.TextSubmitted += text =>
-				SetNodeConfig(parameter.Key, text, $"Change {parameter.Label}", parameter.AffectsLayout);
-			lineEdit.FocusExited += () =>
-				SetNodeConfig(parameter.Key, lineEdit.Text, $"Change {parameter.Label}", parameter.AffectsLayout);
+			BindTextRow(lineEdit, parameter);
 
 			grid.AddChild(lineEdit);
 			return;

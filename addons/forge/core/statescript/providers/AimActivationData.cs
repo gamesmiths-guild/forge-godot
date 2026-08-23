@@ -28,6 +28,8 @@ public readonly record struct AimActivationData(Vector3 Origin, Vector3 Directio
 {
 	private const float DefaultMaxDistance = 1000.0f;
 
+	private const float DirectionEpsilon = 0.000001f;
+
 	/// <summary>
 	/// Builds aim data from where a camera is looking, which is what a first or third person shooter wants.
 	/// </summary>
@@ -73,7 +75,7 @@ public readonly record struct AimActivationData(Vector3 Origin, Vector3 Directio
 
 		if (viewport is null || camera is null)
 		{
-			return new AimActivationData(origin, -source.GlobalBasis.Z.Normalized(), origin);
+			return new AimActivationData(origin, HorizontalForward(source), origin);
 		}
 
 		Vector2 mousePosition = viewport.GetMousePosition();
@@ -89,18 +91,46 @@ public readonly record struct AimActivationData(Vector3 Origin, Vector3 Directio
 
 		if (!hit)
 		{
+			// The plane is infinite, so a near-horizontal ray meets it arbitrarily far away. Accepting that would
+			// silently ignore maxDistance, so a point out of reach is discarded in favour of the ray endpoint, which is
+			// already clamped to it.
 			Vector3? planePoint = new Plane(Vector3.Up, origin.Y).IntersectsRay(rayOrigin, rayDirection);
-			targetPoint = planePoint ?? origin;
+
+			if (planePoint.HasValue && planePoint.Value.DistanceSquaredTo(rayOrigin) <= maxDistance * maxDistance)
+			{
+				targetPoint = planePoint.Value;
+			}
 		}
 
 		Vector3 flattened = targetPoint - origin;
 		flattened.Y = 0;
 
-		Vector3 direction = flattened.LengthSquared() > 0.000001f
+		Vector3 direction = flattened.LengthSquared() > DirectionEpsilon
 			? flattened.Normalized()
-			: -source.GlobalBasis.Z.Normalized();
+			: HorizontalForward(source);
 
 		return new AimActivationData(origin, direction, targetPoint);
+	}
+
+	// Every direction this type hands out is horizontal, including the fallbacks. A pitched source would otherwise
+	// return an aim that tilts, which contradicts what FromMouseGround promises and makes a character lean when it
+	// should only turn.
+	private static Vector3 HorizontalForward(Node3D source)
+	{
+		Vector3 forward = -source.GlobalBasis.Z;
+		forward.Y = 0;
+
+		if (forward.LengthSquared() > DirectionEpsilon)
+		{
+			return forward.Normalized();
+		}
+
+		// Looking straight up or down leaves no horizontal forward at all, so the up axis stands in: for a node pitched
+		// onto its face it points the way the node was turned.
+		Vector3 leaning = source.GlobalBasis.Y;
+		leaning.Y = 0;
+
+		return leaning.LengthSquared() > DirectionEpsilon ? leaning.Normalized() : Vector3.Forward;
 	}
 
 	private static Vector3 CastForPoint(Node3D context, Vector3 from, Vector3 to, uint collisionMask)

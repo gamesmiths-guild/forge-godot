@@ -195,9 +195,11 @@ public class MoveTo3DNode(
 
 		Vector3 position = nodeContext.StartPosition.Lerp(nodeContext.Destination, eased);
 
-		if (Mathf.Abs(nodeContext.ArcHeight) > 0.0001f)
+		// A half sine peaks at the midpoint and is zero at both ends. The endpoints are excluded rather than trusted to
+		// that: Sin(Pi) is not exactly zero in floating point, so an arced move would otherwise land a hair off its
+		// destination and break the arrival contract.
+		if (Mathf.Abs(nodeContext.ArcHeight) > 0.0001f && eased > 0.0f && eased < 1.0f)
 		{
-			// A half sine peaks at the midpoint and is zero at both ends, so the arc never shifts where the move lands.
 			position.Y += nodeContext.ArcHeight * Mathf.Sin(eased * Mathf.Pi);
 		}
 
