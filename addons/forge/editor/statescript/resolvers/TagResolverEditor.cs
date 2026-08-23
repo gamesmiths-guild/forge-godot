@@ -24,7 +24,7 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 	private TagContainerSelectionControl? _selectionControl;
 
 	/// <inheritdoc/>
-	public override string DisplayName => "Tag";
+	public override string DisplayName => "Constant";
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Tag";
@@ -64,6 +64,19 @@ internal sealed partial class TagResolverEditor : NodeEditorProperty
 		var tags = new GodotStringArray();
 		tags.AddRange(_selectedTags);
 		property.Resolver = new TagResolverResource { Tags = tags };
+	}
+
+	/// <inheritdoc/>
+	public override bool TryGetInlineSummary(out string summary)
+	{
+		summary = _selectedTags.Count switch
+		{
+			0 => "(None)",
+			1 => _selectedTags[0],
+			_ => $"{_selectedTags.Count} tags",
+		};
+
+		return true;
 	}
 
 	/// <inheritdoc/>

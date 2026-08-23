@@ -43,10 +43,7 @@ internal static class StatescriptResolverRegistry
 		[typeof(Effect)] = "Effect",
 		[typeof(Tag)] = "Tag",
 		[typeof(PackedScene)] = "ScenePicker",
-
-		// Node references are always produced at runtime - by a spawn node, or by a lookup resolver - so a variable
-		// read is the only sensible authoring default.
-		[typeof(Node)] = "Variable",
+		[typeof(Node)] = "NodePath",
 
 		// Provider-backed marker types, one per optional provider input. Every one of these MUST be listed:
 		// RandomElementResolverEditor reports compatibility with any reference type, so it lands in these dropdowns
@@ -191,7 +188,7 @@ internal static class StatescriptResolverRegistry
 		}
 		finally
 		{
-			if (global::Godot.GodotObject.IsInstanceValid(editor))
+			if (GodotObject.IsInstanceValid(editor))
 			{
 				editor.Free();
 			}

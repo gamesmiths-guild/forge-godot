@@ -8,9 +8,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.VariableTypes;
 /// Object variable type for references to Godot scene nodes.
 /// </summary>
 /// <remarks>
-/// This is what lets a graph hold on to something it spawned, or to a node it looked up, and pass it to a later node.
-/// The reference is not ownership: a node freed elsewhere leaves the variable pointing at a dead instance, so anything
-/// consuming it should gate on the <c>Is Instance Valid</c> resolver rather than a null check.
+/// This is what lets a graph hold on to something it instantiated, or to a node it looked up, and pass it to a later
+/// node. The reference is not ownership: a node freed elsewhere leaves the variable pointing at a dead instance, so
+/// anything consuming it should gate on the <c>Is Instance Valid</c> resolver rather than a null check.
 /// </remarks>
 internal sealed class NodeObjectVariableType : StatescriptObjectVariableType<GodotNode>
 {

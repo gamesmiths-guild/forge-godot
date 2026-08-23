@@ -11,8 +11,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// Resolves a constant array of <see cref="PackedScene"/> values authored on the graph.
 /// </summary>
 /// <remarks>
-/// Feeding this through the core random-element or element-at resolvers is how one graph spawns one of several scenes
-/// without a branch per scene.
+/// Feeding this through the core random-element or element-at resolvers is how one graph instantiates one of several
+/// scenes without a branch per scene.
 /// </remarks>
 /// <param name="scenes">The authored scenes. Empty entries are preserved so indices stay stable.</param>
 internal sealed class SceneArrayResolver(IReadOnlyList<PackedScene?> scenes) : ObjectArrayResolver<PackedScene>

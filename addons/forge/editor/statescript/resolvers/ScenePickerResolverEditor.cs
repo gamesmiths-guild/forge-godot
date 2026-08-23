@@ -23,7 +23,7 @@ internal sealed partial class ScenePickerResolverEditor : NodeEditorProperty
 	private PackedScene? _selectedScene;
 	private VBoxContainer? _sceneContainer;
 
-	public override string DisplayName => "Scene";
+	public override string DisplayName => "Constant";
 
 	public override string ResolverTypeId => "ScenePicker";
 

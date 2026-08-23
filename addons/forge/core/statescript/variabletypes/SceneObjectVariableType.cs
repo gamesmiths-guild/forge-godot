@@ -8,8 +8,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.VariableTypes;
 /// Object variable type for <see cref="PackedScene"/> references.
 /// </summary>
 /// <remarks>
-/// Making scenes a variable type means a graph can pick which scene to spawn at runtime: hold an array of scenes and
-/// index it, or feed it through the core random-element resolver, instead of needing one graph branch per scene.
+/// Making scenes a variable type means a graph can pick which scene to instantiate at runtime: hold an array of scenes
+/// and index it, or feed it through the core random-element resolver, instead of needing one graph branch per scene.
 /// </remarks>
 internal sealed class SceneObjectVariableType : StatescriptObjectVariableType<PackedScene>
 {
