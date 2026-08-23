@@ -43,10 +43,7 @@ internal static class StatescriptResolverRegistry
 		[typeof(Effect)] = "Effect",
 		[typeof(Tag)] = "Tag",
 		[typeof(PackedScene)] = "ScenePicker",
-
-		// Most node references are produced at runtime - by a scene node, or by a lookup resolver - so a variable read
-		// is the better default than the Node Path constant, which only reaches nodes that were placed by hand.
-		[typeof(Node)] = "Variable",
+		[typeof(Node)] = "NodePath",
 
 		// Provider-backed marker types, one per optional provider input. Every one of these MUST be listed:
 		// RandomElementResolverEditor reports compatibility with any reference type, so it lands in these dropdowns
