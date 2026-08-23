@@ -13,7 +13,7 @@ using NumericsVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// State node that owns a instance scene for as long as it is active, freeing it on deactivation.
+/// State node that owns an instantiated scene for as long as it is active, freeing it on deactivation.
 /// </summary>
 /// <remarks>
 /// <para>This is the difference from Instantiate Scene: what this creates is tied to the node's lifetime. A summon,
@@ -23,7 +23,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// summon expires on its own while still being freed if the ability ends first.</para>
 /// </remarks>
 /// <param name="parentMode">Where the instance is parented.</param>
-/// <param name="passOwnership">Whether to tell the instance who instance it.</param>
+/// <param name="passOwnership">Whether to tell the instance who instantiated it.</param>
 [StatescriptCategory("Scene")]
 public class SceneNode(
 	InstantiateParentMode parentMode = InstantiateParentMode.CurrentScene,

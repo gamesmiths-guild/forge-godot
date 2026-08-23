@@ -44,14 +44,19 @@ internal static class SceneInstantiationUtilities
 
 		if (parent is null || !GodotObject.IsInstanceValid(parent))
 		{
-			GD.PushWarning("Statescript: a scene node found no parent to add its instance to. Nothing was instance.");
+			GD.PushWarning(
+				"Statescript: a scene node found no parent to add its instance to. Nothing was instantiated.");
 			return null;
 		}
 
 		Node instance = scene.Instantiate();
-		parent.AddChild(instance);
 
-		Place(instance, parentEntity, position, rotation);
+		// Placed before it is added, because AddChild readies the instance: a scene that reads its own transform in
+		// _Ready - as ForgeProjectile3D does to record where it launched from - would otherwise measure from the
+		// scene's authored position and only afterwards be teleported to the one the graph asked for.
+		Place(instance, parent, parentEntity, position, rotation);
+
+		parent.AddChild(instance);
 
 		if (passOwnership && instance is IInstantiationReceiver receiver)
 		{
@@ -81,6 +86,7 @@ internal static class SceneInstantiationUtilities
 
 	private static void Place(
 		Node instance,
+		Node parent,
 		IForgeEntity? entity,
 		NumericsVector3? position,
 		NumericsQuaternion? rotation)
@@ -90,15 +96,23 @@ internal static class SceneInstantiationUtilities
 			return;
 		}
 
+		// The instance is not in the tree yet, so it has no global transform to write; the world values are put
+		// through the parent's transform and written as local ones instead. A non-spatial parent breaks the transform
+		// chain, which makes the instance its own spatial root and its local transform the global one.
+		Transform3D parentTransform = parent is Node3D spatialParent
+			? spatialParent.GlobalTransform
+			: Transform3D.Identity;
+
 		// An unbound position means "where the caster is", which is the sane default for an instance that only cares
 		// about rotation, and avoids dropping it at the world origin.
 		if (position.HasValue)
 		{
-			spatialInstance.GlobalPosition = new Vector3(position.Value.X, position.Value.Y, position.Value.Z);
+			spatialInstance.Position = parentTransform.AffineInverse()
+				* new Vector3(position.Value.X, position.Value.Y, position.Value.Z);
 		}
 		else if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? entityNode))
 		{
-			spatialInstance.GlobalPosition = entityNode.GlobalPosition;
+			spatialInstance.Position = parentTransform.AffineInverse() * entityNode.GlobalPosition;
 		}
 
 		if (rotation.HasValue)
@@ -111,7 +125,7 @@ internal static class SceneInstantiationUtilities
 
 			if (quaternion.LengthSquared() > 0.000001f)
 			{
-				spatialInstance.GlobalBasis = new Basis(quaternion.Normalized());
+				spatialInstance.Basis = parentTransform.Basis.Inverse() * new Basis(quaternion.Normalized());
 			}
 		}
 	}

@@ -22,7 +22,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// graph can keep acting on what it made.</para>
 /// </remarks>
 /// <param name="parentMode">Where the instance is parented.</param>
-/// <param name="passOwnership">Whether to tell the instance who instance it, when its root implements
+/// <param name="passOwnership">Whether to tell the instance who instantiated it, when its root implements
 /// <see cref="IInstantiationReceiver"/>.</param>
 [StatescriptCategory("Scene")]
 public sealed class InstantiateSceneNode(

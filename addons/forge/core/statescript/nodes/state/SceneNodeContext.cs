@@ -12,7 +12,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 public class SceneNodeContext : StateNodeContext
 {
 	/// <summary>
-	/// Gets or sets the instance instance, or <see langword="null"/> when nothing was instance.
+	/// Gets or sets the owned instance, or <see langword="null"/> when nothing was instantiated.
 	/// </summary>
 	public Node? Instance { get; set; }
 

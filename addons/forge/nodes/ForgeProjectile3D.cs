@@ -12,8 +12,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// </summary>
 /// <remarks>
 /// <para>Effects are authored as child nodes, exactly as on <see cref="EffectArea3D"/>, so a projectile is configured
-/// without code. Aim is simply the rotation it was instance with: it always travels along its own forward axis, which
-/// is what lets a graph aim one by binding the instantiation rotation to a look-at.</para>
+/// without code. Aim is simply the rotation it was instantiated with: it always travels along its own forward axis,
+/// which is what lets a graph aim one by binding the instantiation rotation to a look-at.</para>
 /// <para>Ownership arrives through <see cref="IInstantiationReceiver"/> when a Statescript scene node creates it, so
 /// the effects it applies are attributed to whoever cast it rather than to the projectile.</para>
 /// </remarks>
@@ -40,7 +40,7 @@ public partial class ForgeProjectile3D : Area3D, IInstantiationReceiver
 	public delegate void HitEventHandler(Node3D hit);
 
 	/// <summary>
-	/// Emitted when the projectile ends without hitting anything, having run out of lifetime or range.
+	/// Emitted when the projectile runs out of lifetime or range, whether or not it hit anything on the way.
 	/// </summary>
 	[Signal]
 	public delegate void ExpiredEventHandler();
@@ -168,7 +168,9 @@ public partial class ForgeProjectile3D : Area3D, IInstantiationReceiver
 			return;
 		}
 
-		_effectApplier?.ApplyEffects(other, ResolveFalloff(), _effectOwner, _effectSource);
+		// The resolved entity, not the node the walk started from: the node overload would look it up narrowly again
+		// and find nothing under a nested hurtbox, burning a pierce on a hit that applied no effects.
+		_effectApplier?.ApplyEffects(target, ResolveFalloff(), _effectOwner, _effectSource);
 		EmitSignalHit(other);
 
 		_remainingHits--;
