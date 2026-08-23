@@ -40,7 +40,7 @@ internal sealed partial class EffectResolverEditor : NodeEditorProperty
 	private OwnershipResolverEditor? _ownershipEditor;
 
 	/// <inheritdoc/>
-	public override string DisplayName => "Effect";
+	public override string DisplayName => "Constant";
 
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "Effect";

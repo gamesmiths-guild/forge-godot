@@ -23,7 +23,7 @@ internal sealed partial class AbilityDataResolverEditor : NodeEditorProperty
 	private Action? _onChanged;
 	private ForgeAbilityData? _selectedAbilityData;
 
-	public override string DisplayName => "Ability Data";
+	public override string DisplayName => "Constant";
 
 	public override string ResolverTypeId => "AbilityData";
 
@@ -68,6 +68,12 @@ internal sealed partial class AbilityDataResolverEditor : NodeEditorProperty
 		{
 			AbilityData = _selectedAbilityData,
 		};
+	}
+
+	public override bool TryGetInlineSummary(out string summary)
+	{
+		summary = _selectedAbilityData?.Name ?? "(None)";
+		return true;
 	}
 }
 #endif
