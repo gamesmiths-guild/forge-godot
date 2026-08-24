@@ -255,13 +255,16 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	/// <param name="preferredDefaultResolverTypeId">The preferred default resolver type ID.</param>
 	/// <param name="defaultConstantValue">When provided and the slot has no binding yet, seeds the slot with a
 	/// constant resolver holding this value instead of the type's zero value.</param>
+	/// <param name="defaultResolver">When provided and the slot has no binding yet, seeds the slot with this resolver.
+	/// </param>
 	protected void AddInputPropertyRow(
 		StatescriptNodeDiscovery.InputPropertyInfo propInfo,
 		int index,
 		Control container,
 		string? shapeCustomDataKey = null,
 		string? preferredDefaultResolverTypeId = null,
-		Variant? defaultConstantValue = null)
+		Variant? defaultConstantValue = null,
+		StatescriptResolverResource? defaultResolver = null)
 	{
 		_graphNode!.AddInputPropertyRowInternal(
 			propInfo,
@@ -269,7 +272,8 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 			container,
 			shapeCustomDataKey,
 			preferredDefaultResolverTypeId,
-			defaultConstantValue);
+			defaultConstantValue,
+			defaultResolver);
 	}
 
 	/// <summary>

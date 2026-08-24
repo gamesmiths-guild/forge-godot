@@ -49,12 +49,32 @@ internal abstract class SpatialResolverBase3D(IEntityResolver entityResolver, st
 			return ResolveFrom(spatialNode, graphContext);
 		}
 
-		ReportMissingNodeOnce();
+		if (entity is null)
+		{
+			WarnOnce(
+				"resolved no entity to read from. Check the entity operand, which is often an empty variable." +
+				" Resolving to a default value.");
+
+			return default;
+		}
+
+		// A marker path is an offset from the entity, not a different subject, so an entity that happens not to carry
+		// the marker still has a right answer: its own node. One graph runs against every kind of entity and only some
+		// of them are authored with a %CastPoint, so reading the body for the rest keeps the query on the entity the
+		// author picked, where the default value silently aimed it at the world origin instead.
+		if (_nodePath.Length > 0 && ForgeEntityBridge.TryGetSpatialNode3D(entity, out spatialNode))
+		{
+			WarnOnce($"found no Node3D at [{_nodePath}]. Reading the entity's own node instead.");
+			return ResolveFrom(spatialNode, graphContext);
+		}
+
+		WarnOnce("found no Node3D for its entity. Resolving to a default value.");
 		return default;
 	}
 #pragma warning restore SA1202 // Elements should be ordered by access
 
-	private void ReportMissingNodeOnce()
+	// Resolvers run every tick, so a warning left unsuppressed would repeat every frame.
+	private void WarnOnce(string message)
 	{
 		if (_reportedMissingNode)
 		{
@@ -63,9 +83,6 @@ internal abstract class SpatialResolverBase3D(IEntityResolver entityResolver, st
 
 		_reportedMissingNode = true;
 
-		GD.PushWarning(
-			$"Statescript: {GetType().Name} found no Node3D for its entity" +
-			(_nodePath.Length == 0 ? "." : $" at [{_nodePath}].") +
-			" Resolving to a default value.");
+		GD.PushWarning($"Statescript: {GetType().Name} {message}");
 	}
 }

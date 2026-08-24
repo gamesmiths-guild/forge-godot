@@ -26,7 +26,8 @@ public partial class StatescriptGraphNode
 		Control sectionContainer,
 		string? shapeCustomDataKey = null,
 		string? preferredDefaultResolverTypeId = null,
-		Variant? defaultConstantValue = null)
+		Variant? defaultConstantValue = null,
+		StatescriptResolverResource? defaultResolver = null)
 	{
 		if (NodeResource is null)
 		{
@@ -136,6 +137,16 @@ public partial class StatescriptGraphNode
 				Value = seededValue,
 				ValueType = seededType,
 			};
+			NotifyGraphResourceChanged();
+		}
+
+		// The same seeding for inputs whose conventional default is a composed resolver rather than a constant - an
+		// array of the two entities a sight line normally passes through, say. Without it such an input either starts
+		// on a resolver that is empty and wrong, or hides its real default behind an unbound slot that shows nothing.
+		if (binding?.Resolver is null && !EditorUndoRedoUtils.IsReplaying && defaultResolver is not null)
+		{
+			binding = EnsureBinding(StatescriptPropertyDirection.Input, index);
+			binding.Resolver = defaultResolver;
 			NotifyGraphResourceChanged();
 		}
 
