@@ -100,6 +100,26 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	}
 
 	/// <summary>
+	/// Writes the bindings a freshly created node of this type should start with.
+	/// </summary>
+	/// <remarks>
+	/// <para>Called once, when the node resource is created, rather than while its rows are built. Adding a node runs
+	/// inside an undo-redo replay scope, and row-time seeding is suppressed there on purpose: an undo that cleared a
+	/// binding rebuilds the row, and seeding would put the binding straight back. Seeding the resource at creation
+	/// sidesteps that entirely — the defaults are part of what the new node *is*, so undo and redo of the add carry
+	/// them like any other authored value.</para>
+	/// <para>The editor is a bare instance here, with no node attached, so an override must decide from
+	/// <paramref name="typeInfo"/> and the index alone — never from <c>NodeResource</c> or a config read.</para>
+	/// </remarks>
+	/// <param name="nodeResource">The node resource being created.</param>
+	/// <param name="typeInfo">The node type's discovered inputs and outputs.</param>
+	public virtual void SeedDefaultBindings(
+		StatescriptNode nodeResource,
+		StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+	}
+
+	/// <summary>
 	/// Stores references needed by helper methods. Called once after the instance is created.
 	/// </summary>
 	/// <param name="graphNode">The graph node this editor is bound to.</param>

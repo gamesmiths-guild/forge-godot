@@ -40,6 +40,29 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		BuildOutputSection(typeInfo);
 	}
 
+	/// <inheritdoc/>
+	public override void SeedDefaultBindings(
+		StatescriptNode nodeResource,
+		StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+		{
+			StatescriptResolverResource? seed = GetDefaultInputResolver(i) ?? BuildDefaultConstant(typeInfo, i);
+
+			if (seed is null)
+			{
+				continue;
+			}
+
+			nodeResource.PropertyBindings.Add(new StatescriptNodeProperty
+			{
+				Direction = StatescriptPropertyDirection.Input,
+				PropertyIndex = i,
+				Resolver = seed,
+			});
+		}
+	}
+
 	/// <summary>
 	/// Gets the object variable type id for an object-backed output variable, or <see langword="null"/> when the
 	/// output is value-lane and should use the default rendering.
@@ -138,6 +161,25 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			HorizontalAlignment = HorizontalAlignment.Right,
 			VerticalAlignment = VerticalAlignment.Center,
 		};
+	}
+
+	// Optional inputs are never seeded: their fresh state is (None), which is what the runtime documents as their
+	// default. Everything else whose conventional value is not the type's zero says so through GetDefaultInputConstant.
+	private VariantResolverResource? BuildDefaultConstant(
+		StatescriptNodeDiscovery.NodeTypeInfo typeInfo,
+		int inputIndex)
+	{
+		StatescriptNodeDiscovery.InputPropertyInfo info = typeInfo.InputPropertiesInfo[inputIndex];
+
+		if (info.IsOptional
+			|| GetDefaultInputConstant(inputIndex) is not Variant value
+			|| !StatescriptVariableTypeConverter.TryFromSystemType(
+				info.ExpectedType, out StatescriptVariableType valueType))
+		{
+			return null;
+		}
+
+		return new VariantResolverResource { Value = value, ValueType = valueType };
 	}
 
 	private void BuildSettingsSection()
