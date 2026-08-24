@@ -14,7 +14,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <param name="entityResolver">Resolves which entity to read.</param>
 /// <param name="nodePath">Optional path to a descendant node to read instead.</param>
 /// <param name="space">Whether to report world or parent-relative position.</param>
-internal sealed class Position3DResolver(IEntityResolver entityResolver, string nodePath, TransformSpace space)
+internal sealed class EntityPosition3DResolver(IEntityResolver entityResolver, string nodePath, TransformSpace space)
 	: SpatialResolverBase3D(entityResolver, nodePath)
 {
 	private readonly TransformSpace _space = space;

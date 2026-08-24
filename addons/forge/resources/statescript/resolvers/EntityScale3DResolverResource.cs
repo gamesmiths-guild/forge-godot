@@ -13,10 +13,10 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class Scale3DResolverResource : SpatialResolverResourceBase3D
+public partial class EntityScale3DResolverResource : SpatialResolverResourceBase3D
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "Scale3D";
+	public override string ResolverTypeId => "EntityScale3D";
 
 	/// <summary>
 	/// Gets or sets whether to read world or parent-relative scale.
@@ -25,11 +25,11 @@ public partial class Scale3DResolverResource : SpatialResolverResourceBase3D
 	public TransformSpace Space { get; set; }
 
 	/// <inheritdoc/>
-	protected override string PropertyNamePrefix => "scale3d";
+	protected override string PropertyNamePrefix => "entityscale3d";
 
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(IEntityResolver entityResolver, Graph graph)
 	{
-		return new Scale3DResolver(entityResolver, NodePath, Space);
+		return new EntityScale3DResolver(entityResolver, NodePath, Space);
 	}
 }

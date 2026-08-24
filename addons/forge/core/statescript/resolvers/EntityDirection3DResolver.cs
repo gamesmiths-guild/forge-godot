@@ -18,7 +18,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <param name="entityResolver">Resolves which entity to read.</param>
 /// <param name="nodePath">Optional path to a descendant node to read instead.</param>
 /// <param name="axis">Which of the node's own directions to report.</param>
-internal sealed class Direction3DResolver(IEntityResolver entityResolver, string nodePath, SpatialAxis axis)
+internal sealed class EntityDirection3DResolver(IEntityResolver entityResolver, string nodePath, SpatialAxis axis)
 	: SpatialResolverBase3D(entityResolver, nodePath)
 {
 	private readonly SpatialAxis _axis = axis;

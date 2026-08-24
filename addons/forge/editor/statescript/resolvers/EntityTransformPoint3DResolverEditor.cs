@@ -14,16 +14,16 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Resolver editor that converts a point between an entity's local space and world space.
 /// </summary>
 [Tool]
-internal sealed partial class TransformPoint3DResolverEditor : SpatialResolverEditorBase3D
+internal sealed partial class EntityTransformPoint3DResolverEditor : SpatialResolverEditorBase3D
 {
 	private static readonly Type[] _offsetExpectedTypes = [typeof(NumericsVector3)];
 
 	private NestedResolverPicker? _offsetPicker;
 	private CheckBox? _inverseCheckBox;
 
-	public override string DisplayName => "Transform Point 3D";
+	public override string DisplayName => "Entity Transform Point 3D";
 
-	public override string ResolverTypeId => "TransformPoint3D";
+	public override string ResolverTypeId => "EntityTransformPoint3D";
 
 	protected override Type ValueClrType => typeof(NumericsVector3);
 
@@ -57,7 +57,7 @@ internal sealed partial class TransformPoint3DResolverEditor : SpatialResolverEd
 
 	protected override void BuildSettingsRows(VBoxContainer root, SpatialResolverResourceBase3D? existingResource)
 	{
-		var resource = existingResource as TransformPoint3DResolverResource;
+		var resource = existingResource as EntityTransformPoint3DResolverResource;
 
 		_inverseCheckBox = new CheckBox
 		{
@@ -89,7 +89,7 @@ internal sealed partial class TransformPoint3DResolverEditor : SpatialResolverEd
 
 	protected override SpatialResolverResourceBase3D BuildResource()
 	{
-		return new TransformPoint3DResolverResource
+		return new EntityTransformPoint3DResolverResource
 		{
 			Offset = _offsetPicker?.BuildResource(),
 			OffsetFolded = _offsetPicker?.Folded ?? false,

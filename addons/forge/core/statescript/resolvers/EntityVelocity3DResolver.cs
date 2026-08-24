@@ -18,7 +18,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// </remarks>
 /// <param name="entityResolver">Resolves which entity to read.</param>
 /// <param name="nodePath">Optional path to a descendant node to read instead.</param>
-internal sealed class Velocity3DResolver(IEntityResolver entityResolver, string nodePath)
+internal sealed class EntityVelocity3DResolver(IEntityResolver entityResolver, string nodePath)
 	: SpatialResolverBase3D(entityResolver, nodePath)
 {
 	public override Type ValueType => typeof(NumericsVector3);

@@ -7,27 +7,27 @@ using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Godot;
-using NumericsVector3 = System.Numerics.Vector3;
+using NumericsQuaternion = System.Numerics.Quaternion;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver editor for the scale of the node an entity lives on.
+/// Resolver editor for the rotation of the node an entity lives on.
 /// </summary>
 [Tool]
-internal sealed partial class Scale3DResolverEditor : SpatialResolverEditorBase3D
+internal sealed partial class EntityRotation3DResolverEditor : SpatialResolverEditorBase3D
 {
 	private OptionButton? _spaceDropdown;
 
-	public override string DisplayName => "Scale 3D";
+	public override string DisplayName => "Entity Rotation 3D";
 
-	public override string ResolverTypeId => "Scale3D";
+	public override string ResolverTypeId => "EntityRotation3D";
 
-	protected override Type ValueClrType => typeof(NumericsVector3);
+	protected override Type ValueClrType => typeof(NumericsQuaternion);
 
 	public override bool TryGetInlineSummary(out string summary)
 	{
-		summary = "Scale 3D";
+		summary = "Entity Rotation 3D";
 		return true;
 	}
 
@@ -39,13 +39,13 @@ internal sealed partial class Scale3DResolverEditor : SpatialResolverEditorBase3
 
 	protected override void BuildSettingsRows(VBoxContainer root, SpatialResolverResourceBase3D? existingResource)
 	{
-		int selected = existingResource is Scale3DResolverResource resource ? (int)resource.Space : 0;
+		int selected = existingResource is EntityRotation3DResolverResource resource ? (int)resource.Space : 0;
 		_spaceDropdown = BuildEnumRow(root, "Space:", ["Global", "Local"], selected);
 	}
 
 	protected override SpatialResolverResourceBase3D BuildResource()
 	{
-		return new Scale3DResolverResource
+		return new EntityRotation3DResolverResource
 		{
 			Space = (TransformSpace)(_spaceDropdown?.Selected ?? 0),
 		};

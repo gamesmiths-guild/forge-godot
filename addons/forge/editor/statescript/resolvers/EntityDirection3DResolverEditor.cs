@@ -15,15 +15,15 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Resolver editor for a facing direction of the node an entity lives on.
 /// </summary>
 [Tool]
-internal sealed partial class Direction3DResolverEditor : SpatialResolverEditorBase3D
+internal sealed partial class EntityDirection3DResolverEditor : SpatialResolverEditorBase3D
 {
 	private static readonly string[] _axisNames = ["Forward", "Back", "Right", "Left", "Up", "Down"];
 
 	private OptionButton? _axisDropdown;
 
-	public override string DisplayName => "Direction 3D";
+	public override string DisplayName => "Entity Direction 3D";
 
-	public override string ResolverTypeId => "Direction3D";
+	public override string ResolverTypeId => "EntityDirection3D";
 
 	protected override Type ValueClrType => typeof(NumericsVector3);
 
@@ -42,13 +42,13 @@ internal sealed partial class Direction3DResolverEditor : SpatialResolverEditorB
 
 	protected override void BuildSettingsRows(VBoxContainer root, SpatialResolverResourceBase3D? existingResource)
 	{
-		int selected = existingResource is Direction3DResolverResource resource ? (int)resource.Axis : 0;
+		int selected = existingResource is EntityDirection3DResolverResource resource ? (int)resource.Axis : 0;
 		_axisDropdown = BuildEnumRow(root, "Axis:", _axisNames, selected);
 	}
 
 	protected override SpatialResolverResourceBase3D BuildResource()
 	{
-		return new Direction3DResolverResource
+		return new EntityDirection3DResolverResource
 		{
 			Axis = (SpatialAxis)(_axisDropdown?.Selected ?? 0),
 		};

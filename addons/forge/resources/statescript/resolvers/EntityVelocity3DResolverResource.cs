@@ -9,27 +9,21 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that reads one of the facing directions of the 3D node an entity lives on.
+/// Resolver resource that reads the linear velocity of the body an entity lives on.
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class Direction3DResolverResource : SpatialResolverResourceBase3D
+public partial class EntityVelocity3DResolverResource : SpatialResolverResourceBase3D
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "Direction3D";
-
-	/// <summary>
-	/// Gets or sets which of the node's own directions to report.
-	/// </summary>
-	[Export]
-	public SpatialAxis Axis { get; set; }
+	public override string ResolverTypeId => "EntityVelocity3D";
 
 	/// <inheritdoc/>
-	protected override string PropertyNamePrefix => "direction3d";
+	protected override string PropertyNamePrefix => "entityvelocity3d";
 
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(IEntityResolver entityResolver, Graph graph)
 	{
-		return new Direction3DResolver(entityResolver, NodePath, Axis);
+		return new EntityVelocity3DResolver(entityResolver, NodePath);
 	}
 }

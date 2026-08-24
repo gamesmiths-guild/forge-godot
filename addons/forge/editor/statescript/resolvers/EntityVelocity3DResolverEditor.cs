@@ -14,23 +14,23 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Resolver editor for the velocity of the body an entity lives on.
 /// </summary>
 [Tool]
-internal sealed partial class Velocity3DResolverEditor : SpatialResolverEditorBase3D
+internal sealed partial class EntityVelocity3DResolverEditor : SpatialResolverEditorBase3D
 {
-	public override string DisplayName => "Velocity 3D";
+	public override string DisplayName => "Entity Velocity 3D";
 
-	public override string ResolverTypeId => "Velocity3D";
+	public override string ResolverTypeId => "EntityVelocity3D";
 
 	protected override Type ValueClrType => typeof(NumericsVector3);
 
 	public override bool TryGetInlineSummary(out string summary)
 	{
-		summary = "Velocity 3D";
+		summary = "Entity Velocity 3D";
 		return true;
 	}
 
 	protected override SpatialResolverResourceBase3D BuildResource()
 	{
-		return new Velocity3DResolverResource();
+		return new EntityVelocity3DResolverResource();
 	}
 }
 #endif

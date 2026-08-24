@@ -21,7 +21,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <param name="nodePath">Optional path to a descendant node to use as the frame of reference.</param>
 /// <param name="offsetResolver">Resolves the point to convert.</param>
 /// <param name="inverse">When set, converts world to local instead of local to world.</param>
-internal sealed class TransformPoint3DResolver(
+internal sealed class EntityTransformPoint3DResolver(
 	IEntityResolver entityResolver,
 	string nodePath,
 	IPropertyResolver offsetResolver,

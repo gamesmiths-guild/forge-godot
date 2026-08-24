@@ -14,10 +14,10 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class TransformPoint3DResolverResource : SpatialResolverResourceBase3D
+public partial class EntityTransformPoint3DResolverResource : SpatialResolverResourceBase3D
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "TransformPoint3D";
+	public override string ResolverTypeId => "EntityTransformPoint3D";
 
 	/// <summary>
 	/// Gets or sets the nested resolver providing the point to convert.
@@ -38,7 +38,7 @@ public partial class TransformPoint3DResolverResource : SpatialResolverResourceB
 	public bool OffsetFolded { get; set; }
 
 	/// <inheritdoc/>
-	protected override string PropertyNamePrefix => "transformpoint3d";
+	protected override string PropertyNamePrefix => "entitytransformpoint3d";
 
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(IEntityResolver entityResolver, Graph graph)
@@ -46,6 +46,6 @@ public partial class TransformPoint3DResolverResource : SpatialResolverResourceB
 		IPropertyResolver offsetResolver = Offset?.BuildResolver(graph)
 			?? new VariantResolver(new Variant128(NumericsVector3.Zero), typeof(NumericsVector3));
 
-		return new TransformPoint3DResolver(entityResolver, NodePath, offsetResolver, Inverse);
+		return new EntityTransformPoint3DResolver(entityResolver, NodePath, offsetResolver, Inverse);
 	}
 }

@@ -9,21 +9,27 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that reads the linear velocity of the body an entity lives on.
+/// Resolver resource that reads the rotation of the 3D node an entity lives on.
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class Velocity3DResolverResource : SpatialResolverResourceBase3D
+public partial class EntityRotation3DResolverResource : SpatialResolverResourceBase3D
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "Velocity3D";
+	public override string ResolverTypeId => "EntityRotation3D";
+
+	/// <summary>
+	/// Gets or sets whether to read world or parent-relative rotation.
+	/// </summary>
+	[Export]
+	public TransformSpace Space { get; set; }
 
 	/// <inheritdoc/>
-	protected override string PropertyNamePrefix => "velocity3d";
+	protected override string PropertyNamePrefix => "entityrotation3d";
 
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(IEntityResolver entityResolver, Graph graph)
 	{
-		return new Velocity3DResolver(entityResolver, NodePath);
+		return new EntityRotation3DResolver(entityResolver, NodePath, Space);
 	}
 }

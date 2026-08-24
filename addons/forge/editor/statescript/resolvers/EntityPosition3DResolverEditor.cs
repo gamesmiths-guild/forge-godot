@@ -15,19 +15,19 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Resolver editor for the position of the node an entity lives on.
 /// </summary>
 [Tool]
-internal sealed partial class Position3DResolverEditor : SpatialResolverEditorBase3D
+internal sealed partial class EntityPosition3DResolverEditor : SpatialResolverEditorBase3D
 {
 	private OptionButton? _spaceDropdown;
 
-	public override string DisplayName => "Position 3D";
+	public override string DisplayName => "Entity Position 3D";
 
-	public override string ResolverTypeId => "Position3D";
+	public override string ResolverTypeId => "EntityPosition3D";
 
 	protected override Type ValueClrType => typeof(NumericsVector3);
 
 	public override bool TryGetInlineSummary(out string summary)
 	{
-		summary = "Position 3D";
+		summary = "Entity Position 3D";
 		return true;
 	}
 
@@ -39,13 +39,13 @@ internal sealed partial class Position3DResolverEditor : SpatialResolverEditorBa
 
 	protected override void BuildSettingsRows(VBoxContainer root, SpatialResolverResourceBase3D? existingResource)
 	{
-		int selected = existingResource is Position3DResolverResource resource ? (int)resource.Space : 0;
+		int selected = existingResource is EntityPosition3DResolverResource resource ? (int)resource.Space : 0;
 		_spaceDropdown = BuildEnumRow(root, "Space:", ["Global", "Local"], selected);
 	}
 
 	protected override SpatialResolverResourceBase3D BuildResource()
 	{
-		return new Position3DResolverResource
+		return new EntityPosition3DResolverResource
 		{
 			Space = (TransformSpace)(_spaceDropdown?.Selected ?? 0),
 		};

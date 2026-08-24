@@ -9,27 +9,27 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver resource that reads the rotation of the 3D node an entity lives on.
+/// Resolver resource that reads the position of the 3D node an entity lives on.
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class Rotation3DResolverResource : SpatialResolverResourceBase3D
+public partial class EntityPosition3DResolverResource : SpatialResolverResourceBase3D
 {
 	/// <inheritdoc/>
-	public override string ResolverTypeId => "Rotation3D";
+	public override string ResolverTypeId => "EntityPosition3D";
 
 	/// <summary>
-	/// Gets or sets whether to read world or parent-relative rotation.
+	/// Gets or sets whether to read world or parent-relative position.
 	/// </summary>
 	[Export]
 	public TransformSpace Space { get; set; }
 
 	/// <inheritdoc/>
-	protected override string PropertyNamePrefix => "rotation3d";
+	protected override string PropertyNamePrefix => "entityposition3d";
 
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(IEntityResolver entityResolver, Graph graph)
 	{
-		return new Rotation3DResolver(entityResolver, NodePath, Space);
+		return new EntityPosition3DResolver(entityResolver, NodePath, Space);
 	}
 }
