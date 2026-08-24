@@ -146,6 +146,19 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		};
 	}
 
+	// Whitespace is noise in a search box: someone typing "setvar" is looking for Set Variable, and the space is
+	// exactly the part they skipped. Squeezing both sides lets a query run across word boundaries, so "setvar",
+	// "set var" and "SetVariable" all find it.
+	private static bool Matches(string candidate, string squeezedFilter)
+	{
+		return SqueezeWhitespace(candidate).Contains(squeezedFilter, StringComparison.OrdinalIgnoreCase);
+	}
+
+	private static string SqueezeWhitespace(string value)
+	{
+		return string.Concat(value.Where(character => !char.IsWhiteSpace(character)));
+	}
+
 	private static void SetAllCollapsed(TreeItem root, bool collapsed)
 	{
 		TreeItem? child = root.GetFirstChild();
@@ -235,14 +248,13 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		IReadOnlyList<StatescriptNodeDiscovery.NodeTypeInfo> discoveredTypes =
 			StatescriptNodeDiscovery.GetDiscoveredNodeTypes();
 
-		string filterLower = filter.ToLowerInvariant();
+		string squeezedFilter = SqueezeWhitespace(filter);
 
 		foreach (StatescriptNodeType archetype in _archetypeOrder)
 		{
 			List<StatescriptNodeDiscovery.NodeTypeInfo> matches = [.. discoveredTypes.Where(
 				typeInfo => typeInfo.NodeType == archetype
-					&& (!_isFiltering
-						|| typeInfo.DisplayName.Contains(filterLower, StringComparison.OrdinalIgnoreCase)))];
+					&& (!_isFiltering || Matches(typeInfo.DisplayName, squeezedFilter)))];
 
 			if (matches.Count == 0)
 			{
@@ -277,8 +289,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 			}
 		}
 
-		if (!_isFiltering || "exit".Contains(filterLower, StringComparison.OrdinalIgnoreCase)
-			|| "exit node".Contains(filterLower, StringComparison.OrdinalIgnoreCase))
+		if (!_isFiltering || Matches("Exit", squeezedFilter) || Matches("Exit Node", squeezedFilter))
 		{
 			TreeItem exitItem = _tree.CreateItem(root);
 			exitItem.SetText(0, "Exit");
