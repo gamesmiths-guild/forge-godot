@@ -38,7 +38,7 @@ public partial class QueryActiveEffectsResolverResource : StatescriptResolverRes
 	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? EntityResolver { get; set; }
+	public StatescriptResolverResource? EntityResolver { get; set; }
 
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
@@ -63,7 +63,7 @@ public partial class QueryActiveEffectsResolverResource : StatescriptResolverRes
 		valueArrayResolver = null;
 
 		ForgeEffectQuery? queryResource = Query;
-		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
+		IEntityResolver entityResolver = EntityOperand.BuildOrOwner(EntityResolver, graph);
 
 		objectArrayResolver = new LazyObjectArrayResolver<ActiveEffectHandle>(
 			() => new QueryActiveEffectsResolver(queryResource?.GetEffectQuery() ?? default, entityResolver));

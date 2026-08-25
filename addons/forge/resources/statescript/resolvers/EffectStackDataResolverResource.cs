@@ -41,7 +41,7 @@ public partial class EffectStackDataResolverResource : StatescriptResolverResour
 	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? EntityResolver { get; set; }
+	public StatescriptResolverResource? EntityResolver { get; set; }
 
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
@@ -65,7 +65,7 @@ public partial class EffectStackDataResolverResource : StatescriptResolverResour
 
 		ForgeEffectData effectDataResource = EffectData;
 		EffectStackDataType dataType = DataType;
-		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
+		IEntityResolver entityResolver = EntityOperand.BuildOrOwner(EntityResolver, graph);
 
 		return new LazyPropertyResolver(
 			typeof(int),

@@ -26,7 +26,7 @@ public partial class ObjectIndexOfResolverResource : ArrayReductionResolverResou
 	/// Gets or sets the nested entity resolver providing the entity to search for.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? Value { get; set; }
+	public StatescriptResolverResource? Value { get; set; }
 
 	/// <inheritdoc/>
 	public override IPropertyResolver BuildResolver(Graph graph)
@@ -40,7 +40,7 @@ public partial class ObjectIndexOfResolverResource : ArrayReductionResolverResou
 			return new VariantResolver(new Variant128(-1), typeof(int));
 		}
 
-		IEntityResolver value = Value?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
+		IEntityResolver value = EntityOperand.BuildOrOwner(Value, graph);
 		return new ObjectIndexOfResolver(entityArray!, value);
 	}
 }

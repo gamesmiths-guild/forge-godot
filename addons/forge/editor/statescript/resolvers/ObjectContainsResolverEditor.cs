@@ -69,7 +69,6 @@ internal sealed partial class ObjectContainsResolverEditor : ArrayReductionResol
 			graph,
 			existingResource?.Value,
 			"Entity:",
-			66.0f,
 			onChanged,
 			RaiseLayoutSizeChanged,
 			IterationScope);

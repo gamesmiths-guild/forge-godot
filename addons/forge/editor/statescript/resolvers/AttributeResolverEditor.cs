@@ -87,11 +87,9 @@ internal sealed partial class AttributeResolverEditor : EntityScopedResolverEdit
 		_finalChannelRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Chan:", _finalChannelSpin, LabelWidth);
 		root.AddChild(_finalChannelRow);
 
-		root.AddChild(CreateEntitySelectorRow(LabelWidth));
-		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
+		root.AddChild(CreateEntitySelectorRow());
 
 		_attributePicker.SetValue(_selectedSetClass, _selectedAttribute);
-		PopulateEntityScopeEditor(existingResource?.EntityResolver);
 		UpdateFinalChannelVisibility();
 	}
 

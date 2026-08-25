@@ -63,8 +63,7 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 		};
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Ability:", abilityPicker, LabelWidth));
 
-		root.AddChild(CreateEntitySelectorRow(LabelWidth));
-		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
+		root.AddChild(CreateEntitySelectorRow());
 
 		// The source filter is genuinely three-state, so it needs a None entry the other entity pickers do not have:
 		// None matches any granting source, a selected entity narrows the lookup to grants from that entity, and None
@@ -74,7 +73,6 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 			graph,
 			existingResource?.SourceResolver,
 			"Source:",
-			LabelWidth,
 			NotifyChanged,
 			RaiseLayoutSizeChanged,
 			IterationScope,
@@ -94,8 +92,6 @@ internal sealed partial class GetAbilityHandleResolverEditor : EntityScopedResol
 			NotifyChanged();
 		};
 		root.AddChild(exactSourceCheckBox);
-
-		PopulateEntityScopeEditor(existingResource?.EntityResolver);
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
