@@ -30,6 +30,7 @@ public abstract class SpatialActionNodeBase3D(string nodePath = "") : ActionNode
 	private readonly string _nodePath = nodePath ?? string.Empty;
 
 	private bool _reportedMissingNode;
+	private bool _reportedUnusableNode;
 
 	/// <summary>
 	/// Adds this node's own input properties. The entity input is already declared.
@@ -47,6 +48,16 @@ public abstract class SpatialActionNodeBase3D(string nodePath = "") : ActionNode
 	/// <param name="graphContext">The graph execution context, for resolving this node's own inputs.</param>
 	protected abstract void ExecuteOn(Node3D spatialNode, GraphContext graphContext);
 
+	/// <summary>
+	/// Gets a value indicating whether a marker path that resolves to nothing falls back to the entity's own node.
+	/// </summary>
+	/// <remarks>
+	/// Opt in where the authored path is a route to the subject rather than the subject itself. Physics state lives on
+	/// the body and nowhere else, so an entity without the marker still has a right answer; a node that writes a
+	/// transform is the opposite case, where substituting the body turns "rotate the turret" into "rotate the tank".
+	/// </remarks>
+	protected virtual bool FallsBackToEntityNode => false;
+
 	/// <inheritdoc/>
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
@@ -59,13 +70,46 @@ public abstract class SpatialActionNodeBase3D(string nodePath = "") : ActionNode
 	{
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 
-		if (!ForgeEntityBridge.TryGetSpatialNode3D(entity, _nodePath, out Node3D? spatialNode))
+		if (ForgeEntityBridge.TryGetSpatialNode3D(entity, _nodePath, out Node3D? spatialNode))
 		{
-			ReportMissingNodeOnce();
+			ExecuteOn(spatialNode, graphContext);
 			return;
 		}
 
-		ExecuteOn(spatialNode, graphContext);
+		if (FallsBackToEntityNode
+			&& _nodePath.Length > 0
+			&& ForgeEntityBridge.TryGetSpatialNode3D(entity, out spatialNode))
+		{
+			ReportMissingNodeOnce($"found no Node3D at [{_nodePath}]. Writing to the entity's own node instead.");
+			ExecuteOn(spatialNode, graphContext);
+			return;
+		}
+
+		ReportMissingNodeOnce(
+			"found no Node3D for its entity" +
+			(_nodePath.Length == 0 ? "." : $" at [{_nodePath}].") +
+			" The write was skipped.");
+	}
+
+	/// <summary>
+	/// Warns once that the resolved node cannot take this node's write, such as a marker where a body is required.
+	/// </summary>
+	/// <remarks>
+	/// Suppressed separately from the missing-node warning: an entity without the marker falls back to its own node and
+	/// can then still fail the subclass's type check, and one warning silencing the other would leave that second
+	/// failure invisible, which is the whole reason this exists.
+	/// </remarks>
+	/// <param name="message">What is wrong with the node, completing "Statescript: {node type} ".</param>
+	protected void ReportUnusableNodeOnce(string message)
+	{
+		if (_reportedUnusableNode)
+		{
+			return;
+		}
+
+		_reportedUnusableNode = true;
+
+		GD.PushWarning($"Statescript: {GetType().Name} {message}");
 	}
 
 	private IForgeEntity? ResolveEntityOrOwner(GraphContext graphContext)
@@ -84,7 +128,7 @@ public abstract class SpatialActionNodeBase3D(string nodePath = "") : ActionNode
 			: null;
 	}
 
-	private void ReportMissingNodeOnce()
+	private void ReportMissingNodeOnce(string message)
 	{
 		if (_reportedMissingNode)
 		{
@@ -93,9 +137,6 @@ public abstract class SpatialActionNodeBase3D(string nodePath = "") : ActionNode
 
 		_reportedMissingNode = true;
 
-		GD.PushWarning(
-			$"Statescript: {GetType().Name} found no Node3D for its entity" +
-			(_nodePath.Length == 0 ? "." : $" at [{_nodePath}].") +
-			" The write was skipped.");
+		GD.PushWarning($"Statescript: {GetType().Name} {message}");
 	}
 }
