@@ -77,6 +77,23 @@ internal static class PhysicsQuery3D
 	}
 
 	/// <summary>
+	/// Gets whether a ray with these inputs describes a segment at all, which is what <see cref="TryRaycast"/> requires
+	/// before it queries anything.
+	/// </summary>
+	/// <remarks>
+	/// Exposed so a caller that draws the cast can ask the same question the query asks. A ray that fails this covers
+	/// no distance, and a debug segment built from it would point somewhere the query never looked - backwards, for a
+	/// negative distance.
+	/// </remarks>
+	/// <param name="direction">The direction the ray travels.</param>
+	/// <param name="maxDistance">How far the ray reaches.</param>
+	/// <returns><see langword="true"/> if the ray can be cast; <see langword="false"/> otherwise.</returns>
+	public static bool IsCastable(Vector3 direction, float maxDistance)
+	{
+		return direction.LengthSquared() > 0.000001f && maxDistance > 0;
+	}
+
+	/// <summary>
 	/// Casts a ray and reports what it met.
 	/// </summary>
 	/// <param name="world">The world to query.</param>
@@ -104,7 +121,7 @@ internal static class PhysicsQuery3D
 	{
 		result = default;
 
-		if (direction.LengthSquared() <= 0.000001f || maxDistance <= 0)
+		if (!IsCastable(direction, maxDistance))
 		{
 			return false;
 		}

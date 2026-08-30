@@ -147,7 +147,18 @@ internal static class RaycastNodeParameters3D
 			PhysicsQuery3D.TryCollectExclusions(ignored, exclusions) ? exclusions : null,
 			out result);
 
-		segment = new RaySegment3D(from, hit ? result.Position : from + (along.Normalized() * (float)maxDistance));
+		Vector3 to = from;
+
+		if (hit)
+		{
+			to = result.Position;
+		}
+		else if (PhysicsQuery3D.IsCastable(along, (float)maxDistance))
+		{
+			to = from + (along.Normalized() * (float)maxDistance);
+		}
+
+		segment = new RaySegment3D(from, to);
 
 		return hit;
 	}

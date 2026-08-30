@@ -208,7 +208,6 @@ public class Overlap3DNode(
 		if (!TryCollect(graphContext, nodeContext, entity))
 		{
 			ReportMissingSourceOnce();
-			return;
 		}
 
 		ReportChanges(graphContext, nodeContext, nodeContext.Overlapping, nodeContext.Pending, OnExitedPort);

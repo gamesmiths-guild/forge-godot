@@ -24,11 +24,15 @@ internal sealed class NodePathResolver(string nodePath) : ObjectResolver<Node>
 {
 	private readonly string _nodePath = nodePath;
 
+	private readonly bool _isSceneUnique = nodePath.Contains('%');
+
 	private bool _reportedMissingNode;
 
 	public override Node? Resolve(GraphContext graphContext)
 	{
-		Node? node = ResolveFromGraphEntity(graphContext) ?? ResolveFromCurrentScene();
+		Node? node = _isSceneUnique ? ResolveFromGraphEntity(graphContext) : null;
+
+		node ??= ResolveFromCurrentScene();
 
 		if (node is null)
 		{

@@ -90,6 +90,7 @@ internal static class PhysicsDebugDraw3D
 	{
 		if (!IsEnabled)
 		{
+			Release(existing);
 			return null;
 		}
 
