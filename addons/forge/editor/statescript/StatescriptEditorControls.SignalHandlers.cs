@@ -7,9 +7,20 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 /// <summary>
-/// Signal handler helpers used by <see cref="StatescriptEditorControls"/> to avoid lambdas on Godot signals.
+/// Signal handler helpers used by <see cref="StatescriptEditorControls"/> to keep C# delegates off Godot signals.
 /// Each handler is a <see cref="Node"/> so it can be parented to its owning control and freed automatically.
 /// </summary>
+/// <remarks>
+/// <para><b>These are connected by method name, never with <c>+=</c>.</b> A C# event connection is a
+/// <c>Delegate::Invoke</c> callable holding a GC handle, and an assembly reload has to take every one of them down and
+/// put it back. Both ends here are script instances in the same reloading assembly, and the handler - a child of the
+/// control that emits to it - goes first: Godot core drops connections targeting a freed object, so the emitter's own
+/// cleanup then disconnects something that is already gone.</para>
+/// <para>A <see cref="Callable"/> over a Godot object and a method name carries no GC handle, so there is nothing to
+/// serialize, disconnect or restore and the reload passes over it. The handlers stay Godot objects because that form
+/// requires one, and their parameterless constructors stay because Godot instantiates script classes through them.
+/// </para>
+/// </remarks>
 internal static partial class StatescriptEditorControls
 {
 	/// <summary>
@@ -23,6 +34,61 @@ internal static partial class StatescriptEditorControls
 		public void HandleToggled(bool pressed)
 		{
 			OnChanged?.Invoke(pressed);
+		}
+	}
+
+	/// <summary>
+	/// Handles <see cref="OptionButton.ItemSelected"/> for the variable type dropdown.
+	/// </summary>
+	[Tool]
+	internal sealed partial class VariableTypeDropdownHandler : Node
+	{
+		private readonly OptionButton _dropdown;
+
+		public Action<VariableTypeSelection>? OnChanged { get; set; }
+
+		public VariableTypeDropdownHandler()
+		{
+			_dropdown = null!;
+		}
+
+		public VariableTypeDropdownHandler(OptionButton dropdown)
+		{
+			_dropdown = dropdown;
+		}
+
+		public void HandleItemSelected(long index)
+		{
+			OnChanged?.Invoke(GetVariableTypeSelection(_dropdown, (int)index));
+		}
+	}
+
+	/// <summary>
+	/// Handles <see cref="OptionButton.ItemSelected"/> for the value shape dropdown, which also refreshes the tooltip
+	/// describing the shape it now shows.
+	/// </summary>
+	[Tool]
+	internal sealed partial class ValueShapeDropdownHandler : Node
+	{
+		private readonly OptionButton _dropdown;
+
+		public Action<bool>? OnChanged { get; set; }
+
+		public ValueShapeDropdownHandler()
+		{
+			_dropdown = null!;
+		}
+
+		public ValueShapeDropdownHandler(OptionButton dropdown)
+		{
+			_dropdown = dropdown;
+		}
+
+		public void HandleItemSelected(long index)
+		{
+			_dropdown.Text = string.Empty;
+			UpdateValueShapeDropdownTooltip(_dropdown);
+			OnChanged?.Invoke(_dropdown.GetItemId((int)index) == 1);
 		}
 	}
 
