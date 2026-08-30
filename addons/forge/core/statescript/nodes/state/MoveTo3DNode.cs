@@ -22,6 +22,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>Aborting stops the move where it stands. It does not snap to the destination and it does not return to the
 /// start, so an interrupted leap leaves the character mid-air and whatever follows the abort decides what happens next.
 /// </para>
+/// <para>A move that cannot start - no node to move, or no destination - warns and reports arrival on its first update
+/// rather than holding the node open. Nothing gives the node a target after activation, so waiting would stall every
+/// graph whose next step hangs off <see cref="OnArrivedPort"/>.</para>
 /// <para>Configuration is captured in field initializers rather than a constructor body, because the base node
 /// constructor calls <see cref="DefinePorts"/> and <see cref="DefineParameters"/> before a body would run.</para>
 /// </remarks>
@@ -105,6 +108,7 @@ public class MoveTo3DNode(
 
 		if (!graphContext.TryResolve(InputProperties[DestinationInput].BoundName, out NumericsVector3 destination))
 		{
+			GD.PushWarning("Statescript: Move To 3D could not resolve a destination. The move was skipped.");
 			return;
 		}
 
@@ -138,8 +142,12 @@ public class MoveTo3DNode(
 	{
 		MoveTo3DNodeContext nodeContext = graphContext.GetNodeContext<MoveTo3DNodeContext>(NodeID);
 
+		// A move that could not start is over rather than pending: nothing sets a target after activation, so holding
+		// the node open would stall every graph waiting on OnArrived - a leap that lands its damage there never lands
+		// it, and the ability stays active until something aborts it. Activation already warned about why.
 		if (!nodeContext.HasTarget)
 		{
+			DeactivateNodeAndEmitMessage(graphContext, OnArrivedPort);
 			return;
 		}
 
