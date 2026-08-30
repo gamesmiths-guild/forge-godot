@@ -47,7 +47,8 @@ internal sealed class MouseWorldPosition3DResolver(
 		Vector2 mousePosition = viewport.GetMousePosition();
 		Vector3 rayOrigin = camera.ProjectRayOrigin(mousePosition);
 		Vector3 rayDirection = camera.ProjectRayNormal(mousePosition);
-		float maxDistance = (float)_maxDistanceResolver.Resolve(graphContext).AsDouble();
+
+		float maxDistance = (float)Math.Max(_maxDistanceResolver.Resolve(graphContext).AsDouble(), 0.0);
 		Vector3 rayEnd = rayOrigin + (rayDirection * maxDistance);
 
 		Vector3 point = _mode == MouseWorldMode.PlaneIntersect
