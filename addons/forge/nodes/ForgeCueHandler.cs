@@ -12,6 +12,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 [Icon("uid://snulmvxydrp4")]
 public abstract partial class ForgeCueHandler : Node, ICueHandler
 {
+	private bool _warned;
+
 	[Export]
 	public string? CueTag { get; set; }
 
@@ -117,5 +119,27 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 	public virtual void _CueOnUpdate(CueParameters? parameters)
 	{
+	}
+#pragma warning restore CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
+
+	/// <summary>
+	/// Reports a misconfiguration once, naming this handler.
+	/// </summary>
+	/// <remarks>
+	/// One handler serves every target of its cue, so a path that points at nothing is wrong for all of them and would
+	/// otherwise be reported once per application. Once is enough to fix it, and staying silent is not an option: a cue
+	/// that quietly does nothing looks like a gameplay bug rather than an authoring one.
+	/// </remarks>
+	/// <param name="message">What is wrong, completing "Forge cue handler [name]: ".</param>
+	protected void WarnOnce(string message)
+	{
+		if (_warned)
+		{
+			return;
+		}
+
+		_warned = true;
+
+		GD.PushWarning($"Forge cue handler [{Name}]: {message}");
 	}
 }
