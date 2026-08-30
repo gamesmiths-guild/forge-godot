@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Godot.Core;
@@ -12,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 [Icon("uid://snulmvxydrp4")]
 public abstract partial class ForgeCueHandler : Node, ICueHandler
 {
-	private bool _warned;
+	private readonly HashSet<string> _warnings = [];
 
 	[Export]
 	public string? CueTag { get; set; }
@@ -128,17 +129,16 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 	/// <remarks>
 	/// One handler serves every target of its cue, so a path that points at nothing is wrong for all of them and would
 	/// otherwise be reported once per application. Once is enough to fix it, and staying silent is not an option: a cue
-	/// that quietly does nothing looks like a gameplay bug rather than an authoring one.
+	/// that quietly does nothing looks like a gameplay bug rather than an authoring one. Once is per message rather
+	/// than per handler, so a second, different problem is not hidden by the first one having already been reported.
 	/// </remarks>
 	/// <param name="message">What is wrong, completing "Forge cue handler [name]: ".</param>
 	protected void WarnOnce(string message)
 	{
-		if (_warned)
+		if (!_warnings.Add(message))
 		{
 			return;
 		}
-
-		_warned = true;
 
 		GD.PushWarning($"Forge cue handler [{Name}]: {message}");
 	}

@@ -113,9 +113,12 @@ internal sealed class PresentationNodeInputs(string nodeName, string playerPath)
 			return false;
 		}
 
+		float scale = (float)(speed ?? 1);
+
 		// A negative blend is Godot's own "use whatever this player was authored with", which is what an unbound blend
-		// input should leave in place.
-		player.Play(animation, blend ?? -1, (float)(speed ?? 1), fromEnd: false);
+		// input should leave in place. A negative speed is the graph asking for the animation in reverse, and Godot
+		// starts it at position zero unless told otherwise - which for a backwards animation is already past its end.
+		player.Play(animation, blend ?? -1, scale, fromEnd: scale < 0);
 		return true;
 	}
 

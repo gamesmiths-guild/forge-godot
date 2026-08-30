@@ -23,6 +23,10 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 [GlobalClass]
 public partial class AudioCueHandler : ForgeCueHandler
 {
+	// How many sounds a created player can have in the air at once. Godot's default of one would make a second execute
+	// cut off the first, which for a rapid hit cue is exactly the sound the cue is trying to make.
+	private const int CreatedPolyphony = 8;
+
 	private readonly Dictionary<IForgeEntity, Node> _persistentPlayers = [];
 
 	/// <summary>
@@ -58,50 +62,13 @@ public partial class AudioCueHandler : ForgeCueHandler
 	/// <inheritdoc/>
 	public override void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
-		Node? player = ResolveExistingPlayer(forgeEntity);
-
-		if (player is null && Stream is not null)
-		{
-			player = CreatePlayer(forgeEntity);
-
-			if (player is not null)
-			{
-				_persistentPlayers[forgeEntity] = player;
-			}
-		}
-
-		if (player is null)
-		{
-			ReportNoPlayer();
-			return;
-		}
-
-		AudioPlayers.TryPlay(player, ResolveVolumeDb(parameters), pitch: null);
+		Play(forgeEntity, parameters);
 	}
 
 	/// <inheritdoc/>
 	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
-		Node? player = ResolveExistingPlayer(forgeEntity);
-
-		if (player is null && Stream is not null)
-		{
-			player = CreatePlayer(forgeEntity);
-
-			// Nothing removes a cue that only executes, so the player it created has to retire itself.
-			player?.Connect(
-				AudioStreamPlayer.SignalName.Finished,
-				Callable.From(player.QueueFree),
-				(uint)ConnectFlags.OneShot);
-		}
-
-		if (player is null)
-		{
-			ReportNoPlayer();
-			return;
-		}
-
-		AudioPlayers.TryPlay(player, ResolveVolumeDb(parameters), pitch: null);
+		Play(forgeEntity, parameters);
 	}
 
 	/// <inheritdoc/>
@@ -137,6 +104,34 @@ public partial class AudioCueHandler : ForgeCueHandler
 		}
 	}
 
+	// One created player per target rather than one per playback. A cue that only ever executes has no removal to free
+	// what it made, so a player per execution would be freed only by its own Finished signal - which a looping stream
+	// never emits, leaving them to stack up on the target for as long as it lives. Polyphony is what lets repeated
+	// executes overlap without a node each; the player itself goes with the target, or with the cue when one is
+	// removed.
+	private void Play(IForgeEntity forgeEntity, CueParameters? parameters)
+	{
+		Node? player = ResolveExistingPlayer(forgeEntity);
+
+		if (player is null && Stream is not null)
+		{
+			player = CreatePlayer(forgeEntity);
+
+			if (player is not null)
+			{
+				_persistentPlayers[forgeEntity] = player;
+			}
+		}
+
+		if (player is null)
+		{
+			ReportNoPlayer();
+			return;
+		}
+
+		AudioPlayers.TryPlay(player, ResolveVolumeDb(parameters), pitch: null);
+	}
+
 	private Node? ResolveExistingPlayer(IForgeEntity forgeEntity)
 	{
 		if (_persistentPlayers.TryGetValue(forgeEntity, out Node? tracked) && IsInstanceValid(tracked))
@@ -163,17 +158,17 @@ public partial class AudioCueHandler : ForgeCueHandler
 
 		if (ForgeEntityBridge.TryGetSpatialNode3D(forgeEntity, out Node3D? node3D))
 		{
-			player = new AudioStreamPlayer3D { Stream = Stream };
+			player = new AudioStreamPlayer3D { Stream = Stream, MaxPolyphony = CreatedPolyphony };
 			parent = node3D;
 		}
 		else if (ForgeEntityBridge.TryGetSpatialNode2D(forgeEntity, out Node2D? node2D))
 		{
-			player = new AudioStreamPlayer2D { Stream = Stream };
+			player = new AudioStreamPlayer2D { Stream = Stream, MaxPolyphony = CreatedPolyphony };
 			parent = node2D;
 		}
 		else if (ForgeEntityBridge.TryGetEntityNode(forgeEntity, out Node? entityNode))
 		{
-			player = new AudioStreamPlayer { Stream = Stream };
+			player = new AudioStreamPlayer { Stream = Stream, MaxPolyphony = CreatedPolyphony };
 			parent = entityNode;
 		}
 		else
