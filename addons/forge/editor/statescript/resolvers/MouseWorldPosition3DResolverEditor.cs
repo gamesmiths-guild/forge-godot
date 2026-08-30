@@ -18,7 +18,6 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 [Tool]
 internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorProperty
 {
-	private const float LabelWidth = 74.0f;
 	private const double DefaultMaxDistance = 1000.0;
 
 	private static readonly string[] _modeNames = ["Physics Ray", "Plane Intersect"];
@@ -53,16 +52,12 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		_modeDropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		foreach (string modeName in _modeNames)
-		{
-			_modeDropdown.AddItem(modeName);
-		}
-
-		_modeDropdown.Selected = (int)(resource?.Mode ?? MouseWorldMode.PhysicsRay);
-		_modeDropdown.ItemSelected += _ => OnModeSelected();
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Mode:", _modeDropdown, LabelWidth));
+		_modeDropdown = ResolverEditorLayoutUtilities.CreateEnumRow(
+			root,
+			"Mode:",
+			_modeNames,
+			(int)(resource?.Mode ?? MouseWorldMode.PhysicsRay),
+			OnModeSelected);
 
 		_maskPicker = AddPicker(
 			graph,

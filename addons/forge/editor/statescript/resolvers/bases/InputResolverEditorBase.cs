@@ -17,8 +17,6 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 /// </remarks>
 internal abstract partial class InputResolverEditorBase : NodeEditorProperty
 {
-	private const float LabelWidth = 74.0f;
-
 	private readonly List<InputActionNameField> _actionFields = [];
 
 	private Action? _onChanged;
@@ -95,7 +93,10 @@ internal abstract partial class InputResolverEditorBase : NodeEditorProperty
 		actionField.Initialize(field, NotifyChanged);
 		_actionFields.Add(actionField);
 
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow(label, actionField, LabelWidth));
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow(
+			label,
+			actionField,
+			ResolverEditorLayoutUtilities.SettingLabelWidth));
 		return field;
 	}
 
@@ -109,17 +110,7 @@ internal abstract partial class InputResolverEditorBase : NodeEditorProperty
 	/// <returns>The dropdown, so the caller can read its selection when saving.</returns>
 	protected OptionButton AddEnumRow(VBoxContainer root, string label, string[] itemNames, int selectedIndex)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		foreach (string itemName in itemNames)
-		{
-			dropdown.AddItem(itemName);
-		}
-
-		dropdown.Selected = Math.Clamp(selectedIndex, 0, itemNames.Length - 1);
-		dropdown.ItemSelected += _ => NotifyChanged();
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow(label, dropdown, LabelWidth));
-		return dropdown;
+		return ResolverEditorLayoutUtilities.CreateEnumRow(root, label, itemNames, selectedIndex, NotifyChanged);
 	}
 
 	/// <summary>
