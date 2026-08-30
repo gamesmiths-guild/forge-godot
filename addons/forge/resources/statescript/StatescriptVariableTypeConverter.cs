@@ -195,6 +195,43 @@ public static class StatescriptVariableTypeConverter
 	}
 
 	/// <summary>
+	/// Converts a Forge <see cref="Variant128"/> back to a Godot variant, reading it as the given variable type.
+	/// </summary>
+	/// <remarks>
+	/// The inverse of <see cref="GodotVariantToForge"/>. <see cref="Variant128"/> is an untagged union, so the type
+	/// passed here must be the one the value was written as; reading it as anything else returns whichever bytes
+	/// happen to overlap.
+	/// </remarks>
+	/// <param name="value">The Forge value.</param>
+	/// <param name="variableType">The variable type the value was written as.</param>
+	/// <returns>The corresponding Godot variant.</returns>
+	public static GodotVariant ForgeVariantToGodot(Variant128 value, StatescriptVariableType variableType)
+	{
+		return variableType switch
+		{
+			StatescriptVariableType.Bool => GodotVariant.From(value.AsBool()),
+			StatescriptVariableType.Byte => GodotVariant.From(value.AsByte()),
+			StatescriptVariableType.SByte => GodotVariant.From(value.AsSByte()),
+			StatescriptVariableType.Char => GodotVariant.From(value.AsChar()),
+			StatescriptVariableType.Decimal => GodotVariant.From((double)value.AsDecimal()),
+			StatescriptVariableType.Double => GodotVariant.From(value.AsDouble()),
+			StatescriptVariableType.Float => GodotVariant.From(value.AsFloat()),
+			StatescriptVariableType.Int => GodotVariant.From(value.AsInt()),
+			StatescriptVariableType.UInt => GodotVariant.From(value.AsUInt()),
+			StatescriptVariableType.Long => GodotVariant.From(value.AsLong()),
+			StatescriptVariableType.ULong => GodotVariant.From(value.AsULong()),
+			StatescriptVariableType.Short => GodotVariant.From(value.AsShort()),
+			StatescriptVariableType.UShort => GodotVariant.From(value.AsUShort()),
+			StatescriptVariableType.Vector2 => ToGodotVector2(value.AsVector2()),
+			StatescriptVariableType.Vector3 => ToGodotVector3(value.AsVector3()),
+			StatescriptVariableType.Vector4 => ToGodotVector4(value.AsVector4()),
+			StatescriptVariableType.Plane => ToGodotPlane(value.AsPlane()),
+			StatescriptVariableType.Quaternion => ToGodotQuaternion(value.AsQuaternion()),
+			_ => default,
+		};
+	}
+
+	/// <summary>
 	/// Gets the display name for a variable type.
 	/// </summary>
 	/// <param name="variableType">The variable type.</param>
@@ -253,5 +290,30 @@ public static class StatescriptVariableTypeConverter
 	private static Variant128 ToForgeQuaternion(GodotQuaternion q)
 	{
 		return new Variant128(new System.Numerics.Quaternion(q.X, q.Y, q.Z, q.W));
+	}
+
+	private static GodotVariant ToGodotVector2(SysVector2 v)
+	{
+		return GodotVariant.From(new GodotVector2(v.X, v.Y));
+	}
+
+	private static GodotVariant ToGodotVector3(SysVector3 v)
+	{
+		return GodotVariant.From(new GodotVector3(v.X, v.Y, v.Z));
+	}
+
+	private static GodotVariant ToGodotVector4(SysVector4 v)
+	{
+		return GodotVariant.From(new GodotVector4(v.X, v.Y, v.Z, v.W));
+	}
+
+	private static GodotVariant ToGodotPlane(System.Numerics.Plane p)
+	{
+		return GodotVariant.From(new GodotPlane(p.Normal.X, p.Normal.Y, p.Normal.Z, p.D));
+	}
+
+	private static GodotVariant ToGodotQuaternion(System.Numerics.Quaternion q)
+	{
+		return GodotVariant.From(new GodotQuaternion(q.X, q.Y, q.Z, q.W));
 	}
 }

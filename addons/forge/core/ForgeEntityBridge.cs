@@ -111,6 +111,44 @@ public static class ForgeEntityBridge
 	}
 
 	/// <summary>
+	/// Gets the node an entity lives on, whichever dimension: its nearest spatial ancestor including itself, or its own
+	/// node when it belongs to no spatial hierarchy at all.
+	/// </summary>
+	/// <remarks>
+	/// The dimension-neutral counterpart of the spatial getters, for callers that treat a node as a node - reading a
+	/// property off it, calling a method on it, watching one of its signals - and so have no reason to care whether the
+	/// game is 2D or 3D. An authored path is resolved from that node first and from the entity's own node second, the
+	/// same order the spatial getters use, so the path works whichever authoring pattern the scene uses.
+	/// </remarks>
+	/// <param name="entity">The entity to resolve. May be <see langword="null"/>.</param>
+	/// <param name="nodePath">A path relative to the node the entity lives on, or empty for that node itself.</param>
+	/// <param name="node">When this method returns <see langword="true"/>, the resolved node.</param>
+	/// <returns><see langword="true"/> if a node was found; <see langword="false"/> otherwise.</returns>
+	public static bool TryGetOwningNode(
+		IForgeEntity? entity,
+		string? nodePath,
+		[NotNullWhen(true)] out Node? node)
+	{
+		node = null;
+
+		if (!TryGetEntityNode(entity, out Node? entityNode))
+		{
+			return false;
+		}
+
+		Node owningNode = GetOwningNode(entityNode);
+
+		if (string.IsNullOrEmpty(nodePath))
+		{
+			node = owningNode;
+			return true;
+		}
+
+		node = owningNode.GetNodeOrNull(nodePath) ?? entityNode.GetNodeOrNull(nodePath);
+		return node is not null;
+	}
+
+	/// <summary>
 	/// Gets a node belonging to an entity that is neither spatial nor the entity itself - an animation player, an audio
 	/// player, a particle emitter.
 	/// </summary>
