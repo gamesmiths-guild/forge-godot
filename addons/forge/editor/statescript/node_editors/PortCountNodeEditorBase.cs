@@ -89,6 +89,14 @@ internal abstract partial class PortCountNodeEditorBase : CustomNodeEditor
 	}
 
 	/// <inheritdoc/>
+	public override bool SeedsDefaultBinding(int inputIndex)
+	{
+		// The selector's default follows the enum bound to the node, and a node being created has none yet. Seeding it
+		// now would fix it on the plain constant and the named-value resolver could never claim the fresh slot.
+		return inputIndex != SelectorInputIndex;
+	}
+
+	/// <inheritdoc/>
 	internal override string? GetOutputPortLabel(
 		int runtimePortIndex,
 		StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
