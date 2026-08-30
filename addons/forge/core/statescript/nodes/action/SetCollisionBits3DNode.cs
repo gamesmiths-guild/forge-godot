@@ -46,8 +46,16 @@ public sealed class SetCollisionBits3DNode(
 	/// <inheritdoc/>
 	protected override void ExecuteOn(Node3D spatialNode, GraphContext graphContext)
 	{
-		if (spatialNode is not CollisionObject3D body
-			|| !graphContext.TryResolve(InputProperties[BitsInput].BoundName, out int bits))
+		if (spatialNode is not CollisionObject3D body)
+		{
+			ReportUnusableNodeOnce(
+				$"resolved to a {spatialNode.GetType().Name}, which has no collision layers to set. The write was" +
+				" skipped.");
+
+			return;
+		}
+
+		if (!graphContext.TryResolve(InputProperties[BitsInput].BoundName, out int bits))
 		{
 			return;
 		}
