@@ -17,8 +17,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>The audio counterpart of Play Animation, and the node for sound that belongs to a stretch of gameplay rather
 /// than to a moment: a channel hum, a beam loop, a windup whine. A looping stream never finishes on its own, so the
 /// node runs until the ability ends and takes the sound with it.</para>
-/// <para>A player with nothing to play reports finished on its first update rather than waiting forever, since a stream
-/// that never started is not a sound the graph can be waiting on.</para>
+/// <para>A sound that never started - no player, or a player with no stream - reports finished on its first update
+/// rather than waiting forever, since it is not a sound the graph can be waiting on. The missing player is warned
+/// about; a misconfigured presentation node should not be able to stall an ability on top of that.</para>
 /// </remarks>
 /// <param name="playerPath">Optional path to the audio player, from the node the entity lives on. Empty means the
 /// entity's first audio player child.</param>
@@ -51,7 +52,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true)
 
 	/// <inheritdoc/>
 	public override string Description =>
-		"Plays a sound while active, emitting OnFinished when it ends and stopping it on an early exit.";
+		"Plays a sound while active, emitting OnFinished when it ends and optionally stopping it on an early exit.";
 
 	/// <inheritdoc/>
 	protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
@@ -106,14 +107,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true)
 		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
 		Node? player = nodeContext.Player;
 
-		if (player is null)
-		{
-			return;
-		}
-
-		// A freed player is a finished sound: whatever was making it is gone, and the graph should not keep waiting on
-		// it.
-		if (GodotObject.IsInstanceValid(player) && AudioPlayers.IsPlaying(player))
+		if (player is not null && GodotObject.IsInstanceValid(player) && AudioPlayers.IsPlaying(player))
 		{
 			return;
 		}

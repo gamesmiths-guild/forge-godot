@@ -139,7 +139,12 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 	// An instance parented to the target is already where it belongs, and its authored local offset is worth keeping -
 	// a scene that sits above a character's head says so in its own transform. Only a world-attached instance, or an
 	// authored position, has anything to write.
-	private static void Place(Node instance, Node anchor, bool placeAtAnchor, CueParameters? parameters)
+	//
+	// Run before the instance is added, because adding it readies it: a scene that reads its own transform in _Ready -
+	// as ForgeProjectile3D does to record where it launched from - would otherwise measure the scene's authored
+	// position and only afterwards be moved to the one the cue asked for. Out of the tree there is no global transform
+	// to write, so the world position is put through the parent's and written as a local one.
+	private static void Place(Node instance, Node parent, Node anchor, bool placeAtAnchor, CueParameters? parameters)
 	{
 		bool authored = TryReadPosition(parameters, out Vector3 position3D, out Vector2 position2D);
 
@@ -150,15 +155,22 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 
 		if (instance is Node3D instance3D)
 		{
-			if (authored)
+			if (!authored && anchor is Node3D anchor3D)
 			{
-				instance3D.GlobalPosition = position3D;
+				position3D = anchor3D.GlobalPosition;
 			}
-			else if (anchor is Node3D anchor3D)
+			else if (!authored)
 			{
-				instance3D.GlobalPosition = anchor3D.GlobalPosition;
+				return;
 			}
 
+			// A non-spatial parent breaks the transform chain, which makes the instance its own spatial root and its
+			// local transform the global one.
+			Transform3D parentTransform = parent is Node3D spatialParent
+				? spatialParent.GlobalTransform
+				: Transform3D.Identity;
+
+			instance3D.Position = parentTransform.AffineInverse() * position3D;
 			return;
 		}
 
@@ -167,14 +179,20 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 			return;
 		}
 
-		if (authored)
+		if (!authored && anchor is Node2D anchor2D)
 		{
-			instance2D.GlobalPosition = position2D;
+			position2D = anchor2D.GlobalPosition;
 		}
-		else if (anchor is Node2D anchor2D)
+		else if (!authored)
 		{
-			instance2D.GlobalPosition = anchor2D.GlobalPosition;
+			return;
 		}
+
+		Transform2D parentTransform2D = parent is Node2D spatialParent2D
+			? spatialParent2D.GlobalTransform
+			: Transform2D.Identity;
+
+		instance2D.Position = parentTransform2D.AffineInverse() * position2D;
 	}
 
 	private Node? Instantiate(IForgeEntity forgeEntity, CueParameters? parameters)
@@ -213,10 +231,11 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 		}
 
 		Node instance = Scene.Instantiate();
-		parent.AddChild(instance);
 
-		Place(instance, anchor, Attach == CueAttachMode.World, parameters);
+		Place(instance, parent, anchor, Attach == CueAttachMode.World, parameters);
 		Scale(instance, parameters);
+
+		parent.AddChild(instance);
 
 		if (instance is IInstantiationReceiver receiver)
 		{

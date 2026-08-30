@@ -20,6 +20,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// with one rule: the animation ended, something stopped the player, or another animation took over. A looping
 /// animation therefore never finishes on its own and runs until the node is aborted, which is what makes it the
 /// channelling shape.</para>
+/// <para>An animation that never started - no player, or a name the player does not have - counts as one that is no
+/// longer playing, so the node warns and finishes rather than holding open a graph that is waiting on it. A
+/// misconfigured presentation node should not be able to stall an ability.</para>
 /// <para>Deactivating stops playback under <paramref name="stopOnDeactivate"/>, which reaches an abort, a subgraph
 /// ending and the graph stopping alike - an interrupted cast should not leave the caster mid-gesture. A natural finish
 /// stops nothing, because by then the animation is over.</para>
@@ -59,7 +62,8 @@ public class PlayAnimationNode(string playerPath = "", string animation = "", bo
 
 	/// <inheritdoc/>
 	public override string Description =>
-		"Plays an animation while active, emitting OnFinished when it ends and stopping it on an early exit.";
+		"Plays an animation while active, emitting OnFinished when it ends and optionally stopping it on an early " +
+		"exit.";
 
 	/// <inheritdoc/>
 	protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
@@ -119,7 +123,7 @@ public class PlayAnimationNode(string playerPath = "", string animation = "", bo
 		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
 		AnimationPlayer? player = nodeContext.Player;
 
-		if (player is null || IsStillPlaying(player))
+		if (player is not null && IsStillPlaying(player))
 		{
 			return;
 		}
