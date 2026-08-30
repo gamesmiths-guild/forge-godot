@@ -46,7 +46,7 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 	/// </summary>
 	public const byte WhilePressedPort = 6;
 
-	private readonly string _actionName = actionName ?? string.Empty;
+	private readonly StringName _actionName = actionName ?? string.Empty;
 	private readonly bool _deactivateOnPressed = deactivateOnPressed;
 
 	private bool _reportedMissingAction;

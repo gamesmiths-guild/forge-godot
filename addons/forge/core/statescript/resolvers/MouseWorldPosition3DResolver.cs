@@ -37,14 +37,7 @@ internal sealed class MouseWorldPosition3DResolver(
 
 	protected override Variant128 ResolveFrom(Node3D contextNode, Camera3D camera, GraphContext graphContext)
 	{
-		Viewport? viewport = camera.GetViewport();
-
-		if (viewport is null)
-		{
-			return default;
-		}
-
-		Vector2 mousePosition = viewport.GetMousePosition();
+		Vector2 mousePosition = camera.GetViewport().GetMousePosition();
 		Vector3 rayOrigin = camera.ProjectRayOrigin(mousePosition);
 		Vector3 rayDirection = camera.ProjectRayNormal(mousePosition);
 

@@ -19,7 +19,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 internal sealed class InputActionPressedResolver(string actionName, InputActionMode mode)
 	: InputResolverBase(actionName)
 {
-	private readonly string _actionName = actionName;
+	private readonly StringName _actionName = actionName;
 	private readonly InputActionMode _mode = mode;
 
 	public override Type ValueType => typeof(bool);

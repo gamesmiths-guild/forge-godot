@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <param name="actionName">The input action to read.</param>
 internal sealed class InputActionStrengthResolver(string actionName) : InputResolverBase(actionName)
 {
-	private readonly string _actionName = actionName;
+	private readonly StringName _actionName = actionName;
 
 	public override Type ValueType => typeof(float);
 

@@ -26,10 +26,10 @@ internal sealed class InputVector2Resolver(
 	string positiveYAction)
 	: InputResolverBase(negativeXAction, positiveXAction, negativeYAction, positiveYAction)
 {
-	private readonly string _negativeXAction = negativeXAction;
-	private readonly string _positiveXAction = positiveXAction;
-	private readonly string _negativeYAction = negativeYAction;
-	private readonly string _positiveYAction = positiveYAction;
+	private readonly StringName _negativeXAction = negativeXAction;
+	private readonly StringName _positiveXAction = positiveXAction;
+	private readonly StringName _negativeYAction = negativeYAction;
+	private readonly StringName _positiveYAction = positiveYAction;
 
 	public override Type ValueType => typeof(NumericsVector2);
 

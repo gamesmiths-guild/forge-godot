@@ -21,7 +21,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <param name="actionNames">The actions this resolver reads. All of them must exist for it to resolve.</param>
 internal abstract class InputResolverBase(params string[] actionNames) : IPropertyResolver
 {
-	private readonly string[] _actionNames = actionNames;
+	private readonly StringName[] _actionNames = Array.ConvertAll(actionNames, actionName => (StringName)actionName);
 
 	private bool _reportedMissingAction;
 
@@ -38,7 +38,7 @@ internal abstract class InputResolverBase(params string[] actionNames) : IProper
 	/// <inheritdoc/>
 	public Variant128 Resolve(GraphContext graphContext)
 	{
-		foreach (string actionName in _actionNames)
+		foreach (StringName actionName in _actionNames)
 		{
 			if (!InputMap.HasAction(actionName))
 			{
@@ -51,7 +51,7 @@ internal abstract class InputResolverBase(params string[] actionNames) : IProper
 	}
 #pragma warning restore SA1202 // Elements should be ordered by access
 
-	private void ReportMissingActionOnce(string actionName)
+	private void ReportMissingActionOnce(StringName actionName)
 	{
 		if (_reportedMissingAction)
 		{

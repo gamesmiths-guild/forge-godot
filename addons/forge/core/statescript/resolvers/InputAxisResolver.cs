@@ -18,8 +18,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 internal sealed class InputAxisResolver(string negativeAction, string positiveAction)
 	: InputResolverBase(negativeAction, positiveAction)
 {
-	private readonly string _negativeAction = negativeAction;
-	private readonly string _positiveAction = positiveAction;
+	private readonly StringName _negativeAction = negativeAction;
+	private readonly StringName _positiveAction = positiveAction;
 
 	public override Type ValueType => typeof(float);
 
