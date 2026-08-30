@@ -50,7 +50,7 @@ public partial class AttributeResolverResource : StatescriptResolverResource
 	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? EntityResolver { get; set; }
+	public StatescriptResolverResource? EntityResolver { get; set; }
 
 	/// <inheritdoc/>
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
@@ -76,7 +76,7 @@ public partial class AttributeResolverResource : StatescriptResolverResource
 	private AttributeResolver BuildAttributeResolver(Graph graph)
 	{
 		var attributeKey = new StringKey($"{AttributeSetClass}.{AttributeName}");
-		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
+		IEntityResolver entityResolver = EntityOperand.BuildOrOwner(EntityResolver, graph);
 		return new AttributeResolver(attributeKey, entityResolver, CalculationType, FinalChannel);
 	}
 }

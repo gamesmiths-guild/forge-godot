@@ -77,10 +77,7 @@ internal sealed partial class EffectStackDataResolverEditor : EntityScopedResolv
 		};
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Data:", dataDropdown, LabelWidth));
 
-		root.AddChild(CreateEntitySelectorRow(LabelWidth));
-		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
-
-		PopulateEntityScopeEditor(existingResource?.EntityResolver);
+		root.AddChild(CreateEntitySelectorRow());
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)

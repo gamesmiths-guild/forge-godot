@@ -34,7 +34,7 @@ public abstract partial class SpatialResolverResourceBase3D : StatescriptResolve
 	/// Gets or sets which entity to read. Defaults to the ability's owner when left unset.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? EntityResolver { get; set; }
+	public StatescriptResolverResource? EntityResolver { get; set; }
 
 	/// <summary>
 	/// Gets or sets an optional path to a descendant node to read instead of the entity's own spatial node.
@@ -60,6 +60,6 @@ public abstract partial class SpatialResolverResourceBase3D : StatescriptResolve
 	/// <inheritdoc/>
 	public override IPropertyResolver BuildResolver(Graph graph)
 	{
-		return CreateResolver(EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver(), graph);
+		return CreateResolver(EntityOperand.BuildOrOwner(EntityResolver, graph), graph);
 	}
 }

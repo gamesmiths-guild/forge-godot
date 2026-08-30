@@ -23,7 +23,7 @@ public partial class TagQueryResolverResource : StatescriptResolverResource
 	public TagQuerySource QuerySource { get; set; } = TagQuerySource.AllTags;
 
 	[Export]
-	public EntityResolverResourceBase? EntityResolver { get; set; }
+	public StatescriptResolverResource? EntityResolver { get; set; }
 
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
@@ -49,7 +49,7 @@ public partial class TagQueryResolverResource : StatescriptResolverResource
 
 	private TagQueryResolver BuildTagQueryResolver(Graph graph)
 	{
-		IEntityResolver entityResolver = EntityResolver?.BuildEntityResolver(graph) ?? new AbilityOwnerResolver();
+		IEntityResolver entityResolver = EntityOperand.BuildOrOwner(EntityResolver, graph);
 		return new TagQueryResolver(
 			Query!.GetQueryExpression(),
 			entityResolver,

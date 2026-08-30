@@ -25,7 +25,7 @@ public partial class CanActivateAbilityResolverResource : StatescriptResolverRes
 	/// Gets or sets the optional entity used as the activation target for target tag requirement checks.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? Target { get; set; }
+	public StatescriptResolverResource? Target { get; set; }
 
 	/// <summary>
 	/// Gets or sets the optional nested resolver providing the ability handle to inspect.
@@ -46,6 +46,6 @@ public partial class CanActivateAbilityResolverResource : StatescriptResolverRes
 			Ability,
 			graph);
 
-		return new CanActivateAbilityResolver(Target?.BuildEntityResolver(graph), handleResolver);
+		return new CanActivateAbilityResolver(EntityOperand.Build(Target, graph), handleResolver);
 	}
 }

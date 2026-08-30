@@ -38,14 +38,14 @@ public partial class GetAbilityHandleResolverResource : StatescriptResolverResou
 	/// Gets or sets which entity should be inspected. Defaults to owner when omitted.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? EntityResolver { get; set; }
+	public StatescriptResolverResource? EntityResolver { get; set; }
 
 	/// <summary>
 	/// Gets or sets the optional entity used to filter the lookup by granting source. When unset, the lookup matches
 	/// the ability regardless of its granting source, unless <see cref="ExactSourceMatch"/> is enabled.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? SourceResolver { get; set; }
+	public StatescriptResolverResource? SourceResolver { get; set; }
 
 	/// <summary>
 	/// Gets or sets a value indicating whether the granting source must match exactly. When enabled, only the
@@ -80,8 +80,8 @@ public partial class GetAbilityHandleResolverResource : StatescriptResolverResou
 		}
 
 		ForgeAbilityData abilityDataResource = AbilityData;
-		IEntityResolver? entityResolver = EntityResolver?.BuildEntityResolver(graph);
-		IEntityResolver? sourceResolver = SourceResolver?.BuildEntityResolver(graph);
+		IEntityResolver? entityResolver = EntityOperand.Build(EntityResolver, graph);
+		IEntityResolver? sourceResolver = EntityOperand.Build(SourceResolver, graph);
 		bool exactSourceMatch = ExactSourceMatch;
 
 		objectResolver = new LazyObjectResolver<AbilityHandle>(

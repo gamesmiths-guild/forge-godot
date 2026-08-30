@@ -24,13 +24,13 @@ public partial class OwnershipResolverResource : StatescriptResolverResource
 	/// Gets or sets the resolver used for the ownership owner entity.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? Owner { get; set; }
+	public StatescriptResolverResource? Owner { get; set; }
 
 	/// <summary>
 	/// Gets or sets the resolver used for the ownership source entity.
 	/// </summary>
 	[Export]
-	public EntityResolverResourceBase? Source { get; set; }
+	public StatescriptResolverResource? Source { get; set; }
 
 	[Export]
 	public bool OwnerFolded { get; set; }
@@ -54,7 +54,7 @@ public partial class OwnershipResolverResource : StatescriptResolverResource
 	public OwnershipResolver BuildOwnershipResolver(Graph graph)
 	{
 		return new OwnershipResolver(
-			Owner?.BuildEntityResolver(graph),
-			Source?.BuildEntityResolver(graph));
+			EntityOperand.Build(Owner, graph),
+			EntityOperand.Build(Source, graph));
 	}
 }

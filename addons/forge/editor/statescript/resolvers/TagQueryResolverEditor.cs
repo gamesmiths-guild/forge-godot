@@ -72,10 +72,8 @@ internal sealed partial class TagQueryResolverEditor : EntityScopedResolverEdito
 		_sourceDropdown.ItemSelected += OnSourceChanged;
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Source:", _sourceDropdown, LabelWidth));
 
-		root.AddChild(CreateEntitySelectorRow(LabelWidth));
-		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
+		root.AddChild(CreateEntitySelectorRow());
 		RefreshQueryEditor();
-		PopulateEntityScopeEditor(existingResource?.EntityResolver);
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)

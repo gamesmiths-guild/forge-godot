@@ -64,10 +64,7 @@ internal sealed partial class QueryActiveEffectsResolverEditor : EntityScopedRes
 		};
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Query:", queryPicker, LabelWidth));
 
-		root.AddChild(CreateEntitySelectorRow(LabelWidth));
-		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
-
-		PopulateEntityScopeEditor(existingResource?.EntityResolver);
+		root.AddChild(CreateEntitySelectorRow());
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)

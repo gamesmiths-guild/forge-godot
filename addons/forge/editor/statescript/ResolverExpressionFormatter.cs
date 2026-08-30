@@ -231,7 +231,7 @@ internal static class ResolverExpressionFormatter
 		};
 	}
 
-	private static string EntityLabel(EntityResolverResourceBase? entity)
+	private static string EntityLabel(StatescriptResolverResource? entity)
 	{
 		return entity switch
 		{

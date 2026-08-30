@@ -115,14 +115,14 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 		{
 			var ownerProperty = new StatescriptNodeProperty();
 			_ownerEditor.SaveTo(ownerProperty);
-			resolver.Owner = ownerProperty.Resolver as EntityResolverResourceBase;
+			resolver.Owner = ownerProperty.Resolver;
 		}
 
 		if (_sourceEditor is not null)
 		{
 			var sourceProperty = new StatescriptNodeProperty();
 			_sourceEditor.SaveTo(sourceProperty);
-			resolver.Source = sourceProperty.Resolver as EntityResolverResourceBase;
+			resolver.Source = sourceProperty.Resolver;
 		}
 
 		property.Resolver = resolver;
@@ -191,7 +191,7 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 	}
 
 	private OptionButton CreateResolverDropdownControl(
-		EntityResolverResourceBase? existingResolver,
+		StatescriptResolverResource? existingResolver,
 		string preferredResolverTypeId)
 	{
 		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -205,7 +205,7 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 		return dropdown;
 	}
 
-	private int GetSelectedIndex(EntityResolverResourceBase? existingResolver, string preferredResolverTypeId)
+	private int GetSelectedIndex(StatescriptResolverResource? existingResolver, string preferredResolverTypeId)
 	{
 		if (existingResolver is not null)
 		{
@@ -231,7 +231,7 @@ internal sealed partial class OwnershipResolverEditor : NodeEditorProperty
 
 	private void ShowNestedEditor(
 		int factoryIndex,
-		EntityResolverResourceBase? existingResolver,
+		StatescriptResolverResource? existingResolver,
 		VBoxContainer container,
 		Action<NodeEditorProperty?> setEditor)
 	{

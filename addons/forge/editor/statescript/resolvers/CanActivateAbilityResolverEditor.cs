@@ -79,7 +79,7 @@ internal sealed partial class CanActivateAbilityResolverEditor : NodeEditorPrope
 	{
 		property.Resolver = new CanActivateAbilityResolverResource
 		{
-			Target = _targetPicker?.BuildResource() as EntityResolverResourceBase,
+			Target = _targetPicker?.BuildResource(),
 			Ability = _abilityPicker?.BuildResource(),
 		};
 	}

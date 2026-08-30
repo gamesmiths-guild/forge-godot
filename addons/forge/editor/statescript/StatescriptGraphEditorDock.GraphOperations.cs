@@ -12,6 +12,25 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 public partial class StatescriptGraphEditorDock
 {
+	// The defaults a node type wants a fresh instance to start with are written at creation, not while its rows are
+	// built: adding a node runs inside a replay scope, where row-time seeding is deliberately suppressed so that an
+	// undo clearing a binding is not immediately undone by a rebuild.
+	private static void SeedDefaultBindings(StatescriptNode nodeResource)
+	{
+		if (!CustomNodeEditorRegistry.TryCreate(nodeResource.RuntimeTypeName, out CustomNodeEditor? editor))
+		{
+			return;
+		}
+
+		using (editor)
+		{
+			if (StatescriptNodeDiscovery.FindForNode(nodeResource) is { } typeInfo)
+			{
+				editor.SeedDefaultBindings(nodeResource, typeInfo);
+			}
+		}
+	}
+
 	private static bool WouldCreateLoop(
 		StatescriptGraph graphResource,
 		string fromNodeId,
@@ -386,6 +405,8 @@ public partial class StatescriptGraphEditorDock
 			RuntimeTypeName = runtimeTypeName,
 			PositionOffset = position,
 		};
+
+		SeedDefaultBindings(nodeResource);
 
 		EditorUndoRedoUtils.Record(
 			_undoRedo,

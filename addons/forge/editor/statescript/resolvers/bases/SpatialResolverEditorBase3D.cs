@@ -61,8 +61,7 @@ internal abstract partial class SpatialResolverEditorBase3D : EntityScopedResolv
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		root.AddChild(CreateEntitySelectorRow(LabelWidth));
-		root.AddChild(CreateEntityScopeEditorRow(LabelWidth));
+		root.AddChild(CreateEntitySelectorRow());
 
 		BuildSettingsRows(root, existingResource);
 
@@ -75,8 +74,6 @@ internal abstract partial class SpatialResolverEditorBase3D : EntityScopedResolv
 		};
 		_nodePathField.TextChanged += _ => NotifyChanged();
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Node:", _nodePathField, LabelWidth));
-
-		PopulateEntityScopeEditor(existingResource?.EntityResolver);
 	}
 
 	/// <inheritdoc/>

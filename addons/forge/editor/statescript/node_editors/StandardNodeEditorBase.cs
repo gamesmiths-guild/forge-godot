@@ -40,6 +40,29 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		BuildOutputSection(typeInfo);
 	}
 
+	/// <inheritdoc/>
+	public override void SeedDefaultBindings(
+		StatescriptNode nodeResource,
+		StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
+	{
+		for (int i = 0; i < typeInfo.InputPropertiesInfo.Length; i++)
+		{
+			StatescriptResolverResource? seed = GetDefaultInputResolver(i) ?? BuildDefaultConstant(typeInfo, i);
+
+			if (seed is null)
+			{
+				continue;
+			}
+
+			nodeResource.PropertyBindings.Add(new StatescriptNodeProperty
+			{
+				Direction = StatescriptPropertyDirection.Input,
+				PropertyIndex = i,
+				Resolver = seed,
+			});
+		}
+	}
+
 	/// <summary>
 	/// Gets the object variable type id for an object-backed output variable, or <see langword="null"/> when the
 	/// output is value-lane and should use the default rendering.
@@ -63,6 +86,19 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 	}
 
 	/// <summary>
+	/// Gets the resolver a fresh input slot should be seeded with, or <see langword="null"/> to leave it to the
+	/// dropdown's own default. Override for inputs whose conventional default is a composed resolver rather than a
+	/// constant — an array of the entities a query should pass through, say. The returned resource is bound as-is, so
+	/// build a new one per call.
+	/// </summary>
+	/// <param name="inputIndex">The input property index.</param>
+	/// <returns>The resolver to seed, or <see langword="null"/> for the default behavior.</returns>
+	protected virtual StatescriptResolverResource? GetDefaultInputResolver(int inputIndex)
+	{
+		return null;
+	}
+
+	/// <summary>
 	/// Gets whether the input property at the given index is rendered for the node's current configuration. Returns
 	/// <see langword="true"/> by default. Override to hide an input the runtime does not read under the current
 	/// settings (for example a value consumed by only one branch of a mode-selecting enum), so an unused row is not
@@ -73,6 +109,21 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 	/// <param name="inputIndex">The input property index.</param>
 	/// <returns><see langword="true"/> to render the input; <see langword="false"/> to hide it.</returns>
 	protected virtual bool IsInputVisible(int inputIndex)
+	{
+		return true;
+	}
+
+	/// <summary>
+	/// Gets whether the setting with the given key is rendered for the node's current configuration. Returns
+	/// <see langword="true"/> by default. Override to hide a setting the runtime does not read under the current
+	/// configuration — the path to an existing area on a node currently building its own shape, say — so it cannot be
+	/// filled in and silently ignored. The setting that drives the decision must be declared with
+	/// <see cref="NodeConfigParam.AffectsLayout"/> set so the panel rebuilds when it changes. A hidden setting keeps
+	/// its stored value, so it returns unchanged when it becomes relevant again.
+	/// </summary>
+	/// <param name="key">The CustomData key, matching the runtime node constructor parameter name.</param>
+	/// <returns><see langword="true"/> to render the setting; <see langword="false"/> to hide it.</returns>
+	protected virtual bool IsSettingVisible(string key)
 	{
 		return true;
 	}
@@ -112,9 +163,28 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		};
 	}
 
+	// Optional inputs are never seeded: their fresh state is (None), which is what the runtime documents as their
+	// default. Everything else whose conventional value is not the type's zero says so through GetDefaultInputConstant.
+	private VariantResolverResource? BuildDefaultConstant(
+		StatescriptNodeDiscovery.NodeTypeInfo typeInfo,
+		int inputIndex)
+	{
+		StatescriptNodeDiscovery.InputPropertyInfo info = typeInfo.InputPropertiesInfo[inputIndex];
+
+		if (info.IsOptional
+			|| GetDefaultInputConstant(inputIndex) is not Variant value
+			|| !StatescriptVariableTypeConverter.TryFromSystemType(
+				info.ExpectedType, out StatescriptVariableType valueType))
+		{
+			return null;
+		}
+
+		return new VariantResolverResource { Value = value, ValueType = valueType };
+	}
+
 	private void BuildSettingsSection()
 	{
-		IReadOnlyList<NodeConfigParam> parameters = ConstructorParams;
+		List<NodeConfigParam> parameters = [.. ConstructorParams.Where(x => IsSettingVisible(x.Key))];
 
 		if (parameters.Count == 0)
 		{
@@ -134,7 +204,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		// grid so the label column is sized to the widest label by the layout engine itself (using each label's real
 		// minimum size) and every dropdown starts at the same x — no fragile font measurement that can mismatch the
 		// node's actual render font and let a long label shove its dropdown right.
-		if (!parameters.Any(x => x.EnumNames is { Length: > 0 } || x.IsText))
+		if (!parameters.Exists(x => x.EnumNames is { Length: > 0 } || x.IsText))
 		{
 			foreach (NodeConfigParam parameter in parameters)
 			{
@@ -287,7 +357,8 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 				typeInfo.InputPropertiesInfo[i],
 				i,
 				root,
-				defaultConstantValue: GetDefaultInputConstant(i));
+				defaultConstantValue: GetDefaultInputConstant(i),
+				defaultResolver: GetDefaultInputResolver(i));
 		}
 	}
 

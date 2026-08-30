@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -23,16 +24,15 @@ internal sealed class NodePathResolver(string nodePath) : ObjectResolver<Node>
 {
 	private readonly string _nodePath = nodePath;
 
+	private readonly bool _isSceneUnique = nodePath.Contains('%');
+
 	private bool _reportedMissingNode;
 
 	public override Node? Resolve(GraphContext graphContext)
 	{
-		if (Engine.GetMainLoop() is not SceneTree tree)
-		{
-			return null;
-		}
+		Node? node = _isSceneUnique ? ResolveFromGraphEntity(graphContext) : null;
 
-		Node? node = (tree.CurrentScene ?? tree.Root)?.GetNodeOrNull(_nodePath);
+		node ??= ResolveFromCurrentScene();
 
 		if (node is null)
 		{
@@ -40,6 +40,42 @@ internal sealed class NodePathResolver(string nodePath) : ObjectResolver<Node>
 		}
 
 		return node;
+	}
+
+	// Searched outward from the graph's own entity rather than down from the current scene, because a scene-unique
+	// name is registered on the scene root that owns it, and the current scene is often not that root: a game whose
+	// menu instantiates levels as children never changes scene, so CurrentScene stays the outer shell for the whole
+	// session and knows nothing about the %names inside the level. Walking the caster's ancestors passes through every
+	// scene it belongs to, innermost first, which is also the order an author means when two scenes both define a name.
+	private Node? ResolveFromGraphEntity(GraphContext graphContext)
+	{
+		if (!graphContext.TryGetActivationContext(out AbilityBehaviorContext? abilityContext)
+			|| !ForgeEntityBridge.TryGetEntityNode(abilityContext.Owner, out Node? current))
+		{
+			return null;
+		}
+
+		while (current is not null && GodotObject.IsInstanceValid(current))
+		{
+			Node? found = current.GetNodeOrNull(_nodePath);
+
+			if (found is not null)
+			{
+				return found;
+			}
+
+			current = current.GetParent();
+		}
+
+		return null;
+	}
+
+	// The fallback for a graph with no owner in the scene, which is the only case the walk above cannot start from.
+	private Node? ResolveFromCurrentScene()
+	{
+		return Engine.GetMainLoop() is SceneTree tree
+			? (tree.CurrentScene ?? tree.Root)?.GetNodeOrNull(_nodePath)
+			: null;
 	}
 
 	private void ReportMissingNodeOnce()
