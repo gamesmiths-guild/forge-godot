@@ -1,6 +1,8 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Gamesmiths.Forge.Core;
 using Godot;
 
@@ -106,6 +108,71 @@ public static class ForgeEntityBridge
 
 		node = null;
 		return false;
+	}
+
+	/// <summary>
+	/// Gets a node belonging to an entity that is neither spatial nor the entity itself - an animation player, an audio
+	/// player, a particle emitter.
+	/// </summary>
+	/// <remarks>
+	/// <para>The dimension-neutral counterpart of the spatial getters, for the nodes that have no 2D and 3D split worth
+	/// caring about. Paths resolve from the node the entity lives on, so <c>AnimationPlayer</c> means the same thing
+	/// under both authoring patterns rather than depending on where the <c>ForgeEntity</c> node happens to sit.</para>
+	/// <para>An empty path means "the one the entity has", found among that node's children. Unlike a spatial getter,
+	/// where an empty path has the entity's own node as its obvious answer, an entity's node is never itself a player,
+	/// so the alternative would be a path that is always required for the single-player scene that is the common case.
+	/// The search is one level deep and takes the first match, which keeps it predictable: a player nested inside a
+	/// model scene is named explicitly.</para>
+	/// </remarks>
+	/// <param name="entity">The entity to resolve. May be <see langword="null"/>.</param>
+	/// <param name="nodePath">A path from the node the entity lives on, or empty to take the first matching child.
+	/// </param>
+	/// <param name="matches">What makes a node the one being looked for.</param>
+	/// <param name="child">When this method returns <see langword="true"/>, the resolved node.</param>
+	/// <returns><see langword="true"/> if a matching node was found; <see langword="false"/> otherwise.</returns>
+	public static bool TryGetEntityChild(
+		IForgeEntity? entity,
+		string? nodePath,
+		Func<Node, bool> matches,
+		[NotNullWhen(true)] out Node? child)
+	{
+		child = null;
+
+		if (!TryGetEntityNode(entity, out Node? entityNode))
+		{
+			return false;
+		}
+
+		Node root = GetOwningNode(entityNode);
+
+		if (string.IsNullOrEmpty(nodePath))
+		{
+			child = root.GetChildren().FirstOrDefault(matches);
+			return child is not null;
+		}
+
+		Node? resolved = root.GetNodeOrNull(nodePath) ?? entityNode.GetNodeOrNull(nodePath);
+		child = resolved is not null && matches(resolved) ? resolved : null;
+
+		return child is not null;
+	}
+
+	/// <summary>
+	/// Gets a node of a given type belonging to an entity.
+	/// </summary>
+	/// <typeparam name="T">The node type to look for.</typeparam>
+	/// <param name="entity">The entity to resolve. May be <see langword="null"/>.</param>
+	/// <param name="nodePath">A path from the node the entity lives on, or empty to take the first child of that type.
+	/// </param>
+	/// <param name="child">When this method returns <see langword="true"/>, the resolved node.</param>
+	/// <returns><see langword="true"/> if a node of that type was found; <see langword="false"/> otherwise.</returns>
+	public static bool TryGetEntityChild<T>(IForgeEntity? entity, string? nodePath, [NotNullWhen(true)] out T? child)
+		where T : Node
+	{
+		bool found = TryGetEntityChild(entity, nodePath, static node => node is T, out Node? node);
+		child = (T?)node;
+
+		return found;
 	}
 
 	/// <summary>
@@ -251,5 +318,24 @@ public static class ForgeEntityBridge
 
 		spatialNode = resolved;
 		return resolved is not null;
+	}
+
+	// The node an entity lives on, whichever dimension: the nearest spatial ancestor including itself, and the entity's
+	// own node when it belongs to no spatial hierarchy at all.
+	private static Node GetOwningNode(Node entityNode)
+	{
+		Node? current = entityNode;
+
+		while (current is not null && GodotObject.IsInstanceValid(current))
+		{
+			if (current is Node2D or Node3D)
+			{
+				return current;
+			}
+
+			current = current.GetParent();
+		}
+
+		return entityNode;
 	}
 }
