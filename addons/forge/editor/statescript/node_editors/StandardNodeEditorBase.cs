@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -232,7 +233,9 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 	// typed - the field still owning focus is exactly when that happens. Those syncs record nothing, and the undo step
 	// is recorded once when the edit finishes, against the value the field held before it started. Without restoring
 	// that original first, the recording call would see no change from the keystroke syncs and register nothing at all.
-	private void BindTextRow(LineEdit lineEdit, NodeConfigParam parameter)
+	// The commit is handed back so a picker writing into the field in code can record the same step, which setting the
+	// text raises no signal for.
+	private Action BindTextRow(LineEdit lineEdit, NodeConfigParam parameter)
 	{
 		string originalValue = ReadStringConfig(parameter.Key, parameter.DefaultName ?? string.Empty);
 
@@ -256,6 +259,8 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 		lineEdit.TextSubmitted += _ => CommitEdit();
 		lineEdit.FocusExited += CommitEdit;
+
+		return CommitEdit;
 	}
 
 	private void AddParamRow(GridContainer grid, NodeConfigParam parameter)
@@ -271,9 +276,17 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 				SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 			};
 
-			BindTextRow(lineEdit, parameter);
+			Action commitEdit = BindTextRow(lineEdit, parameter);
 
-			grid.AddChild(lineEdit);
+			if (!parameter.SuggestsInputActions)
+			{
+				grid.AddChild(lineEdit);
+				return;
+			}
+
+			var actionField = new InputActionNameField();
+			actionField.Initialize(lineEdit, commitEdit);
+			grid.AddChild(actionField);
 			return;
 		}
 
@@ -282,7 +295,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			grid.AddChild(BuildSettingsLabel(parameter));
 
 			string currentName = ReadStringConfig(parameter.Key, parameter.DefaultName ?? enumNames[0]);
-			int currentIndex = System.Array.IndexOf(enumNames, currentName);
+			int currentIndex = Array.IndexOf(enumNames, currentName);
 
 			var dropdown = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
 			for (int i = 0; i < enumNames.Length; i++)

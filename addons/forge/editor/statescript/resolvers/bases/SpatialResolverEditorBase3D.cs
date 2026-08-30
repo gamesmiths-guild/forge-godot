@@ -17,8 +17,6 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 /// </remarks>
 internal abstract partial class SpatialResolverEditorBase3D : EntityScopedResolverEditorBase
 {
-	private const float LabelWidth = 74.0f;
-
 	private LineEdit? _nodePathField;
 
 	/// <summary>
@@ -72,8 +70,13 @@ internal abstract partial class SpatialResolverEditorBase3D : EntityScopedResolv
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
 			TooltipText = "Optional. A child node to read instead of the entity's own, such as a %Muzzle marker.",
 		};
+
 		_nodePathField.TextChanged += _ => NotifyChanged();
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Node:", _nodePathField, LabelWidth));
+
+		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow(
+			"Node:",
+			_nodePathField,
+			ResolverEditorLayoutUtilities.SettingLabelWidth));
 	}
 
 	/// <inheritdoc/>
@@ -114,17 +117,7 @@ internal abstract partial class SpatialResolverEditorBase3D : EntityScopedResolv
 	/// <returns>The dropdown, so the caller can read its selection when saving.</returns>
 	protected OptionButton BuildEnumRow(VBoxContainer root, string label, string[] itemNames, int selectedIndex)
 	{
-		var dropdown = new OptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-
-		foreach (string itemName in itemNames)
-		{
-			dropdown.AddItem(itemName);
-		}
-
-		dropdown.Selected = Math.Clamp(selectedIndex, 0, itemNames.Length - 1);
-		dropdown.ItemSelected += _ => NotifyChanged();
-		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow(label, dropdown, LabelWidth));
-		return dropdown;
+		return ResolverEditorLayoutUtilities.CreateEnumRow(root, label, itemNames, selectedIndex, NotifyChanged);
 	}
 }
 #endif

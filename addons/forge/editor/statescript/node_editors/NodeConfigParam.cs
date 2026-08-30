@@ -27,6 +27,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// for the names of things the graph cannot enumerate at authoring time - a node path into whichever scene the entity
 /// comes from, an animation name, an input action - which is why they are text rather than a picker.</param>
 /// <param name="Placeholder">The hint shown in an empty text field, ignored unless <see cref="IsText"/> is set.</param>
+/// <param name="SuggestsInputActions">When <see langword="true"/>, the text field is given a dropdown offering the
+/// project's input actions. Ignored unless <see cref="IsText"/> is set.</param>
 internal readonly record struct NodeConfigParam(
 	string Key,
 	string Label,
@@ -35,5 +37,6 @@ internal readonly record struct NodeConfigParam(
 	bool DefaultBool = false,
 	bool AffectsLayout = false,
 	bool IsText = false,
-	string Placeholder = "");
+	string Placeholder = "",
+	bool SuggestsInputActions = false);
 #endif
