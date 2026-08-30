@@ -7,31 +7,18 @@ namespace Gamesmiths.Forge.Godot.Editor;
 
 /// <summary>
 /// A drop-in <see cref="OptionButton"/> that turns on Godot's popup search bar (4.7+) so long pickers, such as the
-/// resolver list on a numeric input, can be filtered by typing. The bar only appears once the list reaches
-/// <see cref="MinItemCountForSearch"/> items, so short dropdowns look and behave exactly like a plain
-/// <see cref="OptionButton"/>.
+/// resolver list on a numeric input, can be filtered by typing. The bar only appears once the list is long enough, so
+/// short dropdowns look and behave exactly like a plain <see cref="OptionButton"/>.
 /// </summary>
 [Tool]
 internal sealed partial class SearchableOptionButton : OptionButton
 {
-	// Lists shorter than this keep the plain dropdown (no search bar), mirroring Godot's own threshold behavior.
-	private const int MinItemCountForSearch = 10;
-
-	private const int MaxPopupHeight = 400;
-
 	/// <inheritdoc/>
 	public override void _Ready()
 	{
 		base._Ready();
 
-		PopupMenu popup = GetPopup();
-		popup.SearchBarEnabled = true;
-		popup.SearchBarMinItemCount = MinItemCountForSearch;
-
-		Rect2I usableScreen = DisplayServer.ScreenGetUsableRect(GetWindow().CurrentScreen);
-		popup.MaxSize = new Vector2I(
-			usableScreen.Size.X,
-			(int)(MaxPopupHeight * EditorInterface.Singleton.GetEditorScale()));
+		SearchablePopup.Configure(GetPopup(), GetWindow());
 	}
 }
 #endif
