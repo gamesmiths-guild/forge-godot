@@ -72,8 +72,12 @@ internal static class SceneInstantiationUtilities
 		return parentMode switch
 		{
 			InstantiateParentMode.Node => parentNode,
-			InstantiateParentMode.Entity => ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode)
-								? spatialNode
+
+			// The node the entity lives on, whichever dimension. Asking for a Node3D found nothing in a 2D game, so
+			// this mode instantiated nothing at all there; "attach it to them" means the same thing in both.
+			InstantiateParentMode.Entity =>
+								ForgeEntityBridge.TryGetOwningNode(entity, string.Empty, out Node? owningNode)
+								? owningNode
 								: null,
 
 			// Reached through the entity rather than a scene-tree singleton, because an editor-time or headless graph
@@ -84,7 +88,7 @@ internal static class SceneInstantiationUtilities
 		};
 	}
 
-	private static void Place(
+	private static void Place3D(
 		Node instance,
 		Node parent,
 		IForgeEntity? entity,
@@ -93,6 +97,7 @@ internal static class SceneInstantiationUtilities
 	{
 		if (instance is not Node3D spatialInstance)
 		{
+			ReportUnplaceable(instance, "3D", position.HasValue || rotation.HasValue);
 			return;
 		}
 
@@ -128,6 +133,58 @@ internal static class SceneInstantiationUtilities
 				spatialInstance.Basis = parentTransform.Basis.Inverse() * new Basis(quaternion.Normalized());
 			}
 		}
+	}
+
+	private static void Place2D(
+		Node instance,
+		Node parent,
+		IForgeEntity? entity,
+		NumericsVector2? position,
+		double? rotation)
+	{
+		if (instance is not Node2D flatInstance)
+		{
+			ReportUnplaceable(instance, "2D", position.HasValue || rotation.HasValue);
+			return;
+		}
+
+		Transform2D parentTransform = parent is Node2D spatialParent
+			? spatialParent.GlobalTransform
+			: Transform2D.Identity;
+
+		if (position.HasValue)
+		{
+			flatInstance.Position =
+				parentTransform.AffineInverse() * new Vector2(position.Value.X, position.Value.Y);
+		}
+		else if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? entityNode))
+		{
+			flatInstance.Position = parentTransform.AffineInverse() * entityNode.GlobalPosition;
+		}
+
+		if (rotation.HasValue)
+		{
+			// Subtracting the parent's own rotation is the 2D spelling of putting a world value through the parent's
+			// transform, exactly as the basis inverse does above. There is no zero-quaternion case to guard: an angle
+			// of zero is simply unturned.
+			flatInstance.Rotation = (float)rotation.Value - parentTransform.Rotation;
+		}
+	}
+
+	// Only worth saying when a transform was authored. A scene with no spatial root is a legitimate thing to
+	// instantiate - a logic node, a pure data scene - and has nothing to place either way; what is a mistake is
+	// binding a position or a rotation and having it silently dropped, which is what the dimension-specific placement
+	// used to do for every instance of the other dimension.
+	private static void ReportUnplaceable(Node instance, string dimension, bool transformAuthored)
+	{
+		if (!transformAuthored)
+		{
+			return;
+		}
+
+		GD.PushWarning(
+			$"Statescript: a {dimension} scene node instantiated a {instance.GetType().Name}, which has no " +
+			$"{dimension} transform to place. The position and rotation it was given were not applied.");
 	}
 
 	private static void ResolveOwnership(
