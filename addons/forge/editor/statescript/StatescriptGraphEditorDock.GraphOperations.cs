@@ -14,20 +14,25 @@ public partial class StatescriptGraphEditorDock
 {
 	// The defaults a node type wants a fresh instance to start with are written at creation, not while its rows are
 	// built: adding a node runs inside a replay scope, where row-time seeding is deliberately suppressed so that an
-	// undo clearing a binding is not immediately undone by a rebuild.
-	private static void SeedDefaultBindings(StatescriptNode nodeResource)
+	// undo clearing a binding is not immediately undone by a rebuild. The node's own editor gets first say, then every
+	// required input still unbound is given the resolver its row is about to show.
+	private static void SeedDefaultBindings(StatescriptGraph graph, StatescriptNode nodeResource)
 	{
+		if (StatescriptNodeDiscovery.FindForNode(nodeResource) is not { } typeInfo)
+		{
+			return;
+		}
+
 		if (!CustomNodeEditorRegistry.TryCreate(nodeResource.RuntimeTypeName, out CustomNodeEditor? editor))
 		{
+			DefaultInputBindings.SeedMissing(graph, nodeResource, typeInfo, editor: null);
 			return;
 		}
 
 		using (editor)
 		{
-			if (StatescriptNodeDiscovery.FindForNode(nodeResource) is { } typeInfo)
-			{
-				editor.SeedDefaultBindings(nodeResource, typeInfo);
-			}
+			editor.SeedDefaultBindings(nodeResource, typeInfo);
+			DefaultInputBindings.SeedMissing(graph, nodeResource, typeInfo, editor);
 		}
 	}
 
@@ -406,7 +411,7 @@ public partial class StatescriptGraphEditorDock
 			PositionOffset = position,
 		};
 
-		SeedDefaultBindings(nodeResource);
+		SeedDefaultBindings(graph, nodeResource);
 
 		EditorUndoRedoUtils.Record(
 			_undoRedo,

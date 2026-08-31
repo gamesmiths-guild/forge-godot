@@ -120,6 +120,22 @@ internal abstract partial class CustomNodeEditor : RefCounted, ISerializationLis
 	}
 
 	/// <summary>
+	/// Gets whether a required input should be given the resolver its row defaults to when the node is created.
+	/// Returns <see langword="true"/> by default.
+	/// </summary>
+	/// <remarks>
+	/// Override for an input whose right default depends on configuration the node cannot have yet — a selector whose
+	/// resolver follows the enum bound to it later. Such a slot is left unbound at creation and picks up its default
+	/// the first time the row is built outside a replay, by which point the configuration exists.
+	/// </remarks>
+	/// <param name="inputIndex">The input property index.</param>
+	/// <returns><see langword="true"/> to seed the input at creation.</returns>
+	public virtual bool SeedsDefaultBinding(int inputIndex)
+	{
+		return true;
+	}
+
+	/// <summary>
 	/// Stores references needed by helper methods. Called once after the instance is created.
 	/// </summary>
 	/// <param name="graphNode">The graph node this editor is bound to.</param>

@@ -287,6 +287,11 @@ internal static class PhysicsQuery3D
 		IReadOnlyList<object?>? excluded,
 		ISet<IForgeEntity> into)
 	{
+		if (!area.Monitoring)
+		{
+			return;
+		}
+
 		foreach (Node3D body in area.GetOverlappingBodies())
 		{
 			AddEntity(body, excluded, into);

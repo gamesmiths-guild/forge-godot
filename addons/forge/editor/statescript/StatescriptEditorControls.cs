@@ -83,9 +83,14 @@ internal static partial class StatescriptEditorControls
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
 
+		// Connected by name rather than with +=, which is what keeps an assembly reload quiet. See the handler classes.
 		var handler = new BoolSignalHandler { OnChanged = onChanged };
 		checkButton.AddChild(handler);
-		checkButton.Toggled += handler.HandleToggled;
+
+		checkButton.Connect(
+			BaseButton.SignalName.Toggled,
+			new Callable(handler, BoolSignalHandler.MethodName.HandleToggled));
+
 		container.AddChild(checkButton);
 		return container;
 	}
@@ -110,7 +115,13 @@ internal static partial class StatescriptEditorControls
 
 		if (onChanged is not null)
 		{
-			dropdown.ItemSelected += index => onChanged(GetVariableTypeSelection(dropdown, (int)index));
+			// Connected by name rather than with +=, as elsewhere here. See the handler classes.
+			var handler = new VariableTypeDropdownHandler(dropdown) { OnChanged = onChanged };
+			dropdown.AddChild(handler);
+
+			dropdown.Connect(
+				OptionButton.SignalName.ItemSelected,
+				new Callable(handler, VariableTypeDropdownHandler.MethodName.HandleItemSelected));
 		}
 
 		return dropdown;
@@ -276,12 +287,13 @@ internal static partial class StatescriptEditorControls
 
 		if (onChanged is not null)
 		{
-			dropdown.ItemSelected += index =>
-			{
-				dropdown.Text = string.Empty;
-				UpdateValueShapeDropdownTooltip(dropdown);
-				onChanged(dropdown.GetItemId((int)index) == 1);
-			};
+			// Connected by name rather than with +=, as elsewhere here. See the handler classes.
+			var handler = new ValueShapeDropdownHandler(dropdown) { OnChanged = onChanged };
+			dropdown.AddChild(handler);
+
+			dropdown.Connect(
+				OptionButton.SignalName.ItemSelected,
+				new Callable(handler, ValueShapeDropdownHandler.MethodName.HandleItemSelected));
 		}
 
 		return dropdown;
@@ -317,17 +329,26 @@ internal static partial class StatescriptEditorControls
 			Value = value,
 		};
 
+		// Connected by name rather than with +=, which is what keeps an assembly reload quiet. See the handler classes.
 		var handler = new NumericSpinHandler(spin) { OnChanged = onChanged };
 		spin.AddChild(handler);
 
 		if (onChanged is not null)
 		{
-			spin.ValueChanged += handler.HandleValueChanged;
+			spin.Connect(
+				global::Godot.Range.SignalName.ValueChanged,
+				new Callable(handler, NumericSpinHandler.MethodName.HandleValueChanged));
 		}
 
-		spin.Grabbed += handler.HandleGrabbed;
-		spin.Ungrabbed += handler.HandleUngrabbed;
-		spin.FocusExited += handler.HandleFocusExited;
+		spin.Connect(
+			EditorSpinSlider.SignalName.Grabbed,
+			new Callable(handler, NumericSpinHandler.MethodName.HandleGrabbed));
+		spin.Connect(
+			EditorSpinSlider.SignalName.Ungrabbed,
+			new Callable(handler, NumericSpinHandler.MethodName.HandleUngrabbed));
+		spin.Connect(
+			Control.SignalName.FocusExited,
+			new Callable(handler, NumericSpinHandler.MethodName.HandleFocusExited));
 
 		return spin;
 	}
@@ -384,13 +405,22 @@ internal static partial class StatescriptEditorControls
 
 			spin.AddThemeColorOverride("label_color", GetComponentColor(i));
 
+			// Connected by name rather than with +=, as above. See the handler classes.
 			var componentHandler = new VectorSpinHandler(handler, i);
 			spin.AddChild(componentHandler);
 
-			spin.ValueChanged += componentHandler.HandleValueChanged;
-			spin.Grabbed += componentHandler.HandleGrabbed;
-			spin.Ungrabbed += componentHandler.HandleUngrabbed;
-			spin.FocusExited += componentHandler.HandleFocusExited;
+			spin.Connect(
+				global::Godot.Range.SignalName.ValueChanged,
+				new Callable(componentHandler, VectorSpinHandler.MethodName.HandleValueChanged));
+			spin.Connect(
+				EditorSpinSlider.SignalName.Grabbed,
+				new Callable(componentHandler, VectorSpinHandler.MethodName.HandleGrabbed));
+			spin.Connect(
+				EditorSpinSlider.SignalName.Ungrabbed,
+				new Callable(componentHandler, VectorSpinHandler.MethodName.HandleUngrabbed));
+			spin.Connect(
+				Control.SignalName.FocusExited,
+				new Callable(componentHandler, VectorSpinHandler.MethodName.HandleFocusExited));
 
 			row.AddChild(spin);
 		}
