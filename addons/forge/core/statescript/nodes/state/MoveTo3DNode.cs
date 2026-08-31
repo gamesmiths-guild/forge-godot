@@ -154,8 +154,11 @@ public class MoveTo3DNode(
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 
 		// Re-resolved each tick rather than cached: the node may have been freed mid-move, by a death or a despawn.
+		// A move whose subject has gone is over, for the same reason a move that could not start is: nothing gives it
+		// one back, so waiting would stall every graph whose next step hangs off OnArrived.
 		if (!ForgeEntityBridge.TryGetSpatialNode3D(entity, _nodePath, out Node3D? spatialNode))
 		{
+			DeactivateNodeAndEmitMessage(graphContext, OnArrivedPort);
 			return;
 		}
 

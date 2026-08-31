@@ -16,6 +16,12 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// which is what lets a graph aim one by binding the instantiation rotation to a look-at.</para>
 /// <para>Ownership arrives through <see cref="IInstantiationReceiver"/> when a Statescript scene node creates it, so
 /// the effects it applies are attributed to whoever cast it rather than to the projectile.</para>
+/// <para>It travels on the physics tick rather than the render frame, because an <see cref="Area3D"/> is tested for
+/// overlaps once per physics step: moving on the render frame would take several steps the physics server never sees,
+/// and which of them it did see would depend on the frame rate. One move per test is the strongest guarantee an
+/// area-based projectile can give. It is not immunity to tunnelling — a projectile whose step is longer than a collider
+/// is thick still passes through it — so keep <see cref="Speed"/> under the thinnest collider it must hit, divided by
+/// the physics tick, or use a swept scene node for the rest.</para>
 /// </remarks>
 [GlobalClass]
 [Icon("uid://tbuwwf03ikr3")]
@@ -121,9 +127,9 @@ public partial class ForgeProjectile3D : Area3D, IInstantiationReceiver
 	}
 
 	/// <inheritdoc/>
-	public override void _Process(double delta)
+	public override void _PhysicsProcess(double delta)
 	{
-		base._Process(delta);
+		base._PhysicsProcess(delta);
 
 		if (_expired)
 		{

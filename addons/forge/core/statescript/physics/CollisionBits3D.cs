@@ -49,4 +49,22 @@ internal static class CollisionBits3D
 	{
 		return operation == CollisionBitsOperation.Set ? current | bits : current & ~bits;
 	}
+
+	/// <summary>
+	/// Puts the named bits back to what they were, leaving every other bit as it currently stands.
+	/// </summary>
+	/// <remarks>
+	/// An override restores its own bits rather than the whole field it captured, because the field it captured is a
+	/// snapshot of a moment that has since moved on. Writing the snapshot back would undo every other change made while
+	/// the override was running - a second override on different bits of the same field, or a permanent write - and
+	/// resurrect the bits those had deliberately changed.
+	/// </remarks>
+	/// <param name="current">The field as it stands now.</param>
+	/// <param name="original">The field as it was when the override captured it.</param>
+	/// <param name="bits">The bits the override acted on.</param>
+	/// <returns>The new field value.</returns>
+	public static uint Restore(uint current, uint original, uint bits)
+	{
+		return (current & ~bits) | (original & bits);
+	}
 }

@@ -24,4 +24,9 @@ public class CollisionOverride3DNodeContext : StateNodeContext
 	/// Gets or sets the bit field as it was before the override.
 	/// </summary>
 	public uint OriginalBits { get; set; }
+
+	/// <summary>
+	/// Gets or sets the bits this override acted on, which are the only ones it puts back.
+	/// </summary>
+	public uint OverriddenBits { get; set; }
 }
