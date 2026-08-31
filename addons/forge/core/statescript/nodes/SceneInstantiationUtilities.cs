@@ -1,11 +1,13 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
 using NumericsQuaternion = System.Numerics.Quaternion;
+using NumericsVector2 = System.Numerics.Vector2;
 using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
@@ -14,10 +16,14 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 /// The instantiation shared by the scene nodes, so the fire-and-forget one and the lifetime-owning one cannot drift
 /// apart in how they parent, place, or hand ownership to what they create.
 /// </summary>
+/// <remarks>
+/// Parenting and ownership are the same question in both dimensions and are answered once; only placement differs, so
+/// the two entry points are a dimension of transform apart and share everything else.
+/// </remarks>
 internal static class SceneInstantiationUtilities
 {
 	/// <summary>
-	/// Instantiates a scene, parents it, places it, and hands it its Forge ownership.
+	/// Instantiates a scene, parents it, places it in 3D, and hands it its Forge ownership.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context.</param>
 	/// <param name="scene">The scene to instantiate.</param>
@@ -30,7 +36,7 @@ internal static class SceneInstantiationUtilities
 	/// <param name="passOwnership">Whether to call <see cref="IInstantiationReceiver.OnInstantiated"/> on the instance.
 	/// </param>
 	/// <returns>The instance node, or <see langword="null"/> when it could not be parented.</returns>
-	public static Node? Instantiate(
+	public static Node? Instantiate3D(
 		GraphContext graphContext,
 		PackedScene scene,
 		InstantiateParentMode parentMode,
@@ -39,6 +45,59 @@ internal static class SceneInstantiationUtilities
 		NumericsVector3? position,
 		NumericsQuaternion? rotation,
 		bool passOwnership)
+	{
+		return Instantiate(
+			graphContext,
+			scene,
+			parentMode,
+			parentNode,
+			parentEntity,
+			passOwnership,
+			(instance, parent) => Place3D(instance, parent, parentEntity, position, rotation));
+	}
+
+	/// <summary>
+	/// Instantiates a scene, parents it, places it in 2D, and hands it its Forge ownership.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="scene">The scene to instantiate.</param>
+	/// <param name="parentMode">Where to parent the instance.</param>
+	/// <param name="parentNode">The parent to use under <see cref="InstantiateParentMode.Node"/>.</param>
+	/// <param name="parentEntity">The entity to parent under in <see cref="InstantiateParentMode.Entity"/>, also used
+	/// as the placement anchor when no position was resolved.</param>
+	/// <param name="position">The world position, when one was resolved.</param>
+	/// <param name="rotation">The world rotation in radians, when one was resolved.</param>
+	/// <param name="passOwnership">Whether to call <see cref="IInstantiationReceiver.OnInstantiated"/> on the instance.
+	/// </param>
+	/// <returns>The instance node, or <see langword="null"/> when it could not be parented.</returns>
+	public static Node? Instantiate2D(
+		GraphContext graphContext,
+		PackedScene scene,
+		InstantiateParentMode parentMode,
+		Node? parentNode,
+		IForgeEntity? parentEntity,
+		NumericsVector2? position,
+		double? rotation,
+		bool passOwnership)
+	{
+		return Instantiate(
+			graphContext,
+			scene,
+			parentMode,
+			parentNode,
+			parentEntity,
+			passOwnership,
+			(instance, parent) => Place2D(instance, parent, parentEntity, position, rotation));
+	}
+
+	private static Node? Instantiate(
+		GraphContext graphContext,
+		PackedScene scene,
+		InstantiateParentMode parentMode,
+		Node? parentNode,
+		IForgeEntity? parentEntity,
+		bool passOwnership,
+		Action<Node, Node> place)
 	{
 		Node? parent = ResolveParent(parentMode, parentNode, parentEntity);
 
@@ -54,7 +113,7 @@ internal static class SceneInstantiationUtilities
 		// Placed before it is added, because AddChild readies the instance: a scene that reads its own transform in
 		// _Ready - as ForgeProjectile3D does to record where it launched from - would otherwise measure from the
 		// scene's authored position and only afterwards be teleported to the one the graph asked for.
-		Place(instance, parent, parentEntity, position, rotation);
+		place(instance, parent);
 
 		parent.AddChild(instance);
 

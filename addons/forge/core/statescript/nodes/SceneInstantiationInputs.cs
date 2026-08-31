@@ -5,6 +5,7 @@ using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Node = Godot.Node;
 using NumericsQuaternion = System.Numerics.Quaternion;
+using NumericsVector2 = System.Numerics.Vector2;
 using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
@@ -68,6 +69,20 @@ internal static class SceneInstantiationInputs
 	}
 
 	/// <summary>
+	/// Resolves an optional 2D vector input.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="boundName">The bound name of the input.</param>
+	/// <returns>The resolved vector, or <see langword="null"/> when unbound.</returns>
+	public static NumericsVector2? ResolveOptionalVector2(GraphContext graphContext, StringKey boundName)
+	{
+		return boundName != StringKey.Empty
+			&& graphContext.TryResolve(boundName, out NumericsVector2 value)
+				? value
+				: null;
+	}
+
+	/// <summary>
 	/// Resolves an optional rotation input.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context.</param>
@@ -77,6 +92,20 @@ internal static class SceneInstantiationInputs
 	{
 		return boundName != StringKey.Empty
 			&& graphContext.TryResolve(boundName, out NumericsQuaternion value)
+				? value
+				: null;
+	}
+
+	/// <summary>
+	/// Resolves an optional angle input, in radians.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="boundName">The bound name of the input.</param>
+	/// <returns>The resolved angle, or <see langword="null"/> when unbound.</returns>
+	public static double? ResolveOptionalAngle(GraphContext graphContext, StringKey boundName)
+	{
+		return boundName != StringKey.Empty
+			&& graphContext.TryResolve(boundName, out double value)
 				? value
 				: null;
 	}

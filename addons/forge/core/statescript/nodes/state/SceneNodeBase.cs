@@ -2,30 +2,30 @@
 
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Gamesmiths.Forge.Statescript.Ports;
 using Godot;
 using Node = Godot.Node;
-using NumericsQuaternion = System.Numerics.Quaternion;
-using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// State node that owns an instantiated scene for as long as it is active, freeing it on deactivation.
+/// Base for the state nodes that own an instantiated scene for as long as they are active, freeing it on deactivation.
 /// </summary>
 /// <remarks>
-/// <para>This is the difference from Instantiate Scene: what this creates is tied to the node's lifetime. A summon,
+/// <para>This is the difference from Instantiate Scene: what these create is tied to the node's lifetime. A summon,
 /// a zone, a held visual effect - anything that should disappear when the ability ends, is cancelled, or is interrupted
 /// - belongs here, and gets cleaned up without the graph having to remember to free it on every exit path.</para>
 /// <para>An optional lifetime deactivates the node early through <see cref="OnLifetimeEndPort"/>, which is how a timed
 /// summon expires on its own while still being freed if the ability ends first.</para>
+/// <para>As with the action pair, only the transform differs between the two dimensions, and declaring it in the middle
+/// of the parameter list keeps the operand indexes identical across the pair.</para>
 /// </remarks>
 /// <param name="parentMode">Where the instance is parented.</param>
 /// <param name="passOwnership">Whether to tell the instance who instantiated it.</param>
-[StatescriptCategory("Scene")]
-public class SceneNode(
+public abstract class SceneNodeBase(
 	InstantiateParentMode parentMode = InstantiateParentMode.CurrentScene,
 	bool passOwnership = true) : StateNode<SceneNodeContext>
 {
@@ -76,12 +76,35 @@ public class SceneNode(
 	/// </summary>
 	public const byte OnLifetimeEndPort = 4;
 
-	private readonly InstantiateParentMode _parentMode = parentMode;
-	private readonly bool _passOwnership = passOwnership;
+	/// <summary>
+	/// Adds the position and rotation rows, in this node's own dimension.
+	/// </summary>
+	/// <param name="inputProperties">The input property list to add to.</param>
+	protected abstract void DefineTransformParameters(List<InputProperty> inputProperties);
 
-	/// <inheritdoc/>
-	public override string Description =>
-		"Instantiates a scene while active and frees it on deactivation, with an optional lifetime.";
+	/// <summary>
+	/// Instantiates the scene, resolving this node's own dimension of transform on the way.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="scene">The scene to instantiate.</param>
+	/// <param name="parentNode">The resolved parent node operand.</param>
+	/// <param name="parentEntity">The resolved parent entity operand.</param>
+	/// <returns>The instance, or <see langword="null"/> when it could not be parented.</returns>
+	protected abstract Node? Instantiate(
+		GraphContext graphContext,
+		PackedScene scene,
+		Node? parentNode,
+		IForgeEntity? parentEntity);
+
+	/// <summary>
+	/// Gets where the instance is parented.
+	/// </summary>
+	protected InstantiateParentMode ParentMode { get; } = parentMode;
+
+	/// <summary>
+	/// Gets a value indicating whether the instance is told who instantiated it.
+	/// </summary>
+	protected bool PassOwnership { get; } = passOwnership;
 
 	/// <inheritdoc/>
 	protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
@@ -94,8 +117,7 @@ public class SceneNode(
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
 		inputProperties.Add(new InputProperty("Scene", typeof(PackedScene)));
-		inputProperties.Add(new InputProperty("Position", typeof(NumericsVector3), IsOptional: true));
-		inputProperties.Add(new InputProperty("Rotation", typeof(NumericsQuaternion), IsOptional: true));
+		DefineTransformParameters(inputProperties);
 		inputProperties.Add(new InputProperty("Parent Entity", typeof(IForgeEntity), IsOptional: true));
 		inputProperties.Add(new InputProperty("Parent Node", typeof(Node), IsOptional: true));
 		inputProperties.Add(new InputProperty("Lifetime", typeof(double), IsOptional: true));
@@ -121,15 +143,11 @@ public class SceneNode(
 		graphContext.TryResolve(InputProperties[LifetimeInput].BoundName, out double lifetime);
 		nodeContext.Lifetime = lifetime;
 
-		Node? instance = SceneInstantiationUtilities.Instantiate(
+		Node? instance = Instantiate(
 			graphContext,
 			scene,
-			_parentMode,
 			SceneInstantiationInputs.ResolveParentNode(graphContext, InputProperties[ParentNodeInput].BoundName),
-			SceneInstantiationInputs.ResolveEntityOrOwner(graphContext, InputProperties[ParentEntityInput].BoundName),
-			SceneInstantiationInputs.ResolveOptionalVector3(graphContext, InputProperties[PositionInput].BoundName),
-			SceneInstantiationInputs.ResolveOptionalQuaternion(graphContext, InputProperties[RotationInput].BoundName),
-			_passOwnership);
+			SceneInstantiationInputs.ResolveEntityOrOwner(graphContext, InputProperties[ParentEntityInput].BoundName));
 
 		if (instance is null)
 		{

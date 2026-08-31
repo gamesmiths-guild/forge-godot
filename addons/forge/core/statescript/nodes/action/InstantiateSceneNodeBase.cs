@@ -6,26 +6,24 @@ using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
 using Node = Godot.Node;
-using NumericsQuaternion = System.Numerics.Quaternion;
-using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 
 /// <summary>
-/// Action node that instantiates a scene into the running game and forgets about it.
+/// Base for the action nodes that instantiate a scene into the running game and forget about it.
 /// </summary>
 /// <remarks>
-/// <para>The instance outlives the node, and the graph, unless something else frees it. That is the point: a projectile
-/// should keep flying after the ability that fired it has ended. Use Scene Instance instead for anything whose lifetime
-/// should match a state.</para>
+/// <para>Everything about instantiating is dimension-neutral except the transform the graph hands over, so the pair
+/// share this base and differ only in the two rows that place what they made. Declaring the transform in the middle of
+/// the parameter list is what keeps the operand indexes identical across the pair, which is what lets one node editor
+/// serve both.</para>
 /// <para>The instance node and, when the scene is a Forge entity, that entity are written to output variables, so the
 /// graph can keep acting on what it made.</para>
 /// </remarks>
 /// <param name="parentMode">Where the instance is parented.</param>
 /// <param name="passOwnership">Whether to tell the instance who instantiated it, when its root implements
 /// <see cref="IInstantiationReceiver"/>.</param>
-[StatescriptCategory("Scene")]
-public sealed class InstantiateSceneNode(
+public abstract class InstantiateSceneNodeBase(
 	InstantiateParentMode parentMode = InstantiateParentMode.CurrentScene,
 	bool passOwnership = true) : ActionNode
 {
@@ -66,18 +64,41 @@ public sealed class InstantiateSceneNode(
 	/// </summary>
 	public const byte InstanceEntityOutput = 1;
 
-	private readonly InstantiateParentMode _parentMode = parentMode;
-	private readonly bool _passOwnership = passOwnership;
+	/// <summary>
+	/// Adds the position and rotation rows, in this node's own dimension.
+	/// </summary>
+	/// <param name="inputProperties">The input property list to add to.</param>
+	protected abstract void DefineTransformParameters(List<InputProperty> inputProperties);
 
-	/// <inheritdoc/>
-	public override string Description => "Instantiates a scene into the running game, without owning its lifetime.";
+	/// <summary>
+	/// Instantiates the scene, resolving this node's own dimension of transform on the way.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="scene">The scene to instantiate.</param>
+	/// <param name="parentNode">The resolved parent node operand.</param>
+	/// <param name="parentEntity">The resolved parent entity operand.</param>
+	/// <returns>The instance, or <see langword="null"/> when it could not be parented.</returns>
+	protected abstract Node? Instantiate(
+		GraphContext graphContext,
+		PackedScene scene,
+		Node? parentNode,
+		IForgeEntity? parentEntity);
+
+	/// <summary>
+	/// Gets where the instance is parented.
+	/// </summary>
+	protected InstantiateParentMode ParentMode { get; } = parentMode;
+
+	/// <summary>
+	/// Gets a value indicating whether the instance is told who instantiated it.
+	/// </summary>
+	protected bool PassOwnership { get; } = passOwnership;
 
 	/// <inheritdoc/>
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
 		inputProperties.Add(new InputProperty("Scene", typeof(PackedScene)));
-		inputProperties.Add(new InputProperty("Position", typeof(NumericsVector3), IsOptional: true));
-		inputProperties.Add(new InputProperty("Rotation", typeof(NumericsQuaternion), IsOptional: true));
+		DefineTransformParameters(inputProperties);
 		inputProperties.Add(new InputProperty("Parent Entity", typeof(IForgeEntity), IsOptional: true));
 		inputProperties.Add(new InputProperty("Parent Node", typeof(Node), IsOptional: true));
 
@@ -94,15 +115,11 @@ public sealed class InstantiateSceneNode(
 			return;
 		}
 
-		Node? instance = SceneInstantiationUtilities.Instantiate(
+		Node? instance = Instantiate(
 			graphContext,
 			scene,
-			_parentMode,
 			SceneInstantiationInputs.ResolveParentNode(graphContext, InputProperties[ParentNodeInput].BoundName),
-			SceneInstantiationInputs.ResolveEntityOrOwner(graphContext, InputProperties[ParentEntityInput].BoundName),
-			SceneInstantiationInputs.ResolveOptionalVector3(graphContext, InputProperties[PositionInput].BoundName),
-			SceneInstantiationInputs.ResolveOptionalQuaternion(graphContext, InputProperties[RotationInput].BoundName),
-			_passOwnership);
+			SceneInstantiationInputs.ResolveEntityOrOwner(graphContext, InputProperties[ParentEntityInput].BoundName));
 
 		if (instance is null)
 		{

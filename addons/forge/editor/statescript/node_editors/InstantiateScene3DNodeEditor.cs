@@ -6,12 +6,12 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
 /// <summary>
-/// Node editor for Scene Instance.
+/// Node editor for Instantiate Scene 3D.
 /// </summary>
 [Tool]
-internal sealed partial class SceneNodeEditor : SceneNodeEditorBase
+internal sealed partial class InstantiateScene3DNodeEditor : SceneNodeEditorBase
 {
 	public override string HandledRuntimeTypeName =>
-		"Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.SceneNode";
+		"Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode";
 }
 #endif
