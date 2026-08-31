@@ -34,6 +34,8 @@ internal static class PhysicsDebugDraw3D
 	// A multiple of four, so the four edges running back to the apex land on rim points that are already being drawn.
 	private const int ConeRimSegments = 16;
 
+	private const float PointMarkExtent = 0.125f;
+
 	private static readonly Dictionary<Color, StandardMaterial3D> _materials = [];
 
 	/// <summary>
@@ -202,6 +204,36 @@ internal static class PhysicsDebugDraw3D
 	}
 
 	/// <summary>
+	/// Points a marker at a world point, drawn as short lines crossing on it.
+	/// </summary>
+	/// <remarks>
+	/// A cross rather than a small shape, because the queries that ask about a point have no radius and any outline
+	/// with a volume would be read as one.
+	/// </remarks>
+	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
+	/// <param name="position">The point to mark.</param>
+	public static void SetPoint(MeshInstance3D? marker, Vector3 position)
+	{
+		ImmediateMesh? mesh = PrepareLineMesh(marker);
+
+		if (mesh is null)
+		{
+			return;
+		}
+
+		mesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
+
+		mesh.SurfaceAddVertex(position - (Vector3.Right * PointMarkExtent));
+		mesh.SurfaceAddVertex(position + (Vector3.Right * PointMarkExtent));
+		mesh.SurfaceAddVertex(position - (Vector3.Up * PointMarkExtent));
+		mesh.SurfaceAddVertex(position + (Vector3.Up * PointMarkExtent));
+		mesh.SurfaceAddVertex(position - (Vector3.Back * PointMarkExtent));
+		mesh.SurfaceAddVertex(position + (Vector3.Back * PointMarkExtent));
+
+		mesh.SurfaceEnd();
+	}
+
+	/// <summary>
 	/// Points a marker at an arrow drawn from a world point along a vector.
 	/// </summary>
 	/// <remarks>
@@ -334,6 +366,64 @@ internal static class PhysicsDebugDraw3D
 
 		MeshInstance3D? marker = CreateMarker(graphContext, color);
 		SetShape(marker, shape, transform);
+		Flash(marker);
+	}
+
+	/// <summary>
+	/// Draws a collision object's own shapes somewhere it is not, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="collisionObject">The object whose shapes are drawn.</param>
+	/// <param name="transform">Where the object would sit and how it would be turned.</param>
+	/// <param name="color">The colour to draw them in.</param>
+	public static void FlashBody(
+		GraphContext graphContext,
+		CollisionObject3D collisionObject,
+		Transform3D transform,
+		Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		// Godot hands the owner ids back as ints and takes them back as uints.
+		foreach (int owner in collisionObject.GetShapeOwners())
+		{
+			uint ownerId = (uint)owner;
+
+			// Disabled owners are left out because the physics query left them out too, and an outline drawn from
+			// geometry the answer did not account for would misreport what was tested.
+			if (collisionObject.IsShapeOwnerDisabled(ownerId))
+			{
+				continue;
+			}
+
+			Transform3D ownerTransform = transform * collisionObject.ShapeOwnerGetTransform(ownerId);
+			int shapeCount = collisionObject.ShapeOwnerGetShapeCount(ownerId);
+
+			for (int shapeId = 0; shapeId < shapeCount; shapeId++)
+			{
+				FlashShape(graphContext, collisionObject.ShapeOwnerGetShape(ownerId, shapeId), ownerTransform, color);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Draws a mark where a query asked about a single point, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="position">The point that was tested.</param>
+	/// <param name="color">The colour to draw it in.</param>
+	public static void FlashPoint(GraphContext graphContext, Vector3 position, Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		MeshInstance3D? marker = CreateMarker(graphContext, color);
+		SetPoint(marker, position);
 		Flash(marker);
 	}
 

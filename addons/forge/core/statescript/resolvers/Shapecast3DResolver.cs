@@ -5,7 +5,6 @@ using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
-using GodotNode = Godot.Node;
 using GodotRidArray = Godot.Collections.Array<Godot.Rid>;
 using NumericsQuaternion = System.Numerics.Quaternion;
 using NumericsVector3 = System.Numerics.Vector3;
@@ -95,7 +94,7 @@ internal sealed class Shapecast3DResolver(
 			_collideWithAreas,
 			hasExclusions ? _exclusions : null,
 			out Transform3D hitTransform,
-			out GodotNode? collider);
+			out RaycastResult3D hitResult);
 
 		// The shape is drawn where the sweep came to rest and the line runs the sweep's full reach, so a hit reads as
 		// the shape stopped part way along its own path. A miss draws both at the far end, which tells an obstacle
@@ -108,7 +107,10 @@ internal sealed class Shapecast3DResolver(
 			origin + motion,
 			hit ? PhysicsDebugDraw3D.RayHitColor : PhysicsDebugDraw3D.RayClearColor);
 
-		return hit && ForgeEntityBridge.TryGetEntityInHierarchy(collider, out IForgeEntity? entity) ? entity : null;
+		// Only the entity survives, because a resolver returns one value. Everything else the sweep reported - where
+		// it landed, the surface normal, the collider, the distance - is what the Shapecast 3D node exists to give a
+		// graph, and is the reason the node form is not merely this resolver with ports.
+		return hit ? hitResult.Entity : null;
 	}
 
 	private Basis ResolveBasis(GraphContext graphContext)

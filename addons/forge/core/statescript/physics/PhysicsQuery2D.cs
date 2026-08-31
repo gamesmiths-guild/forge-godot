@@ -280,6 +280,63 @@ internal static class PhysicsQuery2D
 	}
 
 	/// <summary>
+	/// Collects the entities whose colliders contain a point.
+	/// </summary>
+	/// <remarks>
+	/// The one space-state query with no shape behind it, and not the same thing as an overlap with a tiny circle: a
+	/// point is exact and needs no radius invented for it. It matters more here than in 3D, because a 2D cursor
+	/// already names a world point exactly — this is what the player just clicked on.
+	/// </remarks>
+	/// <param name="world">The world to query.</param>
+	/// <param name="position">The point to test.</param>
+	/// <param name="mask">The physics layers the query can find.</param>
+	/// <param name="includeAreas">Whether areas count, as well as bodies.</param>
+	/// <param name="excluded">Entities to leave out. Untyped because both lanes hand back untyped arrays; anything
+	/// that is not an entity is ignored.</param>
+	/// <param name="into">The set to add the found entities to.</param>
+	public static void CollectPointOverlaps(
+		World2D world,
+		Vector2 position,
+		uint mask,
+		bool includeAreas,
+		IReadOnlyList<object?>? excluded,
+		ISet<IForgeEntity> into)
+	{
+		var query = new PhysicsPointQueryParameters2D
+		{
+			Position = position,
+			CollisionMask = mask,
+			CollideWithBodies = true,
+			CollideWithAreas = includeAreas,
+		};
+
+		foreach (GodotDictionary hit in world.DirectSpaceState.IntersectPoint(query, MaxResults))
+		{
+			AddEntity(hit["collider"].As<Node>(), excluded, into);
+		}
+	}
+
+	/// <summary>
+	/// Reports whether a body would fit if it were moved.
+	/// </summary>
+	/// <remarks>
+	/// <para>The check the non-solving movement nodes create a need for. Set Position 2D and Move To 2D drive the
+	/// transform and pass through geometry, so "can this character actually be there" is a question a graph has to ask
+	/// before it teleports — a blink into a wall is the classic way an ability breaks a level.</para>
+	/// <para>It tests the body's <em>own</em> collision shapes, which is what makes it a better answer here than a
+	/// sweep: a Shapecast can only test a shape somebody authored into it, and keeping that in sync with the character
+	/// it stands for is exactly the sort of duplication that rots.</para>
+	/// </remarks>
+	/// <param name="body">The body to test.</param>
+	/// <param name="from">The transform to test from.</param>
+	/// <param name="motion">The movement to test, which may be zero to test the destination itself.</param>
+	/// <returns><see langword="true"/> if nothing is in the way; <see langword="false"/> otherwise.</returns>
+	public static bool CanFit(PhysicsBody2D body, Transform2D from, Vector2 motion)
+	{
+		return !body.TestMove(from, motion);
+	}
+
+	/// <summary>
 	/// Collects the entities an existing area currently overlaps.
 	/// </summary>
 	/// <param name="area">The area to read.</param>
@@ -333,7 +390,8 @@ internal static class PhysicsQuery2D
 	/// <param name="collideWithAreas">Whether areas stop the sweep, as well as bodies.</param>
 	/// <param name="exclude">Collision object RIDs the sweep passes through.</param>
 	/// <param name="hitTransform">Where the shape came to rest, whether or not it met anything.</param>
-	/// <param name="collider">What stopped the sweep, when something did.</param>
+	/// <param name="result">What stopped the sweep, when something did. Reported in the same shape a ray reports its
+	/// hit, so the sweep nodes can write the same five outputs the ray nodes write.</param>
 	/// <returns><see langword="true"/> if the sweep met something; <see langword="false"/> otherwise.</returns>
 	public static bool TryShapecast(
 		World2D world,
@@ -344,10 +402,10 @@ internal static class PhysicsQuery2D
 		bool collideWithAreas,
 		GodotRidArray? exclude,
 		out Transform2D hitTransform,
-		out Node? collider)
+		out RaycastResult2D result)
 	{
 		hitTransform = transform;
-		collider = null;
+		result = default;
 
 		var query = new PhysicsShapeQueryParameters2D
 		{
@@ -364,8 +422,6 @@ internal static class PhysicsQuery2D
 			query.Exclude = exclude;
 		}
 
-		// Two fractions come back: the last one that is definitely clear, and the first one that is not. A sweep that
-		// meets nothing reports both as the whole motion.
 		// Asked before the sweep, because the sweep cannot answer it. Godot's cast motion skips every collider the
 		// shape already overlaps at its start - "test initial overlap, ignore objects it's inside of", in the engine's
 		// own words - so a sweep that begins inside something reports no hit at all rather than reporting it at zero
@@ -377,11 +433,14 @@ internal static class PhysicsQuery2D
 
 		if (resting.Count > 0)
 		{
-			return TryReadCollider(resting, out collider);
+			result = ReadResult(resting, 0.0f);
+			return true;
 		}
 
 		query.Motion = motion;
 
+		// Two fractions come back: the last one that is definitely clear, and the first one that is not. A sweep that
+		// meets nothing reports both as the whole motion.
 		float[] fractions = world.DirectSpaceState.CastMotion(query);
 
 		if (fractions.Length < 2 || fractions[1] >= 1.0f)
@@ -398,13 +457,26 @@ internal static class PhysicsQuery2D
 
 		GodotDictionary rest = world.DirectSpaceState.GetRestInfo(query);
 
-		return rest.Count > 0 && TryReadCollider(rest, out collider);
+		if (rest.Count == 0)
+		{
+			return false;
+		}
+
+		result = ReadResult(rest, motion.Length() * fractions[1]);
+
+		return true;
 	}
 
-	private static bool TryReadCollider(GodotDictionary rest, out Node? collider)
+	private static RaycastResult2D ReadResult(GodotDictionary rest, float distance)
 	{
-		collider = GodotObject.InstanceFromId((ulong)rest["collider_id"]) as Node;
-		return collider is not null;
+		var collider = GodotObject.InstanceFromId((ulong)rest["collider_id"]) as Node2D;
+
+		return new RaycastResult2D(
+			rest["point"].AsVector2(),
+			rest["normal"].AsVector2(),
+			collider,
+			ForgeEntityBridge.TryGetEntityInHierarchy(collider, out IForgeEntity? entity) ? entity : null,
+			distance);
 	}
 
 	private static void CollectCollisionObjects(Node node, GodotRidArray into)

@@ -36,6 +36,8 @@ internal static class PhysicsDebugDraw2D
 	// aperture rather than a full turn.
 	private const int ConeArcSegments = 12;
 
+	private const float PointMarkExtent = 6.0f;
+
 	/// <summary>
 	/// Gets a value indicating whether the running game was started with Visible Collision Shapes on.
 	/// </summary>
@@ -188,6 +190,30 @@ internal static class PhysicsDebugDraw2D
 	}
 
 	/// <summary>
+	/// Points a marker at a world point, drawn as short lines crossing on it.
+	/// </summary>
+	/// <remarks>
+	/// A cross rather than a small shape, because the queries that ask about a point have no radius and any outline
+	/// with a volume would be read as one.
+	/// </remarks>
+	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
+	/// <param name="position">The point to mark.</param>
+	public static void SetPoint(PhysicsDebugMarker2D? marker, Vector2 position)
+	{
+		if (marker is null || !GodotObject.IsInstanceValid(marker))
+		{
+			return;
+		}
+
+		marker.BeginSegments();
+		marker.AddSegment(
+			position - (Vector2.Right * PointMarkExtent),
+			position + (Vector2.Right * PointMarkExtent));
+		marker.AddSegment(position - (Vector2.Up * PointMarkExtent), position + (Vector2.Up * PointMarkExtent));
+		marker.EndSegments();
+	}
+
+	/// <summary>
 	/// Points a marker at an arrow drawn from a world point along a vector.
 	/// </summary>
 	/// <remarks>
@@ -298,6 +324,64 @@ internal static class PhysicsDebugDraw2D
 
 		PhysicsDebugMarker2D? marker = CreateMarker(graphContext, color);
 		SetShape(marker, shape, transform);
+		Flash(marker);
+	}
+
+	/// <summary>
+	/// Draws a collision object's own shapes somewhere it is not, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="collisionObject">The object whose shapes are drawn.</param>
+	/// <param name="transform">Where the object would sit and how it would be turned.</param>
+	/// <param name="color">The colour to draw them in.</param>
+	public static void FlashBody(
+		GraphContext graphContext,
+		CollisionObject2D collisionObject,
+		Transform2D transform,
+		Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		// Godot hands the owner ids back as ints and takes them back as uints.
+		foreach (int owner in collisionObject.GetShapeOwners())
+		{
+			uint ownerId = (uint)owner;
+
+			// Disabled owners are left out because the physics query left them out too, and an outline drawn from
+			// geometry the answer did not account for would misreport what was tested.
+			if (collisionObject.IsShapeOwnerDisabled(ownerId))
+			{
+				continue;
+			}
+
+			Transform2D ownerTransform = transform * collisionObject.ShapeOwnerGetTransform(ownerId);
+			int shapeCount = collisionObject.ShapeOwnerGetShapeCount(ownerId);
+
+			for (int shapeId = 0; shapeId < shapeCount; shapeId++)
+			{
+				FlashShape(graphContext, collisionObject.ShapeOwnerGetShape(ownerId, shapeId), ownerTransform, color);
+			}
+		}
+	}
+
+	/// <summary>
+	/// Draws a mark where a query asked about a single point, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="position">The point that was tested.</param>
+	/// <param name="color">The colour to draw it in.</param>
+	public static void FlashPoint(GraphContext graphContext, Vector2 position, Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		PhysicsDebugMarker2D? marker = CreateMarker(graphContext, color);
+		SetPoint(marker, position);
 		Flash(marker);
 	}
 
