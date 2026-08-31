@@ -390,6 +390,8 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 	private void BuildOutputSection(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
+		DropOutputBindingsBeyond(typeInfo.OutputVariablesInfo.Length);
+
 		if (typeInfo.OutputVariablesInfo.Length == 0)
 		{
 			return;
@@ -416,6 +418,24 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			}
 
 			AddObjectOutputRow(root, typeInfo.OutputVariablesInfo[i].Label, i, objectTypeId);
+		}
+	}
+
+	private void DropOutputBindingsBeyond(int outputCount)
+	{
+		if (EditorUndoRedoUtils.IsReplaying)
+		{
+			return;
+		}
+
+		for (int i = NodeResource.PropertyBindings.Count - 1; i >= 0; i--)
+		{
+			StatescriptNodeProperty binding = NodeResource.PropertyBindings[i];
+
+			if (binding.Direction == StatescriptPropertyDirection.Output && binding.PropertyIndex >= outputCount)
+			{
+				RemoveBinding(StatescriptPropertyDirection.Output, binding.PropertyIndex);
+			}
 		}
 	}
 
