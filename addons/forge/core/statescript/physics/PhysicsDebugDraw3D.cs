@@ -31,6 +31,9 @@ internal static class PhysicsDebugDraw3D
 	private const float ArrowHeadFraction = 0.18f;
 	private const float ArrowHeadMaxLength = 0.6f;
 
+	// A multiple of four, so the four edges running back to the apex land on rim points that are already being drawn.
+	private const int ConeRimSegments = 16;
+
 	private static readonly Dictionary<Color, StandardMaterial3D> _materials = [];
 
 	/// <summary>
@@ -46,17 +49,17 @@ internal static class PhysicsDebugDraw3D
 	/// <summary>
 	/// Gets the colour of an overlap query that found something.
 	/// </summary>
-	public static Color OverlapFoundColor { get; } = new(1.0f, 0.55f, 0.2f, 0.35f);
+	public static Color OverlapFoundColor { get; } = new(1.0f, 0.55f, 0.2f, 0.2f);
 
 	/// <summary>
 	/// Gets the colour of a ray that hit something.
 	/// </summary>
-	public static Color RayHitColor { get; } = new(1.0f, 0.45f, 0.2f);
+	public static Color RayHitColor { get; } = new(1.0f, 0.45f, 0.2f, 0.2f);
 
 	/// <summary>
 	/// Gets the colour of a ray that reached its full length without hitting anything.
 	/// </summary>
-	public static Color RayClearColor { get; } = new(1.0f, 0.85f, 0.3f);
+	public static Color RayClearColor { get; } = new(1.0f, 0.85f, 0.3f, 0.2f);
 
 	/// <summary>
 	/// Gets the colour of an unobstructed line of sight.
@@ -134,6 +137,50 @@ internal static class PhysicsDebugDraw3D
 	}
 
 	/// <summary>
+	/// Points a marker at a swept shape: its outline where it came to rest, and the line its centre travelled along.
+	/// </summary>
+	/// <remarks>
+	/// <para>The outline alone says where the sweep <em>stopped</em> and nothing about where it came from, which for a
+	/// cast that missed leaves a shape floating with no visible relationship to the caster. The line is what Godot's
+	/// own <see cref="ShapeCast3D"/> gizmo draws for the same reason, and it is drawn to the sweep's full reach rather
+	/// than to the resting point — on a hit, the gap between the end of the line and the shape is exactly the distance
+	/// the sweep was stopped short by.</para>
+	/// <para>Both are one colour, because they are one answer.</para>
+	/// </remarks>
+	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
+	/// <param name="shape">The shape that was swept.</param>
+	/// <param name="transform">Where the shape came to rest and how it is turned.</param>
+	/// <param name="from">Where the sweep started.</param>
+	/// <param name="to">Where the sweep would have reached had nothing stopped it.</param>
+	public static void SetShapecast(
+		MeshInstance3D? marker,
+		Shape3D shape,
+		Transform3D transform,
+		Vector3 from,
+		Vector3 to)
+	{
+		if (marker is null || !GodotObject.IsInstanceValid(marker))
+		{
+			return;
+		}
+
+		SetShape(marker, shape, transform);
+
+		MeshInstance3D line = EnsureLineChild(marker);
+
+		// Recoloured from the parent on every call rather than once, because a held sweep recolours its marker each
+		// tick and a line still showing the previous answer would be worse than no line.
+		line.MaterialOverride = marker.MaterialOverride;
+
+		var mesh = (ImmediateMesh)line.Mesh;
+		mesh.ClearSurfaces();
+		mesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
+		mesh.SurfaceAddVertex(from);
+		mesh.SurfaceAddVertex(to);
+		mesh.SurfaceEnd();
+	}
+
+	/// <summary>
 	/// Points a marker at a line between two world points.
 	/// </summary>
 	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
@@ -202,6 +249,76 @@ internal static class PhysicsDebugDraw3D
 	}
 
 	/// <summary>
+	/// Points a marker at a cone opening from a world point.
+	/// </summary>
+	/// <remarks>
+	/// A cone is the one query shape Godot has no collision shape for, so there is no debug mesh to borrow and the
+	/// wireframe is built here: four edges to the rim and a ring closing them, which is the least geometry that reads
+	/// as a cone rather than as a fan of lines. The rim sits on the sphere the query actually swept, so what is drawn
+	/// is the volume that was asked about and not an approximation of it.
+	/// </remarks>
+	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
+	/// <param name="origin">The cone's apex.</param>
+	/// <param name="direction">Which way it opens. Normalized here.</param>
+	/// <param name="range">How far it reaches.</param>
+	/// <param name="halfAngle">Half the cone's aperture, in radians.</param>
+	public static void SetCone(
+		MeshInstance3D? marker,
+		Vector3 origin,
+		Vector3 direction,
+		float range,
+		float halfAngle)
+	{
+		ImmediateMesh? mesh = PrepareLineMesh(marker);
+
+		if (mesh is null)
+		{
+			return;
+		}
+
+		if (direction.LengthSquared() <= 0.000001f || range <= 0)
+		{
+			return;
+		}
+
+		Vector3 axis = direction.Normalized();
+
+		// Any axis not parallel to the cone works for spreading the rim; up is only unusable for a vertical cone.
+		Vector3 side = Mathf.Abs(axis.Dot(Vector3.Up)) > 0.99f
+			? axis.Cross(Vector3.Right).Normalized()
+			: axis.Cross(Vector3.Up).Normalized();
+
+		Vector3 up = axis.Cross(side).Normalized();
+
+		Vector3 rimCenter = origin + (axis * range * Mathf.Cos(halfAngle));
+		float rimRadius = range * Mathf.Sin(halfAngle);
+
+		mesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
+
+		Vector3 previous = rimCenter + (side * rimRadius);
+
+		for (int i = 1; i <= ConeRimSegments; i++)
+		{
+			float angle = Mathf.Tau * i / ConeRimSegments;
+			Vector3 point = rimCenter + (((side * Mathf.Cos(angle)) + (up * Mathf.Sin(angle))) * rimRadius);
+
+			mesh.SurfaceAddVertex(previous);
+			mesh.SurfaceAddVertex(point);
+
+			// Every quarter turn an edge runs back to the apex, which is what turns the ring into a cone.
+			if (i % (ConeRimSegments / 4) == 0)
+			{
+				mesh.SurfaceAddVertex(origin);
+				mesh.SurfaceAddVertex(point);
+			}
+
+			previous = point;
+		}
+
+		mesh.SurfaceEnd();
+	}
+
+	/// <summary>
 	/// Draws a shape where a one-shot query asked about it, for a moment.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
@@ -217,6 +334,33 @@ internal static class PhysicsDebugDraw3D
 
 		MeshInstance3D? marker = CreateMarker(graphContext, color);
 		SetShape(marker, shape, transform);
+		Flash(marker);
+	}
+
+	/// <summary>
+	/// Draws a swept shape where a one-shot cast ran, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="shape">The shape that was swept.</param>
+	/// <param name="transform">Where the shape came to rest and how it is turned.</param>
+	/// <param name="from">Where the sweep started.</param>
+	/// <param name="to">Where the sweep would have reached had nothing stopped it.</param>
+	/// <param name="color">The colour to draw it in.</param>
+	public static void FlashShapecast(
+		GraphContext graphContext,
+		Shape3D shape,
+		Transform3D transform,
+		Vector3 from,
+		Vector3 to,
+		Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		MeshInstance3D? marker = CreateMarker(graphContext, color);
+		SetShapecast(marker, shape, transform, from, to);
 		Flash(marker);
 	}
 
@@ -255,6 +399,33 @@ internal static class PhysicsDebugDraw3D
 
 		MeshInstance3D? marker = CreateMarker(graphContext, color);
 		SetArrow(marker, origin, vector);
+		Flash(marker);
+	}
+
+	/// <summary>
+	/// Draws a cone where a one-shot query asked about it, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="origin">The cone's apex.</param>
+	/// <param name="direction">Which way it opens.</param>
+	/// <param name="range">How far it reaches.</param>
+	/// <param name="halfAngle">Half the cone's aperture, in radians.</param>
+	/// <param name="color">The colour to draw it in.</param>
+	public static void FlashCone(
+		GraphContext graphContext,
+		Vector3 origin,
+		Vector3 direction,
+		float range,
+		float halfAngle,
+		Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		MeshInstance3D? marker = CreateMarker(graphContext, color);
+		SetCone(marker, origin, direction, range, halfAngle);
 		Flash(marker);
 	}
 
@@ -299,6 +470,30 @@ internal static class PhysicsDebugDraw3D
 		}
 
 		tree.CreateTimer(FlashSeconds).Timeout += () => Release(marker);
+	}
+
+	// The centre line is a child rather than another surface on the marker's own mesh, because that mesh is the
+	// shape's own debug mesh - borrowed from the shape and shared with everything else drawing it, so nothing may be
+	// added to it. The child is top level, which keeps its vertices world points while the parent carries the shape's
+	// transform, and it goes with the marker when that is freed.
+	private static MeshInstance3D EnsureLineChild(MeshInstance3D marker)
+	{
+		if (marker.GetChildCount() > 0 && marker.GetChild(0) is MeshInstance3D existing)
+		{
+			return existing;
+		}
+
+		var child = new MeshInstance3D
+		{
+			Mesh = new ImmediateMesh(),
+			CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+		};
+
+		marker.AddChild(child);
+		child.TopLevel = true;
+		child.GlobalTransform = Transform3D.Identity;
+
+		return child;
 	}
 
 	private static ImmediateMesh? PrepareLineMesh(MeshInstance3D? marker)
