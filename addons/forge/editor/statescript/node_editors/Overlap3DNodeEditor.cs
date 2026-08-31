@@ -55,11 +55,14 @@ internal sealed partial class Overlap3DNodeEditor : StandardNodeEditorBase
 	protected override StatescriptResolverResource? GetDefaultInputResolver(int inputIndex)
 	{
 		// The ignore row starts as the caster, in both modes: a watch is almost never meant to report the entity
-		// running it. The position starts on an Entity Position 3D, matching the resolver.
+		// running it. The position and the shape start on an Entity Position 3D and a sphere, matching the resolver -
+		// and the shape has to, because an unbound one is not a query that finds nothing, it is a query that never
+		// runs, and the poll returns without a word to say so.
 		return inputIndex switch
 		{
 			IgnoreInputIndex => EntityIgnoreOperand.BuildOwner(),
 			PositionInputIndex => new EntityPosition3DResolverResource(),
+			ShapeInputIndex => new SphereShape3DResolverResource(),
 			_ => null,
 		};
 	}
