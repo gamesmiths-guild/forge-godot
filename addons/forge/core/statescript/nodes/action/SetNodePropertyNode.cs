@@ -61,7 +61,7 @@ public sealed class SetNodePropertyNode(
 			return;
 		}
 
-		var path = new NodePath(_propertyPath);
+		using var path = new NodePath(_propertyPath);
 
 		if (!NodePropertyAccess.DeclaresProperty(node, path))
 		{

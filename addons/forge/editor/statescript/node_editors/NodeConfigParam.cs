@@ -29,6 +29,13 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// <param name="Placeholder">The hint shown in an empty text field, ignored unless <see cref="IsText"/> is set.</param>
 /// <param name="SuggestsInputActions">When <see langword="true"/>, the text field is given a dropdown offering the
 /// project's input actions. Ignored unless <see cref="IsText"/> is set.</param>
+/// <param name="RetypesInput">The index of the input property whose declared type or shape this setting decides, for
+/// settings that do more than change which rows are drawn. Such a change invalidates whatever resolver the slot holds -
+/// a scalar constant does not belong on a row that now expects a node - so the change is routed through
+/// <see cref="CustomNodeEditor.ChangeInputPropertyConfig"/>, which resets the binding and lets the rebuild seed the
+/// default for the new type, all as one undoable step. <see cref="AffectsLayout"/> alone rebuilds the node but keeps
+/// the stale binding, which then reads back as a row showing one thing and a graph running another. Applies to enum and
+/// boolean settings; a text setting never decides an input's type.</param>
 internal readonly record struct NodeConfigParam(
 	string Key,
 	string Label,
@@ -38,5 +45,6 @@ internal readonly record struct NodeConfigParam(
 	bool AffectsLayout = false,
 	bool IsText = false,
 	string Placeholder = "",
-	bool SuggestsInputActions = false);
+	bool SuggestsInputActions = false,
+	int? RetypesInput = null);
 #endif

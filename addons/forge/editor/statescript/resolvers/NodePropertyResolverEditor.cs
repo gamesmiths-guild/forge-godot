@@ -25,15 +25,11 @@ internal sealed partial class NodePropertyResolverEditor : NodeEditorProperty
 {
 	private static readonly Type[] _nodeExpectedTypes = [typeof(GodotNode)];
 
-	private static readonly InteropValueType[] _valueTypes =
-		[.. Enum.GetValues<InteropValueType>().Where(x => x != InteropValueType.None)];
-
-	private static readonly string[] _valueTypeNames = [.. _valueTypes.Select(x => x.ToString())];
-
 	private Action? _onChanged;
 	private NestedResolverPicker? _nodePicker;
 	private LineEdit? _propertyPathField;
 	private OptionButton? _valueTypeDropdown;
+	private InteropValueType[] _valueTypes = [];
 	private bool _isArray;
 
 	public override string DisplayName => "Node Property";
@@ -94,10 +90,12 @@ internal sealed partial class NodePropertyResolverEditor : NodeEditorProperty
 			_propertyPathField,
 			ResolverEditorLayoutUtilities.SettingLabelWidth));
 
+		_valueTypes = GetSelectableValueTypes(expectedType);
+
 		_valueTypeDropdown = ResolverEditorLayoutUtilities.CreateEnumRow(
 			root,
 			"Type:",
-			_valueTypeNames,
+			[.. _valueTypes.Select(x => x.ToString())],
 			Array.IndexOf(_valueTypes, ResolveInitialValueType(resource, expectedType)),
 			() => _onChanged?.Invoke());
 	}
@@ -148,25 +146,41 @@ internal sealed partial class NodePropertyResolverEditor : NodeEditorProperty
 		_valueTypeDropdown = null;
 	}
 
-	// A stored type wins, then the slot's own type, then Float. The slot answers it for every input that names a
-	// concrete type, which leaves only the wildcard operands - the sides of a comparison, a math operand - choosing.
-	private static InteropValueType ResolveInitialValueType(
-		NodePropertyResolverResource? resource,
-		Type expectedType)
+	private static InteropValueType[] GetSelectableValueTypes(Type expectedType)
 	{
-		if (resource is not null)
+		if (expectedType == typeof(GodotNode))
+		{
+			return [InteropValueType.Node];
+		}
+
+		InteropValueType[] valueTypes = [.. Enum.GetValues<InteropValueType>()
+			.Where(x => x is not InteropValueType.None and not InteropValueType.Node)];
+
+		if (expectedType == typeof(ForgeVariant128))
+		{
+			return valueTypes;
+		}
+
+		return [.. valueTypes.Where(x =>
+			StatescriptVariableTypeConverter.IsCompatible(expectedType, InteropValues.ToVariableType(x)))];
+	}
+
+	private InteropValueType ResolveInitialValueType(NodePropertyResolverResource? resource, Type expectedType)
+	{
+		if (resource is not null && Array.IndexOf(_valueTypes, resource.ValueType) >= 0)
 		{
 			return resource.ValueType;
 		}
 
 		return InteropValues.TryFromClrType(expectedType, out InteropValueType valueType)
-			? valueType
-			: InteropValueType.Float;
+			&& Array.IndexOf(_valueTypes, valueType) >= 0
+				? valueType
+				: _valueTypes[0];
 	}
 
 	private InteropValueType SelectedValueType()
 	{
-		return _valueTypeDropdown is not null && IsInstanceValid(_valueTypeDropdown)
+		return _valueTypeDropdown is not null && IsInstanceValid(_valueTypeDropdown) && _valueTypes.Length > 0
 			? _valueTypes[Math.Clamp(_valueTypeDropdown.Selected, 0, _valueTypes.Length - 1)]
 			: InteropValueType.Float;
 	}

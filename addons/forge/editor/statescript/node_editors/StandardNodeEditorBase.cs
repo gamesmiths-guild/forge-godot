@@ -8,6 +8,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
 using Godot;
+using GodotCollections = Godot.Collections;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
@@ -306,8 +307,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			dropdown.Selected = currentIndex >= 0 ? currentIndex : 0;
 
 			// Enum members are stored by name so flags enums parse correctly at graph-build time.
-			dropdown.ItemSelected += index =>
-				SetNodeConfig(parameter.Key, enumNames[(int)index], $"Change {parameter.Label}", parameter.AffectsLayout);
+			dropdown.ItemSelected += index => ApplySetting(parameter, enumNames[(int)index]);
 
 			grid.AddChild(dropdown);
 			return;
@@ -326,9 +326,22 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 			ButtonPressed = ReadBoolConfig(parameter.Key, parameter.DefaultBool),
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
 		};
-		checkBox.Toggled += pressed =>
-			SetNodeConfig(parameter.Key, pressed, $"Change {parameter.Label}", parameter.AffectsLayout);
+		checkBox.Toggled += pressed => ApplySetting(parameter, pressed);
 		return checkBox;
+	}
+
+	private void ApplySetting(NodeConfigParam parameter, Variant value)
+	{
+		if (parameter.RetypesInput is not int inputIndex)
+		{
+			SetNodeConfig(parameter.Key, value, $"Change {parameter.Label}", parameter.AffectsLayout);
+			return;
+		}
+
+		ChangeInputPropertyConfig(
+			inputIndex,
+			new GodotCollections.Dictionary { { parameter.Key, value } },
+			$"Change {parameter.Label}");
 	}
 
 	private void BuildInputSection(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)

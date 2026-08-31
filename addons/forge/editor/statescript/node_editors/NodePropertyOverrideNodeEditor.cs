@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
@@ -24,8 +25,13 @@ internal sealed partial class NodePropertyOverrideNodeEditor : StandardNodeEdito
 			"Type",
 			InteropValueTypeNames.Values,
 			DefaultName: "Float",
-			AffectsLayout: true),
-		new NodeConfigParam("isArray", "Array", AffectsLayout: true),
+			AffectsLayout: true,
+			RetypesInput: NodePropertyOverrideNode.ValueInput),
+		new NodeConfigParam(
+			"isArray",
+			"Array",
+			AffectsLayout: true,
+			RetypesInput: NodePropertyOverrideNode.ValueInput),
 	];
 
 	public override string HandledRuntimeTypeName =>

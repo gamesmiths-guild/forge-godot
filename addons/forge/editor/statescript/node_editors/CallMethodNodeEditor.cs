@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
@@ -20,13 +21,15 @@ internal sealed partial class CallMethodNodeEditor : InteropArgumentNodeEditorBa
 			"Arg 1",
 			InteropValueTypeNames.Arguments,
 			DefaultName: NoneName,
-			AffectsLayout: true),
+			AffectsLayout: true,
+			RetypesInput: CallMethodNode.Argument1Input),
 		new NodeConfigParam(
 			Argument2TypeKey,
 			"Arg 2",
 			InteropValueTypeNames.Arguments,
 			DefaultName: NoneName,
-			AffectsLayout: true),
+			AffectsLayout: true,
+			RetypesInput: CallMethodNode.Argument2Input),
 		new NodeConfigParam(
 			"returnType",
 			"Returns",

@@ -34,6 +34,12 @@ internal abstract partial class InteropArgumentNodeEditorBase : StandardNodeEdit
 	protected abstract int Argument1InputIndex { get; }
 
 	/// <inheritdoc/>
+	public override bool SeedsDefaultBinding(int inputIndex)
+	{
+		return inputIndex != Argument1InputIndex && inputIndex != Argument1InputIndex + 1;
+	}
+
+	/// <inheritdoc/>
 	protected override bool IsInputVisible(int inputIndex)
 	{
 		bool hasFirst = ReadStringConfig(Argument1TypeKey, NoneName) != NoneName;

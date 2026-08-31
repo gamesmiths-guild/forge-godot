@@ -73,7 +73,7 @@ public class NodePropertyOverrideNode(
 			return;
 		}
 
-		var path = new NodePath(_propertyPath);
+		using var path = new NodePath(_propertyPath);
 
 		if (!NodePropertyAccess.DeclaresProperty(node, path))
 		{
@@ -108,7 +108,8 @@ public class NodePropertyOverrideNode(
 
 		if (node is not null && GodotObject.IsInstanceValid(node))
 		{
-			node.SetIndexed(new NodePath(_propertyPath), nodeContext.OriginalValue);
+			using var path = new NodePath(_propertyPath);
+			node.SetIndexed(path, nodeContext.OriginalValue);
 		}
 
 		nodeContext.OriginalValue = default;

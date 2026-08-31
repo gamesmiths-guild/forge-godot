@@ -66,7 +66,13 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 			return;
 		}
 
-		graphContext.TryResolve(InputProperties[EnabledInput].BoundName, out bool enabled);
+		if (!graphContext.TryResolve(InputProperties[EnabledInput].BoundName, out bool enabled))
+		{
+			// Nothing is captured either: an override that could not read what to hold must leave the node alone, not
+			// hold it at the false a failed read returns and then claim to restore it.
+			WarnOnce("could not resolve whether to enable or disable. The override was skipped.");
+			return;
+		}
 
 		nodeContext.Node = node;
 		nodeContext.OriginalEnabled = original;

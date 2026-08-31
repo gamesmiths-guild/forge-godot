@@ -24,7 +24,7 @@ internal static class NodePropertyAccess
 	/// <returns><see langword="true"/> when the object declares the property.</returns>
 	public static bool DeclaresProperty(GodotObject target, NodePath propertyPath)
 	{
-		NodePath asPropertyPath = propertyPath.GetAsPropertyPath();
+		using NodePath asPropertyPath = propertyPath.GetAsPropertyPath();
 
 		if (asPropertyPath.GetSubNameCount() == 0)
 		{
