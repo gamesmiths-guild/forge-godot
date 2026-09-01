@@ -17,9 +17,10 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>Every deactivation path restores the original bits, including an abort. That is the whole reason this node
 /// exists rather than a pair of writes the graph has to remember on each exit: a dash that is cancelled mid-flight by a
 /// stun must not leave the character permanently intangible.</para>
-/// <para>The bits found at activation are what gets restored, so a scene that authored extra layers keeps them, and two
-/// overlapping overrides of the same field resolve to whichever ends last rather than to a value neither of them
-/// intended.</para>
+/// <para>Only the bits this node acted on are put back, at the values they had when it activated. Everything else in
+/// the field is left as it currently stands, so a second override on different bits of the same field, or a permanent
+/// write made while this one was running, survives it rather than being reverted by a stale snapshot. Two overrides on
+/// the *same* bits still resolve to whichever ends last, since neither of them can know what the other found.</para>
 /// </remarks>
 /// <param name="target">Which of the two bit fields to change.</param>
 /// <param name="operation">Whether the given bits are turned on or off for the duration.</param>
@@ -78,14 +79,13 @@ public class CollisionOverride3DNode(
 		graphContext.TryResolve(InputProperties[BitsInput].BoundName, out int bits);
 
 		uint original = CollisionBits3D.Read(body, _target);
+		uint overridden = unchecked((uint)bits);
 
 		nodeContext.Body = body;
 		nodeContext.OriginalBits = original;
+		nodeContext.OverriddenBits = overridden;
 
-		CollisionBits3D.Write(
-			body,
-			_target,
-			CollisionBits3D.Apply(original, unchecked((uint)bits), _operation));
+		CollisionBits3D.Write(body, _target, CollisionBits3D.Apply(original, overridden, _operation));
 	}
 
 	/// <inheritdoc/>
@@ -98,7 +98,13 @@ public class CollisionOverride3DNode(
 
 		if (body is not null && GodotObject.IsInstanceValid(body))
 		{
-			CollisionBits3D.Write(body, _target, nodeContext.OriginalBits);
+			CollisionBits3D.Write(
+				body,
+				_target,
+				CollisionBits3D.Restore(
+					CollisionBits3D.Read(body, _target),
+					nodeContext.OriginalBits,
+					nodeContext.OverriddenBits));
 		}
 	}
 

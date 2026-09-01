@@ -1,11 +1,13 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
 using NumericsQuaternion = System.Numerics.Quaternion;
+using NumericsVector2 = System.Numerics.Vector2;
 using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
@@ -14,10 +16,14 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 /// The instantiation shared by the scene nodes, so the fire-and-forget one and the lifetime-owning one cannot drift
 /// apart in how they parent, place, or hand ownership to what they create.
 /// </summary>
+/// <remarks>
+/// Parenting and ownership are the same question in both dimensions and are answered once; only placement differs, so
+/// the two entry points are a dimension of transform apart and share everything else.
+/// </remarks>
 internal static class SceneInstantiationUtilities
 {
 	/// <summary>
-	/// Instantiates a scene, parents it, places it, and hands it its Forge ownership.
+	/// Instantiates a scene, parents it, places it in 3D, and hands it its Forge ownership.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context.</param>
 	/// <param name="scene">The scene to instantiate.</param>
@@ -30,7 +36,7 @@ internal static class SceneInstantiationUtilities
 	/// <param name="passOwnership">Whether to call <see cref="IInstantiationReceiver.OnInstantiated"/> on the instance.
 	/// </param>
 	/// <returns>The instance node, or <see langword="null"/> when it could not be parented.</returns>
-	public static Node? Instantiate(
+	public static Node? Instantiate3D(
 		GraphContext graphContext,
 		PackedScene scene,
 		InstantiateParentMode parentMode,
@@ -39,6 +45,59 @@ internal static class SceneInstantiationUtilities
 		NumericsVector3? position,
 		NumericsQuaternion? rotation,
 		bool passOwnership)
+	{
+		return Instantiate(
+			graphContext,
+			scene,
+			parentMode,
+			parentNode,
+			parentEntity,
+			passOwnership,
+			(instance, parent) => Place3D(instance, parent, parentEntity, position, rotation));
+	}
+
+	/// <summary>
+	/// Instantiates a scene, parents it, places it in 2D, and hands it its Forge ownership.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="scene">The scene to instantiate.</param>
+	/// <param name="parentMode">Where to parent the instance.</param>
+	/// <param name="parentNode">The parent to use under <see cref="InstantiateParentMode.Node"/>.</param>
+	/// <param name="parentEntity">The entity to parent under in <see cref="InstantiateParentMode.Entity"/>, also used
+	/// as the placement anchor when no position was resolved.</param>
+	/// <param name="position">The world position, when one was resolved.</param>
+	/// <param name="rotation">The world rotation in radians, when one was resolved.</param>
+	/// <param name="passOwnership">Whether to call <see cref="IInstantiationReceiver.OnInstantiated"/> on the instance.
+	/// </param>
+	/// <returns>The instance node, or <see langword="null"/> when it could not be parented.</returns>
+	public static Node? Instantiate2D(
+		GraphContext graphContext,
+		PackedScene scene,
+		InstantiateParentMode parentMode,
+		Node? parentNode,
+		IForgeEntity? parentEntity,
+		NumericsVector2? position,
+		double? rotation,
+		bool passOwnership)
+	{
+		return Instantiate(
+			graphContext,
+			scene,
+			parentMode,
+			parentNode,
+			parentEntity,
+			passOwnership,
+			(instance, parent) => Place2D(instance, parent, parentEntity, position, rotation));
+	}
+
+	private static Node? Instantiate(
+		GraphContext graphContext,
+		PackedScene scene,
+		InstantiateParentMode parentMode,
+		Node? parentNode,
+		IForgeEntity? parentEntity,
+		bool passOwnership,
+		Action<Node, Node> place)
 	{
 		Node? parent = ResolveParent(parentMode, parentNode, parentEntity);
 
@@ -54,7 +113,7 @@ internal static class SceneInstantiationUtilities
 		// Placed before it is added, because AddChild readies the instance: a scene that reads its own transform in
 		// _Ready - as ForgeProjectile3D does to record where it launched from - would otherwise measure from the
 		// scene's authored position and only afterwards be teleported to the one the graph asked for.
-		Place(instance, parent, parentEntity, position, rotation);
+		place(instance, parent);
 
 		parent.AddChild(instance);
 
@@ -72,8 +131,12 @@ internal static class SceneInstantiationUtilities
 		return parentMode switch
 		{
 			InstantiateParentMode.Node => parentNode,
-			InstantiateParentMode.Entity => ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode)
-								? spatialNode
+
+			// The node the entity lives on, whichever dimension. Asking for a Node3D found nothing in a 2D game, so
+			// this mode instantiated nothing at all there; "attach it to them" means the same thing in both.
+			InstantiateParentMode.Entity =>
+								ForgeEntityBridge.TryGetOwningNode(entity, string.Empty, out Node? owningNode)
+								? owningNode
 								: null,
 
 			// Reached through the entity rather than a scene-tree singleton, because an editor-time or headless graph
@@ -84,7 +147,7 @@ internal static class SceneInstantiationUtilities
 		};
 	}
 
-	private static void Place(
+	private static void Place3D(
 		Node instance,
 		Node parent,
 		IForgeEntity? entity,
@@ -93,6 +156,7 @@ internal static class SceneInstantiationUtilities
 	{
 		if (instance is not Node3D spatialInstance)
 		{
+			ReportUnplaceable(instance, "3D", position.HasValue || rotation.HasValue);
 			return;
 		}
 
@@ -128,6 +192,58 @@ internal static class SceneInstantiationUtilities
 				spatialInstance.Basis = parentTransform.Basis.Inverse() * new Basis(quaternion.Normalized());
 			}
 		}
+	}
+
+	private static void Place2D(
+		Node instance,
+		Node parent,
+		IForgeEntity? entity,
+		NumericsVector2? position,
+		double? rotation)
+	{
+		if (instance is not Node2D flatInstance)
+		{
+			ReportUnplaceable(instance, "2D", position.HasValue || rotation.HasValue);
+			return;
+		}
+
+		Transform2D parentTransform = parent is Node2D spatialParent
+			? spatialParent.GlobalTransform
+			: Transform2D.Identity;
+
+		if (position.HasValue)
+		{
+			flatInstance.Position =
+				parentTransform.AffineInverse() * new Vector2(position.Value.X, position.Value.Y);
+		}
+		else if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? entityNode))
+		{
+			flatInstance.Position = parentTransform.AffineInverse() * entityNode.GlobalPosition;
+		}
+
+		if (rotation.HasValue)
+		{
+			// Subtracting the parent's own rotation is the 2D spelling of putting a world value through the parent's
+			// transform, exactly as the basis inverse does above. There is no zero-quaternion case to guard: an angle
+			// of zero is simply unturned.
+			flatInstance.Rotation = (float)rotation.Value - parentTransform.Rotation;
+		}
+	}
+
+	// Only worth saying when a transform was authored. A scene with no spatial root is a legitimate thing to
+	// instantiate - a logic node, a pure data scene - and has nothing to place either way; what is a mistake is
+	// binding a position or a rotation and having it silently dropped, which is what the dimension-specific placement
+	// used to do for every instance of the other dimension.
+	private static void ReportUnplaceable(Node instance, string dimension, bool transformAuthored)
+	{
+		if (!transformAuthored)
+		{
+			return;
+		}
+
+		GD.PushWarning(
+			$"Statescript: a {dimension} scene node instantiated a {instance.GetType().Name}, which has no " +
+			$"{dimension} transform to place. The position and rotation it was given were not applied.");
 	}
 
 	private static void ResolveOwnership(
