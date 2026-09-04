@@ -37,6 +37,7 @@ public partial class CameraShakeCueHandler : ForgeCueHandler
 	private ulong _startedAt;
 	private float _magnitudeScale = 1.0f;
 	private bool _sustained;
+	private int _holds;
 
 	/// <summary>
 	/// Gets or sets how far the view is thrown at full strength, in the camera's own units - world units for a 3D
@@ -69,8 +70,9 @@ public partial class CameraShakeCueHandler : ForgeCueHandler
 	/// <inheritdoc/>
 	public override void _ExitTree()
 	{
-		// Put the camera back before going away. A handler freed mid-shake - a scene change, a level reload - would
-		// otherwise leave the offset it wrote on a camera that outlives it.
+		// Put the camera back before going away, whatever is still holding it. A handler freed mid-shake - a scene
+		// change, a level reload - would otherwise leave the offset it wrote on a camera that outlives it.
+		_holds = 0;
 		Restore();
 		base._ExitTree();
 	}
@@ -111,19 +113,30 @@ public partial class CameraShakeCueHandler : ForgeCueHandler
 	/// <inheritdoc/>
 	public override void _CueOnExecute(CueParameters? parameters)
 	{
-		Begin(parameters, sustained: false);
+		// A hold outranks a one-shot. One handler serves every target of its cue, so an execute landing while someone
+		// is still holding the shake must refresh how hard it shakes without also handing it a timer - ending on that
+		// timer would cut a shake its holder still expects to be running.
+		Begin(parameters, sustained: _holds > 0);
 	}
 
 	/// <inheritdoc/>
 	public override void _CueOnApply(CueParameters? parameters)
 	{
+		_holds++;
 		Begin(parameters, sustained: true);
 	}
 
 	/// <inheritdoc/>
 	public override void _CueOnRemove(bool interrupted)
 	{
-		Restore();
+		// Counted rather than switched off, because one handler is shared by every target: two stunned characters are
+		// two holds, and the first stun to expire must not steal the shake from the second.
+		_holds = Mathf.Max(_holds - 1, 0);
+
+		if (_holds == 0)
+		{
+			Restore();
+		}
 	}
 
 	private static void Apply(Camera3D? camera3D, Camera2D? camera2D, Vector2 offset)

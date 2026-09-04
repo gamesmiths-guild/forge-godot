@@ -23,6 +23,10 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <para>Levels that resolve back to the entity being read are stepped over rather than reported, for the same reason
 /// Parent Entity steps over them: under the composition pattern an entity's own node sits below its body, so a naive
 /// walk would report every entity as containing itself.</para>
+/// <para><b>Every read walks the whole subtree.</b> There is no cache, because the answer changes whenever anything is
+/// spawned or freed and a resolver has no teardown to hang a tree-change subscription off. On a rigged character that
+/// is every bone and mesh under the body, so bind this where the graph asks occasionally - a For Each on activation, a
+/// revoke on death - rather than inside a Condition Monitor that asks it every tick.</para>
 /// </remarks>
 /// <param name="entityResolver">Resolves which entity to read.</param>
 internal sealed class ChildEntitiesResolver(IEntityResolver entityResolver) : ObjectArrayResolver<IForgeEntity>

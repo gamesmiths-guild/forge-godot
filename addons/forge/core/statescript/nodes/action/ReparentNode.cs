@@ -68,7 +68,10 @@ public sealed class ReparentNode(bool keepGlobalTransform = true) : ActionNode
 
 		if (node.GetParent() is null)
 		{
-			WarnOnce($"cannot move [{node.Name}], which has no parent to be moved out of. The reparent was skipped.");
+			WarnOnce(
+				"no-parent",
+				$"cannot move [{node.Name}], which has no parent to be moved out of. The reparent was skipped.");
+
 			return;
 		}
 
@@ -77,6 +80,7 @@ public sealed class ReparentNode(bool keepGlobalTransform = true) : ActionNode
 		if (node == newParent || node.IsAncestorOf(newParent))
 		{
 			WarnOnce(
+				"cycle",
 				$"cannot move [{node.Name}] under [{newParent.Name}], which is inside it. The reparent was skipped.");
 
 			return;
@@ -98,16 +102,13 @@ public sealed class ReparentNode(bool keepGlobalTransform = true) : ActionNode
 			return true;
 		}
 
-		WarnOnce($"resolved no {what}. The reparent was skipped.");
+		WarnOnce(what, $"resolved no {what}. The reparent was skipped.");
 		return false;
 	}
 
-	// Suppressed per message rather than per node, so a second, different problem is not hidden by the first having
-	// already been reported. A reparent driven from a loop would otherwise report the same misconfiguration every
-	// frame.
-	private void WarnOnce(string message)
+	private void WarnOnce(string kind, string message)
 	{
-		if (!_warnings.Add(message))
+		if (!_warnings.Add(kind))
 		{
 			return;
 		}

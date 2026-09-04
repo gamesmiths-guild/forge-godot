@@ -119,7 +119,18 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 
 		nodeContext.Agent = agent;
 
-		if (!_useSafeVelocity)
+		// Resolved against the agent, not taken from the setting. Godot routes a submitted velocity through the
+		// avoidance solver only when the agent has avoidance enabled, and the answer comes back solely on that
+		// solver's callback - so on an agent left at Godot's default the signal never fires, and a node that trusted
+		// the setting would feed the body the zero it started with forever, arriving never and failing never.
+		nodeContext.SafeVelocityActive = _useSafeVelocity && agent.AvoidanceEnabled;
+
+		if (_useSafeVelocity && !agent.AvoidanceEnabled)
+		{
+			ReportAvoidanceDisabledOnce();
+		}
+
+		if (!nodeContext.SafeVelocityActive)
 		{
 			return;
 		}
