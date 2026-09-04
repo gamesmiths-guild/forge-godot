@@ -136,8 +136,11 @@ public class RotateTo2DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 
 		// Re-resolved each tick rather than cached: the node may have been freed mid-turn, by a death or a despawn.
+		// A turn whose subject has gone is over, for the same reason a turn that could not start is: nothing gives it
+		// one back, so waiting would stall every graph whose next step hangs off OnAligned.
 		if (!ForgeEntityBridge.TryGetSpatialNode2D(entity, _nodePath, out Node2D? spatialNode))
 		{
+			DeactivateNodeAndEmitMessage(graphContext, OnAlignedPort);
 			return;
 		}
 

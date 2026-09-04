@@ -10,15 +10,28 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 /// Node editor for Rotate To 2D.
 /// </summary>
 /// <remarks>
-/// The mode setting relabels the value input rather than hiding anything, the same as Move To: the input is read
-/// either way and just means seconds or radians per second depending on the mode.
+/// The mode setting relabels the value input rather than hiding anything, since the input is read either way - it just
+/// means seconds or radians per second depending on the mode. That relabelling is what
+/// <see cref="StandardNodeEditorBase.GetInputLabel"/> exists for, and it is why the mode is declared as affecting
+/// layout: without the rebuild the row would keep whichever label it was first drawn with.
 /// </remarks>
 [Tool]
 internal sealed partial class RotateTo2DNodeEditor : StandardNodeEditorBase
 {
+	// Input property index of the duration or speed, matching RotateTo2DNode.
+	private const int ValueInputIndex = 2;
+
+	private const string ModeKey = "mode";
+	private const string DurationMode = "Duration";
+
 	private static readonly IReadOnlyList<NodeConfigParam> _configParams =
 	[
-		new NodeConfigParam("mode", "Mode", SpatialSettingNames.MoveModes, DefaultName: "Duration"),
+		new NodeConfigParam(
+			ModeKey,
+			"Mode",
+			SpatialSettingNames.MoveModes,
+			DefaultName: DurationMode,
+			AffectsLayout: true),
 		new NodeConfigParam("nodePath", "Node", IsText: true, Placeholder: "%TurretPivot"),
 	];
 
@@ -26,5 +39,19 @@ internal sealed partial class RotateTo2DNodeEditor : StandardNodeEditorBase
 		"Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.RotateTo2DNode";
 
 	protected override IReadOnlyList<NodeConfigParam> ConstructorParams => _configParams;
+
+	private bool IsDuration => ReadStringConfig(ModeKey, DurationMode) == DurationMode;
+
+	protected override string? GetInputLabel(int inputIndex)
+	{
+		// Radians per second rather than degrees: the node turns through the angle core's own resolvers produce, and
+		// Deg To Rad is how a degree figure gets there.
+		if (inputIndex != ValueInputIndex)
+		{
+			return null;
+		}
+
+		return IsDuration ? "Duration (s)" : "Speed (rad/s)";
+	}
 }
 #endif

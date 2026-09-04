@@ -35,4 +35,29 @@ public class NavMoveTo2DNodeContext : StateNodeContext
 	/// a navigation map that has not synced yet reports every destination as unreachable.
 	/// </summary>
 	public ulong ActivationPhysicsFrame { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the avoidance solver is actually driving this walk.
+	/// </summary>
+	/// <remarks>
+	/// Safe velocity asks the agent for an avoidance-adjusted answer, and the agent only produces one when its own
+	/// avoidance is switched on - with it off the signal never fires at all, so the setting has to be resolved against
+	/// the agent rather than trusted from the node.
+	/// </remarks>
+	public bool SafeVelocityActive { get; set; }
+
+	/// <summary>
+	/// Gets or sets the destination last handed to the agent, so an unmoved one is not handed over again.
+	/// </summary>
+	/// <remarks>
+	/// Godot's target setter requests a repath unconditionally and a repath discards the computed path, so submitting
+	/// the same destination every update costs a full path query every rendered frame.
+	/// </remarks>
+	public Vector2 SubmittedTarget { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether a destination has been handed to the agent yet. Kept apart from the
+	/// destination itself because the world origin is a destination a graph can legitimately name.
+	/// </summary>
+	public bool HasSubmittedTarget { get; set; }
 }

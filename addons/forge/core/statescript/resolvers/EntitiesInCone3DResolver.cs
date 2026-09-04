@@ -48,6 +48,8 @@ internal sealed class EntitiesInCone3DResolver(
 	IObjectArrayResolver? ignoreResolver) : ObjectArrayResolver<IForgeEntity>
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable
 {
+	private const float FullTurnDegrees = 360.0f;
+
 	private readonly IPropertyResolver _originResolver = originResolver;
 	private readonly IPropertyResolver _directionResolver = directionResolver;
 	private readonly IPropertyResolver _rangeResolver = rangeResolver;
@@ -58,8 +60,6 @@ internal sealed class EntitiesInCone3DResolver(
 	private readonly HashSet<IForgeEntity> _found = [];
 	private readonly List<IForgeEntity> _inCone = [];
 
-	// One sphere for the resolver's whole life, resized per query. The alternative is a new Shape3D - a reference
-	// counted engine object - every time a graph asks, which for a query bound to a per-tick condition is a lot.
 	private readonly SphereShape3D _sphere = new();
 
 	public override IForgeEntity[] ResolveArray(GraphContext graphContext)
@@ -81,9 +81,7 @@ internal sealed class EntitiesInCone3DResolver(
 
 		Vector3 axis = direction.Normalized();
 
-		// Halved because the authored figure is the whole aperture - a 90 degree cleave reaches 45 degrees either side
-		// of where the caster is facing, which is what "90 degree cleave" means everywhere it is said.
-		float halfAngle = Mathf.DegToRad(angle) * 0.5f;
+		float halfAngle = Mathf.DegToRad(Mathf.Clamp(angle, 0.0f, FullTurnDegrees)) * 0.5f;
 
 		// The sets are kept between resolves so a per-tick read does not allocate. Forge runs its graphs on one
 		// thread, and the contents never outlive the copy returned below.

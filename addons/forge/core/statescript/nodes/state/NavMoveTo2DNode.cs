@@ -77,6 +77,8 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 
 	private bool _reportedMissingAgent;
 	private bool _reportedUnusableBody;
+	private bool _reportedUnusableSpeed;
+	private bool _reportedAvoidanceDisabled;
 
 	/// <inheritdoc/>
 	public override string Description =>
@@ -105,6 +107,7 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 		nodeContext.Agent = null;
 		nodeContext.SafeVelocity = Vector2.Zero;
 		nodeContext.ActivationPhysicsFrame = Engine.GetPhysicsFrames();
+		nodeContext.HasSubmittedTarget = false;
 
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 
@@ -164,8 +167,11 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 			return;
 		}
 
+		// A walk whose subject has gone is over rather than pending, the same as one that never had an agent: a death
+		// or a despawn mid-walk must not leave the graph waiting on a port that can no longer fire.
 		if (!ForgeEntityBridge.TryGetSpatialNode2D(ResolveEntityOrOwner(graphContext), out Node2D? spatialNode))
 		{
+			DeactivateNodeAndEmitMessage(graphContext, OnFailedPort);
 			return;
 		}
 
@@ -177,9 +183,19 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 
 		graphContext.TryResolve(InputProperties[SpeedInput].BoundName, out double speed);
 
-		// Submitted before anything is asked of the agent: its path is recomputed lazily, and every query below is a
-		// no-op until a destination has been handed to it.
-		agent.TargetPosition = new Vector2(target.X, target.Y);
+		if (speed <= 0)
+		{
+			ReportUnusableSpeedOnce(speed);
+		}
+
+		var targetPosition = new Vector2(target.X, target.Y);
+
+		if (!nodeContext.HasSubmittedTarget || !nodeContext.SubmittedTarget.IsEqualApprox(targetPosition))
+		{
+			agent.TargetPosition = targetPosition;
+			nodeContext.SubmittedTarget = targetPosition;
+			nodeContext.HasSubmittedTarget = true;
+		}
 
 		if (agent.IsNavigationFinished())
 		{
@@ -195,35 +211,35 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 			return;
 		}
 
-		Vector2 desired = (next - spatialNode.GlobalPosition).Normalized() * (float)speed;
+		Vector2 desired = (next - spatialNode.GlobalPosition).Normalized() * Mathf.Max((float)speed, 0.0f);
 
-		if (!_useSafeVelocity)
+		if (nodeContext.SafeVelocityActive)
 		{
-			TryApplyVelocity(spatialNode, desired);
-			return;
+			agent.Velocity = desired;
+			desired = nodeContext.SafeVelocity;
 		}
 
-		// The solver answers on its own schedule, so what is applied is the answer to the previous frame's question.
-		// Submitting first keeps that lag to one frame rather than two.
-		agent.Velocity = desired;
-		TryApplyVelocity(spatialNode, nodeContext.SafeVelocity);
+		if (!TryApplyVelocity(spatialNode, desired))
+		{
+			DeactivateNodeAndEmitMessage(graphContext, OnFailedPort);
+		}
 	}
 
-	private void TryApplyVelocity(Node2D spatialNode, Vector2 velocity)
+	private bool TryApplyVelocity(Node2D spatialNode, Vector2 velocity)
 	{
 		switch (spatialNode)
 		{
 			case CharacterBody2D characterBody:
 				characterBody.Velocity = velocity;
-				break;
+				return true;
 
 			case RigidBody2D rigidBody:
 				rigidBody.LinearVelocity = velocity;
-				break;
+				return true;
 
 			default:
 				ReportUnusableBodyOnce(spatialNode);
-				break;
+				return false;
 		}
 	}
 
@@ -258,8 +274,35 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 			" The walk reported OnFailed.");
 	}
 
-	// Suppressed separately from the missing-agent warning: an entity can have an agent and still not be a body the
-	// path can steer, and one warning silencing the other would leave that second failure invisible.
+	private void ReportAvoidanceDisabledOnce()
+	{
+		if (_reportedAvoidanceDisabled)
+		{
+			return;
+		}
+
+		_reportedAvoidanceDisabled = true;
+
+		GD.PushWarning(
+			"Statescript: Nav Move To 2D was told to use safe velocity, but its NavigationAgent2D has avoidance" +
+			" disabled and so never computes one. The walk follows the path directly instead. Turn on the agent's" +
+			" Avoidance Enabled, or clear Use Safe Velocity on the node.");
+	}
+
+	private void ReportUnusableSpeedOnce(double speed)
+	{
+		if (_reportedUnusableSpeed)
+		{
+			return;
+		}
+
+		_reportedUnusableSpeed = true;
+
+		GD.PushWarning(
+			$"Statescript: Nav Move To 2D resolved a speed of {speed}, so the entity is not moving. Speed is" +
+			" required - an unbound row resolves to zero. A negative speed cannot drive a path and is read as zero.");
+	}
+
 	private void ReportUnusableBodyOnce(Node2D spatialNode)
 	{
 		if (_reportedUnusableBody)

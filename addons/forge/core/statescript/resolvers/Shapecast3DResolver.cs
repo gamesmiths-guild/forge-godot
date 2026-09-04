@@ -22,9 +22,11 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// <para>It answers with one entity rather than an array on purpose: the question a sweep asks is what is in the way,
 /// and everything behind that is not. An area of effect along a line is an Overlap 3D with a capsule, which is the
 /// same shape asked a different question.</para>
-/// <para>The ignore operand keeps the sweep off the body it starts inside, exactly as it does for a ray, and it
-/// matters more here: a swept volume starting at a character's own origin overlaps that character's collider from the
-/// first instant, which without the exclusion is a sweep that stops at zero distance every time.</para>
+/// <para>The ignore operand drops the bodies the sweep should pass through, the same as it does for a ray. It reads
+/// differently here, though: a swept volume that starts inside a body is reported at zero distance rather than
+/// stopping the sweep short of everything behind it, because the sweep and the initial-overlap test are two separate
+/// questions. Leaving the caster in the list therefore makes a cast from its own origin answer "the caster", every
+/// time.</para>
 /// </remarks>
 /// <param name="shapeResolver">Resolves the shape to sweep.</param>
 /// <param name="originResolver">Resolves where the sweep starts.</param>

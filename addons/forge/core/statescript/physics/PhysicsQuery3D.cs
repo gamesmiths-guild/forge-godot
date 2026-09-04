@@ -366,6 +366,22 @@ internal static class PhysicsQuery3D
 
 		// Two fractions come back: the last one that is definitely clear, and the first one that is not. A sweep that
 		// meets nothing reports both as the whole motion.
+		// Asked before the sweep, because the sweep cannot answer it. Godot's cast motion skips every collider the
+		// shape already overlaps at its start - "test initial overlap, ignore objects it's inside of", in the engine's
+		// own words - so a sweep that begins inside something reports no hit at all rather than reporting it at zero
+		// distance. Without this the first thing met is exactly the thing this misses. No margin here, unlike the test
+		// at the end of the sweep: that one has to forgive an exact touch, this one must not invent one.
+		query.Motion = Vector3.Zero;
+
+		GodotDictionary resting = world.DirectSpaceState.GetRestInfo(query);
+
+		if (resting.Count > 0)
+		{
+			return TryReadCollider(resting, out collider);
+		}
+
+		query.Motion = motion;
+
 		float[] fractions = world.DirectSpaceState.CastMotion(query);
 
 		if (fractions.Length < 2 || fractions[1] >= 1.0f)
@@ -382,11 +398,11 @@ internal static class PhysicsQuery3D
 
 		GodotDictionary rest = world.DirectSpaceState.GetRestInfo(query);
 
-		if (rest.Count == 0)
-		{
-			return false;
-		}
+		return rest.Count > 0 && TryReadCollider(rest, out collider);
+	}
 
+	private static bool TryReadCollider(GodotDictionary rest, out Node? collider)
+	{
 		collider = GodotObject.InstanceFromId((ulong)rest["collider_id"]) as Node;
 		return collider is not null;
 	}
