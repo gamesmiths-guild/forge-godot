@@ -116,8 +116,14 @@ public class Sweep2DNode(bool collideWithAreas = false, bool oneShot = false) : 
 		Sweep2DNodeContext nodeContext = graphContext.GetNodeContext<Sweep2DNodeContext>(NodeID);
 
 		// Held for the node's lifetime and recoloured on each cast, so a watched path shows both where it reaches and
-		// whether it is currently blocked.
-		if (shape is not null)
+		// whether it is currently blocked - and released when there is nothing to cast, since a marker left standing
+		// would go on claiming the last sweep's outline and colour for a sweep that is no longer running.
+		if (shape is null)
+		{
+			PhysicsDebugDraw2D.Release(nodeContext.DebugMarker);
+			nodeContext.DebugMarker = null;
+		}
+		else
 		{
 			nodeContext.DebugMarker = PhysicsDebugDraw2D.EnsureMarker(
 				graphContext,

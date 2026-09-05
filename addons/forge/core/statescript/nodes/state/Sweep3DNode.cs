@@ -116,8 +116,14 @@ public class Sweep3DNode(bool collideWithAreas = false, bool oneShot = false) : 
 		Sweep3DNodeContext nodeContext = graphContext.GetNodeContext<Sweep3DNodeContext>(NodeID);
 
 		// Held for the node's lifetime and recoloured on each cast, so a watched path shows both where it reaches and
-		// whether it is currently blocked.
-		if (shape is not null)
+		// whether it is currently blocked - and released when there is nothing to cast, since a marker left standing
+		// would go on claiming the last sweep's outline and colour for a sweep that is no longer running.
+		if (shape is null)
+		{
+			PhysicsDebugDraw3D.Release(nodeContext.DebugMarker);
+			nodeContext.DebugMarker = null;
+		}
+		else
 		{
 			nodeContext.DebugMarker = PhysicsDebugDraw3D.EnsureMarker(
 				graphContext,
