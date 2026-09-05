@@ -46,6 +46,31 @@ internal sealed partial class PhysicsDebugMarker2D : Node2D
 	}
 
 	/// <summary>
+	/// Draws a swept shape: its outline where it came to rest, and the line its centre travelled along.
+	/// </summary>
+	/// <remarks>
+	/// The one case that needs both kinds of geometry at once. The marker carries the shape's transform, so the line's
+	/// world points are brought into that space rather than drawn in a second one — query transforms carry rotation
+	/// and translation only, so the line keeps its authored width.
+	/// </remarks>
+	/// <param name="shape">The shape that was swept.</param>
+	/// <param name="transform">Where the shape came to rest and how it is turned.</param>
+	/// <param name="from">Where the sweep started.</param>
+	/// <param name="to">Where the sweep would have reached had nothing stopped it.</param>
+	public void SetShapecast(Shape2D shape, Transform2D transform, Vector2 from, Vector2 to)
+	{
+		_shape = shape;
+		_points.Clear();
+		GlobalTransform = transform;
+
+		Transform2D inverse = transform.AffineInverse();
+		_points.Add(inverse * from);
+		_points.Add(inverse * to);
+
+		QueueRedraw();
+	}
+
+	/// <summary>
 	/// Starts a new run of segments, discarding whatever the marker held.
 	/// </summary>
 	public void BeginSegments()
@@ -81,10 +106,11 @@ internal sealed partial class PhysicsDebugMarker2D : Node2D
 	{
 		base._Draw();
 
+		// Both, rather than one or the other: a swept shape carries an outline and the line its centre travelled, and
+		// everything else leaves whichever it does not use empty.
 		if (_shape is not null && IsInstanceValid(_shape))
 		{
 			_shape.Draw(GetCanvasItem(), Color);
-			return;
 		}
 
 		for (int i = 0; i + 1 < _points.Count; i += 2)

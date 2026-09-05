@@ -32,6 +32,10 @@ internal static class PhysicsDebugDraw2D
 	private const float ArrowHeadFraction = 0.18f;
 	private const float ArrowHeadMaxLength = 24.0f;
 
+	// How many segments the wedge's arc is drawn with. Fewer than the 3D cone's ring, because the arc spans the
+	// aperture rather than a full turn.
+	private const int ConeArcSegments = 12;
+
 	/// <summary>
 	/// Gets a value indicating whether the running game was started with Visible Collision Shapes on.
 	/// </summary>
@@ -135,6 +139,37 @@ internal static class PhysicsDebugDraw2D
 	}
 
 	/// <summary>
+	/// Points a marker at a swept shape: its outline where it came to rest, and the line its centre travelled along.
+	/// </summary>
+	/// <remarks>
+	/// <para>The outline alone says where the sweep <em>stopped</em> and nothing about where it came from, which for a
+	/// cast that missed leaves a shape floating with no visible relationship to the caster. The line is what Godot's
+	/// own <see cref="ShapeCast2D"/> gizmo draws for the same reason, and it is drawn to the sweep's full reach rather
+	/// than to the resting point — on a hit, the gap between the end of the line and the shape is exactly the distance
+	/// the sweep was stopped short by.</para>
+	/// <para>Both are one colour, because they are one answer.</para>
+	/// </remarks>
+	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
+	/// <param name="shape">The shape that was swept.</param>
+	/// <param name="transform">Where the shape came to rest and how it is turned.</param>
+	/// <param name="from">Where the sweep started.</param>
+	/// <param name="to">Where the sweep would have reached had nothing stopped it.</param>
+	public static void SetShapecast(
+		PhysicsDebugMarker2D? marker,
+		Shape2D shape,
+		Transform2D transform,
+		Vector2 from,
+		Vector2 to)
+	{
+		if (marker is null || !GodotObject.IsInstanceValid(marker))
+		{
+			return;
+		}
+
+		marker.SetShapecast(shape, transform, from, to);
+	}
+
+	/// <summary>
 	/// Points a marker at a line between two world points.
 	/// </summary>
 	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
@@ -196,6 +231,58 @@ internal static class PhysicsDebugDraw2D
 	}
 
 	/// <summary>
+	/// Points a marker at a wedge opening from a world point.
+	/// </summary>
+	/// <remarks>
+	/// The 2D reading of the 3D cone, and a genuinely simpler shape: a plane's cone is a wedge, so two edges and the
+	/// arc between them are the whole outline rather than the least geometry that suggests a volume.
+	/// </remarks>
+	/// <param name="marker">The marker, which may be <see langword="null"/>.</param>
+	/// <param name="origin">The wedge's apex.</param>
+	/// <param name="direction">Which way it opens. Normalized here.</param>
+	/// <param name="range">How far it reaches.</param>
+	/// <param name="halfAngle">Half the wedge's aperture, in radians.</param>
+	public static void SetCone(
+		PhysicsDebugMarker2D? marker,
+		Vector2 origin,
+		Vector2 direction,
+		float range,
+		float halfAngle)
+	{
+		if (marker is null || !GodotObject.IsInstanceValid(marker))
+		{
+			return;
+		}
+
+		// Cleared before the validity check, matching the arrow: a wedge that resolved to nothing must not leave the
+		// previous frame's wedge on screen.
+		marker.BeginSegments();
+
+		if (direction.LengthSquared() <= 0.000001f || range <= 0)
+		{
+			marker.EndSegments();
+			return;
+		}
+
+		float axis = direction.Angle();
+		Vector2 previous = origin + (Vector2.FromAngle(axis - halfAngle) * range);
+
+		marker.AddSegment(origin, previous);
+
+		for (int i = 1; i <= ConeArcSegments; i++)
+		{
+			float angle = axis - halfAngle + (2 * halfAngle * i / ConeArcSegments);
+			Vector2 point = origin + (Vector2.FromAngle(angle) * range);
+
+			marker.AddSegment(previous, point);
+			previous = point;
+		}
+
+		marker.AddSegment(previous, origin);
+		marker.EndSegments();
+	}
+
+	/// <summary>
 	/// Draws a shape where a one-shot query asked about it, for a moment.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
@@ -211,6 +298,33 @@ internal static class PhysicsDebugDraw2D
 
 		PhysicsDebugMarker2D? marker = CreateMarker(graphContext, color);
 		SetShape(marker, shape, transform);
+		Flash(marker);
+	}
+
+	/// <summary>
+	/// Draws a swept shape where a one-shot cast ran, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="shape">The shape that was swept.</param>
+	/// <param name="transform">Where the shape came to rest and how it is turned.</param>
+	/// <param name="from">Where the sweep started.</param>
+	/// <param name="to">Where the sweep would have reached had nothing stopped it.</param>
+	/// <param name="color">The colour to draw it in.</param>
+	public static void FlashShapecast(
+		GraphContext graphContext,
+		Shape2D shape,
+		Transform2D transform,
+		Vector2 from,
+		Vector2 to,
+		Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		PhysicsDebugMarker2D? marker = CreateMarker(graphContext, color);
+		SetShapecast(marker, shape, transform, from, to);
 		Flash(marker);
 	}
 
@@ -249,6 +363,33 @@ internal static class PhysicsDebugDraw2D
 
 		PhysicsDebugMarker2D? marker = CreateMarker(graphContext, color);
 		SetArrow(marker, origin, vector);
+		Flash(marker);
+	}
+
+	/// <summary>
+	/// Draws a wedge where a one-shot query asked about it, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="origin">The wedge's apex.</param>
+	/// <param name="direction">Which way it opens.</param>
+	/// <param name="range">How far it reaches.</param>
+	/// <param name="halfAngle">Half the wedge's aperture, in radians.</param>
+	/// <param name="color">The colour to draw it in.</param>
+	public static void FlashCone(
+		GraphContext graphContext,
+		Vector2 origin,
+		Vector2 direction,
+		float range,
+		float halfAngle,
+		Color color)
+	{
+		if (!IsEnabled)
+		{
+			return;
+		}
+
+		PhysicsDebugMarker2D? marker = CreateMarker(graphContext, color);
+		SetCone(marker, origin, direction, range, halfAngle);
 		Flash(marker);
 	}
 

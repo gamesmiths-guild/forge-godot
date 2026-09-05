@@ -7,18 +7,18 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 
 /// <summary>
-/// Node editor for Move To 3D.
+/// Node editor for Rotate To 3D.
 /// </summary>
 /// <remarks>
 /// The mode setting relabels the value input rather than hiding anything, since the input is read either way - it just
-/// means seconds or units per second depending on the mode. That relabelling is what
+/// means seconds or radians per second depending on the mode. That relabelling is what
 /// <see cref="StandardNodeEditorBase.GetInputLabel"/> exists for, and it is why the mode is declared as affecting
 /// layout: without the rebuild the row would keep whichever label it was first drawn with.
 /// </remarks>
 [Tool]
-internal sealed partial class MoveTo3DNodeEditor : StandardNodeEditorBase
+internal sealed partial class RotateTo3DNodeEditor : StandardNodeEditorBase
 {
-	// Input property index of the duration or speed, matching MoveTo3DNode.
+	// Input property index of the duration or speed, matching RotateTo3DNode.
 	private const int ValueInputIndex = 2;
 
 	private const string ModeKey = "mode";
@@ -32,12 +32,11 @@ internal sealed partial class MoveTo3DNodeEditor : StandardNodeEditorBase
 			SpatialSettingNames.MoveModes,
 			DefaultName: DurationMode,
 			AffectsLayout: true),
-		new NodeConfigParam("easing", "Easing", SpatialSettingNames.Easings, DefaultName: "Linear"),
-		new NodeConfigParam("nodePath", "Node", IsText: true, Placeholder: "%TargetPoint"),
+		new NodeConfigParam("nodePath", "Node", IsText: true, Placeholder: "%TurretYaw"),
 	];
 
 	public override string HandledRuntimeTypeName =>
-		"Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.MoveTo3DNode";
+		"Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.RotateTo3DNode";
 
 	protected override IReadOnlyList<NodeConfigParam> ConstructorParams => _configParams;
 
@@ -45,12 +44,14 @@ internal sealed partial class MoveTo3DNodeEditor : StandardNodeEditorBase
 
 	protected override string? GetInputLabel(int inputIndex)
 	{
+		// Radians per second rather than degrees: the node turns through the angle core's own resolvers produce, and
+		// Deg To Rad is how a degree figure gets there.
 		if (inputIndex != ValueInputIndex)
 		{
 			return null;
 		}
 
-		return IsDuration ? "Duration (s)" : "Speed (units/s)";
+		return IsDuration ? "Duration (s)" : "Speed (rad/s)";
 	}
 }
 #endif

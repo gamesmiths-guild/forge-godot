@@ -116,6 +116,23 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 	}
 
 	/// <summary>
+	/// Gets the label to render for an input property, or <see langword="null"/> to use the name the node declared.
+	/// </summary>
+	/// <remarks>
+	/// For the inputs whose <em>meaning</em> a setting decides rather than whose presence it decides. A Move To or
+	/// Rotate To reads one Value input either way, but that value is seconds under Duration and units per second under
+	/// Speed - and a row labelled "Value" in both cases tells the author neither. The config parameter that drives the
+	/// choice must be declared with <see cref="NodeConfigParam.AffectsLayout"/> set, so the panel rebuilds and this is
+	/// asked again when the setting changes.
+	/// </remarks>
+	/// <param name="inputIndex">The input property index.</param>
+	/// <returns>The label to use, or <see langword="null"/> for the declared one.</returns>
+	protected virtual string? GetInputLabel(int inputIndex)
+	{
+		return null;
+	}
+
+	/// <summary>
 	/// Gets whether the setting with the given key is rendered for the node's current configuration. Returns
 	/// <see langword="true"/> by default. Override to hide a setting the runtime does not read under the current
 	/// configuration — the path to an existing area on a node currently building its own shape, say — so it cannot be
@@ -379,8 +396,11 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 
 		foreach (int i in visibleIndices)
 		{
+			StatescriptNodeDiscovery.InputPropertyInfo info = typeInfo.InputPropertiesInfo[i];
+			string? label = GetInputLabel(i);
+
 			AddInputPropertyRow(
-				typeInfo.InputPropertiesInfo[i],
+				label is null ? info : info with { Label = label },
 				i,
 				root,
 				defaultConstantValue: GetDefaultInputConstant(i),

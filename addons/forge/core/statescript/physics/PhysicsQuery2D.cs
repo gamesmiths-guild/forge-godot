@@ -24,6 +24,11 @@ internal static class PhysicsQuery2D
 	/// </summary>
 	public const int MaxResults = 64;
 
+	// What a swept shape is allowed to be inside by before the contact test at the end of the sweep counts it. The
+	// sweep stops the shape exactly touching, and an exact touch is the one distance floating point cannot be trusted
+	// to report as a contact. Larger than the 3D margin because a 2D world measures distance in pixels.
+	private const float ContactMargin = 1.0f;
+
 	/// <summary>
 	/// Turns an authored mask into the one the physics server is given.
 	/// </summary>
@@ -306,6 +311,100 @@ internal static class PhysicsQuery2D
 		{
 			AddEntity(overlapping, excluded, into);
 		}
+	}
+
+	/// <summary>
+	/// Sweeps a shape through the world and reports the first thing it meets.
+	/// </summary>
+	/// <remarks>
+	/// <para>Two queries, because Godot's sweep and Godot's contact report are separate calls. The sweep says <em>how
+	/// far</em> the shape got as a fraction of the motion; placing the shape there and asking for rest info says
+	/// <em>what</em> stopped it. A margin is applied to that second query because the sweep stops the shape exactly
+	/// touching, and an exact touch is the one case a contact test can miss to floating point.</para>
+	/// <para>Exclusions are by RID rather than dropped from the results, the same as the casts: a shape swept from a
+	/// caster's own position starts inside the caster's own collider, which would stop the sweep at zero distance.
+	/// </para>
+	/// </remarks>
+	/// <param name="world">The world to query.</param>
+	/// <param name="shape">The shape to sweep.</param>
+	/// <param name="transform">Where the shape starts and how it is turned.</param>
+	/// <param name="motion">How far and which way the shape is swept.</param>
+	/// <param name="mask">The physics layers the sweep can hit.</param>
+	/// <param name="collideWithAreas">Whether areas stop the sweep, as well as bodies.</param>
+	/// <param name="exclude">Collision object RIDs the sweep passes through.</param>
+	/// <param name="hitTransform">Where the shape came to rest, whether or not it met anything.</param>
+	/// <param name="collider">What stopped the sweep, when something did.</param>
+	/// <returns><see langword="true"/> if the sweep met something; <see langword="false"/> otherwise.</returns>
+	public static bool TryShapecast(
+		World2D world,
+		Shape2D shape,
+		Transform2D transform,
+		Vector2 motion,
+		uint mask,
+		bool collideWithAreas,
+		GodotRidArray? exclude,
+		out Transform2D hitTransform,
+		out Node? collider)
+	{
+		hitTransform = transform;
+		collider = null;
+
+		var query = new PhysicsShapeQueryParameters2D
+		{
+			Shape = shape,
+			Transform = transform,
+			Motion = motion,
+			CollisionMask = mask,
+			CollideWithBodies = true,
+			CollideWithAreas = collideWithAreas,
+		};
+
+		if (exclude is not null)
+		{
+			query.Exclude = exclude;
+		}
+
+		// Two fractions come back: the last one that is definitely clear, and the first one that is not. A sweep that
+		// meets nothing reports both as the whole motion.
+		// Asked before the sweep, because the sweep cannot answer it. Godot's cast motion skips every collider the
+		// shape already overlaps at its start - "test initial overlap, ignore objects it's inside of", in the engine's
+		// own words - so a sweep that begins inside something reports no hit at all rather than reporting it at zero
+		// distance. Without this the first thing met is exactly the thing this misses. No margin here, unlike the test
+		// at the end of the sweep: that one has to forgive an exact touch, this one must not invent one.
+		query.Motion = Vector2.Zero;
+
+		GodotDictionary resting = world.DirectSpaceState.GetRestInfo(query);
+
+		if (resting.Count > 0)
+		{
+			return TryReadCollider(resting, out collider);
+		}
+
+		query.Motion = motion;
+
+		float[] fractions = world.DirectSpaceState.CastMotion(query);
+
+		if (fractions.Length < 2 || fractions[1] >= 1.0f)
+		{
+			hitTransform = transform.Translated(motion);
+			return false;
+		}
+
+		hitTransform = transform.Translated(motion * fractions[1]);
+
+		query.Transform = hitTransform;
+		query.Motion = Vector2.Zero;
+		query.Margin = ContactMargin;
+
+		GodotDictionary rest = world.DirectSpaceState.GetRestInfo(query);
+
+		return rest.Count > 0 && TryReadCollider(rest, out collider);
+	}
+
+	private static bool TryReadCollider(GodotDictionary rest, out Node? collider)
+	{
+		collider = GodotObject.InstanceFromId((ulong)rest["collider_id"]) as Node;
+		return collider is not null;
 	}
 
 	private static void CollectCollisionObjects(Node node, GodotRidArray into)

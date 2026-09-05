@@ -130,6 +130,8 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		_cachedTypeInfo = null;
 		_cachedInputEditorContainer = null;
 		_cachedTargetContainer = null;
+		_scopeFoldable = null;
+		_targetFoldable = null;
 		_setDropdown = null;
 		_sharedVarDropdown = null;
 	}
