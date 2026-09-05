@@ -25,9 +25,11 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// two modes report entry and exit identically, and it is what makes an entity with several colliders count once: a
 /// hurtbox leaving while a hitbox stays is not an exit, which a signal would have to re-scan the overlap list to know
 /// anyway. The cost is that an overlap starting and ending entirely between two polls is not seen.</para>
-/// <para>The first poll runs on the first update rather than during activation, so entities already inside are reported
-/// one entity at a time with the Event Entity output correct for each. Reporting them during activation would defer
-/// every message to the end of it, by which point the output would name only the last of them.</para>
+/// <para>The first poll runs during activation, from <see cref="OnActivated"/> rather than from
+/// <see cref="OnActivate"/>. A message emitted while a node is still activating is deferred to the end of it, so
+/// polling from there would fire every <see cref="OnEnteredPort"/> at once with the Event Entity output naming only
+/// the last of them. <see cref="OnActivated"/> runs on the same frame with that deferral already over, so an entity
+/// standing inside when the watch begins is reported on the frame it begins, one entity per event.</para>
 /// </remarks>
 /// <param name="sourceMode">Whether the volume is an area in the scene or a shape the query builds.</param>
 /// <param name="includeAreas">Whether overlapping areas count, as well as bodies.</param>
@@ -147,9 +149,13 @@ public class Overlap3DNode(
 		nodeContext.Pending.Clear();
 		nodeContext.Changed.Clear();
 		nodeContext.LastOccupied = null;
+		nodeContext.TimeSincePoll = 0;
+	}
 
-		// Already overdue, so the first update polls whatever the interval is.
-		nodeContext.TimeSincePoll = double.MaxValue;
+	/// <inheritdoc/>
+	protected override void OnActivated(GraphContext graphContext)
+	{
+		Poll(graphContext, graphContext.GetNodeContext<Overlap3DNodeContext>(NodeID));
 	}
 
 	/// <inheritdoc/>
