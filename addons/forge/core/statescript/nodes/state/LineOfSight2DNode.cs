@@ -141,7 +141,7 @@ public class LineOfSight2DNode(bool deactivateOnBlocked = false)
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Check(graphContext);
 	}

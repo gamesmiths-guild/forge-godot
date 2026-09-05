@@ -92,7 +92,7 @@ public class Sweep2DNode(bool collideWithAreas = false, bool oneShot = false) : 
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Cast(graphContext);
 	}

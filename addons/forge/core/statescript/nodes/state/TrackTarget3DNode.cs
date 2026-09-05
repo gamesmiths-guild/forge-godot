@@ -87,7 +87,7 @@ public class TrackTarget3DNode(bool flatten = true, string nodePath = "") : Stat
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 

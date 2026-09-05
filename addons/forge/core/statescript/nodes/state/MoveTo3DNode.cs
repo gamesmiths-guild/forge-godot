@@ -138,7 +138,7 @@ public class MoveTo3DNode(
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		MoveTo3DNodeContext nodeContext = graphContext.GetNodeContext<MoveTo3DNodeContext>(NodeID);
 

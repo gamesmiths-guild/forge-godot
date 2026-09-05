@@ -82,7 +82,7 @@ public class TrackTarget2DNode(string nodePath = "") : StateNode<StateNodeContex
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 

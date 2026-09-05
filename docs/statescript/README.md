@@ -116,7 +116,7 @@ In Forge for Godot, you use the **Statescript graph editor** to create graphs vi
 4. Set the ability's `AbilityBehavior` to a `StatescriptAbilityBehavior`.
 5. Assign your `StatescriptGraph` to the behavior's `Statescript` property.
 
-The `ForgeEntity` node automatically calls `Abilities.UpdateAbilities(delta)` in its `_Process` method, which drives graph updates. If you implement `IForgeEntity` directly, you must call this yourself.
+The `ForgeEntity` node drives graph updates on two rails: `Abilities.UpdateAbilities(delta)` in its `_Process` method, and `Abilities.FixedUpdateAbilities(delta)` in its `_PhysicsProcess` method. If you implement `IForgeEntity` directly, you must call **both** yourself — the built-in nodes that move a body, steer an agent or query physics (Move To, Rotate To, Track Target, Nav Move To, Force Override, Overlap, Ray, Sweep, Line Of Sight) only run on the fixed rail, and a host that never calls it leaves them activated and stuck.
 
 ## Loop Detection
 

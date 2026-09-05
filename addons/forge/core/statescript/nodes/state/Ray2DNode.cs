@@ -94,7 +94,7 @@ public class Ray2DNode(
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Cast(graphContext);
 	}

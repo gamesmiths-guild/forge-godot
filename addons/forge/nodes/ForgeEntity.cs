@@ -79,4 +79,11 @@ public partial class ForgeEntity : Node, IForgeEntity
 		EffectsManager.UpdateEffects(delta);
 		Abilities.UpdateAbilities(delta);
 	}
+
+	public override void _PhysicsProcess(double delta)
+	{
+		base._PhysicsProcess(delta);
+
+		Abilities.FixedUpdateAbilities(delta);
+	}
 }

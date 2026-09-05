@@ -132,7 +132,7 @@ public class RotateTo3DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		RotateTo3DNodeContext nodeContext = graphContext.GetNodeContext<RotateTo3DNodeContext>(NodeID);
 

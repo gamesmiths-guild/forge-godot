@@ -27,8 +27,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>The first poll runs during activation, from <see cref="OnActivated"/> rather than from
 /// <see cref="OnActivate"/>. A message emitted while a node is still activating is deferred to the end of it, so
 /// polling from there would fire every <see cref="OnEnteredPort"/> at once with the Event Entity output naming only
-/// the last of them. <see cref="OnActivated"/> runs on the same frame with that deferral already over, so an entity
-/// standing inside when the watch begins is reported on the frame it begins, one entity per event.</para>
+/// the last of them. <see cref="OnActivated"/> still runs inside the activation, with that deferral already over, so
+/// an entity standing inside when the watch begins is reported as it begins, one entity per event.</para>
 /// </remarks>
 /// <param name="sourceMode">Whether the volume is an area in the scene or a shape the query builds.</param>
 /// <param name="includeAreas">Whether overlapping areas count, as well as bodies.</param>
@@ -66,7 +66,7 @@ public class Overlap2DNode(
 	public const byte MaskInput = 4;
 
 	/// <summary>
-	/// Input property index for how long to wait between polls, in seconds. Unbound polls every update.
+	/// Input property index for how long to wait between polls, in seconds. Unbound polls every fixed update.
 	/// </summary>
 	public const byte PollIntervalInput = 5;
 
@@ -170,7 +170,7 @@ public class Overlap2DNode(
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Overlap2DNodeContext nodeContext = graphContext.GetNodeContext<Overlap2DNodeContext>(NodeID);
 

@@ -31,9 +31,10 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// own schedule, which costs one frame of standing still at the start and means the body follows the solver rather
 /// than the path directly. Leave it off unless the agent has avoidance enabled and crowding is the problem being
 /// solved.</para>
-/// <para>Reachability is judged only once a physics frame has passed. A navigation map that has not synced yet hands
-/// back an empty path, and an empty path reports every destination as unreachable - so judging on the first update
-/// would fail every walk that started on the frame its level loaded.</para>
+/// <para>Reachability is judged only once a physics frame has completed. A navigation map that has not synced yet
+/// hands back an empty path, and an empty path reports every destination as unreachable - so judging straight away
+/// would fail every walk that started as its level loaded. Godot counts a physics frame after the step that ran it, so
+/// the first fixed update still reads the activation frame's count and the check waits for the step after.</para>
 /// <para>Deactivating zeroes the body's velocity, which reaches arrival, failure and abort alike: a summon whose order
 /// is cancelled stops rather than coasting on the last velocity the path asked for.</para>
 /// <para>Configuration is captured in field initializers rather than a constructor body, because the base node
@@ -165,7 +166,7 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		NavMoveTo2DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo2DNodeContext>(NodeID);
 		NavigationAgent2D? agent = nodeContext.Agent;

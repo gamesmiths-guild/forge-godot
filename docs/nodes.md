@@ -17,7 +17,7 @@ The central node for adding Forge system functionality to any game object.
 
 `ForgeEntity` implements the `IForgeEntity` interface and provides a ready-to-use component for any Godot node. It automatically initializes Forge attributes, tags, effects, abilities, and shared variables.
 
-Additionally, `ForgeEntity` automatically calls `EffectsManager.UpdateEffects` and `Abilities.UpdateAbilities` each frame in its `_Process` method, driving time-dependent behaviors such as timed effects, periodic effects, and Statescript graph updates.
+Additionally, `ForgeEntity` automatically calls `EffectsManager.UpdateEffects` and `Abilities.UpdateAbilities` each frame in its `_Process` method, driving time-dependent behaviors such as timed effects, periodic effects, and Statescript graph updates. It also calls `Abilities.FixedUpdateAbilities` on each physics step in its `_PhysicsProcess` method, driving the state nodes that move bodies or query physics.
 
 **Usage:**
 
