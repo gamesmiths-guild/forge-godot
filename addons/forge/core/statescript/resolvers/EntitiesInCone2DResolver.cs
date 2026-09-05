@@ -48,8 +48,6 @@ internal sealed class EntitiesInCone2DResolver(
 	IObjectArrayResolver? ignoreResolver) : ObjectArrayResolver<IForgeEntity>
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable
 {
-	private const float FullTurnDegrees = 360.0f;
-
 	private readonly IPropertyResolver _originResolver = originResolver;
 	private readonly IPropertyResolver _directionResolver = directionResolver;
 	private readonly IPropertyResolver _rangeResolver = rangeResolver;
@@ -80,8 +78,7 @@ internal sealed class EntitiesInCone2DResolver(
 		}
 
 		Vector2 axis = direction.Normalized();
-
-		float halfAngle = Mathf.DegToRad(Mathf.Clamp(angle, 0.0f, FullTurnDegrees)) * 0.5f;
+		float halfAngle = ConeQuery.HalfAngleRadians(angle);
 
 		// The sets are kept between resolves so a per-tick read does not allocate. Forge runs its graphs on one
 		// thread, and the contents never outlive the copy returned below.
@@ -99,7 +96,7 @@ internal sealed class EntitiesInCone2DResolver(
 			_ignoreResolver?.ResolveArray(graphContext),
 			_found);
 
-		float cosHalfAngle = Mathf.Cos(halfAngle);
+		float cosHalfAngle = ConeQuery.ResolveCosHalfAngle(angle);
 
 		// Filtered by hand rather than through Where, so a query bound to a per-tick condition allocates neither an
 		// iterator nor a closure over the three operands the test reads.
@@ -124,18 +121,13 @@ internal sealed class EntitiesInCone2DResolver(
 		return [.. _inCone];
 	}
 
-	// The apex counts as inside: an entity standing exactly on the caster has no direction to test, and dropping it
-	// would make a point-blank cleave the one place a cleave misses.
+	// Only the aperture is tested here. The reach was already enforced by the circle the query swept, and re-testing
+	// it against the entity's origin would be stricter than the query was: something whose collider clipped the
+	// circle's edge would be dropped for having its origin just outside.
 	private static bool IsInCone(IForgeEntity entity, Vector2 origin, Vector2 axis, float cosHalfAngle)
 	{
-		if (!ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? spatialNode))
-		{
-			return false;
-		}
-
-		Vector2 offset = spatialNode.GlobalPosition - origin;
-
-		return offset.LengthSquared() <= 0.000001f || offset.Normalized().Dot(axis) >= cosHalfAngle;
+		return ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? spatialNode)
+			&& ConeQuery.IsWithinAngle(spatialNode.GlobalPosition - origin, axis, cosHalfAngle);
 	}
 
 	private int ResolveMaskValue(GraphContext graphContext)
