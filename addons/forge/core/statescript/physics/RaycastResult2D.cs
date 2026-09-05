@@ -18,9 +18,13 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 /// <param name="Node">The collider that was hit.</param>
 /// <param name="Entity">The entity that collider belongs to, when it belongs to one.</param>
 /// <param name="Distance">How far along the ray the hit is, in units.</param>
+/// <param name="Rid">The physics object that owns the shape, which a caller repeating the query excludes by. Not every
+/// owner is a <see cref="CollisionObject2D"/> - a <see cref="TileMapLayer"/> owns its shapes itself - so this is the
+/// only identity every hit has.</param>
 internal readonly record struct RaycastResult2D(
 	Vector2 Position,
 	Vector2 Normal,
 	Node2D? Node,
 	IForgeEntity? Entity,
-	float Distance);
+	float Distance,
+	Rid Rid);

@@ -157,7 +157,8 @@ internal static class PhysicsQuery2D
 			hit["normal"].AsVector2(),
 			collider,
 			ForgeEntityBridge.TryGetEntityInHierarchy(collider, out IForgeEntity? entity) ? entity : null,
-			origin.DistanceTo(position));
+			origin.DistanceTo(position),
+			hit["rid"].AsRid());
 
 		return true;
 	}
@@ -480,7 +481,8 @@ internal static class PhysicsQuery2D
 			rest["normal"].AsVector2(),
 			collider,
 			ForgeEntityBridge.TryGetEntityInHierarchy(collider, out IForgeEntity? entity) ? entity : null,
-			distance);
+			distance,
+			rest["rid"].AsRid());
 	}
 
 	private static void CollectCollisionObjects(Node node, GodotRidArray into)
