@@ -108,6 +108,8 @@ internal sealed class Shapecast2DResolver(
 			origin + motion,
 			hit ? PhysicsDebugDraw2D.RayHitColor : PhysicsDebugDraw2D.RayClearColor);
 
+		PhysicsDebugDraw2D.FlashTarget(graphContext, hitResult.Entity, PhysicsDebugDraw2D.RayHitColor);
+
 		// Only the entity survives, because a resolver returns one value. Everything else the sweep reported - where
 		// it landed, the surface normal, the collider, the distance - is what the Shapecast 2D node exists to give a
 		// graph, and is the reason the node form is not merely this resolver with ports.

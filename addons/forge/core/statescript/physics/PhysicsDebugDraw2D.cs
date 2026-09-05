@@ -1,5 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
@@ -42,6 +44,15 @@ internal static class PhysicsDebugDraw2D
 	/// Gets a value indicating whether the running game was started with Visible Collision Shapes on.
 	/// </summary>
 	public static bool IsEnabled => Engine.GetMainLoop() is SceneTree { DebugCollisionsHint: true };
+
+	/// <summary>
+	/// Gets a value indicating whether the entities a query found are outlined on top of the query's own geometry.
+	/// </summary>
+	/// <remarks>
+	/// A second switch inside the first, because the two answer different questions: the query geometry says where the
+	/// question was asked, and the outlines say who answered it. The second is what a crowded scene has too much of.
+	/// </remarks>
+	public static bool HighlightsTargets => IsEnabled && ForgeSettings.HighlightQueryTargets;
 
 	/// <summary>
 	/// Gets the colour of an overlap query that found nothing.
@@ -365,6 +376,49 @@ internal static class PhysicsDebugDraw2D
 				FlashShape(graphContext, collisionObject.ShapeOwnerGetShape(ownerId, shapeId), ownerTransform, color);
 			}
 		}
+	}
+
+	/// <summary>
+	/// Outlines the entities a query found, where they are, for a moment.
+	/// </summary>
+	/// <remarks>
+	/// The query's own geometry says where it looked and its colour says whether it found anything; this says
+	/// <em>who</em>, which is the part a shape drawn over a crowd cannot. Entities with no collider of their own are
+	/// skipped rather than marked, since there is no outline to draw for one and a stand-in shape would report a
+	/// volume the query never tested.
+	/// </remarks>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="entities">The entities the query answered with.</param>
+	/// <param name="color">The colour to outline them in, matching the query's own.</param>
+	public static void FlashTargets(GraphContext graphContext, IEnumerable<IForgeEntity> entities, Color color)
+	{
+		if (!HighlightsTargets)
+		{
+			return;
+		}
+
+		foreach (IForgeEntity entity in entities)
+		{
+			FlashTarget(graphContext, entity, color);
+		}
+	}
+
+	/// <summary>
+	/// Outlines one entity a query found, where it is, for a moment.
+	/// </summary>
+	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
+	/// <param name="entity">The entity the query answered with, or <see langword="null"/> for none.</param>
+	/// <param name="color">The colour to outline it in, matching the query's own.</param>
+	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color)
+	{
+		if (!HighlightsTargets
+			|| !ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? spatialNode)
+			|| spatialNode is not CollisionObject2D collider)
+		{
+			return;
+		}
+
+		FlashBody(graphContext, collider, collider.GlobalTransform, color);
 	}
 
 	/// <summary>

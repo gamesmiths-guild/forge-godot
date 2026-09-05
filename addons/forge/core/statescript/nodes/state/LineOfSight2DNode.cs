@@ -227,6 +227,10 @@ public class LineOfSight2DNode(bool deactivateOnBlocked = false)
 		bool hadValue = nodeContext.LastClear.HasValue;
 		nodeContext.LastClear = clear;
 
+		// On the transition only, and only what got in the way: the held line is redrawn every check, and a clear line
+		// has nobody to name.
+		PhysicsDebugDraw2D.FlashTarget(graphContext, blocker.Entity, PhysicsDebugDraw2D.SightBlockedColor);
+
 		if (!clear && _deactivateOnBlocked)
 		{
 			DeactivateNodeAndEmitMessage(graphContext, OnBlockedPort);

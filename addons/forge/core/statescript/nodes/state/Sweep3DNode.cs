@@ -146,6 +146,10 @@ public class Sweep3DNode(bool collideWithAreas = false, bool oneShot = false) : 
 		bool hadValue = nodeContext.LastHit.HasValue;
 		nodeContext.LastHit = hit;
 
+		// On the transition only. The held geometry is redrawn every cast, and outlining the target every cast would
+		// stack a fresh outline on the last one until nothing about it read as a highlight.
+		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor);
+
 		if (hit && _oneShot)
 		{
 			DeactivateNodeAndEmitMessage(graphContext, OnHitPort);

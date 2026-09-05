@@ -72,11 +72,12 @@ internal sealed class Overlap3DResolver(
 			_ignoreResolver?.ResolveArray(graphContext),
 			_found);
 
-		PhysicsDebugDraw3D.FlashShape(
-			graphContext,
-			shape,
-			transform,
-			_found.Count > 0 ? PhysicsDebugDraw3D.OverlapFoundColor : PhysicsDebugDraw3D.OverlapEmptyColor);
+		Color color = _found.Count > 0
+			? PhysicsDebugDraw3D.OverlapFoundColor
+			: PhysicsDebugDraw3D.OverlapEmptyColor;
+
+		PhysicsDebugDraw3D.FlashShape(graphContext, shape, transform, color);
+		PhysicsDebugDraw3D.FlashTargets(graphContext, _found, color);
 
 		var resolved = new IForgeEntity[_found.Count];
 		_found.CopyTo(resolved);

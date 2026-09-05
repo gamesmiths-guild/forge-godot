@@ -273,6 +273,10 @@ public class Overlap2DNode(
 			else
 			{
 				to.Add(changed);
+
+				// Once, as it enters. The watched volume is held for as long as the node is, and says nothing about who
+				// is inside it; an outline redrawn every poll would stack up rather than read as a highlight.
+				PhysicsDebugDraw2D.FlashTarget(graphContext, changed, PhysicsDebugDraw2D.OverlapFoundColor);
 			}
 
 			WriteEventEntity(graphContext, OutputVariables[EventEntityOutput], changed);

@@ -71,11 +71,12 @@ internal sealed class Overlap2DResolver(
 			_ignoreResolver?.ResolveArray(graphContext),
 			_found);
 
-		PhysicsDebugDraw2D.FlashShape(
-			graphContext,
-			shape,
-			transform,
-			_found.Count > 0 ? PhysicsDebugDraw2D.OverlapFoundColor : PhysicsDebugDraw2D.OverlapEmptyColor);
+		Color color = _found.Count > 0
+			? PhysicsDebugDraw2D.OverlapFoundColor
+			: PhysicsDebugDraw2D.OverlapEmptyColor;
+
+		PhysicsDebugDraw2D.FlashShape(graphContext, shape, transform, color);
+		PhysicsDebugDraw2D.FlashTargets(graphContext, _found, color);
 
 		var resolved = new IForgeEntity[_found.Count];
 		_found.CopyTo(resolved);
