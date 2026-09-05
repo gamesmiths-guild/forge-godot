@@ -333,7 +333,11 @@ internal static class PhysicsQuery2D
 	/// <returns><see langword="true"/> if nothing is in the way; <see langword="false"/> otherwise.</returns>
 	public static bool CanFit(PhysicsBody2D body, Transform2D from, Vector2 motion)
 	{
-		return !body.TestMove(from, motion);
+		// Recovery counts as a collision, without which this answers the wrong question. Godot depenetrates the
+		// body before it casts, so with a zero motion the cast has nothing left to find - a destination the body is
+		// standing inside gets quietly pushed clear and reported as fitting. The flag makes that push itself the
+		// collision, which is exactly what "would it fit here" is asking about.
+		return !body.TestMove(from, motion, recoveryAsCollision: true);
 	}
 
 	/// <summary>

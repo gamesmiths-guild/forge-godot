@@ -16,7 +16,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <remarks>
 /// <para>The third reading of a turn, and the one a moving target needs. Look At 2D faces a point at the instant it
 /// runs; Rotate To 2D turns to a rotation captured when it started; both aim at where something <em>was</em>. This
-/// re-resolves its target every update, so binding Target to a Entity Position 2D of whoever is being followed keeps
+/// re-resolves its target every update, so binding Target to an Entity Position 2D of whoever is being followed keeps
 /// the caster pointed at them as they move — a turret holding a lead, a channelled beam that follows, an enemy that
 /// keeps the player in front of it.</para>
 /// <para><b>The turn rate is a ceiling, not a rate to be met.</b> Unbound, zero or negative snaps to the target every
