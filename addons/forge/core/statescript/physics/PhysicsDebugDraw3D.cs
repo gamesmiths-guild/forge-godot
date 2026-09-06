@@ -452,14 +452,12 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to outline it in, matching the query's own.</param>
 	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color)
 	{
-		if (!HighlightsTargets
-			|| !ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode)
-			|| spatialNode is not CollisionObject3D collider)
+		if (!HighlightsTargets || !ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode))
 		{
 			return;
 		}
 
-		FlashBody(graphContext, collider, collider.GlobalTransform, color);
+		FlashColliders(graphContext, spatialNode, color);
 	}
 
 	/// <summary>
@@ -570,6 +568,19 @@ internal static class PhysicsDebugDraw3D
 		MeshInstance3D? marker = CreateMarker(graphContext, color);
 		SetCone(marker, origin, direction, range, halfAngle);
 		Flash(marker);
+	}
+
+	private static void FlashColliders(GraphContext graphContext, Node node, Color color)
+	{
+		if (node is CollisionObject3D collider)
+		{
+			FlashBody(graphContext, collider, collider.GlobalTransform, color);
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			FlashColliders(graphContext, child, color);
+		}
 	}
 
 	private static MeshInstance3D? CreateMarker(GraphContext graphContext, Color color)
