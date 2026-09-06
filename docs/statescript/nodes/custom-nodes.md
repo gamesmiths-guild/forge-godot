@@ -104,7 +104,7 @@ State nodes are more complex because they persist over time and manage their own
 2. Create the node class that extends `StateNode<T>`.
 3. Override `OnActivate` to initialize state when the node receives a message.
 4. Override `OnDeactivate` to clean up state.
-5. Override `OnUpdate` to advance logic each frame.
+5. Override `OnUpdate` to advance logic each frame, or `OnFixedUpdate` to advance it on each physics step. Use the fixed rail for anything that moves a body or queries the physics world, so the result does not depend on the frame rate; use the frame rail for timers, input and presentation.
 6. Call `DeactivateNode` or `DeactivateNodeAndEmitMessage` when the node should deactivate.
 
 **Example - Cooldown State Node:**

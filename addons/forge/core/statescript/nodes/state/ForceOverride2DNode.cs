@@ -19,11 +19,12 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// is over; a velocity write is a speed set outright. A held force is neither — it is a push that keeps pushing, so
 /// the body builds speed for as long as the node runs and coasts once it stops. Thrusters, updrafts, tractor beams, a
 /// gravity well, a channelled pull.</para>
-/// <para><b>It writes the body's constant force rather than calling apply force every update, and that is a
-/// correctness decision rather than an optimisation.</b> Godot accumulates an applied force per <em>physics</em> frame
-/// and clears it, while graphs tick on the process frame — so a node applying force per update would push harder at
-/// 120fps than at 60. A constant force is integrated by the engine itself at its own rate, which is the only way the
-/// push is the push the author wrote.</para>
+/// <para><b>It writes the body's constant force rather than calling apply force every update.</b> A constant force is
+/// integrated by the engine at its own rate whether or not the node ran that step, so the push is the push the author
+/// wrote: it is held from activation, given back on deactivation, and the fixed update only re-reads a bound value so
+/// a thrust tied to an attribute tracks it. An applied force is cleared every physics step, so it would have to be
+/// re-applied on exactly the steps the engine takes - right on a host that drives the fixed rail, and silently weaker
+/// on one that does not.</para>
 /// <para>The torque is a <b>number</b> rather than a vector, because a plane has one axis to turn around.</para>
 /// <para>Both inputs are optional and are captured and restored independently, so a node that binds only a force puts
 /// only the force back and leaves an authored constant torque alone. Restoring happens on deactivate <em>or abort</em>,
@@ -142,7 +143,7 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		ForceOverride2DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride2DNodeContext>(NodeID);
 		RigidBody2D? body = nodeContext.Body;

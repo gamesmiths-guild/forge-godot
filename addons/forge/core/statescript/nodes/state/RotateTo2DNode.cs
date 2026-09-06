@@ -121,7 +121,7 @@ public class RotateTo2DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		RotateTo2DNodeContext nodeContext = graphContext.GetNodeContext<RotateTo2DNodeContext>(NodeID);
 
