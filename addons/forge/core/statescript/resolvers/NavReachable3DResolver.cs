@@ -63,6 +63,14 @@ internal sealed class NavReachable3DResolver(
 		var from = new Vector3(fromValue.X, fromValue.Y, fromValue.Z);
 		var to = new Vector3(toValue.X, toValue.Y, toValue.Z);
 
+		// Nothing is reachable across a map that has not synchronized yet, which is the honest answer and the one the
+		// query would arrive at anyway - but asking it directly is what the engine prints an error about, and a graph
+		// evaluated on the frame its level loaded would raise that error in a perfectly navigable scene.
+		if (NavigationServer3D.MapGetIterationId(world.NavigationMap) == 0)
+		{
+			return new Variant128(false);
+		}
+
 		Vector3[] path = NavigationServer3D.MapGetPath(world.NavigationMap, from, to, true);
 
 		double tolerance = _toleranceResolver is null

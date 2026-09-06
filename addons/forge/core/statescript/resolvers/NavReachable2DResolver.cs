@@ -62,6 +62,14 @@ internal sealed class NavReachable2DResolver(
 
 		var to = new Vector2(toValue.X, toValue.Y);
 
+		// Nothing is reachable across a map that has not synchronized yet, which is the honest answer and the one the
+		// query would arrive at anyway - but asking it directly is what the engine prints an error about, and a graph
+		// evaluated on the frame its level loaded would raise that error in a perfectly navigable scene.
+		if (NavigationServer2D.MapGetIterationId(world.NavigationMap) == 0)
+		{
+			return new Variant128(false);
+		}
+
 		Vector2[] path = NavigationServer2D.MapGetPath(
 			world.NavigationMap,
 			new Vector2(fromValue.X, fromValue.Y),

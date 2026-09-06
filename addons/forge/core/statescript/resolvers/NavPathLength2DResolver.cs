@@ -43,6 +43,14 @@ internal sealed class NavPathLength2DResolver(IPropertyResolver fromResolver, IP
 			return new Variant128(0.0);
 		}
 
+		// No walk at all across a map that has not synchronized yet, which is what an empty path would report anyway -
+		// but asking it directly is what the engine prints an error about, and a graph evaluated on the frame its
+		// level loaded would raise that error in a perfectly navigable scene.
+		if (NavigationServer2D.MapGetIterationId(world.NavigationMap) == 0)
+		{
+			return new Variant128(0.0);
+		}
+
 		NumericsVector2 fromValue = _fromResolver.Resolve(graphContext).AsVector2();
 		NumericsVector2 toValue = _toResolver.Resolve(graphContext).AsVector2();
 
