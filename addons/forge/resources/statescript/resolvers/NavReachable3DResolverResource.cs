@@ -59,8 +59,7 @@ public partial class NavReachable3DResolverResource : StatescriptResolverResourc
 	public override void BindInput(Graph graph, ForgeNode runtimeNode, string nodeId, byte index)
 	{
 		DefineAndBindInputProperty(
-			graph,
-			runtimeNode, $"__navreachable3d_{nodeId}_{index}", index, BuildResolver(graph));
+			graph, runtimeNode, $"__navreachable3d_{nodeId}_{index}", index, BuildResolver(graph));
 	}
 
 	/// <inheritdoc/>
