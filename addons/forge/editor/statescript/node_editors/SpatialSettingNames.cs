@@ -28,6 +28,11 @@ internal static class SpatialSettingNames
 	/// Member names of the move-to easing enum.
 	/// </summary>
 	internal static readonly string[] Easings = ["Linear", "EaseIn", "EaseOut", "EaseInOut"];
+
+	/// <summary>
+	/// Member names of the blocked-response enum.
+	/// </summary>
+	internal static readonly string[] BlockedResponses = ["Stop", "Slide"];
 #pragma warning restore IDE1006 // Naming Styles
 }
 #endif
