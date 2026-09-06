@@ -183,6 +183,16 @@ public partial class ForgeProjectile3D : Area3D, IInstantiationReceiver
 		// Forward is -Z, so the rotation it was created with is the whole aiming story.
 		Vector3 motion = -GlobalBasis.Z.Normalized() * Speed * (float)delta;
 
+		if (MaxRange > 0)
+		{
+			float remaining = Mathf.Max(MaxRange - _distanceTraveled, 0.0f);
+
+			if (motion.Length() > remaining)
+			{
+				motion = motion.Normalized() * remaining;
+			}
+		}
+
 		if (_sweptShape is not null)
 		{
 			SweepStep(motion);

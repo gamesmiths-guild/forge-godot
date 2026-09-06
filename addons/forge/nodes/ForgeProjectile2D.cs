@@ -183,6 +183,16 @@ public partial class ForgeProjectile2D : Area2D, IInstantiationReceiver
 		// 2D forward is +X, so the rotation it was created with is the whole aiming story.
 		Vector2 motion = GlobalTransform.X.Normalized() * Speed * (float)delta;
 
+		if (MaxRange > 0)
+		{
+			float remaining = Mathf.Max(MaxRange - _distanceTraveled, 0.0f);
+
+			if (motion.Length() > remaining)
+			{
+				motion = motion.Normalized() * remaining;
+			}
+		}
+
 		if (_sweptShape is not null)
 		{
 			SweepStep(motion);

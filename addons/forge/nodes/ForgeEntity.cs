@@ -38,6 +38,20 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public Variables SharedVariables { get; set; } = null!;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
+	/// </summary>
+	/// <remarks>
+	/// The fixed rail is dispatched ahead of the body this node hangs under, because Godot runs a parent's physics
+	/// callback before its children's and the supported layout puts this node inside the character. A node that writes
+	/// a velocity for the body to consume - Nav Move To - would otherwise write it after the body had already moved.
+	/// Set in the constructor rather than on ready, so a scene that authors its own priority still wins.
+	/// </remarks>
+	public ForgeEntity()
+	{
+		ProcessPhysicsPriority = -1;
+	}
+
 	public override void _Ready()
 	{
 		base._Ready();
