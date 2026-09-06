@@ -17,9 +17,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// set its designer assembled - every guard on this floor, the whole boss escort, the objective markers - and an
 /// ability that buffs a party or damages a wave needs the entities, not the nodes carrying them.</para>
 /// <para>Members that carry no entity are skipped rather than reported as gaps, so a group mixing marked-up characters
-/// with plain scenery reads as just the characters. The lookup is the narrow one, matching Child Entities: the node in
-/// the group, or an entity component directly beneath it. Adding the body to the group is what an author does, and
-/// under composition the entity hangs one level below it.</para>
+/// with plain scenery reads as just the characters. The lookup is the wider one, matching what the physics queries do
+/// with a collider: a group holds whatever a designer put in it, which is as likely to be a hurtbox or a marker nested
+/// under a character as the character's own node, and walking up finds the entity from any of them.</para>
 /// <para>A set rather than a list, because a project that put both a body and its hurtbox in one group named two nodes
 /// and one entity - reporting it twice would make a For Each over the group apply everything to it twice.</para>
 /// </remarks>
@@ -42,7 +42,7 @@ internal sealed class EntitiesInNodeGroupResolver(string groupName) : ObjectArra
 
 		foreach (Node node in tree.GetNodesInGroup(_groupName))
 		{
-			if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? entity))
+			if (ForgeEntityBridge.TryGetEntityInHierarchy(node, out IForgeEntity? entity))
 			{
 				_found.Add(entity);
 			}

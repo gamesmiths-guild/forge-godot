@@ -77,7 +77,9 @@ internal sealed partial class EntitiesInNodeGroupResolverEditor : NodeEditorProp
 
 	public override void ClearCallbacks()
 	{
+		base.ClearCallbacks();
 		_onChanged = null;
+		_groupField = null;
 	}
 }
 #endif
