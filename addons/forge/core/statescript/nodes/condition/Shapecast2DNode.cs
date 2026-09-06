@@ -68,6 +68,8 @@ public sealed class Shapecast2DNode(bool collideWithAreas = false) : ConditionNo
 				hit ? PhysicsDebugDraw2D.RayHitColor : PhysicsDebugDraw2D.RayClearColor);
 		}
 
+		PhysicsDebugDraw2D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw2D.RayHitColor);
+
 		return hit;
 	}
 }

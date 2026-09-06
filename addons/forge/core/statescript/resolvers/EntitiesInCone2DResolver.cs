@@ -110,13 +110,15 @@ internal sealed class EntitiesInCone2DResolver(
 		}
 #pragma warning restore S3267 // Loops should be simplified using the "Where" LINQ method
 
-		PhysicsDebugDraw2D.FlashCone(
-			graphContext,
-			origin,
-			axis,
-			range,
-			halfAngle,
-			_inCone.Count > 0 ? PhysicsDebugDraw2D.OverlapFoundColor : PhysicsDebugDraw2D.OverlapEmptyColor);
+		Color color = _inCone.Count > 0
+			? PhysicsDebugDraw2D.OverlapFoundColor
+			: PhysicsDebugDraw2D.OverlapEmptyColor;
+
+		PhysicsDebugDraw2D.FlashCone(graphContext, origin, axis, range, halfAngle, color);
+
+		// The entities that passed the aperture test, not the ones the sphere found: a wireframe cone drawn over a
+		// crowd cannot say which of them the angle kept.
+		PhysicsDebugDraw2D.FlashTargets(graphContext, _inCone, color);
 
 		return [.. _inCone];
 	}

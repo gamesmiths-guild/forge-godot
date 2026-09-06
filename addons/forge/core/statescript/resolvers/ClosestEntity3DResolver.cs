@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -65,6 +66,10 @@ internal sealed class ClosestEntity3DResolver(
 				closest = entity;
 			}
 		}
+
+		// The one thing it draws, and the reason it is worth drawing: the query that found the group already showed
+		// the group, and nothing in that wireframe says which of them this picked.
+		PhysicsDebugDraw3D.FlashTarget(graphContext, closest, PhysicsDebugDraw3D.OverlapFoundColor);
 
 		return closest;
 	}

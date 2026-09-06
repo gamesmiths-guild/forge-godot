@@ -27,6 +27,24 @@ public static class ForgeSettings
 	public const string DefaultSourcePath = "res://forge_tags.tres";
 
 	/// <summary>
+	/// Setting deciding whether a physics query outlines the entities it found, on top of the query geometry itself.
+	/// </summary>
+	public const string HighlightQueryTargetsSetting = "forge/statescript/highlight_query_targets";
+
+	/// <summary>
+	/// Gets a value indicating whether a physics query outlines the entities it found.
+	/// </summary>
+	/// <remarks>
+	/// A developer preference rather than something a graph authors, which is why it is a project setting and not a
+	/// node row: the answer is the same for every query in the project, and a per-query checkbox would be twenty
+	/// settings to keep in step. It only ever narrows what Godot's own Visible Collision Shapes already turned on -
+	/// with that off nothing is drawn either way - so an outline is one switch away when a crowded scene makes the
+	/// query geometry hard to read, and the query's own colour still says whether it found anything.
+	/// </remarks>
+	public static bool HighlightQueryTargets =>
+		ProjectSettings.GetSetting(HighlightQueryTargetsSetting, true).AsBool();
+
+	/// <summary>
 	/// Gets the configured tag source references, each a <c>uid://</c> or <c>res://</c> string.
 	/// </summary>
 	/// <returns>The configured references, or an empty array if unset.</returns>
@@ -82,21 +100,38 @@ public static class ForgeSettings
 
 #if TOOLS
 	/// <summary>
-	/// Declares the setting so it shows up in Project Settings with a sensible editing widget.
+	/// Declares the settings so they show up in Project Settings with sensible editing widgets.
 	/// </summary>
 	/// <remarks>
-	/// The initial value is deliberately an empty array and no value is written here. ProjectSettings skips saving any
-	/// property whose value still equals its initial value, so declaring a non-empty default would keep the setting out
-	/// of project.godot entirely until it happened to diverge.
+	/// The initial values are deliberately what an unset project already behaves as, and no value is written here.
+	/// ProjectSettings skips saving any property whose value still equals its initial value, so declaring a different
+	/// default would keep the setting out of project.godot entirely until it happened to diverge - which is also why
+	/// nothing is saved from here: neither declaration can reach the file, and the tag source writes its own setting
+	/// when it creates one.
 	/// </remarks>
 	public static void EnsureRegistered()
 	{
-		bool declared = ProjectSettings.HasSetting(SourcesSetting);
+		bool sourcesMissing = !ProjectSettings.HasSetting(SourcesSetting);
+		bool highlightMissing = !ProjectSettings.HasSetting(HighlightQueryTargetsSetting);
 
-		if (!declared)
+		if (sourcesMissing)
 		{
 			ProjectSettings.SetSetting(SourcesSetting, Array.Empty<string>());
 		}
+
+		if (highlightMissing)
+		{
+			ProjectSettings.SetSetting(HighlightQueryTargetsSetting, true);
+		}
+
+		ProjectSettings.AddPropertyInfo(new GodotDictionary
+		{
+			{ "name", HighlightQueryTargetsSetting },
+			{ "type", (int)Variant.Type.Bool },
+		});
+
+		ProjectSettings.SetInitialValue(HighlightQueryTargetsSetting, true);
+		ProjectSettings.SetAsBasic(HighlightQueryTargetsSetting, true);
 
 		ProjectSettings.AddPropertyInfo(new GodotDictionary
 		{
@@ -108,13 +143,6 @@ public static class ForgeSettings
 
 		ProjectSettings.SetInitialValue(SourcesSetting, Array.Empty<string>());
 		ProjectSettings.SetAsBasic(SourcesSetting, true);
-
-		// Property info and initial values are editor-session state, not file content, so only an actual first-time
-		// declaration is worth rewriting project.godot for.
-		if (!declared)
-		{
-			ProjectSettings.Save();
-		}
 	}
 #endif
 }

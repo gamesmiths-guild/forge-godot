@@ -54,6 +54,10 @@ internal sealed class AreaOverlaps3DResolver(
 		_found.Clear();
 		PhysicsQuery3D.CollectAreaOverlaps(area, _includeAreas, _ignoreResolver?.ResolveArray(graphContext), _found);
 
+		// The area itself stays undrawn - it is in the scene and Godot renders it already - but which entities are
+		// inside it is not something that wireframe says.
+		PhysicsDebugDraw3D.FlashTargets(graphContext, _found, PhysicsDebugDraw3D.OverlapFoundColor);
+
 		var resolved = new IForgeEntity[_found.Count];
 		_found.CopyTo(resolved);
 		return resolved;

@@ -78,6 +78,10 @@ internal sealed class LineOfSight3DResolver(
 			clear ? to : blocker.Position,
 			clear ? PhysicsDebugDraw3D.SightClearColor : PhysicsDebugDraw3D.SightBlockedColor);
 
+		// Only on a block, and only the blocker: a clear line has nobody to name, and the thing that got in the way is
+		// what an author checking a failed line of sight is looking for.
+		PhysicsDebugDraw3D.FlashTarget(graphContext, blocker.Entity, PhysicsDebugDraw3D.SightBlockedColor);
+
 		return new Variant128(clear);
 	}
 }
