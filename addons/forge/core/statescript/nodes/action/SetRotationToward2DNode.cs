@@ -17,7 +17,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// </remarks>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
 [StatescriptCategory("Spatial")]
-public sealed class LookAt2DNode(string nodePath = "") : SpatialActionNodeBase2D(nodePath)
+public sealed class SetRotationToward2DNode(string nodePath = "") : SpatialActionNodeBase2D(nodePath)
 {
 	/// <summary>
 	/// Input property index for the point to face.

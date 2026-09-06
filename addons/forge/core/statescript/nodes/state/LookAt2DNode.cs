@@ -6,7 +6,7 @@ using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
-using NumericsVector3 = System.Numerics.Vector3;
+using NumericsVector2 = System.Numerics.Vector2;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
@@ -14,20 +14,20 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// State node that keeps an entity facing a point for as long as it is active.
 /// </summary>
 /// <remarks>
-/// <para>The third reading of a turn, and the one a moving target needs. Look At 3D faces a point at the instant it
-/// runs; Rotate To 3D turns to a rotation captured when it started; both aim at where something <em>was</em>. This
-/// re-resolves its target every update, so binding Target to an Entity Position 3D of whoever is being followed keeps
-/// the caster pointed at them as they move — a turret holding a lead, a channelled beam that follows, a boss keeping
-/// the player in front of it.</para>
+/// <para>The third reading of a turn, and the one a moving target needs. Set Rotation Toward 2D faces a point at the
+/// instant it runs; Rotate To 2D turns to a rotation captured when it started; both aim at where something
+/// <em>was</em>. This re-resolves its target every update, so binding Target to an Entity Position 2D of whoever is
+/// being followed keeps the caster pointed at them as they move — a turret holding a lead, a channelled beam that
+/// follows, an enemy that keeps the player in front of it.</para>
 /// <para><b>The turn rate is a ceiling, not a rate to be met.</b> Unbound, zero or negative snaps to the target every
 /// update, which is the honest reading of "no limit on how fast it may turn". A rate makes the facing lag a target
 /// that jinks, and that lag is what makes a tracking attack dodgeable — which is usually the whole point of authoring
 /// one.</para>
-/// <para>Flattening is on by default for the reason Look At 3D has it on: the usual intent is "turn towards them",
-/// and a character that pitches at a target's feet reads as a bug. Turn it off for something that genuinely aims in
-/// three dimensions.</para>
+/// <para>Unlike its 3D twin there is nothing to flatten: a plane has one axis to turn around, so this is the turn the
+/// 3D node has to be told to restrict itself to. The node faces the point with its +X axis, which is what Godot
+/// treats as a 2D node's forward, so the offset's own angle is the facing directly.</para>
 /// <para>There is no aligned event. Whether the facing has arrived is a question the layer already answers — Is In
-/// Cone 3D over the caster's forward and the target — and an event here would be a second answer that could disagree
+/// Cone 2D over the caster's forward and the target — and an event here would be a second answer that could disagree
 /// with it. A graph that must wait for the turn gates on that condition.</para>
 /// <para>Nothing is restored on deactivate, unlike the override nodes. A facing is not a property borrowed from the
 /// scene: where a thing ended up looking is where it is looking, and snapping it back would undo a turn the player
@@ -35,10 +35,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>Configuration is captured in field initializers rather than a constructor body, because the base node
 /// constructor calls <see cref="DefineParameters"/> before a body would run.</para>
 /// </remarks>
-/// <param name="flatten">Whether to ignore the height difference and turn only around the vertical axis.</param>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
 [StatescriptCategory("Spatial")]
-public class TrackTarget3DNode(bool flatten = true, string nodePath = "") : StateNode<StateNodeContext>
+public class LookAt2DNode(string nodePath = "") : StateNode<StateNodeContext>
 {
 	/// <summary>
 	/// Input property index for the entity to turn. Unbound means the ability's owner.
@@ -57,10 +56,6 @@ public class TrackTarget3DNode(bool flatten = true, string nodePath = "") : Stat
 
 	private const float MinimumOffsetSquared = 0.000001f;
 
-	// Above this the offset is close enough to the up axis that a look-at has no perpendicular left to build from.
-	private const float ParallelToUpDot = 0.9999f;
-
-	private readonly bool _flatten = flatten;
 	private readonly string _nodePath = nodePath ?? string.Empty;
 
 	private bool _reportedMissingNode;
@@ -72,7 +67,7 @@ public class TrackTarget3DNode(bool flatten = true, string nodePath = "") : Stat
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
 		inputProperties.Add(new InputProperty("Entity", typeof(IForgeEntity), IsOptional: true));
-		inputProperties.Add(new InputProperty("Target", typeof(NumericsVector3)));
+		inputProperties.Add(new InputProperty("Target", typeof(NumericsVector2)));
 		inputProperties.Add(new InputProperty("Speed", typeof(double), IsOptional: true));
 	}
 
@@ -93,59 +88,38 @@ public class TrackTarget3DNode(bool flatten = true, string nodePath = "") : Stat
 
 		// Re-resolved every update rather than captured at activation, because a tracker runs for as long as its
 		// ability does and the node it turns can be freed under it by a death or a despawn.
-		if (!ForgeEntityBridge.TryGetSpatialNode3D(entity, _nodePath, out Node3D? spatialNode))
+		if (!ForgeEntityBridge.TryGetSpatialNode2D(entity, _nodePath, out Node2D? spatialNode))
 		{
 			ReportMissingNodeOnce();
 			return;
 		}
 
-		if (!graphContext.TryResolve(InputProperties[TargetInput].BoundName, out NumericsVector3 target))
+		if (!graphContext.TryResolve(InputProperties[TargetInput].BoundName, out NumericsVector2 target))
 		{
 			return;
 		}
 
-		var point = new Vector3(target.X, target.Y, target.Z);
+		Vector2 offset = new Vector2(target.X, target.Y) - spatialNode.GlobalPosition;
 
-		if (_flatten)
-		{
-			point.Y = spatialNode.GlobalPosition.Y;
-		}
-
-		Vector3 offset = point - spatialNode.GlobalPosition;
-
-		// The two offsets a look-at cannot be built from: a target standing exactly on the node names no direction,
-		// and one directly overhead leaves the up axis with nothing to be perpendicular to. Both happen in play, and
-		// both mean "keep the facing you have" rather than "turn somewhere arbitrary".
-		if (offset.LengthSquared() <= MinimumOffsetSquared
-			|| Mathf.Abs(offset.Normalized().Dot(Vector3.Up)) > ParallelToUpDot)
+		// A target standing exactly on the node names no direction, and turning to the angle a zero vector rounds to
+		// would snap the facing somewhere arbitrary. Keeping the facing it has is the reading that matches.
+		if (offset.LengthSquared() <= MinimumOffsetSquared)
 		{
 			return;
 		}
 
 		graphContext.TryResolve(InputProperties[SpeedInput].BoundName, out double speed);
 
-		Quaternion current = spatialNode.GlobalBasis.GetRotationQuaternion();
-		Quaternion desired = Basis.LookingAt(offset, Vector3.Up).GetRotationQuaternion();
+		float current = spatialNode.GlobalRotation;
+		float desired = offset.Angle();
+		float maxStep = (float)(speed * deltaTime);
 
-		// Scale is carried separately so a scaled node keeps its scale, and applied in the new rotation's own axes,
-		// matching Rotate To 3D - scaling in parent axes would shear a non-uniformly scaled node as it turns.
-		Vector3 scale = spatialNode.GlobalBasis.Scale;
-		Quaternion rotation = StepToward(current, desired, speed * deltaTime);
-		spatialNode.GlobalBasis = new Basis(rotation).ScaledLocal(scale);
-	}
-
-	// The step is a ceiling: one longer than the turn that is left lands on the target rather than overshooting it and
-	// swinging back, which is what a per-frame step would otherwise do as the facing closes in.
-	private static Quaternion StepToward(Quaternion current, Quaternion desired, double maxStep)
-	{
-		float angle = current.AngleTo(desired);
-
-		if (maxStep <= 0 || angle <= maxStep)
-		{
-			return desired;
-		}
-
-		return current.Slerp(desired, (float)(maxStep / angle));
+		// Stepped through the signed difference rather than towards the absolute angle, for the reason Rotate To 2D
+		// takes its delta once: a facing accumulates past a full turn, and comparing absolutes would send a node that
+		// has spun twice the long way round to a target directly in front of it.
+		spatialNode.GlobalRotation = maxStep <= 0
+			? desired
+			: current + Mathf.Clamp(Mathf.AngleDifference(current, desired), -maxStep, maxStep);
 	}
 
 	private IForgeEntity? ResolveEntityOrOwner(GraphContext graphContext)
@@ -174,7 +148,7 @@ public class TrackTarget3DNode(bool flatten = true, string nodePath = "") : Stat
 		_reportedMissingNode = true;
 
 		GD.PushWarning(
-			"Statescript: Track Target 3D found no Node3D for its entity" +
+			"Statescript: Look At 2D found no Node2D for its entity" +
 			(_nodePath.Length == 0 ? "." : $" at [{_nodePath}].") +
 			" Nothing was turned.");
 	}

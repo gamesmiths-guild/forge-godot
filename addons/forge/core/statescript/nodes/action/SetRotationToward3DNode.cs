@@ -18,7 +18,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// <param name="flatten">Whether to ignore the height difference and turn only around the vertical axis.</param>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
 [StatescriptCategory("Spatial")]
-public sealed class LookAt3DNode(bool flatten = true, string nodePath = "") : SpatialActionNodeBase3D(nodePath)
+public sealed class SetRotationToward3DNode(bool flatten = true, string nodePath = "")
+	: SpatialActionNodeBase3D(nodePath)
 {
 	/// <summary>
 	/// Input property index for the point to face.
