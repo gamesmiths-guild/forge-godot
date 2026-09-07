@@ -31,6 +31,11 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// taken unobstructed, whichever comes first - so a slide that grinds along a wall forever is not a thing a graph can
 /// author by accident. Running out of time reports <see cref="OnBlockedPort"/>, because not arriving is what being
 /// blocked means; under <see cref="BlockedResponse.Slide"/> that is the only way it fires.</para>
+/// <para><b>The game's own movement code still runs.</b> This adds displacement to a body; it does not take the body
+/// over, and Forge has no way to tell a character controller to stand down. On a character whose script moves itself
+/// every physics step the two motions combine, which is rarely what a dash wants. Suspending the controller for the
+/// duration is the ability's job and composes out of what is already here - Node Enabled Override on the script that
+/// moves it, or a tag the controller checks before moving.</para>
 /// <para>A rigid body is better driven by Force Override 3D or Set Velocity 3D. Sweeping one with move and collide
 /// teleports it past the simulation rather than pushing it through, and the result fights whatever else is acting on
 /// it - but it is allowed here rather than refused, because a game that has made a rigid body kinematic for the
