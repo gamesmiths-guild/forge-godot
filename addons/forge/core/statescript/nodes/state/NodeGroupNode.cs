@@ -20,10 +20,12 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para><b>Only a membership this node added is one it removes.</b> A node the level already put in the group is left
 /// in it, because the membership was never this ability's to take away - the same reasoning the override nodes use for
 /// restoring the value they found rather than the one they assume.</para>
-/// <para>The consequence is that two of these held over the same node and group resolve to whichever ends
-/// <em>first</em>, where the override nodes resolve to whichever ends last. A group is a set and not a count, so the
-/// second hold has nothing to add and nothing to restore; if two abilities need to mark the same node independently,
-/// give them a group each.</para>
+/// <para>The consequence is that the membership lasts exactly as long as the hold that <em>added</em> it. A second
+/// hold over the same node and group is a no-op in both directions - it adds nothing on activation and removes
+/// nothing on deactivation - so the node leaves the group when the adding hold ends, whether that is before or after
+/// the other one. This is not a reference count, and it is not the "whichever ends last" the override nodes give. A
+/// group is a set, so the second hold has nothing to add and nothing to restore; if two abilities need to mark the
+/// same node independently, give them a group each.</para>
 /// <para>The membership is not persistent, so it belongs to the running game and is never saved into the scene.</para>
 /// </remarks>
 /// <param name="group">The group to hold the node in.</param>
