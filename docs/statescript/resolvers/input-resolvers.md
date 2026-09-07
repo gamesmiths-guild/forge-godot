@@ -17,7 +17,7 @@ All four are unpaired — a button has no dimension.
 | **Input Axis** | `float` | **Negative**; **Positive** |
 | **Input Vector 2** | `Vector2` | **Left**; **Right**; **Up**; **Down** |
 
-**`Input Axis` is not a subtraction of two strengths.** The two actions *cancel*, which is what a subtraction does not do — holding both leaves the axis at zero rather than at whichever analog value happens to be larger.
+**`Input Axis` is Godot's `Input.GetAxis`**: the positive action's strength minus the negative one's. Holding both cancels to zero when they are equally strong, and otherwise reports the difference, so the stronger side wins by how much it leads. That is one row instead of two strengths and a `Subtract`, and it keeps the operand order — negative first — the same as the engine's.
 
 `Input Vector 2` gives movement-direction aiming without a camera.
 

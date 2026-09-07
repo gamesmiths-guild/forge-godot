@@ -268,7 +268,7 @@ Extends Area2D/Area3D; travels along its own forward each physics step and appli
 - `Speed` (float): Units per second. Defaults to `10` in 3D and `400` in 2D.
 - `MaxLifetime` (float): Seconds before it expires. Default `5`.
 - `MaxRange` (float): Distance before it expires. Zero means unlimited.
-- `Pierce` (int): How many targets it passes through before stopping. Zero stops at the first.
+- `Pierce` (int): How many extra targets it hits before `DestroyOnHit` frees it. Zero frees it on the first. With `DestroyOnHit` off it is not a limit at all — the projectile keeps hitting until its lifetime or range ends.
 - `DistanceFalloffCurve` (Curve): Sampled at distance travelled over `MaxRange` and passed to the effects as context data.
 - `DestroyOnHit` (bool): Default on.
 - `IncludeAreas` (bool): Whether areas count as hits, as well as bodies.
@@ -287,6 +287,8 @@ It carries `ForgeEffect` children exactly as `EffectArea3D` does, and implements
 Two costs come with it. The cast is not free, and **the first enabled `CollisionShape` child becomes the query's shape** — a projectile built from several shapes or from a `CollisionPolygon` has no single shape to sweep and says so with a warning rather than silently sweeping one of them. That is why it is an export and not the only behavior.
 
 Pierce works by **re-sweeping with each collider it met excluded**, so a piercing shot reports everything along the step in the order it met them. The exclusion list is kept for the whole flight rather than per step, so a collider already answered for cannot stop the sweep again. The caster needs no special case: a projectile spawned inside its owner meets the owner on its first cast, skips it as the owner, and the exclusion that follows is exactly what should happen for the rest of the flight.
+
+`Pierce` counts down on every hit, but only `DestroyOnHit` acts on the count reaching zero — so an endlessly piercing beam-like projectile is `DestroyOnHit` off, bounded by `MaxLifetime` or `MaxRange` instead.
 
 While swept, monitoring is switched off — nothing reads the overlap list any more, and an armed area pays for a test per step that decides nothing. The projectile stays *monitorable*, so areas watching for it still see it.
 

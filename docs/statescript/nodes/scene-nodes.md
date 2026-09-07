@@ -77,7 +77,9 @@ A Godot group is a name attached to scene nodes, and it is the one way to reach 
 
 All three are dimension-neutral: a group is a name in the scene tree, not a physics concept.
 
-**Only a membership the node added is one it removes.** `NodeGroup` checks whether the node was already in the group when it activated, and leaves it alone if it was — a node the level author put in the group was never this ability's to take away. The consequence is that two holds over the same node and group resolve to whichever ends *first*, where the value overrides in [Interop Nodes](interop-nodes.md) resolve to whichever ends last. A group is a set, not a count, so the second hold has nothing to add and nothing to give back; two abilities that need to mark the same node independently want a group each.
+**Only a membership the node added is one it removes.** `NodeGroup` checks whether the node was already in the group when it activated, and leaves it alone if it was — a node the level author put in the group was never this ability's to take away.
+
+The consequence is that **the membership lasts exactly as long as the hold that added it**, and a second hold over the same node and group is a no-op in both directions: it adds nothing on activation and removes nothing on deactivation. So the node leaves the group when the *adding* hold ends, whether that is before or after the other one — it is not a reference count, and it is not "whichever ends last" the way the value overrides in [Interop Nodes](interop-nodes.md) are. A group is a set, so the second hold has nothing to add and nothing to give back; two abilities that need to mark the same node independently want a group each.
 
 ## Related Docs
 

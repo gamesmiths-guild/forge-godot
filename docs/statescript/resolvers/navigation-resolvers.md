@@ -20,7 +20,7 @@ Each is a 2D/3D pair, because `NavigationServer2D` and `NavigationServer3D` are 
 
 `NavigationServer.MapGetPath` answers an impossible request with a perfectly good path to the closest point it could reach, so a destination across a chasm returns a full path that simply stops at the edge. The test is whether the path's **last point lands near the one asked for**, which is what the **Within** row is.
 
-The tolerance has to be forgiving, because the destination is snapped onto the navigation mesh before the path is built — even an obviously reachable point rarely comes back exactly. The unbound default is `NavigationAgent`'s own `target_desired_distance`: **1.0 in 3D, 10.0 in 2D**, so a check agrees with what an agent walking the same path would report rather than inventing a second standard.
+The tolerance has to be forgiving, because the destination is snapped onto the navigation mesh before the path is built — even an obviously reachable point rarely comes back exactly. A fresh **Within** row is seeded with `NavigationAgent`'s own `target_desired_distance` — **1.0 in 3D, 10.0 in 2D** — so a check agrees with what an agent walking the same path would report rather than inventing a second standard, and what the editor shows is what runs.
 
 ## Path length reports the walk it can make
 

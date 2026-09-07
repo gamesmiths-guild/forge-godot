@@ -131,7 +131,9 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 ### The two update rails
 
-Anything that moves a body, steers an agent, or asks the physics world a question runs on the **fixed step** — Move To, Move Body, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep and Line Of Sight, in both dimensions. Timers, `InputActionNode`, the presentation nodes and the scene lifetimes stay on the **frame**, because their delta is wall-clock time.
+Only **State** nodes have a rail: Action and Condition nodes run the moment a message reaches them, so a one-shot `Raycast`, `Shapecast`, `Set Velocity` or `Apply Impulse` executes on whatever pass delivered it and never waits for a tick.
+
+Among the State nodes, the ones that move a body, steer an agent, or poll the physics world update on the **fixed step** — Move To, Move Body, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep and Line Of Sight, in both dimensions. Timers, `InputActionNode`, the presentation nodes and the scene lifetimes stay on the **frame**, because their delta is wall-clock time. Collision Override sits on neither: it writes once on activation and undoes it once on deactivation.
 
 The split is by what a node's delta *means*, not by what the node touches. A host that implements `IForgeEntity` itself must drive both rails; see [Ability Integration](../README.md#in-godot).
 

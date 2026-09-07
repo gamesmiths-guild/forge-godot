@@ -60,7 +60,7 @@ The `Only` variants are not redundant: a character wedged in a corner is on the 
 
 ## What differs in 2D
 
-- **`Entity Rotation 2D` reports a `float` in radians** rather than a quaternion, so core's whole numeric toolbox applies to a facing directly. **`Entity Angular Velocity 2D`** is likewise a `float` rate rather than an axis.
+- **`Entity Rotation 2D` reports a `float` in radians** rather than a quaternion, so core's whole numeric toolbox applies to a facing directly. **`Entity Angular Velocity 2D` reports a `double`** rate rather than an axis with a length.
 - **`Entity Direction 2D` offers four axes, not six.** A plane has no up and down of its own, and screen-up is already `Left` or `Right` of a facing, so it takes a `SpatialAxis2D` of its own rather than sharing an enum with two members that would resolve to nothing.
 - Everything else — position, scale, velocity, transform point, both character readers, Can Fit — mirrors with the vector type swapped.
 

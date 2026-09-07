@@ -12,7 +12,7 @@ They read the engine itself rather than the scene: the running tick, the clock, 
 |---|---|---|
 | **Delta Time** | `double` | — |
 | **Engine Time** | `double` | — |
-| **Animation Length** | `float` | Of (entity); **Player** (path); **Animation** (name) |
+| **Animation Length** | `double` | Of (entity); **Player** (path); **Animation** (name) |
 
 ## Delta Time
 

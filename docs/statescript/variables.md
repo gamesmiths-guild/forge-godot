@@ -20,7 +20,7 @@ In the Godot editor, `Float` is the single designer-facing floating-point choice
 
 **Reference (object-backed) types:** In addition to the value types above, the editor exposes object variable types for storing reference objects. These have no inline initial value (they are assigned at runtime) and are read with the **Variable** resolver (or `ObjectVariableResolver<T>` in code).
 
-The core types are `Entity`, `Effect`, and `Active Effect`. Forge for Godot registers `Tag`, `Ability Handle` and `Ability Data` for the listener and grant nodes, and four engine types so a graph can hold what it spawned and what it queries with: `Node`, `Scene`, `Shape 3D` and `Shape 2D`. See [Object Variable Types](resolvers/README.md#object-variable-types) for what uses each.
+The core types are `Entity`, `Effect`, and `Active Effect`. Forge for Godot registers `Tag`, `Ability` (an `AbilityHandle`) and `Ability Data` for the listener and grant nodes, and four engine types so a graph can hold what it spawned and what it queries with: `Node`, `Scene`, `Shape 3D` and `Shape 2D`. See [Object Variable Types](resolvers/README.md#object-variable-types) for what uses each.
 
 #### Adding a custom object variable type
 

@@ -72,7 +72,7 @@ Object-backed graph values are keyed by an object variable type. In addition to 
 | Type id | Display name | Backing type | Used by |
 |---------|--------------|--------------|---------|
 | `Tag` | Tag | `Tag` | The tag listener's output. |
-| `AbilityHandle` | Ability Handle | `AbilityHandle` | The grant nodes' handle output and the lookup resolvers. |
+| `AbilityHandle` | Ability | `AbilityHandle` | The grant nodes' handle output and the lookup resolvers. |
 | `AbilityData` | Ability Data | `AbilityData` | The ability grant inputs. |
 | `GodotNode` | Node | `Godot.Node` | Everything in the node lane — spawn outputs, hit nodes, the interop rows. |
 | `Scene` | Scene | `Godot.PackedScene` | The scene `Constant` resolver and the instantiating nodes. |

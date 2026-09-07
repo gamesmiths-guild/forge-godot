@@ -12,7 +12,7 @@ They ask the physics world a question. Which shape a question takes decides whet
 - **Entity-list queries are resolvers**, so they feed `ForEach`, `Where` and `OrderBy` directly.
 - **Boolean checks that must work inside a lambda are resolvers.** [`Line Of Sight 3D`](../resolvers/physics-queries.md#narrowing-and-testing) has to be usable inside a `Where`; the node form on this page is for when you want the transitions and the blocker.
 
-Every node here is a 2D/3D pair, runs its queries on the **fixed step**, and takes the two operands the whole family shares:
+Every node here is a 2D/3D pair and takes the two operands the whole family shares. **The one-shot Condition nodes cast the moment a message reaches them**; only the monitored State nodes below poll, and those poll on the fixed step.
 
 - **Mask (`int`, optional).** A collision mask, authored as a number. **Zero means every layer** — a mask of zero can never find anything, so reading it literally would make an unbound row silently disable the query it belongs to.
 - **Ignore (`IForgeEntity[]`, required, seeded).** The entities the query keeps off. It is a *list* and not a flag because both ends of a query sit inside a body: a ray from a character's own position starts at its feet, outside its own capsule by a hair, and a line drawn to `%CastPoint` on a target ends inside the target. A fresh row is seeded with the ability's owner — or with the owner and the target for the sight forms — so what the editor shows is what runs. Emptying it is how a query that reports everyone is authored.
