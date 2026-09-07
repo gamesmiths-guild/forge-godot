@@ -24,6 +24,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Condition;
 /// <param name="collideWithAreas">Whether areas count as hits, as well as bodies.</param>
 /// <param name="hitFromInside">Whether a ray starting inside a shape reports that shape.</param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics2D, RaycastNodeParameters2D.MaskInput)]
 public sealed class Raycast2DNode(bool collideWithAreas = false, bool hitFromInside = false) : ConditionNode
 {
 	private readonly bool _collideWithAreas = collideWithAreas;

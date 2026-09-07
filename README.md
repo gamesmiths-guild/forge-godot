@@ -160,3 +160,5 @@ This project is not currently accepting contributions as it's still in early dev
 ## License
 
 Copyright © Gamesmiths Guild. See [LICENSE](LICENSE) for details.
+
+Third-party code included in this project is listed in [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md), along with the licenses it is used under.

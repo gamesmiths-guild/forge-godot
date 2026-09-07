@@ -40,6 +40,7 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [ActiveEffectTagQueryResolver](active-effect-tag-query-resolver.md) | `bool` | Evaluates a tag query against an active effect's own tags, granted tags, or both. |
 | [ActiveEffectTargetResolver](active-effect-target-resolver.md) | `IForgeEntity?` | Reads the entity an active effect is applied to. |
 | [CanActivateAbilityResolver](can-activate-ability-resolver.md) | `bool` | Checks whether an ability can currently activate. |
+| [CollisionMaskResolver](collision-mask-resolver.md) | `int` | Authors a collision layer or mask as the engine's bit grid, with the project's layer names, rather than as a number. |
 | [CueCustomParametersResolver](cue-custom-parameters-resolver.md) | `Dictionary<StringKey, object>` | Selects an `ICueCustomParametersProvider` to author the `CueParameters.CustomParameters` bag for the cue nodes. |
 | [CurveSampleResolver](curve-sample-resolver.md) | `float` | Samples a Godot `Curve` resource at a resolved position. |
 | [EffectContextDataResolver](effect-context-data-resolver.md) | `EffectApplicationContext` | Selects an `IEffectContextDataProvider` to pass custom context data into effect applications. |
@@ -107,7 +108,9 @@ The [Godot engine resolvers](#godot-engine-resolvers) above are grouped the same
 
 ## Seeding a Nested Operand
 
-A **node input** marked optional renders a `(None)` entry and genuinely stays unbound, which is what lets Raycast read "no mask" as every layer. A nested operand **inside a resolver** has no such state: the picker always selects an editor, and an untouched one is the constant zero.
+A **node input** marked optional renders a `(None)` entry and can genuinely stay unbound, which is what lets a query read "no mask" as every layer. A nested operand **inside a resolver** has no such state: the picker always selects an editor, and an untouched one is the constant zero.
+
+An optional input still *rests* on `(None)` when fresh, with one exception: a **collision layer slot** is seeded with the [layer grid](collision-mask-resolver.md), because there the two states are the same query — an unbound mask reads as zero, and zero already means every layer.
 
 So any resolver operand whose sensible default is not zero is *seeded* with the resolver that expresses it — `Overlap`'s Position starts on `Entity Position 3D`, its Shape on a Sphere, both ends of `Line Of Sight` on `Entity Position 3D`, `Mouse World Position 3D`'s Max Dist on the same 1000 units the aim payload uses. An untouched row runs what the editor shows.
 

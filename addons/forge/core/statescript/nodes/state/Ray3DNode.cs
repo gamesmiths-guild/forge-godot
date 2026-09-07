@@ -26,6 +26,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="hitFromInside">Whether a ray starting inside a shape reports that shape.</param>
 /// <param name="oneShot">Whether the node deactivates itself the first time the ray hits.</param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics3D, RaycastNodeParameters3D.MaskInput)]
 public class Ray3DNode(
 	bool collideWithAreas = false,
 	bool hitFromInside = false,

@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
@@ -148,7 +149,8 @@ internal static class NestedResolverEditorUtilities
 		Action layoutSizeChanged,
 		bool isArray,
 		bool iterationScope,
-		bool angleSlot = false)
+		bool angleSlot = false,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
 		if (graph is null || factoryIndex < 0 || factoryIndex >= factories.Count)
 		{
@@ -159,6 +161,7 @@ internal static class NestedResolverEditorUtilities
 		editor.IterationScope = iterationScope
 			|| factories is ResolverEditorFactoryList { IterationScope: true };
 		editor.AngleSlot = angleSlot;
+		editor.MaskSlot = maskSpace;
 		Type[] compatibleExpectedTypes = GetCompatibleExpectedTypes(editor, allowedExpectedTypes);
 		Type[] effectiveAllowedExpectedTypes = compatibleExpectedTypes.Length > 0
 			? compatibleExpectedTypes

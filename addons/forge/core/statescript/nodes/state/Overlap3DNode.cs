@@ -36,6 +36,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="areaPath">Path to the area to watch, from the entity's spatial node. Empty means that node itself.
 /// </param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics3D, MaskInput)]
 public class Overlap3DNode(
 	OverlapSourceMode sourceMode = OverlapSourceMode.ExistingArea,
 	bool includeAreas = false,

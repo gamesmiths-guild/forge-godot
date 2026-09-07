@@ -8,6 +8,7 @@ using System.Reflection;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Statescript.Properties;
 using Gamesmiths.Forge.Tags;
 using Godot;
@@ -85,8 +86,25 @@ internal static class StatescriptResolverRegistry
 		return [.. compatible];
 	}
 
-	public static int GetDefaultFactoryIndex(List<Func<NodeEditorProperty>> factories, Type expectedType, bool isArray)
+	public static int GetDefaultFactoryIndex(
+		List<Func<NodeEditorProperty>> factories,
+		Type expectedType,
+		bool isArray,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
+		// A slot that says it holds collision layers is authored as the bit grid, whatever the type dictionary would
+		// otherwise pick for the integer behind it.
+		if (maskSpace != CollisionLayerSpace.None)
+		{
+			for (int i = 0; i < factories.Count; i++)
+			{
+				if (GetResolverTypeId(factories[i]) == "CollisionMask")
+				{
+					return i;
+				}
+			}
+		}
+
 		if (!isArray && _defaultScalarResolverIds.TryGetValue(expectedType, out string? preferredResolverId))
 		{
 			for (int i = 0; i < factories.Count; i++)

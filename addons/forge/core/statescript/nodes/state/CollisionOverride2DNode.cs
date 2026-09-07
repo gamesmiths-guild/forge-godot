@@ -27,6 +27,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="nodePath">Optional path to a descendant node to change instead of the entity's own spatial node.
 /// </param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics2D, BitsInput)]
 public class CollisionOverride2DNode(
 	CollisionBitsTarget target = CollisionBitsTarget.Layer,
 	CollisionBitsOperation operation = CollisionBitsOperation.Clear,

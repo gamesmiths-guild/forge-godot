@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -81,7 +82,8 @@ internal sealed partial class LineOfSight2DResolverEditor : NodeEditorProperty
 			resource?.MaskFolded ?? true,
 			NotifyChanged,
 			RaiseLayoutSizeChanged,
-			IterationScope);
+			IterationScope,
+			maskSpace: CollisionLayerSpace.Physics2D);
 		root.AddChild(_maskPicker);
 	}
 

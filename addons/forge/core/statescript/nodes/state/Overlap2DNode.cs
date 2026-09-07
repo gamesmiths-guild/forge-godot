@@ -36,6 +36,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// </param>
 [StatescriptCategory("Physics")]
 [StatescriptAngleInputs(RotationInput)]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics2D, MaskInput)]
 public class Overlap2DNode(
 	OverlapSourceMode sourceMode = OverlapSourceMode.ExistingArea,
 	bool includeAreas = false,

@@ -12,7 +12,7 @@ Every one is a 2D/3D pair.
 
 ## Shared operands
 
-- **Mask** (`int`, nested). **Zero means every layer.** A mask of zero can never find anything, so it is never a useful authored value, and reading it literally would make an untouched row silently disable the query.
+- **Mask** (`int`, nested, seeded with the [layer grid](collision-mask-resolver.md)). Layers are picked as bits, named by the project, exactly as they are on a body in the inspector. **Zero means every layer.** A mask of zero can never find anything, so it is never a useful authored value, and reading it literally would make an untouched row silently disable the query.
 - **Ignore** (`Entity[]`, nested, seeded with the ability's owner). What the query keeps off. It is a *list* because both ends of a query sit inside a body: a ray from a character's own position starts at its feet, outside its own capsule by a hair, and a line drawn to a marker on a target ends inside the target. Being a list also means an overlap's results can be fed straight in, for a check that should pass through a whole group.
 - **Include Areas** (checkbox) where the query can meet one.
 

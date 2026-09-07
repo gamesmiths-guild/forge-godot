@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -157,7 +158,8 @@ internal sealed partial class Overlap3DResolverEditor : NodeEditorProperty
 			resource?.Mask,
 			_maskExpectedTypes,
 			isArray: false,
-			resource?.MaskFolded ?? true);
+			resource?.MaskFolded ?? true,
+			CollisionLayerSpace.Physics3D);
 
 		_ignorePicker = AddPicker(
 			graph,
@@ -176,7 +178,8 @@ internal sealed partial class Overlap3DResolverEditor : NodeEditorProperty
 		StatescriptResolverResource? existing,
 		Type[] expectedTypes,
 		bool isArray,
-		bool folded)
+		bool folded,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
 		var picker = new NestedResolverPicker();
 		picker.Initialize(
@@ -188,7 +191,8 @@ internal sealed partial class Overlap3DResolverEditor : NodeEditorProperty
 			folded,
 			NotifyChanged,
 			RaiseLayoutSizeChanged,
-			IterationScope);
+			IterationScope,
+			maskSpace: maskSpace);
 
 		root.AddChild(picker);
 		return picker;

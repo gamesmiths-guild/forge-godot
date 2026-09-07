@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -65,7 +66,8 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 			"Mask:",
 			resource?.Mask,
 			_maskExpectedTypes,
-			resource?.MaskFolded ?? true);
+			resource?.MaskFolded ?? true,
+			CollisionLayerSpace.Physics3D);
 
 		// Seeded with the same constant the resource falls back to: a nested operand has no unbound state, so an
 		// untouched distance would be zero and every query would resolve onto the camera itself.
@@ -124,7 +126,8 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 		string title,
 		StatescriptResolverResource? existing,
 		Type[] expectedTypes,
-		bool folded)
+		bool folded,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
 		var picker = new NestedResolverPicker();
 		picker.Initialize(
@@ -136,7 +139,8 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 			folded,
 			NotifyChanged,
 			RaiseLayoutSizeChanged,
-			IterationScope);
+			IterationScope,
+			maskSpace: maskSpace);
 
 		root.AddChild(picker);
 		return picker;
