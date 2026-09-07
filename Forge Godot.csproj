@@ -4,5 +4,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RootNamespace>ForgeGodot</RootNamespace>
+    <AssemblyName>Gamesmiths.Forge.Godot</AssemblyName>
   </PropertyGroup>
 </Project>
