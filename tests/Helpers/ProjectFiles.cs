@@ -31,11 +31,30 @@ internal static class ProjectFiles
 	/// <returns>The matching <c>res://</c> paths, ordered so test output is stable.</returns>
 	public static IEnumerable<string> ResourcePaths(params string[] extensions)
 	{
+		return Files(extensions).Select(ToResourcePath);
+	}
+
+	/// <summary>
+	/// Enumerates every project file with one of the given extensions as an absolute path.
+	/// </summary>
+	/// <param name="extensions">Extensions to match, including the leading dot.</param>
+	/// <returns>The matching absolute paths, ordered so test output is stable.</returns>
+	public static IEnumerable<string> Files(params string[] extensions)
+	{
 		return Walk(ProjectRoot)
 			.Where(path => extensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
-			.Select(path => "res://" + Path.GetRelativePath(ProjectRoot, path)
-				.Replace(Path.DirectorySeparatorChar, '/'))
 			.OrderBy(path => path, StringComparer.Ordinal);
+	}
+
+	/// <summary>
+	/// Converts an absolute path inside the project to its <c>res://</c> form.
+	/// </summary>
+	/// <param name="absolutePath">The absolute path to convert.</param>
+	/// <returns>The equivalent <c>res://</c> path.</returns>
+	public static string ToResourcePath(string absolutePath)
+	{
+		return "res://" + Path.GetRelativePath(ProjectRoot, absolutePath)
+			.Replace(Path.DirectorySeparatorChar, '/');
 	}
 
 	private static IEnumerable<string> Walk(string directory)
