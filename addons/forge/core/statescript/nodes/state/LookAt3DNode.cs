@@ -38,6 +38,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="flatten">Whether to ignore the height difference and turn only around the vertical axis.</param>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
 [StatescriptCategory("Spatial")]
+[StatescriptAngleInputs(SpeedInput)]
 public class LookAt3DNode(bool flatten = true, string nodePath = "") : StateNode<StateNodeContext>
 {
 	/// <summary>
@@ -51,7 +52,8 @@ public class LookAt3DNode(bool flatten = true, string nodePath = "") : StateNode
 	public const byte TargetInput = 1;
 
 	/// <summary>
-	/// Input property index for the most the facing may turn in a second, in radians. Unbound snaps.
+	/// Input property index for the most the facing may turn in a second. Read in radians, typed in degrees. Unbound
+	/// snaps.
 	/// </summary>
 	public const byte SpeedInput = 2;
 
@@ -73,7 +75,7 @@ public class LookAt3DNode(bool flatten = true, string nodePath = "") : StateNode
 	{
 		inputProperties.Add(new InputProperty("Entity", typeof(IForgeEntity), IsOptional: true));
 		inputProperties.Add(new InputProperty("Target", typeof(NumericsVector3)));
-		inputProperties.Add(new InputProperty("Speed", typeof(double), IsOptional: true));
+		inputProperties.Add(new InputProperty("Speed (deg/s)", typeof(double), IsOptional: true));
 	}
 
 	/// <inheritdoc/>

@@ -30,11 +30,17 @@ internal sealed partial class QuaternionFromYawPitchRollResolverEditor
 
 	protected override Type ThirdNestedExpectedType => typeof(float);
 
-	protected override string FirstTitle => "Yaw:";
+	protected override string FirstTitle => "Yaw (deg):";
 
-	protected override string SecondTitle => "Pitch:";
+	protected override string SecondTitle => "Pitch (deg):";
 
-	protected override string ThirdTitle => "Roll:";
+	protected override string ThirdTitle => "Roll (deg):";
+
+	protected override bool FirstIsAngle => true;
+
+	protected override bool SecondIsAngle => true;
+
+	protected override bool ThirdIsAngle => true;
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{

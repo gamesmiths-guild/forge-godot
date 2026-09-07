@@ -23,7 +23,7 @@ The Action nodes execute once and have no rail. Of the two State nodes, **Force 
 |---|---|---|---|---|
 | `SetVelocity3DNode` | Node | 1 Velocity (`Vector3`, required) | `CharacterBody3D`, `RigidBody3D` | Dash; knockback by aiming Entity at the target instead of the caster. |
 | `ApplyImpulse3DNode` | Node | 1 Impulse (`Vector3`, required); 2 At Offset (`Vector3`, optional) | `RigidBody3D` | An offset turns the push into a spin. |
-| `SetAngularVelocity3DNode` | Node | 1 Angular Velocity (`Vector3`, required) | `RigidBody3D` | An axis with the rate as its length. Zero stops a spin dead. |
+| `SetAngularVelocity3DNode` | Node | 1 Angular Velocity (deg/s) (`Vector3`, required) | `RigidBody3D` | An axis with the rate as its length. Zero stops a spin dead. |
 | `ApplyTorqueImpulse3DNode` | Node | 1 Torque (`Vector3`, required) | `RigidBody3D` | The angular Apply Impulse. No offset row: an offset is what turns a push into a spin, and this already is the spin. |
 
 **The angular half is narrower than the linear one, and the engine is why.** Angular velocity and torque exist only on a rigid body — a character body is turned by the game rather than by physics — so pointing an angular node at a `CharacterBody3D` warns and skips the write, naming [Set Rotation 3D and Rotate To 3D](spatial-nodes.md) instead of silently doing nothing.
@@ -77,7 +77,7 @@ All of it is gated on Godot's own **Debug → Visible Collision Shapes** and not
 
 ## What differs in 2D
 
-- **A spin is a number.** `SetAngularVelocity2D` takes a `double` in radians per second and `ApplyTorqueImpulse2D` a `double` — a plane has one axis to turn around.
+- **A spin is a number.** `SetAngularVelocity2D` takes a `double` and `ApplyTorqueImpulse2D` a `double` — a plane has one axis to turn around. The rate is radians per second at runtime and its `Angular Velocity (deg/s)` row is typed in degrees, per [radians flow, degrees are typed](../README.md#angles-radians-flow-degrees-are-typed).
 - **The two angular nodes draw nothing**, which is the answer rather than an omission: a 2D spin is about an axis pointing out of the screen, so any arrow drawn in the plane would name a direction the spin does not have.
 - Everything else is a mechanical mirror: `SetVelocity2D`, `ApplyImpulse2D`, `ForceOverride2D` (whose Torque row is a `double`), `SetCollisionBits2D` and `CollisionOverride2D`.
 

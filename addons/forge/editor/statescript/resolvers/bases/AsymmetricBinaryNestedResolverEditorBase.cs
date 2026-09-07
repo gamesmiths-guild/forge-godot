@@ -39,6 +39,12 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 
 	protected virtual string RightTitle => "Right:";
 
+	/// <summary>
+	/// Gets a value indicating whether the right operand is an angle a designer types, so a constant there is authored
+	/// in degrees and stored in radians. The left operand of every asymmetric pair is a vector or a quaternion.
+	/// </summary>
+	protected virtual bool RightIsAngle => false;
+
 	public override void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
@@ -85,7 +91,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			existingResource?.Left,
 			GetConstrainedExpectedTypes(GetLeftFactoryExpectedTypes(expectedType), expectedType),
 			_leftEditorContainer,
-			x => _leftEditor = x);
+			x => _leftEditor = x,
+			angleSlot: false);
 
 		_leftResolverDropdown.ItemSelected += OnLeftResolverDropdownItemSelected;
 
@@ -104,7 +111,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			existingResource?.Right,
 			GetConstrainedExpectedTypes(GetRightFactoryExpectedTypes(expectedType), expectedType),
 			_rightEditorContainer,
-			x => _rightEditor = x);
+			x => _rightEditor = x,
+			RightIsAngle);
 
 		_rightResolverDropdown.ItemSelected += OnRightResolverDropdownItemSelected;
 		UpdateFoldableTitles();
@@ -191,7 +199,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			(int)index,
 			GetConstrainedExpectedTypes(GetLeftFactoryExpectedTypes(_expectedType), _expectedType),
 			_leftEditorContainer,
-			x => _leftEditor = x);
+			x => _leftEditor = x,
+			angleSlot: false);
 	}
 
 	private void OnRightResolverDropdownItemSelected(long index)
@@ -201,7 +210,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			(int)index,
 			GetConstrainedExpectedTypes(GetRightFactoryExpectedTypes(_expectedType), _expectedType),
 			_rightEditorContainer,
-			x => _rightEditor = x);
+			x => _rightEditor = x,
+			RightIsAngle);
 	}
 
 	private void HandleResolverDropdownChanged(
@@ -209,7 +219,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		int selectedIndex,
 		Type[] allowedExpectedTypes,
 		VBoxContainer? editorContainer,
-		Action<NodeEditorProperty?> setEditor)
+		Action<NodeEditorProperty?> setEditor,
+		bool angleSlot)
 	{
 		if (editorContainer is null)
 		{
@@ -225,7 +236,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			null,
 			allowedExpectedTypes,
 			editorContainer,
-			setEditor);
+			setEditor,
+			angleSlot);
 		UpdateFoldableTitles();
 		_onChanged?.Invoke();
 		RaiseLayoutSizeChanged();
@@ -237,7 +249,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 		StatescriptResolverResource? existingResolver,
 		Type[] allowedExpectedTypes,
 		VBoxContainer? container,
-		Action<NodeEditorProperty?> setEditor)
+		Action<NodeEditorProperty?> setEditor,
+		bool angleSlot)
 	{
 		if (_graph is null || container is null || factoryIndex < 0 || factoryIndex >= factories.Count)
 		{
@@ -251,7 +264,10 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			existingResolver,
 			allowedExpectedTypes,
 			OnNestedEditorChanged,
-			RaiseLayoutSizeChanged);
+			RaiseLayoutSizeChanged,
+			isArray: false,
+			iterationScope: false,
+			angleSlot: angleSlot);
 
 		if (editor is null)
 		{

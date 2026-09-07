@@ -42,7 +42,7 @@ internal static class ShapecastNodeParameters2D
 	public const byte MaxDistanceInput = 3;
 
 	/// <summary>
-	/// Input property index for how the shape is turned, in radians.
+	/// Input property index for how the shape is turned. Read in radians, typed in degrees.
 	/// </summary>
 	public const byte RotationInput = 4;
 
@@ -92,7 +92,7 @@ internal static class ShapecastNodeParameters2D
 		inputProperties.Add(new InputProperty("Origin", typeof(NumericsVector2)));
 		inputProperties.Add(new InputProperty("Direction", typeof(NumericsVector2)));
 		inputProperties.Add(new InputProperty("Max Distance", typeof(double)));
-		inputProperties.Add(new InputProperty("Rotation", typeof(double), IsOptional: true));
+		inputProperties.Add(new InputProperty("Rotation (deg)", typeof(double), IsOptional: true));
 		inputProperties.Add(new InputProperty("Mask", typeof(int), IsOptional: true));
 
 		// Not optional, and seeded by the editor with the ability's owner, matching the ray nodes. A volume swept from

@@ -12,7 +12,7 @@ They cover the two things a graph does to the scene tree itself: putting scenes 
 
 `InstantiateScene3D`/`InstantiateScene2D` (Action) spawn and forget. `Scene3D`/`Scene2D` (State) own what they spawned: the instance is created on activation and freed on deactivation, so a summon lasts exactly as long as the node does.
 
-They are a 2D/3D pair even though a scene carries its own dimension, because the *transform* the graph hands them does not: Position and Rotation are a `Vector3` and a `Quaternion` in 3D, and a `Vector2` and an angle in radians in 2D.
+They are a 2D/3D pair even though a scene carries its own dimension, because the *transform* the graph hands them does not: Position and Rotation are a `Vector3` and a `Quaternion` in 3D, and a `Vector2` and a single angle in 2D — a `Rotation (deg)` row, [typed in degrees](../README.md#angles-radians-flow-degrees-are-typed).
 
 ### Settings
 

@@ -337,6 +337,8 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 			return;
 		}
 
+		// Building a vector out of three typed numbers is a way of typing a vector, not a computation, so an angle slot
+		// filled this way reaches each component: Euler angles are the case this exists for.
 		NodeEditorProperty? editor = NestedResolverEditorUtilities.CreateNestedEditor(
 			_graph,
 			_factories,
@@ -344,7 +346,10 @@ internal sealed partial class VectorFromValuesResolverEditor : NodeEditorPropert
 			existingResolver,
 			ResolverEditorCompatibility.FloatOperandExpectedTypes,
 			OnNestedEditorChanged,
-			RaiseLayoutSizeChanged);
+			RaiseLayoutSizeChanged,
+			isArray: false,
+			iterationScope: false,
+			angleSlot: AngleSlot);
 
 		if (editor is null)
 		{

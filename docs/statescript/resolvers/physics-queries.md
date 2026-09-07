@@ -52,7 +52,9 @@ When you need a cone that *is* a shape, [`Cone`](shapes.md#the-cone-and-the-wedg
 
 ## An aperture is in degrees
 
-**It is the only angle in the layer that is.** Every other angle here is a rotation — it gets lerped, wrapped, read off a transform or handed to a quaternion, and core's numeric toolbox speaks radians throughout. An aperture is none of those: it is a design figure typed once and never computed, and radians would put a `DegToRad` in front of every cone in the game to say what `90` already says. The row is labelled `Angle (deg)` so the exception is visible where it is authored.
+Like every other angle a designer types — see [radians flow, degrees are typed](../README.md#angles-radians-flow-degrees-are-typed) — the `Angle (deg)` row is authored in degrees. An aperture is the clearest case for it: a design figure typed once and never computed, where radians would put a `Deg To Rad` in front of every cone in the game to say what `90` already says.
+
+**An aperture is the one angle stored in degrees as well as typed in them.** Everywhere else the row converts and the graph carries radians; an aperture is never lerped, wrapped or handed to a quaternion, so it has no reason to be converted and back again. Nothing downstream sees the difference — both rows show `90` for a quarter turn.
 
 **The authored figure is the whole aperture** and is halved internally, because a 90-degree cleave means 45 degrees either side of the facing everywhere that phrase is used.
 
@@ -62,7 +64,7 @@ When you need a cone that *is* a shape, [`Cone`](shapes.md#the-cone-and-the-wedg
 
 ## What differs in 2D
 
-The whole family mirrors, with `Overlap 2D`'s and `Shapecast 2D`'s rotation operands being angles in radians rather than quaternions, and the cone being a wedge. Line Of Sight, Area Overlaps, Closest Entity, Is In Cone and Entities At Point differ only in vector type.
+The whole family mirrors, with `Overlap 2D`'s and `Shapecast 2D`'s rotation operands being single angles rather than quaternions — typed in degrees on a `Rotation (deg)` row — and the cone being a wedge. Line Of Sight, Area Overlaps, Closest Entity, Is In Cone and Entities At Point differ only in vector type.
 
 ## Related Docs
 

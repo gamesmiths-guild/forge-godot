@@ -137,7 +137,9 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			return false;
 		}
 
-		summary = InlineConstantSummaryFormatter.FormatVariant(_currentValue, _valueType);
+		// The folded pill has to read in the same unit as the field it summarizes, or a collapsed angle row would
+		// report the radians behind a figure that was typed in degrees.
+		summary = InlineConstantSummaryFormatter.FormatVariant(ToDisplayVariant(_currentValue), _valueType);
 		return true;
 	}
 
@@ -240,7 +242,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		{
 			return StatescriptEditorControls.CreateNumericSpinSlider(
 				_valueType,
-				_currentValue.AsDouble(),
+				ToDisplay(_currentValue.AsDouble()),
 				OnNumericValueChanged);
 		}
 
@@ -248,11 +250,75 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		{
 			return StatescriptEditorControls.CreateVectorEditor(
 				_valueType,
-				x => StatescriptEditorControls.GetVectorComponent(_currentValue, _valueType, x),
+				x => ToDisplay(StatescriptEditorControls.GetVectorComponent(_currentValue, _valueType, x)),
 				OnVectorValueChanged);
 		}
 
 		return new Label { Text = _valueType.ToString() };
+	}
+
+	/// <summary>
+	/// Whether the field shows degrees over the radians actually stored. An angle slot only converts a floating-point
+	/// value: the integer types are filtered out of an angle row's type list precisely because they cannot hold the
+	/// radians a typed degree figure converts to.
+	/// </summary>
+	private bool ConvertsAngle()
+	{
+		return AngleSlot
+			&& (StatescriptEditorControls.IsFloatType(_valueType)
+				|| _valueType is StatescriptVariableType.Vector2
+					or StatescriptVariableType.Vector3
+					or StatescriptVariableType.Vector4);
+	}
+
+	private double ToDisplay(double storedValue)
+	{
+		return ConvertsAngle() ? Mathf.RadToDeg(storedValue) : storedValue;
+	}
+
+	private double FromDisplay(double displayedValue)
+	{
+		return ConvertsAngle() ? Mathf.DegToRad(displayedValue) : displayedValue;
+	}
+
+	private double[] ToStored(double[] displayedComponents)
+	{
+		if (!ConvertsAngle())
+		{
+			return displayedComponents;
+		}
+
+		double[] storedComponents = new double[displayedComponents.Length];
+
+		for (int i = 0; i < displayedComponents.Length; i++)
+		{
+			storedComponents[i] = FromDisplay(displayedComponents[i]);
+		}
+
+		return storedComponents;
+	}
+
+	private GodotVariant ToDisplayVariant(GodotVariant storedValue)
+	{
+		if (!ConvertsAngle())
+		{
+			return storedValue;
+		}
+
+		if (StatescriptEditorControls.IsFloatType(_valueType))
+		{
+			return GodotVariant.From(ToDisplay(storedValue.AsDouble()));
+		}
+
+		double[] components = new double[StatescriptEditorControls.GetVectorComponentCount(_valueType)];
+
+		for (int i = 0; i < components.Length; i++)
+		{
+			components[i] = ToDisplay(
+				StatescriptEditorControls.GetVectorComponent(storedValue, _valueType, i));
+		}
+
+		return StatescriptEditorControls.BuildVectorVariant(_valueType, components);
 	}
 
 	private void OnBoolValueChanged(bool x)
@@ -263,13 +329,13 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 	private void OnNumericValueChanged(double x)
 	{
-		_currentValue = GodotVariant.From(x);
+		_currentValue = GodotVariant.From(FromDisplay(x));
 		_onChanged?.Invoke();
 	}
 
 	private void OnVectorValueChanged(double[] x)
 	{
-		_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, x);
+		_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, ToStored(x));
 		_onChanged?.Invoke();
 	}
 
@@ -387,15 +453,15 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 					_valueType,
 					x =>
 					{
-						return StatescriptEditorControls.GetVectorComponent(
+						return ToDisplay(StatescriptEditorControls.GetVectorComponent(
 							_arrayValues[capturedIndex],
 							_valueType,
-							x);
+							x));
 					},
 					x =>
 					{
 						_arrayValues[capturedIndex] =
-							StatescriptEditorControls.BuildVectorVariant(_valueType, x);
+							StatescriptEditorControls.BuildVectorVariant(_valueType, ToStored(x));
 						_onChanged?.Invoke();
 					});
 
@@ -421,10 +487,10 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 				{
 					EditorSpinSlider spin = StatescriptEditorControls.CreateNumericSpinSlider(
 						_valueType,
-						_arrayValues[capturedIndex].AsDouble(),
+						ToDisplay(_arrayValues[capturedIndex].AsDouble()),
 						x =>
 						{
-							_arrayValues[capturedIndex] = GodotVariant.From(x);
+							_arrayValues[capturedIndex] = GodotVariant.From(FromDisplay(x));
 							_onChanged?.Invoke();
 						});
 
@@ -472,7 +538,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		{
 			if (allowedExpectedTypes[i] == typeof(ForgeVariant128))
 			{
-				return StatescriptVariableTypeConverter.GetAllTypes();
+				return DropIntegerTypesForAngle(StatescriptVariableTypeConverter.GetAllTypes());
 			}
 		}
 
@@ -489,7 +555,32 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			}
 		}
 
-		return result.Count > 0 ? [.. result] : [StatescriptVariableType.Int];
+		return result.Count > 0 ? DropIntegerTypesForAngle([.. result]) : [StatescriptVariableType.Int];
+	}
+
+	/// <summary>
+	/// Removes the integer types from an angle row's type list. The field shows degrees over a radians store, and a
+	/// whole number of radians cannot hold the figure that was typed — a 90 degree turn would round to 2.
+	/// </summary>
+	/// <param name="valueTypes">The value types the slot would otherwise offer.</param>
+	private StatescriptVariableType[] DropIntegerTypesForAngle(StatescriptVariableType[] valueTypes)
+	{
+		if (!AngleSlot)
+		{
+			return valueTypes;
+		}
+
+		var result = new List<StatescriptVariableType>();
+
+		for (int i = 0; i < valueTypes.Length; i++)
+		{
+			if (!StatescriptEditorControls.IsIntegerType(valueTypes[i]))
+			{
+				result.Add(valueTypes[i]);
+			}
+		}
+
+		return result.Count > 0 ? [.. result] : valueTypes;
 	}
 
 	private StatescriptVariableType GetDefaultValueType(Type expectedType)

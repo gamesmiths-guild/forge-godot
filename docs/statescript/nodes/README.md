@@ -74,7 +74,7 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 | Arch | Node | Docs | Description |
 |------|------|------|-------------|
 | **Action** | `SetPosition3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Moves an entity instantly. Blink and teleport. |
-| **Action** | `SetRotation3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Writes a rotation instantly. 2D takes radians. |
+| **Action** | `SetRotation3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Writes a rotation instantly. 2D takes an angle rather than a quaternion. |
 | **Action** | `SetScale3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Growing zones. |
 | **Action** | `SetRotationToward3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Turns to face a point, once. |
 | **State** | `MoveTo3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#move-to) | Transform interpolation with easing and an arc. Non-solving; `OnArrived`. |

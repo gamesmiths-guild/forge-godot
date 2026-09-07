@@ -254,7 +254,9 @@ internal static class StatescriptNodeDiscovery
 			outputLabels = GetOutputPortLabels(tempNode, nodeType);
 			isSubgraph = GetSubgraphFlags(tempNode);
 			description = tempNode.Description;
-			inputPropertiesInfo = GetInputPropertiesInfo(tempNode);
+			inputPropertiesInfo = GetInputPropertiesInfo(
+				tempNode,
+				type.GetCustomAttribute<StatescriptAngleInputsAttribute>());
 			outputVariablesInfo = GetOutputVariablesInfo(tempNode);
 		}
 		catch
@@ -350,7 +352,7 @@ internal static class StatescriptNodeDiscovery
 		return flags;
 	}
 
-	private static InputPropertyInfo[] GetInputPropertiesInfo(ForgeNode node)
+	private static InputPropertyInfo[] GetInputPropertiesInfo(ForgeNode node, StatescriptAngleInputsAttribute? angles)
 	{
 		var propertiesInfo = new InputPropertyInfo[node.InputProperties.Length];
 		for (int i = 0; i < node.InputProperties.Length; i++)
@@ -366,7 +368,8 @@ internal static class StatescriptNodeDiscovery
 				node.InputProperties[i].Label,
 				expectedType,
 				isArray,
-				node.InputProperties[i].IsOptional);
+				node.InputProperties[i].IsOptional,
+				angles?.IsAngleInput(i) ?? false);
 		}
 
 		return propertiesInfo;
@@ -545,11 +548,15 @@ internal static class StatescriptNodeDiscovery
 	/// <param name="IsOptional">Whether leaving the input unbound is a meaningful authoring choice, mirroring the
 	/// runtime <see cref="InputProperty.IsOptional"/>. Such rows offer an explicit <c>(None)</c> entry and start
 	/// unbound instead of being seeded with a default resolver.</param>
+	/// <param name="IsAngle">Whether the input carries an angle, as declared by
+	/// <see cref="StatescriptAngleInputsAttribute"/>. A constant on such a row is typed in degrees and stored in
+	/// radians.</param>
 	internal readonly record struct InputPropertyInfo(
 		string Label,
 		Type ExpectedType,
 		bool IsArray = false,
-		bool IsOptional = false);
+		bool IsOptional = false,
+		bool IsAngle = false);
 
 	/// <summary>
 	/// Describes an output variable declared by a node type.

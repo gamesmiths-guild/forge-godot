@@ -34,6 +34,12 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 
 	protected virtual string RightTitle => "Right:";
 
+	/// <summary>
+	/// Gets a value indicating whether both operands are angles a designer types, so a constant in either is authored
+	/// in degrees and stored in radians. The two operands of a symmetric resolver always share a unit.
+	/// </summary>
+	protected virtual bool OperandsAreAngles => false;
+
 	public override void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
@@ -279,7 +285,10 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			existingResolver,
 			GetConstrainedExpectedTypes(_expectedType),
 			OnNestedEditorChanged,
-			RaiseLayoutSizeChanged);
+			RaiseLayoutSizeChanged,
+			isArray: false,
+			iterationScope: false,
+			angleSlot: OperandsAreAngles);
 
 		if (editor is null)
 		{

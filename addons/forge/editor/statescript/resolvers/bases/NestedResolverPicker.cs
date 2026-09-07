@@ -35,6 +35,7 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 	private Type[] _expectedTypes = [];
 	private bool _isArray;
 	private bool _iterationScope;
+	private bool _angleSlot;
 	private string _title = string.Empty;
 
 	public bool Folded => _foldable?.Folded ?? true;
@@ -50,7 +51,8 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 		bool folded,
 		Action onChanged,
 		Action layoutSizeChanged,
-		bool iterationScope = false)
+		bool iterationScope = false,
+		bool angleSlot = false)
 	{
 		_graph = graph;
 		_onChanged = onChanged;
@@ -58,6 +60,7 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 		_expectedTypes = expectedTypes;
 		_isArray = isArray;
 		_iterationScope = iterationScope;
+		_angleSlot = angleSlot;
 		_title = title;
 
 		_factories = isArray
@@ -254,7 +257,8 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 				OnNestedEditorChanged,
 				() => _layoutSizeChanged?.Invoke(),
 				_isArray,
-				_iterationScope);
+				_iterationScope,
+				_angleSlot);
 
 			if (editor is null)
 			{

@@ -147,7 +147,8 @@ internal static class NestedResolverEditorUtilities
 		Action onChanged,
 		Action layoutSizeChanged,
 		bool isArray,
-		bool iterationScope)
+		bool iterationScope,
+		bool angleSlot = false)
 	{
 		if (graph is null || factoryIndex < 0 || factoryIndex >= factories.Count)
 		{
@@ -157,6 +158,7 @@ internal static class NestedResolverEditorUtilities
 		NodeEditorProperty editor = factories[factoryIndex]();
 		editor.IterationScope = iterationScope
 			|| factories is ResolverEditorFactoryList { IterationScope: true };
+		editor.AngleSlot = angleSlot;
 		Type[] compatibleExpectedTypes = GetCompatibleExpectedTypes(editor, allowedExpectedTypes);
 		Type[] effectiveAllowedExpectedTypes = compatibleExpectedTypes.Length > 0
 			? compatibleExpectedTypes

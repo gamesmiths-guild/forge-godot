@@ -112,6 +112,20 @@ The distinction comes from the runtime: a node declares such an input with `IsOp
 
 For the full rationale, see the [core Unbound Inputs documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/README.md#unbound-inputs).
 
+### Angles: radians flow, degrees are typed
+
+Every angle that moves between nodes and resolvers is in **radians**. That is what a rotation read off a transform reports, what the trigonometry resolvers take and return, and what core's numeric toolbox — `Lerp`, `Wrap`, `Delta Angle`, `Rotate Towards`, `Pi` — speaks throughout.
+
+Every angle a designer *types* is in **degrees**. A row whose value is authored rather than computed is labelled `(deg)` and its constant field shows degrees while storing the radians the graph runs on, the same way Godot's own inspector presents `Node2D.rotation`. Typing `90` into `Quaternion From Euler Angles` gives a quarter turn with no `Deg To Rad` in front of it.
+
+The conversion belongs to the **constant**, not to the slot, so nothing is converted twice and nothing is converted by surprise:
+
+- A constant in an angle row is degrees. So are the three components when the row is filled with `Vector From Values`, since building a vector out of typed numbers is still typing.
+- **Anything else in that row is left alone.** Bind a variable, an attribute, `Entity Rotation 2D` or an `ATan2` into an angle row and it passes through in radians, because that value was computed rather than typed.
+- `Deg To Rad` and `Rad To Deg` still exist for the conversions a graph genuinely needs to perform on a computed value.
+
+A row whose unit depends on how the node is configured is never marked as an angle, so nothing on it is converted — `Rotate To`'s **Value** row means seconds under `Duration` and radians per second under `Speed`. Its editor still labels it (`Duration (s)` or `Speed (rad/s)`) by reading the mode; what it cannot do is claim one unit for a constant that would be converted the same way in both.
+
 ## Ability Integration
 
 Statescript integrates with the Abilities system through `GraphAbilityBehavior`:

@@ -142,11 +142,12 @@ internal sealed partial class Overlap2DResolverEditor : NodeEditorProperty
 		_rotationPicker = AddPicker(
 			graph,
 			root,
-			"Rotation:",
+			"Rotation (deg):",
 			resource?.Rotation,
 			ResolverEditorCompatibility.FloatOperandExpectedTypes,
 			isArray: false,
-			resource?.RotationFolded ?? true);
+			resource?.RotationFolded ?? true,
+			angleSlot: true);
 
 		_maskPicker = AddPicker(
 			graph,
@@ -174,7 +175,8 @@ internal sealed partial class Overlap2DResolverEditor : NodeEditorProperty
 		StatescriptResolverResource? existing,
 		Type[] expectedTypes,
 		bool isArray,
-		bool folded)
+		bool folded,
+		bool angleSlot = false)
 	{
 		var picker = new NestedResolverPicker();
 		picker.Initialize(
@@ -186,7 +188,8 @@ internal sealed partial class Overlap2DResolverEditor : NodeEditorProperty
 			folded,
 			NotifyChanged,
 			RaiseLayoutSizeChanged,
-			IterationScope);
+			IterationScope,
+			angleSlot);
 
 		root.AddChild(picker);
 		return picker;

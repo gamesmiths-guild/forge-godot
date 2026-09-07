@@ -27,6 +27,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Condition;
 /// </remarks>
 /// <param name="collideWithAreas">Whether areas stop the sweep, as well as bodies.</param>
 [StatescriptCategory("Physics")]
+[StatescriptAngleInputs(ShapecastNodeParameters2D.RotationInput)]
 public sealed class Shapecast2DNode(bool collideWithAreas = false) : ConditionNode
 {
 	private readonly bool _collideWithAreas = collideWithAreas;

@@ -22,15 +22,16 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// <param name="nodePath">Optional path to the body to write, for an entity whose body is not its own spatial node. A
 /// path that resolves to nothing falls back to that spatial node, since a spin has nowhere else to live.</param>
 [StatescriptCategory("Physics")]
+[StatescriptAngleInputs(AngularVelocityInput)]
 public sealed class SetAngularVelocity2DNode(string nodePath = "") : SpatialActionNodeBase2D(nodePath)
 {
 	/// <summary>
-	/// Input property index for the angular velocity, in radians per second.
+	/// Input property index for the angular velocity. Read in radians per second, typed in degrees per second.
 	/// </summary>
 	public const byte AngularVelocityInput = 1;
 
 	/// <inheritdoc/>
-	public override string Description => "Sets how fast the body an entity lives on is spinning, in radians.";
+	public override string Description => "Sets how fast the body an entity lives on is spinning.";
 
 	/// <inheritdoc/>
 	protected override bool FallsBackToEntityNode => true;
@@ -40,7 +41,7 @@ public sealed class SetAngularVelocity2DNode(string nodePath = "") : SpatialActi
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		inputProperties.Add(new InputProperty("Angular Velocity", typeof(double)));
+		inputProperties.Add(new InputProperty("Angular Velocity (deg/s)", typeof(double)));
 	}
 
 	/// <inheritdoc/>

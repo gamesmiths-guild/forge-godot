@@ -542,7 +542,13 @@ internal static partial class StatescriptEditorControls
 		};
 	}
 
-	private static int GetVectorComponentCount(StatescriptVariableType type)
+	/// <summary>
+	/// Returns how many components a multi-component variable type carries.
+	/// </summary>
+	/// <param name="type">The variable type to measure.</param>
+	/// <exception cref="NotImplementedException">Exception thrown if the provided type is not a vector/quaternion/plane
+	/// type.</exception>
+	public static int GetVectorComponentCount(StatescriptVariableType type)
 	{
 		return type switch
 		{

@@ -52,7 +52,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
-		_operandFoldable = CreateFoldable("Euler Angles:", existing?.OperandFolded ?? true);
+		_operandFoldable = CreateFoldable("Euler Angles (deg):", existing?.OperandFolded ?? true);
 		root.AddChild(_operandFoldable);
 		var container = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_operandFoldable.AddChild(container);
@@ -127,7 +127,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 	{
 		if (_operandFoldable is not null)
 		{
-			InlineConstantSummaryFormatter.ApplyFoldableTitle("Euler Angles:", _operandFoldable, _anglesEditor);
+			InlineConstantSummaryFormatter.ApplyFoldableTitle("Euler Angles (deg):", _operandFoldable, _anglesEditor);
 		}
 	}
 
@@ -181,6 +181,7 @@ internal sealed partial class QuaternionFromEulerAnglesResolverEditor : NodeEdit
 		}
 
 		NodeEditorProperty editor = _factories[factoryIndex]();
+		editor.AngleSlot = true;
 		StatescriptNodeProperty? tempProperty =
 			existingResolver is null ? null : new StatescriptNodeProperty { Resolver = existingResolver };
 		editor.Setup(_graph, tempProperty, typeof(SysVector3), OnNestedEditorChanged, false);
