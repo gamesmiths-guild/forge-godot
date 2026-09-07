@@ -122,6 +122,8 @@ public partial class ForgePluginLoader : EditorPlugin
 		ResourceSaved += OnResourceSaved;
 
 		Validation.Enabled = true;
+
+		RunEditorTestsIfRequested();
 	}
 
 	public override void _ExitTree()
@@ -462,5 +464,12 @@ public partial class ForgePluginLoader : EditorPlugin
 			}
 		}
 	}
+
+	/// <summary>
+	/// Hook for this repository's own editor-context test suite, which needs a live editor and so cannot run under
+	/// the normal test runner. Implemented only when <c>tests/</c> is compiled in; in a shipped plugin no
+	/// implementation exists and the call above compiles away to nothing.
+	/// </summary>
+	partial void RunEditorTestsIfRequested();
 }
 #endif

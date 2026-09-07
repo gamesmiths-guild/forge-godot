@@ -63,6 +63,19 @@ jobs:
       - name: Boot the editor
         run: bash .github/scripts/godot-boot.sh editor godot --headless --editor --quit-after 240
 
+      # Editor-context tests. gdUnit4 launches a Godot runtime process, where EditorInterface is null and
+      # EditorUndoRedoManager cannot be instantiated, so anything driving the docks needs a real editor session.
+      - name: Editor tests
+        run: godot --path . --editor --headless --forge-editor-tests
+
+      - name: Editor test report
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v3.0.0
+        with:
+          name: Editor Test Reporter
+          path: "TestResults/editor-tests.xml"
+          reporter: java-junit
+
   test:
     name: Tests
     runs-on: ubuntu-latest

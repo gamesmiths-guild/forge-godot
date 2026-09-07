@@ -25,3 +25,6 @@ mono_crash.*.json
 
 # Local test settings: pins this machine's Godot binary. Copy .runsettings.ci and set GODOT_BIN.
 /.runsettings
+
+# JUnit report from the editor test suite.
+/TestResults/

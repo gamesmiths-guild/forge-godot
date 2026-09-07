@@ -450,3 +450,7 @@ dotnet_diagnostic.S2699.severity = none
 # SA1402: File may only contain a single type
 # Test data classes live beside the suite that uses them.
 dotnet_diagnostic.SA1402.severity = none
+
+# IDE0130: Namespace does not match folder structure
+# Test seams are partials of plugin classes, so they keep the plugin's namespace while living under tests/.
+dotnet_diagnostic.IDE0130.severity = none
