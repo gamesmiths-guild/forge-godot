@@ -31,6 +31,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="deactivateOnBlocked">Whether the node deactivates itself the first time the line breaks, for the
 /// "hold this until it is interrupted" shape.</param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics2D, MaskInput)]
 public class LineOfSight2DNode(bool deactivateOnBlocked = false)
 	: StateNode<LineOfSight2DNodeContext>
 {

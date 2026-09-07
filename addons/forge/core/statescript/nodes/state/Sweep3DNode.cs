@@ -29,6 +29,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="collideWithAreas">Whether areas stop the sweep, as well as bodies.</param>
 /// <param name="oneShot">Whether the node deactivates itself the first time the sweep meets something.</param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics3D, ShapecastNodeParameters3D.MaskInput)]
 public class Sweep3DNode(bool collideWithAreas = false, bool oneShot = false) : StateNode<Sweep3DNodeContext>
 {
 	/// <summary>

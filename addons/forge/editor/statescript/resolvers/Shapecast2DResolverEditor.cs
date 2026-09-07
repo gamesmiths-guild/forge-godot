@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
@@ -124,7 +125,8 @@ internal sealed partial class Shapecast2DResolverEditor : NodeEditorProperty
 			resource?.Mask,
 			_maskExpectedTypes,
 			isArray: false,
-			resource?.MaskFolded ?? true);
+			resource?.MaskFolded ?? true,
+			maskSpace: CollisionLayerSpace.Physics2D);
 
 		_ignorePicker = AddPicker(
 			graph,
@@ -200,7 +202,8 @@ internal sealed partial class Shapecast2DResolverEditor : NodeEditorProperty
 		Type[] expectedTypes,
 		bool isArray,
 		bool folded,
-		bool angleSlot = false)
+		bool angleSlot = false,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
 		var picker = new NestedResolverPicker();
 		picker.Initialize(
@@ -213,7 +216,8 @@ internal sealed partial class Shapecast2DResolverEditor : NodeEditorProperty
 			NotifyChanged,
 			RaiseLayoutSizeChanged,
 			IterationScope,
-			angleSlot);
+			angleSlot,
+			maskSpace);
 
 		root.AddChild(picker);
 		return picker;

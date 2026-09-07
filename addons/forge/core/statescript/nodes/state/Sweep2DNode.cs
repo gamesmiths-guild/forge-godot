@@ -30,6 +30,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="oneShot">Whether the node deactivates itself the first time the sweep meets something.</param>
 [StatescriptCategory("Physics")]
 [StatescriptAngleInputs(ShapecastNodeParameters2D.RotationInput)]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics2D, ShapecastNodeParameters2D.MaskInput)]
 public class Sweep2DNode(bool collideWithAreas = false, bool oneShot = false) : StateNode<Sweep2DNodeContext>
 {
 	/// <summary>

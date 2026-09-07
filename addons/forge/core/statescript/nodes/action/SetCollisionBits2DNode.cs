@@ -19,6 +19,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// <param name="operation">Whether the given bits are turned on or off.</param>
 /// <param name="nodePath">Optional path to a descendant node to write instead of the entity's own spatial node.</param>
 [StatescriptCategory("Physics")]
+[StatescriptCollisionMaskInputs(CollisionLayerSpace.Physics2D, BitsInput)]
 public sealed class SetCollisionBits2DNode(
 	CollisionBitsTarget target = CollisionBitsTarget.Layer,
 	CollisionBitsOperation operation = CollisionBitsOperation.Clear,
