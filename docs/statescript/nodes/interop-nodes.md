@@ -58,7 +58,7 @@ Switching monitoring off is now an ordinary state for an area to be in, so [`Are
 |---|---|---|---|---|
 | `CallMethodNode` | Action | **Method** (text); **Arg 1**; **Arg 2**; **Returns** | 0 Node; 1 Arg 1; 2 Arg 2 | Output 0 `Return` |
 | `EmitSignalNode` | Action | **Signal** (text); **Arg 1**; **Arg 2** | 0 Node; 1 Arg 1; 2 Arg 2 | — |
-| `SignalListenerNode` | State | **Signal** (text); **One Shot** | 0 Node | Port 4 `OnSignal` |
+| `SignalListenerNode` | State | **Signal** (text); **One Shot** (deactivates the node the first time the signal fires) | 0 Node | Port 4 `OnSignal` |
 
 **Arguments are filled in order, and the editor enforces it both ways.** The second argument's type is offered only once the first is set, and the second row is hidden unless both are — the runtime stops at the first gap, so a row shown on its own type alone would be one the author filled in and nothing passed. The rows are *required* rather than optional for the same reason: an optional row renders `(None)`, which would read as "no argument" while the runtime passed a zero to keep the positions right.
 

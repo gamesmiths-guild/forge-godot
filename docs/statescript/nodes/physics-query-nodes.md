@@ -101,15 +101,17 @@ Watches a volume and reports the entities that enter and leave it. The port shap
 | **Area** | text, placeholder `%WeaponHitbox` | `ExistingArea` only. Empty means the entity's own node. |
 | **Include Areas** | checkbox, default off | Whether overlapping areas count as well as bodies. |
 
-| Index | Label | Type | Notes |
-|---|---|---|---|
-| 0 | Entity | `IForgeEntity` | Optional. **`ExistingArea` mode only** — it says *whose* area to read. |
-| 1 | Shape | `Shape3D` | `TransientShape` mode. Seeded with a Sphere. |
-| 2 | Position | `Vector3` | **Required**, seeded with `Entity Position 3D` so a fresh node means "around me". |
-| 3 | Rotation | `Quaternion` | Optional. |
-| 4 | Mask | `int` | Optional. |
-| 5 | Poll Interval | `double` | Optional. Seconds between polls; unbound polls every fixed step. |
-| 6 | Ignore | `IForgeEntity[]` | Seeded with the owner. |
+**The Source setting decides which rows exist.** The editor shows only the ones its mode reads, so a row you cannot see is one that mode would have ignored.
+
+| Index | Label | Type | Mode | Notes |
+|---|---|---|---|---|
+| 0 | Entity | `IForgeEntity` | ExistingArea | Optional. Says *whose* area to read. |
+| 1 | Shape | `Shape3D` | TransientShape | Seeded with a Sphere. |
+| 2 | Position | `Vector3` | TransientShape | **Required**, seeded with `Entity Position 3D` so a fresh node means "around me". |
+| 3 | Rotation | `Quaternion` | TransientShape | Optional. |
+| 4 | Mask | `int` | TransientShape | Optional. An existing area is filtered by **its own** collision mask in the scene, so the node has no mask to offer there. |
+| 5 | Poll Interval | `double` | both | Optional. Seconds between polls; unbound polls every fixed step. |
+| 6 | Ignore | `IForgeEntity[]` | both | Seeded with the owner. |
 
 | Kind | Index | Name | Notes |
 |---|---|---|---|

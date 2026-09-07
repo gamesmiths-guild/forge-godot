@@ -26,10 +26,10 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 | Index | Label | Type | Notes |
 |---|---|---|---|
 | 0 | Scene | `PackedScene` | Required. Authored with the **Constant** scene resolver, or read from a `Scene` variable. |
-| 1 | Position | `Vector3` / `Vector2` | Optional. **Unbound means "where the caster is"** — the Parent Entity's own node — rather than the world origin, which is the sane default for an instance that only cares about rotation. |
+| 1 | Position | `Vector3` / `Vector2` | Optional. **Unbound means "where the caster is"** rather than the world origin, which is the sane default for an instance that only cares about rotation. Under `Entity` parenting that is the Parent Entity's node; under the other two, where the Parent Entity row is not shown, it is the ability's owner. |
 | 2 | Rotation | `Quaternion` / `double` | Optional. Unbound, and in 3D a zero quaternion, leave the scene's authored rotation. |
-| 3 | Parent Entity | `IForgeEntity` | Optional, defaults to the ability's owner. What the instance is parented to under `Entity` parenting, **and what an unbound Position is read from in every mode**. |
-| 4 | Parent Node | `Node` | Optional. Only read under `Node` parenting. |
+| 3 | Parent Entity | `IForgeEntity` | **Shown under `Entity` parenting only.** What the instance is parented to, and what an unbound Position is measured from. |
+| 4 | Parent Node | `Node` | **Shown under `Node` parenting only.** |
 | 5 | Lifetime | `double` | **State nodes only.** Seconds before the node self-deactivates. Zero or less means "until aborted". |
 
 ### Outputs and ports
