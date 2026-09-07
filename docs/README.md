@@ -83,6 +83,7 @@ Cues connect the gameplay simulation layer with the presentation layer, translat
 - Triggers audio/visual feedback in response to gameplay events and effect changes.
 - Organizes cues and handlers using tags for flexible assignment.
 - Passes custom parameters for feedback intensity, color, sound, and more.
+- Ships a [handler library](nodes.md#cue-handler-library) for particles, spawned scenes, audio, animation, camera shake and hit stop, so the common hookups need no C#.
 
 ### Statescript System
 
@@ -93,6 +94,7 @@ Statescript is a state-based scripting system for defining ability behaviors:
 - **Subgraphs**: State nodes own downstream subgraphs, providing automatic lifetime management and cleanup.
 - **Variables**: Mutable graph variables and entity-level shared variables connect graph logic to runtime data.
 - **Property Resolvers**: Data-driven inputs from attributes, tags, comparisons, and activation context.
+- **Engine Access**: Godot-only nodes and resolvers for the scene tree, transforms, physics queries, animation and more.
 - **Ability Integration**: Graphs plug directly into the Abilities system as `IAbilityBehavior` implementations.
 - **Visual Editor**: Built-in Statescript graph editor integrated into the Godot editor for visual authoring.
 
