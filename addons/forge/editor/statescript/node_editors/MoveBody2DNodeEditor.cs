@@ -55,5 +55,15 @@ internal sealed partial class MoveBody2DNodeEditor : StandardNodeEditorBase
 
 		return IsDuration ? "Duration (s)" : "Speed (px/s)";
 	}
+
+	protected override string? GetOutputObjectTypeId(int outputIndex)
+	{
+		return outputIndex switch
+		{
+			0 => "Entity",
+			1 => "GodotNode",
+			_ => null,
+		};
+	}
 }
 #endif

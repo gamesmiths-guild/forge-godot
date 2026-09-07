@@ -118,6 +118,7 @@ public class MoveBody3DNode(
 		MoveBody3DNodeContext nodeContext = graphContext.GetNodeContext<MoveBody3DNodeContext>(NodeID);
 		nodeContext.Body = null;
 		nodeContext.ElapsedTime = 0;
+		nodeContext.LastBlocker = null;
 
 		IForgeEntity? entity = ResolveEntityOrOwner(graphContext);
 
@@ -210,6 +211,10 @@ public class MoveBody3DNode(
 			return;
 		}
 
+		// Remembered rather than read back off whichever step ends the move: a slide meets a wall, clears it, and can
+		// then time out several steps later having touched nothing that step.
+		nodeContext.LastBlocker = blocker ?? nodeContext.LastBlocker;
+
 		// Arrival is the step that would have landed on the destination meeting nothing on the way, rather than a
 		// distance compared against an epsilon: under Slide a collision redirects that step somewhere else entirely,
 		// and the next one measures again from wherever it ended up.
@@ -224,7 +229,7 @@ public class MoveBody3DNode(
 		// out of reach from running for the rest of the ability.
 		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
-			ReportBlocked(graphContext, blocker);
+			ReportBlocked(graphContext, nodeContext.LastBlocker);
 		}
 	}
 
@@ -274,8 +279,11 @@ public class MoveBody3DNode(
 
 		// One redirect, not a loop: the part of the step the surface refused, turned along it. A second collision in
 		// the same step is left for the next one, which keeps a body wedged in a corner from spending the frame
-		// bouncing between two walls it cannot leave.
-		body.MoveAndCollide(collision.GetRemainder().Slide(collision.GetNormal()));
+		// bouncing between two walls it cannot leave - but it is still the most recent thing touched, so it is what
+		// gets reported if this turns out to be the step the move ends on.
+		KinematicCollision3D? redirected = body.MoveAndCollide(collision.GetRemainder().Slide(collision.GetNormal()));
+
+		blocker = redirected?.GetCollider() as GodotNode ?? blocker;
 
 		return true;
 	}

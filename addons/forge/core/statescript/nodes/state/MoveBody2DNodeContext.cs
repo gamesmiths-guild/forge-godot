@@ -2,6 +2,7 @@
 
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
+using GodotNode = Godot.Node;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
@@ -41,4 +42,15 @@ public class MoveBody2DNodeContext : StateNodeContext
 	/// Gets or sets how far through the move it is, in seconds.
 	/// </summary>
 	public double ElapsedTime { get; set; }
+
+	/// <summary>
+	/// Gets or sets the last thing the move touched, or <see langword="null"/> when it has touched nothing.
+	/// </summary>
+	/// <remarks>
+	/// Kept across steps rather than read off the step that ends the move, because under
+	/// <see cref="BlockedResponse.Slide"/> the two are rarely the same one: a dash grazes a wall, slides clear of it,
+	/// and runs out of time several steps later with nothing under it. Reporting nothing there would answer "what
+	/// blocked me" with silence in exactly the case the port exists for.
+	/// </remarks>
+	public GodotNode? LastBlocker { get; set; }
 }

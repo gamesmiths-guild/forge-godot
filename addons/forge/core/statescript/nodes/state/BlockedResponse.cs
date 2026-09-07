@@ -7,8 +7,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// </summary>
 /// <remarks>
 /// This is the whole difference between a dash that reads as an impact and one that reads as a scramble, which is why
-/// it is authored rather than assumed. Neither answer changes how long the move lasts: both end at the destination or
-/// at the move's own duration, whichever comes first.
+/// it is authored rather than assumed - and it decides when the move ends, not only where the body goes.
+/// <see cref="Stop"/> ends on the first thing met, so a move under it may finish long before its duration is up.
+/// <see cref="Slide"/> carries on, bounded by the destination or by that duration, whichever comes first.
 /// </remarks>
 public enum BlockedResponse
 {
