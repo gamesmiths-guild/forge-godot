@@ -281,6 +281,23 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 		return ConvertsAngle() ? Mathf.DegToRad(displayedValue) : displayedValue;
 	}
 
+	private double[] ToStored(double[] displayedComponents)
+	{
+		if (!ConvertsAngle())
+		{
+			return displayedComponents;
+		}
+
+		double[] storedComponents = new double[displayedComponents.Length];
+
+		for (int i = 0; i < displayedComponents.Length; i++)
+		{
+			storedComponents[i] = FromDisplay(displayedComponents[i]);
+		}
+
+		return storedComponents;
+	}
+
 	private GodotVariant ToDisplayVariant(GodotVariant storedValue)
 	{
 		if (!ConvertsAngle())
@@ -318,14 +335,7 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 
 	private void OnVectorValueChanged(double[] x)
 	{
-		double[] storedComponents = new double[x.Length];
-
-		for (int i = 0; i < x.Length; i++)
-		{
-			storedComponents[i] = FromDisplay(x[i]);
-		}
-
-		_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, storedComponents);
+		_currentValue = StatescriptEditorControls.BuildVectorVariant(_valueType, ToStored(x));
 		_onChanged?.Invoke();
 	}
 
@@ -443,15 +453,15 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 					_valueType,
 					x =>
 					{
-						return StatescriptEditorControls.GetVectorComponent(
+						return ToDisplay(StatescriptEditorControls.GetVectorComponent(
 							_arrayValues[capturedIndex],
 							_valueType,
-							x);
+							x));
 					},
 					x =>
 					{
 						_arrayValues[capturedIndex] =
-							StatescriptEditorControls.BuildVectorVariant(_valueType, x);
+							StatescriptEditorControls.BuildVectorVariant(_valueType, ToStored(x));
 						_onChanged?.Invoke();
 					});
 
@@ -477,10 +487,10 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 				{
 					EditorSpinSlider spin = StatescriptEditorControls.CreateNumericSpinSlider(
 						_valueType,
-						_arrayValues[capturedIndex].AsDouble(),
+						ToDisplay(_arrayValues[capturedIndex].AsDouble()),
 						x =>
 						{
-							_arrayValues[capturedIndex] = GodotVariant.From(x);
+							_arrayValues[capturedIndex] = GodotVariant.From(FromDisplay(x));
 							_onChanged?.Invoke();
 						});
 
