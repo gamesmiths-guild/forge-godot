@@ -14,7 +14,7 @@ They ask the physics world a question. Which shape a question takes decides whet
 
 Every node here is a 2D/3D pair and takes the two operands the whole family shares. **The one-shot Condition nodes cast the moment a message reaches them**; only the monitored State nodes below poll, and those poll on the fixed step.
 
-- **Mask (`int`, optional).** A collision mask, authored as a number. **Zero means every layer** — a mask of zero can never find anything, so reading it literally would make an unbound row silently disable the query it belongs to.
+- **Mask (`int`, optional, seeded).** A collision mask, picked on the [layer grid](../resolvers/collision-mask-resolver.md) the inspector uses for a body's own layers. **Zero means every layer** — a mask of zero can never find anything, so reading it literally would make an untouched row silently disable the query it belongs to. That is also why the row is seeded despite being optional: an empty grid and an unbound slot are the same query, so the grid can be shown from the start.
 - **Ignore (`IForgeEntity[]`, required, seeded).** The entities the query keeps off. It is a *list* and not a flag because both ends of a query sit inside a body: a ray from a character's own position starts at its feet, outside its own capsule by a hair, and a line drawn to `%CastPoint` on a target ends inside the target. A fresh row is seeded with the ability's owner — or with the owner and the target for the sight forms — so what the editor shows is what runs. Emptying it is how a query that reports everyone is authored.
 
 > The two mechanisms behind that one row differ by necessity: **casts exclude by RID**, because they must keep off a collider they would otherwise start inside, while **overlaps drop the entities from their results**. Nothing about authoring them differs.
@@ -160,6 +160,8 @@ Channels that break on cover, tethers, aggro drop.
 
 Node settings render as enums, checkboxes and text — there is no numeric setting control — so a mask, a poll interval and a max distance are all **inputs**. That is the better answer anyway: a number that cannot come from a variable or scale with an ability level is the weaker half of the pair.
 
+Being an input costs nothing in readability: a Mask row starts on the [Collision Mask](../resolvers/collision-mask-resolver.md) resolver, which is the engine's own layer grid, so a mask is picked by name here exactly as it is on the body it will be compared against. Swapping that row for a variable or an expression is still one dropdown away.
+
 ## Filtering is composition
 
 No query node takes a filter or a predicate. Core's element-lambda resolvers already do this three ways: gate an event edge with `ExpressionNode` plus an `AttributeResolver`, filter an array with `ObjectWhereResolver` and `ElementEntityResolver`, or track a filtered population with `ConditionMonitorNode` over `Count(Where(Overlap3D(...))) > 0`.
@@ -173,5 +175,6 @@ The whole family mirrors mechanically, with one difference: **`Overlap2D`'s and 
 - [Nodes Reference](README.md)
 - [Physics Query Resolvers](../resolvers/physics-queries.md) — the entity-list and boolean forms
 - [Shape Resolvers](../resolvers/shapes.md) — what feeds a Shape row
+- [Collision Mask Resolver](../resolvers/collision-mask-resolver.md) — what feeds a Mask row
 - [Physics Nodes](physics-nodes.md) — the writing half
 - [Physics Debug Drawing](../physics-debug-drawing.md)

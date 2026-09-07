@@ -57,6 +57,8 @@ The permanent-and-held pair the whole layer uses for writes: the Action form is 
 | `SetCollisionBits3DNode` | Action | Field (`Layer`/`Mask`); Operation (`Clear`/`Set`); Node | 1 Bits (`int`, required) |
 | `CollisionOverride3DNode` | State | the same three | 1 Bits (`int`, required) |
 
+A Bits row starts on the [Collision Mask](../resolvers/collision-mask-resolver.md) resolver, so the bits to write are picked on the engine's layer grid and read by name. Unlike a query mask, zero here means exactly no bits — nothing to write.
+
 `CollisionOverride` captures the field on activation and restores it on deactivation *or abort*, so a cancelled dash cannot leave a character permanently intangible.
 
 **It restores only the bits it acted on**, not the whole field. Putting the captured snapshot back would undo everything else that touched the field while it was running — a second override on different bits, or a permanent `Set Collision Bits` — and resurrect the bits those deliberately changed. Two overrides on the *same* bits still resolve to whichever ends last; neither can know what the other found.
@@ -85,6 +87,7 @@ All of it is gated on Godot's own **Debug → Visible Collision Shapes** and not
 
 - [Nodes Reference](README.md)
 - [Physics Query Nodes](physics-query-nodes.md) — rays, sweeps, overlaps, sight lines
+- [Collision Mask Resolver](../resolvers/collision-mask-resolver.md) — what feeds a Bits row
 - [Spatial Nodes](spatial-nodes.md) — the non-solving transform writers
 - [Spatial Getters](../resolvers/spatial-getters.md) — `Entity Velocity`, `Entity Angular Velocity`, `Character State`, `Character Motion`
 - [Physics Debug Drawing](../physics-debug-drawing.md)
