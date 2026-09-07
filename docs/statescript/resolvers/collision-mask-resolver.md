@@ -23,7 +23,9 @@ Layer names come from **Project Settings → General → Layer Names → 2D Phys
 
 Every slot a node declares as a layer field starts on this resolver rather than on a plain constant. That covers the mask operands of the [physics query resolvers](physics-queries.md), the Mask rows of the [physics query nodes](../nodes/physics-query-nodes.md), and the Bits rows of `Set Collision Bits` and `Collision Override` ([physics nodes](../nodes/physics-nodes.md)).
 
-**The optional Mask rows are seeded too**, which is the one place an optional input does not rest on `(None)`. It is safe there and nowhere else: an unbound mask reads as zero, and a mask of zero already means every layer, so the two states are the same query. Showing the grid from the start therefore says what the row does without deciding anything. The `(None)` entry stays on the row for anyone who wants the slot genuinely unbound.
+**The optional Mask rows are seeded too**, which is the one place a fresh optional input does not rest on `(None)`. It is safe there and nowhere else: an unbound mask reads as zero, and a mask of zero already means every layer, so the two states are the same query. Showing the grid from the start therefore says what the row does without deciding anything.
+
+The seeding happens once, when the node is created. Choosing `(None)` afterwards genuinely clears the slot and it stays cleared — reopening the graph will not put the grid back.
 
 It is offered on any `int` input as well, so a mask can be authored once into a graph variable and bound to several queries. A slot with no world of its own keeps the names of the world it was authored in.
 

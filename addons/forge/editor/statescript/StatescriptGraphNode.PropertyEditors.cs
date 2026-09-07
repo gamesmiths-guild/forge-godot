@@ -165,7 +165,7 @@ public partial class StatescriptGraphNode
 				}
 			}
 		}
-		else if (!propInfo.IsOptional || propInfo.MaskSpace != CollisionLayerSpace.None)
+		else if (!propInfo.IsOptional)
 		{
 			factoryIndex = -1;
 
@@ -194,9 +194,10 @@ public partial class StatescriptGraphNode
 		else
 		{
 			// Optional and unbound: rest on (None) rather than falling into a default resolver. A collision layer slot
-			// is excluded above, because an unbound mask and a mask of zero are the same query - both mean every
-			// layer - so starting it on the grid shows what the row does without deciding anything for the author.
-			// The (None) entry stays on the row either way.
+			// is no exception here even though it is seeded, because its seeding belongs to node creation alone: a
+			// fresh node is given the grid by DefaultInputBindings, so an optional layer row that reaches this point
+			// unbound is one the author cleared, and re-seeding it on every rebuild would make (None) impossible to
+			// keep.
 			factoryIndex = -1;
 		}
 

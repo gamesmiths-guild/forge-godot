@@ -87,6 +87,10 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 			StretchMode = TextureButton.StretchModeEnum.KeepCentered,
 			ToggleMode = true,
 			TooltipText = "Pick layers by name.",
+
+			// Icon-only, so without this a screen reader has nothing to announce. The engine names its own copy of
+			// this button the same way.
+			AccessibilityName = "Layers",
 		};
 
 		_menuButton.Pressed += OnMenuButtonPressed;
@@ -162,6 +166,21 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 	}
 
 	/// <inheritdoc/>
+	public override void _EnterTree()
+	{
+		// Bound to the tree rather than to Setup and ClearCallbacks: swapping the resolver on a row frees this editor
+		// through QueueFree without going through ClearCallbacks, so a subscription taken in Setup would be left on
+		// the singleton's event with a freed control behind it.
+		ProjectSettings.SettingsChanged += RefreshLayerNames;
+	}
+
+	/// <inheritdoc/>
+	public override void _ExitTree()
+	{
+		ProjectSettings.SettingsChanged -= RefreshLayerNames;
+	}
+
+	/// <inheritdoc/>
 	public override void _Notification(int what)
 	{
 		if (what == NotificationThemeChanged && _menuButton is not null && IsInstanceValid(_menuButton))
@@ -224,9 +243,6 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 		{
 			return;
 		}
-
-		// Read afresh, so a layer named in Project Settings while this graph was open shows up on the next open.
-		RefreshLayerNames();
 
 		_layerMenu.Clear();
 
