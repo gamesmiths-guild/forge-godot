@@ -51,7 +51,8 @@ public class LookAt2DNode(string nodePath = "") : StateNode<StateNodeContext>
 	public const byte TargetInput = 1;
 
 	/// <summary>
-	/// Input property index for the most the facing may turn in a second, in radians. Unbound snaps.
+	/// Input property index for the most the facing may turn in a second. Read in radians, typed in degrees. Unbound
+	/// snaps.
 	/// </summary>
 	public const byte SpeedInput = 2;
 

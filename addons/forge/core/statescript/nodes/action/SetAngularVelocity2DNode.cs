@@ -26,7 +26,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 public sealed class SetAngularVelocity2DNode(string nodePath = "") : SpatialActionNodeBase2D(nodePath)
 {
 	/// <summary>
-	/// Input property index for the angular velocity, in radians per second.
+	/// Input property index for the angular velocity. Read in radians per second, typed in degrees per second.
 	/// </summary>
 	public const byte AngularVelocityInput = 1;
 

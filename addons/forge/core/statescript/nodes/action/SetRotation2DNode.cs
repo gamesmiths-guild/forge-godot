@@ -23,7 +23,7 @@ public sealed class SetRotation2DNode(TransformSpace space = TransformSpace.Glob
 	: SpatialActionNodeBase2D(nodePath)
 {
 	/// <summary>
-	/// Input property index for the rotation, in radians.
+	/// Input property index for the rotation. Read in radians, typed in degrees.
 	/// </summary>
 	public const byte RotationInput = 1;
 

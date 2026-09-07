@@ -42,7 +42,7 @@ internal static class ShapecastNodeParameters2D
 	public const byte MaxDistanceInput = 3;
 
 	/// <summary>
-	/// Input property index for how the shape is turned, in radians.
+	/// Input property index for how the shape is turned. Read in radians, typed in degrees.
 	/// </summary>
 	public const byte RotationInput = 4;
 

@@ -23,7 +23,7 @@ The Action nodes execute once and have no rail. Of the two State nodes, **Force 
 |---|---|---|---|---|
 | `SetVelocity3DNode` | Node | 1 Velocity (`Vector3`, required) | `CharacterBody3D`, `RigidBody3D` | Dash; knockback by aiming Entity at the target instead of the caster. |
 | `ApplyImpulse3DNode` | Node | 1 Impulse (`Vector3`, required); 2 At Offset (`Vector3`, optional) | `RigidBody3D` | An offset turns the push into a spin. |
-| `SetAngularVelocity3DNode` | Node | 1 Angular Velocity (`Vector3`, required) | `RigidBody3D` | An axis with the rate as its length. Zero stops a spin dead. |
+| `SetAngularVelocity3DNode` | Node | 1 Angular Velocity (deg/s) (`Vector3`, required) | `RigidBody3D` | An axis with the rate as its length. Zero stops a spin dead. |
 | `ApplyTorqueImpulse3DNode` | Node | 1 Torque (`Vector3`, required) | `RigidBody3D` | The angular Apply Impulse. No offset row: an offset is what turns a push into a spin, and this already is the spin. |
 
 **The angular half is narrower than the linear one, and the engine is why.** Angular velocity and torque exist only on a rigid body — a character body is turned by the game rather than by physics — so pointing an angular node at a `CharacterBody3D` warns and skips the write, naming [Set Rotation 3D and Rotate To 3D](spatial-nodes.md) instead of silently doing nothing.

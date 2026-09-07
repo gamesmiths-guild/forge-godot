@@ -57,7 +57,8 @@ public class Overlap2DNode(
 	public const byte PositionInput = 2;
 
 	/// <summary>
-	/// Input property index for how a transient shape is turned, in radians. Unbound leaves it unturned.
+	/// Input property index for how a transient shape is turned. Read in radians, typed in degrees. Unbound leaves it
+	/// unturned.
 	/// </summary>
 	public const byte RotationInput = 3;
 

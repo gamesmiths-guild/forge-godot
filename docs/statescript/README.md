@@ -124,7 +124,7 @@ The conversion belongs to the **constant**, not to the slot, so nothing is conve
 - **Anything else in that row is left alone.** Bind a variable, an attribute, `Entity Rotation 2D` or an `ATan2` into an angle row and it passes through in radians, because that value was computed rather than typed.
 - `Deg To Rad` and `Rad To Deg` still exist for the conversions a graph genuinely needs to perform on a computed value.
 
-A row whose unit depends on how the node is configured is not labelled and not converted — `Rotate To`'s **Value** row means seconds under `Duration` and radians per second under `Speed`, so it has no single unit to declare and stays radians in both.
+A row whose unit depends on how the node is configured is never marked as an angle, so nothing on it is converted — `Rotate To`'s **Value** row means seconds under `Duration` and radians per second under `Speed`. Its editor still labels it (`Duration (s)` or `Speed (rad/s)`) by reading the mode; what it cannot do is claim one unit for a constant that would be converted the same way in both.
 
 ## Ability Integration
 

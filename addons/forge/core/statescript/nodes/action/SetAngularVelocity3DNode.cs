@@ -28,7 +28,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 public sealed class SetAngularVelocity3DNode(string nodePath = "") : SpatialActionNodeBase3D(nodePath)
 {
 	/// <summary>
-	/// Input property index for the angular velocity, in radians per second about the vector's own axis.
+	/// Input property index for the angular velocity about the vector's own axis. Read in radians per second, typed in
+	/// degrees per second.
 	/// </summary>
 	public const byte AngularVelocityInput = 1;
 

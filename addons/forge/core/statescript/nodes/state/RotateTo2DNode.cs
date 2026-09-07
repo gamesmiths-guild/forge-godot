@@ -42,7 +42,7 @@ public class RotateTo2DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 	public const byte EntityInput = 0;
 
 	/// <summary>
-	/// Input property index for the rotation to turn to, in radians.
+	/// Input property index for the rotation to turn to. Read in radians, typed in degrees.
 	/// </summary>
 	public const byte RotationInput = 1;
 
@@ -63,7 +63,7 @@ public class RotateTo2DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 
 	/// <inheritdoc/>
 	public override string Description =>
-		"Turns an entity to a rotation over time, in radians, emitting OnAligned on completion.";
+		"Turns an entity to a rotation over time, emitting OnAligned on completion.";
 
 	/// <inheritdoc/>
 	protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
