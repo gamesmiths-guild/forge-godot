@@ -19,3 +19,9 @@ export_presets.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# gdUnit4 installs its test runner scene here on every run.
+/gdunit4_testadapter_v5/
+
+# Local test settings: pins this machine's Godot binary. Copy .runsettings.ci and set GODOT_BIN.
+/.runsettings
