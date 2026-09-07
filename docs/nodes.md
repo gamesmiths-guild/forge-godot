@@ -259,6 +259,39 @@ Great for melee sweeps, cone attacks, or custom AoE checks.
 - Add the node, configure shape and properties.
 - Add ForgeEffect child nodes as needed.
 
+### ForgeProjectile2D / ForgeProjectile3D
+
+Extends Area2D/Area3D; travels along its own forward each physics step and applies its child ForgeEffect nodes to whatever it hits. The generic projectile, so a fireball, an arrow or a bullet is a scene rather than a C# class.
+
+**Properties:**
+
+- `Speed` (float): Units per second. Defaults to `10` in 3D and `400` in 2D.
+- `MaxLifetime` (float): Seconds before it expires. Default `5`.
+- `MaxRange` (float): Distance before it expires. Zero means unlimited.
+- `Pierce` (int): How many extra targets it hits before `DestroyOnHit` frees it. Zero frees it on the first. With `DestroyOnHit` off it is not a limit at all — the projectile keeps hitting until its lifetime or range ends.
+- `DistanceFalloffCurve` (Curve): Sampled at distance travelled over `MaxRange` and passed to the effects as context data.
+- `DestroyOnHit` (bool): Default on.
+- `IncludeAreas` (bool): Whether areas count as hits, as well as bodies.
+- `Swept` (bool): Default on — see below.
+
+**Description:**
+
+Moves −Z in 3D and +X in 2D, so **aim is simply instantiation rotation**: binding [`InstantiateScene3DNode`](statescript/nodes/scene-nodes.md#the-instantiating-pair)'s Rotation to core's `LookAt` — or the 2D node's Rotation to an angle — is the whole launch story, and there is no `Launch` method to call.
+
+It carries `ForgeEffect` children exactly as `EffectArea3D` does, and implements `IInstantiationReceiver`, so owner and source arrive from whatever spawned it. On a hit it resolves the target through [`ForgeEntityBridge`](helper-classes.md#forgeentitybridge) and applies its effects with the falloff sampled from the curve.
+
+**Signals:** `Hit(Node)` and `Expired()`.
+
+**`Swept` closes the tunnelling question, and defaults on.** An area is tested for overlaps once per physics step, so a projectile whose step is longer than a wall is thick was never tested anywhere inside that wall and appeared on the far side of it. Swept, each step is a shape cast along the motion instead, and the projectile is placed *at* the impact rather than past it on the step that ends it.
+
+Two costs come with it. The cast is not free, and **the first enabled `CollisionShape` child becomes the query's shape** — a projectile built from several shapes or from a `CollisionPolygon` has no single shape to sweep and says so with a warning rather than silently sweeping one of them. That is why it is an export and not the only behavior.
+
+Pierce works by **re-sweeping with each collider it met excluded**, so a piercing shot reports everything along the step in the order it met them. The exclusion list is kept for the whole flight rather than per step, so a collider already answered for cannot stop the sweep again. The caster needs no special case: a projectile spawned inside its owner meets the owner on its first cast, skips it as the owner, and the exclusion that follows is exactly what should happen for the rest of the flight.
+
+`Pierce` counts down on every hit, but only `DestroyOnHit` acts on the count reaching zero — so an endlessly piercing beam-like projectile is `DestroyOnHit` off, bounded by `MaxLifetime` or `MaxRange` instead.
+
+While swept, monitoring is switched off — nothing reads the overlap list any more, and an armed area pays for a test per step that decides nothing. The projectile stays *monitorable*, so areas watching for it still see it.
+
 ## Cue Nodes
 
 ### ForgeCueHandler (Abstract)
@@ -271,7 +304,11 @@ Base node for implementing handlers for visual and audio feedback.
 
 **Description:**
 
-Extend `ForgeCueHandler` to implement custom logic for visual/audio response to gameplay events. Registers and unregisters with the Forge CuesManager automatically.
+Extend `ForgeCueHandler` to implement custom logic for visual/audio response to gameplay events. Registers and unregisters with the Forge CuesManager automatically. Before writing one, check whether the [cue handler library](#cue-handler-library) below already covers it.
+
+Each phase has **two overloads**: one taking the target entity, and one taking only the parameters. Override the second when the effect belongs to the screen rather than to whoever was hit — that is what the camera shake and hit stop handlers do.
+
+`WarnOnce(message)` reports a misconfiguration — a path pointing at nothing, a curve on an emitter that cannot scale — exactly once per message rather than once per application. One handler serves every target of its cue, so a bad path is wrong for all of them, and suppressing per *message* rather than per handler stops a handler's first problem hiding its second.
 
 **Usage:**
 
@@ -314,10 +351,84 @@ public partial class DamageCueHandler : ForgeCueHandler
 }
 ```
 
+## Cue Handler Library
+
+Six concrete handlers ship with the plugin, so the common visual and audio hookups need no C# at all. Add one to the scene, set its `CueTag`, and fill in its exports.
+
+All six inherit `CueTag` and `WarnOnce` from [`ForgeCueHandler`](#forgecuehandler-abstract). **(M)** marks an optional `MagnitudeCurve`, sampled at the cue's normalized magnitude.
+
+### ParticlesCueHandler
+
+Drives a particle emitter already in the target's scene, which is what keeps the material, draw pass and local-coords flag where an artist authored them.
+
+- `ParticlesPath` (string): Path to the emitter, from the node the target lives on. Empty means the target's first emitter child.
+- `OneShotOnExecute` (bool, default on): Executing restarts the emitter rather than only switching emission on.
+- `MagnitudeCurve` (Curve) **(M)**: Written as the emitter's amount ratio.
+
+Applying starts emission, removing stops it, executing bursts. One class covers all four emitter types; they share no base class in Godot, so the operations switch over them. **The magnitude curve reaches only the GPU pair** — `amount_ratio` is the one knob that scales emission without reallocating the particle buffer, and the CPU emitters do not have it, so a curve on one says so rather than silently doing nothing.
+
+### InstantiateSceneCueHandler
+
+The general-purpose visual: a telegraph, an impact burst, a shield bubble, a scorch mark.
+
+- `Scene` (PackedScene)
+- `Attach` (CueAttachMode): `TargetEntity` or `World`.
+- `Lifetime` (float): Seconds an executed instance lives. Zero or less leaves it to free itself.
+- `MagnitudeCurve` (Curve) **(M)**: Multiplied into the scene's authored scale.
+
+Executing spawns and forgets; applying spawns and holds, and removing frees what it spawned — which is what ties a bubble to the effect that put it there. It reads a well-known `position` custom parameter when one is present, else the target's position.
+
+**Placement happens before parenting**, written as a local transform through the parent's, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` would otherwise see the position the scene was authored at.
+
+### AudioCueHandler
+
+- `PlayerPath` (string): An existing audio player. Empty falls back to `Stream`, then to the target's first audio player child.
+- `Stream` (AudioStream): Creates a player on the target instead. Ignored when `PlayerPath` resolves.
+- `StopOnRemove` (bool, default on): Off lets a tail finish after the effect has gone.
+- `MagnitudeCurve` (Curve) **(M)**: Sets the volume as a linear gain where one is full.
+
+Two ways to say what plays: a path, for anything whose bus, attenuation or stream randomization is authored; or a bare stream, for the common case where a cue is one sound and adding a node to every entity that can receive it is the only obstacle. A created player matches the target's dimension, so a sound on a 3D character is positional without the cue saying so.
+
+**One player per target, not one per playback.** A player created per execution and freed on `Finished` never frees for a looping stream, so a hit cue firing ten times a second would stack ten never-freed players a second onto its target. `MaxPolyphony` keeps what made per-playback players attractive — repeated executes still overlap instead of cutting each other off.
+
+**The curve replaces the volume rather than scaling it.** The volume is written *onto* a shared player, so adding to it would compound: each application would read back a level that already included the last one, and the sound would walk up until it clipped. With a curve, the cue decides the level; without one, the player's own mix stands.
+
+### AnimationCueHandler
+
+- `PlayerPath` (string): Empty means the target's first animation player child.
+- `ApplyAnimation`, `ExecuteAnimation`, `RemoveAnimation` (string): One clip per phase.
+
+Three names rather than one animation with a mode, because a stun that starts, holds and ends is three different clips and the alternative is three handlers under three cue tags. A phase left empty plays nothing, which makes a one-phase cue a single filled field.
+
+### CameraShakeCueHandler
+
+- `Amplitude` (float, default `0.1`): In the camera's own units — world units in 3D, pixels in 2D.
+- `Duration` (float, default `0.25`): For an executed shake. Ignored while a cue is applied, which shakes until removal.
+- `MagnitudeCurve` (Curve) **(M)**: Scales the amplitude, so a scratch and a critical do not shake identically.
+
+### HitStopCueHandler
+
+- `TimeScale` (float, default `0.05`)
+- `Duration` (float, default `0.08`)
+- `MagnitudeCurve` (Curve) **(M)**: Scales the duration, so a heavier hit hangs longer.
+
+Writes `Engine.TimeScale` for a moment and restores whatever was in force before. It is global — that is what a hit stop *is* — which means two of them fighting over the same moment is one handler's stop, so put one in the scene and let cue tags decide when it fires.
+
+### The two screen effects
+
+`CameraShakeCueHandler` and `HitStopCueHandler` are the only handlers that **do not touch their target**: they read the cue's phase and nothing else, which is what "presentation only" turns out to mean in code. They are cue handlers rather than graph nodes for the same reason — nothing about a screen effect belongs to the entity that was hit, and a graph node that could shake the screen would be a node that has to know *which* screen.
+
+Three details they share:
+
+- **The shake writes the camera's offset, never its transform**, because a game's camera is nearly always driven by a rig that would fight a transform write every frame.
+- **Both count in wall clock, not frame delta.** A hit stop measured in scaled time at a twentieth speed would last twenty times as long as it says, and a shake driven by scaled time would crawl through exactly the hit stop it exists to punctuate.
+- **Both put back what they found** when they end or leave the tree, so a handler freed mid-effect cannot leave the whole game in slow motion with nothing left to undo it.
+
 ## Best Practices
 
 - Use **ForgeEntity** for any game object needing Forge's systems.
 - Use **EffectArea/RayCast/ShapeCast** for persistent environment effects and hazards, prefer these over custom code for triggers, traps, or fields.
+- Use **ForgeProjectile2D/3D** for linear projectiles rather than writing a mover; aim it by spawning it rotated.
 - Use **ForgeEffect** as a child to define the effects any effect-applier node will use.
-- Implement custom **ForgeCueHandler** nodes for all presentation feedback tied to gameplay events.
+- Reach for the **cue handler library** first, and implement custom **ForgeCueHandler** nodes for presentation it does not cover.
 - When in doubt, favor the provided nodes and resources, they handle complex cases (ownership, cleanup, stacking) automatically.

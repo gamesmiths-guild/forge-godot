@@ -4,6 +4,8 @@ Forge for Godot uses the core Forge resolver set and adds Godot-facing resolver 
 
 Use the **core Forge documentation** for runtime resolver behavior and API details. Use the pages in this folder when Godot authoring adds editor, resource, or binding details.
 
+A second group of resolvers — [the engine-facing ones](#godot-engine-resolvers) — has no core counterpart at all: they read the scene tree, the physics world, cameras, input, navigation and the clock. Their pages here are the canonical reference as well as the authoring notes.
+
 ## Core Resolver Reference
 
 | Category | Core Docs | Notes |
@@ -50,7 +52,7 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [SetByCallerMagnitudeResolver](set-by-caller-magnitude-resolver.md) | `float` | Reads the SetByCaller magnitude stored on an `Effect` for a selected tag. |
 | [EventPayloadOutputResolver](event-payload-resolver.md#listener-side-eventpayloadoutputresolver) | `EventPayloadWriter` | Selects an `IEventPayloadProvider` to write a received payload to graph variables for `EventListenerNode`. |
 | [EventPayloadResolver](event-payload-resolver.md#raise-side-eventpayloadresolver) | `EventPayloadRaiser` | Selects an `IEventPayloadProvider` to build and raise a typed event payload for `RaiseEventNode`. |
-| [IsValidResolver](is-valid-resolver.md) | `bool` | Authors a validity (non-null) check over an object-backed variable of any registered type. |
+| [IsValidResolver](is-valid-resolver.md) | `bool` | Authors a validity check over an object-backed variable of any registered type. Rejects null, invalidated handles, and freed Godot objects. |
 | [ObjectEqualsResolver](object-equals-resolver.md) | `bool` | Authors a reference-identity check between two object-backed variables of any registered type. |
 | [OwnershipResolver](ownership-resolver.md) | `EffectOwnership` | Composes effect ownership from two nested entity resolvers. |
 | [TagResolver](tag-resolver.md) | `Tag` | Selects one or more registered tags for any tag input (e.g. the cue nodes). |
@@ -65,7 +67,35 @@ These resolvers add no Godot-specific authoring beyond the standard nested-opera
 
 ### Object Variable Types
 
-Object-backed graph values are keyed by an object variable type. In addition to the built-in `Entity`, `Effect`, and `ActiveEffectHandle` types, this release registers `Tag`, `AbilityHandle`, and `AbilityData` — used by the tag listener output, the grant nodes' handle output and lookup resolvers, and the ability grant inputs respectively.
+Object-backed graph values are keyed by an object variable type. In addition to the built-in `Entity`, `Effect`, and `ActiveEffectHandle` types, Forge for Godot registers:
+
+| Type id | Display name | Backing type | Used by |
+|---------|--------------|--------------|---------|
+| `Tag` | Tag | `Tag` | The tag listener's output. |
+| `AbilityHandle` | Ability | `AbilityHandle` | The grant nodes' handle output and the lookup resolvers. |
+| `AbilityData` | Ability Data | `AbilityData` | The ability grant inputs. |
+| `GodotNode` | Node | `Godot.Node` | Everything in the node lane — spawn outputs, hit nodes, the interop rows. |
+| `Scene` | Scene | `Godot.PackedScene` | The scene `Constant` resolver and the instantiating nodes. |
+| `Shape3D` | Shape 3D | `Godot.Shape3D` | The 3D [shape resolvers](shapes.md) and every 3D query that takes one. |
+| `Shape2D` | Shape 2D | `Godot.Shape2D` | The 2D shape resolvers. Deliberately a separate type — the two physics servers do not mix. |
+
+Because a shape, a scene and a node all travel the object lane, an operand of any of them is a nested picker like any other, and can be seeded with a composed resolver.
+
+
+## Godot Engine Resolvers
+
+These read the engine rather than the Forge simulation, so nothing about them exists in the core library. They are grouped by the authoring model they share; each page carries a table of the individual resolvers with their outputs and rows.
+
+| Guide | Resolvers | What they answer |
+|-------|-----------|------------------|
+| [Spatial Getters](spatial-getters.md) | `Entity Position`, `Entity Direction`, `Entity Rotation`, `Entity Scale`, `Entity Velocity`, `Entity Angular Velocity`, `Entity Transform Point`, `Character State`, `Character Motion`, `Can Fit` | What is true of the node an entity lives on. All 2D/3D pairs, all sharing an entity operand and an optional `%marker` path. |
+| [Physics Query Resolvers](physics-queries.md) | `Area Overlaps`, `Overlap`, `Entities In Cone`, `Entities At Point`, `Closest Entity`, `Is In Cone`, `Line Of Sight`, `Shapecast` | Who is in there, can I see it, what would this sweep meet. `Entity[]` and `bool` results, so they compose with `Where`, `OrderBy` and `Except`. |
+| [Shape Resolvers](shapes.md) | `Sphere`, `Box`, `Capsule`, `Cylinder`, `Cone`, `Circle`, `Rectangle`, `Wedge`, `Constant` | The shape a query sweeps, built from resolvers so every dimension can scale. |
+| [Camera and Aim Resolvers](camera-and-aim.md) | `Camera Position`, `Camera Forward 3D`, `Mouse World Position` | Where the graph's own player is looking and pointing. No entity operand — the viewport the owner stands in answers "whose camera". |
+| [Input Resolvers](input-resolvers.md) | `Input Action Pressed`, `Input Action Strength`, `Input Axis`, `Input Vector 2` | Button and analog state, for expression gates and condition monitors. |
+| [Scene Graph and Interop Resolvers](scene-graph-resolvers.md) | `Constant` (scene and node path), `Node From Entity`, `Entity From Node`, `Entity At Path`, `Node Property`, `Parent Entity`, `Child Entities`, `Nodes In Node Group`, `Entities In Node Group` | Crossing between entities, nodes and scenes, and reading a node's own state. |
+| [Navigation Resolvers](navigation-resolvers.md) | `Nav Reachable`, `Nav Path Length`, `Nav Closest Point` | Whether a walk is possible, how long it is, and where the nearest legal ground is. |
+| [Engine and Timing Resolvers](engine-resolvers.md) | `Delta Time`, `Engine Time`, `Animation Length` | The running tick's step, monotonic time, and how long a clip is. |
 
 ## Authoring Guides
 
@@ -73,9 +103,20 @@ The array-operation resolver family (`Where`, `Order By`, `Take`, `Select`, `Cou
 
 - [Array Operations Authoring](array-operations.md) — nested source, per-element (lambda) operands and element resolvers, iteration scope, and the value/object lanes.
 
+The [Godot engine resolvers](#godot-engine-resolvers) above are grouped the same way and for the same reason.
+
+## Seeding a Nested Operand
+
+A **node input** marked optional renders a `(None)` entry and genuinely stays unbound, which is what lets Raycast read "no mask" as every layer. A nested operand **inside a resolver** has no such state: the picker always selects an editor, and an untouched one is the constant zero.
+
+So any resolver operand whose sensible default is not zero is *seeded* with the resolver that expresses it — `Overlap`'s Position starts on `Entity Position 3D`, its Shape on a Sphere, both ends of `Line Of Sight` on `Entity Position 3D`, `Mouse World Position 3D`'s Max Dist on the same 1000 units the aim payload uses. An untouched row runs what the editor shows.
+
+The same reasoning reaches node inputs whose default is a composed resolver rather than a constant, which is why [Line Of Sight](../nodes/physics-query-nodes.md#line-of-sight)'s Ignore row is required and seeded with an array of the owner and the target rather than being optional.
+
 ## Related Docs
 
 - [Variables and Data](../variables.md)
 - [Statescript Enums](../enums.md)
 - [Custom Resolvers](../custom-resolvers.md)
+- [Physics Debug Drawing](../physics-debug-drawing.md)
 - [Resolver Template](../templates/resolver-template.md)

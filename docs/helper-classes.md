@@ -19,6 +19,55 @@ var cuesManager = ForgeManagers.Instance.CuesManager;
 var tag = Tag.RequestTag(tagsManager, "ability.damage.fire");
 ```
 
+## ForgeEntityBridge
+
+The canonical translation between Godot scene nodes and `IForgeEntity`.
+
+**Description:**
+
+Forge supports two authoring patterns, and this static class is the only place that knows about both:
+
+- **Composition**: a plain `ForgeEntity` node parented under the visual or physics root. The spatial node is an *ancestor* of the entity.
+- **Direct**: a body script that implements `IForgeEntity` itself. The spatial node *is* the entity.
+
+Every spatial node, Statescript resolver, and cue handler resolves through here instead of guessing inline, so both patterns keep working and the guess only ever has to be fixed in one place. Use it in your own code for the same reason.
+
+**Lookups:**
+
+| Method | Answers |
+|---|---|
+| `TryGetEntity(node, out entity)` | The entity for a node, checking the node itself then its direct children. The narrow case: a collider that was just hit. |
+| `TryGetEntityInHierarchy(node, out entity)` | The same, widening up the ancestor chain. Physics reports the collider it hit, which is often a hurtbox nested under the body that owns the entity. |
+| `TryGetEntityNode(entity, out node)` | The Godot node backing an entity. |
+| `TryGetOwningNode(entity, out node)` | "The node this entity lives on", with no dimension: the nearest spatial ancestor of *either* kind, falling back to the entity's own node. |
+| `TryGetSpatialNode3D` / `TryGetSpatialNode2D` | The spatial node of a given dimension, with `nodePath` overloads so `%CastPoint` markers work everywhere. |
+| `TryGetEntityChild(entity, nodePath, out child)` | A child that is neither spatial nor the entity itself — an animation player, an audio player, an emitter. **An empty path means the first matching child**, one level deep, first match wins, which is not what an empty path means in the spatial lookups. |
+
+```csharp
+if (ForgeEntityBridge.TryGetEntityInHierarchy(hit.GetCollider() as Node, out IForgeEntity? target))
+{
+    _effectApplier.ApplyEffects(target, effectOwner: Owner, effectSource: this);
+}
+```
+
+## IInstantiationReceiver
+
+Implement this on the root script of a scene that Forge instantiates, and it is handed its ownership when it enters the tree:
+
+```csharp
+void OnInstantiated(IForgeEntity? owner, IForgeEntity? source);
+```
+
+`owner` is the entity that owns the effects the instance applies, usually the ability's owner; `source` is what is credited as causing them, which can be the instance's own entity when the spawned scene is a Forge entity in its own right.
+
+Both [`InstantiateScene`/`Scene` nodes](statescript/nodes/scene-nodes.md#the-instantiating-pair) (when **Pass ownership** is on) and [`InstantiateSceneCueHandler`](nodes.md#instantiatescenecuehandler) call it. It is what replaces a bespoke `Launch` method on a projectile: `ForgeProjectile3D` implements it, so a graph aims a projectile by spawning it rotated and nothing has to be called afterwards.
+
+## AudioPlayers
+
+A switch over Godot's three audio player types, which share no base class.
+
+Anything that means "the entity's audio player" without caring whether it is an `AudioStreamPlayer`, `AudioStreamPlayer2D` or `AudioStreamPlayer3D` goes through here. It is shared by the [Play Audio nodes](statescript/nodes/presentation-nodes.md#audio) and the [`AudioCueHandler`](nodes.md#audiocuehandler), so a path resolves the same way in a graph and in a cue.
+
 ## EffectApplier
 
 A helper class for applying effects from child effect nodes to target entities.
@@ -101,6 +150,7 @@ _effectApplier.ApplyEffects(targetNode, attackData, Owner, this, level: 2);
 
 **Notes:**
 
-- Make sure the target node (or a child) implements `IForgeEntity`.
+- Make sure the target node (or a child) implements `IForgeEntity`. `EffectApplier` resolves it through [`ForgeEntityBridge`](#forgeentitybridge), so both authoring patterns work.
 - For generic `ApplyEffects<TData>`, all ForgeEffect children must support the same TData type.
 - Add `[Tool]` and `[GlobalClass]` to custom node scripts for editor usability.
+- Before writing a projectile script like the one above, check whether [`ForgeProjectile3D`](nodes.md#forgeprojectile2d--forgeprojectile3d) already covers it — it does all of this, plus sweeping, piercing and distance falloff.

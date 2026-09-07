@@ -448,6 +448,28 @@ Because the reading side resolves members on `TData` by name, each `Name` must m
 
 Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `AbilityActivationDataInputs` inside `CreateData`. See [AbilityActivatorResolver](../resolvers/ability-activator-resolver.md).
 
+### Built-in activation data providers
+
+Forge for Godot ships the payload nearly every projectile, blink and ground-targeted skill needs first, so a game does not have to declare its own type and provider just to say where the player was aiming.
+
+```csharp
+public readonly record struct AimActivationData(
+    Vector3 Origin, Vector3 Direction, Vector3 TargetPoint);
+
+public sealed class AimActivationDataProvider : AbilityActivationDataProvider<AimActivationData>;
+```
+
+Declaring the three members makes the payload readable in graphs through the Activation Data resolver **and** sendable from graphs for sub-ability activation. Two helpers build it from scene code:
+
+- `AimActivationData.FromCamera(...)` — first or third person shooters.
+- `AimActivationData.FromMouseGround(...)` — top-down and isometric. Resolves against physics first and falls back to the horizontal plane through the source, so pointing at empty sky still yields a usable point. The direction is flattened, because a character aiming at the ground should turn rather than tilt.
+
+`AimActivationData2D` is the twin, with the same three members as `Vector2`s and its own provider. **Its two helpers are not the same two**: `FromMouse` replaces `FromMouseGround` and `FromFacing` replaces `FromCamera`, because a 2D camera has no forward and the way a character already points is what a stick-aimed or heading-aimed game has instead. `FromMouse` casts nothing — a 2D cursor already names a world point exactly, so a ray between the caster and it could only replace where the player pointed with whatever stands in the way. The point is clamped to the aim's reach instead.
+
+> **There is deliberately no target-entity member.** Activation-data members resolve through the value lane, which carries numbers and math structs but not object references, so an entity member would look bindable in the editor and never resolve. Entity targeting already has a home: the ability's own target.
+
+Sampling aim once at activation is also what makes an ability work under authority — see [input is client-local](input-action-node.md#input-is-client-local).
+
 ## Effect Context Data Providers
 
 This is the inverse of an activation data provider. Instead of reading values *out* of ability activation data, an effect context-data provider builds typed data *from* the current graph state and passes it *into* the effect pipeline when `ApplyEffectNode`/`EffectNode` apply an effect. Custom calculators and executions then read it with `EffectEvaluatedData.TryGetContextData<TData>`.
@@ -500,6 +522,10 @@ public sealed class DirectionContextProvider : EffectContextDataProvider<Directi
 Selecting `DirectionContextProvider` shows a **Direction** section with a Vector3 resolver (constant, variable, activation data, ...). Input value types must be supported by `Variant128`. Note that graph values use `System.Numerics` math types, so convert to Godot's (`new Vector3(v.X, v.Y, v.Z)`) when your `TData` stores Godot types.
 
 Providers are discovered via reflection and shared as cached instances, so keep them stateless. Build everything fresh from the supplied `GraphContext` and `EffectContextDataInputs` inside `CreateData`. See [EffectContextDataResolver](../resolvers/effect-context-data-resolver.md).
+
+### Built-in effect context data provider
+
+`FloatContextDataProvider` declares a single `Value` input typed `float`, which covers the common case of handing one number to a calculation — a damage falloff computed from distance, a charge fraction, a stack multiplier. Select it on `ApplyEffectNode`'s or `EffectNode`'s context-data row, bind the **Value** resolver, and read it back with `EffectEvaluatedData.TryGetContextData<float>`.
 
 ## Cue Custom Parameters Providers
 

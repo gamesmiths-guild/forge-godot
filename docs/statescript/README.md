@@ -58,6 +58,23 @@ Messages flow from output ports to input ports. This propagation is **synchronou
 
 For the built-in node index and links to the core per-node documentation, see [Nodes](nodes/README.md).
 
+### Reaching the Engine
+
+The core Statescript library is engine-agnostic, so nothing in it knows about scenes, physics, cameras or input. Forge for Godot adds those as ordinary nodes and resolvers, which is what lets a dash, a projectile, an area of effect or a trap be authored without writing an `IAbilityBehavior`:
+
+| Concern | Nodes | Resolvers |
+|---------|-------|-----------|
+| Scenes and the tree | [Scene Nodes](nodes/scene-nodes.md) | [Scene Graph and Interop](resolvers/scene-graph-resolvers.md) |
+| Transforms and motion | [Spatial Nodes](nodes/spatial-nodes.md) | [Spatial Getters](resolvers/spatial-getters.md) |
+| Physics writes | [Physics Nodes](nodes/physics-nodes.md) | [Spatial Getters](resolvers/spatial-getters.md) |
+| Physics queries | [Physics Query Nodes](nodes/physics-query-nodes.md) | [Physics Queries](resolvers/physics-queries.md), [Shapes](resolvers/shapes.md) |
+| Animation and audio | [Presentation Nodes](nodes/presentation-nodes.md) | [Engine and Timing](resolvers/engine-resolvers.md) |
+| Input and aim | [InputActionNode](nodes/input-action-node.md) | [Input](resolvers/input-resolvers.md), [Camera and Aim](resolvers/camera-and-aim.md) |
+| Navigation | [Navigation Nodes](nodes/navigation-nodes.md) | [Navigation](resolvers/navigation-resolvers.md) |
+| A game's own scripts | [Interop Nodes](nodes/interop-nodes.md) | [Scene Graph and Interop](resolvers/scene-graph-resolvers.md) |
+
+Presentation driven by *effects* rather than by a graph goes through cues instead — see the [cue handler library](../nodes.md#cue-handler-library).
+
 ## Subgraphs
 
 State nodes have **Subgraph** output ports in addition to regular Event output ports. Both emit a regular message when the state node activates, but the critical difference is what happens when a disable signal is sent:
@@ -131,6 +148,7 @@ Statescript graphs must be **acyclic**. The framework validates this at graph co
 - [Variables and Data](variables.md): Variables, shared variables, and property resolvers.
 - [Statescript Enums](enums.md): Authoring integers by name, and naming a Switch's cases or a State Machine's states.
 - [Property Resolvers](resolvers/README.md): Index of the resolver set available in Forge for Godot, with local pages for Godot-specific resolver resources.
+- [Physics Debug Drawing](physics-debug-drawing.md): What the query nodes and resolvers draw, and the one switch that turns it on.
 - [Custom Statescript Nodes](nodes/custom-nodes.md): How to create custom Action, Condition, and State nodes for Godot.
 - [Custom Resolvers](custom-resolvers.md): Creating custom property resolvers to expose game-specific data.
 - [Custom Editors](custom-editors.md): Creating custom node and resolver editors for the Statescript graph editor.

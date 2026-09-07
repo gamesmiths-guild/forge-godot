@@ -413,6 +413,8 @@ This pattern works for simple and complex abilities alike; just expand the effec
 
 ## Setting Up Visual Feedback with Cues
 
+> **Check the library first.** Particles, a spawned scene, audio, an animation, camera shake and hit stop already have handlers that ship with the plugin — add the node, set its `CueTag`, fill in the exports. See the [cue handler library](nodes.md#cue-handler-library). The steps below are for feedback none of those covers.
+
 ### Step 1: Create a Cue Handler
 
 ```csharp
@@ -472,7 +474,7 @@ public partial class DamageCueHandler : ForgeCueHandler
 
 - Learn more about the [Forge nodes](nodes.md) provided by the plugin.
 - Browse all available [Forge resources](resources.md) for configuring effects, abilities, tags, and more.
-- Build ability behaviors visually with [Statescript](statescript/README.md).
+- Build ability behaviors visually with [Statescript](statescript/README.md) — including the spatial, physics, input and interop nodes that let a dash, a projectile or an area of effect be authored instead of coded. See [Reaching the Engine](statescript/README.md#reaching-the-engine).
 - Discover [helper classes](helper-classes.md) for streamlining common Forge workflows in Godot.
 - Explore the scenes in the `forge_samples` folder.
 - Check out the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) for advanced topics and reference.
