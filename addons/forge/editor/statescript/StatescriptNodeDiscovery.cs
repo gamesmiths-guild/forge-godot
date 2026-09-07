@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Gamesmiths.Forge.Godot.Core.Statescript;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
@@ -256,7 +257,8 @@ internal static class StatescriptNodeDiscovery
 			description = tempNode.Description;
 			inputPropertiesInfo = GetInputPropertiesInfo(
 				tempNode,
-				type.GetCustomAttribute<StatescriptAngleInputsAttribute>());
+				type.GetCustomAttribute<StatescriptAngleInputsAttribute>(),
+				type.GetCustomAttribute<StatescriptCollisionMaskInputsAttribute>());
 			outputVariablesInfo = GetOutputVariablesInfo(tempNode);
 		}
 		catch
@@ -352,7 +354,10 @@ internal static class StatescriptNodeDiscovery
 		return flags;
 	}
 
-	private static InputPropertyInfo[] GetInputPropertiesInfo(ForgeNode node, StatescriptAngleInputsAttribute? angles)
+	private static InputPropertyInfo[] GetInputPropertiesInfo(
+		ForgeNode node,
+		StatescriptAngleInputsAttribute? angles,
+		StatescriptCollisionMaskInputsAttribute? collisionMasks)
 	{
 		var propertiesInfo = new InputPropertyInfo[node.InputProperties.Length];
 		for (int i = 0; i < node.InputProperties.Length; i++)
@@ -369,7 +374,8 @@ internal static class StatescriptNodeDiscovery
 				expectedType,
 				isArray,
 				node.InputProperties[i].IsOptional,
-				angles?.IsAngleInput(i) ?? false);
+				angles?.IsAngleInput(i) ?? false,
+				collisionMasks?.GetLayerSpace(i) ?? CollisionLayerSpace.None);
 		}
 
 		return propertiesInfo;
@@ -551,12 +557,16 @@ internal static class StatescriptNodeDiscovery
 	/// <param name="IsAngle">Whether the input carries an angle, as declared by
 	/// <see cref="StatescriptAngleInputsAttribute"/>. A constant on such a row is typed in degrees and stored in
 	/// radians.</param>
+	/// <param name="MaskSpace">Which world's collision layers the input is picked from, as declared by
+	/// <see cref="StatescriptCollisionMaskInputsAttribute"/>. Such a row is authored as a layer grid rather than as a
+	/// number.</param>
 	internal readonly record struct InputPropertyInfo(
 		string Label,
 		Type ExpectedType,
 		bool IsArray = false,
 		bool IsOptional = false,
-		bool IsAngle = false);
+		bool IsAngle = false,
+		CollisionLayerSpace MaskSpace = CollisionLayerSpace.None);
 
 	/// <summary>
 	/// Describes an output variable declared by a node type.

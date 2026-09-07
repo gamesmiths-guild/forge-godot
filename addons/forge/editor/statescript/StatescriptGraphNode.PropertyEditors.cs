@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
@@ -164,7 +165,7 @@ public partial class StatescriptGraphNode
 				}
 			}
 		}
-		else if (!propInfo.IsOptional)
+		else if (!propInfo.IsOptional || propInfo.MaskSpace != CollisionLayerSpace.None)
 		{
 			factoryIndex = -1;
 
@@ -186,12 +187,16 @@ public partial class StatescriptGraphNode
 				factoryIndex = StatescriptResolverRegistry.GetDefaultFactoryIndex(
 					resolverFactories,
 					propInfo.ExpectedType,
-					propInfo.IsArray);
+					propInfo.IsArray,
+					propInfo.MaskSpace);
 			}
 		}
 		else
 		{
-			// Optional and unbound: rest on (None) rather than falling into a default resolver.
+			// Optional and unbound: rest on (None) rather than falling into a default resolver. A collision layer slot
+			// is excluded above, because an unbound mask and a mask of zero are the same query - both mean every
+			// layer - so starting it on the grid shows what the row does without deciding anything for the author.
+			// The (None) entry stays on the row either way.
 			factoryIndex = -1;
 		}
 
@@ -214,7 +219,8 @@ public partial class StatescriptGraphNode
 				StatescriptPropertyDirection.Input,
 				index,
 				propInfo.IsArray,
-				propInfo.IsAngle);
+				propInfo.IsAngle,
+				propInfo.MaskSpace);
 
 			// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
 			// used at runtime, without requiring the user to interact with the slot first.
@@ -278,7 +284,8 @@ public partial class StatescriptGraphNode
 				StatescriptPropertyDirection.Input,
 				index,
 				ctx.PropInfo.IsArray,
-				ctx.PropInfo.IsAngle);
+				ctx.PropInfo.IsAngle,
+				ctx.PropInfo.MaskSpace);
 
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
 			{
@@ -433,7 +440,8 @@ public partial class StatescriptGraphNode
 		StatescriptPropertyDirection direction,
 		int propertyIndex,
 		bool isArray = false,
-		bool isAngle = false)
+		bool isAngle = false,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
 		if (_graph is null)
 		{
@@ -443,6 +451,7 @@ public partial class StatescriptGraphNode
 		NodeEditorProperty resolverEditor = factory();
 		resolverEditor.ConfigureAllowedExpectedTypes(expectedType);
 		resolverEditor.AngleSlot = isAngle;
+		resolverEditor.MaskSlot = maskSpace;
 
 		var key = new PropertySlotKey(direction, propertyIndex);
 

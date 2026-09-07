@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -36,6 +37,7 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 	private bool _isArray;
 	private bool _iterationScope;
 	private bool _angleSlot;
+	private CollisionLayerSpace _maskSpace;
 	private string _title = string.Empty;
 
 	public bool Folded => _foldable?.Folded ?? true;
@@ -52,7 +54,8 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 		Action onChanged,
 		Action layoutSizeChanged,
 		bool iterationScope = false,
-		bool angleSlot = false)
+		bool angleSlot = false,
+		CollisionLayerSpace maskSpace = CollisionLayerSpace.None)
 	{
 		_graph = graph;
 		_onChanged = onChanged;
@@ -61,6 +64,7 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 		_isArray = isArray;
 		_iterationScope = iterationScope;
 		_angleSlot = angleSlot;
+		_maskSpace = maskSpace;
 		_title = title;
 
 		_factories = isArray
@@ -214,6 +218,12 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 		{
 			types = ["Variable", "Variant"];
 		}
+		else if (_maskSpace != CollisionLayerSpace.None)
+		{
+			// A fresh layer operand starts on the grid: an unfilled one resolves to zero either way, and the grid is
+			// the form that says what the zero means.
+			types = ["CollisionMask", "Variant", "Variable"];
+		}
 		else
 		{
 			types = ["Variant", "Variable"];
@@ -258,7 +268,8 @@ internal sealed partial class NestedResolverPicker : VBoxContainer
 				() => _layoutSizeChanged?.Invoke(),
 				_isArray,
 				_iterationScope,
-				_angleSlot);
+				_angleSlot,
+				_maskSpace);
 
 			if (editor is null)
 			{

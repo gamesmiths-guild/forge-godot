@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -95,6 +96,16 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	/// way of typing three constants, and stops at anything that resolves a value of its own.
 	/// </remarks>
 	internal bool AngleSlot { get; set; }
+
+	/// <summary>
+	/// Gets or sets which world's collision layers the slot this editor fills is picked from, or
+	/// <see cref="CollisionLayerSpace.None"/> when the slot is not a layer field.
+	/// </summary>
+	/// <remarks>
+	/// Set by the node input or nested operand the editor was created for, so the layer grid shows that world's layer
+	/// names and a fresh layer slot starts on the grid rather than on a number field.
+	/// </remarks>
+	internal CollisionLayerSpace MaskSlot { get; set; }
 
 	/// <summary>
 	/// Configures the concrete input types allowed for this editor when the surrounding context accepts more than one.

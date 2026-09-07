@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 
@@ -41,8 +42,10 @@ internal static class DefaultInputBindings
 			StatescriptNodeDiscovery.InputPropertyInfo info = typeInfo.InputPropertiesInfo[i];
 
 			// Optional inputs are never seeded: their fresh state is (None), which is what the runtime documents as
-			// their default and what no resolver can reproduce.
-			if (info.IsOptional
+			// their default and what no resolver can reproduce. A collision layer slot is the one exception, because
+			// there the two states are the same query - an unbound mask reads as zero, and a mask of zero already
+			// means every layer - so the grid can be shown from the start without changing what the node does.
+			if ((info.IsOptional && info.MaskSpace == CollisionLayerSpace.None)
 				|| editor?.SeedsDefaultBinding(i) == false
 				|| HasBinding(nodeResource, i)
 				|| !TryBuildDefaultResolver(graph, info, out StatescriptResolverResource? resolver))
@@ -94,13 +97,19 @@ internal static class DefaultInputBindings
 			return false;
 		}
 
-		int index = StatescriptResolverRegistry.GetDefaultFactoryIndex(factories, info.ExpectedType, info.IsArray);
+		int index = StatescriptResolverRegistry.GetDefaultFactoryIndex(
+			factories,
+			info.ExpectedType,
+			info.IsArray,
+			info.MaskSpace);
+
 		NodeEditorProperty defaultEditor = factories[index]();
 
 		try
 		{
 			defaultEditor.ConfigureAllowedExpectedTypes(info.ExpectedType);
 			defaultEditor.AngleSlot = info.IsAngle;
+			defaultEditor.MaskSlot = info.MaskSpace;
 			defaultEditor.Setup(graph, null, info.ExpectedType, static () => { }, info.IsArray);
 
 			var property = new StatescriptNodeProperty();
