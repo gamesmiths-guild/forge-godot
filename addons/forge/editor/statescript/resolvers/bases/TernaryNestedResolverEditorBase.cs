@@ -49,6 +49,22 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 	protected virtual string ThirdTitle => "Third:";
 
+	/// <summary>
+	/// Gets a value indicating whether the first operand is an angle a designer types, so a constant there is authored
+	/// in degrees and stored in radians.
+	/// </summary>
+	protected virtual bool FirstIsAngle => false;
+
+	/// <summary>
+	/// Gets a value indicating whether the second operand is an angle a designer types.
+	/// </summary>
+	protected virtual bool SecondIsAngle => false;
+
+	/// <summary>
+	/// Gets a value indicating whether the third operand is an angle a designer types.
+	/// </summary>
+	protected virtual bool ThirdIsAngle => false;
+
 	public override void Setup(
 		StatescriptGraph graph,
 		StatescriptNodeProperty? property,
@@ -238,6 +254,16 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 		return slotContainer.GetChild(1) as VBoxContainer;
 	}
 
+	private bool IsAngleSlot(ResolverSlot slot)
+	{
+		return slot switch
+		{
+			ResolverSlot.First => FirstIsAngle,
+			ResolverSlot.Second => SecondIsAngle,
+			_ => ThirdIsAngle,
+		};
+	}
+
 	private void BuildSlot(
 		VBoxContainer root,
 		ResolverSlot slot,
@@ -300,7 +326,10 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			existingResolver,
 			allowedExpectedTypes,
 			OnNestedEditorChanged,
-			RaiseLayoutSizeChanged);
+			RaiseLayoutSizeChanged,
+			isArray: false,
+			iterationScope: false,
+			angleSlot: IsAngleSlot(slot));
 
 		if (editor is null)
 		{

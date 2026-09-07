@@ -34,7 +34,9 @@ internal sealed partial class RotateTowardsResolverEditor
 
 	protected override string SecondTitle => "Target:";
 
-	protected override string ThirdTitle => "Max Radians Delta:";
+	protected override string ThirdTitle => "Max Delta (deg):";
+
+	protected override bool ThirdIsAngle => true;
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{

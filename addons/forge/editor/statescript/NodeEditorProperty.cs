@@ -85,6 +85,18 @@ internal abstract partial class NodeEditorProperty : PanelContainer
 	internal bool IterationScope { get; set; }
 
 	/// <summary>
+	/// Gets or sets a value indicating whether the slot this editor fills holds an angle, so a constant authored here
+	/// is typed in degrees and stored in radians.
+	/// </summary>
+	/// <remarks>
+	/// Only the slots a designer types a figure into carry this. A value that is computed — read off a transform,
+	/// lerped, wrapped, or handed to trigonometry — stays in radians end to end, which is what core's numeric toolbox
+	/// speaks. The flag therefore reaches a constant directly, or through the vector constructor that is itself only a
+	/// way of typing three constants, and stops at anything that resolves a value of its own.
+	/// </remarks>
+	internal bool AngleSlot { get; set; }
+
+	/// <summary>
 	/// Configures the concrete input types allowed for this editor when the surrounding context accepts more than one.
 	/// </summary>
 	/// <param name="allowedExpectedTypes">The allowed expected types.</param>

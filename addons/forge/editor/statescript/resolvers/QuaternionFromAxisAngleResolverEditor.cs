@@ -29,7 +29,9 @@ internal sealed partial class QuaternionFromAxisAngleResolverEditor
 
 	protected override string LeftTitle => "Axis:";
 
-	protected override string RightTitle => "Angle:";
+	protected override string RightTitle => "Angle (deg):";
+
+	protected override bool RightIsAngle => true;
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{

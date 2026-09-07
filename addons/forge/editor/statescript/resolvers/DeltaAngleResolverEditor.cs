@@ -14,8 +14,10 @@ internal sealed partial class DeltaAngleResolverEditor : ScalarBinaryResolverEdi
 
 	public override string ResolverTypeId => "DeltaAngle";
 
-	protected override string LeftTitle => "Current:";
+	protected override string LeftTitle => "Current (deg):";
 
-	protected override string RightTitle => "Target:";
+	protected override string RightTitle => "Target (deg):";
+
+	protected override bool OperandsAreAngles => true;
 }
 #endif
