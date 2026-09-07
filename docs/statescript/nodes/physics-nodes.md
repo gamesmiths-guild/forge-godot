@@ -77,7 +77,7 @@ All of it is gated on Godot's own **Debug → Visible Collision Shapes** and not
 
 ## What differs in 2D
 
-- **A spin is a number.** `SetAngularVelocity2D` takes a `double` in radians per second and `ApplyTorqueImpulse2D` a `double` — a plane has one axis to turn around.
+- **A spin is a number.** `SetAngularVelocity2D` takes a `double` and `ApplyTorqueImpulse2D` a `double` — a plane has one axis to turn around. The rate is radians per second at runtime and its `Angular Velocity (deg/s)` row is typed in degrees, per [radians flow, degrees are typed](../README.md#angles-radians-flow-degrees-are-typed).
 - **The two angular nodes draw nothing**, which is the answer rather than an omission: a 2D spin is about an axis pointing out of the screen, so any arrow drawn in the plane would name a direction the spin does not have.
 - Everything else is a mechanical mirror: `SetVelocity2D`, `ApplyImpulse2D`, `ForceOverride2D` (whose Torque row is a `double`), `SetCollisionBits2D` and `CollisionOverride2D`.
 

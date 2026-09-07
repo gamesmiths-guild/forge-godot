@@ -166,7 +166,7 @@ No query node takes a filter or a predicate. Core's element-lambda resolvers alr
 
 ## What differs in 2D
 
-The whole family mirrors mechanically, with one difference: **`Overlap2D`'s and `Sweep2D`'s Rotation operands are angles in radians** rather than quaternions. The rotation guard disappears with them — every 3D query has to reject the zero quaternion an unfilled operand resolves to, while an unfilled angle is zero, which means "unturned".
+The whole family mirrors mechanically, with one difference: **`Overlap2D`'s and `Sweep2D`'s Rotation operands are single angles** rather than quaternions, typed in degrees on a `Rotation (deg)` row and read as radians ([why](../README.md#angles-radians-flow-degrees-are-typed)). The rotation guard disappears with them — every 3D query has to reject the zero quaternion an unfilled operand resolves to, while an unfilled angle is zero, which means "unturned".
 
 ## Related Docs
 

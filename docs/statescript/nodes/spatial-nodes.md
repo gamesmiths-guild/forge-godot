@@ -104,7 +104,7 @@ The turn that keeps turning. The target is re-resolved every fixed step, so a bo
 |---|---|---|---|
 | 0 | Entity | `IForgeEntity` | Optional. |
 | 1 | Target | `Vector3` | Required, re-read every step. |
-| 2 | Speed | `double` | Optional ceiling in radians per second. Unbound snaps. |
+| 2 | Speed (deg/s) | `double` | Optional ceiling, typed in degrees per second. Unbound snaps. |
 
 There is no aligned port: [`Is In Cone 3D`](../resolvers/physics-queries.md#narrowing-and-testing) over the caster's forward is the layer's aim test. The lag a speed ceiling creates is the point — it is what makes a tracking attack dodgeable, which is why the rate is a maximum rather than a rate to be met.
 
@@ -116,9 +116,9 @@ A `%name` in the **Node** setting is searched **outward from the graph's entity*
 
 ## What differs in 2D
 
-- **Rotation is a number.** `SetRotation2D` and `RotateTo2D` take a `double` in radians. Core's whole numeric toolbox — lerp, wrap, delta angle, deg-to-rad — applies to a facing directly, with no quaternion resolvers in between.
+- **Rotation is a number.** `SetRotation2D` and `RotateTo2D` take a `double`, so core's whole numeric toolbox — lerp, wrap, delta angle — applies to a facing directly, with no quaternion resolvers in between. The value they read is radians; the `Rotation (deg)` row is typed in degrees, per [radians flow, degrees are typed](../README.md#angles-radians-flow-degrees-are-typed).
 - **`SetRotationToward2D` and `LookAt2D` have no Ignore height setting.** There is no pitch to suppress in a plane, so the 2D nodes are the flattened ones by construction.
-- **`RotateTo2D` resolves a signed delta once at activation** rather than interpolating two absolute angles, because a plane's rotation keeps counting past a full turn and lerping the raw numbers would go the long way round. It has no zero guard either, since zero radians is a facing a graph can genuinely mean.
+- **`RotateTo2D` resolves a signed delta once at activation** rather than interpolating two absolute angles, because a plane's rotation keeps counting past a full turn and lerping the raw numbers would go the long way round. It has no zero guard either, since zero is a facing a graph can genuinely mean.
 - **`MoveTo2D`'s arc subtracts**, because screen up is −Y.
 
 ## Related Docs
