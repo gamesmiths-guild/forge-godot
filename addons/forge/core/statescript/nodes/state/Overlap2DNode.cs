@@ -35,6 +35,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="areaPath">Path to the area to watch, from the entity's spatial node. Empty means that node itself.
 /// </param>
 [StatescriptCategory("Physics")]
+[StatescriptAngleInputs(RotationInput)]
 public class Overlap2DNode(
 	OverlapSourceMode sourceMode = OverlapSourceMode.ExistingArea,
 	bool includeAreas = false,
@@ -129,7 +130,7 @@ public class Overlap2DNode(
 		// Required and seeded with an Entity Position 2D, matching the resolver: an unbound position would have to fall
 		// back to the entity, which is the fallback that made the resolver query the world origin.
 		inputProperties.Add(new InputProperty("Position", typeof(NumericsVector2)));
-		inputProperties.Add(new InputProperty("Rotation", typeof(double), IsOptional: true));
+		inputProperties.Add(new InputProperty("Rotation (deg)", typeof(double), IsOptional: true));
 		inputProperties.Add(new InputProperty("Mask", typeof(int), IsOptional: true));
 		inputProperties.Add(new InputProperty("Poll Interval", typeof(double), IsOptional: true));
 

@@ -24,6 +24,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// <param name="nodePath">Optional path to the body to write, for an entity whose body is not its own spatial node. A
 /// path that resolves to nothing falls back to that spatial node, since a spin has nowhere else to live.</param>
 [StatescriptCategory("Physics")]
+[StatescriptAngleInputs(AngularVelocityInput)]
 public sealed class SetAngularVelocity3DNode(string nodePath = "") : SpatialActionNodeBase3D(nodePath)
 {
 	/// <summary>
@@ -42,7 +43,7 @@ public sealed class SetAngularVelocity3DNode(string nodePath = "") : SpatialActi
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		inputProperties.Add(new InputProperty("Angular Velocity", typeof(NumericsVector3)));
+		inputProperties.Add(new InputProperty("Angular Velocity (deg/s)", typeof(NumericsVector3)));
 	}
 
 	/// <inheritdoc/>

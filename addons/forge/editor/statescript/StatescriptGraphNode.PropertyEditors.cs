@@ -213,7 +213,8 @@ public partial class StatescriptGraphNode
 				editorContainer,
 				StatescriptPropertyDirection.Input,
 				index,
-				propInfo.IsArray);
+				propInfo.IsArray,
+				propInfo.IsAngle);
 
 			// Persist the default resolver binding for a fresh input slot so the value shown in the editor is the value
 			// used at runtime, without requiring the user to interact with the slot first.
@@ -276,7 +277,8 @@ public partial class StatescriptGraphNode
 				ctx.EditorContainer,
 				StatescriptPropertyDirection.Input,
 				index,
-				ctx.PropInfo.IsArray);
+				ctx.PropInfo.IsArray,
+				ctx.PropInfo.IsAngle);
 
 			if (_activeResolverEditors.TryGetValue(key, out NodeEditorProperty? editor))
 			{
@@ -430,7 +432,8 @@ public partial class StatescriptGraphNode
 		VBoxContainer container,
 		StatescriptPropertyDirection direction,
 		int propertyIndex,
-		bool isArray = false)
+		bool isArray = false,
+		bool isAngle = false)
 	{
 		if (_graph is null)
 		{
@@ -439,6 +442,7 @@ public partial class StatescriptGraphNode
 
 		NodeEditorProperty resolverEditor = factory();
 		resolverEditor.ConfigureAllowedExpectedTypes(expectedType);
+		resolverEditor.AngleSlot = isAngle;
 
 		var key = new PropertySlotKey(direction, propertyIndex);
 

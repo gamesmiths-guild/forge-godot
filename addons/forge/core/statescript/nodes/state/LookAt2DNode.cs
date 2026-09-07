@@ -37,6 +37,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// </remarks>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
 [StatescriptCategory("Spatial")]
+[StatescriptAngleInputs(SpeedInput)]
 public class LookAt2DNode(string nodePath = "") : StateNode<StateNodeContext>
 {
 	/// <summary>
@@ -68,7 +69,7 @@ public class LookAt2DNode(string nodePath = "") : StateNode<StateNodeContext>
 	{
 		inputProperties.Add(new InputProperty("Entity", typeof(IForgeEntity), IsOptional: true));
 		inputProperties.Add(new InputProperty("Target", typeof(NumericsVector2)));
-		inputProperties.Add(new InputProperty("Speed", typeof(double), IsOptional: true));
+		inputProperties.Add(new InputProperty("Speed (deg/s)", typeof(double), IsOptional: true));
 	}
 
 	/// <inheritdoc/>

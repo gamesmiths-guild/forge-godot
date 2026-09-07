@@ -15,6 +15,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="parentMode">Where the instance is parented.</param>
 /// <param name="passOwnership">Whether to tell the instance who instantiated it.</param>
 [StatescriptCategory("Scene")]
+[StatescriptAngleInputs(RotationInput)]
 public class Scene2DNode(
 	InstantiateParentMode parentMode = InstantiateParentMode.CurrentScene,
 	bool passOwnership = true) : SceneNodeBase(parentMode, passOwnership)
@@ -27,7 +28,7 @@ public class Scene2DNode(
 	protected override void DefineTransformParameters(List<InputProperty> inputProperties)
 	{
 		inputProperties.Add(new InputProperty("Position", typeof(NumericsVector2), IsOptional: true));
-		inputProperties.Add(new InputProperty("Rotation", typeof(double), IsOptional: true));
+		inputProperties.Add(new InputProperty("Rotation (deg)", typeof(double), IsOptional: true));
 	}
 
 	/// <inheritdoc/>

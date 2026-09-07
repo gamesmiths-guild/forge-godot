@@ -100,6 +100,7 @@ internal static class DefaultInputBindings
 		try
 		{
 			defaultEditor.ConfigureAllowedExpectedTypes(info.ExpectedType);
+			defaultEditor.AngleSlot = info.IsAngle;
 			defaultEditor.Setup(graph, null, info.ExpectedType, static () => { }, info.IsArray);
 
 			var property = new StatescriptNodeProperty();

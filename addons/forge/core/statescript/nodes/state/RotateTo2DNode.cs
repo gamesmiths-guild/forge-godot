@@ -17,8 +17,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>The rotation counterpart of Move To 2D, and the node for a turn that has to be seen: a caster winding up to
 /// face their target, a turret coming round onto a lead. Setting a rotation outright is Set Rotation 2D; this is what
 /// makes the same turn take time, which is what a graph gates a cast on.</para>
-/// <para>The rotation is an angle in radians, not a quaternion, so core's Deg To Rad and Look At resolvers feed it
-/// directly. The turn takes the shortest way round, resolved once at activation: a plane's rotation keeps counting
+/// <para>The rotation is a single angle, not a quaternion, so core's Look At and numeric resolvers feed it directly.
+/// The value read is radians and the row is typed in degrees. The turn takes the shortest way round, resolved once at
+/// activation: a plane's rotation keeps counting
 /// past a full turn, so a facing of -3 radians and one of 3 are a third of a turn apart rather than most of one, and
 /// interpolating the two numbers would go the long way.</para>
 /// <para>Unlike its 3D twin there is no guard on the rotation input. An unfilled angle is zero, which is a facing a
@@ -31,6 +32,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <param name="mode">Whether the value input is a duration or an angular speed.</param>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
 [StatescriptCategory("Spatial")]
+[StatescriptAngleInputs(RotationInput)]
 public class RotateTo2DNode(MoveToMode mode = MoveToMode.Duration, string nodePath = "")
 	: StateNode<RotateTo2DNodeContext>
 {
@@ -74,7 +76,7 @@ public class RotateTo2DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
 		inputProperties.Add(new InputProperty("Entity", typeof(IForgeEntity), IsOptional: true));
-		inputProperties.Add(new InputProperty("Rotation", typeof(double)));
+		inputProperties.Add(new InputProperty("Rotation (deg)", typeof(double)));
 		inputProperties.Add(new InputProperty("Value", typeof(double)));
 	}
 
