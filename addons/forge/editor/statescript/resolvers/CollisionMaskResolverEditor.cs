@@ -27,6 +27,12 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 {
 	private Action? _onChanged;
 	private CollisionLayerSpace _layerSpace;
+
+	// The authored bits live here rather than only in the grid, the way the constant editor keeps its own value: a
+	// teardown that releases the control must not be able to turn a saved mask back into zero.
+	private uint _value;
+	private bool _expanded;
+
 	private CollisionLayersGrid? _grid;
 	private PopupMenu? _layerMenu;
 	private TextureButton? _menuButton;
@@ -71,14 +77,17 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 		var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipContents = true };
 		AddChild(row);
 
+		_value = unchecked((uint)(resource?.Value ?? 0));
+		_expanded = resource?.Expanded ?? false;
+
 		_grid = new CollisionLayersGrid
 		{
 			SizeFlagsHorizontal = SizeFlags.ExpandFill,
-			Value = unchecked((uint)(resource?.Value ?? 0)),
-			Expanded = resource?.Expanded ?? false,
+			Value = _value,
+			Expanded = _expanded,
 		};
 
-		_grid.FlagChanged += _ => NotifyChanged();
+		_grid.FlagChanged += OnFlagChanged;
 		_grid.ExpandedChanged += OnExpandedChanged;
 		row.AddChild(_grid);
 
@@ -109,16 +118,16 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 	{
 		property.Resolver = new CollisionMaskResolverResource
 		{
-			Value = unchecked((int)ReadValue()),
+			Value = unchecked((int)_value),
 			LayerSpace = _layerSpace,
-			Expanded = _grid is not null && IsInstanceValid(_grid) && _grid.Expanded,
+			Expanded = _expanded,
 		};
 	}
 
 	/// <inheritdoc/>
 	public override bool TryGetInlineSummary(out string summary)
 	{
-		uint value = ReadValue();
+		uint value = _value;
 
 		if (value == 0)
 		{
@@ -196,9 +205,10 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 		return layerSpace == CollisionLayerSpace.Physics3D ? "layer_names/3d_physics" : "layer_names/2d_physics";
 	}
 
-	private uint ReadValue()
+	private void OnFlagChanged(uint value)
 	{
-		return _grid is not null && IsInstanceValid(_grid) ? _grid.Value : 0;
+		_value = value;
+		NotifyChanged();
 	}
 
 	private void RefreshLayerNames()
@@ -256,7 +266,7 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 			}
 
 			_layerMenu.AddCheckItem(name, i);
-			_layerMenu.SetItemChecked(_layerMenu.GetItemIndex(i), (_grid.Value & (1u << i)) != 0);
+			_layerMenu.SetItemChecked(_layerMenu.GetItemIndex(i), (_value & (1u << i)) != 0);
 		}
 
 		if (_layerMenu.ItemCount == 0)
@@ -278,9 +288,11 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 			return;
 		}
 
-		_grid.Value ^= 1u << (int)id;
+		// Written straight through rather than raised as a toggle, matching how the engine's own menu drives its grid.
+		_value ^= 1u << (int)id;
+		_grid.Value = _value;
 		_grid.QueueRedraw();
-		_layerMenu.SetItemChecked(_layerMenu.GetItemIndex((int)id), (_grid.Value & (1u << (int)id)) != 0);
+		_layerMenu.SetItemChecked(_layerMenu.GetItemIndex((int)id), (_value & (1u << (int)id)) != 0);
 		NotifyChanged();
 	}
 
@@ -294,6 +306,8 @@ internal sealed partial class CollisionMaskResolverEditor : NodeEditorProperty
 
 	private void OnExpandedChanged()
 	{
+		_expanded = _grid is not null && IsInstanceValid(_grid) && _grid.Expanded;
+
 		// Whether the blocks that did not fit are unfolded is view state, so it is written back without an undo step.
 		SaveViewState(_onChanged);
 		RaiseLayoutSizeChanged();
