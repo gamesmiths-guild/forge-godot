@@ -17,10 +17,18 @@ namespace Gamesmiths.Forge.Godot.Tests.Helpers;
 /// </remarks>
 internal static class PluginTypes
 {
+	private static readonly HashSet<string> _coreTypeNames =
+	[
+		.. LoadAll(typeof(Forge.Statescript.Graph).Assembly)
+			.Select(type => type.FullName)
+			.Where(name => name is not null)
+			.Select(name => name!),
+	];
+
 	/// <summary>
 	/// Gets every type in the plugin assembly, tolerating types whose dependencies fail to load.
 	/// </summary>
-	public static IReadOnlyList<Type> All { get; } = LoadAll();
+	public static IReadOnlyList<Type> All { get; } = LoadAll(Assembly.GetExecutingAssembly());
 
 	/// <summary>
 	/// Gets the concrete, instantiable subclasses of <paramref name="baseType"/>, excluding the base itself.
@@ -43,17 +51,34 @@ internal static class PluginTypes
 	/// Data-driven cases carry type names rather than <see cref="Type"/> instances: the name is what makes the test
 	/// case readable in a report, and it keeps the data source free of anything that would need the Godot runtime.
 	/// </remarks>
+	/// <exception cref="InvalidOperationException">Exception thrown when the type name does not resolve in the plugin
+	/// assembly.</exception>
 	public static Type Resolve(string fullName)
 	{
 		return All.FirstOrDefault(type => type.FullName == fullName)
 			?? throw new InvalidOperationException($"No type named '{fullName}' in the plugin assembly.");
 	}
 
-	private static Type[] LoadAll()
+	/// <summary>
+	/// Reports whether a type name resolves in either the plugin assembly or Forge core.
+	/// </summary>
+	/// <param name="fullName">The full name of the type.</param>
+	/// <returns><see langword="true"/> when the type exists in either assembly.</returns>
+	/// <remarks>
+	/// Statescript nodes come from both sides: the generic ones live in core, the Godot-specific ones in the plugin,
+	/// and a serialized graph stores the same kind of type name for either.
+	/// </remarks>
+	public static bool ExistsInPluginOrCore(string fullName)
+	{
+		return All.Any(type => type.FullName == fullName)
+			|| _coreTypeNames.Contains(fullName);
+	}
+
+	private static Type[] LoadAll(Assembly assembly)
 	{
 		try
 		{
-			return Assembly.GetExecutingAssembly().GetTypes();
+			return assembly.GetTypes();
 		}
 		catch (ReflectionTypeLoadException ex)
 		{
