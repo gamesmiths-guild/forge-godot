@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+env:
+  GODOT_VERSION: 4.7.0
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+  smoke:
+    name: Godot boot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: true
+
+      - name: Build
+        run: dotnet build
+
+      # .godot/ is gitignored, so CI always starts with no import cache. Everything below depends on this.
+      - name: Import assets
+        run: godot --headless --import
+
+      - name: Boot the project
+        run: bash .github/scripts/godot-boot.sh runtime godot --headless --quit-after 120
+
+      # Boots with the Forge plugin enabled, so it catches broken .tres, missing UIDs, a bad plugin.cfg, and any
+      # [Tool] script that throws on load - none of which the runtime boot or the test suite would notice.
+      - name: Boot the editor
+        run: bash .github/scripts/godot-boot.sh editor godot --headless --editor --quit-after 240
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: true
+
+      - name: Build
+        run: dotnet build
+
+      - name: Import assets
+        run: godot --headless --import
+
+      - name: Test
+        env:
+          GODOT_BIN: ${{ env.GODOT }}
+        run: >
+          dotnet test "Forge Godot.csproj"
+          --settings .runsettings.ci
+          --no-build
+          --results-directory TestResults
+          --logger "trx;LogFileName=test-results.trx"
+
+      - name: Test report
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v3.0.0
+        with:
+          name: Test Reporter
+          path: "TestResults/test-results.trx"
+          reporter: dotnet-trx
