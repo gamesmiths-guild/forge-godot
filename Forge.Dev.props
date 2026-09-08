@@ -30,4 +30,41 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <!--
+    Test tooling. gdUnit4 resolves the Godot project from the .csproj's own directory, so tests have to build into
+    this assembly rather than a project of their own. They still live outside addons/ and are export-ignored, so
+    neither the tests nor these packages reach an installed copy of the plugin.
+
+    Debug only: TOOLS (and therefore the editor code under test) is defined only in Debug, and an export build has
+    no business carrying a test framework.
+  -->
+  <ItemGroup Label="Testing" Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="gdUnit4.api" Version="5.1.0-rc5" />
+    <PackageReference Include="gdUnit4.test.adapter" Version="3.1.1" />
+    <PackageReference Include="gdUnit4.analyzers" Version="1.0.0">
+      <PrivateAssets>none</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+    <PackageReference Include="FluentAssertions.Analyzers" Version="0.34.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!--
+    The test packages above are Debug-only, so the sources that need them must be too. gdunit4_testadapter_v5/ is the
+    runner scene gdUnit4 generates into the project root; it has to compile into the assembly Godot loads, but only
+    when the framework it references is present.
+  -->
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+    <Compile Remove="$(MSBuildThisFileDirectory)tests/**/*.cs" />
+    <Compile Remove="$(MSBuildThisFileDirectory)gdunit4_testadapter_v5/**/*.cs" />
+  </ItemGroup>
 </Project>

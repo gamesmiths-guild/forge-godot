@@ -1,5 +1,6 @@
 # Forge for Godot
 
+[![CI](https://github.com/gamesmiths-guild/forge-godot/actions/workflows/validate-project.yml/badge.svg)](https://github.com/gamesmiths-guild/forge-godot/actions/workflows/validate-project.yml)
 [![Godot .NET](https://img.shields.io/badge/Godot-4.7%2B%20.NET-478cbf)](https://godotengine.org/download/)
 [![License](https://img.shields.io/github/license/gamesmiths-guild/forge-godot)](LICENSE)
 

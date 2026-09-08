@@ -8,7 +8,7 @@ using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Godot.Resources.Magnitudes;
 using Godot;
 
-namespace ForgeGodot.Addons.Forge.Resources.Components;
+namespace Gamesmiths.Forge.Godot.Resources.Components;
 
 [Tool]
 [GlobalClass]

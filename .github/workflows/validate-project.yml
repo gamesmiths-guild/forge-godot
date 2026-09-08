@@ -1,0 +1,208 @@
+name: CI
+
+# This project builds against Forge core in one of two ways, and addons/forge/Forge.props picks between them by
+# probing for a sibling checkout:
+#
+#   sibling ../forge exists  ->  ProjectReference to core's own sources
+#   otherwise                ->  PackageReference Gamesmiths.Forge (the last released version)
+#
+# Those are different dependencies, so CI names which one it is testing rather than letting the probe decide:
+# every job below checks core out as a sibling, and a separate release-compatibility job deliberately does not.
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+env:
+  GODOT_VERSION: 4.7.0
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: forge-godot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      # develop tracks core's main, which is usually ahead of the released package. Checking core out beside this
+      # repository reproduces the layout Forge.props probes for, and is what a developer has locally.
+      - name: Checkout Forge core
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: gamesmiths-guild/forge
+          ref: main
+          path: forge
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+  smoke:
+    name: Godot boot
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: forge-godot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      - name: Checkout Forge core
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: gamesmiths-guild/forge
+          ref: main
+          path: forge
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: true
+
+      - name: Build
+        run: dotnet build
+
+      # .godot/ is gitignored, so CI always starts with no import cache. Everything below depends on this.
+      - name: Import assets
+        run: godot --headless --import
+
+      - name: Boot the project
+        run: bash .github/scripts/godot-boot.sh runtime godot --headless --quit-after 120
+
+      # Boots with the Forge plugin enabled, so it catches broken .tres, missing UIDs, a bad plugin.cfg, and any
+      # [Tool] script that throws on load - none of which the runtime boot or the test suite would notice.
+      - name: Boot the editor
+        run: bash .github/scripts/godot-boot.sh editor godot --headless --editor --quit-after 240
+
+      # Editor-context tests. gdUnit4 launches a Godot runtime process, where EditorInterface is null and
+      # EditorUndoRedoManager cannot be instantiated, so anything driving the docks needs a real editor session.
+      - name: Editor tests
+        id: editor-tests
+        run: godot --path . --editor --headless --forge-editor-tests
+
+      - name: Editor test report
+      # A fork PR gets a read-only token, so the reporter cannot create check runs there and would fail the job.
+        if: ${{ !cancelled() && steps.editor-tests.outcome != 'skipped' && github.event.pull_request.head.repo.fork != true }}
+        uses: dorny/test-reporter@v3.0.0
+        with:
+          name: Editor Test Reporter
+          # This repository is checked out into a subdirectory so Forge core can sit beside it, and the reporter runs
+          # git against its working directory. Without this it runs in the workspace root, which is not a repository.
+          # It chdirs before globbing, so path is relative to this, not to the workspace.
+          working-directory: forge-godot
+          path: "TestResults/editor-tests.xml"
+          reporter: java-junit
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: forge-godot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      - name: Checkout Forge core
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: gamesmiths-guild/forge
+          ref: main
+          path: forge
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: true
+
+      - name: Build
+        run: dotnet build
+
+      - name: Import assets
+        run: godot --headless --import
+
+      # gdUnit4 reads GODOT_BIN from the environment; setup-godot exports the executable as GODOT.
+      - name: Test
+        id: dotnet-test
+        run: |
+          export GODOT_BIN="$GODOT"
+          dotnet test "Forge Godot.csproj" \
+            --settings .runsettings.ci \
+            --no-build \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=test-results.trx"
+
+      - name: Test report
+      # Skipped on fork PRs for the same reason as the editor test report above.
+        if: ${{ !cancelled() && steps.dotnet-test.outcome != 'skipped' && github.event.pull_request.head.repo.fork != true }}
+        uses: dorny/test-reporter@v3.0.0
+        with:
+          name: Test Reporter
+          # See the editor test report step: the reporter chdirs here before running git and globbing.
+          working-directory: forge-godot
+          path: "TestResults/test-results.trx"
+          reporter: dotnet-trx
+
+  release-compat:
+    name: Builds against the released package
+    # main is what someone cloning this repository gets, and they have no sibling core checkout - only the released
+    # Gamesmiths.Forge package. develop is deliberately excluded: it tracks unreleased core APIs, so this would be
+    # red by design there and would only teach everyone to ignore it.
+    if: github.ref_name == 'main' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: forge-godot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      # Forge core is deliberately NOT checked out here, so Forge.props falls through to the released package.
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        run: dotnet build

@@ -424,3 +424,33 @@ dotnet_diagnostic.IDE0270.severity = suggestion
 
 # T0010: Internal Styling Rule T0010
 dotnet_diagnostic.T0010.severity = none
+
+##########################################
+# Tests
+##########################################
+
+[tests/**.cs]
+
+# CA1707: Identifiers should not contain underscores
+# Test names are snake_case sentences, matching the core Forge test suite.
+dotnet_diagnostic.CA1707.severity = none
+
+# CA1822: Mark members as static
+# gdUnit4 discovers instance methods; making them static is not an option.
+dotnet_diagnostic.CA1822.severity = none
+
+# CA1861: Prefer 'static readonly' fields over constant array arguments
+# Inline arrays are the readable form for test data.
+dotnet_diagnostic.CA1861.severity = none
+
+# S2699: Tests should include assertions
+# Reported for tests whose assertions run inside a shared helper.
+dotnet_diagnostic.S2699.severity = none
+
+# SA1402: File may only contain a single type
+# Test data classes live beside the suite that uses them.
+dotnet_diagnostic.SA1402.severity = none
+
+# IDE0130: Namespace does not match folder structure
+# Test seams are partials of plugin classes, so they keep the plugin's namespace while living under tests/.
+dotnet_diagnostic.IDE0130.severity = none
