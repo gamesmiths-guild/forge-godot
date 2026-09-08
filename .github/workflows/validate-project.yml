@@ -108,7 +108,11 @@ jobs:
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Editor Test Reporter
-          path: "forge-godot/TestResults/editor-tests.xml"
+          # This repository is checked out into a subdirectory so Forge core can sit beside it, and the reporter runs
+          # git against its working directory. Without this it runs in the workspace root, which is not a repository.
+          # It chdirs before globbing, so path is relative to this, not to the workspace.
+          working-directory: forge-godot
+          path: "TestResults/editor-tests.xml"
           reporter: java-junit
 
   test:
@@ -163,7 +167,9 @@ jobs:
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Test Reporter
-          path: "forge-godot/TestResults/test-results.trx"
+          # See the editor test report step: the reporter chdirs here before running git and globbing.
+          working-directory: forge-godot
+          path: "TestResults/test-results.trx"
           reporter: dotnet-trx
 
   release-compat:
