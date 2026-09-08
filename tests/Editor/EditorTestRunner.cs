@@ -61,19 +61,37 @@ internal static class EditorTestRunner
 			return;
 		}
 
-		List<EditorTestResult> results = [.. Discover().Select(test => Run(test, dock, undoRedo))];
-		int failed = results.Count(result => result.Failure is not null);
+		// Everything from here runs under a finally that quits. A headless editor that never quits does not fail the
+		// run, it hangs it, and CI would sit there until the runner's own timeout with nothing useful in the log.
+		int exitCode = 1;
 
-		foreach (EditorTestResult result in results.Where(result => result.Failure is not null))
+		try
 		{
-			GD.PrintErr($"FAIL {result.Name}: {result.Failure}");
+			List<EditorTestResult> results = [.. Discover().Select(test => Run(test, dock, undoRedo))];
+			int failed = results.Count(result => result.Failure is not null);
+
+			foreach (EditorTestResult result in results.Where(result => result.Failure is not null))
+			{
+				GD.PrintErr($"FAIL {result.Name}: {result.Failure}");
+			}
+
+			GD.Print($"--- {results.Count} tests, {failed} failed ---");
+			GD.Print(failed == 0 ? "RESULT: PASS" : "RESULT: FAIL");
+
+			WriteReport(results);
+			exitCode = failed == 0 ? 0 : 1;
 		}
-
-		GD.Print($"--- {results.Count} tests, {failed} failed ---");
-		GD.Print(failed == 0 ? "RESULT: PASS" : "RESULT: FAIL");
-
-		WriteReport(results);
-		Quit(failed == 0 ? 0 : 1);
+#pragma warning disable CA1031 // Discovery or reporting failing is a run failure, not a reason to hang the editor.
+		catch (Exception ex)
+#pragma warning restore CA1031
+		{
+			GD.PrintErr($"FATAL: the editor test run did not complete: {ex}");
+			GD.Print("RESULT: FAIL");
+		}
+		finally
+		{
+			Quit(exitCode);
+		}
 	}
 
 	/// <summary>

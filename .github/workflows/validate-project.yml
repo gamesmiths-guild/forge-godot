@@ -22,6 +22,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: forge-godot
@@ -55,6 +56,7 @@ jobs:
   smoke:
     name: Godot boot
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: forge-godot
@@ -101,11 +103,12 @@ jobs:
       # Editor-context tests. gdUnit4 launches a Godot runtime process, where EditorInterface is null and
       # EditorUndoRedoManager cannot be instantiated, so anything driving the docks needs a real editor session.
       - name: Editor tests
+        id: editor-tests
         run: godot --path . --editor --headless --forge-editor-tests
 
       - name: Editor test report
       # A fork PR gets a read-only token, so the reporter cannot create check runs there and would fail the job.
-        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
+        if: ${{ !cancelled() && steps.editor-tests.outcome != 'skipped' && github.event.pull_request.head.repo.fork != true }}
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Editor Test Reporter
@@ -119,6 +122,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: forge-godot
@@ -155,6 +159,7 @@ jobs:
 
       # gdUnit4 reads GODOT_BIN from the environment; setup-godot exports the executable as GODOT.
       - name: Test
+        id: dotnet-test
         run: |
           export GODOT_BIN="$GODOT"
           dotnet test "Forge Godot.csproj" \
@@ -165,7 +170,7 @@ jobs:
 
       - name: Test report
       # Skipped on fork PRs for the same reason as the editor test report above.
-        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
+        if: ${{ !cancelled() && steps.dotnet-test.outcome != 'skipped' && github.event.pull_request.head.repo.fork != true }}
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Test Reporter
@@ -181,6 +186,7 @@ jobs:
     # red by design there and would only teach everyone to ignore it.
     if: github.ref_name == 'main' || github.base_ref == 'main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: forge-godot
