@@ -1,5 +1,14 @@
 name: CI
 
+# This project builds against Forge core in one of two ways, and addons/forge/Forge.props picks between them by
+# probing for a sibling checkout:
+#
+#   sibling ../forge exists  ->  ProjectReference to core's own sources
+#   otherwise                ->  PackageReference Gamesmiths.Forge (the last released version)
+#
+# Those are different dependencies, so CI names which one it is testing rather than letting the probe decide:
+# every job below checks core out as a sibling, and a separate release-compatibility job deliberately does not.
+
 on:
   push:
     branches: ["main", "develop"]
@@ -13,10 +22,24 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: forge-godot
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      # develop tracks core's main, which is usually ahead of the released package. Checking core out beside this
+      # repository reproduces the layout Forge.props probes for, and is what a developer has locally.
+      - name: Checkout Forge core
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: gamesmiths-guild/forge
+          ref: main
+          path: forge
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5.2.0
@@ -32,10 +55,22 @@ jobs:
   smoke:
     name: Godot boot
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: forge-godot
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      - name: Checkout Forge core
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: gamesmiths-guild/forge
+          ref: main
+          path: forge
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5.2.0
@@ -73,16 +108,28 @@ jobs:
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Editor Test Reporter
-          path: "TestResults/editor-tests.xml"
+          path: "forge-godot/TestResults/editor-tests.xml"
           reporter: java-junit
 
   test:
     name: Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: forge-godot
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      - name: Checkout Forge core
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: gamesmiths-guild/forge
+          ref: main
+          path: forge
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5.2.0
@@ -101,20 +148,47 @@ jobs:
       - name: Import assets
         run: godot --headless --import
 
+      # gdUnit4 reads GODOT_BIN from the environment; setup-godot exports the executable as GODOT.
       - name: Test
-        env:
-          GODOT_BIN: ${{ env.GODOT }}
-        run: >
-          dotnet test "Forge Godot.csproj"
-          --settings .runsettings.ci
-          --no-build
-          --results-directory TestResults
-          --logger "trx;LogFileName=test-results.trx"
+        run: |
+          export GODOT_BIN="$GODOT"
+          dotnet test "Forge Godot.csproj" \
+            --settings .runsettings.ci \
+            --no-build \
+            --results-directory TestResults \
+            --logger "trx;LogFileName=test-results.trx"
 
       - name: Test report
         if: ${{ !cancelled() }}
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Test Reporter
-          path: "TestResults/test-results.trx"
+          path: "forge-godot/TestResults/test-results.trx"
           reporter: dotnet-trx
+
+  release-compat:
+    name: Builds against the released package
+    # main is what someone cloning this repository gets, and they have no sibling core checkout - only the released
+    # Gamesmiths.Forge package. develop is deliberately excluded: it tracks unreleased core APIs, so this would be
+    # red by design there and would only teach everyone to ignore it.
+    if: github.ref_name == 'main' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: forge-godot
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          path: forge-godot
+
+      # Forge core is deliberately NOT checked out here, so Forge.props falls through to the released package.
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5.2.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build
+        run: dotnet build
