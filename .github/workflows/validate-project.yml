@@ -104,7 +104,8 @@ jobs:
         run: godot --path . --editor --headless --forge-editor-tests
 
       - name: Editor test report
-        if: ${{ !cancelled() }}
+      # A fork PR gets a read-only token, so the reporter cannot create check runs there and would fail the job.
+        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Editor Test Reporter
@@ -163,7 +164,8 @@ jobs:
             --logger "trx;LogFileName=test-results.trx"
 
       - name: Test report
-        if: ${{ !cancelled() }}
+      # Skipped on fork PRs for the same reason as the editor test report above.
+        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
         uses: dorny/test-reporter@v3.0.0
         with:
           name: Test Reporter

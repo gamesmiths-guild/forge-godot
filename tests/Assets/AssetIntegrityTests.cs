@@ -44,6 +44,19 @@ public class AssetIntegrityTests
 		PackedScene scene = ResourceLoader.Load<PackedScene>(scenePath);
 
 		scene.Should().NotBeNull($"'{scenePath}' has to load.");
-		scene.CanInstantiate().Should().BeTrue($"'{scenePath}' has to be instantiable.");
+
+		// CanInstantiate only reports that the scene has state; it never builds the tree, so it cannot see a script
+		// that throws while constructing. Actually instantiating is the point of this test.
+		Node? instance = null;
+
+		try
+		{
+			instance = scene.Instantiate();
+			instance.Should().NotBeNull($"'{scenePath}' has to instantiate.");
+		}
+		finally
+		{
+			instance?.Free();
+		}
 	}
 }

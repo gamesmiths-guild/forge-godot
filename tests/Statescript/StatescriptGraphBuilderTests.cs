@@ -3,6 +3,7 @@
 using System;
 using System.Linq;
 using FluentAssertions;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -132,7 +133,11 @@ public class StatescriptGraphBuilderTests
 
 		ForgeGraph graph = StatescriptGraphBuilder.Build(resource);
 
-		graph.VariableDefinitions.Should().NotBeNull();
+		// Asserting on the definition itself, not on VariableDefinitions being non-null: Graph creates that container
+		// itself, so a null check passes even when RegisterGraphVariables never runs.
+		graph.VariableDefinitions.VariableDefinitions.Should().ContainSingle(
+			definition => definition.Name == new StringKey("Ammo") && definition.ValueType == typeof(int),
+			"the authored variable has to reach the runtime graph with its declared type.");
 	}
 
 	private static StatescriptGraph NewGraph()

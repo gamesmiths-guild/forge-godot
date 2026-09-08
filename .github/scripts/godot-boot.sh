@@ -12,7 +12,9 @@ set -uo pipefail
 label="$1"
 shift
 
-log="godot-${label}.log"
+# Kept under TestResults/, which is gitignored, so a local run never leaves an untracked log at the repository root.
+mkdir -p TestResults
+log="TestResults/godot-${label}.log"
 
 "$@" 2>&1 | tee "${log}"
 status="${PIPESTATUS[0]}"
