@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using ForgeGodot.Addons.Forge.Resources.Components;
 using Gamesmiths.Forge.Effects.Components;
 using Godot;
 
