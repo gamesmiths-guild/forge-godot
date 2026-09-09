@@ -21,6 +21,7 @@ public partial class Character3D : CharacterBody3D
 
 	private readonly SkillSlot[] _skillSlots = new SkillSlot[SkillCount];
 	private TagContainer? _entityTags;
+	private Tag _movementBlockTag;
 	private Vector3 _previousVelocity = Vector3.Forward;
 
 	[Export]
@@ -56,6 +57,7 @@ public partial class Character3D : CharacterBody3D
 
 		ForgeEntity forgeEntity = GetNode<ForgeEntity>("%Forge Entity");
 		_entityTags = forgeEntity.Tags.AllTags;
+		_movementBlockTag = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "movement.block");
 
 		InitializeSkillSlots(forgeEntity);
 	}
@@ -73,7 +75,7 @@ public partial class Character3D : CharacterBody3D
 	{
 		base._PhysicsProcess(delta);
 
-		if (!_entityTags!.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "movement.block")))
+		if (!_entityTags!.HasTag(_movementBlockTag))
 		{
 			Vector2 inputDirection = Input.GetVector("move_left", "move_right", "move_up", "move_down");
 			Vector3 direction = (Transform.Basis * new Vector3(inputDirection.X, 0, inputDirection.Y)).Normalized();

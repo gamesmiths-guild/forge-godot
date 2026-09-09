@@ -15,6 +15,8 @@ public partial class SimpleEnemy3D : CharacterBody3D
 
 	private TagContainer? _entityTags;
 
+	private Tag _movementBlockTag;
+
 	private Node3D? _player;
 
 	private ForgeEntity? _forgePlayer;
@@ -46,6 +48,7 @@ public partial class SimpleEnemy3D : CharacterBody3D
 		};
 
 		_entityTags = forgeEntity.Tags.AllTags;
+		_movementBlockTag = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "movement.block");
 	}
 
 	public override void _Process(double delta)
@@ -67,7 +70,7 @@ public partial class SimpleEnemy3D : CharacterBody3D
 	{
 		base._PhysicsProcess(delta);
 
-		if (_entityTags!.HasTag(Tag.RequestTag(ForgeManagers.Instance.TagsManager, "movement.block")))
+		if (_entityTags!.HasTag(_movementBlockTag))
 		{
 			return;
 		}
