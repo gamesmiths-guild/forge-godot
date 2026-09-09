@@ -15,10 +15,14 @@ public partial class Main : Node
 
 	public void ChangeScene(string scenePath)
 	{
+		ChangeScene(GD.Load<PackedScene>(scenePath));
+	}
+
+	public void ChangeScene(PackedScene scene)
+	{
 		_currentScene?.QueueFree();
 
-		PackedScene packedScene = GD.Load<PackedScene>(scenePath);
-		_currentScene = packedScene.Instantiate();
+		_currentScene = scene.Instantiate();
 		AddChild(_currentScene);
 	}
 }
