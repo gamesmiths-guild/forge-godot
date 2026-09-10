@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://ipt87tpu75xh"]
+
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_tags"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="2_modifier_tags"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_int"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="4_effect"]
+
+[sub_resource type="Resource" id="Resource_fallen_tags"]
+script = ExtResource("1_tags")
+ContainerTags = Array[String](["state.fallen"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_modifier_tags"]
+script = ExtResource("2_modifier_tags")
+TagsToAdd = SubResource("Resource_fallen_tags")
+metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_initial_stack"]
+script = ExtResource("3_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_stack_limit"]
+script = ExtResource("3_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("4_effect")
+Name = "Fallen"
+Modifiers = []
+Components = [SubResource("Resource_modifier_tags")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_stack_limit")
+InitialStack = SubResource("Resource_initial_stack")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

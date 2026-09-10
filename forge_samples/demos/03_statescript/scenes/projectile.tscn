@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://1wpake6l3k5q"]
+
+[ext_resource type="Script" uid="uid://bk24da1sfjabw" path="res://addons/forge/nodes/ForgeProjectile3D.cs" id="1_projectile"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="3_effect"]
+[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://forge_samples/shared/effects/damage.tres" id="4_damage"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="5_entity"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="6_tags"]
+
+[sub_resource type="Curve" id="Curve_falloff"]
+_data = [Vector2(0, 1), 0.0, -1.8, 0, 1, Vector2(0.5, 0.1), -1.8, 0.0, 1, 1, Vector2(1, 0.1), 0.0, 0.0, 1, 0]
+point_count = 3
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_body"]
+radius = 0.3
+
+[sub_resource type="SphereMesh" id="SphereMesh_body"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i8vn8"]
+albedo_color = Color(0.9019608, 0.7647059, 0, 1)
+roughness = 0.6
+
+[sub_resource type="Resource" id="Resource_tags"]
+script = ExtResource("6_tags")
+ContainerTags = Array[String](["trait.flammable"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[node name="Projectile" type="Area3D" unique_id=1782987559]
+collision_layer = 8
+collision_mask = 4
+script = ExtResource("1_projectile")
+MaxRange = 20.0
+DistanceFalloffCurve = SubResource("Curve_falloff")
+metadata/_custom_type_script = "uid://bk24da1sfjabw"
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=2122902378]
+shape = SubResource("SphereShape3D_body")
+
+[node name="Body" type="MeshInstance3D" parent="." unique_id=917890314]
+mesh = SubResource("SphereMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_i8vn8")
+
+[node name="Damage" type="Node" parent="." unique_id=424594614]
+script = ExtResource("3_effect")
+EffectData = ExtResource("4_damage")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Forge Entity" type="Node" parent="." unique_id=1034631407]
+script = ExtResource("5_entity")
+BaseTags = SubResource("Resource_tags")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"

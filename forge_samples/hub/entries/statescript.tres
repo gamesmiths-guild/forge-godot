@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DemoEntry" format=3]
+
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="PackedScene" uid="uid://dtct8is60aoex" path="res://forge_samples/demos/03_statescript/scenes/sample_level.tscn" id="2_level"]
+
+[resource]
+script = ExtResource("1_entry")
+Title = "Statescript"
+Tagline = "The Real-Time 3D demo's abilities and enemy, authored as Statescript graphs instead of C#."
+Blurb = "The same four player abilities, the same enemy and the same HUD as the Real-Time 3D demo, rebuilt so that every ability behavior is a Statescript graph. Compare the two demos side by side: where that one has an IAbilityBehavior class, this one has a graph resource.
+
+Movement is WASD or the arrow keys. Walk into the bonfire to catch fire, into the lake to put it out, onto the regen pad to heal. Press E inside the brazier's ring to start enemy waves, and E again to stop them. Falling off the bridge or the rim respawns you."
+Highlights = Array[String](["Projectile (Mouse 1) — a ForgeProjectile3D spawned by a graph; shoot it through the bonfire and it spreads fire", "Dash (Space) — a Move Body 3D sweep along the aim held for the roll animation, with a collision override that restores itself", "Shield (3) — a toggle whose cost, cue, damage listener and off switch are all graph nodes", "Thorns (passive) — an event-triggered graph that reflects melee hits to everything in range and shakes the camera", "Enemy — navmesh chase and attack, both graphs; the attack cooldown is what makes it stop", "Brazier — a condition monitor on a bool toggled by E that spawns enemies while lit", "Respawn — a passive graph that puts a fallen player back where it started", "Bonfire, lake, regen pad — effect areas with no graph at all", "Speed is an attribute from a definition resource, not a C# class"])
+Scene = ExtResource("2_level")
+Accent = Color(1, 0.541176, 0.239216, 1)

@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://dr8sxhg544h62"]
+
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/flame.tres" id="2_flame"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="3_area"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_effect"]
+[ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://forge_samples/shared/effects/fire.tres" id="5_fire"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_log"]
+size = Vector3(0.25, 0.25, 1.6)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_flame"]
+top_radius = 0.0
+height = 1.4
+radial_segments = 8
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_fire"]
+height = 1.5
+
+[node name="Bonfire" type="Node3D" unique_id=194513711]
+
+[node name="Logs" type="Node3D" parent="." unique_id=1932073776]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.28828073, 0)
+
+[node name="Log1" type="MeshInstance3D" parent="Logs" unique_id=1577200507]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0)
+mesh = SubResource("BoxMesh_log")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Log2" type="MeshInstance3D" parent="Logs" unique_id=4922253]
+transform = Transform3D(0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, 0.7071, 0, 0.42, 0)
+mesh = SubResource("BoxMesh_log")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Log3" type="MeshInstance3D" parent="Logs" unique_id=1612303141]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0.42, 0)
+mesh = SubResource("BoxMesh_log")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Log4" type="MeshInstance3D" parent="Logs" unique_id=1147820509]
+transform = Transform3D(-0.7071, 0, -0.7071, 0, 1, 0, 0.7071, 0, -0.7071, 0, 0.42, 0)
+mesh = SubResource("BoxMesh_log")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Flame" type="MeshInstance3D" parent="." unique_id=2088545635]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9617193, 0)
+mesh = SubResource("CylinderMesh_flame")
+surface_material_override/0 = ExtResource("2_flame")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=558533382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1117193, 0)
+light_color = Color(1, 0.552941, 0.239216, 1)
+light_energy = 6.0
+shadow_enabled = true
+omni_range = 16.0
+
+[node name="Area" type="Area3D" parent="." unique_id=803592248]
+collision_layer = 0
+collision_mask = 14
+script = ExtResource("3_area")
+metadata/_custom_type_script = "uid://cvhkilfepqpyi"
+
+[node name="Collision" type="CollisionShape3D" parent="Area" unique_id=199167717]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CylinderShape3D_fire")
+
+[node name="Fire" type="Node" parent="Area" unique_id=371051664]
+script = ExtResource("4_effect")
+EffectData = ExtResource("5_fire")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Sign" type="Label3D" parent="." unique_id=307576508]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+billboard = 1
+modulate = Color(1, 0.819608, 0.4, 1)
+text = "Bonfire — fire.tres
+burning things spread it, projectiles included"
+font_size = 48
+outline_size = 16
