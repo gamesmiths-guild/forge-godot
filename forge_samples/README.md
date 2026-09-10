@@ -19,15 +19,20 @@ Without this step the sample scenes will fail to resolve their tags at runtime.
 
 ## Running the samples
 
-Open `forge_samples/Main.tscn` and run it. The hub scene links to the 2D and 3D sample levels.
+Open `forge_samples/Main.tscn` and run it. The hub scene lists every demo and loads the one you pick.
 
 ## Layout
 
 | Path | Contents |
 | --- | --- |
-| `2d/` | 2D character, effect areas, floating text and particle cue handlers. |
-| `3d/` | 3D character, enemies, and the player ability set (dash, projectile, reflect, shield). |
-| `common/` | Attribute sets, shared effect resources, custom executions and calculators. |
+| `hub/` | The demo hub, plus one `DemoEntry` resource per demo under `entries/`. |
+| `demos/01_realtime_3d/` | 3D character, enemies, and the player ability set (dash, projectile, reflect, shield). |
+| `demos/02_turnbased_2d/` | 2D character, effect areas, floating text and particle cue handlers. |
+| `shared/` | Attribute sets, shared effect resources, custom executions and calculators. |
+
+## Adding a demo
+
+The hub is data-driven. Add a `DemoEntry` resource under `hub/entries/` — title, tagline, blurb, highlights, accent colour and the scene to load — then append it to the `Demos` array on the `Hub` node. No code changes.
 
 ## A note on `[GlobalClass]`
 

@@ -162,7 +162,7 @@ jobs:
         id: dotnet-test
         run: |
           export GODOT_BIN="$GODOT"
-          dotnet test "Forge Godot.csproj" \
+          dotnet test "Gamesmiths.Forge.Godot.csproj" \
             --settings .runsettings.ci \
             --no-build \
             --results-directory TestResults \

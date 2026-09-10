@@ -1,0 +1,99 @@
+[gd_scene load_steps=4 format=3 uid="uid://c555ix6yk55jj"]
+
+[ext_resource type="Script" uid="uid://cqoo1l13mvgdd" path="res://forge_samples/hub/Hub.cs" id="1_hub"]
+[ext_resource type="Resource" path="res://forge_samples/hub/entries/realtime_3d.tres" id="2_realtime_3d"]
+[ext_resource type="Resource" path="res://forge_samples/hub/entries/turnbased_2d.tres" id="3_turnbased_2d"]
+
+[node name="Hub" type="Control" node_paths=PackedStringArray("CardList", "TitleLabel", "TaglineLabel", "BlurbLabel", "HighlightsLabel", "PlayButton")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hub")
+Demos = Array[Object]([ExtResource("2_realtime_3d"), ExtResource("3_turnbased_2d")])
+CardList = NodePath("MarginContainer/VBoxContainer/Body/CardList")
+TitleLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/TitleLabel")
+TaglineLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/TaglineLabel")
+BlurbLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/DetailScroll/DetailBody/BlurbLabel")
+HighlightsLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/DetailScroll/DetailBody/HighlightsLabel")
+PlayButton = NodePath("MarginContainer/VBoxContainer/Body/Detail/PlayButton")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.854902, 0.4, 1)
+theme_override_font_sizes/font_size = 24
+text = "Forge Gameplay System — Samples"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="CardList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Body"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Detail" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/Body/Detail"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+
+[node name="TaglineLabel" type="Label" parent="MarginContainer/VBoxContainer/Body/Detail"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72549, 0.752941, 0.792157, 1)
+autowrap_mode = 3
+
+[node name="DetailScroll" type="ScrollContainer" parent="MarginContainer/VBoxContainer/Body/Detail"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DetailBody" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Body/Detail/DetailScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="BlurbLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/Body/Detail/DetailScroll/DetailBody"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="HighlightsLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/Body/Detail/DetailScroll/DetailBody"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="PlayButton" type="Button" parent="MarginContainer/VBoxContainer/Body/Detail"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Play"

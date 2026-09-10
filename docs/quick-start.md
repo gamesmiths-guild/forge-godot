@@ -74,7 +74,7 @@ By default, validation is **enabled** in the Godot editor and during development
 1. Add a ForgeEntity node as a child of your character.
 2. Add a ForgeAttributeSet node as a child of the ForgeEntity.
 
-Alternatively, you can implement the IForgeEntity interface directly. See the [CustomForgeEntity.cs](https://github.com/gamesmiths-guild/forge-godot/blob/main/forge_samples/2d/scripts/CustomForgeEntity.cs) in the 2D sample scenes for an example. This approach requires more work but gives you more control over your entity.
+Alternatively, you can implement the IForgeEntity interface directly. See the [CustomForgeEntity.cs](https://github.com/gamesmiths-guild/forge-godot/blob/main/forge_samples/demos/02_turnbased_2d/scripts/CustomForgeEntity.cs) in the 2D sample scenes for an example. This approach requires more work but gives you more control over your entity.
 
 ### Step 3: Define an Attribute Set
 

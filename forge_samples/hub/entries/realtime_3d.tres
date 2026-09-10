@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DemoEntry" format=3]
+
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="PackedScene" uid="uid://ca1f6valfuo1n" path="res://forge_samples/demos/01_realtime_3d/scenes/abilities_level.tscn" id="2_level"]
+
+[resource]
+script = ExtResource("1_entry")
+Title = "Real-Time 3D"
+Tagline = "A player, two enemies, four abilities, and effect areas that interact."
+Blurb = "A real-time 3D scene with a player and two basic enemies that approach and attack. Abilities here are written in C# as IAbilityBehavior implementations.
+
+Movement is WASD or the arrow keys. The player regenerates +1 Health/s and +1 Mana/s."
+Highlights = Array[String](["Fire Area — 10 elemental damage over time; spreads from a burning source", "Water Area — removes and prevents Fire", "Instant Damage Area — 100 instant physical damage", "Regen Area — instant heal of 50, plus up to 3 heal-over-time stacks at 10/s", "Healing ShapeCast — applied while inside, removed on exit, and a Water RayCast", "Projectile (Mouse 1) — distance-scaled damage that can apply Fire", "Dash (Space) — dashes toward the mouse with temporary physical immunity", "Shield (3) — a toggle reducing damage by 80%; 10 mana to raise it and 10 more per hit taken", "Reflect (passive) — physical damage taken triggers an area reflection"])
+Scene = ExtResource("2_level")
+Accent = Color(0.435294, 0.658824, 0.862745, 1)
