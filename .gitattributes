@@ -33,8 +33,8 @@
 #                        their tags on every install and update. The sample tags ship separately, in
 #                        forge_samples/forge_samples_tags.tres, to be added as a source of its own.
 #   Forge.Dev.props      Analyzers and style rules for developing this repository.
-#   Forge Godot.csproj   This repository's own Godot project files - they would overwrite the user's.
-#   Forge Godot.sln
+#   Gamesmiths.Forge.Godot.csproj / .sln
+#                        This repository's own Godot project files - they would overwrite the user's.
 #   project.godot
 #   export_presets.cfg
 #   icon.svg / icon.png
