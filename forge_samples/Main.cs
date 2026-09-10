@@ -23,6 +23,12 @@ public partial class Main : Node
 		_currentScene?.QueueFree();
 
 		_currentScene = scene.Instantiate();
+
+		if (_currentScene is Hub hub)
+		{
+			hub.DemoSelected += ChangeScene;
+		}
+
 		AddChild(_currentScene);
 	}
 }

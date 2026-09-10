@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="DemoEntry" format=3]
 
-[ext_resource type="Script" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
 [ext_resource type="PackedScene" uid="uid://ca1f6valfuo1n" path="res://forge_samples/demos/01_realtime_3d/scenes/abilities_level.tscn" id="2_level"]
 
 [resource]

@@ -9,11 +9,18 @@ namespace Gamesmiths.Forge.Example;
 
 public partial class Hub : Control
 {
-	private static readonly Color UnselectedCardColor = new(0.78f, 0.81f, 0.85f);
+	private static readonly Color _unselectedCardColor = new(0.78f, 0.81f, 0.85f);
+
+	private static readonly StringName _fontColor = "font_color";
+
+	private readonly List<DemoEntry> _entries = [];
 
 	private readonly List<Button> _cards = [];
 
 	private int _selectedIndex = -1;
+
+	[Signal]
+	public delegate void DemoSelectedEventHandler(PackedScene scene);
 
 	[Export]
 	public Array<DemoEntry> Demos { get; set; } = [];
@@ -42,37 +49,49 @@ public partial class Hub : Control
 
 		PlayButton.Pressed += OnPlayPressed;
 
-		for (int i = 0; i < Demos.Count; i++)
+		// An exported array can hold empty slots while a demo is being added, so a missing entry is skipped
+		// rather than left to fail on the first property read.
+		foreach (DemoEntry demo in Demos)
 		{
-			int index = i;
+			if (demo is null)
+			{
+				continue;
+			}
+
+			int index = _entries.Count;
 
 			var card = new Button
 			{
-				Text = Demos[i].Title,
+				Text = demo.Title,
 				Alignment = HorizontalAlignment.Left,
 				CustomMinimumSize = new Vector2(0, 36),
 			};
 
 			card.Pressed += () => Select(index);
 
-			CardList.AddChild(card);
+			_entries.Add(demo);
 			_cards.Add(card);
+			CardList.AddChild(card);
 		}
 
-		if (Demos.Count > 0)
+		if (_entries.Count == 0)
 		{
-			Select(0);
+			PlayButton.Disabled = true;
+			return;
 		}
+
+		Select(0);
+		_cards[0].GrabFocus();
 	}
 
 	private void Select(int index)
 	{
 		_selectedIndex = index;
 
-		DemoEntry demo = Demos[index];
+		DemoEntry demo = _entries[index];
 
 		TitleLabel.Text = demo.Title;
-		TitleLabel.AddThemeColorOverride("font_color", demo.Accent);
+		TitleLabel.AddThemeColorOverride(_fontColor, demo.Accent);
 		TaglineLabel.Text = demo.Tagline;
 		BlurbLabel.Text = demo.Blurb;
 
@@ -81,14 +100,16 @@ public partial class Hub : Control
 
 		foreach (string highlight in demo.Highlights)
 		{
-			highlights.Append(bullet).Append(highlight).Append('\n');
+			// Highlights are plain data rendered into a BBCode list, so an opening bracket is escaped instead of
+			// being parsed as a tag and swallowing the rest of the line. Blurb stays BBCode on purpose.
+			highlights.Append(bullet).Append(highlight.Replace("[", "[lb]")).Append('\n');
 		}
 
 		HighlightsLabel.Text = highlights.ToString();
 
 		for (int i = 0; i < _cards.Count; i++)
 		{
-			_cards[i].AddThemeColorOverride("font_color", i == index ? demo.Accent : UnselectedCardColor);
+			_cards[i].AddThemeColorOverride(_fontColor, i == index ? demo.Accent : _unselectedCardColor);
 		}
 
 		PlayButton.Disabled = demo.Scene is null;
@@ -96,11 +117,11 @@ public partial class Hub : Control
 
 	private void OnPlayPressed()
 	{
-		if (_selectedIndex < 0 || Demos[_selectedIndex].Scene is null)
+		if (_selectedIndex < 0 || _entries[_selectedIndex].Scene is null)
 		{
 			return;
 		}
 
-		GetTree().Root.GetNode<Main>("Main").ChangeScene(Demos[_selectedIndex].Scene!);
+		EmitSignal(SignalName.DemoSelected, _entries[_selectedIndex].Scene!);
 	}
 }
