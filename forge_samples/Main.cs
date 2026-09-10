@@ -6,11 +6,18 @@ namespace Gamesmiths.Forge.Example;
 
 public partial class Main : Node
 {
+	private const string HubScenePath = "uid://c555ix6yk55jj";
+
 	private Node? _currentScene;
 
 	public override void _Ready()
 	{
-		ChangeScene("uid://c555ix6yk55jj");
+		ReturnToHub();
+	}
+
+	public void ReturnToHub()
+	{
+		ChangeScene(HubScenePath);
 	}
 
 	public void ChangeScene(string scenePath)

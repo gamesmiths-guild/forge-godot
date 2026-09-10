@@ -6,11 +6,11 @@ namespace Gamesmiths.Forge.Example;
 
 public partial class QuitScene : Node
 {
-	public override void _Input(InputEvent @event)
+	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is InputEventKey eventKey && eventKey.Pressed && eventKey.Keycode == Key.Escape)
+		if (@event.IsActionPressed("ui_cancel"))
 		{
-			GetTree().Root.GetNode<Main>("Main").ChangeScene("uid://c555ix6yk55jj");
+			GetTree().Root.GetNodeOrNull<Main>("Main")?.ReturnToHub();
 		}
 	}
 }
