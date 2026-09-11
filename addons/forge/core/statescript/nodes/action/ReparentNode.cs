@@ -87,6 +87,13 @@ public sealed class ReparentNode(bool keepGlobalTransform = true) : ActionNode
 		}
 
 		node.Reparent(newParent, _keepGlobalTransform);
+
+		// Keeping the global transform moves nothing on screen; dropping it is a teleport, and a teleport under
+		// physics interpolation is drawn as a streak across the next tick unless the history is discarded.
+		if (!_keepGlobalTransform)
+		{
+			node.ResetPhysicsInterpolation();
+		}
 	}
 
 	private bool TryResolveNode(

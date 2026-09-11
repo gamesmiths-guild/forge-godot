@@ -14,6 +14,8 @@ They cover the two things a graph does to the scene tree itself: putting scenes 
 
 They are a 2D/3D pair even though a scene carries its own dimension, because the *transform* the graph hands them does not: Position and Rotation are a `Vector3` and a `Quaternion` in 3D, and a `Vector2` and a single angle in 2D — a `Rotation (deg)` row, [typed in degrees](../README.md#angles-radians-flow-degrees-are-typed).
 
+The instance is placed before it enters the tree, and its physics interpolation is reset once it has — so under `physics/common/physics_interpolation` a spawn appears where the graph put it instead of sliding there from the scene's authored transform over its first tick.
+
 ### Settings
 
 | Setting | Values | Meaning |
@@ -64,6 +66,8 @@ Moves a node under a new parent — the stick-to-target, pick-up and drop primit
 | 1 | New Parent | `Node` | Required. The node it moves under. |
 
 Neither row falls back to the ability's owner, unlike the [interop nodes](interop-nodes.md): "reparent me" and "reparent onto me" are different questions and an empty row reads as neither. The three reparents Godot rejects outright — a node with no parent, a node moved onto itself, and a node moved under its own descendant — are checked here first and reported as authoring warnings instead of engine errors.
+
+With **Keep World Transform** off the node teleports to its new parent-relative place, so its physics interpolation is reset afterwards; with it on nothing moves on screen and nothing is reset.
 
 ## Godot groups
 

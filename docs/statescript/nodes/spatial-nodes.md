@@ -28,6 +28,8 @@ The instant writers additionally share a **Space** setting (`Global` or `Local`)
 
 `SetRotationToward` faces where the target *was* at the instant it ran. For a facing that keeps following, use [Look At](#look-at).
 
+Every instant writer resets the node's physics interpolation after writing, so a project running with `physics/common/physics_interpolation` on sees a blink land in one frame rather than smear across the next physics tick. The State movers below leave interpolation alone: they move every tick, which is exactly what it is for.
+
 ## Motion over time (State)
 
 All four run on the **fixed step**, not the frame — see [the two update rails](../README.md#in-godot).

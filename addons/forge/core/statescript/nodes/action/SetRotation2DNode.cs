@@ -51,9 +51,12 @@ public sealed class SetRotation2DNode(TransformSpace space = TransformSpace.Glob
 		if (_space == TransformSpace.Local)
 		{
 			spatialNode.Rotation = (float)rotation;
-			return;
+		}
+		else
+		{
+			spatialNode.GlobalRotation = (float)rotation;
 		}
 
-		spatialNode.GlobalRotation = (float)rotation;
+		spatialNode.ResetPhysicsInterpolation();
 	}
 }

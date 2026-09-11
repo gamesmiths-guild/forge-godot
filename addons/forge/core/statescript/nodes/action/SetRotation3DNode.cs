@@ -49,13 +49,16 @@ public sealed class SetRotation3DNode(TransformSpace space = TransformSpace.Glob
 		if (_space == TransformSpace.Local)
 		{
 			spatialNode.Quaternion = target;
-			return;
+		}
+		else
+		{
+			// Scale is carried separately so a scaled node keeps its scale, which assigning a pure rotation basis
+			// would drop. Applied in the new rotation's own axes: scaling in parent axes instead would shear a
+			// non-uniformly scaled node as soon as the rotation stopped being axis-aligned.
+			Vector3 scale = spatialNode.GlobalBasis.Scale;
+			spatialNode.GlobalBasis = new Basis(target).ScaledLocal(scale);
 		}
 
-		// Scale is carried separately so a scaled node keeps its scale, which assigning a pure rotation basis would
-		// drop. Applied in the new rotation's own axes: scaling in parent axes instead would shear a non-uniformly
-		// scaled node as soon as the rotation stopped being axis-aligned.
-		Vector3 scale = spatialNode.GlobalBasis.Scale;
-		spatialNode.GlobalBasis = new Basis(target).ScaledLocal(scale);
+		spatialNode.ResetPhysicsInterpolation();
 	}
 }
