@@ -117,10 +117,6 @@ internal static class SceneInstantiationUtilities
 
 		parent.AddChild(instance);
 
-		// Placement is the other teleport: under physics interpolation the instance would otherwise be drawn sliding
-		// from the scene's authored transform to the one the graph asked for over its first tick.
-		instance.ResetPhysicsInterpolation();
-
 		if (passOwnership && instance is IInstantiationReceiver receiver)
 		{
 			ResolveOwnership(graphContext, parentEntity, out IForgeEntity? owner, out IForgeEntity? source);

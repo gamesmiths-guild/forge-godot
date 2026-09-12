@@ -14,8 +14,6 @@ They cover the two things a graph does to the scene tree itself: putting scenes 
 
 They are a 2D/3D pair even though a scene carries its own dimension, because the *transform* the graph hands them does not: Position and Rotation are a `Vector3` and a `Quaternion` in 3D, and a `Vector2` and a single angle in 2D — a `Rotation (deg)` row, [typed in degrees](../README.md#angles-radians-flow-degrees-are-typed).
 
-The instance is placed before it enters the tree, and its physics interpolation is reset once it has — so under `physics/common/physics_interpolation` a spawn appears where the graph put it instead of sliding there from the scene's authored transform over its first tick.
-
 ### Settings
 
 | Setting | Values | Meaning |
@@ -42,7 +40,7 @@ The instance is placed before it enters the tree, and its physics interpolation 
 | Output | 1 | Instance Entity | `IForgeEntity` | The entity on the instance, when it has one. |
 | Port | 4 | OnLifetimeEnd | Event | **State nodes only.** Emits when the lifetime elapses, as opposed to an abort. |
 
-**Placement happens before parenting.** The transform is applied as a *local* one through the parent's transform, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` — `ForgeProjectile3D` recording where it launched from — has to see the position it was actually spawned at.
+**Placement happens before parenting.** The transform is applied as a *local* one through the parent's transform, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` — `ForgeProjectile3D` recording where it launched from — has to see the position it was actually spawned at. The same ordering is what lets Godot handle physics interpolation unaided: entering the tree resets the instance at the transform it already has, and a second, deferred reset at the end of its first frame or tick covers anything `OnInstantiated` or `_Ready` moves afterwards. These nodes add no reset of their own, because an explicit one would cancel that deferred half.
 
 ## Queue Free
 
@@ -67,7 +65,7 @@ Moves a node under a new parent — the stick-to-target, pick-up and drop primit
 
 Neither row falls back to the ability's owner, unlike the [interop nodes](interop-nodes.md): "reparent me" and "reparent onto me" are different questions and an empty row reads as neither. The three reparents Godot rejects outright — a node with no parent, a node moved onto itself, and a node moved under its own descendant — are checked here first and reported as authoring warnings instead of engine errors.
 
-With **Keep World Transform** off the node teleports to its new parent-relative place, so its physics interpolation is reset afterwards; with it on nothing moves on screen and nothing is reset.
+Reparenting takes the node out of the tree and back in, and re-entry resets its physics interpolation, so a node that jumps because **Keep World Transform** is off lands in one frame without this node doing anything about it.
 
 ## Godot groups
 

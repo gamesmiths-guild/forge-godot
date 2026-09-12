@@ -30,6 +30,8 @@ The instant writers additionally share a **Space** setting (`Global` or `Local`)
 
 Every instant writer resets the node's physics interpolation after writing, so a project running with `physics/common/physics_interpolation` on sees a blink land in one frame rather than smear across the next physics tick. The State movers below leave interpolation alone: they move every tick, which is exactly what it is for.
 
+The flip side: an instant writer run every tick — inside a `Loop Timer`, say — resets on every tick, so its node is drawn with no interpolation at all and steps at the physics rate on a faster display. Moving something over time is what [Move To](#move-to) and [Move Body](#move-body) are for.
+
 ## Motion over time (State)
 
 All four run on the **fixed step**, not the frame — see [the two update rails](../README.md#in-godot).
