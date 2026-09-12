@@ -52,9 +52,12 @@ public sealed class SetPosition3DNode(TransformSpace space = TransformSpace.Glob
 		if (_space == TransformSpace.Local)
 		{
 			spatialNode.Position = target;
-			return;
+		}
+		else
+		{
+			spatialNode.GlobalPosition = target;
 		}
 
-		spatialNode.GlobalPosition = target;
+		spatialNode.ResetPhysicsInterpolation();
 	}
 }

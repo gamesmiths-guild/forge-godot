@@ -53,5 +53,6 @@ public sealed class SetRotationToward2DNode(string nodePath = "") : SpatialActio
 		}
 
 		spatialNode.LookAt(point);
+		spatialNode.ResetPhysicsInterpolation();
 	}
 }

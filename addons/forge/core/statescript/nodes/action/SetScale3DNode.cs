@@ -40,6 +40,7 @@ public sealed class SetScale3DNode(string nodePath = "") : SpatialActionNodeBase
 		if (graphContext.TryResolve(InputProperties[ScaleInput].BoundName, out NumericsVector3 scale))
 		{
 			spatialNode.Scale = new Vector3(scale.X, scale.Y, scale.Z);
+			spatialNode.ResetPhysicsInterpolation();
 		}
 	}
 }

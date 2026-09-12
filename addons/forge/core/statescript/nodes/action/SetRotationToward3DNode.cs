@@ -69,5 +69,6 @@ public sealed class SetRotationToward3DNode(bool flatten = true, string nodePath
 		}
 
 		spatialNode.LookAt(point, Vector3.Up);
+		spatialNode.ResetPhysicsInterpolation();
 	}
 }

@@ -40,7 +40,7 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 | Output | 1 | Instance Entity | `IForgeEntity` | The entity on the instance, when it has one. |
 | Port | 4 | OnLifetimeEnd | Event | **State nodes only.** Emits when the lifetime elapses, as opposed to an abort. |
 
-**Placement happens before parenting.** The transform is applied as a *local* one through the parent's transform, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` — `ForgeProjectile3D` recording where it launched from — has to see the position it was actually spawned at.
+**Placement happens before parenting.** The transform is applied as a *local* one through the parent's transform, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` — `ForgeProjectile3D` recording where it launched from — has to see the position it was actually spawned at. The same ordering is what lets Godot handle physics interpolation unaided: entering the tree resets the instance at the transform it already has, and a second, deferred reset at the end of its first frame or tick covers anything `OnInstantiated` or `_Ready` moves afterwards. These nodes add no reset of their own, because an explicit one would cancel that deferred half.
 
 ## Queue Free
 
@@ -64,6 +64,8 @@ Moves a node under a new parent — the stick-to-target, pick-up and drop primit
 | 1 | New Parent | `Node` | Required. The node it moves under. |
 
 Neither row falls back to the ability's owner, unlike the [interop nodes](interop-nodes.md): "reparent me" and "reparent onto me" are different questions and an empty row reads as neither. The three reparents Godot rejects outright — a node with no parent, a node moved onto itself, and a node moved under its own descendant — are checked here first and reported as authoring warnings instead of engine errors.
+
+Reparenting takes the node out of the tree and back in, and re-entry resets its physics interpolation, so a node that jumps because **Keep World Transform** is off lands in one frame without this node doing anything about it.
 
 ## Godot groups
 
