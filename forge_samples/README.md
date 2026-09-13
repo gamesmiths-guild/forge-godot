@@ -28,7 +28,10 @@ Open `forge_samples/Main.tscn` and run it. The hub scene lists every demo and lo
 | `hub/` | The demo hub, plus one `DemoEntry` resource per demo under `entries/`. |
 | `demos/01_realtime_3d/` | 3D character, enemies, and the player ability set (dash, projectile, reflect, shield). |
 | `demos/02_turnbased_2d/` | 2D character, effect areas, floating text and particle cue handlers. |
+| `demos/03_statescript/` | The Real-Time 3D demo's abilities and enemy rebuilt as Statescript graphs, on a level shared with future demos. |
 | `shared/` | Attribute sets, shared effect resources, custom executions and calculators. |
+
+Each demo folder has a README of its own that walks through what is in it.
 
 ## Adding a demo
 
