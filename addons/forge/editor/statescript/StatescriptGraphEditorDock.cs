@@ -243,8 +243,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
 				&& _openTabs[i].ResourcePath == graph.ResourcePath))
 			{
-				SetCurrentTabWithoutLoading(i);
-				ApplyVariablesPanelState(i);
+				// TabChanged loads the graph; a no-op when the tab is already current.
+				_tabBar.CurrentTab = i;
 				return;
 			}
 		}
