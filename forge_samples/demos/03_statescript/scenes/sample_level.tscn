@@ -333,7 +333,7 @@ UpdateEffectIntensity = true
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.regen"
 
-[node name="Shake Cues" type="Node" parent="."]
+[node name="Shake Cues" type="Node" parent="." unique_id=304190392]
 script = ExtResource("25_shake_cue")
 Amplitude = 0.2
 CueTag = "cue.screen.shake"

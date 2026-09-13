@@ -1,0 +1,270 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://6eciad4ildkk"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_0noie"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://b8sny7pwgn1jf" path="res://addons/forge/resources/statescript/resolvers/EffectResolverResource.cs" id="6_effect"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="7_owner"]
+[ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="8_tag"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="9_variable"]
+[ext_resource type="Script" uid="uid://c3hb4x0majsfa" path="res://addons/forge/resources/statescript/resolvers/ComparisonResolverResource.cs" id="10_comparison"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="11_variant"]
+[ext_resource type="Resource" uid="uid://hebawhvxakuu" path="res://forge_samples/demos/03_statescript/abilities/player/shield_protection.tres" id="12_shield_protection"]
+
+[sub_resource type="Resource" id="Resource_0noie"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_gexgi"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_1dttu"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_6"
+
+[sub_resource type="Resource" id="Resource_soou3"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_8"
+
+[sub_resource type="Resource" id="Resource_tibfq"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+OutputPort = 4
+ToNode = "node_5"
+
+[sub_resource type="Resource" id="Resource_88x0m"]
+script = ExtResource("4_connection")
+FromNode = "node_5"
+OutputPort = 1
+ToNode = "node_9"
+
+[sub_resource type="Resource" id="Resource_06s6r"]
+script = ExtResource("4_connection")
+FromNode = "node_6"
+OutputPort = 4
+ToNode = "node_7"
+
+[sub_resource type="Resource" id="Resource_lrwhl"]
+script = ExtResource("4_connection")
+FromNode = "node_7"
+ToNode = "node_9"
+
+[sub_resource type="Resource" id="Resource_eqhqm"]
+script = ExtResource("4_connection")
+FromNode = "node_8"
+OutputPort = 4
+ToNode = "node_9"
+
+[sub_resource type="Resource" id="Resource_62yj7"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_f5nwf"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 400)
+
+[sub_resource type="Resource" id="Resource_commit"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Try Commit Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
+PositionOffset = Vector2(260, 400)
+CustomData = Dictionary[String, Variant]({
+"operation": "CostOnly"
+})
+
+[sub_resource type="Resource" id="Resource_protection_effect"]
+script = ExtResource("6_effect")
+Effect = ExtResource("12_shield_protection")
+
+[sub_resource type="Resource" id="Resource_protection_effect_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_protection_effect")
+
+[sub_resource type="Resource" id="Resource_protection_target"]
+script = ExtResource("7_owner")
+
+[sub_resource type="Resource" id="Resource_protection_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_protection_target")
+
+[sub_resource type="Resource" id="Resource_protection"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Effect"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.EffectNode"
+PositionOffset = Vector2(740, 80)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_protection_effect_binding"), SubResource("Resource_protection_target_binding")])
+
+[sub_resource type="Resource" id="Resource_shield_cue_tags"]
+script = ExtResource("8_tag")
+Tags = Array[String](["cue.vfx.shield"])
+
+[sub_resource type="Resource" id="Resource_shield_cue_tags_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_shield_cue_tags")
+
+[sub_resource type="Resource" id="Resource_shield_cue_target"]
+script = ExtResource("7_owner")
+
+[sub_resource type="Resource" id="Resource_shield_cue_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_shield_cue_target")
+
+[sub_resource type="Resource" id="Resource_shield_cue"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Cue"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.CueNode"
+PositionOffset = Vector2(1100, 80)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_shield_cue_tags_binding"), SubResource("Resource_shield_cue_target_binding")])
+
+[sub_resource type="Resource" id="Resource_damage_taken_tags"]
+script = ExtResource("8_tag")
+Tags = Array[String](["event.damage.taken"])
+
+[sub_resource type="Resource" id="Resource_damage_taken_tags_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_damage_taken_tags")
+
+[sub_resource type="Resource" id="Resource_damage_taken_listen_on"]
+script = ExtResource("7_owner")
+
+[sub_resource type="Resource" id="Resource_damage_taken_listen_on_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_damage_taken_listen_on")
+
+[sub_resource type="Resource" id="Resource_damage_taken"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Event Listener"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.EventListenerNode"
+PositionOffset = Vector2(1480, 80)
+CustomData = Dictionary[String, Variant]({
+"deactivateOnEvent": false
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_damage_taken_tags_binding"), SubResource("Resource_damage_taken_listen_on_binding")])
+
+[sub_resource type="Resource" id="Resource_pay_per_hit"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Try Commit Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
+PositionOffset = Vector2(1920, 380)
+CustomData = Dictionary[String, Variant]({
+"operation": "CostOnly"
+})
+
+[sub_resource type="Resource" id="Resource_mana_entity"]
+script = ExtResource("7_owner")
+
+[sub_resource type="Resource" id="Resource_mana_entity_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_mana_entity")
+
+[sub_resource type="Resource" id="Resource_mana_output"]
+script = ExtResource("9_variable")
+VariableName = "mana"
+
+[sub_resource type="Resource" id="Resource_mana_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_mana_output")
+
+[sub_resource type="Resource" id="Resource_mana_listener"]
+script = ExtResource("2_node")
+NodeId = "node_6"
+Title = "Attribute Listener"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.AttributeListenerNode"
+PositionOffset = Vector2(1040, 780)
+CustomData = Dictionary[String, Variant]({
+"attributeKey": "CharacterAttributes.Mana"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_mana_entity_binding"), SubResource("Resource_mana_output_binding")])
+
+[sub_resource type="Resource" id="Resource_mana_value"]
+script = ExtResource("9_variable")
+VariableName = "mana"
+
+[sub_resource type="Resource" id="Resource_mana_floor"]
+script = ExtResource("11_variant")
+Value = 10
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_mana_too_low"]
+script = ExtResource("10_comparison")
+Left = SubResource("Resource_mana_value")
+Operation = 2
+Right = SubResource("Resource_mana_floor")
+
+[sub_resource type="Resource" id="Resource_mana_too_low_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_mana_too_low")
+
+[sub_resource type="Resource" id="Resource_out_of_mana"]
+script = ExtResource("2_node")
+NodeId = "node_7"
+Title = "Expression"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.ExpressionNode"
+PositionOffset = Vector2(1500, 880)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_mana_too_low_binding")])
+
+[sub_resource type="Resource" id="Resource_toggle_key"]
+script = ExtResource("2_node")
+NodeId = "node_8"
+Title = "Input Action"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.InputActionNode"
+PositionOffset = Vector2(1040, 1380)
+CustomData = Dictionary[String, Variant]({
+"actionName": "skill_3",
+"deactivateOnPressed": false
+})
+
+[sub_resource type="Resource" id="Resource_exit"]
+script = ExtResource("2_node")
+NodeId = "node_9"
+Title = "Exit"
+NodeType = 1
+PositionOffset = Vector2(2520, 960)
+
+[sub_resource type="Resource" id="Resource_mana_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "mana"
+InitialValue = 0
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Shield"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_protection"), SubResource("Resource_shield_cue"), SubResource("Resource_damage_taken"), SubResource("Resource_pay_per_hit"), SubResource("Resource_mana_listener"), SubResource("Resource_out_of_mana"), SubResource("Resource_toggle_key"), SubResource("Resource_exit")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_0noie"), SubResource("Resource_gexgi"), SubResource("Resource_1dttu"), SubResource("Resource_soou3"), SubResource("Resource_tibfq"), SubResource("Resource_88x0m"), SubResource("Resource_06s6r"), SubResource("Resource_lrwhl"), SubResource("Resource_eqhqm"), SubResource("Resource_62yj7"), SubResource("Resource_f5nwf")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_mana_variable")])
+ScrollOffset = Vector2(-713.9574, 191.30606)
+Zoom = 0.5644737
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

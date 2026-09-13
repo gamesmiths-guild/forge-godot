@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://eaearcr3toht"]
+
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="1_int"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="2_float"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="3_modifier"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="4_effect"]
+
+[sub_resource type="Resource" id="Resource_initial_stack"]
+script = ExtResource("1_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_uercn"]
+script = ExtResource("2_float")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_motbr"]
+script = ExtResource("2_float")
+
+[sub_resource type="Resource" id="Resource_7p4ef"]
+script = ExtResource("2_float")
+
+[sub_resource type="Resource" id="Resource_i1yg4"]
+script = ExtResource("2_float")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_54575"]
+script = ExtResource("2_float")
+
+[sub_resource type="Resource" id="Resource_fgv51"]
+script = ExtResource("2_float")
+
+[sub_resource type="Resource" id="Resource_mana_delta"]
+script = ExtResource("2_float")
+BaseValue = -20.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_mana"]
+script = ExtResource("3_modifier")
+Attribute = "CharacterAttributes.Mana"
+ScalableFloat = SubResource("Resource_mana_delta")
+SnapshotAttribute = false
+Coefficient = SubResource("Resource_i1yg4")
+PreMultiplyAdditiveValue = SubResource("Resource_fgv51")
+PostMultiplyAdditiveValue = SubResource("Resource_54575")
+CalculatorCoefficient = SubResource("Resource_uercn")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_7p4ef")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_motbr")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_stack_limit"]
+script = ExtResource("1_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("4_effect")
+Name = "Thorns Cost"
+Modifiers = [SubResource("Resource_mana")]
+Components = []
+Executions = []
+StackLimit = SubResource("Resource_stack_limit")
+InitialStack = SubResource("Resource_initial_stack")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"
