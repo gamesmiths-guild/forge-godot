@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="7_effect"]
 [ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://forge_samples/shared/effects/natural_regen.tres" id="8_natural_regen"]
 [ext_resource type="Script" uid="uid://lgxurajmwoly" path="res://forge_samples/demos/01_realtime_3d/scripts/HealthBar3D.cs" id="9_health_bar"]
+[ext_resource type="Resource" uid="uid://hs0eraqvm22f" path="res://forge_samples/demos/03_statescript/abilities/enemy/grant_abilities.tres" id="10_grant_abilities"]
 
 [sub_resource type="Resource" id="Resource_tags"]
 script = ExtResource("6_tags")
@@ -41,33 +42,32 @@ bg_color = Color(0.17566097, 0.34232214, 1, 1)
 [sub_resource type="ViewportTexture" id="ViewportTexture_bars"]
 viewport_path = NodePath("SubViewport")
 
-[node name="Enemy" type="CharacterBody3D" groups=["enemies"]]
+[node name="Enemy" type="CharacterBody3D" unique_id=1112349522 groups=["enemies"]]
 collision_layer = 4
 collision_mask = 7
 script = ExtResource("1_puppet")
 
-[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
-target_desired_distance = 1.0
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1564207146]
 
-[node name="Forge Entity" type="Node" parent="."]
+[node name="Forge Entity" type="Node" parent="." unique_id=1170851664]
 unique_name_in_owner = true
 script = ExtResource("3_entity")
 BaseTags = SubResource("Resource_tags")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"
 
-[node name="Character Attributes" type="Node" parent="Forge Entity"]
+[node name="Character Attributes" type="Node" parent="Forge Entity" unique_id=523647748]
 script = ExtResource("4_attrset")
 AttributeSetClass = "CharacterAttributes"
 InitialAttributeValues = Dictionary[String, ExtResource("5_values")]({})
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
-[node name="Meta Attributes" type="Node" parent="Forge Entity"]
+[node name="Meta Attributes" type="Node" parent="Forge Entity" unique_id=868330382]
 script = ExtResource("4_attrset")
 AttributeSetClass = "MetaAttributes"
 InitialAttributeValues = Dictionary[String, ExtResource("5_values")]({})
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
-[node name="Movement Attributes" type="Node" parent="Forge Entity"]
+[node name="Movement Attributes" type="Node" parent="Forge Entity" unique_id=1498480063]
 script = ExtResource("4_attrset")
 AttributeSetClass = "MovementAttributes"
 InitialAttributeValues = Dictionary[String, ExtResource("5_values")]({
@@ -76,33 +76,38 @@ InitialAttributeValues = Dictionary[String, ExtResource("5_values")]({
 })
 metadata/_custom_type_script = "uid://cxihb42t2mfqi"
 
-[node name="Natural Regen" type="Node" parent="Forge Entity"]
+[node name="Natural Regen" type="Node" parent="Forge Entity" unique_id=1028148239]
 script = ExtResource("7_effect")
 EffectData = ExtResource("8_natural_regen")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Body" type="MeshInstance3D" parent="."]
+[node name="Grant Abilities" type="Node" parent="Forge Entity" unique_id=1110475009]
+script = ExtResource("7_effect")
+EffectData = ExtResource("10_grant_abilities")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Body" type="MeshInstance3D" parent="." unique_id=1637479435]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 mesh = SubResource("CapsuleMesh_body")
 surface_material_override/0 = ExtResource("2_body")
 
-[node name="Collision" type="CollisionShape3D" parent="."]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=107282592]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_body")
 
-[node name="AttackRange" type="Area3D" parent="."]
+[node name="AttackRange" type="Area3D" parent="." unique_id=338276962]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 collision_layer = 0
 collision_mask = 2
 
-[node name="Collision" type="CollisionShape3D" parent="AttackRange"]
+[node name="Collision" type="CollisionShape3D" parent="AttackRange" unique_id=1438721364]
 shape = SubResource("SphereShape3D_attack_range")
 
-[node name="SubViewport" type="SubViewport" parent="."]
+[node name="SubViewport" type="SubViewport" parent="." unique_id=251031113]
 size = Vector2i(100, 40)
 
-[node name="Bars" type="VBoxContainer" parent="SubViewport"]
+[node name="Bars" type="VBoxContainer" parent="SubViewport" unique_id=1074465067]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -110,7 +115,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 0
 
-[node name="HealthBar" type="ProgressBar" parent="SubViewport/Bars" node_paths=PackedStringArray("HealthBarLabel")]
+[node name="HealthBar" type="ProgressBar" parent="SubViewport/Bars" unique_id=763359678 node_paths=PackedStringArray("HealthBarLabel")]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/background = SubResource("StyleBoxFlat_health_bg")
@@ -120,7 +125,7 @@ show_percentage = false
 script = ExtResource("9_health_bar")
 HealthBarLabel = NodePath("Label")
 
-[node name="Label" type="Label" parent="SubViewport/Bars/HealthBar"]
+[node name="Label" type="Label" parent="SubViewport/Bars/HealthBar" unique_id=272866361]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -137,7 +142,7 @@ text = "1000/1000"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ManaBar" type="ProgressBar" parent="SubViewport/Bars" node_paths=PackedStringArray("HealthBarLabel")]
+[node name="ManaBar" type="ProgressBar" parent="SubViewport/Bars" unique_id=1653977035 node_paths=PackedStringArray("HealthBarLabel")]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/background = SubResource("StyleBoxFlat_mana_bg")
@@ -148,7 +153,7 @@ script = ExtResource("9_health_bar")
 HealthBarLabel = NodePath("Label")
 Attribute = "Mana"
 
-[node name="Label" type="Label" parent="SubViewport/Bars/ManaBar"]
+[node name="Label" type="Label" parent="SubViewport/Bars/ManaBar" unique_id=693719976]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -165,7 +170,7 @@ text = "1000/1000"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BarsSprite" type="Sprite3D" parent="."]
+[node name="BarsSprite" type="Sprite3D" parent="." unique_id=1325436168]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
 billboard = 1
 texture = SubResource("ViewportTexture_bars")

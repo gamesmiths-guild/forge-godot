@@ -4,6 +4,8 @@
 [ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/brazier_flame.tres" id="2_flame"]
 [ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/ember.tres" id="3_ember"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="4_entity"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_effect"]
+[ext_resource type="Resource" uid="uid://bjs5hrn58t0w" path="res://forge_samples/demos/03_statescript/abilities/brazier/grant_abilities.tres" id="6_grant_abilities"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_pedestal"]
 size = Vector3(1, 1.6, 1)
@@ -36,6 +38,11 @@ radius = 3.0
 unique_name_in_owner = true
 script = ExtResource("4_entity")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+script = ExtResource("5_effect")
+EffectData = ExtResource("6_grant_abilities")
+metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Pedestal" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
