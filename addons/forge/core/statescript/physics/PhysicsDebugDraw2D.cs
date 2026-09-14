@@ -142,7 +142,7 @@ internal static class PhysicsDebugDraw2D
 		PhysicsDebugMarker2D? existing,
 		Color color)
 	{
-		if (!IsEnabled || color.A <= 0f)
+		if (!Draws(color))
 		{
 			Release(existing);
 			return null;
@@ -363,7 +363,7 @@ internal static class PhysicsDebugDraw2D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashShape(GraphContext graphContext, Shape2D shape, Transform2D transform, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -386,7 +386,7 @@ internal static class PhysicsDebugDraw2D
 		Transform2D transform,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -433,7 +433,7 @@ internal static class PhysicsDebugDraw2D
 		Color color,
 		bool includeAreas)
 	{
-		if (!HighlightsTargets)
+		if (!Highlights(color))
 		{
 			return;
 		}
@@ -453,7 +453,7 @@ internal static class PhysicsDebugDraw2D
 	/// <param name="includeAreas">Whether the query counted areas as well as bodies.</param>
 	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color, bool includeAreas)
 	{
-		if (!HighlightsTargets || !ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? spatialNode))
+		if (!Highlights(color) || !ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? spatialNode))
 		{
 			return;
 		}
@@ -469,7 +469,7 @@ internal static class PhysicsDebugDraw2D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashPoint(GraphContext graphContext, Vector2 position, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -496,7 +496,7 @@ internal static class PhysicsDebugDraw2D
 		Vector2 to,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -515,7 +515,7 @@ internal static class PhysicsDebugDraw2D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashLine(GraphContext graphContext, Vector2 from, Vector2 to, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -534,7 +534,7 @@ internal static class PhysicsDebugDraw2D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashArrow(GraphContext graphContext, Vector2 origin, Vector2 vector, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -561,7 +561,7 @@ internal static class PhysicsDebugDraw2D
 		float halfAngle,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -584,11 +584,19 @@ internal static class PhysicsDebugDraw2D
 		}
 	}
 
+	private static bool Draws(Color color)
+	{
+		return IsEnabled && color.A > 0f;
+	}
+
+	private static bool Highlights(Color color)
+	{
+		return HighlightsTargets && color.A > 0f;
+	}
+
 	private static PhysicsDebugMarker2D? CreateMarker(GraphContext graphContext, Color color)
 	{
-		// A fully transparent colour is how one drawing is switched off, so it is not built either.
-		if (color.A <= 0f
-			|| !PhysicsQuery2D.TryResolveContextNode(graphContext, out Node2D? context)
+		if (!PhysicsQuery2D.TryResolveContextNode(graphContext, out Node2D? context)
 			|| !context.IsInsideTree())
 		{
 			return null;

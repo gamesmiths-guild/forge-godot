@@ -53,9 +53,9 @@ Per-query checkboxes were the alternative and would have been twenty settings an
 | `sight_blocked` | A blocked line of sight and its blocker; a `Can Fit` that does not fit. | `(1.0, 0.3, 0.35)` | the same |
 | `force` | The arrows of `Set Velocity`, `Set Angular Velocity`, `Apply Impulse`, `Apply Torque Impulse` and `Force Override`. | `(1.0, 0.4, 0.95)` | the same |
 
-The two groups differ only in alpha, which is why there are two: a 3D wireframe is drawn over the scene with no depth test and reads at a fifth of full opacity, while a 2D line is a pixel wide and needs most of it. A colour is read once, the first time something is drawn in it, so a change takes effect on the next run of the game.
+The two groups differ only in alpha, which is why there are two: a 3D wireframe is drawn over the scene with no depth test and reads at a fifth of full opacity, while a 2D line is a pixel wide and needs most of it. A colour is read once, the first time a query asks for it, so a change takes effect on the next run of the game.
 
-**Alpha zero is the off switch.** A fully transparent colour is not drawn faintly — nothing is built for it at all, so a project that wants no ray drawing sets `ray_hit` and `ray_clear` transparent and pays nothing for them. There is deliberately no checkbox beside each colour: it would be the same question asked twice.
+**Alpha zero is the off switch.** A fully transparent colour is not drawn faintly — every flash and outline stops on it before walking an entity or a shape, and nothing is built, so a project that wants no ray drawing sets `ray_hit` and `ray_clear` transparent and pays nothing for them. There is deliberately no checkbox beside each colour: it would be the same question asked twice.
 
 ## How it is drawn
 

@@ -138,7 +138,7 @@ internal static class PhysicsDebugDraw3D
 	/// scene.</returns>
 	public static MeshInstance3D? EnsureMarker(GraphContext graphContext, MeshInstance3D? existing, Color color)
 	{
-		if (!IsEnabled || color.A <= 0f)
+		if (!Draws(color))
 		{
 			Release(existing);
 			return null;
@@ -404,7 +404,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashShape(GraphContext graphContext, Shape3D shape, Transform3D transform, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -427,7 +427,7 @@ internal static class PhysicsDebugDraw3D
 		Transform3D transform,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -474,7 +474,7 @@ internal static class PhysicsDebugDraw3D
 		Color color,
 		bool includeAreas)
 	{
-		if (!HighlightsTargets)
+		if (!Highlights(color))
 		{
 			return;
 		}
@@ -494,7 +494,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="includeAreas">Whether the query counted areas as well as bodies.</param>
 	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color, bool includeAreas)
 	{
-		if (!HighlightsTargets || !ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode))
+		if (!Highlights(color) || !ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode))
 		{
 			return;
 		}
@@ -510,7 +510,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashPoint(GraphContext graphContext, Vector3 position, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -537,7 +537,7 @@ internal static class PhysicsDebugDraw3D
 		Vector3 to,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -556,7 +556,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashLine(GraphContext graphContext, Vector3 from, Vector3 to, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -575,7 +575,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashArrow(GraphContext graphContext, Vector3 origin, Vector3 vector, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -602,7 +602,7 @@ internal static class PhysicsDebugDraw3D
 		float halfAngle,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -625,11 +625,19 @@ internal static class PhysicsDebugDraw3D
 		}
 	}
 
+	private static bool Draws(Color color)
+	{
+		return IsEnabled && color.A > 0f;
+	}
+
+	private static bool Highlights(Color color)
+	{
+		return HighlightsTargets && color.A > 0f;
+	}
+
 	private static MeshInstance3D? CreateMarker(GraphContext graphContext, Color color)
 	{
-		// A fully transparent colour is how one drawing is switched off, so it is not built either.
-		if (color.A <= 0f
-			|| !PhysicsQuery3D.TryResolveContextNode(graphContext, out Node3D? context)
+		if (!PhysicsQuery3D.TryResolveContextNode(graphContext, out Node3D? context)
 			|| !context.IsInsideTree())
 		{
 			return null;
