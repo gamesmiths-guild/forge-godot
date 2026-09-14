@@ -33,15 +33,29 @@ With the switch off every entry point returns on one flag read and allocates not
 
 So every query that produces entities outlines them, in the query's own colour. The outline is the entity's bodies, and its areas only when the query itself counted areas: a sensor hanging off a body — a reflect aura, an attack range — was never tested by a query about bodies, and an outline on it would read as the volume the query found. **A one-shot query outlines on every run; a monitored one outlines on the transition** — the same rule the geometry follows, because an outline redrawn every poll would stack a fresh flash on the last one until the highlight was a permanently lit body. `Overlap` outlines each entity as it enters, `Ray` and `Sweep` outline what they just acquired, and `Line Of Sight` outlines whatever just blocked it.
 
-### The project setting
+### The project settings
 
-**Project → Project Settings → General**, under **Forge → Statescript → Highlight Query Targets**. It is a basic setting, so no Advanced Settings toggle is needed to see it.
+**Project → Project Settings → General**, under **Forge → Statescript**. They are basic settings, so no Advanced Settings toggle is needed to see them, and enabling the plugin declares them, so they are there from the first run. None appears in `project.godot` until you actually change it: Godot skips saving a property whose value still equals its initial value, which is what keeps an untouched project's file clean.
 
-`forge/statescript/highlight_query_targets`, **default on**, and consulted only when Visible Collision Shapes is already on. Enabling the plugin declares it, so it is there to switch off from the first run.
-
-It does not appear in `project.godot` until you actually change it: Godot skips saving a property whose value still equals its initial value, which is what keeps an untouched project's file clean.
+**Highlight Query Targets** — `forge/statescript/highlight_query_targets`, **default on**, and consulted only when Visible Collision Shapes is already on.
 
 Per-query checkboxes were the alternative and would have been twenty settings answering one question, against the rule that debug drawing is never authored. The answer is the same for every query in a project and it is a developer preference, which is exactly what a project setting is for — and the reason to have a switch at all is that a crowded scene is where the outlines are most useful *and* most overwhelming, which is a judgement no default can make. With it off, the query geometry and its colour still say whether anything was found.
+
+**The colours** — two groups, **Debug Colors 3D** and **Debug Colors 2D** (`forge/statescript/debug_colors_3d/…` and `…/debug_colors_2d/…`), with the same seven entries each:
+
+| Setting | Colours | 3D default | 2D default |
+|---|---|---|---|
+| `overlap_empty` | An overlap that found nothing: a transient marker while it is empty, an existing area as it arms or empties, `Entities At Point` and `Entities In Cone` that came back empty. | `(0.25, 0.85, 1.0, 0.2)` | the same |
+| `overlap_found` | An overlap that found something, and the outlines of what it found. Also `Closest Entity`'s pick. | `(1.0, 0.55, 0.2, 0.2)` | `(1.0, 0.55, 0.2, 0.35)` |
+| `ray_hit` | A ray, sweep or shapecast that hit, and the outline of what it hit. | `(1.0, 0.45, 0.2, 0.2)` | `(1.0, 0.45, 0.2)` |
+| `ray_clear` | A ray, sweep or shapecast that reached its full length. | `(1.0, 0.85, 0.3, 0.2)` | `(1.0, 0.85, 0.3)` |
+| `sight_clear` | An unobstructed line of sight; a `Can Fit` that fits. | `(0.35, 1.0, 0.45)` | the same |
+| `sight_blocked` | A blocked line of sight and its blocker; a `Can Fit` that does not fit. | `(1.0, 0.3, 0.35)` | the same |
+| `force` | The arrows of `Set Velocity`, `Set Angular Velocity`, `Apply Impulse`, `Apply Torque Impulse` and `Force Override`. | `(1.0, 0.4, 0.95)` | the same |
+
+The two groups differ only in alpha, which is why there are two: a 3D wireframe is drawn over the scene with no depth test and reads at a fifth of full opacity, while a 2D line is a pixel wide and needs most of it. A colour is read once, the first time something is drawn in it, so a change takes effect on the next run of the game.
+
+**Alpha zero is the off switch.** A fully transparent colour is not drawn faintly — nothing is built for it at all, so a project that wants no ray drawing sets `ray_hit` and `ray_clear` transparent and pays nothing for them. There is deliberately no checkbox beside each colour: it would be the same question asked twice.
 
 ## How it is drawn
 

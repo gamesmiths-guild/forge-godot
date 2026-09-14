@@ -23,6 +23,11 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 /// </remarks>
 internal static class PhysicsDebugDraw3D
 {
+	/// <summary>
+	/// Prefix of the project settings holding the colours this drawer uses.
+	/// </summary>
+	public const string ColorSettingPrefix = "forge/statescript/debug_colors_3d/";
+
 	private const string ContainerName = "ForgeStatescriptPhysicsDebug";
 
 	private const float FlashSeconds = 0.35f;
@@ -38,6 +43,30 @@ internal static class PhysicsDebugDraw3D
 	private const float PointMarkExtent = 0.125f;
 
 	private static readonly Dictionary<Color, StandardMaterial3D> _materials = [];
+
+	// The palette: each colour is a project setting under ColorSettingPrefix, with what an unset project draws in.
+	// Only the alpha differs between the two dimensions: 3D wireframes are drawn over the scene with no depth test,
+	// and need less of it.
+	private static readonly PhysicsDebugColor _overlapEmpty =
+		new(ColorSettingPrefix + "overlap_empty", new(0.25f, 0.85f, 1.0f, 0.2f));
+
+	private static readonly PhysicsDebugColor _overlapFound =
+		new(ColorSettingPrefix + "overlap_found", new(1.0f, 0.55f, 0.2f, 0.2f));
+
+	private static readonly PhysicsDebugColor _rayHit =
+		new(ColorSettingPrefix + "ray_hit", new(1.0f, 0.45f, 0.2f, 0.2f));
+
+	private static readonly PhysicsDebugColor _rayClear =
+		new(ColorSettingPrefix + "ray_clear", new(1.0f, 0.85f, 0.3f, 0.2f));
+
+	private static readonly PhysicsDebugColor _sightClear =
+		new(ColorSettingPrefix + "sight_clear", new(0.35f, 1.0f, 0.45f));
+
+	private static readonly PhysicsDebugColor _sightBlocked =
+		new(ColorSettingPrefix + "sight_blocked", new(1.0f, 0.3f, 0.35f));
+
+	private static readonly PhysicsDebugColor _force =
+		new(ColorSettingPrefix + "force", new(1.0f, 0.4f, 0.95f));
 
 	/// <summary>
 	/// Gets a value indicating whether the running game was started with Visible Collision Shapes on.
@@ -56,37 +85,43 @@ internal static class PhysicsDebugDraw3D
 	/// <summary>
 	/// Gets the colour of an overlap query that found nothing.
 	/// </summary>
-	public static Color OverlapEmptyColor { get; } = new(0.25f, 0.85f, 1.0f, 0.2f);
+	public static Color OverlapEmptyColor => _overlapEmpty.Value;
 
 	/// <summary>
 	/// Gets the colour of an overlap query that found something.
 	/// </summary>
-	public static Color OverlapFoundColor { get; } = new(1.0f, 0.55f, 0.2f, 0.2f);
+	public static Color OverlapFoundColor => _overlapFound.Value;
 
 	/// <summary>
 	/// Gets the colour of a ray that hit something.
 	/// </summary>
-	public static Color RayHitColor { get; } = new(1.0f, 0.45f, 0.2f, 0.2f);
+	public static Color RayHitColor => _rayHit.Value;
 
 	/// <summary>
 	/// Gets the colour of a ray that reached its full length without hitting anything.
 	/// </summary>
-	public static Color RayClearColor { get; } = new(1.0f, 0.85f, 0.3f, 0.2f);
+	public static Color RayClearColor => _rayClear.Value;
 
 	/// <summary>
 	/// Gets the colour of an unobstructed line of sight.
 	/// </summary>
-	public static Color SightClearColor { get; } = new(0.35f, 1.0f, 0.45f);
+	public static Color SightClearColor => _sightClear.Value;
 
 	/// <summary>
 	/// Gets the colour of a line of sight something is standing in.
 	/// </summary>
-	public static Color SightBlockedColor { get; } = new(1.0f, 0.3f, 0.35f);
+	public static Color SightBlockedColor => _sightBlocked.Value;
 
 	/// <summary>
 	/// Gets the colour of a velocity or impulse arrow.
 	/// </summary>
-	public static Color ForceColor { get; } = new(1.0f, 0.4f, 0.95f);
+	public static Color ForceColor => _force.Value;
+
+	/// <summary>
+	/// Gets every colour this drawer uses, for <c>ForgeSettings.EnsureRegistered</c> to declare in Project Settings.
+	/// </summary>
+	public static IReadOnlyList<PhysicsDebugColor> Colors { get; } =
+		[_overlapEmpty, _overlapFound, _rayHit, _rayClear, _sightClear, _sightBlocked, _force];
 
 	/// <summary>
 	/// Gets the marker a State node holds for as long as it is watching something, creating it on the first call and
@@ -103,7 +138,7 @@ internal static class PhysicsDebugDraw3D
 	/// scene.</returns>
 	public static MeshInstance3D? EnsureMarker(GraphContext graphContext, MeshInstance3D? existing, Color color)
 	{
-		if (!IsEnabled)
+		if (!IsEnabled || color.A <= 0f)
 		{
 			Release(existing);
 			return null;
@@ -592,7 +627,9 @@ internal static class PhysicsDebugDraw3D
 
 	private static MeshInstance3D? CreateMarker(GraphContext graphContext, Color color)
 	{
-		if (!PhysicsQuery3D.TryResolveContextNode(graphContext, out Node3D? context)
+		// A fully transparent colour is how one drawing is switched off, so it is not built either.
+		if (color.A <= 0f
+			|| !PhysicsQuery3D.TryResolveContextNode(graphContext, out Node3D? context)
 			|| !context.IsInsideTree())
 		{
 			return null;

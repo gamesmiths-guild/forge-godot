@@ -1,13 +1,14 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Godot;
 using GodotDictionary = Godot.Collections.Dictionary;
 
 namespace Gamesmiths.Forge.Godot.Core;
 
 /// <summary>
-/// Project settings describing where Forge reads its gameplay tags from.
+/// Project settings describing where Forge reads its gameplay tags from, and how its debug drawing looks.
 /// </summary>
 /// <remarks>
 /// Tags come from an ordered list of tag source resources, merged into a single registry. The order is a display
@@ -40,6 +41,9 @@ public static class ForgeSettings
 	/// settings to keep in step. It only ever narrows what Godot's own Visible Collision Shapes already turned on -
 	/// with that off nothing is drawn either way - so an outline is one switch away when a crowded scene makes the
 	/// query geometry hard to read, and the query's own colour still says whether it found anything.
+	/// <para>The colours the drawing uses are settings too, one group per dimension under
+	/// <see cref="PhysicsDebugDraw3D.ColorSettingPrefix"/> and <see cref="PhysicsDebugDraw2D.ColorSettingPrefix"/>. The
+	/// drawers own them - their defaults are read where they are drawn - and only their registration lives here.</para>
 	/// </remarks>
 	public static bool HighlightQueryTargets =>
 		ProjectSettings.GetSetting(HighlightQueryTargetsSetting, true).AsBool();
@@ -133,6 +137,16 @@ public static class ForgeSettings
 		ProjectSettings.SetInitialValue(HighlightQueryTargetsSetting, true);
 		ProjectSettings.SetAsBasic(HighlightQueryTargetsSetting, true);
 
+		foreach (PhysicsDebugColor color in PhysicsDebugDraw3D.Colors)
+		{
+			RegisterColor(color);
+		}
+
+		foreach (PhysicsDebugColor color in PhysicsDebugDraw2D.Colors)
+		{
+			RegisterColor(color);
+		}
+
 		ProjectSettings.AddPropertyInfo(new GodotDictionary
 		{
 			{ "name", SourcesSetting },
@@ -143,6 +157,23 @@ public static class ForgeSettings
 
 		ProjectSettings.SetInitialValue(SourcesSetting, Array.Empty<string>());
 		ProjectSettings.SetAsBasic(SourcesSetting, true);
+	}
+
+	private static void RegisterColor(PhysicsDebugColor color)
+	{
+		if (!ProjectSettings.HasSetting(color.Setting))
+		{
+			ProjectSettings.SetSetting(color.Setting, color.Default);
+		}
+
+		ProjectSettings.AddPropertyInfo(new GodotDictionary
+		{
+			{ "name", color.Setting },
+			{ "type", (int)Variant.Type.Color },
+		});
+
+		ProjectSettings.SetInitialValue(color.Setting, color.Default);
+		ProjectSettings.SetAsBasic(color.Setting, true);
 	}
 #endif
 }
