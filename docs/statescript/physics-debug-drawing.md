@@ -24,7 +24,7 @@ With the switch off every entry point returns on one flag read and allocates not
 | `Set Velocity`, `Apply Impulse` | An arrow at its true world length, so a velocity arrow reaches where the body gets to in one second. |
 | `Set Angular Velocity`, `Apply Torque Impulse` | An arrow along the spin axis with the rate as its length — the same reading `Entity Angular Velocity` reports. **Their 2D twins draw nothing**, and that is the answer rather than an omission: a 2D spin is a scalar about an axis pointing out of the screen, so any arrow drawn in the plane would name a direction the spin does not have. |
 | `Overlap` (State, transient), `Ray`, `Line Of Sight` (State) | Held for as long as the node is active, updated every poll, and recoloured by the answer: an armed trap reads as armed and turns as something steps into it, a beam as it acquires and loses. |
-| `Area Overlaps`, `Overlap` (State, existing area) | No shape. The area is in the scene and Godot already draws it; a second wireframe on top of the engine's is noise. The entities inside it are outlined, which the engine's wireframe does not say. |
+| `Area Overlaps`, `Overlap` (State, existing area) | No held shape. The area is in the scene and Godot already draws it; a second wireframe on top of the engine's is noise. But that wireframe never changes, so **the area's own shapes flash in the answer's colour** — on every run for the resolver, and as the occupancy turns for the State node: the watch starting, the first one in, the last one out. The entities inside it are outlined as well, which neither wireframe says. |
 | `Is In Cone` | Nothing. It tests one point against numbers and touches no physics server. |
 
 ## Outlining what a query found

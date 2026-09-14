@@ -307,6 +307,21 @@ public class Overlap2DNode(
 			}
 
 			PhysicsQuery2D.CollectAreaOverlaps(area, _includeAreas, excluded, nodeContext.Pending);
+
+			// Nothing is held over an area that is in the scene - Godot draws it already - but that wireframe never
+			// changes, so the area's own shapes flash as the occupancy turns, in the colour the transient marker would
+			// be: the watch starting, the first one in, the last one out.
+			bool occupied = nodeContext.Pending.Count > 0;
+
+			if (nodeContext.LastOccupied != occupied)
+			{
+				PhysicsDebugDraw2D.FlashBody(
+					graphContext,
+					area,
+					area.GlobalTransform,
+					occupied ? PhysicsDebugDraw2D.OverlapFoundColor : PhysicsDebugDraw2D.OverlapEmptyColor);
+			}
+
 			return true;
 		}
 
@@ -334,8 +349,7 @@ public class Overlap2DNode(
 			nodeContext.Pending);
 
 		// Held for the node's lifetime rather than flashed, so a trap that is armed reads as armed, and recoloured by
-		// whether anything is inside, so it reads as triggered without opening a variable. Existing-Area mode draws
-		// nothing: Godot already renders the shapes of an area that is in the scene.
+		// whether anything is inside, so it reads as triggered without opening a variable.
 		Color markerColor = nodeContext.Pending.Count > 0
 			? PhysicsDebugDraw2D.OverlapFoundColor
 			: PhysicsDebugDraw2D.OverlapEmptyColor;
