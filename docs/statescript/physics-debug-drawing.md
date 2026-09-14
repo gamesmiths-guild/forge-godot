@@ -31,7 +31,7 @@ With the switch off every entry point returns on one flag read and allocates not
 
 **A query's own geometry says where the question was asked; only an outline on the answer says who answered it.** A cleave drawn over a crowd shows a cone and leaves the author counting who was inside it by hand; a ray drawn through two overlapping characters says nothing about which one it reported.
 
-So every query that produces entities outlines them, in the query's own colour. **A one-shot query outlines on every run; a monitored one outlines on the transition** — the same rule the geometry follows, because an outline redrawn every poll would stack a fresh flash on the last one until the highlight was a permanently lit body. `Overlap` outlines each entity as it enters, `Ray` and `Sweep` outline what they just acquired, and `Line Of Sight` outlines whatever just blocked it.
+So every query that produces entities outlines them, in the query's own colour. The outline is the entity's bodies, and its areas only when the query itself counted areas: a sensor hanging off a body — a reflect aura, an attack range — was never tested by a query about bodies, and an outline on it would read as the volume the query found. **A one-shot query outlines on every run; a monitored one outlines on the transition** — the same rule the geometry follows, because an outline redrawn every poll would stack a fresh flash on the last one until the highlight was a permanently lit body. `Overlap` outlines each entity as it enters, `Ray` and `Sweep` outline what they just acquired, and `Line Of Sight` outlines whatever just blocked it.
 
 ### The project setting
 

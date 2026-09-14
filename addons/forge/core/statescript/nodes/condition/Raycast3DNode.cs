@@ -60,7 +60,7 @@ public sealed class Raycast3DNode(bool collideWithAreas = false, bool hitFromIns
 			segment.To,
 			hit ? PhysicsDebugDraw3D.RayHitColor : PhysicsDebugDraw3D.RayClearColor);
 
-		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor);
+		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor, _collideWithAreas);
 
 		return hit;
 	}

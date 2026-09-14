@@ -89,6 +89,6 @@ internal sealed class EntitiesAtPoint2DResolver(
 		// The mark says where the question was asked; the outlines say what answered it. A point has no volume of its
 		// own to draw, so with the outlines switched off a hit and a miss differ only by the colour of a speck - which
 		// is the trade this query pays more for than any other, and still the author's to make.
-		PhysicsDebugDraw2D.FlashTargets(graphContext, _found, color);
+		PhysicsDebugDraw2D.FlashTargets(graphContext, _found, color, _includeAreas);
 	}
 }

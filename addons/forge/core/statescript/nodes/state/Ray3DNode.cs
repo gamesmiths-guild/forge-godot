@@ -137,7 +137,7 @@ public class Ray3DNode(
 
 		// On the transition only. The held geometry is redrawn every cast, and outlining the target every cast would
 		// stack a fresh outline on the last one until nothing about it read as a highlight.
-		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor);
+		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor, _collideWithAreas);
 
 		if (hit && _oneShot)
 		{

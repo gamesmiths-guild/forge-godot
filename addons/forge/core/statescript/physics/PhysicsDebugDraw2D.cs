@@ -385,12 +385,18 @@ internal static class PhysicsDebugDraw2D
 	/// The query's own geometry says where it looked and its colour says whether it found anything; this says
 	/// <em>who</em>, which is the part a shape drawn over a crowd cannot. Entities with no collider of their own are
 	/// skipped rather than marked, since there is no outline to draw for one and a stand-in shape would report a
-	/// volume the query never tested.
+	/// volume the query never tested. Areas are outlined only when the query counted areas, for the same reason: a
+	/// sensor nested under a body is a volume a query about bodies never tested.
 	/// </remarks>
 	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
 	/// <param name="entities">The entities the query answered with.</param>
 	/// <param name="color">The colour to outline them in, matching the query's own.</param>
-	public static void FlashTargets(GraphContext graphContext, IEnumerable<IForgeEntity> entities, Color color)
+	/// <param name="includeAreas">Whether the query counted areas as well as bodies.</param>
+	public static void FlashTargets(
+		GraphContext graphContext,
+		IEnumerable<IForgeEntity> entities,
+		Color color,
+		bool includeAreas)
 	{
 		if (!HighlightsTargets)
 		{
@@ -399,7 +405,7 @@ internal static class PhysicsDebugDraw2D
 
 		foreach (IForgeEntity entity in entities)
 		{
-			FlashTarget(graphContext, entity, color);
+			FlashTarget(graphContext, entity, color, includeAreas);
 		}
 	}
 
@@ -409,14 +415,15 @@ internal static class PhysicsDebugDraw2D
 	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
 	/// <param name="entity">The entity the query answered with, or <see langword="null"/> for none.</param>
 	/// <param name="color">The colour to outline it in, matching the query's own.</param>
-	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color)
+	/// <param name="includeAreas">Whether the query counted areas as well as bodies.</param>
+	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color, bool includeAreas)
 	{
 		if (!HighlightsTargets || !ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? spatialNode))
 		{
 			return;
 		}
 
-		FlashColliders(graphContext, spatialNode, color);
+		FlashColliders(graphContext, spatialNode, color, includeAreas);
 	}
 
 	/// <summary>
@@ -529,16 +536,16 @@ internal static class PhysicsDebugDraw2D
 		Flash(marker);
 	}
 
-	private static void FlashColliders(GraphContext graphContext, Node node, Color color)
+	private static void FlashColliders(GraphContext graphContext, Node node, Color color, bool includeAreas)
 	{
-		if (node is CollisionObject2D collider)
+		if (node is CollisionObject2D collider && (includeAreas || collider is not Area2D))
 		{
 			FlashBody(graphContext, collider, collider.GlobalTransform, color);
 		}
 
 		foreach (Node child in node.GetChildren())
 		{
-			FlashColliders(graphContext, child, color);
+			FlashColliders(graphContext, child, color, includeAreas);
 		}
 	}
 

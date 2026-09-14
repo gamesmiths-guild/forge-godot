@@ -76,7 +76,7 @@ internal sealed class Overlap2DResolver(
 			: PhysicsDebugDraw2D.OverlapEmptyColor;
 
 		PhysicsDebugDraw2D.FlashShape(graphContext, shape, transform, color);
-		PhysicsDebugDraw2D.FlashTargets(graphContext, _found, color);
+		PhysicsDebugDraw2D.FlashTargets(graphContext, _found, color, _includeAreas);
 
 		var resolved = new IForgeEntity[_found.Count];
 		_found.CopyTo(resolved);
