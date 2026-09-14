@@ -54,6 +54,7 @@ These pages cover authoring details that the Godot editor adds on top of the cor
 | [EventPayloadOutputResolver](event-payload-resolver.md#listener-side-eventpayloadoutputresolver) | `EventPayloadWriter` | Selects an `IEventPayloadProvider` to write a received payload to graph variables for `EventListenerNode`. |
 | [EventPayloadResolver](event-payload-resolver.md#raise-side-eventpayloadresolver) | `EventPayloadRaiser` | Selects an `IEventPayloadProvider` to build and raise a typed event payload for `RaiseEventNode`. |
 | [IsValidResolver](is-valid-resolver.md) | `bool` | Authors a validity check over an object-backed variable of any registered type. Rejects null, invalidated handles, and freed Godot objects. |
+| [LookAtResolver](look-at-resolver.md) | `Quaternion` | Authors a look rotation from two positions and an up vector. Faces Godot's −Z, where core's faces +Z. |
 | [ObjectEqualsResolver](object-equals-resolver.md) | `bool` | Authors a reference-identity check between two object-backed variables of any registered type. |
 | [OwnershipResolver](ownership-resolver.md) | `EffectOwnership` | Composes effect ownership from two nested entity resolvers. |
 | [TagResolver](tag-resolver.md) | `Tag` | Selects one or more registered tags for any tag input (e.g. the cue nodes). |
