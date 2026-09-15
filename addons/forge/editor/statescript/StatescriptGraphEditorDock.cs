@@ -753,7 +753,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		DisposeCachedGraphVisuals(_openTabs[tabIndex]);
 
 		_openTabs.RemoveAt(tabIndex);
+
+		// Removing the current tab makes the bar select a neighbour of its own choosing and emit TabChanged, which
+		// would load that graph only for the load below to replace it.
+		bool wasLoading = _isLoadingGraph;
+		_isLoadingGraph = true;
 		_tabBar.RemoveTab(tabIndex);
+		_isLoadingGraph = wasLoading;
 
 		if (_openTabs.Count > 0)
 		{
