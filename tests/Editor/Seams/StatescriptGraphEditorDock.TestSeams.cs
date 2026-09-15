@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System.Linq;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using GodotCollections = Godot.Collections;
@@ -74,6 +75,21 @@ public partial class StatescriptGraphEditorDock
 		{
 			visual.TestOnlySetWidth(width);
 		}
+	}
+
+	/// <summary>
+	/// Returns the open graph whose node visuals the graph edit is showing, regardless of which tab is selected.
+	/// </summary>
+	/// <returns>The displayed graph, or <see langword="null"/> when nothing is shown.</returns>
+	internal StatescriptGraph? TestOnlyDisplayedGraph()
+	{
+		StatescriptGraphNode? visual = _graphEdit?.GetChildren().OfType<StatescriptGraphNode>().FirstOrDefault();
+		if (visual?.NodeResource is null)
+		{
+			return null;
+		}
+
+		return _openTabs.Select(x => x.GraphResource).FirstOrDefault(x => x.Nodes.Contains(visual.NodeResource));
 	}
 }
 #endif

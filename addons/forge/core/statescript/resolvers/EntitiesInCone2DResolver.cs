@@ -118,7 +118,7 @@ internal sealed class EntitiesInCone2DResolver(
 
 		// The entities that passed the aperture test, not the ones the sphere found: a wireframe cone drawn over a
 		// crowd cannot say which of them the angle kept.
-		PhysicsDebugDraw2D.FlashTargets(graphContext, _inCone, color);
+		PhysicsDebugDraw2D.FlashTargets(graphContext, _inCone, color, _includeAreas);
 
 		return [.. _inCone];
 	}

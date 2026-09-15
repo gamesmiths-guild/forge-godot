@@ -243,8 +243,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			if (_openTabs[i].GraphResource == graph || (!string.IsNullOrEmpty(graph.ResourcePath)
 				&& _openTabs[i].ResourcePath == graph.ResourcePath))
 			{
-				SetCurrentTabWithoutLoading(i);
-				ApplyVariablesPanelState(i);
+				// TabChanged loads the graph; a no-op when the tab is already current.
+				_tabBar.CurrentTab = i;
 				return;
 			}
 		}
@@ -753,7 +753,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		DisposeCachedGraphVisuals(_openTabs[tabIndex]);
 
 		_openTabs.RemoveAt(tabIndex);
+
+		// Removing the current tab makes the bar select a neighbour of its own choosing and emit TabChanged, which
+		// would load that graph only for the load below to replace it.
+		bool wasLoading = _isLoadingGraph;
+		_isLoadingGraph = true;
 		_tabBar.RemoveTab(tabIndex);
+		_isLoadingGraph = wasLoading;
 
 		if (_openTabs.Count > 0)
 		{

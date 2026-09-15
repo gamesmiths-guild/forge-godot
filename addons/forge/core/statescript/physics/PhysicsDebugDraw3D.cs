@@ -23,6 +23,11 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 /// </remarks>
 internal static class PhysicsDebugDraw3D
 {
+	/// <summary>
+	/// Prefix of the project settings holding the colours this drawer uses.
+	/// </summary>
+	public const string ColorSettingPrefix = "forge/statescript/debug_colors_3d/";
+
 	private const string ContainerName = "ForgeStatescriptPhysicsDebug";
 
 	private const float FlashSeconds = 0.35f;
@@ -38,6 +43,30 @@ internal static class PhysicsDebugDraw3D
 	private const float PointMarkExtent = 0.125f;
 
 	private static readonly Dictionary<Color, StandardMaterial3D> _materials = [];
+
+	// The palette: each colour is a project setting under ColorSettingPrefix, with what an unset project draws in.
+	// Only the alpha differs between the two dimensions: 3D wireframes are drawn over the scene with no depth test,
+	// and need less of it.
+	private static readonly PhysicsDebugColor _overlapEmpty =
+		new(ColorSettingPrefix + "overlap_empty", new(0.25f, 0.85f, 1.0f, 0.2f));
+
+	private static readonly PhysicsDebugColor _overlapFound =
+		new(ColorSettingPrefix + "overlap_found", new(1.0f, 0.55f, 0.2f, 0.2f));
+
+	private static readonly PhysicsDebugColor _rayHit =
+		new(ColorSettingPrefix + "ray_hit", new(1.0f, 0.45f, 0.2f, 0.2f));
+
+	private static readonly PhysicsDebugColor _rayClear =
+		new(ColorSettingPrefix + "ray_clear", new(1.0f, 0.85f, 0.3f, 0.2f));
+
+	private static readonly PhysicsDebugColor _sightClear =
+		new(ColorSettingPrefix + "sight_clear", new(0.35f, 1.0f, 0.45f));
+
+	private static readonly PhysicsDebugColor _sightBlocked =
+		new(ColorSettingPrefix + "sight_blocked", new(1.0f, 0.3f, 0.35f));
+
+	private static readonly PhysicsDebugColor _force =
+		new(ColorSettingPrefix + "force", new(1.0f, 0.4f, 0.95f));
 
 	/// <summary>
 	/// Gets a value indicating whether the running game was started with Visible Collision Shapes on.
@@ -56,37 +85,43 @@ internal static class PhysicsDebugDraw3D
 	/// <summary>
 	/// Gets the colour of an overlap query that found nothing.
 	/// </summary>
-	public static Color OverlapEmptyColor { get; } = new(0.25f, 0.85f, 1.0f, 0.2f);
+	public static Color OverlapEmptyColor => _overlapEmpty.Value;
 
 	/// <summary>
 	/// Gets the colour of an overlap query that found something.
 	/// </summary>
-	public static Color OverlapFoundColor { get; } = new(1.0f, 0.55f, 0.2f, 0.2f);
+	public static Color OverlapFoundColor => _overlapFound.Value;
 
 	/// <summary>
 	/// Gets the colour of a ray that hit something.
 	/// </summary>
-	public static Color RayHitColor { get; } = new(1.0f, 0.45f, 0.2f, 0.2f);
+	public static Color RayHitColor => _rayHit.Value;
 
 	/// <summary>
 	/// Gets the colour of a ray that reached its full length without hitting anything.
 	/// </summary>
-	public static Color RayClearColor { get; } = new(1.0f, 0.85f, 0.3f, 0.2f);
+	public static Color RayClearColor => _rayClear.Value;
 
 	/// <summary>
 	/// Gets the colour of an unobstructed line of sight.
 	/// </summary>
-	public static Color SightClearColor { get; } = new(0.35f, 1.0f, 0.45f);
+	public static Color SightClearColor => _sightClear.Value;
 
 	/// <summary>
 	/// Gets the colour of a line of sight something is standing in.
 	/// </summary>
-	public static Color SightBlockedColor { get; } = new(1.0f, 0.3f, 0.35f);
+	public static Color SightBlockedColor => _sightBlocked.Value;
 
 	/// <summary>
 	/// Gets the colour of a velocity or impulse arrow.
 	/// </summary>
-	public static Color ForceColor { get; } = new(1.0f, 0.4f, 0.95f);
+	public static Color ForceColor => _force.Value;
+
+	/// <summary>
+	/// Gets every colour this drawer uses, for <c>ForgeSettings.EnsureRegistered</c> to declare in Project Settings.
+	/// </summary>
+	public static IReadOnlyList<PhysicsDebugColor> Colors { get; } =
+		[_overlapEmpty, _overlapFound, _rayHit, _rayClear, _sightClear, _sightBlocked, _force];
 
 	/// <summary>
 	/// Gets the marker a State node holds for as long as it is watching something, creating it on the first call and
@@ -103,7 +138,7 @@ internal static class PhysicsDebugDraw3D
 	/// scene.</returns>
 	public static MeshInstance3D? EnsureMarker(GraphContext graphContext, MeshInstance3D? existing, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			Release(existing);
 			return null;
@@ -369,7 +404,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashShape(GraphContext graphContext, Shape3D shape, Transform3D transform, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -392,7 +427,7 @@ internal static class PhysicsDebugDraw3D
 		Transform3D transform,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -426,21 +461,27 @@ internal static class PhysicsDebugDraw3D
 	/// The query's own geometry says where it looked and its colour says whether it found anything; this says
 	/// <em>who</em>, which is the part a shape drawn over a crowd cannot. Entities with no collider of their own are
 	/// skipped rather than marked, since there is no outline to draw for one and a stand-in shape would report a
-	/// volume the query never tested.
+	/// volume the query never tested. Areas are outlined only when the query counted areas, for the same reason: a
+	/// sensor nested under a body is a volume a query about bodies never tested.
 	/// </remarks>
 	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
 	/// <param name="entities">The entities the query answered with.</param>
 	/// <param name="color">The colour to outline them in, matching the query's own.</param>
-	public static void FlashTargets(GraphContext graphContext, IEnumerable<IForgeEntity> entities, Color color)
+	/// <param name="includeAreas">Whether the query counted areas as well as bodies.</param>
+	public static void FlashTargets(
+		GraphContext graphContext,
+		IEnumerable<IForgeEntity> entities,
+		Color color,
+		bool includeAreas)
 	{
-		if (!HighlightsTargets)
+		if (!Highlights(color))
 		{
 			return;
 		}
 
 		foreach (IForgeEntity entity in entities)
 		{
-			FlashTarget(graphContext, entity, color);
+			FlashTarget(graphContext, entity, color, includeAreas);
 		}
 	}
 
@@ -450,14 +491,15 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="graphContext">The graph execution context, used to find the viewport to draw in.</param>
 	/// <param name="entity">The entity the query answered with, or <see langword="null"/> for none.</param>
 	/// <param name="color">The colour to outline it in, matching the query's own.</param>
-	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color)
+	/// <param name="includeAreas">Whether the query counted areas as well as bodies.</param>
+	public static void FlashTarget(GraphContext graphContext, IForgeEntity? entity, Color color, bool includeAreas)
 	{
-		if (!HighlightsTargets || !ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode))
+		if (!Highlights(color) || !ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? spatialNode))
 		{
 			return;
 		}
 
-		FlashColliders(graphContext, spatialNode, color);
+		FlashColliders(graphContext, spatialNode, color, includeAreas);
 	}
 
 	/// <summary>
@@ -468,7 +510,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashPoint(GraphContext graphContext, Vector3 position, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -495,7 +537,7 @@ internal static class PhysicsDebugDraw3D
 		Vector3 to,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -514,7 +556,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashLine(GraphContext graphContext, Vector3 from, Vector3 to, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -533,7 +575,7 @@ internal static class PhysicsDebugDraw3D
 	/// <param name="color">The colour to draw it in.</param>
 	public static void FlashArrow(GraphContext graphContext, Vector3 origin, Vector3 vector, Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -560,7 +602,7 @@ internal static class PhysicsDebugDraw3D
 		float halfAngle,
 		Color color)
 	{
-		if (!IsEnabled)
+		if (!Draws(color))
 		{
 			return;
 		}
@@ -570,17 +612,27 @@ internal static class PhysicsDebugDraw3D
 		Flash(marker);
 	}
 
-	private static void FlashColliders(GraphContext graphContext, Node node, Color color)
+	private static void FlashColliders(GraphContext graphContext, Node node, Color color, bool includeAreas)
 	{
-		if (node is CollisionObject3D collider)
+		if (node is CollisionObject3D collider && (includeAreas || collider is not Area3D))
 		{
 			FlashBody(graphContext, collider, collider.GlobalTransform, color);
 		}
 
 		foreach (Node child in node.GetChildren())
 		{
-			FlashColliders(graphContext, child, color);
+			FlashColliders(graphContext, child, color, includeAreas);
 		}
+	}
+
+	private static bool Draws(Color color)
+	{
+		return IsEnabled && color.A > 0f;
+	}
+
+	private static bool Highlights(Color color)
+	{
+		return HighlightsTargets && color.A > 0f;
 	}
 
 	private static MeshInstance3D? CreateMarker(GraphContext graphContext, Color color)

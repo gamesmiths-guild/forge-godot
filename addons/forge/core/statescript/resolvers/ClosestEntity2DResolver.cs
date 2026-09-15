@@ -68,8 +68,10 @@ internal sealed class ClosestEntity2DResolver(
 		}
 
 		// The one thing it draws, and the reason it is worth drawing: the query that found the group already showed
-		// the group, and nothing in that wireframe says which of them this picked.
-		PhysicsDebugDraw2D.FlashTarget(graphContext, closest, PhysicsDebugDraw2D.OverlapFoundColor);
+		// the group, and nothing in that wireframe says which of them this picked. Bodies only, since it ran no query
+		// that an area could have answered.
+		PhysicsDebugDraw2D.FlashTarget(
+			graphContext, closest, PhysicsDebugDraw2D.OverlapFoundColor, includeAreas: false);
 
 		return closest;
 	}

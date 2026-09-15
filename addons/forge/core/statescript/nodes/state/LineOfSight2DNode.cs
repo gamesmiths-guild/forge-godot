@@ -230,7 +230,8 @@ public class LineOfSight2DNode(bool deactivateOnBlocked = false)
 
 		// On the transition only, and only what got in the way: the held line is redrawn every check, and a clear line
 		// has nobody to name.
-		PhysicsDebugDraw2D.FlashTarget(graphContext, blocker.Entity, PhysicsDebugDraw2D.SightBlockedColor);
+		PhysicsDebugDraw2D.FlashTarget(
+			graphContext, blocker.Entity, PhysicsDebugDraw2D.SightBlockedColor, includeAreas: false);
 
 		if (!clear && _deactivateOnBlocked)
 		{

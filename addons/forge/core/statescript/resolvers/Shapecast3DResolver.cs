@@ -107,7 +107,8 @@ internal sealed class Shapecast3DResolver(
 			origin + motion,
 			hit ? PhysicsDebugDraw3D.RayHitColor : PhysicsDebugDraw3D.RayClearColor);
 
-		PhysicsDebugDraw3D.FlashTarget(graphContext, hitResult.Entity, PhysicsDebugDraw3D.RayHitColor);
+		PhysicsDebugDraw3D.FlashTarget(
+			graphContext, hitResult.Entity, PhysicsDebugDraw3D.RayHitColor, _collideWithAreas);
 
 		// Only the entity survives, because a resolver returns one value. Everything else the sweep reported - where
 		// it landed, the surface normal, the collider, the distance - is what the Shapecast 3D node exists to give a

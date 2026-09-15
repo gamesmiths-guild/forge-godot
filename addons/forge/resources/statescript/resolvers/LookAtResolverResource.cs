@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -21,6 +22,6 @@ public partial class LookAtResolverResource : TernaryNestedResolverResourceBase
 		IPropertyResolver thirdResolver,
 		Graph graph)
 	{
-		return new LookAtResolver(firstResolver, secondResolver, thirdResolver);
+		return new GodotLookAtResolver(firstResolver, secondResolver, thirdResolver);
 	}
 }

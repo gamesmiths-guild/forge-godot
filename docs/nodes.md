@@ -276,7 +276,7 @@ Extends Area2D/Area3D; travels along its own forward each physics step and appli
 
 **Description:**
 
-Moves −Z in 3D and +X in 2D, so **aim is simply instantiation rotation**: binding [`InstantiateScene3DNode`](statescript/nodes/scene-nodes.md#the-instantiating-pair)'s Rotation to core's `LookAt` — or the 2D node's Rotation to an angle — is the whole launch story, and there is no `Launch` method to call.
+Moves −Z in 3D and +X in 2D, so **aim is simply instantiation rotation**: binding [`InstantiateScene3DNode`](statescript/nodes/scene-nodes.md#the-instantiating-pair)'s Rotation to [`Look At`](statescript/resolvers/look-at-resolver.md) — or the 2D node's Rotation to an angle — is the whole launch story, and there is no `Launch` method to call.
 
 It carries `ForgeEffect` children exactly as `EffectArea3D` does, and implements `IInstantiationReceiver`, so owner and source arrive from whatever spawned it. On a hit it resolves the target through [`ForgeEntityBridge`](helper-classes.md#forgeentitybridge) and applies its effects with the falloff sampled from the curve.
 

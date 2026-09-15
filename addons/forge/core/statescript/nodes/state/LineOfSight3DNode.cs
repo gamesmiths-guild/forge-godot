@@ -231,7 +231,8 @@ public class LineOfSight3DNode(bool deactivateOnBlocked = false)
 
 		// On the transition only, and only what got in the way: the held line is redrawn every check, and a clear line
 		// has nobody to name.
-		PhysicsDebugDraw3D.FlashTarget(graphContext, blocker.Entity, PhysicsDebugDraw3D.SightBlockedColor);
+		PhysicsDebugDraw3D.FlashTarget(
+			graphContext, blocker.Entity, PhysicsDebugDraw3D.SightBlockedColor, includeAreas: false);
 
 		if (!clear && _deactivateOnBlocked)
 		{

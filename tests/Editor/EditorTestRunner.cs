@@ -117,7 +117,9 @@ internal static class EditorTestRunner
 
 		try
 		{
-			test.Invoke(null, [new EditorTestContext(dock, undoRedo)]);
+			// A test of the editor's global state - project settings, say - has no dock to drive and takes no context.
+			object[] arguments = test.GetParameters().Length == 0 ? [] : [new EditorTestContext(dock, undoRedo)];
+			test.Invoke(null, arguments);
 			return new EditorTestResult(test.DeclaringType!.FullName!, name, stopwatch.Elapsed, null);
 		}
 #pragma warning disable CA1031 // A failing test is reported, never allowed to take the runner down with it.

@@ -69,7 +69,7 @@ public sealed class Shapecast3DNode(bool collideWithAreas = false) : ConditionNo
 				hit ? PhysicsDebugDraw3D.RayHitColor : PhysicsDebugDraw3D.RayClearColor);
 		}
 
-		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor);
+		PhysicsDebugDraw3D.FlashTarget(graphContext, result.Entity, PhysicsDebugDraw3D.RayHitColor, _collideWithAreas);
 
 		return hit;
 	}

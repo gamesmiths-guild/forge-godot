@@ -166,8 +166,6 @@ public partial class ForgeAbilityData : Resource
 					}
 				}
 
-				GD.Print($"call {triggerTag} - {Name}");
-
 				return AbilityTriggerData.ForEvent(triggerTag, Priority);
 			case TriggerSource.TagAdded:
 				return AbilityTriggerData.ForTagAdded(triggerTag);

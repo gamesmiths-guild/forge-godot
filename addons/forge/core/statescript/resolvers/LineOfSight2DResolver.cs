@@ -80,7 +80,8 @@ internal sealed class LineOfSight2DResolver(
 
 		// Only on a block, and only the blocker: a clear line has nobody to name, and the thing that got in the way is
 		// what an author checking a failed line of sight is looking for.
-		PhysicsDebugDraw2D.FlashTarget(graphContext, blocker.Entity, PhysicsDebugDraw2D.SightBlockedColor);
+		PhysicsDebugDraw2D.FlashTarget(
+			graphContext, blocker.Entity, PhysicsDebugDraw2D.SightBlockedColor, includeAreas: false);
 
 		return new Variant128(clear);
 	}
