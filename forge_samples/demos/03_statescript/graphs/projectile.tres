@@ -22,6 +22,16 @@ script = ExtResource("4_connection")
 FromNode = "node_1"
 ToNode = "node_3"
 
+[sub_resource type="Resource" id="Resource_1ki2j"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_shot_to_recoil"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+ToNode = "node_5"
+
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
 NodeId = "entry"
@@ -84,16 +94,39 @@ NodeId = "node_3"
 Title = "Instantiate Scene 3D"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
-PositionOffset = Vector2(600, 200)
+PositionOffset = Vector2(620, 200)
 CustomData = Dictionary[String, Variant]({
 "parentMode": "Node",
 "passOwnership": true
 })
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_spawn_scene"), SubResource("Resource_spawn_position"), SubResource("Resource_spawn_rotation"), SubResource("Resource_spawn_parent")])
 
+[sub_resource type="Resource" id="Resource_shot"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Play Audio One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
+PositionOffset = Vector2(980, 200)
+CustomData = Dictionary[String, Variant]({
+"playerPath": "ShotSfx"
+})
+
+[sub_resource type="Resource" id="Resource_recoil"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Play Animation One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAnimationOneShotNode"
+PositionOffset = Vector2(1300, 200)
+CustomData = Dictionary[String, Variant]({
+"animation": "shoot",
+"playerPath": "FxPlayer"
+})
+
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Projectile"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_spawn")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_h2yms"), SubResource("Resource_opgl2")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_spawn"), SubResource("Resource_shot"), SubResource("Resource_recoil")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_h2yms"), SubResource("Resource_opgl2"), SubResource("Resource_1ki2j"), SubResource("Resource_shot_to_recoil")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

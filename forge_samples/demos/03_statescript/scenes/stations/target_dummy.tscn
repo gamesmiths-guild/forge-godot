@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://w55e2cvyemsw"]
 
 [ext_resource type="Material" uid="uid://busfmqa4bdqna" path="res://forge_samples/demos/03_statescript/materials/player_body.tres" id="1_body"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_entity"]
 [ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="4_6qcqr"]
 [ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="4_attrset"]
@@ -35,6 +35,33 @@ bg_color = Color(1, 0.0364741, 0.0496456, 1)
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_bars"]
 viewport_path = NodePath("SubViewport")
+
+[sub_resource type="Animation" id="Animation_fx_reset"]
+length = 0.001
+tracks/0/type = "scale_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Post")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 1, 1, 1)
+
+[sub_resource type="Animation" id="Animation_hit"]
+resource_name = "hit"
+length = 0.25
+tracks/0/type = "scale_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Post")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 1, 1, 1, 0.06, 1, 1.25, 0.8, 1.25, 0.25, 1, 1, 1, 1)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]
+_data = {
+&"RESET": SubResource("Animation_fx_reset"),
+&"hit": SubResource("Animation_hit")
+}
 
 [node name="TargetDummy" type="StaticBody3D" unique_id=1926101796]
 collision_layer = 4
@@ -119,3 +146,6 @@ vertical_alignment = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
 billboard = 1
 texture = SubResource("ViewportTexture_bars")
+
+[node name="FxPlayer" type="AnimationPlayer" parent="." unique_id=1027940179]
+libraries/ = SubResource("AnimationLibrary_fx")

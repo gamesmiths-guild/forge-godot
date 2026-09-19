@@ -1,8 +1,8 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://bgw7wp5ey33l4"]
 
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/bark.tres" id="1_bark"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/leaf.tres" id="2_leaf"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/leaf_light.tres" id="3_leaf_light"]
+[ext_resource type="Material" uid="uid://drecjffqcbfn" path="res://forge_samples/demos/03_statescript/materials/bark.tres" id="1_bark"]
+[ext_resource type="Material" uid="uid://b8o8us1cekn72" path="res://forge_samples/demos/03_statescript/materials/leaf.tres" id="2_leaf"]
+[ext_resource type="Material" uid="uid://banfs60shjcc2" path="res://forge_samples/demos/03_statescript/materials/leaf_light.tres" id="3_leaf_light"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_trunk"]
 top_radius = 0.18
@@ -32,28 +32,28 @@ radial_segments = 6
 height = 1.4
 radius = 0.4
 
-[node name="Tree" type="StaticBody3D"]
+[node name="Tree" type="StaticBody3D" unique_id=864044502]
 
-[node name="Trunk" type="MeshInstance3D" parent="."]
+[node name="Trunk" type="MeshInstance3D" parent="." unique_id=1638977087]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 mesh = SubResource("CylinderMesh_trunk")
 surface_material_override/0 = ExtResource("1_bark")
 
-[node name="Tier1" type="MeshInstance3D" parent="."]
+[node name="Tier1" type="MeshInstance3D" parent="." unique_id=1835233527]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 mesh = SubResource("CylinderMesh_tier1")
 surface_material_override/0 = ExtResource("2_leaf")
 
-[node name="Tier2" type="MeshInstance3D" parent="."]
+[node name="Tier2" type="MeshInstance3D" parent="." unique_id=693048922]
 transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, 0, 2.9, 0)
 mesh = SubResource("CylinderMesh_tier2")
 surface_material_override/0 = ExtResource("3_leaf_light")
 
-[node name="Tier3" type="MeshInstance3D" parent="."]
+[node name="Tier3" type="MeshInstance3D" parent="." unique_id=2026520195]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.9, 0)
 mesh = SubResource("CylinderMesh_tier3")
 surface_material_override/0 = ExtResource("2_leaf")
 
-[node name="Collision" type="CollisionShape3D" parent="."]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1363131728]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
 shape = SubResource("CylinderShape3D_trunk")

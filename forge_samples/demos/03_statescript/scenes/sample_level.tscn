@@ -1,17 +1,17 @@
 [gd_scene format=3 uid="uid://dtct8is60aoex"]
 
 [ext_resource type="Environment" uid="uid://curphkq8itbej" path="res://forge_samples/demos/03_statescript/materials/environment.tres" id="1_env"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_1xjp2"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/ground.tres" id="2_grass"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_1xjp2"]
+[ext_resource type="Material" uid="uid://bfepc7hp0hd8h" path="res://forge_samples/demos/03_statescript/materials/ground.tres" id="2_grass"]
 [ext_resource type="PackedScene" uid="uid://cvt3hn4ybouc0" path="res://forge_samples/demos/03_statescript/scenes/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" uid="uid://dr8sxhg544h62" path="res://forge_samples/demos/03_statescript/scenes/stations/bonfire.tscn" id="4_bonfire"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/water.tres" id="4_f8cj4"]
+[ext_resource type="Material" uid="uid://dm25nvk6sef30" path="res://forge_samples/demos/03_statescript/materials/water.tres" id="4_f8cj4"]
 [ext_resource type="PackedScene" uid="uid://btewds1fqvri5" path="res://forge_samples/demos/03_statescript/scenes/stations/lake.tscn" id="5_lake"]
 [ext_resource type="PackedScene" uid="uid://c64aspqdedbua" path="res://forge_samples/demos/03_statescript/scenes/stations/regen_area.tscn" id="6_regen"]
 [ext_resource type="PackedScene" uid="uid://t3tnw06y4rt1" path="res://forge_samples/demos/03_statescript/scenes/stations/brazier.tscn" id="7_brazier"]
 [ext_resource type="PackedScene" uid="uid://w55e2cvyemsw" path="res://forge_samples/demos/03_statescript/scenes/stations/target_dummy.tscn" id="8_dummy"]
 [ext_resource type="PackedScene" uid="uid://denp5vmbi66b8" path="res://forge_samples/demos/03_statescript/scenes/stations/standing_stone.tscn" id="9_stone"]
-[ext_resource type="PackedScene" path="res://forge_samples/demos/03_statescript/scenes/props/tree.tscn" id="9_tree"]
+[ext_resource type="PackedScene" uid="uid://bgw7wp5ey33l4" path="res://forge_samples/demos/03_statescript/scenes/props/tree.tscn" id="9_tree"]
 [ext_resource type="Script" uid="uid://dihph8tka5qgq" path="res://forge_samples/demos/03_statescript/scripts/FollowCamera3D.cs" id="10_camera"]
 [ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://forge_samples/shared/QuitScene.cs" id="11_quit"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="12_area"]
@@ -24,10 +24,24 @@
 [ext_resource type="PackedScene" uid="uid://dn5d64jtdgft5" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/reflect_effect.tscn" id="19_reflect_vfx"]
 [ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn" id="20_fire_vfx"]
 [ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_wet_effect.tscn" id="21_wet_vfx"]
-[ext_resource type="PackedScene" uid="uid://cwn3bvfd3pobb" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_regen_effect.tscn" id="22_regen_vfx"]
 [ext_resource type="PackedScene" uid="uid://f0cdtm7kc3qx" path="res://forge_samples/shared/ActionBarView.tscn" id="23_action_bar"]
 [ext_resource type="NavigationMesh" uid="uid://yfi8e3ex6e4l" path="res://forge_samples/demos/03_statescript/scenes/sample_level_navmesh.tres" id="24_navmesh"]
 [ext_resource type="Script" uid="uid://bmoxdc61oenng" path="res://addons/forge/nodes/CameraShakeCueHandler.cs" id="25_shake_cue"]
+[ext_resource type="Script" uid="uid://4r6wjmvrq18e" path="res://forge_samples/demos/03_statescript/scripts/HitFlashCueHandler3D.cs" id="26_flash_cue"]
+[ext_resource type="Material" uid="uid://slep1ateetaq" path="res://forge_samples/demos/03_statescript/materials/hit_flash.tres" id="27_hit_flash"]
+[ext_resource type="Material" uid="uid://mkfty8mek62t" path="res://forge_samples/demos/03_statescript/materials/burn_flash.tres" id="28_burn_flash"]
+[ext_resource type="PackedScene" uid="uid://glc1a555rbn5" path="res://forge_samples/demos/03_statescript/scenes/vfx/vapor_effect.tscn" id="29_vapor_vfx"]
+[ext_resource type="Script" uid="uid://bxw5ax6u4m82n" path="res://addons/forge/nodes/AudioCueHandler.cs" id="30_audio_cue"]
+[ext_resource type="AudioStream" uid="uid://fe2dybr470eu" path="res://forge_samples/shared/audio/hit.ogg" id="31_hit_sfx"]
+[ext_resource type="AudioStream" uid="uid://ddltr6pp8vhxs" path="res://forge_samples/shared/audio/fire-loop.ogg" id="32_fire_sfx"]
+[ext_resource type="AudioStream" uid="uid://bnsk4h3tbd3s7" path="res://forge_samples/shared/audio/quench.ogg" id="33_quench_sfx"]
+[ext_resource type="AudioStream" uid="uid://dnuat5dsia5du" path="res://forge_samples/shared/audio/water-dripping-loop.ogg" id="34_wet_sfx"]
+[ext_resource type="AudioStream" uid="uid://b2rg3674ittqt" path="res://forge_samples/shared/audio/heal.ogg" id="35_heal_sfx"]
+[ext_resource type="AudioStream" uid="uid://cgg38msod1667" path="res://forge_samples/shared/audio/healing-loop.ogg" id="36_regen_sfx"]
+[ext_resource type="AudioStream" uid="uid://isyp0yuesk4o" path="res://forge_samples/shared/audio/shield-loop.ogg" id="37_shield_sfx"]
+[ext_resource type="AudioStream" uid="uid://ch1ig413i31i3" path="res://forge_samples/shared/audio/reflect.ogg" id="38_reflect_sfx"]
+[ext_resource type="Script" uid="uid://d3v5ni4eocbqr" path="res://addons/forge/nodes/AnimationCueHandler.cs" id="39_anim_cue"]
+[ext_resource type="PackedScene" uid="uid://75gb6rjv4sf5" path="res://forge_samples/demos/03_statescript/scenes/vfx/regen_effect.tscn" id="40_regen_vfx"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_4t6yx"]
 material = ExtResource("4_f8cj4")
@@ -38,6 +52,10 @@ size = Vector3(30, 1.5, 5)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_void"]
 size = Vector3(200, 62.24588, 200)
+
+[sub_resource type="Curve" id="Curve_burn_gain"]
+_data = [Vector2(0, 0.35), 0.0, 0.0, 0, 0, Vector2(1, 0.35), 0.0, 0.0, 0, 0]
+point_count = 2
 
 [node name="SampleLevel" type="Node3D" unique_id=930093996]
 
@@ -328,8 +346,9 @@ CueTag = "cue.vfx.wet"
 
 [node name="RegenVFX Cues" type="Node" parent="." unique_id=505247103]
 script = ExtResource("17_particles_cue")
-PersistentEffectScene = ExtResource("22_regen_vfx")
+PersistentEffectScene = ExtResource("40_regen_vfx")
 UpdateEffectIntensity = true
+IntensitySpeed = Vector2(0.25, 2.5)
 Offset = Vector3(0, 2, 0)
 CueTag = "cue.vfx.regen"
 
@@ -338,6 +357,91 @@ script = ExtResource("25_shake_cue")
 Amplitude = 0.2
 CueTag = "cue.screen.shake"
 metadata/_custom_type_script = "uid://bmoxdc61oenng"
+
+[node name="HitFlash Cues" type="Node" parent="." unique_id=1849894790]
+script = ExtResource("26_flash_cue")
+FlashMaterial = ExtResource("27_hit_flash")
+Duration = 0.15
+CueTag = "cue.vfx.hit"
+
+[node name="BurnFlash Cues" type="Node" parent="." unique_id=1751204014]
+script = ExtResource("26_flash_cue")
+FlashMaterial = ExtResource("28_burn_flash")
+Duration = 0.12
+CueTag = "cue.vfx.burn"
+
+[node name="QuenchVFX Cues" type="Node" parent="." unique_id=621309963]
+script = ExtResource("17_particles_cue")
+InstantEffectScene = ExtResource("29_vapor_vfx")
+Offset = Vector3(0, 1, 0)
+CueTag = "cue.vfx.quench"
+
+[node name="Hit SFX" type="Node" parent="." unique_id=1879536885]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("31_hit_sfx")
+CueTag = "cue.sfx.hit"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Fire SFX" type="Node" parent="." unique_id=1051651938]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("32_fire_sfx")
+PlayOnExecute = false
+CueTag = "cue.sfx.fire"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Quench SFX" type="Node" parent="." unique_id=1452593854]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("33_quench_sfx")
+CueTag = "cue.sfx.quench"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Wet SFX" type="Node" parent="." unique_id=1434140919]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("34_wet_sfx")
+CueTag = "cue.sfx.wet"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Heal SFX" type="Node" parent="." unique_id=306185575]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("35_heal_sfx")
+PlayOnApply = false
+StopOnRemove = false
+CueTag = "cue.sfx.heal"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Regen SFX" type="Node" parent="." unique_id=274120948]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("36_regen_sfx")
+PlayOnExecute = false
+CueTag = "cue.sfx.regen"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Shield SFX" type="Node" parent="." unique_id=1790525107]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("37_shield_sfx")
+CueTag = "cue.sfx.shield"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Reflect SFX" type="Node" parent="." unique_id=521978773]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("38_reflect_sfx")
+CueTag = "cue.sfx.reflect"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Burn SFX" type="Node" parent="." unique_id=1775380545]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("31_hit_sfx")
+MagnitudeCurve = SubResource("Curve_burn_gain")
+CueTag = "cue.sfx.burn"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="HitAnim Cues" type="Node" parent="." unique_id=398820366]
+script = ExtResource("39_anim_cue")
+PlayerPath = "FxPlayer"
+ExecuteAnimation = "hit"
+Interrupt = false
+CueTag = "cue.vfx.hit"
+metadata/_custom_type_script = "uid://d3v5ni4eocbqr"
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1599457603]
 

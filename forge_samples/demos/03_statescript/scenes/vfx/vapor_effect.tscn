@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://glc1a555rbn5"]
+
+[sub_resource type="Gradient" id="Gradient_vapor"]
+offsets = PackedFloat32Array(0, 0.25, 1)
+colors = PackedColorArray(0.95, 0.97, 1, 0.85, 0.85, 0.9, 0.95, 0.55, 0.8, 0.85, 0.9, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_vapor"]
+gradient = SubResource("Gradient_vapor")
+
+[sub_resource type="Curve" id="Curve_vapor_scale"]
+_data = [Vector2(0, 0.45), 0.0, 0.9, 0, 0, Vector2(1, 1), 0.3, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_vapor_scale"]
+curve = SubResource("Curve_vapor_scale")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_vapor"]
+lifetime_randomness = 0.3
+emission_shape = 1
+emission_sphere_radius = 0.35
+direction = Vector3(0, 1, 0)
+spread = 30.0
+initial_velocity_min = 1.2
+initial_velocity_max = 2.4
+gravity = Vector3(0, 0.8, 0)
+damping_min = 0.8
+damping_max = 1.5
+scale_min = 0.5
+scale_max = 0.9
+scale_curve = SubResource("CurveTexture_vapor_scale")
+color_ramp = SubResource("GradientTexture1D_vapor")
+turbulence_enabled = true
+turbulence_noise_strength = 0.5
+turbulence_noise_scale = 4.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vapor"]
+transparency = 1
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_vapor"]
+material = SubResource("StandardMaterial3D_vapor")
+
+[node name="VaporEffect" type="GPUParticles3D" unique_id=1611638691]
+emitting = false
+amount = 32
+lifetime = 1.4
+one_shot = true
+explosiveness = 0.9
+process_material = SubResource("ParticleProcessMaterial_vapor")
+draw_pass_1 = SubResource("SphereMesh_vapor")

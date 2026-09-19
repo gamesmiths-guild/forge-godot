@@ -32,6 +32,11 @@ ToNode = "node_13"
 [sub_resource type="Resource" id="Resource_xn5pp"]
 script = ExtResource("4_connection")
 FromNode = "node_1"
+ToNode = "node_14"
+
+[sub_resource type="Resource" id="Resource_bbnfa"]
+script = ExtResource("4_connection")
+FromNode = "node_14"
 ToNode = "node_12"
 
 [sub_resource type="Resource" id="Resource_entry"]
@@ -48,6 +53,8 @@ NodeType = 3
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
 PositionOffset = Vector2(220, 200)
 CustomData = Dictionary[String, Variant]({
+"_custom_width": 225.85791,
+"_fold_settings": false,
 "operation": "CostAndCooldown"
 })
 
@@ -67,7 +74,7 @@ NodeId = "node_4"
 Title = "Collision Override 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.CollisionOverride3DNode"
-PositionOffset = Vector2(1080, 200)
+PositionOffset = Vector2(1340, 200)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_0": true,
 "_fold_input_property_1": true,
@@ -82,7 +89,7 @@ NodeId = "node_12"
 Title = "Play Animation"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.PlayAnimationNode"
-PositionOffset = Vector2(640, 200)
+PositionOffset = Vector2(940, 200)
 CustomData = Dictionary[String, Variant]({
 "animation": "roll"
 })
@@ -137,7 +144,7 @@ NodeId = "node_13"
 Title = "Move Body 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.MoveBody3DNode"
-PositionOffset = Vector2(1480, 200)
+PositionOffset = Vector2(1700, 200)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_0": true,
 "_fold_input_property_1": true,
@@ -147,10 +154,21 @@ CustomData = Dictionary[String, Variant]({
 })
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_hoj4f"), SubResource("Resource_e15kt")])
 
+[sub_resource type="Resource" id="Resource_woosh"]
+script = ExtResource("2_node")
+NodeId = "node_14"
+Title = "Play Audio One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
+PositionOffset = Vector2(620, 200)
+CustomData = Dictionary[String, Variant]({
+"playerPath": "DashSfx"
+})
+
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Dash"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_pass_through_enemies"), SubResource("Resource_5h2ox"), SubResource("Resource_f62k3")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_bg6f5"), SubResource("Resource_njutq"), SubResource("Resource_qguum"), SubResource("Resource_xn5pp")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_pass_through_enemies"), SubResource("Resource_5h2ox"), SubResource("Resource_f62k3"), SubResource("Resource_woosh")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_bg6f5"), SubResource("Resource_njutq"), SubResource("Resource_qguum"), SubResource("Resource_xn5pp"), SubResource("Resource_bbnfa")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

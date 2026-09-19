@@ -14,6 +14,11 @@
 [ext_resource type="Resource" uid="uid://u4w8dj6he865" path="res://forge_samples/demos/03_statescript/abilities/player/dash.tres" id="12_dash"]
 [ext_resource type="Resource" uid="uid://2ap1y02j3hnc" path="res://forge_samples/demos/03_statescript/abilities/player/shield.tres" id="13_shield"]
 [ext_resource type="Resource" uid="uid://qrl7e7juley6" path="res://forge_samples/demos/03_statescript/abilities/player/thorns.tres" id="14_thorns"]
+[ext_resource type="AudioStream" uid="uid://c2jkjy0k5jyyu" path="res://forge_samples/shared/audio/shot.ogg" id="15_shot"]
+[ext_resource type="AudioStream" uid="uid://b15cfkgnv2vag" path="res://forge_samples/shared/audio/woosh.ogg" id="16_woosh"]
+[ext_resource type="AudioStream" uid="uid://cldxi8c5nubs7" path="res://forge_samples/shared/audio/fizzle.ogg" id="17_dry_fire"]
+[ext_resource type="AudioStream" uid="uid://d26fxrgexf70w" path="res://forge_samples/shared/audio/shield-hit.ogg" id="18_shield_hit"]
+[ext_resource type="AudioStream" uid="uid://bqta7fvf7bnau" path="res://forge_samples/shared/audio/death.ogg" id="19_fall"]
 
 [sub_resource type="Resource" id="Resource_tags"]
 script = ExtResource("6_tags")
@@ -79,7 +84,67 @@ _data = {
 &"roll": SubResource("Animation_i1sys")
 }
 
-[node name="Player" type="CharacterBody3D" unique_id=708925511]
+[sub_resource type="Animation" id="Animation_fx_reset"]
+length = 0.001
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.8, 0)
+tracks/1/type = "scale_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 1, 1, 1)
+
+[sub_resource type="Animation" id="Animation_hit"]
+resource_name = "hit"
+length = 0.25
+tracks/0/type = "scale_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 1, 1, 1, 0.06, 1, 1.25, 0.8, 1.25, 0.25, 1, 1, 1, 1)
+tracks/1/type = "position_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0.8, 0, 0.25, 1, 0, 0.8, 0)
+
+[sub_resource type="Animation" id="Animation_shoot"]
+resource_name = "shoot"
+length = 0.2
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.8, 0, 0.05, 1, 0, 0.8, 0.15, 0.2, 1, 0, 0.8, 0)
+tracks/1/type = "scale_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 1, 1, 1, 0.05, 1, 0.92, 1.08, 0.92, 0.2, 1, 1, 1, 1)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]
+_data = {
+&"RESET": SubResource("Animation_fx_reset"),
+&"hit": SubResource("Animation_hit"),
+&"shoot": SubResource("Animation_shoot")
+}
+
+[node name="Player" type="CharacterBody3D" unique_id=708925511 node_paths=PackedStringArray("ActivationFailedSfx")]
 collision_layer = 2
 collision_mask = 5
 floor_block_on_wall = false
@@ -88,6 +153,7 @@ ProjectileAbility = ExtResource("11_projectile")
 DashAbility = ExtResource("12_dash")
 ShieldAbility = ExtResource("13_shield")
 ThornsAbility = ExtResource("14_thorns")
+ActivationFailedSfx = NodePath("DryFireSfx")
 
 [node name="Forge Entity" type="Node" parent="." unique_id=1581405689]
 unique_name_in_owner = true
@@ -227,3 +293,21 @@ texture = SubResource("ViewportTexture_bars")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=439049339]
 libraries/ = SubResource("AnimationLibrary_hn5xc")
+
+[node name="ShotSfx" type="AudioStreamPlayer3D" parent="." unique_id=1611099861]
+stream = ExtResource("15_shot")
+
+[node name="DashSfx" type="AudioStreamPlayer3D" parent="." unique_id=1553954389]
+stream = ExtResource("16_woosh")
+
+[node name="DryFireSfx" type="AudioStreamPlayer3D" parent="." unique_id=667606393]
+stream = ExtResource("17_dry_fire")
+
+[node name="ShieldHitSfx" type="AudioStreamPlayer3D" parent="." unique_id=1752839108]
+stream = ExtResource("18_shield_hit")
+
+[node name="FallSfx" type="AudioStreamPlayer3D" parent="." unique_id=1077698364]
+stream = ExtResource("19_fall")
+
+[node name="FxPlayer" type="AnimationPlayer" parent="." unique_id=568804654]
+libraries/ = SubResource("AnimationLibrary_fx")

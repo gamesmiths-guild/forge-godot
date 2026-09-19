@@ -1,11 +1,12 @@
 [gd_scene format=3 uid="uid://t3tnw06y4rt1"]
 
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/brazier_flame.tres" id="2_flame"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/ember.tres" id="3_ember"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
+[ext_resource type="Material" uid="uid://uwvcui8cwaui" path="res://forge_samples/demos/03_statescript/materials/brazier_flame.tres" id="2_flame"]
+[ext_resource type="Material" uid="uid://dycuean8vaun" path="res://forge_samples/demos/03_statescript/materials/ember.tres" id="3_ember"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="4_entity"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_effect"]
 [ext_resource type="Resource" uid="uid://bjs5hrn58t0w" path="res://forge_samples/demos/03_statescript/abilities/brazier/grant_abilities.tres" id="6_grant_abilities"]
+[ext_resource type="AudioStream" uid="uid://iqp0l4cujjyp" path="res://forge_samples/shared/audio/brazier-toggle.ogg" id="7_toggle"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_pedestal"]
 size = Vector3(1, 1.6, 1)
@@ -32,65 +33,69 @@ size = Vector3(1, 1.6, 1)
 height = 3.0
 radius = 3.0
 
-[node name="Brazier" type="StaticBody3D"]
+[node name="Brazier" type="StaticBody3D" unique_id=1278748470]
 
-[node name="Forge Entity" type="Node" parent="."]
+[node name="Forge Entity" type="Node" parent="." unique_id=2032034059]
 unique_name_in_owner = true
 script = ExtResource("4_entity")
 metadata/_custom_type_script = "uid://8uj04dfe8oql"
 
-[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+[node name="Grant Abilities" type="Node" parent="Forge Entity" unique_id=1542369922]
 script = ExtResource("5_effect")
 EffectData = ExtResource("6_grant_abilities")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Pedestal" type="MeshInstance3D" parent="."]
+[node name="Pedestal" type="MeshInstance3D" parent="." unique_id=319410576]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 mesh = SubResource("BoxMesh_pedestal")
 surface_material_override/0 = ExtResource("1_stone")
 
-[node name="Bowl" type="MeshInstance3D" parent="."]
+[node name="Bowl" type="MeshInstance3D" parent="." unique_id=1021819576]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
 mesh = SubResource("CylinderMesh_bowl")
 surface_material_override/0 = ExtResource("1_stone")
 
-[node name="Flame" type="MeshInstance3D" parent="."]
+[node name="Flame" type="MeshInstance3D" parent="." unique_id=690411229]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0)
 visible = false
 mesh = SubResource("CylinderMesh_flame")
 surface_material_override/0 = ExtResource("2_flame")
 
-[node name="Light" type="OmniLight3D" parent="."]
+[node name="Light" type="OmniLight3D" parent="." unique_id=1003306460]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 light_color = Color(1, 0.552941, 0.239216, 1)
 light_energy = 0.0
 omni_range = 12.0
 
-[node name="Ring" type="MeshInstance3D" parent="."]
+[node name="Ring" type="MeshInstance3D" parent="." unique_id=764755001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 mesh = SubResource("TorusMesh_ring")
 surface_material_override/0 = ExtResource("3_ember")
 
-[node name="Collision" type="CollisionShape3D" parent="."]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=669979481]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("BoxShape3D_pedestal")
 
-[node name="Trigger" type="Area3D" parent="."]
+[node name="Trigger" type="Area3D" parent="." unique_id=709813577]
 unique_name_in_owner = true
 collision_layer = 0
 collision_mask = 2
 
-[node name="Collision" type="CollisionShape3D" parent="Trigger"]
+[node name="Collision" type="CollisionShape3D" parent="Trigger" unique_id=2092897518]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 shape = SubResource("CylinderShape3D_trigger")
 
-[node name="Sign" type="Label3D" parent="."]
+[node name="ToggleSfx" type="AudioStreamPlayer3D" parent="." unique_id=733174058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+stream = ExtResource("7_toggle")
+
+[node name="Sign" type="Label3D" parent="." unique_id=1406828684]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
 billboard = 1
+modulate = Color(1, 0.478431, 0.184314, 1)
 text = "Brazier — E inside the ring toggles enemy waves
 lit: one enemy every 5 s from the spawn markers"
 font_size = 48
 outline_size = 16
-modulate = Color(1, 0.478431, 0.184314, 1)

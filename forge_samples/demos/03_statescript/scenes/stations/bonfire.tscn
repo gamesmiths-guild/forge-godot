@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://dr8sxhg544h62"]
 
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/flame.tres" id="2_flame"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
+[ext_resource type="Material" uid="uid://bfyodfgwltutq" path="res://forge_samples/demos/03_statescript/materials/flame.tres" id="2_flame"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="3_area"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_effect"]
 [ext_resource type="Resource" uid="uid://drty8r1ibx5ug" path="res://forge_samples/shared/effects/fire.tres" id="5_fire"]
+[ext_resource type="AudioStream" uid="uid://brnlxsdfveeon" path="res://forge_samples/shared/audio/bonfire-loop.ogg" id="6_crackle"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_log"]
 size = Vector3(0.25, 0.25, 1.6)
@@ -68,6 +69,12 @@ shape = SubResource("CylinderShape3D_fire")
 script = ExtResource("4_effect")
 EffectData = ExtResource("5_fire")
 metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Crackle" type="AudioStreamPlayer3D" parent="." unique_id=730506734]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+stream = ExtResource("6_crackle")
+autoplay = true
+max_distance = 30.0
 
 [node name="Sign" type="Label3D" parent="." unique_id=307576508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)

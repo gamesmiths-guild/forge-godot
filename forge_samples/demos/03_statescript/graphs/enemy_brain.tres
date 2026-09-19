@@ -22,62 +22,82 @@
 [ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="18_node_from_entity"]
 [ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="19_tag"]
 [ext_resource type="Resource" uid="uid://2qw6jjadfcyy" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_attack.tres" id="20_enemy_attack"]
+[ext_resource type="Script" uid="uid://bjc7ugk07pyar" path="res://addons/forge/resources/statescript/resolvers/ScenePickerResolverResource.cs" id="21_scene"]
+[ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="22_node_path"]
+[ext_resource type="PackedScene" uid="uid://y6dw4xnr8s7x" path="res://forge_samples/demos/03_statescript/scenes/vfx/death_burst.tscn" id="23_death_burst"]
 
-[sub_resource type="Resource" id="Resource_7pxl0"]
+[sub_resource type="Resource" id="Resource_iht5q"]
 script = ExtResource("4_connection")
 FromNode = "entry"
 ToNode = "node_1"
 
-[sub_resource type="Resource" id="Resource_tguad"]
+[sub_resource type="Resource" id="Resource_ssbih"]
 script = ExtResource("4_connection")
 FromNode = "node_1"
 OutputPort = 7
 ToNode = "node_2"
 
-[sub_resource type="Resource" id="Resource_mhwuj"]
+[sub_resource type="Resource" id="Resource_m1k48"]
 script = ExtResource("4_connection")
 FromNode = "node_2"
 OutputPort = 6
 ToNode = "node_3"
 
-[sub_resource type="Resource" id="Resource_iht5q"]
+[sub_resource type="Resource" id="Resource_pbnfa"]
 script = ExtResource("4_connection")
 FromNode = "node_1"
 OutputPort = 6
 ToNode = "node_4"
 
-[sub_resource type="Resource" id="Resource_ssbih"]
+[sub_resource type="Resource" id="Resource_1qhvr"]
 script = ExtResource("4_connection")
 FromNode = "node_4"
 OutputPort = 4
 ToNode = "node_5"
 
-[sub_resource type="Resource" id="Resource_m1k48"]
+[sub_resource type="Resource" id="Resource_mcj36"]
 script = ExtResource("4_connection")
 FromNode = "entry"
 ToNode = "node_6"
 
-[sub_resource type="Resource" id="Resource_pbnfa"]
+[sub_resource type="Resource" id="Resource_be1nu"]
 script = ExtResource("4_connection")
 FromNode = "node_6"
 OutputPort = 4
 ToNode = "node_7"
 
-[sub_resource type="Resource" id="Resource_1qhvr"]
+[sub_resource type="Resource" id="Resource_1r5tk"]
 script = ExtResource("4_connection")
 FromNode = "node_7"
-ToNode = "node_8"
+ToNode = "node_10"
 
-[sub_resource type="Resource" id="Resource_mcj36"]
+[sub_resource type="Resource" id="Resource_pxngb"]
 script = ExtResource("4_connection")
 FromNode = "entry"
 ToNode = "node_9"
 
-[sub_resource type="Resource" id="Resource_be1nu"]
+[sub_resource type="Resource" id="Resource_cpx84"]
 script = ExtResource("4_connection")
 FromNode = "node_9"
 OutputPort = 4
+ToNode = "node_10"
+
+[sub_resource type="Resource" id="Resource_tgvmm"]
+script = ExtResource("4_connection")
+FromNode = "node_10"
 ToNode = "node_8"
+
+[sub_resource type="Resource" id="Resource_chase_keepalive"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+OutputPort = 6
+ToNode = "node_11"
+
+[sub_resource type="Resource" id="Resource_restart_chase"]
+script = ExtResource("4_connection")
+FromNode = "node_11"
+OutputPort = 4
+ToNode = "node_3"
 
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
@@ -138,7 +158,7 @@ NodeId = "node_2"
 Title = "Condition Monitor"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.ConditionMonitorNode"
-PositionOffset = Vector2(700, 280)
+PositionOffset = Vector2(720, 280)
 CustomData = Dictionary[String, Variant]({
 "deactivateWhenTrue": false,
 "initialCheckOnActivate": true
@@ -183,7 +203,7 @@ NodeId = "node_3"
 Title = "Nav Move To 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NavMoveTo3DNode"
-PositionOffset = Vector2(1120, 280)
+PositionOffset = Vector2(1580, 280)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_chase_target_binding"), SubResource("Resource_chase_speed_binding")])
 
 [sub_resource type="Resource" id="Resource_attack_interval"]
@@ -210,7 +230,7 @@ NodeId = "node_4"
 Title = "Loop Timer"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
-PositionOffset = Vector2(700, -140)
+PositionOffset = Vector2(720, -140)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_attack_interval_binding"), SubResource("Resource_jbfxn")])
 
 [sub_resource type="Resource" id="Resource_attack_handle"]
@@ -245,7 +265,7 @@ NodeId = "node_5"
 Title = "Try Activate Ability"
 NodeType = 3
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryActivateAbilityNode"
-PositionOffset = Vector2(1120, -140)
+PositionOffset = Vector2(1080, -140)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_attack_handle_binding"), SubResource("Resource_attack_target_binding"), SubResource("Resource_p2372")])
 
 [sub_resource type="Resource" id="Resource_health_entity"]
@@ -301,7 +321,7 @@ NodeId = "node_7"
 Title = "Expression"
 NodeType = 3
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.ExpressionNode"
-PositionOffset = Vector2(700, 800)
+PositionOffset = Vector2(740, 920)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_dead_binding")])
 
 [sub_resource type="Resource" id="Resource_own_node"]
@@ -317,7 +337,7 @@ NodeId = "node_8"
 Title = "Queue Free"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.QueueFreeNode"
-PositionOffset = Vector2(1100, 1040)
+PositionOffset = Vector2(1540, 1200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_own_node_binding")])
 
 [sub_resource type="Resource" id="Resource_fallen_entity"]
@@ -345,6 +365,63 @@ RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.TagListenerNode"
 PositionOffset = Vector2(300, 1260)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_fallen_entity_binding"), SubResource("Resource_fallen_tags_binding")])
 
+[sub_resource type="Resource" id="Resource_death_burst_scene"]
+script = ExtResource("21_scene")
+Scene = ExtResource("23_death_burst")
+
+[sub_resource type="Resource" id="Resource_death_burst_scene_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_death_burst_scene")
+
+[sub_resource type="Resource" id="Resource_death_burst_container"]
+script = ExtResource("22_node_path")
+NodePath = "%Spawned"
+
+[sub_resource type="Resource" id="Resource_death_burst_parent_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 4
+Resolver = SubResource("Resource_death_burst_container")
+
+[sub_resource type="Resource" id="Resource_death_burst"]
+script = ExtResource("2_node")
+NodeId = "node_10"
+Title = "Instantiate Scene 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
+PositionOffset = Vector2(1160, 1200)
+CustomData = Dictionary[String, Variant]({
+"parentMode": "Node",
+"passOwnership": false
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_death_burst_scene_binding"), SubResource("Resource_death_burst_parent_binding")])
+
+[sub_resource type="Resource" id="Resource_restart_interval"]
+script = ExtResource("13_variant")
+Value = 0.5
+
+[sub_resource type="Resource" id="Resource_restart_interval_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_restart_interval")
+
+[sub_resource type="Resource" id="Resource_restart_forever"]
+script = ExtResource("13_variant")
+Value = 0
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_restart_forever_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_restart_forever")
+
+[sub_resource type="Resource" id="Resource_keep_chasing"]
+script = ExtResource("2_node")
+NodeId = "node_11"
+Title = "Loop Timer"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
+PositionOffset = Vector2(1160, 520)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_restart_interval_binding"), SubResource("Resource_restart_forever_binding")])
+
 [sub_resource type="Resource" id="Resource_health_variable"]
 script = ExtResource("5_variable_definition")
 VariableName = "health"
@@ -353,8 +430,8 @@ InitialValue = 1000
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Enemy Brain"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_attack_range"), SubResource("Resource_may_move"), SubResource("Resource_chase"), SubResource("Resource_attack_loop"), SubResource("Resource_attack"), SubResource("Resource_health_listener"), SubResource("Resource_is_dead"), SubResource("Resource_despawn"), SubResource("Resource_fallen_listener")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_7pxl0"), SubResource("Resource_tguad"), SubResource("Resource_mhwuj"), SubResource("Resource_iht5q"), SubResource("Resource_ssbih"), SubResource("Resource_m1k48"), SubResource("Resource_pbnfa"), SubResource("Resource_1qhvr"), SubResource("Resource_mcj36"), SubResource("Resource_be1nu")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_attack_range"), SubResource("Resource_may_move"), SubResource("Resource_chase"), SubResource("Resource_attack_loop"), SubResource("Resource_attack"), SubResource("Resource_health_listener"), SubResource("Resource_is_dead"), SubResource("Resource_despawn"), SubResource("Resource_fallen_listener"), SubResource("Resource_death_burst"), SubResource("Resource_keep_chasing")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_iht5q"), SubResource("Resource_ssbih"), SubResource("Resource_m1k48"), SubResource("Resource_pbnfa"), SubResource("Resource_1qhvr"), SubResource("Resource_mcj36"), SubResource("Resource_be1nu"), SubResource("Resource_1r5tk"), SubResource("Resource_pxngb"), SubResource("Resource_cpx84"), SubResource("Resource_tgvmm"), SubResource("Resource_chase_keepalive"), SubResource("Resource_restart_chase")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_health_variable")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

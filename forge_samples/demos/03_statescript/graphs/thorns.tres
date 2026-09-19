@@ -96,7 +96,7 @@ NodeId = "node_2"
 Title = "Set Variable"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
-PositionOffset = Vector2(600, 200)
+PositionOffset = Vector2(620, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_reflect_source_binding"), SubResource("Resource_reflect_target_binding")])
 
 [sub_resource type="Resource" id="Resource_magnitude_effect"]
@@ -283,12 +283,12 @@ NodeId = "node_5"
 Title = "Apply Effect"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
-PositionOffset = Vector2(1740, 200)
+PositionOffset = Vector2(1720, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_apply_effect_binding"), SubResource("Resource_apply_target_binding"), SubResource("Resource_falloff_context_binding")])
 
 [sub_resource type="Resource" id="Resource_reflect_cue_tags"]
 script = ExtResource("8_tag")
-Tags = Array[String](["cue.vfx.reflect", "cue.screen.shake"])
+Tags = Array[String](["cue.vfx.reflect", "cue.sfx.reflect", "cue.screen.shake"])
 
 [sub_resource type="Resource" id="Resource_reflect_cue_tags_binding"]
 script = ExtResource("3_binding")
@@ -308,7 +308,7 @@ NodeId = "node_6"
 Title = "Execute Cue"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ExecuteCueNode"
-PositionOffset = Vector2(1740, 580)
+PositionOffset = Vector2(1720, 580)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_reflect_cue_tags_binding"), SubResource("Resource_reflect_cue_target_binding")])
 
 [sub_resource type="Resource" id="Resource_reflect_variable"]
