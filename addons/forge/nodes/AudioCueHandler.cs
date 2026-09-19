@@ -44,6 +44,22 @@ public partial class AudioCueHandler : ForgeCueHandler
 	public AudioStream? Stream { get; set; }
 
 	/// <summary>
+	/// Gets or sets a value indicating whether applying the cue plays the sound. Off leaves a persistent cue's sound
+	/// to its executions, which is what a one-shot stream on a periodic effect wants: the application is when the
+	/// effect starts, and the ticks are when it does something.
+	/// </summary>
+	[Export]
+	public bool PlayOnApply { get; set; } = true;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether executing the cue plays the sound. Off leaves a persistent cue's sound
+	/// to its application, which is what a looping stream on a periodic effect wants: every tick executes the cue, and
+	/// a loop restarted on each tick is a loop played on top of itself.
+	/// </summary>
+	[Export]
+	public bool PlayOnExecute { get; set; } = true;
+
+	/// <summary>
 	/// Gets or sets a value indicating whether removing the cue stops the sound. Off lets a tail finish after the
 	/// effect that started it has gone.
 	/// </summary>
@@ -62,13 +78,19 @@ public partial class AudioCueHandler : ForgeCueHandler
 	/// <inheritdoc/>
 	public override void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
-		Play(forgeEntity, parameters);
+		if (PlayOnApply)
+		{
+			Play(forgeEntity, parameters);
+		}
 	}
 
 	/// <inheritdoc/>
 	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
-		Play(forgeEntity, parameters);
+		if (PlayOnExecute)
+		{
+			Play(forgeEntity, parameters);
+		}
 	}
 
 	/// <inheritdoc/>

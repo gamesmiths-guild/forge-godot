@@ -384,6 +384,8 @@ Executing spawns and forgets; applying spawns and holds, and removing frees what
 
 - `PlayerPath` (string): An existing audio player. Empty falls back to `Stream`, then to the target's first audio player child.
 - `Stream` (AudioStream): Creates a player on the target instead. Ignored when `PlayerPath` resolves.
+- `PlayOnApply` (bool, default on): Off leaves a persistent cue's sound to its executions. A one-shot on a periodic effect wants that: the application is when the effect starts, the ticks are when it does something.
+- `PlayOnExecute` (bool, default on): Off leaves a persistent cue's sound to its application. A periodic effect executes its cues every tick, and a loop restarted on each tick is a loop played on top of itself.
 - `StopOnRemove` (bool, default on): Off lets a tail finish after the effect has gone.
 - `MagnitudeCurve` (Curve) **(M)**: Sets the volume as a linear gain where one is full.
 
@@ -397,6 +399,7 @@ Two ways to say what plays: a path, for anything whose bus, attenuation or strea
 
 - `PlayerPath` (string): Empty means the target's first animation player child.
 - `ApplyAnimation`, `ExecuteAnimation`, `RemoveAnimation` (string): One clip per phase.
+- `Interrupt` (bool, default on): Off yields to a clip already playing, restarting only its own — a flinch that would cut an attack short is left to the attack.
 
 Three names rather than one animation with a mode, because a stun that starts, holds and ends is three different clips and the alternative is three handlers under three cue tags. A phase left empty plays nothing, which makes a one-phase cue a single filled field.
 

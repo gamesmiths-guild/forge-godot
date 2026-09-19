@@ -45,6 +45,14 @@ public partial class AnimationCueHandler : ForgeCueHandler
 	[Export]
 	public string RemoveAnimation { get; set; } = string.Empty;
 
+	/// <summary>
+	/// Gets or sets a value indicating whether a phase's animation replaces one already playing. Off yields to whatever
+	/// the player is in the middle of - a flinch should not cut an attack short - while a repeat of its own clip still
+	/// restarts it.
+	/// </summary>
+	[Export]
+	public bool Interrupt { get; set; } = true;
+
 	/// <inheritdoc/>
 	public override void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
@@ -76,6 +84,11 @@ public partial class AnimationCueHandler : ForgeCueHandler
 				"found no AnimationPlayer for its target" +
 				(PlayerPath.Length == 0 ? "." : $" at [{PlayerPath}].") +
 				" Nothing was played.");
+			return;
+		}
+
+		if (!Interrupt && player.IsPlaying() && player.CurrentAnimation != animation)
+		{
 			return;
 		}
 
