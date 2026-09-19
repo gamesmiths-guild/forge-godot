@@ -38,6 +38,7 @@ metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
 script = ExtResource("3_modifier")
 Attribute = "MetaAttributes.IncomingDamage"
 Operation = 1
+Channel = 1
 ScalableFloat = SubResource("Resource_reduction")
 SnapshotAttribute = false
 Coefficient = SubResource("Resource_d1kca")
