@@ -26,7 +26,7 @@ Movement is WASD or the arrow keys. Aim is the mouse.
 Two things the graphs rely on that are worth knowing:
 
 - **Passive abilities wake through a tag.** `respawn`, `enemy_brain` and `brazier` have trigger source `TagPresent` on `state.awake`. Each entity's `grant_abilities.tres` grants its abilities and then, as its second component, adds `state.awake` — the grant subscribes the trigger first, the tag fires it. That is the whole "runs from the moment the entity is ready" recipe, and it works the same for a hand-placed entity and a spawned one.
-- **Thorns triggers on `event.hit.melee`, not on `event.damage.taken`.** The Real-Time 3D demo's C# reflects only `DamageType.Physical`; a graph cannot read an enum payload, so `abilities/enemy/enemy_damage.tres` raises `event.hit.melee` through a `RaiseEvent` component instead, and fire ticks never reflect.
+- **Thorns triggers on `event.hit.melee`, not on `event.damage.taken`.** The Real-Time 3D demo's C# reflects only `DamageType.Physical`; a graph cannot read an enum payload, so `abilities/enemy/enemy_damage.tres` raises `event.hit.melee` through a `RaiseEvent` component instead, and fire ticks never reflect. The event carries the damage actually dealt, not the 100 the effect asks for: an `Attribute Accumulator` component ahead of it in the list tallies the health the hit removed — after the shield's mitigation and the health floor — and publishes it as the set-by-caller magnitude the event reads, which is the `finalDamage` the Real-Time 3D demo reflects.
 
 ## The stations
 
@@ -59,7 +59,7 @@ The level is a composition root and nothing else: a `NavigationRegion3D` baked f
 
 | Script | Job |
 | --- | --- |
-| `PlayerController3D` | Movement with gravity, facing the cursor every physics tick (the same `AimActivationData.FromMouseGround` sample the abilities are activated with, so a graph reading `Entity Rotation 3D` is already aimed), and the same HUD mirror `Character3D` keeps in the Real-Time 3D demo. It never decides what an ability does. While `movement.block` is on it neither steers nor turns, so the roll stays pointed where it was aimed. |
+| `PlayerController3D` | Movement with gravity, facing the cursor every physics tick (the same `AimActivationData.FromMouseGround` sample the abilities are activated with, so a graph reading `Entity Rotation 3D` is already aimed), and the same HUD mirror `Character3D` keeps in the Real-Time 3D demo. It never decides what an ability does. While `movement.block` is on it neither steers nor turns and drops its own horizontal velocity, so the roll's `Move Body 3D` is the only thing moving the body and it stays pointed where it was aimed. |
 | `PuppetBody3D` | Every non-player body. Gravity and `MoveAndSlide()`; `Nav Move To 3D` writes the velocity. |
 | `FollowCamera3D` | A damped follow rig with a fixed top-down view. It moves the rig, never the camera's own offset — that belongs to `CameraShakeCueHandler`. |
 

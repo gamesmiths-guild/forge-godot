@@ -137,9 +137,14 @@ public partial class PlayerController3D : CharacterBody3D
 			velocity.Y -= _gravity * dt;
 		}
 
-		// While movement is blocked the horizontal velocity is left alone rather than braked: a dash is one velocity
-		// write that has to survive until the roll ends.
-		if (!_entityTags!.HasTag(_movementBlockTag))
+		// While movement is blocked the controller contributes gravity and nothing else: the dash's Move Body 3D sweeps
+		// the body itself, and a walking velocity carried into the roll would add to it.
+		if (_entityTags!.HasTag(_movementBlockTag))
+		{
+			velocity.X = 0f;
+			velocity.Z = 0f;
+		}
+		else
 		{
 			Vector2 input = Input.GetVector("move_left", "move_right", "move_up", "move_down");
 			Vector3 target = new Vector3(input.X, 0f, input.Y) * (_speed!.CurrentValue / SpeedScale);

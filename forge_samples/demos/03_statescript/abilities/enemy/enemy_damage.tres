@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_tags"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_requirements"]
 [ext_resource type="Script" uid="uid://d272jk0xri1r1" path="res://addons/forge/resources/components/RaiseEvent.cs" id="3_raise_event"]
+[ext_resource type="Script" uid="uid://brfiixlf8uxqs" path="res://addons/forge/resources/components/AttributeAccumulator.cs" id="3_accumulator"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="3_tag"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="4_cue"]
 [ext_resource type="Script" uid="uid://dpoo864fev8me" path="res://forge_samples/shared/scripts/calculators/DamageExecutionWrapper.cs" id="5_execution"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="6_int"]
@@ -52,20 +54,28 @@ script = ExtResource("7_float")
 [sub_resource type="Resource" id="Resource_yw1fn"]
 script = ExtResource("7_float")
 
-[sub_resource type="Resource" id="Resource_melee_amount"]
-script = ExtResource("7_float")
-BaseValue = 100.0
-metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+[sub_resource type="Resource" id="Resource_dealt_tag"]
+script = ExtResource("3_tag")
+Tag = "set_by_caller.damage"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_accumulate_dealt"]
+script = ExtResource("3_accumulator")
+Attribute = "CharacterAttributes.Health"
+MagnitudeTag = SubResource("Resource_dealt_tag")
+Policy = 0
+metadata/_custom_type_script = "uid://brfiixlf8uxqs"
 
 [sub_resource type="Resource" id="Resource_melee_magnitude"]
 script = ExtResource("8_magnitude")
-ScalableFloat = SubResource("Resource_melee_amount")
+CalculationType = 3
 Coefficient = SubResource("Resource_mof80")
 PreMultiplyAdditiveValue = SubResource("Resource_yw1fn")
 PostMultiplyAdditiveValue = SubResource("Resource_5qvsm")
 CalculatorCoefficient = SubResource("Resource_b7cd7")
 CalculatorPreMultiplyAdditiveValue = SubResource("Resource_iw6v2")
 CalculatorPostMultiplyAdditiveValue = SubResource("Resource_34nse")
+CallerTargetTag = SubResource("Resource_dealt_tag")
 metadata/_custom_type_script = "uid://2gm1hdhi8u08"
 
 [sub_resource type="Resource" id="Resource_raise_melee"]
@@ -144,7 +154,7 @@ BaseValue = 1
 script = ExtResource("10_effect")
 Name = "Enemy Damage"
 Modifiers = [SubResource("Resource_incoming_damage")]
-Components = [SubResource("Resource_requirements"), SubResource("Resource_raise_melee")]
+Components = [SubResource("Resource_requirements"), SubResource("Resource_accumulate_dealt"), SubResource("Resource_raise_melee")]
 Executions = [SubResource("Resource_execution")]
 StackLimit = SubResource("Resource_stack_limit")
 InitialStack = SubResource("Resource_initial_stack")
