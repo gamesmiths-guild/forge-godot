@@ -1,0 +1,71 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://fvex1c7fdjqi"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://b8sny7pwgn1jf" path="res://addons/forge/resources/statescript/resolvers/EffectResolverResource.cs" id="5_effect"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_k672h"]
+[ext_resource type="Script" uid="uid://bofma2reays8y" path="res://addons/forge/resources/statescript/resolvers/AbilityTargetResolverResource.cs" id="6_target"]
+[ext_resource type="Resource" uid="uid://xd3d6l0hqx8b" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_damage.tres" id="7_enemy_damage"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="8_65jcq"]
+
+[sub_resource type="Resource" id="Resource_k672h"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_65jcq"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_commit"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Try Commit Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
+PositionOffset = Vector2(220, 200)
+CustomData = Dictionary[String, Variant]({
+"operation": "CooldownOnly"
+})
+
+[sub_resource type="Resource" id="Resource_damage_effect"]
+script = ExtResource("5_effect")
+Effect = ExtResource("7_enemy_damage")
+
+[sub_resource type="Resource" id="Resource_damage_effect_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_damage_effect")
+
+[sub_resource type="Resource" id="Resource_damage_target"]
+script = ExtResource("6_target")
+
+[sub_resource type="Resource" id="Resource_damage_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_damage_target")
+
+[sub_resource type="Resource" id="Resource_hit"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Apply Effect"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
+PositionOffset = Vector2(580, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_damage_effect_binding"), SubResource("Resource_damage_target_binding")])
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Enemy Attack"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_hit")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_k672h"), SubResource("Resource_65jcq")])
+ScrollOffset = Vector2(-201, -7)
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

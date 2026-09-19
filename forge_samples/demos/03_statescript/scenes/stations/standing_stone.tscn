@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://denp5vmbi66b8"]
+
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_stone"]
+size = Vector3(1.2, 8, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_stone"]
+size = Vector3(1.2, 8, 1.2)
+
+[node name="StandingStone" type="StaticBody3D" unique_id=429066067]
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=382229997]
+mesh = SubResource("BoxMesh_stone")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=419013080]
+shape = SubResource("BoxShape3D_stone")

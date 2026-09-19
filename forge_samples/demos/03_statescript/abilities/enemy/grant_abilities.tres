@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://hs0eraqvm22f"]
+
+[ext_resource type="Resource" uid="uid://2qw6jjadfcyy" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_attack.tres" id="1_attack"]
+[ext_resource type="Resource" uid="uid://6h2vgcfbxvp8" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_brain.tres" id="2_brain"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_int"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="4_grant_config"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="5_grant"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="6_tags"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="7_modifier_tags"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="8_effect"]
+
+[sub_resource type="Resource" id="Resource_level_attack"]
+script = ExtResource("3_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_attack"]
+script = ExtResource("4_grant_config")
+AbilityData = ExtResource("1_attack")
+AbilityLevel = SubResource("Resource_level_attack")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_brain"]
+script = ExtResource("3_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_brain"]
+script = ExtResource("4_grant_config")
+AbilityData = ExtResource("2_brain")
+AbilityLevel = SubResource("Resource_level_brain")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_grant"]
+script = ExtResource("5_grant")
+GrantAbilityConfigs = [SubResource("Resource_grant_attack"), SubResource("Resource_grant_brain")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_awake_tags"]
+script = ExtResource("6_tags")
+ContainerTags = Array[String](["state.awake"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_awake"]
+script = ExtResource("7_modifier_tags")
+TagsToAdd = SubResource("Resource_awake_tags")
+metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_initial_stack"]
+script = ExtResource("3_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_stack_limit"]
+script = ExtResource("3_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("8_effect")
+Name = "Grant Enemy Abilities"
+Modifiers = []
+Components = [SubResource("Resource_grant"), SubResource("Resource_awake")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_stack_limit")
+InitialStack = SubResource("Resource_initial_stack")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

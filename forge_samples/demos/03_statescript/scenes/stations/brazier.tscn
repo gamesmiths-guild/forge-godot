@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://t3tnw06y4rt1"]
+
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="1_stone"]
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/brazier_flame.tres" id="2_flame"]
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/ember.tres" id="3_ember"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="4_entity"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="5_effect"]
+[ext_resource type="Resource" uid="uid://bjs5hrn58t0w" path="res://forge_samples/demos/03_statescript/abilities/brazier/grant_abilities.tres" id="6_grant_abilities"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_pedestal"]
+size = Vector3(1, 1.6, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bowl"]
+top_radius = 0.7
+bottom_radius = 0.45
+height = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_flame"]
+top_radius = 0.0
+bottom_radius = 0.35
+height = 1.0
+radial_segments = 8
+
+[sub_resource type="TorusMesh" id="TorusMesh_ring"]
+inner_radius = 2.9
+outer_radius = 3.1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pedestal"]
+size = Vector3(1, 1.6, 1)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trigger"]
+height = 3.0
+radius = 3.0
+
+[node name="Brazier" type="StaticBody3D"]
+
+[node name="Forge Entity" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_entity")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+script = ExtResource("5_effect")
+EffectData = ExtResource("6_grant_abilities")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Pedestal" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("BoxMesh_pedestal")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Bowl" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0)
+mesh = SubResource("CylinderMesh_bowl")
+surface_material_override/0 = ExtResource("1_stone")
+
+[node name="Flame" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0)
+visible = false
+mesh = SubResource("CylinderMesh_flame")
+surface_material_override/0 = ExtResource("2_flame")
+
+[node name="Light" type="OmniLight3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+light_color = Color(1, 0.552941, 0.239216, 1)
+light_energy = 0.0
+omni_range = 12.0
+
+[node name="Ring" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("TorusMesh_ring")
+surface_material_override/0 = ExtResource("3_ember")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("BoxShape3D_pedestal")
+
+[node name="Trigger" type="Area3D" parent="."]
+unique_name_in_owner = true
+collision_layer = 0
+collision_mask = 2
+
+[node name="Collision" type="CollisionShape3D" parent="Trigger"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_trigger")
+
+[node name="Sign" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+billboard = 1
+text = "Brazier — E inside the ring toggles enemy waves
+lit: one enemy every 5 s from the spawn markers"
+font_size = 48
+outline_size = 16
+modulate = Color(1, 0.478431, 0.184314, 1)

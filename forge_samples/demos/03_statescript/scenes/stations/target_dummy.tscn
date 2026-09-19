@@ -1,0 +1,121 @@
+[gd_scene format=3 uid="uid://w55e2cvyemsw"]
+
+[ext_resource type="Material" uid="uid://busfmqa4bdqna" path="res://forge_samples/demos/03_statescript/materials/player_body.tres" id="1_body"]
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_entity"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="4_6qcqr"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="4_attrset"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_tags"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="6_effect"]
+[ext_resource type="Material" uid="uid://b7m0lrhal5u6" path="res://forge_samples/demos/03_statescript/materials/enemy_body.tres" id="7_4g72w"]
+[ext_resource type="Resource" uid="uid://ntwpoomg0iq0" path="res://forge_samples/demos/03_statescript/effects/dummy_regen.tres" id="7_dummy_regen"]
+[ext_resource type="Script" uid="uid://lgxurajmwoly" path="res://forge_samples/demos/01_realtime_3d/scripts/HealthBar3D.cs" id="8_health_bar"]
+
+[sub_resource type="Resource" id="Resource_tags"]
+script = ExtResource("5_tags")
+ContainerTags = Array[String](["trait.damageable", "trait.flammable", "trait.healable", "trait.wettable"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_post"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(0.9, 0.2, 0.9)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_post"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0.215432, 6.34724e-07, 0.000667838, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(1, 0.0364741, 0.0496456, 1)
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_bars"]
+viewport_path = NodePath("SubViewport")
+
+[node name="TargetDummy" type="StaticBody3D" unique_id=1926101796]
+collision_layer = 4
+
+[node name="Forge Entity" type="Node" parent="." unique_id=599859612]
+unique_name_in_owner = true
+script = ExtResource("3_entity")
+BaseTags = SubResource("Resource_tags")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Character Attributes" type="Node" parent="Forge Entity" unique_id=42692588]
+script = ExtResource("4_attrset")
+AttributeSetClass = "CharacterAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("4_6qcqr")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Meta Attributes" type="Node" parent="Forge Entity" unique_id=544702548]
+script = ExtResource("4_attrset")
+AttributeSetClass = "MetaAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("4_6qcqr")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Dummy Regen" type="Node" parent="Forge Entity" unique_id=145446841]
+script = ExtResource("6_effect")
+EffectData = ExtResource("7_dummy_regen")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Post" type="MeshInstance3D" parent="." unique_id=979539709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8440964, 0)
+material_override = ExtResource("7_4g72w")
+mesh = SubResource("CapsuleMesh_post")
+surface_material_override/0 = ExtResource("1_body")
+
+[node name="Base" type="MeshInstance3D" parent="." unique_id=1164433047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.055903576, 0)
+mesh = SubResource("BoxMesh_base")
+surface_material_override/0 = ExtResource("2_stone")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1300699261]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8440964, 0)
+shape = SubResource("CapsuleShape3D_post")
+
+[node name="SubViewport" type="SubViewport" parent="." unique_id=1642261149]
+size = Vector2i(100, 20)
+
+[node name="Bars" type="VBoxContainer" parent="SubViewport" unique_id=1913945383]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="HealthBar" type="ProgressBar" parent="SubViewport/Bars" unique_id=65872381 node_paths=PackedStringArray("HealthBarLabel")]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/background = SubResource("StyleBoxFlat_health_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_health_fill")
+value = 100.0
+show_percentage = false
+script = ExtResource("8_health_bar")
+HealthBarLabel = NodePath("Label")
+
+[node name="Label" type="Label" parent="SubViewport/Bars/HealthBar" unique_id=1916571063]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -35.5
+offset_top = -11.5
+offset_right = 35.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "1000/1000"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BarsSprite" type="Sprite3D" parent="." unique_id=1961309404]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+billboard = 1
+texture = SubResource("ViewportTexture_bars")

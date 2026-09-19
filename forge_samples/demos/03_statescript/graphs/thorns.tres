@@ -1,0 +1,334 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://rynkfoy3kxlr"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_4b4sd"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://b8sny7pwgn1jf" path="res://addons/forge/resources/statescript/resolvers/EffectResolverResource.cs" id="6_effect"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="7_variable"]
+[ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="8_tag"]
+[ext_resource type="Script" uid="uid://bls6qlyxbp0wo" path="res://addons/forge/resources/statescript/resolvers/MultiplyResolverResource.cs" id="9_multiply"]
+[ext_resource type="Script" uid="uid://88e4ahqgwac6" path="res://addons/forge/resources/statescript/resolvers/AbilityMagnitudeResolverResource.cs" id="10_magnitude"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="11_variant"]
+[ext_resource type="Script" uid="uid://s0mlbfjapmub" path="res://addons/forge/resources/statescript/resolvers/AreaOverlaps3DResolverResource.cs" id="12_area_overlaps"]
+[ext_resource type="Script" uid="uid://ceqwj4are6644" path="res://addons/forge/resources/statescript/resolvers/EffectContextDataResolverResource.cs" id="13_context_data"]
+[ext_resource type="Script" uid="uid://dyc7kddjdolth" path="res://addons/forge/resources/statescript/resolvers/ClampResolverResource.cs" id="14_clamp"]
+[ext_resource type="Script" uid="uid://bup34ndc8qd4a" path="res://addons/forge/resources/statescript/resolvers/SubtractResolverResource.cs" id="15_subtract"]
+[ext_resource type="Script" uid="uid://dchlcihlglcdc" path="res://addons/forge/resources/statescript/resolvers/DivideResolverResource.cs" id="16_divide"]
+[ext_resource type="Script" uid="uid://bq8oi7lr3ome5" path="res://addons/forge/resources/statescript/resolvers/DistanceResolverResource.cs" id="17_distance"]
+[ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="18_position"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="19_owner"]
+[ext_resource type="Resource" uid="uid://8jtvacvtea03" path="res://forge_samples/demos/03_statescript/abilities/player/reflect_damage.tres" id="20_reflect_damage"]
+[ext_resource type="Script" uid="uid://bmlwmm5o5prqv" path="res://addons/forge/resources/statescript/StatescriptResolverResource.cs" id="21_resolver"]
+
+[sub_resource type="Resource" id="Resource_4b4sd"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_0oltv"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_v6v6u"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_d70ko"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_1t04f"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+OutputPort = 4
+ToNode = "node_5"
+
+[sub_resource type="Resource" id="Resource_gxjle"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+OutputPort = 5
+ToNode = "node_6"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_commit"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Try Commit Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
+PositionOffset = Vector2(220, 200)
+CustomData = Dictionary[String, Variant]({
+"operation": "CostAndCooldown"
+})
+
+[sub_resource type="Resource" id="Resource_reflect_effect"]
+script = ExtResource("6_effect")
+Effect = ExtResource("20_reflect_damage")
+
+[sub_resource type="Resource" id="Resource_reflect_source_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_reflect_effect")
+
+[sub_resource type="Resource" id="Resource_reflect_target_variable"]
+script = ExtResource("7_variable")
+VariableName = "reflect"
+ObjectTypeId = "Effect"
+
+[sub_resource type="Resource" id="Resource_reflect_target_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_reflect_target_variable")
+
+[sub_resource type="Resource" id="Resource_hold_effect"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Set Variable"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
+PositionOffset = Vector2(600, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_reflect_source_binding"), SubResource("Resource_reflect_target_binding")])
+
+[sub_resource type="Resource" id="Resource_magnitude_effect"]
+script = ExtResource("7_variable")
+VariableName = "reflect"
+ObjectTypeId = "Effect"
+
+[sub_resource type="Resource" id="Resource_magnitude_effect_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_magnitude_effect")
+
+[sub_resource type="Resource" id="Resource_caller_tag"]
+script = ExtResource("8_tag")
+Tags = Array[String](["set_by_caller.damage"])
+
+[sub_resource type="Resource" id="Resource_caller_tag_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_caller_tag")
+
+[sub_resource type="Resource" id="Resource_hit_magnitude"]
+script = ExtResource("10_magnitude")
+
+[sub_resource type="Resource" id="Resource_two"]
+script = ExtResource("11_variant")
+Value = 2.0
+
+[sub_resource type="Resource" id="Resource_doubled_hit"]
+script = ExtResource("9_multiply")
+Left = SubResource("Resource_hit_magnitude")
+Right = SubResource("Resource_two")
+
+[sub_resource type="Resource" id="Resource_doubled_hit_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_doubled_hit")
+
+[sub_resource type="Resource" id="Resource_set_magnitude"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Set By Caller Magnitude"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetByCallerMagnitudeNode"
+PositionOffset = Vector2(960, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_magnitude_effect_binding"), SubResource("Resource_caller_tag_binding"), SubResource("Resource_doubled_hit_binding")])
+
+[sub_resource type="Resource" id="Resource_in_range"]
+script = ExtResource("12_area_overlaps")
+NodePath = "%ReflectArea"
+
+[sub_resource type="Resource" id="Resource_in_range_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_in_range")
+
+[sub_resource type="Resource" id="Resource_keep_going"]
+script = ExtResource("11_variant")
+Value = true
+ValueType = 0
+
+[sub_resource type="Resource" id="Resource_keep_going_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_keep_going")
+
+[sub_resource type="Resource" id="Resource_element_variable"]
+script = ExtResource("7_variable")
+VariableName = "target"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_element_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_element_variable")
+
+[sub_resource type="Resource" id="Resource_s0gyo"]
+script = ExtResource("11_variant")
+Value = 0.0
+
+[sub_resource type="Resource" id="Resource_8of51"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_s0gyo")
+
+[sub_resource type="Resource" id="Resource_for_each_target"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "For Each"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.ForEachNode"
+PositionOffset = Vector2(1320, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_in_range_binding"), SubResource("Resource_keep_going_binding"), SubResource("Resource_element_binding"), SubResource("Resource_8of51")])
+
+[sub_resource type="Resource" id="Resource_apply_effect_variable"]
+script = ExtResource("7_variable")
+VariableName = "reflect"
+ObjectTypeId = "Effect"
+
+[sub_resource type="Resource" id="Resource_apply_effect_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_apply_effect_variable")
+
+[sub_resource type="Resource" id="Resource_apply_target_variable"]
+script = ExtResource("7_variable")
+VariableName = "target"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_apply_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_apply_target_variable")
+
+[sub_resource type="Resource" id="Resource_one_b"]
+script = ExtResource("11_variant")
+Value = 1.0
+
+[sub_resource type="Resource" id="Resource_owner_position"]
+script = ExtResource("18_position")
+
+[sub_resource type="Resource" id="Resource_target_entity"]
+script = ExtResource("7_variable")
+VariableName = "target"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_target_position"]
+script = ExtResource("18_position")
+EntityResolver = SubResource("Resource_target_entity")
+
+[sub_resource type="Resource" id="Resource_distance"]
+script = ExtResource("17_distance")
+Left = SubResource("Resource_owner_position")
+Right = SubResource("Resource_target_position")
+
+[sub_resource type="Resource" id="Resource_one_a"]
+script = ExtResource("11_variant")
+Value = 1.0
+
+[sub_resource type="Resource" id="Resource_distance_past_one"]
+script = ExtResource("15_subtract")
+Left = SubResource("Resource_distance")
+Right = SubResource("Resource_one_a")
+
+[sub_resource type="Resource" id="Resource_falloff_range"]
+script = ExtResource("11_variant")
+Value = 3.5
+
+[sub_resource type="Resource" id="Resource_falloff_fraction"]
+script = ExtResource("16_divide")
+Left = SubResource("Resource_distance_past_one")
+Right = SubResource("Resource_falloff_range")
+
+[sub_resource type="Resource" id="Resource_falloff"]
+script = ExtResource("15_subtract")
+Left = SubResource("Resource_one_b")
+Right = SubResource("Resource_falloff_fraction")
+
+[sub_resource type="Resource" id="Resource_falloff_min"]
+script = ExtResource("11_variant")
+Value = 0.1
+
+[sub_resource type="Resource" id="Resource_falloff_max"]
+script = ExtResource("11_variant")
+Value = 1.0
+
+[sub_resource type="Resource" id="Resource_falloff_clamped"]
+script = ExtResource("14_clamp")
+First = SubResource("Resource_falloff")
+Second = SubResource("Resource_falloff_min")
+Third = SubResource("Resource_falloff_max")
+
+[sub_resource type="Resource" id="Resource_falloff_context"]
+script = ExtResource("13_context_data")
+ProviderClassName = "Gamesmiths.Forge.Godot.Core.Statescript.Providers.FloatContextDataProvider"
+InputNames = Array[String](["Value"])
+InputResolvers = Array[ExtResource("21_resolver")]([SubResource("Resource_falloff_clamped")])
+
+[sub_resource type="Resource" id="Resource_falloff_context_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_falloff_context")
+
+[sub_resource type="Resource" id="Resource_reflect_hit"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Apply Effect"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
+PositionOffset = Vector2(1740, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_apply_effect_binding"), SubResource("Resource_apply_target_binding"), SubResource("Resource_falloff_context_binding")])
+
+[sub_resource type="Resource" id="Resource_reflect_cue_tags"]
+script = ExtResource("8_tag")
+Tags = Array[String](["cue.vfx.reflect", "cue.screen.shake"])
+
+[sub_resource type="Resource" id="Resource_reflect_cue_tags_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_reflect_cue_tags")
+
+[sub_resource type="Resource" id="Resource_reflect_cue_target"]
+script = ExtResource("19_owner")
+
+[sub_resource type="Resource" id="Resource_reflect_cue_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_reflect_cue_target")
+
+[sub_resource type="Resource" id="Resource_reflect_cue"]
+script = ExtResource("2_node")
+NodeId = "node_6"
+Title = "Execute Cue"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ExecuteCueNode"
+PositionOffset = Vector2(1740, 580)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_reflect_cue_tags_binding"), SubResource("Resource_reflect_cue_target_binding")])
+
+[sub_resource type="Resource" id="Resource_reflect_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "reflect"
+ObjectTypeId = "Effect"
+InitialValue = null
+
+[sub_resource type="Resource" id="Resource_target_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "target"
+ObjectTypeId = "Entity"
+InitialValue = null
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Thorns"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_hold_effect"), SubResource("Resource_set_magnitude"), SubResource("Resource_for_each_target"), SubResource("Resource_reflect_hit"), SubResource("Resource_reflect_cue")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_4b4sd"), SubResource("Resource_0oltv"), SubResource("Resource_v6v6u"), SubResource("Resource_d70ko"), SubResource("Resource_1t04f"), SubResource("Resource_gxjle")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_reflect_variable"), SubResource("Resource_target_variable")])
+ScrollOffset = Vector2(-372.72974, 12.154724)
+Zoom = 0.75131476
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

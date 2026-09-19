@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://qrl7e7juley6"]
+
+[ext_resource type="Resource" uid="uid://g5vobs76j1ou" path="res://forge_samples/demos/03_statescript/abilities/player/reflect_cooldown.tres" id="1_cooldown"]
+[ext_resource type="Resource" uid="uid://eaearcr3toht" path="res://forge_samples/demos/03_statescript/abilities/player/reflect_cost.tres" id="2_cost"]
+[ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="3_behavior"]
+[ext_resource type="Resource" uid="uid://rynkfoy3kxlr" path="res://forge_samples/demos/03_statescript/graphs/thorns.tres" id="4_graph"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="5_tag"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="6_ability"]
+
+[sub_resource type="Resource" id="Resource_behavior"]
+script = ExtResource("3_behavior")
+Statescript = ExtResource("4_graph")
+metadata/_custom_type_script = "uid://dapjjbxrv801t"
+
+[sub_resource type="Resource" id="Resource_trigger_tag"]
+script = ExtResource("5_tag")
+Tag = "event.hit.melee"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[resource]
+script = ExtResource("6_ability")
+Name = "Thorns"
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("1_cooldown")]
+CostEffect = ExtResource("2_cost")
+AbilityBehavior = SubResource("Resource_behavior")
+TriggerSource = 1
+TriggerTag = SubResource("Resource_trigger_tag")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

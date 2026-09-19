@@ -1,0 +1,362 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://bhwim660vqnm"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://bmlwmm5o5prqv" path="res://addons/forge/resources/statescript/StatescriptResolverResource.cs" id="4_7pxl0"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="6_tags"]
+[ext_resource type="Script" uid="uid://bgwlwvf1kkbu3" path="res://addons/forge/resources/statescript/resolvers/ArrayResolverResource.cs" id="6_tguad"]
+[ext_resource type="Script" uid="uid://2v5alkmjnjhy" path="res://addons/forge/resources/ForgeQueryExpression.cs" id="7_query_expression"]
+[ext_resource type="Script" uid="uid://d3udnarp22cdm" path="res://addons/forge/resources/statescript/resolvers/TagQueryResolverResource.cs" id="8_tag_query"]
+[ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="9_position"]
+[ext_resource type="Script" uid="uid://7wnn3h38rl5q" path="res://addons/forge/resources/statescript/resolvers/EntityAtPathResolverResource.cs" id="10_entity_at_path"]
+[ext_resource type="Script" uid="uid://dchlcihlglcdc" path="res://addons/forge/resources/statescript/resolvers/DivideResolverResource.cs" id="11_divide"]
+[ext_resource type="Script" uid="uid://cyiritjnyt65r" path="res://addons/forge/resources/statescript/resolvers/AttributeResolverResource.cs" id="12_attribute"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="13_variant"]
+[ext_resource type="Script" uid="uid://briikswdv6fmu" path="res://addons/forge/resources/statescript/resolvers/GetAbilityHandleResolverResource.cs" id="14_ability_handle"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="15_owner"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="16_variable"]
+[ext_resource type="Script" uid="uid://c3hb4x0majsfa" path="res://addons/forge/resources/statescript/resolvers/ComparisonResolverResource.cs" id="17_comparison"]
+[ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="18_node_from_entity"]
+[ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="19_tag"]
+[ext_resource type="Resource" uid="uid://2qw6jjadfcyy" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_attack.tres" id="20_enemy_attack"]
+
+[sub_resource type="Resource" id="Resource_7pxl0"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_tguad"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+OutputPort = 7
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_mhwuj"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+OutputPort = 6
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_iht5q"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+OutputPort = 6
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_ssbih"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+OutputPort = 4
+ToNode = "node_5"
+
+[sub_resource type="Resource" id="Resource_m1k48"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_6"
+
+[sub_resource type="Resource" id="Resource_pbnfa"]
+script = ExtResource("4_connection")
+FromNode = "node_6"
+OutputPort = 4
+ToNode = "node_7"
+
+[sub_resource type="Resource" id="Resource_1qhvr"]
+script = ExtResource("4_connection")
+FromNode = "node_7"
+ToNode = "node_8"
+
+[sub_resource type="Resource" id="Resource_mcj36"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_9"
+
+[sub_resource type="Resource" id="Resource_be1nu"]
+script = ExtResource("4_connection")
+FromNode = "node_9"
+OutputPort = 4
+ToNode = "node_8"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 400)
+
+[sub_resource type="Resource" id="Resource_jeers"]
+script = ExtResource("15_owner")
+
+[sub_resource type="Resource" id="Resource_a4pwr"]
+script = ExtResource("6_tguad")
+ElementResolvers = Array[ExtResource("4_7pxl0")]([SubResource("Resource_jeers")])
+ObjectElementTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_g6s34"]
+script = ExtResource("3_binding")
+PropertyIndex = 6
+Resolver = SubResource("Resource_a4pwr")
+
+[sub_resource type="Resource" id="Resource_attack_range"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Overlap 3D"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.Overlap3DNode"
+PositionOffset = Vector2(300, -20)
+CustomData = Dictionary[String, Variant]({
+"areaPath": "%AttackRange",
+"includeAreas": false,
+"sourceMode": "ExistingArea"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_g6s34")])
+
+[sub_resource type="Resource" id="Resource_block_tags"]
+script = ExtResource("6_tags")
+ContainerTags = Array[String](["movement.block"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_not_blocked_query"]
+script = ExtResource("7_query_expression")
+ExpressionType = 3
+Expressions = []
+TagContainer = SubResource("Resource_block_tags")
+metadata/_custom_type_script = "uid://2v5alkmjnjhy"
+
+[sub_resource type="Resource" id="Resource_not_blocked"]
+script = ExtResource("8_tag_query")
+Query = SubResource("Resource_not_blocked_query")
+
+[sub_resource type="Resource" id="Resource_not_blocked_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_not_blocked")
+
+[sub_resource type="Resource" id="Resource_may_move"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Condition Monitor"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.ConditionMonitorNode"
+PositionOffset = Vector2(700, 280)
+CustomData = Dictionary[String, Variant]({
+"deactivateWhenTrue": false,
+"initialCheckOnActivate": true
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_not_blocked_binding")])
+
+[sub_resource type="Resource" id="Resource_player_entity"]
+script = ExtResource("10_entity_at_path")
+NodePath = "%Player"
+
+[sub_resource type="Resource" id="Resource_player_position"]
+script = ExtResource("9_position")
+EntityResolver = SubResource("Resource_player_entity")
+
+[sub_resource type="Resource" id="Resource_chase_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_player_position")
+
+[sub_resource type="Resource" id="Resource_speed_attribute"]
+script = ExtResource("12_attribute")
+AttributeSetClass = "MovementAttributes"
+AttributeName = "Speed"
+
+[sub_resource type="Resource" id="Resource_speed_scale"]
+script = ExtResource("13_variant")
+Value = 100.0
+
+[sub_resource type="Resource" id="Resource_speed"]
+script = ExtResource("11_divide")
+Left = SubResource("Resource_speed_attribute")
+Right = SubResource("Resource_speed_scale")
+
+[sub_resource type="Resource" id="Resource_chase_speed_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_speed")
+
+[sub_resource type="Resource" id="Resource_chase"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Nav Move To 3D"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NavMoveTo3DNode"
+PositionOffset = Vector2(1120, 280)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_chase_target_binding"), SubResource("Resource_chase_speed_binding")])
+
+[sub_resource type="Resource" id="Resource_attack_interval"]
+script = ExtResource("13_variant")
+Value = 0.1
+
+[sub_resource type="Resource" id="Resource_attack_interval_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_attack_interval")
+
+[sub_resource type="Resource" id="Resource_y3vts"]
+script = ExtResource("13_variant")
+Value = 0
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_jbfxn"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_y3vts")
+
+[sub_resource type="Resource" id="Resource_attack_loop"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Loop Timer"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
+PositionOffset = Vector2(700, -140)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_attack_interval_binding"), SubResource("Resource_jbfxn")])
+
+[sub_resource type="Resource" id="Resource_attack_handle"]
+script = ExtResource("14_ability_handle")
+AbilityData = ExtResource("20_enemy_attack")
+
+[sub_resource type="Resource" id="Resource_attack_handle_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_attack_handle")
+
+[sub_resource type="Resource" id="Resource_attack_target"]
+script = ExtResource("10_entity_at_path")
+NodePath = "%Player"
+
+[sub_resource type="Resource" id="Resource_attack_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_attack_target")
+
+[sub_resource type="Resource" id="Resource_mt5ga"]
+script = ExtResource("13_variant")
+Value = 0.0
+
+[sub_resource type="Resource" id="Resource_p2372"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_mt5ga")
+
+[sub_resource type="Resource" id="Resource_attack"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Try Activate Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryActivateAbilityNode"
+PositionOffset = Vector2(1120, -140)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_attack_handle_binding"), SubResource("Resource_attack_target_binding"), SubResource("Resource_p2372")])
+
+[sub_resource type="Resource" id="Resource_health_entity"]
+script = ExtResource("15_owner")
+
+[sub_resource type="Resource" id="Resource_health_entity_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_health_entity")
+
+[sub_resource type="Resource" id="Resource_health_output"]
+script = ExtResource("16_variable")
+VariableName = "health"
+
+[sub_resource type="Resource" id="Resource_health_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_health_output")
+
+[sub_resource type="Resource" id="Resource_health_listener"]
+script = ExtResource("2_node")
+NodeId = "node_6"
+Title = "Attribute Listener"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.AttributeListenerNode"
+PositionOffset = Vector2(300, 700)
+CustomData = Dictionary[String, Variant]({
+"attributeKey": "CharacterAttributes.Health"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_health_entity_binding"), SubResource("Resource_health_output_binding")])
+
+[sub_resource type="Resource" id="Resource_health_value"]
+script = ExtResource("16_variable")
+VariableName = "health"
+
+[sub_resource type="Resource" id="Resource_zero"]
+script = ExtResource("13_variant")
+Value = 0
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_dead"]
+script = ExtResource("17_comparison")
+Left = SubResource("Resource_health_value")
+Operation = 3
+Right = SubResource("Resource_zero")
+
+[sub_resource type="Resource" id="Resource_dead_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_dead")
+
+[sub_resource type="Resource" id="Resource_is_dead"]
+script = ExtResource("2_node")
+NodeId = "node_7"
+Title = "Expression"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.ExpressionNode"
+PositionOffset = Vector2(700, 800)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_dead_binding")])
+
+[sub_resource type="Resource" id="Resource_own_node"]
+script = ExtResource("18_node_from_entity")
+
+[sub_resource type="Resource" id="Resource_own_node_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_own_node")
+
+[sub_resource type="Resource" id="Resource_despawn"]
+script = ExtResource("2_node")
+NodeId = "node_8"
+Title = "Queue Free"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.QueueFreeNode"
+PositionOffset = Vector2(1100, 1040)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_own_node_binding")])
+
+[sub_resource type="Resource" id="Resource_fallen_entity"]
+script = ExtResource("15_owner")
+
+[sub_resource type="Resource" id="Resource_fallen_entity_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_fallen_entity")
+
+[sub_resource type="Resource" id="Resource_fallen_tags"]
+script = ExtResource("19_tag")
+Tags = Array[String](["state.fallen"])
+
+[sub_resource type="Resource" id="Resource_fallen_tags_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_fallen_tags")
+
+[sub_resource type="Resource" id="Resource_fallen_listener"]
+script = ExtResource("2_node")
+NodeId = "node_9"
+Title = "Tag Listener"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.TagListenerNode"
+PositionOffset = Vector2(300, 1260)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_fallen_entity_binding"), SubResource("Resource_fallen_tags_binding")])
+
+[sub_resource type="Resource" id="Resource_health_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "health"
+InitialValue = 1000
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Enemy Brain"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_attack_range"), SubResource("Resource_may_move"), SubResource("Resource_chase"), SubResource("Resource_attack_loop"), SubResource("Resource_attack"), SubResource("Resource_health_listener"), SubResource("Resource_is_dead"), SubResource("Resource_despawn"), SubResource("Resource_fallen_listener")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_7pxl0"), SubResource("Resource_tguad"), SubResource("Resource_mhwuj"), SubResource("Resource_iht5q"), SubResource("Resource_ssbih"), SubResource("Resource_m1k48"), SubResource("Resource_pbnfa"), SubResource("Resource_1qhvr"), SubResource("Resource_mcj36"), SubResource("Resource_be1nu")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_health_variable")])
+ScrollOffset = Vector2(0, 21.929321)
+Zoom = 0.82644624
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()

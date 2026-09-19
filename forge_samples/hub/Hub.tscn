@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://c555ix6yk55jj"]
+[gd_scene load_steps=5 format=3 uid="uid://c555ix6yk55jj"]
 
 [ext_resource type="Script" uid="uid://cqoo1l13mvgdd" path="res://forge_samples/hub/Hub.cs" id="1_hub"]
 [ext_resource type="Resource" path="res://forge_samples/hub/entries/realtime_3d.tres" id="2_realtime_3d"]
 [ext_resource type="Resource" path="res://forge_samples/hub/entries/turnbased_2d.tres" id="3_turnbased_2d"]
+[ext_resource type="Resource" path="res://forge_samples/hub/entries/statescript.tres" id="4_statescript"]
 
 [node name="Hub" type="Control" node_paths=PackedStringArray("CardList", "TitleLabel", "TaglineLabel", "BlurbLabel", "HighlightsLabel", "PlayButton")]
 layout_mode = 3
@@ -12,7 +13,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_hub")
-Demos = Array[Object]([ExtResource("2_realtime_3d"), ExtResource("3_turnbased_2d")])
+Demos = Array[Object]([ExtResource("2_realtime_3d"), ExtResource("3_turnbased_2d"), ExtResource("4_statescript")])
 CardList = NodePath("MarginContainer/VBoxContainer/Body/CardList")
 TitleLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/TitleLabel")
 TaglineLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/TaglineLabel")
