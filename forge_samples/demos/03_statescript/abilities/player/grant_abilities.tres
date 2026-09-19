@@ -1,0 +1,98 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://7djx87hod1uf"]
+
+[ext_resource type="Resource" uid="uid://v3oigpxd1tu6" path="res://forge_samples/demos/03_statescript/abilities/player/projectile.tres" id="1_projectile"]
+[ext_resource type="Resource" uid="uid://u4w8dj6he865" path="res://forge_samples/demos/03_statescript/abilities/player/dash.tres" id="2_dash"]
+[ext_resource type="Resource" uid="uid://2ap1y02j3hnc" path="res://forge_samples/demos/03_statescript/abilities/player/shield.tres" id="3_shield"]
+[ext_resource type="Resource" uid="uid://qrl7e7juley6" path="res://forge_samples/demos/03_statescript/abilities/player/thorns.tres" id="4_thorns"]
+[ext_resource type="Resource" uid="uid://kncyoqdihf45" path="res://forge_samples/demos/03_statescript/abilities/player/respawn.tres" id="5_respawn"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="6_int"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="7_grant_config"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="8_grant"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="9_tags"]
+[ext_resource type="Script" uid="uid://dngf30hxy5go4" path="res://addons/forge/resources/components/ModifierTags.cs" id="10_modifier_tags"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="11_effect"]
+
+[sub_resource type="Resource" id="Resource_level_projectile"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_projectile"]
+script = ExtResource("7_grant_config")
+AbilityData = ExtResource("1_projectile")
+AbilityLevel = SubResource("Resource_level_projectile")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_dash"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_dash"]
+script = ExtResource("7_grant_config")
+AbilityData = ExtResource("2_dash")
+AbilityLevel = SubResource("Resource_level_dash")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_shield"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_shield"]
+script = ExtResource("7_grant_config")
+AbilityData = ExtResource("3_shield")
+AbilityLevel = SubResource("Resource_level_shield")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_thorns"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_thorns"]
+script = ExtResource("7_grant_config")
+AbilityData = ExtResource("4_thorns")
+AbilityLevel = SubResource("Resource_level_thorns")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_respawn"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_respawn"]
+script = ExtResource("7_grant_config")
+AbilityData = ExtResource("5_respawn")
+AbilityLevel = SubResource("Resource_level_respawn")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_grant"]
+script = ExtResource("8_grant")
+GrantAbilityConfigs = [SubResource("Resource_grant_projectile"), SubResource("Resource_grant_dash"), SubResource("Resource_grant_shield"), SubResource("Resource_grant_thorns"), SubResource("Resource_grant_respawn")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_awake_tags"]
+script = ExtResource("9_tags")
+ContainerTags = Array[String](["state.awake"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_awake"]
+script = ExtResource("10_modifier_tags")
+TagsToAdd = SubResource("Resource_awake_tags")
+metadata/_custom_type_script = "uid://dngf30hxy5go4"
+
+[sub_resource type="Resource" id="Resource_initial_stack"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_stack_limit"]
+script = ExtResource("6_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("11_effect")
+Name = "Grant Abilities"
+Modifiers = []
+Components = [SubResource("Resource_grant"), SubResource("Resource_awake")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_stack_limit")
+InitialStack = SubResource("Resource_initial_stack")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

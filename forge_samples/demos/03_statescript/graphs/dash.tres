@@ -1,0 +1,158 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://1yjpinwh7aex"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://dcshceitj3lc" path="res://addons/forge/resources/statescript/resolvers/AbilityActivationDataResolverResource.cs" id="5_activation"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="5_bg6f5"]
+[ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="6_njutq"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="6_variant"]
+[ext_resource type="Script" uid="uid://dln7k2vdnm2ky" path="res://addons/forge/resources/statescript/resolvers/ScaleResolverResource.cs" id="7_scale"]
+[ext_resource type="Script" uid="uid://d16o23uhdy3jd" path="res://addons/forge/resources/statescript/resolvers/CollisionMaskResolverResource.cs" id="8_collision_mask"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="8_k4466"]
+[ext_resource type="Script" uid="uid://cm23kjjecsqkk" path="res://addons/forge/resources/statescript/resolvers/AddResolverResource.cs" id="10_qguum"]
+
+[sub_resource type="Resource" id="Resource_bg6f5"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_njutq"]
+script = ExtResource("4_connection")
+FromNode = "node_12"
+OutputPort = 3
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_qguum"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+ToNode = "node_13"
+
+[sub_resource type="Resource" id="Resource_xn5pp"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_12"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_commit"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Try Commit Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
+PositionOffset = Vector2(220, 200)
+CustomData = Dictionary[String, Variant]({
+"operation": "CostAndCooldown"
+})
+
+[sub_resource type="Resource" id="Resource_enemies_layer"]
+script = ExtResource("8_collision_mask")
+Value = 4
+LayerSpace = 2
+
+[sub_resource type="Resource" id="Resource_bits_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_enemies_layer")
+
+[sub_resource type="Resource" id="Resource_pass_through_enemies"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Collision Override 3D"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.CollisionOverride3DNode"
+PositionOffset = Vector2(1080, 200)
+CustomData = Dictionary[String, Variant]({
+"_fold_input_property_0": true,
+"_fold_input_property_1": true,
+"operation": "Clear",
+"target": "Mask"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_bits_binding")])
+
+[sub_resource type="Resource" id="Resource_5h2ox"]
+script = ExtResource("2_node")
+NodeId = "node_12"
+Title = "Play Animation"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.PlayAnimationNode"
+PositionOffset = Vector2(640, 200)
+CustomData = Dictionary[String, Variant]({
+"animation": "roll"
+})
+
+[sub_resource type="Resource" id="Resource_5kj70"]
+script = ExtResource("5_bg6f5")
+
+[sub_resource type="Resource" id="Resource_qi78w"]
+script = ExtResource("6_njutq")
+EntityResolver = SubResource("Resource_5kj70")
+
+[sub_resource type="Resource" id="Resource_i60ck"]
+script = ExtResource("5_activation")
+ProviderClassName = "Gamesmiths.Forge.Godot.Core.Statescript.Providers.AimActivationDataProvider"
+FieldName = "Direction"
+FieldType = 14
+
+[sub_resource type="Resource" id="Resource_7mtcy"]
+script = ExtResource("6_variant")
+Value = 10.0
+
+[sub_resource type="Resource" id="Resource_r0ngr"]
+script = ExtResource("7_scale")
+Left = SubResource("Resource_i60ck")
+Right = SubResource("Resource_7mtcy")
+LeftFolded = true
+RightFolded = true
+
+[sub_resource type="Resource" id="Resource_8ya22"]
+script = ExtResource("10_qguum")
+Left = SubResource("Resource_qi78w")
+Right = SubResource("Resource_r0ngr")
+LeftFolded = true
+
+[sub_resource type="Resource" id="Resource_hoj4f"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_8ya22")
+
+[sub_resource type="Resource" id="Resource_24lfw"]
+script = ExtResource("6_variant")
+Value = 20.0
+
+[sub_resource type="Resource" id="Resource_e15kt"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_24lfw")
+
+[sub_resource type="Resource" id="Resource_f62k3"]
+script = ExtResource("2_node")
+NodeId = "node_13"
+Title = "Move Body 3D"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.MoveBody3DNode"
+PositionOffset = Vector2(1480, 200)
+CustomData = Dictionary[String, Variant]({
+"_fold_input_property_0": true,
+"_fold_input_property_1": true,
+"_fold_input_property_2": true,
+"blocked": "Slide",
+"mode": "Speed"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_hoj4f"), SubResource("Resource_e15kt")])
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Dash"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_pass_through_enemies"), SubResource("Resource_5h2ox"), SubResource("Resource_f62k3")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_bg6f5"), SubResource("Resource_njutq"), SubResource("Resource_qguum"), SubResource("Resource_xn5pp")])
+ScrollOffset = Vector2(-461.62463, 30.275513)
+Zoom = 0.6830134
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()

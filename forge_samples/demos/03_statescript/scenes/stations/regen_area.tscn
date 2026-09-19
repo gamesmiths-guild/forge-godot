@@ -1,0 +1,91 @@
+[gd_scene format=3 uid="uid://c64aspqdedbua"]
+
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/verdant.tres" id="1_verdant"]
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="3_area"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_effect"]
+[ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://forge_samples/shared/effects/heal.tres" id="5_heal"]
+[ext_resource type="Resource" uid="uid://bgbbtfuhkcquk" path="res://forge_samples/shared/effects/regen.tres" id="6_regen"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pad"]
+top_radius = 2.5
+bottom_radius = 2.5
+height = 0.4
+radial_segments = 6
+
+[sub_resource type="TorusMesh" id="TorusMesh_rim"]
+inner_radius = 2.4
+outer_radius = 2.7
+rings = 6
+
+[sub_resource type="BoxMesh" id="BoxMesh_floater"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_regen"]
+height = 3.0
+radius = 2.5
+
+[node name="RegenArea" type="Node3D" unique_id=889799427]
+
+[node name="Pad" type="MeshInstance3D" parent="." unique_id=1985990072]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.036208913, 0)
+mesh = SubResource("CylinderMesh_pad")
+surface_material_override/0 = ExtResource("2_stone")
+
+[node name="Rim" type="MeshInstance3D" parent="." unique_id=516105412]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18379107, 0)
+mesh = SubResource("TorusMesh_rim")
+surface_material_override/0 = ExtResource("1_verdant")
+
+[node name="Floaters" type="Node3D" parent="." unique_id=2051377658]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Floater1" type="MeshInstance3D" parent="Floaters" unique_id=818504976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 0, 0)
+mesh = SubResource("BoxMesh_floater")
+surface_material_override/0 = ExtResource("1_verdant")
+
+[node name="Floater2" type="MeshInstance3D" parent="Floaters" unique_id=1238326472]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 0.35, 0.95)
+mesh = SubResource("BoxMesh_floater")
+surface_material_override/0 = ExtResource("1_verdant")
+
+[node name="Floater3" type="MeshInstance3D" parent="Floaters" unique_id=1900477310]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, -0.3, -0.95)
+mesh = SubResource("BoxMesh_floater")
+surface_material_override/0 = ExtResource("1_verdant")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=1855259270]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+light_color = Color(0.431373, 0.878431, 0.478431, 1)
+light_energy = 2.5
+omni_range = 8.0
+
+[node name="Area" type="Area3D" parent="." unique_id=3619988]
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("3_area")
+metadata/_custom_type_script = "uid://cvhkilfepqpyi"
+
+[node name="Collision" type="CollisionShape3D" parent="Area" unique_id=1526327238]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_regen")
+
+[node name="Heal" type="Node" parent="Area" unique_id=253774563]
+script = ExtResource("4_effect")
+EffectData = ExtResource("5_heal")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Regen" type="Node" parent="Area" unique_id=1512148323]
+script = ExtResource("4_effect")
+EffectData = ExtResource("6_regen")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Sign" type="Label3D" parent="." unique_id=667866204]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+billboard = 1
+modulate = Color(0.431373, 0.878431, 0.478431, 1)
+text = "Regen area — heal.tres + regen.tres
+instant 50, then 3 stacks at 10/s"
+font_size = 48
+outline_size = 16

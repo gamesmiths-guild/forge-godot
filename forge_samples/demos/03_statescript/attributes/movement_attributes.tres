@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ForgeAttributeSetDefinition" format=3 uid="uid://cva87deogoyjs"]
+
+[ext_resource type="Script" uid="uid://kakarw7w5eke" path="res://addons/forge/resources/attributes/ForgeAttributeDefinition.cs" id="1_rqqf5"]
+[ext_resource type="Script" uid="uid://c4ex3nut7plyb" path="res://addons/forge/resources/attributes/ForgeAttributeSetDefinition.cs" id="2_b228o"]
+
+[sub_resource type="Resource" id="Resource_speed"]
+script = ExtResource("1_rqqf5")
+AttributeName = "Speed"
+DefaultValue = 500
+MaxValue = 2000
+DecimalPlaces = 2
+metadata/_custom_type_script = "uid://kakarw7w5eke"
+
+[resource]
+script = ExtResource("2_b228o")
+AttributeSetName = "MovementAttributes"
+Attributes = Array[ExtResource("1_rqqf5")]([SubResource("Resource_speed")])
+metadata/_custom_type_script = "uid://c4ex3nut7plyb"

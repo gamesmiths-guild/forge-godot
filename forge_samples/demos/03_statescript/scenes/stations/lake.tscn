@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://btewds1fqvri5"]
+
+[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/water.tres" id="1_water"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="3_area"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_effect"]
+[ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://forge_samples/shared/effects/water.tres" id="5_wet"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_surface"]
+top_radius = 5.45
+bottom_radius = 5.45
+height = 0.12
+radial_segments = 32
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_lake"]
+radius = 5.5
+
+[node name="Lake" type="Node3D" unique_id=945182539]
+
+[node name="Surface" type="MeshInstance3D" parent="." unique_id=460651302]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.4, 0)
+mesh = SubResource("CylinderMesh_surface")
+surface_material_override/0 = ExtResource("1_water")
+
+[node name="Area" type="Area3D" parent="." unique_id=931682395]
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("3_area")
+metadata/_custom_type_script = "uid://cvhkilfepqpyi"
+
+[node name="Collision" type="CollisionShape3D" parent="Area" unique_id=1827714789]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.4, 0)
+shape = SubResource("CylinderShape3D_lake")
+
+[node name="Wet" type="Node" parent="Area" unique_id=1554556054]
+script = ExtResource("4_effect")
+EffectData = ExtResource("5_wet")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Sign" type="Label3D" parent="." unique_id=403177856]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+billboard = 1
+modulate = Color(0.623529, 0.941176, 1, 1)
+text = "Lake — water.tres
+walk down the ramp to douse fire (no graph)"
+font_size = 48
+outline_size = 16

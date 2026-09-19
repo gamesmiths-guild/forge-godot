@@ -1,0 +1,151 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://475fympddmlq"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="6_position"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="7_variable"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="8_owner"]
+[ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="9_tag"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="10_variant"]
+
+[sub_resource type="Resource" id="Resource_2kab5"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_078ql"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_ut70n"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+OutputPort = 4
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_5hky6"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_start_position"]
+script = ExtResource("6_position")
+
+[sub_resource type="Resource" id="Resource_start_position_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_start_position")
+
+[sub_resource type="Resource" id="Resource_spawn_output"]
+script = ExtResource("7_variable")
+VariableName = "spawn"
+VariableType = 14
+
+[sub_resource type="Resource" id="Resource_spawn_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_spawn_output")
+
+[sub_resource type="Resource" id="Resource_remember_spawn"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Set Variable"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
+PositionOffset = Vector2(220, 200)
+CustomData = Dictionary[String, Variant]({
+"_fold_output_scope": true
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_start_position_binding"), SubResource("Resource_spawn_output_binding")])
+
+[sub_resource type="Resource" id="Resource_fallen_entity"]
+script = ExtResource("8_owner")
+
+[sub_resource type="Resource" id="Resource_fallen_entity_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_fallen_entity")
+
+[sub_resource type="Resource" id="Resource_fallen_tags"]
+script = ExtResource("9_tag")
+Tags = Array[String](["state.fallen"])
+
+[sub_resource type="Resource" id="Resource_fallen_tags_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_fallen_tags")
+
+[sub_resource type="Resource" id="Resource_fallen_listener"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Tag Listener"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.TagListenerNode"
+PositionOffset = Vector2(560, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_fallen_entity_binding"), SubResource("Resource_fallen_tags_binding")])
+
+[sub_resource type="Resource" id="Resource_spawn_position"]
+script = ExtResource("7_variable")
+VariableName = "spawn"
+VariableType = 14
+
+[sub_resource type="Resource" id="Resource_spawn_position_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_spawn_position")
+
+[sub_resource type="Resource" id="Resource_put_back"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Set Position 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetPosition3DNode"
+PositionOffset = Vector2(920, 200)
+CustomData = Dictionary[String, Variant]({
+"space": "Global"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_spawn_position_binding")])
+
+[sub_resource type="Resource" id="Resource_still"]
+script = ExtResource("10_variant")
+Value = Vector3(0, 0, 0)
+ValueType = 14
+
+[sub_resource type="Resource" id="Resource_still_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_still")
+
+[sub_resource type="Resource" id="Resource_stop_falling"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Set Velocity 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetVelocity3DNode"
+PositionOffset = Vector2(1280, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_still_binding")])
+
+[sub_resource type="Resource" id="Resource_spawn_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "spawn"
+VariableType = 14
+InitialValue = Vector3(0, 0, 0)
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Respawn"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_remember_spawn"), SubResource("Resource_fallen_listener"), SubResource("Resource_put_back"), SubResource("Resource_stop_falling")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_2kab5"), SubResource("Resource_078ql"), SubResource("Resource_ut70n"), SubResource("Resource_5hky6")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_spawn_variable")])
+ScrollOffset = Vector2(-242.5951, -16.7686)
+Zoom = 0.82644624
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()

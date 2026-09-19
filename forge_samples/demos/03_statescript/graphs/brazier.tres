@@ -1,0 +1,364 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://f4fxxd4fw8pi"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="6_variable"]
+[ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="7_node_path"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="8_variant"]
+[ext_resource type="Script" uid="uid://c3hb4x0majsfa" path="res://addons/forge/resources/statescript/resolvers/ComparisonResolverResource.cs" id="9_comparison"]
+[ext_resource type="Script" uid="uid://dapgkibgbdah5" path="res://addons/forge/resources/statescript/resolvers/CountResolverResource.cs" id="10_count"]
+[ext_resource type="Script" uid="uid://i0dsn4ts4wdg" path="res://addons/forge/resources/statescript/resolvers/EntitiesInNodeGroupResolverResource.cs" id="11_entities_in_group"]
+[ext_resource type="Script" uid="uid://bjc7ugk07pyar" path="res://addons/forge/resources/statescript/resolvers/ScenePickerResolverResource.cs" id="12_scene"]
+[ext_resource type="Script" uid="uid://cnwqnwspcmiw7" path="res://addons/forge/resources/statescript/resolvers/NodePropertyResolverResource.cs" id="13_node_property"]
+[ext_resource type="Script" uid="uid://sqopldeg5asv" path="res://addons/forge/resources/statescript/resolvers/RandomElementResolverResource.cs" id="14_random_element"]
+[ext_resource type="Script" uid="uid://cf0qtsycieogb" path="res://addons/forge/resources/statescript/resolvers/NodesInNodeGroupResolverResource.cs" id="15_nodes_in_group"]
+[ext_resource type="Script" uid="uid://bmlwmm5o5prqv" path="res://addons/forge/resources/statescript/StatescriptResolverResource.cs" id="15_tl8rd"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="16_maesg"]
+[ext_resource type="PackedScene" uid="uid://ubxffu08xt3k" path="res://forge_samples/demos/03_statescript/scenes/enemy.tscn" id="17_enemy"]
+[ext_resource type="Script" uid="uid://bgwlwvf1kkbu3" path="res://addons/forge/resources/statescript/resolvers/ArrayResolverResource.cs" id="17_mtynk"]
+[ext_resource type="Script" uid="uid://d1rfllxhfre8x" path="res://addons/forge/resources/statescript/resolvers/NotResolverResource.cs" id="18_tl8rd"]
+
+[sub_resource type="Resource" id="Resource_tl8rd"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+OutputPort = 4
+ToNode = "node_5"
+
+[sub_resource type="Resource" id="Resource_maesg"]
+script = ExtResource("4_connection")
+FromNode = "node_5"
+ToNode = "node_6"
+
+[sub_resource type="Resource" id="Resource_mtynk"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_7"
+
+[sub_resource type="Resource" id="Resource_d3b5t"]
+script = ExtResource("4_connection")
+FromNode = "node_7"
+OutputPort = 6
+ToNode = "node_8"
+
+[sub_resource type="Resource" id="Resource_v1pr5"]
+script = ExtResource("4_connection")
+FromNode = "node_8"
+OutputPort = 4
+ToNode = "node_9"
+
+[sub_resource type="Resource" id="Resource_7xmfw"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_1o0c2"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_7qbjb"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_10"
+
+[sub_resource type="Resource" id="Resource_nfbag"]
+script = ExtResource("4_connection")
+FromNode = "node_10"
+OutputPort = 6
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 400)
+
+[sub_resource type="Resource" id="Resource_flame_node"]
+script = ExtResource("7_node_path")
+NodePath = "%Flame"
+
+[sub_resource type="Resource" id="Resource_flame_node_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_flame_node")
+
+[sub_resource type="Resource" id="Resource_flame_visible"]
+script = ExtResource("8_variant")
+Value = true
+ValueType = 0
+
+[sub_resource type="Resource" id="Resource_flame_visible_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_flame_visible")
+
+[sub_resource type="Resource" id="Resource_show_flame"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Node Property Override"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NodePropertyOverrideNode"
+PositionOffset = Vector2(660, 200)
+CustomData = Dictionary[String, Variant]({
+"isArray": false,
+"propertyPath": "visible",
+"valueType": "Bool"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_flame_node_binding"), SubResource("Resource_flame_visible_binding")])
+
+[sub_resource type="Resource" id="Resource_light_node"]
+script = ExtResource("7_node_path")
+NodePath = "%Light"
+
+[sub_resource type="Resource" id="Resource_light_node_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_light_node")
+
+[sub_resource type="Resource" id="Resource_light_energy"]
+script = ExtResource("8_variant")
+Value = 3.0
+ValueType = 6
+
+[sub_resource type="Resource" id="Resource_light_energy_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_light_energy")
+
+[sub_resource type="Resource" id="Resource_light_up"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Node Property Override"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NodePropertyOverrideNode"
+PositionOffset = Vector2(980, 200)
+CustomData = Dictionary[String, Variant]({
+"isArray": false,
+"propertyPath": "light_energy",
+"valueType": "Float"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_light_node_binding"), SubResource("Resource_light_energy_binding")])
+
+[sub_resource type="Resource" id="Resource_wave_interval"]
+script = ExtResource("8_variant")
+Value = 5.0
+
+[sub_resource type="Resource" id="Resource_wave_interval_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_wave_interval")
+
+[sub_resource type="Resource" id="Resource_y8c05"]
+script = ExtResource("8_variant")
+Value = 0
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_pmswa"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_y8c05")
+
+[sub_resource type="Resource" id="Resource_waves"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Loop Timer"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
+PositionOffset = Vector2(1320, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_wave_interval_binding"), SubResource("Resource_pmswa")])
+
+[sub_resource type="Resource" id="Resource_enemies_alive"]
+script = ExtResource("11_entities_in_group")
+GroupName = "enemies"
+
+[sub_resource type="Resource" id="Resource_enemy_count"]
+script = ExtResource("10_count")
+Source = SubResource("Resource_enemies_alive")
+
+[sub_resource type="Resource" id="Resource_enemy_cap"]
+script = ExtResource("8_variant")
+Value = 6
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_below_cap"]
+script = ExtResource("9_comparison")
+Left = SubResource("Resource_enemy_count")
+Operation = 2
+Right = SubResource("Resource_enemy_cap")
+
+[sub_resource type="Resource" id="Resource_below_cap_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_below_cap")
+
+[sub_resource type="Resource" id="Resource_room_for_more"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Expression"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.ExpressionNode"
+PositionOffset = Vector2(1680, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_below_cap_binding")])
+
+[sub_resource type="Resource" id="Resource_enemy_scene"]
+script = ExtResource("12_scene")
+Scene = ExtResource("17_enemy")
+
+[sub_resource type="Resource" id="Resource_enemy_scene_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_enemy_scene")
+
+[sub_resource type="Resource" id="Resource_spawn_points"]
+script = ExtResource("15_nodes_in_group")
+GroupName = "spawn_points"
+
+[sub_resource type="Resource" id="Resource_random_spawn_point"]
+script = ExtResource("14_random_element")
+Source = SubResource("Resource_spawn_points")
+
+[sub_resource type="Resource" id="Resource_spawn_point_position"]
+script = ExtResource("13_node_property")
+Node = SubResource("Resource_random_spawn_point")
+PropertyPath = "global_position"
+ValueType = 5
+
+[sub_resource type="Resource" id="Resource_spawn_position_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_spawn_point_position")
+
+[sub_resource type="Resource" id="Resource_spawned_container"]
+script = ExtResource("7_node_path")
+NodePath = "%Spawned"
+
+[sub_resource type="Resource" id="Resource_spawn_parent_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 4
+Resolver = SubResource("Resource_spawned_container")
+
+[sub_resource type="Resource" id="Resource_spawn_enemy"]
+script = ExtResource("2_node")
+NodeId = "node_6"
+Title = "Instantiate Scene 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
+PositionOffset = Vector2(2020, 200)
+CustomData = Dictionary[String, Variant]({
+"parentMode": "Node",
+"passOwnership": true
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_enemy_scene_binding"), SubResource("Resource_spawn_position_binding"), SubResource("Resource_spawn_parent_binding")])
+
+[sub_resource type="Resource" id="Resource_rbnq5"]
+script = ExtResource("16_maesg")
+
+[sub_resource type="Resource" id="Resource_r0qf8"]
+script = ExtResource("17_mtynk")
+ElementResolvers = Array[ExtResource("15_tl8rd")]([SubResource("Resource_rbnq5")])
+ObjectElementTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_d2ie4"]
+script = ExtResource("3_binding")
+PropertyIndex = 6
+Resolver = SubResource("Resource_r0qf8")
+
+[sub_resource type="Resource" id="Resource_ring"]
+script = ExtResource("2_node")
+NodeId = "node_7"
+Title = "Overlap 3D"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.Overlap3DNode"
+PositionOffset = Vector2(300, 760)
+CustomData = Dictionary[String, Variant]({
+"areaPath": "%Trigger",
+"includeAreas": false,
+"sourceMode": "ExistingArea"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_d2ie4")])
+
+[sub_resource type="Resource" id="Resource_interact_key"]
+script = ExtResource("2_node")
+NodeId = "node_8"
+Title = "Input Action"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.InputActionNode"
+PositionOffset = Vector2(660, 760)
+CustomData = Dictionary[String, Variant]({
+"actionName": "interact",
+"deactivateOnPressed": false
+})
+
+[sub_resource type="Resource" id="Resource_tm5xn"]
+script = ExtResource("6_variable")
+VariableName = "lit"
+VariableType = 0
+
+[sub_resource type="Resource" id="Resource_vp3fs"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_tm5xn")
+
+[sub_resource type="Resource" id="Resource_78a30"]
+script = ExtResource("6_variable")
+VariableName = "lit"
+VariableType = 0
+
+[sub_resource type="Resource" id="Resource_77rd1"]
+script = ExtResource("18_tl8rd")
+Operand = SubResource("Resource_78a30")
+OperandFolded = true
+
+[sub_resource type="Resource" id="Resource_cdx7l"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_77rd1")
+
+[sub_resource type="Resource" id="Resource_toggle"]
+script = ExtResource("2_node")
+NodeId = "node_9"
+Title = "Set Variable"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
+PositionOffset = Vector2(1080, 760)
+CustomData = Dictionary[String, Variant]({
+"_fold_input_property_0": true,
+"_fold_output_target": true
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_vp3fs"), SubResource("Resource_cdx7l")])
+
+[sub_resource type="Resource" id="Resource_o33i7"]
+script = ExtResource("6_variable")
+VariableName = "lit"
+VariableType = 0
+
+[sub_resource type="Resource" id="Resource_scn27"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_o33i7")
+
+[sub_resource type="Resource" id="Resource_p3lev"]
+script = ExtResource("2_node")
+NodeId = "node_10"
+Title = "Condition Monitor"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.ConditionMonitorNode"
+PositionOffset = Vector2(320, 200)
+CustomData = Dictionary[String, Variant]({
+"_fold_input_property_0": true,
+"initialCheckOnActivate": false
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_scn27")])
+
+[sub_resource type="Resource" id="Resource_l2yiy"]
+script = ExtResource("5_variable_definition")
+VariableName = "lit"
+VariableType = 0
+InitialValue = false
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Brazier"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_show_flame"), SubResource("Resource_light_up"), SubResource("Resource_waves"), SubResource("Resource_room_for_more"), SubResource("Resource_spawn_enemy"), SubResource("Resource_ring"), SubResource("Resource_interact_key"), SubResource("Resource_toggle"), SubResource("Resource_p3lev")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_tl8rd"), SubResource("Resource_maesg"), SubResource("Resource_mtynk"), SubResource("Resource_d3b5t"), SubResource("Resource_v1pr5"), SubResource("Resource_7xmfw"), SubResource("Resource_1o0c2"), SubResource("Resource_7qbjb"), SubResource("Resource_nfbag")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_l2yiy")])
+ScrollOffset = Vector2(-802.85614, 210.67148)
+Zoom = 0.56447387
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()
