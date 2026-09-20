@@ -300,6 +300,10 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		bool[] varStates = _statescriptGraphEditorDock.GetVariablesPanelStates();
 		configuration.SetValue("Forge", "variables_states", string.Join(";", varStates));
+
+		_statescriptGraphEditorDock.GetViewStates(out Vector2[] scrollOffsets, out float[] zooms);
+		configuration.SetValue("Forge", "scroll_offsets", scrollOffsets);
+		configuration.SetValue("Forge", "zooms", zooms);
 	}
 
 	public override void _SetWindowLayout(ConfigFile configuration)
@@ -335,7 +339,12 @@ public partial class ForgePluginLoader : EditorPlugin
 			}
 		}
 
-		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates);
+		Vector2[] scrollOffsets =
+			configuration.GetValue("Forge", "scroll_offsets", Array.Empty<Vector2>()).AsVector2Array();
+
+		float[] zooms = configuration.GetValue("Forge", "zooms", Array.Empty<float>()).AsFloat32Array();
+
+		_statescriptGraphEditorDock.RestoreFromPaths(paths, activeIndex, variablesStates, scrollOffsets, zooms);
 	}
 
 	/// <summary>

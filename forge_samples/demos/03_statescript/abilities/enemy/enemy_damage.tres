@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_tags"]
 [ext_resource type="Script" uid="uid://b0eq12mjqfage" path="res://addons/forge/resources/components/TargetTagRequirements.cs" id="2_requirements"]
-[ext_resource type="Script" uid="uid://d272jk0xri1r1" path="res://addons/forge/resources/components/RaiseEvent.cs" id="3_raise_event"]
 [ext_resource type="Script" uid="uid://brfiixlf8uxqs" path="res://addons/forge/resources/components/AttributeAccumulator.cs" id="3_accumulator"]
+[ext_resource type="Script" uid="uid://d272jk0xri1r1" path="res://addons/forge/resources/components/RaiseEvent.cs" id="3_raise_event"]
 [ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="3_tag"]
 [ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="4_cue"]
 [ext_resource type="Script" uid="uid://dpoo864fev8me" path="res://forge_samples/shared/scripts/calculators/DamageExecutionWrapper.cs" id="5_execution"]
@@ -29,6 +29,17 @@ ApplicationRequiredTags = SubResource("Resource_required_tags")
 ApplicationIgnoredTags = SubResource("Resource_ignored_tags")
 metadata/_custom_type_script = "uid://b0eq12mjqfage"
 
+[sub_resource type="Resource" id="Resource_dealt_tag"]
+script = ExtResource("3_tag")
+Tag = "set_by_caller.damage"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_accumulate_dealt"]
+script = ExtResource("3_accumulator")
+Attribute = "CharacterAttributes.Health"
+MagnitudeTag = SubResource("Resource_dealt_tag")
+metadata/_custom_type_script = "uid://brfiixlf8uxqs"
+
 [sub_resource type="Resource" id="Resource_melee_tags"]
 script = ExtResource("1_tags")
 ContainerTags = Array[String](["event.hit.melee"])
@@ -53,18 +64,6 @@ script = ExtResource("7_float")
 
 [sub_resource type="Resource" id="Resource_yw1fn"]
 script = ExtResource("7_float")
-
-[sub_resource type="Resource" id="Resource_dealt_tag"]
-script = ExtResource("3_tag")
-Tag = "set_by_caller.damage"
-metadata/_custom_type_script = "uid://dpakv7agvir6y"
-
-[sub_resource type="Resource" id="Resource_accumulate_dealt"]
-script = ExtResource("3_accumulator")
-Attribute = "CharacterAttributes.Health"
-MagnitudeTag = SubResource("Resource_dealt_tag")
-Policy = 0
-metadata/_custom_type_script = "uid://brfiixlf8uxqs"
 
 [sub_resource type="Resource" id="Resource_melee_magnitude"]
 script = ExtResource("8_magnitude")

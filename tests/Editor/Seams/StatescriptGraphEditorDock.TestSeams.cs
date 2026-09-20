@@ -78,6 +78,18 @@ public partial class StatescriptGraphEditorDock
 	}
 
 	/// <summary>
+	/// Connects two nodes, as the graph edit's connection request does. Ports are the visual port indexes.
+	/// </summary>
+	/// <param name="fromNodeId">The node the connection leaves.</param>
+	/// <param name="fromPort">The visual output port on that node.</param>
+	/// <param name="toNodeId">The node the connection enters.</param>
+	/// <param name="toPort">The visual input port on that node.</param>
+	internal void TestOnlyConnect(string fromNodeId, int fromPort, string toNodeId, int toPort)
+	{
+		OnConnectionRequest(fromNodeId, fromPort, toNodeId, toPort);
+	}
+
+	/// <summary>
 	/// Returns the open graph whose node visuals the graph edit is showing, regardless of which tab is selected.
 	/// </summary>
 	/// <returns>The displayed graph, or <see langword="null"/> when nothing is shown.</returns>

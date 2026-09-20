@@ -329,6 +329,4 @@ StatescriptName = "Thorns"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_hold_effect"), SubResource("Resource_set_magnitude"), SubResource("Resource_for_each_target"), SubResource("Resource_reflect_hit"), SubResource("Resource_reflect_cue")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_4b4sd"), SubResource("Resource_0oltv"), SubResource("Resource_v6v6u"), SubResource("Resource_d70ko"), SubResource("Resource_1t04f"), SubResource("Resource_gxjle")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_reflect_variable"), SubResource("Resource_target_variable")])
-ScrollOffset = Vector2(-372.72974, 12.154724)
-Zoom = 0.75131476
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

@@ -152,7 +152,5 @@ script = ExtResource("1_graph")
 StatescriptName = "Dash"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_pass_through_enemies"), SubResource("Resource_5h2ox"), SubResource("Resource_f62k3")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_bg6f5"), SubResource("Resource_njutq"), SubResource("Resource_qguum"), SubResource("Resource_xn5pp")])
-ScrollOffset = Vector2(-461.62463, 30.275513)
-Zoom = 0.6830134
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

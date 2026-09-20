@@ -145,7 +145,5 @@ StatescriptName = "Respawn"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_remember_spawn"), SubResource("Resource_fallen_listener"), SubResource("Resource_put_back"), SubResource("Resource_stop_falling")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_2kab5"), SubResource("Resource_078ql"), SubResource("Resource_ut70n"), SubResource("Resource_5hky6")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_spawn_variable")])
-ScrollOffset = Vector2(-242.5951, -16.7686)
-Zoom = 0.82644624
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

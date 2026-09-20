@@ -67,5 +67,4 @@ script = ExtResource("1_graph")
 StatescriptName = "Enemy Attack"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_hit")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_k672h"), SubResource("Resource_65jcq")])
-ScrollOffset = Vector2(-201, -7)
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
