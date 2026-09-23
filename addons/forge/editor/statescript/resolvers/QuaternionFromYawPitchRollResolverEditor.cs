@@ -11,12 +11,13 @@ using SysQuaternion = System.Numerics.Quaternion;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class QuaternionFromYawPitchRollResolverEditor
-	: TernaryNestedResolverEditorBase<QuaternionFromYawPitchRollResolverResource>
+internal sealed partial class QuaternionFromYawPitchRollResolverEditor : TernaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Quaternion From Yaw Pitch Roll";
 
 	public override string ResolverTypeId => "QuaternionFromYawPitchRoll";
+
+	protected override Type ResourceType => typeof(QuaternionFromYawPitchRollResolverResource);
 
 	protected override Type[] FirstFactoryExpectedTypes => ResolverEditorCompatibility.FloatOperandExpectedTypes;
 

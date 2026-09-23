@@ -9,10 +9,11 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class ScalarConstantResolverEditorBase<TResource> : NodeEditorProperty
-	where TResource : TypedConstantResolverResourceBase, new()
+internal abstract partial class ScalarConstantResolverEditorBase : NodeEditorProperty
 {
 	private StatescriptVariableType _valueType;
+
+	protected abstract Type ResourceType { get; }
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{
@@ -28,7 +29,7 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 		Action onChanged,
 		bool isArray)
 	{
-		if (property?.Resolver is TResource)
+		if (ResourceType.IsInstanceOfType(property?.Resolver))
 		{
 			_valueType = NormalizeValueType();
 		}
@@ -57,7 +58,9 @@ internal abstract partial class ScalarConstantResolverEditorBase<TResource> : No
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new TResource { ValueType = _valueType };
+		var resource = (TypedConstantResolverResourceBase)Activator.CreateInstance(ResourceType)!;
+		resource.ValueType = _valueType;
+		property.Resolver = resource;
 	}
 
 	private static StatescriptVariableType NormalizeValueType()

@@ -11,11 +11,13 @@ using SysQuaternion = System.Numerics.Quaternion;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class ConjugateResolverEditor : UnaryNestedResolverEditorBase<ConjugateResolverResource>
+internal sealed partial class ConjugateResolverEditor : UnaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Conjugate";
 
 	public override string ResolverTypeId => "Conjugate";
+
+	protected override Type ResourceType => typeof(ConjugateResolverResource);
 
 	protected override Type[] FactoryExpectedTypes => [typeof(SysQuaternion)];
 

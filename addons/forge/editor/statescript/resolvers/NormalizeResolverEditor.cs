@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -8,11 +9,12 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class NormalizeResolverEditor
-	: VectorPlaneQuaternionUnaryResolverEditorBase<NormalizeResolverResource>
+internal sealed partial class NormalizeResolverEditor : VectorPlaneQuaternionUnaryResolverEditorBase
 {
 	public override string DisplayName => "Normalize";
 
 	public override string ResolverTypeId => "Normalize";
+
+	protected override Type ResourceType => typeof(NormalizeResolverResource);
 }
 #endif

@@ -10,12 +10,13 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class SmoothStepResolverEditor
-	: NumericOrVectorTernaryResolverEditorBase<SmoothStepResolverResource>
+internal sealed partial class SmoothStepResolverEditor : NumericOrVectorTernaryResolverEditorBase
 {
 	public override string DisplayName => "Smooth Step";
 
 	public override string ResolverTypeId => "SmoothStep";
+
+	protected override Type ResourceType => typeof(SmoothStepResolverResource);
 
 	protected override string FirstTitle => "Edge 0:";
 

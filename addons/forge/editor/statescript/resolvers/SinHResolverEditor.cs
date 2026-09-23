@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -8,10 +9,12 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class SinHResolverEditor : ScalarUnaryResolverEditorBase<SinHResolverResource>
+internal sealed partial class SinHResolverEditor : ScalarUnaryResolverEditorBase
 {
 	public override string DisplayName => "SinH";
 
 	public override string ResolverTypeId => "SinH";
+
+	protected override Type ResourceType => typeof(SinHResolverResource);
 }
 #endif

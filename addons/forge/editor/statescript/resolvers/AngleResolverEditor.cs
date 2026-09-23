@@ -14,11 +14,13 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
 internal sealed partial class AngleResolverEditor
-	: VectorOrQuaternionBinaryFloatResolverEditorBase<AngleResolverResource>
+	: VectorOrQuaternionBinaryFloatResolverEditorBase
 {
 	public override string DisplayName => "Angle";
 
 	public override string ResolverTypeId => "Angle";
+
+	protected override Type ResourceType => typeof(AngleResolverResource);
 
 	protected override string LeftTitle => "From:";
 

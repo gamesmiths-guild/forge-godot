@@ -13,12 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class MultiplyResolverEditor
-	: NumericVectorOrQuaternionBinaryResolverEditorBase<MultiplyResolverResource>
+internal sealed partial class MultiplyResolverEditor : NumericVectorOrQuaternionBinaryResolverEditorBase
 {
 	public override string DisplayName => "Multiply";
 
 	public override string ResolverTypeId => "Multiply";
+
+	protected override Type ResourceType => typeof(MultiplyResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

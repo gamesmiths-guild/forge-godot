@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class SqrtResolverEditor : NumericOrVectorUnaryResolverEditorBase<SqrtResolverResource>
+internal sealed partial class SqrtResolverEditor : NumericOrVectorUnaryResolverEditorBase
 {
 	public override string DisplayName => "Sqrt";
 
 	public override string ResolverTypeId => "Sqrt";
+
+	protected override Type ResourceType => typeof(SqrtResolverResource);
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{

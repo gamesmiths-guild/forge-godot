@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System;
-using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 using SysVector2 = System.Numerics.Vector2;
 using SysVector3 = System.Numerics.Vector3;
@@ -10,9 +9,7 @@ using SysVector4 = System.Numerics.Vector4;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class NumericOrVectorUnaryResolverEditorBase<TResource>
-	: UnaryNestedResolverEditorBase<TResource>
-	where TResource : UnaryNestedResolverResourceBase, new()
+internal abstract partial class NumericOrVectorUnaryResolverEditorBase : UnaryNestedResolverEditorBase
 {
 	protected override Type[] FactoryExpectedTypes =>
 	[

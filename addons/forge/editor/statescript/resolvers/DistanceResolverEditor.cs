@@ -13,12 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class DistanceResolverEditor
-	: VectorOrQuaternionBinaryFloatResolverEditorBase<DistanceResolverResource>
+internal sealed partial class DistanceResolverEditor : VectorOrQuaternionBinaryFloatResolverEditorBase
 {
 	public override string DisplayName => "Distance";
 
 	public override string ResolverTypeId => "Distance";
+
+	protected override Type ResourceType => typeof(DistanceResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

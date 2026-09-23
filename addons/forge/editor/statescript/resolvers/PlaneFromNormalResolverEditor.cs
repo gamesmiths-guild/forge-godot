@@ -12,12 +12,13 @@ using SysVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class PlaneFromNormalResolverEditor
-	: AsymmetricBinaryNestedResolverEditorBase<PlaneFromNormalResolverResource>
+internal sealed partial class PlaneFromNormalResolverEditor : AsymmetricBinaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Plane From Normal";
 
 	public override string ResolverTypeId => "PlaneFromNormal";
+
+	protected override Type ResourceType => typeof(PlaneFromNormalResolverResource);
 
 	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysVector3)];
 

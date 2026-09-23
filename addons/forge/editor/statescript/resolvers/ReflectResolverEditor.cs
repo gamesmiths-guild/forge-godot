@@ -12,11 +12,13 @@ using SysVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class ReflectResolverEditor : BinaryNestedResolverEditorBase<ReflectResolverResource>
+internal sealed partial class ReflectResolverEditor : BinaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Reflect";
 
 	public override string ResolverTypeId => "Reflect";
+
+	protected override Type ResourceType => typeof(ReflectResolverResource);
 
 	protected override Type[] FactoryExpectedTypes => [typeof(SysVector2), typeof(SysVector3)];
 

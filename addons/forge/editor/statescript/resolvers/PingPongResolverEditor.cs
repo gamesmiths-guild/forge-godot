@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 #if TOOLS
+using System;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -8,11 +9,13 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class PingPongResolverEditor : ScalarBinaryResolverEditorBase<PingPongResolverResource>
+internal sealed partial class PingPongResolverEditor : ScalarBinaryResolverEditorBase
 {
 	public override string DisplayName => "Ping Pong";
 
 	public override string ResolverTypeId => "PingPong";
+
+	protected override Type ResourceType => typeof(PingPongResolverResource);
 
 	protected override string LeftTitle => "Value:";
 

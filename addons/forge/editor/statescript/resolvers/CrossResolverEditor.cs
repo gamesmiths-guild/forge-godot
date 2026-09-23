@@ -11,11 +11,13 @@ using SysVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class CrossResolverEditor : VectorBinaryResolverEditorBase<CrossResolverResource>
+internal sealed partial class CrossResolverEditor : VectorBinaryResolverEditorBase
 {
 	public override string DisplayName => "Cross";
 
 	public override string ResolverTypeId => "Cross";
+
+	protected override Type ResourceType => typeof(CrossResolverResource);
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{

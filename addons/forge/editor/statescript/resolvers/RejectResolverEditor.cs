@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class RejectResolverEditor : VectorBinaryResolverEditorBase<RejectResolverResource>
+internal sealed partial class RejectResolverEditor : VectorBinaryResolverEditorBase
 {
 	public override string DisplayName => "Reject";
 
 	public override string ResolverTypeId => "Reject";
+
+	protected override Type ResourceType => typeof(RejectResolverResource);
 
 	protected override string LeftTitle => "Value:";
 

@@ -9,8 +9,7 @@ using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class TernaryNestedResolverEditorBase<TResource> : NodeEditorProperty
-	where TResource : TernaryNestedResolverResourceBase, new()
+internal abstract partial class TernaryNestedResolverEditorBase : NodeEditorProperty
 {
 	private enum ResolverSlot
 	{
@@ -30,6 +29,8 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 	private List<Func<NodeEditorProperty>> _firstFactories = [];
 	private List<Func<NodeEditorProperty>> _secondFactories = [];
 	private List<Func<NodeEditorProperty>> _thirdFactories = [];
+
+	protected abstract Type ResourceType { get; }
 
 	protected abstract Type[] FirstFactoryExpectedTypes { get; }
 
@@ -99,7 +100,9 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 			return;
 		}
 
-		var existingResource = property?.Resolver as TResource;
+		TernaryNestedResolverResourceBase? existingResource = ResourceType.IsInstanceOfType(property?.Resolver)
+			? (TernaryNestedResolverResourceBase)property.Resolver
+			: null;
 
 		BuildSlot(
 			vBox,
@@ -133,15 +136,14 @@ internal abstract partial class TernaryNestedResolverEditorBase<TResource> : Nod
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new TResource
-		{
-			First = SaveNestedEditor(_firstEditor),
-			FirstFolded = _firstFoldable?.Folded ?? false,
-			Second = SaveNestedEditor(_secondEditor),
-			SecondFolded = _secondFoldable?.Folded ?? false,
-			Third = SaveNestedEditor(_thirdEditor),
-			ThirdFolded = _thirdFoldable?.Folded ?? false,
-		};
+		var resource = (TernaryNestedResolverResourceBase)Activator.CreateInstance(ResourceType)!;
+		resource.First = SaveNestedEditor(_firstEditor);
+		resource.FirstFolded = _firstFoldable?.Folded ?? false;
+		resource.Second = SaveNestedEditor(_secondEditor);
+		resource.SecondFolded = _secondFoldable?.Folded ?? false;
+		resource.Third = SaveNestedEditor(_thirdEditor);
+		resource.ThirdFolded = _thirdFoldable?.Folded ?? false;
+		property.Resolver = resource;
 	}
 
 	public override void ClearCallbacks()

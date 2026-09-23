@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class DotResolverEditor : VectorOrQuaternionBinaryFloatResolverEditorBase<DotResolverResource>
+internal sealed partial class DotResolverEditor : VectorOrQuaternionBinaryFloatResolverEditorBase
 {
 	public override string DisplayName => "Dot";
 
 	public override string ResolverTypeId => "Dot";
+
+	protected override Type ResourceType => typeof(DotResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

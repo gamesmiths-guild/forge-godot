@@ -10,8 +10,7 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeEditorProperty
-	where TResource : UnaryNestedResolverResourceBase, new()
+internal abstract partial class UnaryNestedResolverEditorBase : NodeEditorProperty
 {
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
@@ -21,6 +20,8 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 	private VBoxContainer? _editorContainer;
 	private NodeEditorProperty? _operandEditor;
 	private List<Func<NodeEditorProperty>> _factories = [];
+
+	protected abstract Type ResourceType { get; }
 
 	protected abstract Type[] FactoryExpectedTypes { get; }
 
@@ -54,7 +55,9 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 			return;
 		}
 
-		var existingResource = property?.Resolver as TResource;
+		UnaryNestedResolverResourceBase? existingResource = ResourceType.IsInstanceOfType(property?.Resolver)
+			? (UnaryNestedResolverResourceBase)property.Resolver
+			: null;
 		_operandFoldable = CreateFoldable(OperandTitle, existingResource?.OperandFolded ?? true);
 		vBox.AddChild(_operandFoldable);
 
@@ -82,11 +85,10 @@ internal abstract partial class UnaryNestedResolverEditorBase<TResource> : NodeE
 			operand = operandProperty.Resolver;
 		}
 
-		property.Resolver = new TResource
-		{
-			Operand = operand,
-			OperandFolded = _operandFoldable?.Folded ?? false,
-		};
+		var resource = (UnaryNestedResolverResourceBase)Activator.CreateInstance(ResourceType)!;
+		resource.Operand = operand;
+		resource.OperandFolded = _operandFoldable?.Folded ?? false;
+		property.Resolver = resource;
 	}
 
 	public override void ClearCallbacks()

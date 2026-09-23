@@ -2,7 +2,6 @@
 
 #if TOOLS
 using System;
-using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 using SysPlane = System.Numerics.Plane;
 using SysQuaternion = System.Numerics.Quaternion;
@@ -12,9 +11,7 @@ using SysVector4 = System.Numerics.Vector4;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class VectorPlaneQuaternionUnaryResolverEditorBase<TResource>
-	: UnaryNestedResolverEditorBase<TResource>
-	where TResource : UnaryNestedResolverResourceBase, new()
+internal abstract partial class VectorPlaneQuaternionUnaryResolverEditorBase : UnaryNestedResolverEditorBase
 {
 	protected override Type[] FactoryExpectedTypes =>
 		[typeof(SysVector2), typeof(SysVector3), typeof(SysVector4), typeof(SysPlane), typeof(SysQuaternion)];
