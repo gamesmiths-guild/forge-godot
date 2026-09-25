@@ -11,11 +11,13 @@ using SysQuaternion = System.Numerics.Quaternion;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class SlerpResolverEditor : TernaryNestedResolverEditorBase<SlerpResolverResource>
+internal sealed partial class SlerpResolverEditor : TernaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Slerp";
 
 	public override string ResolverTypeId => "Slerp";
+
+	protected override Type ResourceType => typeof(SlerpResolverResource);
 
 	protected override Type[] FirstFactoryExpectedTypes => [typeof(SysQuaternion)];
 

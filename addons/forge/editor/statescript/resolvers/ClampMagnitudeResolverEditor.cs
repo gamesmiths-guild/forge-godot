@@ -13,12 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class ClampMagnitudeResolverEditor
-	: AsymmetricBinaryNestedResolverEditorBase<ClampMagnitudeResolverResource>
+internal sealed partial class ClampMagnitudeResolverEditor : AsymmetricBinaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Clamp Magnitude";
 
 	public override string ResolverTypeId => "ClampMagnitude";
+
+	protected override Type ResourceType => typeof(ClampMagnitudeResolverResource);
 
 	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
 

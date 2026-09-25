@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System.Collections.Generic;
+using System.Linq;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
@@ -94,24 +95,67 @@ public partial class StatescriptGraphEditorDock
 			graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.DoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
-				undo.AddUndoMethod(this, MethodName.UndoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
+				undo.AddDoMethod(
+					this,
+					MethodName.DoConnect,
+					graph,
+					fromNodeId,
+					runtimeFromPort,
+					toNodeId,
+					runtimeToPort);
+				undo.AddUndoMethod(
+					this,
+					MethodName.UndoConnect,
+					graph,
+					fromNodeId,
+					runtimeFromPort,
+					toNodeId,
+					runtimeToPort);
 			},
 			execute: true,
-			fallback: () => DoConnect(fromNodeId, runtimeFromPort, toNodeId, runtimeToPort));
+			fallback: () => DoConnect(graph, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort));
 	}
 
-	private void DoConnect(string fromNode, int fromPort, string toNode, int toPort)
+	// An undo can run after another tab was brought up, so a graph that is not on show is changed directly.
+	private void DoConnect(StatescriptGraph graph, string fromNode, int fromPort, string toNode, int toPort)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
+		if (CurrentGraph != graph)
+		{
+			graph.Connections.Add(new StatescriptConnection
+			{
+				FromNode = fromNode,
+				OutputPort = fromPort,
+				ToNode = toNode,
+				InputPort = toPort,
+			});
+
+			graph.EmitChanged();
+			return;
+		}
 
 		_graphEdit?.ConnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
 	}
 
-	private void UndoConnect(string fromNode, int fromPort, string toNode, int toPort)
+	private void UndoConnect(StatescriptGraph graph, string fromNode, int fromPort, string toNode, int toPort)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
+
+		if (CurrentGraph != graph)
+		{
+			StatescriptConnection? connection = graph.Connections.FirstOrDefault(x =>
+				x.FromNode == fromNode && x.OutputPort == fromPort && x.ToNode == toNode && x.InputPort == toPort);
+
+			if (connection is not null)
+			{
+				graph.Connections.Remove(connection);
+				graph.EmitChanged();
+			}
+
+			return;
+		}
 
 		_graphEdit?.DisconnectNode(fromNode, ToVisualOutputPort(fromNode, fromPort), toNode, toPort);
 		SyncConnectionsToCurrentGraph();
@@ -136,8 +180,22 @@ public partial class StatescriptGraphEditorDock
 			graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.UndoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
-				undo.AddUndoMethod(this, MethodName.DoConnect, fromNodeId, runtimeFromPort, toNodeId, runtimeToPort);
+				undo.AddDoMethod(
+					this,
+					MethodName.UndoConnect,
+					graph,
+					fromNodeId,
+					runtimeFromPort,
+					toNodeId,
+					runtimeToPort);
+				undo.AddUndoMethod(
+					this,
+					MethodName.DoConnect,
+					graph,
+					fromNodeId,
+					runtimeFromPort,
+					toNodeId,
+					runtimeToPort);
 			},
 			execute: true,
 			fallback: () =>
@@ -306,10 +364,11 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
+		// Every node, not only the selected ones: arranging with nothing selected moves the whole graph.
 		_preMovePositions.Clear();
 		foreach (Node child in _graphEdit.GetChildren())
 		{
-			if (child is StatescriptGraphNode { Selected: true } sgn)
+			if (child is StatescriptGraphNode sgn)
 			{
 				_preMovePositions[sgn.Name] = sgn.PositionOffset;
 			}
@@ -360,6 +419,7 @@ public partial class StatescriptGraphEditorDock
 			});
 
 		SyncNodePositionsToResource(graph, movedNodes);
+		graph.EmitChanged();
 	}
 
 	private void DoMoveNodes(
@@ -375,6 +435,8 @@ public partial class StatescriptGraphEditorDock
 				node.PositionOffset = pos;
 			}
 		}
+
+		graph.EmitChanged();
 
 		if (CurrentGraph == graph && _graphEdit is not null)
 		{

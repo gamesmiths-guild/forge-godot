@@ -96,6 +96,4 @@ script = ExtResource("1_graph")
 StatescriptName = "Projectile"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_spawn")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_h2yms"), SubResource("Resource_opgl2")])
-ScrollOffset = Vector2(-211.90912, 47.363617)
-Zoom = 0.9090909
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

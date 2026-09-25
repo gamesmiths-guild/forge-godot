@@ -10,11 +10,13 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class WrapResolverEditor : NumericOrVectorTernaryResolverEditorBase<WrapResolverResource>
+internal sealed partial class WrapResolverEditor : NumericOrVectorTernaryResolverEditorBase
 {
 	public override string DisplayName => "Wrap";
 
 	public override string ResolverTypeId => "Wrap";
+
+	protected override Type ResourceType => typeof(WrapResolverResource);
 
 	protected override string FirstTitle => "Value:";
 

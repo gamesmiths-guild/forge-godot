@@ -38,15 +38,14 @@ public partial class StatescriptGraph : Resource
 	public Array<StatescriptGraphVariable> Variables { get; set; } = [];
 
 	/// <summary>
-	/// Gets or sets the scroll offset of the graph editor when this graph was last saved.
+	/// Gets or sets the scroll offset of the graph editor when this graph was last shown. View state lives in the
+	/// editor layout, never in the graph file, so panning a graph never changes it.
 	/// </summary>
-	[Export]
 	public Vector2 ScrollOffset { get; set; }
 
 	/// <summary>
-	/// Gets or sets the zoom level of the graph editor when this graph was last saved.
+	/// Gets or sets the zoom level of the graph editor when this graph was last shown. Kept in the editor layout.
 	/// </summary>
-	[Export]
 	public float Zoom { get; set; } = 1.0f;
 
 	/// <summary>

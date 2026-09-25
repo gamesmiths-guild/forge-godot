@@ -10,12 +10,13 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class InverseLerpResolverEditor
-	: NumericOrVectorTernaryResolverEditorBase<InverseLerpResolverResource>
+internal sealed partial class InverseLerpResolverEditor : NumericOrVectorTernaryResolverEditorBase
 {
 	public override string DisplayName => "Inverse Lerp";
 
 	public override string ResolverTypeId => "InverseLerp";
+
+	protected override Type ResourceType => typeof(InverseLerpResolverResource);
 
 	protected override string FirstTitle => "A:";
 

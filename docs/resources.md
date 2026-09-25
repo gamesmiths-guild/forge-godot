@@ -293,8 +293,6 @@ Resource representing a complete Statescript graph definition.
 - `Nodes` (Array\<StatescriptNode\>): The nodes in the graph.
 - `Connections` (Array\<StatescriptConnection\>): The connections between nodes.
 - `Variables` (Array\<StatescriptGraphVariable\>): Graph variable definitions.
-- `ScrollOffset` (Vector2): Editor scroll position (persisted for convenience).
-- `Zoom` (float): Editor zoom level (persisted for convenience).
 
 **Usage:**
 

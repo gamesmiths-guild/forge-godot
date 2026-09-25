@@ -10,8 +10,7 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class BinaryNestedResolverEditorBase<TResource> : NodeEditorProperty
-	where TResource : BinaryNestedResolverResourceBase, new()
+internal abstract partial class BinaryNestedResolverEditorBase : NodeEditorProperty
 {
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
@@ -25,6 +24,8 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 	private NodeEditorProperty? _leftEditor;
 	private NodeEditorProperty? _rightEditor;
 	private List<Func<NodeEditorProperty>> _factories = [];
+
+	protected abstract Type ResourceType { get; }
 
 	protected abstract Type[] FactoryExpectedTypes { get; }
 
@@ -66,7 +67,9 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			return;
 		}
 
-		var existingResource = property?.Resolver as TResource;
+		BinaryNestedResolverResourceBase? existingResource = ResourceType.IsInstanceOfType(property?.Resolver)
+			? (BinaryNestedResolverResourceBase)property.Resolver
+			: null;
 
 		_leftFoldable = CreateFoldable(LeftTitle, existingResource?.LeftFolded ?? true);
 		vBox.AddChild(_leftFoldable);
@@ -124,13 +127,11 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 			right = rightProperty.Resolver;
 		}
 
-		var resource = new TResource
-		{
-			Left = left,
-			LeftFolded = _leftFoldable?.Folded ?? false,
-			Right = right,
-			RightFolded = _rightFoldable?.Folded ?? false,
-		};
+		var resource = (BinaryNestedResolverResourceBase)Activator.CreateInstance(ResourceType)!;
+		resource.Left = left;
+		resource.LeftFolded = _leftFoldable?.Folded ?? false;
+		resource.Right = right;
+		resource.RightFolded = _rightFoldable?.Folded ?? false;
 
 		ApplyAdditionalProperties(resource);
 		property.Resolver = resource;
@@ -194,7 +195,9 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 	/// </summary>
 	/// <param name="container">The root container of the editor.</param>
 	/// <param name="existingResource">The resource being edited, if any.</param>
-	protected virtual void BuildAdditionalRows(VBoxContainer container, TResource? existingResource)
+	protected virtual void BuildAdditionalRows(
+		VBoxContainer container,
+		BinaryNestedResolverResourceBase? existingResource)
 	{
 	}
 
@@ -202,7 +205,7 @@ internal abstract partial class BinaryNestedResolverEditorBase<TResource> : Node
 	/// Writes extra properties onto the freshly built resource during <see cref="SaveTo"/>.
 	/// </summary>
 	/// <param name="resource">The resource about to be assigned to the property.</param>
-	protected virtual void ApplyAdditionalProperties(TResource resource)
+	protected virtual void ApplyAdditionalProperties(BinaryNestedResolverResourceBase resource)
 	{
 	}
 

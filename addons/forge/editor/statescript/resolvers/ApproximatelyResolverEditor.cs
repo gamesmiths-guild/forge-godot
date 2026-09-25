@@ -5,14 +5,14 @@ using System;
 using System.Globalization;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Godot;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class ApproximatelyResolverEditor
-	: ScalarBinaryResolverEditorBase<ApproximatelyResolverResource>
+internal sealed partial class ApproximatelyResolverEditor : ScalarBinaryResolverEditorBase
 {
 	private const float LabelWidth = 60.0f;
 
@@ -22,6 +22,8 @@ internal sealed partial class ApproximatelyResolverEditor
 	public override string DisplayName => "Approximately";
 
 	public override string ResolverTypeId => "Approximately";
+
+	protected override Type ResourceType => typeof(ApproximatelyResolverResource);
 
 	protected override string LeftTitle => "A:";
 
@@ -40,9 +42,9 @@ internal sealed partial class ApproximatelyResolverEditor
 
 	protected override void BuildAdditionalRows(
 		VBoxContainer container,
-		ApproximatelyResolverResource? existingResource)
+		BinaryNestedResolverResourceBase? existingResource)
 	{
-		_tolerance = existingResource?.Tolerance ?? 1e-6;
+		_tolerance = (existingResource as ApproximatelyResolverResource)?.Tolerance ?? 1e-6;
 
 		_toleranceEdit = new LineEdit
 		{
@@ -58,9 +60,9 @@ internal sealed partial class ApproximatelyResolverEditor
 		container.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Tolerance:", _toleranceEdit, LabelWidth));
 	}
 
-	protected override void ApplyAdditionalProperties(ApproximatelyResolverResource resource)
+	protected override void ApplyAdditionalProperties(BinaryNestedResolverResourceBase resource)
 	{
-		resource.Tolerance = _tolerance;
+		((ApproximatelyResolverResource)resource).Tolerance = _tolerance;
 	}
 
 	private static string FormatTolerance(double tolerance)

@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class AbsResolverEditor : NumericOrVectorUnaryResolverEditorBase<AbsResolverResource>
+internal sealed partial class AbsResolverEditor : NumericOrVectorUnaryResolverEditorBase
 {
 	public override string DisplayName => "Abs";
 
 	public override string ResolverTypeId => "Abs";
+
+	protected override Type ResourceType => typeof(AbsResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

@@ -13,12 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class NegateResolverEditor
-	: NumericOrVectorUnaryResolverEditorBase<NegatePassthroughResolverResource>
+internal sealed partial class NegateResolverEditor : NumericOrVectorUnaryResolverEditorBase
 {
 	public override string DisplayName => "Negate";
 
 	public override string ResolverTypeId => "Negate";
+
+	protected override Type ResourceType => typeof(NegatePassthroughResolverResource);
 
 	public override bool IsCompatibleWith(Type expectedType)
 	{

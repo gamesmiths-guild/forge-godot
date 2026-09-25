@@ -55,8 +55,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private int _serializedActiveTab = -1;
 	private bool[]? _serializedVariablesStates;
 	private string?[]? _serializedSelectedVariables;
-	private string[]? _serializedConnections;
-	private int[]? _serializedConnectionCounts;
+	private Vector2[]? _serializedScrollOffsets;
+	private float[]? _serializedZooms;
 	private bool _persistedVariablesPanelVisible = true;
 	private bool _sharedVariableHighlightSubscribed;
 	private bool _uiSignalsConnected;
@@ -148,28 +148,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		SyncVisualNodePositionsToGraph();
 		SyncConnectionsToCurrentGraph();
 
-		if (CurrentGraph is not null && _graphEdit is not null)
-		{
-			CurrentGraph.ScrollOffset = _graphEdit.ScrollOffset;
-			CurrentGraph.Zoom = _graphEdit.Zoom;
-		}
-
-		var allConnections = new List<string>();
-		_serializedConnectionCounts = new int[_openTabs.Count];
-		for (int i = 0; i < _openTabs.Count; i++)
-		{
-			StatescriptGraph graph = _openTabs[i].GraphResource;
-			int count = 0;
-			foreach (StatescriptConnection c in graph.Connections)
-			{
-				allConnections.Add($"{c.FromNode},{c.OutputPort},{c.ToNode},{c.InputPort}");
-				count++;
-			}
-
-			_serializedConnectionCounts[i] = count;
-		}
-
-		_serializedConnections = [.. allConnections];
+		// The shown tab's view has not reached its graph yet, and writing it there now is too late for the reload to
+		// carry it over, so the dock carries every tab's view itself.
+		GetViewStates(out _serializedScrollOffsets, out _serializedZooms);
 
 		ReleaseEditorRuntimeState();
 	}
@@ -256,6 +237,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			VariablesPanelOpen = _variablePanel?.Visible ?? false,
 		};
 
+		TrackChanges(tab);
 		_openTabs.Add(tab);
 
 		_tabBar.AddTab(graph.StatescriptName);
@@ -350,8 +332,26 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	}
 
 	/// <summary>
-	/// Saves all open graphs that have a resource path. Called by the plugin's _SaveExternalData
-	/// so that Ctrl+S persists statescript graphs alongside scenes.
+	/// Returns per-tab scroll offsets and zoom levels, kept in the editor layout rather than in the graph files.
+	/// </summary>
+	/// <param name="scrollOffsets">The scroll offset of each tab.</param>
+	/// <param name="zooms">The zoom level of each tab.</param>
+	public void GetViewStates(out Vector2[] scrollOffsets, out float[] zooms)
+	{
+		if (CurrentGraph is not null && _graphEdit is not null)
+		{
+			CurrentGraph.ScrollOffset = _graphEdit.ScrollOffset;
+			CurrentGraph.Zoom = _graphEdit.Zoom;
+		}
+
+		GraphTab[] tabs = GetPersistedTabs();
+		scrollOffsets = [.. tabs.Select(x => x.GraphResource.ScrollOffset)];
+		zooms = [.. tabs.Select(x => x.GraphResource.Zoom)];
+	}
+
+	/// <summary>
+	/// Saves the open graphs that have a resource path and changed since they were loaded or saved. Called by the
+	/// plugin's _SaveExternalData so that Ctrl+S persists statescript graphs alongside scenes.
 	/// </summary>
 	public void SaveAllOpenGraphs()
 	{
@@ -369,14 +369,19 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			CurrentGraph.Zoom = _graphEdit.Zoom;
 		}
 
-		foreach (StatescriptGraph graph in _openTabs.Select(x => x.GraphResource))
+		// Only a graph that changed is written. The editor saves everything before every run, and a graph that was
+		// merely looked at came back rewritten.
+		foreach (GraphTab tab in _openTabs)
 		{
-			if (string.IsNullOrEmpty(graph.ResourcePath))
+			if (string.IsNullOrEmpty(tab.GraphResource.ResourcePath) || !tab.Unsaved)
 			{
 				continue;
 			}
 
-			SaveGraphResource(graph);
+			if (SaveGraphResource(tab.GraphResource) == Error.Ok)
+			{
+				tab.Unsaved = false;
+			}
 		}
 	}
 
@@ -386,7 +391,14 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	/// <param name="paths">The resource paths of the tabs to restore.</param>
 	/// <param name="activeIndex">The index of the tab to make active.</param>
 	/// <param name="variablesStates">The visibility states of the variables panel for each tab.</param>
-	public void RestoreFromPaths(string[] paths, int activeIndex, bool[]? variablesStates = null)
+	/// <param name="scrollOffsets">The scroll offset of each tab.</param>
+	/// <param name="zooms">The zoom level of each tab.</param>
+	public void RestoreFromPaths(
+		string[] paths,
+		int activeIndex,
+		bool[]? variablesStates = null,
+		Vector2[]? scrollOffsets = null,
+		float[]? zooms = null)
 	{
 		if (_tabBar is null || _graphEdit is null)
 		{
@@ -395,13 +407,15 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_isLoadingGraph = true;
 
-		_openTabs.Clear();
+		ReleaseAllTabs();
 		while (_tabBar.GetTabCount() > 0)
 		{
 			_tabBar.RemoveTab(0);
 		}
 
-		int skippedTabs = 0;
+		// The saved states line up with the saved paths, not with the tabs restored from them, which leave out a path
+		// that no longer loads.
+		int restoredActiveIndex = -1;
 		for (int i = 0; i < paths.Length; i++)
 		{
 			string path = paths[i];
@@ -409,17 +423,28 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			StatescriptGraph? graph = LoadGraphFromPath(path);
 			if (graph is null)
 			{
-				skippedTabs++;
 				continue;
 			}
 
 			graph.EnsureEntryNode();
-			var tab = new GraphTab(graph);
 
-			int currentTab = i - skippedTabs;
-			if (variablesStates is not null && currentTab < variablesStates.Length)
+			if (scrollOffsets is not null && i < scrollOffsets.Length && zooms is not null && i < zooms.Length)
 			{
-				tab.VariablesPanelOpen = variablesStates[currentTab];
+				graph.ScrollOffset = scrollOffsets[i];
+				graph.Zoom = zooms[i];
+			}
+
+			var tab = new GraphTab(graph);
+			TrackChanges(tab);
+
+			if (variablesStates is not null && i < variablesStates.Length)
+			{
+				tab.VariablesPanelOpen = variablesStates[i];
+			}
+
+			if (i == activeIndex)
+			{
+				restoredActiveIndex = _openTabs.Count;
 			}
 
 			_openTabs.Add(tab);
@@ -428,12 +453,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_isLoadingGraph = false;
 
-		if (activeIndex >= 0 && activeIndex < _openTabs.Count)
+		if (restoredActiveIndex >= 0)
 		{
-			_openTabs[activeIndex].VariablesPanelOpen = _persistedVariablesPanelVisible;
-			SetCurrentTabWithoutLoading(activeIndex);
-			LoadGraphIntoEditor(_openTabs[activeIndex].GraphResource);
-			ApplyVariablesPanelState(activeIndex);
+			_openTabs[restoredActiveIndex].VariablesPanelOpen = _persistedVariablesPanelVisible;
+			SetCurrentTabWithoutLoading(restoredActiveIndex);
+			LoadGraphIntoEditor(_openTabs[restoredActiveIndex].GraphResource);
+			ApplyVariablesPanelState(restoredActiveIndex);
 		}
 		else if (_openTabs.Count > 0)
 		{
@@ -554,7 +579,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		return null;
 	}
 
-	private static void SaveGraphResource(StatescriptGraph graph)
+	private static Error SaveGraphResource(StatescriptGraph graph)
 	{
 		string path = graph.ResourcePath;
 
@@ -562,14 +587,65 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			string basePath = GetBaseFilePath(path);
 			Resource? parentResource = ResourceLoader.Load(basePath);
-			if (parentResource is not null)
+			if (parentResource is null)
 			{
-				ResourceSaver.Save(parentResource);
+				return Error.CantOpen;
 			}
+
+			return ResourceSaver.Save(parentResource);
 		}
-		else
+
+		return ResourceSaver.Save(graph);
+	}
+
+	private void ReleaseAllTabs()
+	{
+		foreach (GraphTab tab in _openTabs)
 		{
-			ResourceSaver.Save(graph);
+			ReleaseTab(tab);
+		}
+
+		_openTabs.Clear();
+	}
+
+	private void ReleaseTab(GraphTab tab)
+	{
+		if (IsInstanceValid(tab.GraphResource))
+		{
+			tab.GraphResource.Disconnect(
+				Resource.SignalName.Changed,
+				new Callable(this, MethodName.OnGraphResourceChanged));
+		}
+	}
+
+	// A method callable, not a lambda: the editor cannot serialize a lambda capturing a GraphTab, so it releases it
+	// before an assembly reload and leaves behind a dead connection that can no longer be disconnected.
+	private void TrackChanges(GraphTab tab)
+	{
+		tab.GraphResource.Connect(
+			Resource.SignalName.Changed,
+			new Callable(this, MethodName.OnGraphResourceChanged),
+			(uint)ConnectFlags.AppendSourceObject);
+	}
+
+	// Loading raises Changed as the visuals are built, so only what happens after a load counts as an edit.
+	private void OnGraphResourceChanged(StatescriptGraph graph)
+	{
+		GraphTab? tab = FindTab(graph);
+
+		if (tab is not null && !_isLoadingGraph)
+		{
+			tab.Unsaved = true;
+		}
+	}
+
+	private void MarkSaved(StatescriptGraph graph)
+	{
+		GraphTab? tab = FindTab(graph);
+
+		if (tab is not null)
+		{
+			tab.Unsaved = false;
 		}
 	}
 
@@ -600,7 +676,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		DisposeCachedGraphVisuals();
 
-		_openTabs.Clear();
+		ReleaseAllTabs();
 	}
 
 	private void TryRestoreTabsDeferred()
@@ -638,15 +714,15 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		int activeTab = _serializedActiveTab;
 		bool[]? varStates = _serializedVariablesStates;
 		string?[]? selectedVariables = _serializedSelectedVariables;
-		string[]? savedConnections = _serializedConnections;
-		int[]? connectionCounts = _serializedConnectionCounts;
+		Vector2[]? scrollOffsets = _serializedScrollOffsets;
+		float[]? zooms = _serializedZooms;
 
 		_serializedTabPaths = null;
 		_serializedActiveTab = -1;
 		_serializedVariablesStates = null;
 		_serializedSelectedVariables = null;
-		_serializedConnections = null;
-		_serializedConnectionCounts = null;
+		_serializedScrollOffsets = null;
+		_serializedZooms = null;
 
 		if (_tabBar is null || _graphEdit is null)
 		{
@@ -655,40 +731,55 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_isLoadingGraph = true;
 
-		_openTabs.Clear();
+		ReleaseAllTabs();
 		while (_tabBar.GetTabCount() > 0)
 		{
 			_tabBar.RemoveTab(0);
 		}
 
-		int skippedTabs = 0;
+		// As in RestoreFromPaths, the saved states line up with the saved paths.
+		int restoredActiveTab = -1;
 		for (int i = 0; i < paths.Length; i++)
 		{
 			if (!ResourceLoader.Exists(paths[i]))
 			{
-				skippedTabs++;
 				continue;
 			}
 
 			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(paths[i]);
 			if (graph is null)
 			{
-				skippedTabs++;
 				continue;
 			}
 
 			graph.EnsureEntryNode();
-			var tab = new GraphTab(graph);
 
-			int currentTab = i - skippedTabs;
-			if (varStates is not null && currentTab < varStates.Length)
+			if (scrollOffsets is not null && i < scrollOffsets.Length && zooms is not null && i < zooms.Length)
 			{
-				tab.VariablesPanelOpen = varStates[currentTab];
+				graph.ScrollOffset = scrollOffsets[i];
+				graph.Zoom = zooms[i];
 			}
 
-			if (selectedVariables is not null && currentTab < selectedVariables.Length)
+			var tab = new GraphTab(graph);
+			TrackChanges(tab);
+
+			if (varStates is not null && i < varStates.Length)
 			{
-				tab.SelectedVariableName = selectedVariables[currentTab];
+				tab.VariablesPanelOpen = varStates[i];
+			}
+
+			if (selectedVariables is not null && i < selectedVariables.Length)
+			{
+				tab.SelectedVariableName = selectedVariables[i];
+			}
+
+			// The graphs survive the reload in memory, edits included, and nothing is known about their state; a save
+			// that finds nothing changed rewrites nothing.
+			tab.Unsaved = true;
+
+			if (i == activeTab)
+			{
+				restoredActiveTab = _openTabs.Count;
 			}
 
 			_openTabs.Add(tab);
@@ -697,41 +788,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_isLoadingGraph = false;
 
-		if (savedConnections is not null && connectionCounts is not null)
+		if (restoredActiveTab >= 0)
 		{
-			int offset = 0;
-			for (int i = 0; i < _openTabs.Count && i < connectionCounts.Length; i++)
-			{
-				StatescriptGraph graph = _openTabs[i].GraphResource;
-				graph.Connections.Clear();
-
-				for (int j = 0; j < connectionCounts[i] && offset < savedConnections.Length; j++, offset++)
-				{
-					string[] parts = savedConnections[offset].Split(',');
-					if (parts.Length != 4
-						|| !int.TryParse(parts[1], out int outPort)
-						|| !int.TryParse(parts[3], out int inPort))
-					{
-						continue;
-					}
-
-					graph.Connections.Add(new StatescriptConnection
-					{
-						FromNode = parts[0],
-						OutputPort = outPort,
-						ToNode = parts[2],
-						InputPort = inPort,
-					});
-				}
-			}
-		}
-
-		if (activeTab >= 0 && activeTab < _openTabs.Count)
-		{
-			_openTabs[activeTab].VariablesPanelOpen = _persistedVariablesPanelVisible;
-			SetCurrentTabWithoutLoading(activeTab);
-			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
-			ApplyVariablesPanelState(activeTab);
+			_openTabs[restoredActiveTab].VariablesPanelOpen = _persistedVariablesPanelVisible;
+			SetCurrentTabWithoutLoading(restoredActiveTab);
+			LoadGraphIntoEditor(_openTabs[restoredActiveTab].GraphResource);
+			ApplyVariablesPanelState(restoredActiveTab);
 		}
 		else if (_openTabs.Count > 0)
 		{
@@ -751,6 +813,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		DisposeCachedGraphVisuals(_openTabs[tabIndex]);
+		ReleaseTab(_openTabs[tabIndex]);
 
 		_openTabs.RemoveAt(tabIndex);
 
@@ -1337,20 +1400,45 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
-		graph.Connections.Clear();
+		// A connection that already has a resource keeps it, so a save writes it back under the id it was loaded with
+		// rather than as a new resource under a fresh one; recreating them all made every save rewrite every
+		// connection in the file, whether or not anything had changed.
+		var unclaimed = new List<StatescriptConnection>(graph.Connections);
+		var connections = new List<StatescriptConnection>();
+
 		foreach (GodotCollections.Dictionary connection in _graphEdit.GetConnectionList())
 		{
 			string fromNode = connection["from_node"].AsString();
-			var connectionResource = new StatescriptConnection
+			int outputPort = ToRuntimeOutputPort(fromNode, connection["from_port"].AsInt32());
+			string toNode = connection["to_node"].AsString();
+			int inputPort = connection["to_port"].AsInt32();
+
+			StatescriptConnection? kept = unclaimed.Find(c =>
+				c.FromNode == fromNode && c.OutputPort == outputPort && c.ToNode == toNode && c.InputPort == inputPort);
+
+			if (kept is not null)
+			{
+				unclaimed.Remove(kept);
+				connections.Add(kept);
+				continue;
+			}
+
+			connections.Add(new StatescriptConnection
 			{
 				FromNode = fromNode,
-				OutputPort = ToRuntimeOutputPort(fromNode, connection["from_port"].AsInt32()),
-				ToNode = connection["to_node"].AsString(),
-				InputPort = connection["to_port"].AsInt32(),
-			};
-
-			graph.Connections.Add(connectionResource);
+				OutputPort = outputPort,
+				ToNode = toNode,
+				InputPort = inputPort,
+			});
 		}
+
+		if (connections.SequenceEqual(graph.Connections))
+		{
+			return;
+		}
+
+		graph.Connections.Clear();
+		graph.Connections.AddRange(connections);
 
 		graph.EmitChanged();
 	}
@@ -1908,6 +1996,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		public bool VariablesPanelOpen { get; set; }
 
 		public string? SelectedVariableName { get; set; }
+
+		public bool Unsaved { get; set; }
 
 		public GraphTab(StatescriptGraph graphResource)
 		{

@@ -10,8 +10,7 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResource> : NodeEditorProperty
-	where TResource : BinaryNestedResolverResourceBase, new()
+internal abstract partial class AsymmetricBinaryNestedResolverEditorBase : NodeEditorProperty
 {
 	private StatescriptGraph? _graph;
 	private Action? _onChanged;
@@ -26,6 +25,8 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 	private NodeEditorProperty? _rightEditor;
 	private List<Func<NodeEditorProperty>> _leftFactories = [];
 	private List<Func<NodeEditorProperty>> _rightFactories = [];
+
+	protected abstract Type ResourceType { get; }
 
 	protected abstract Type[] LeftFactoryExpectedTypes { get; }
 
@@ -74,7 +75,9 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			return;
 		}
 
-		var existingResource = property?.Resolver as TResource;
+		BinaryNestedResolverResourceBase? existingResource = ResourceType.IsInstanceOfType(property?.Resolver)
+			? (BinaryNestedResolverResourceBase)property.Resolver
+			: null;
 
 		_leftFoldable = CreateFoldable(LeftTitle, existingResource?.LeftFolded ?? true);
 		vBox.AddChild(_leftFoldable);
@@ -137,13 +140,12 @@ internal abstract partial class AsymmetricBinaryNestedResolverEditorBase<TResour
 			right = rightProperty.Resolver;
 		}
 
-		property.Resolver = new TResource
-		{
-			Left = left,
-			LeftFolded = _leftFoldable?.Folded ?? false,
-			Right = right,
-			RightFolded = _rightFoldable?.Folded ?? false,
-		};
+		var resource = (BinaryNestedResolverResourceBase)Activator.CreateInstance(ResourceType)!;
+		resource.Left = left;
+		resource.LeftFolded = _leftFoldable?.Folded ?? false;
+		resource.Right = right;
+		resource.RightFolded = _rightFoldable?.Folded ?? false;
+		property.Resolver = resource;
 	}
 
 	public override void ClearCallbacks()

@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class MinResolverEditor : NumericOrVectorBinaryResolverEditorBase<MinResolverResource>
+internal sealed partial class MinResolverEditor : NumericOrVectorBinaryResolverEditorBase
 {
 	public override string DisplayName => "Min";
 
 	public override string ResolverTypeId => "Min";
+
+	protected override Type ResourceType => typeof(MinResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

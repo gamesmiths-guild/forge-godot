@@ -8,22 +8,27 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 internal sealed partial class StatescriptVariablePanel
 {
-	private static void SetArrayElementValue(StatescriptGraphVariable variable, int index, Variant newValue)
+	private static void SetArrayElementValue(
+		StatescriptGraph graph,
+		StatescriptGraphVariable variable,
+		int index,
+		Variant newValue)
 	{
 		variable.InitialArrayValues[index] = newValue;
 		variable.EmitChanged();
+		graph.EmitChanged();
 	}
 
 	private void SetArrayElementValueWithUndo(StatescriptGraphVariable variable, int index, Variant newValue)
 	{
-		if (index < 0 || index >= variable.InitialArrayValues.Count)
+		if (_graph is null || index < 0 || index >= variable.InitialArrayValues.Count)
 		{
 			return;
 		}
 
 		Variant oldValue = variable.InitialArrayValues[index];
 
-		SetArrayElementValue(variable, index, newValue);
+		SetArrayElementValue(_graph, variable, index, newValue);
 
 		EditorUndoRedoUtils.Record(
 			_undoRedo,
@@ -31,12 +36,18 @@ internal sealed partial class StatescriptVariablePanel
 			_graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyArrayElementValue, variable, index, newValue);
-				undo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, variable, index, oldValue);
+				undo.AddDoMethod(this, MethodName.ApplyArrayElementValue, _graph, variable, index, newValue);
+				undo.AddUndoMethod(this, MethodName.ApplyArrayElementValue, _graph, variable, index, oldValue);
 			});
 	}
 
-	private void ApplyArrayElementValue(StatescriptGraphVariable variable, int index, Variant value)
+	// A replay is handed the variable's graph rather than using the one on show: an undo can run after the panel has
+	// moved to another tab, and it is the variable's graph that has to be marked changed for the save to write it.
+	private void ApplyArrayElementValue(
+		StatescriptGraph graph,
+		StatescriptGraphVariable variable,
+		int index,
+		Variant value)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
@@ -44,6 +55,7 @@ internal sealed partial class StatescriptVariablePanel
 		{
 			variable.InitialArrayValues[index] = value;
 			variable.EmitChanged();
+			graph.EmitChanged();
 		}
 
 		// Reveal the changed element so an undo/redo isn't hidden inside a collapsed array.
@@ -55,10 +67,16 @@ internal sealed partial class StatescriptVariablePanel
 
 	private void SetVariableValue(StatescriptGraphVariable variable, Variant newValue)
 	{
+		if (_graph is null)
+		{
+			return;
+		}
+
 		Variant oldValue = variable.InitialValue;
 
 		variable.InitialValue = newValue;
 		variable.EmitChanged();
+		_graph.EmitChanged();
 
 		EditorUndoRedoUtils.Record(
 			_undoRedo,
@@ -66,17 +84,18 @@ internal sealed partial class StatescriptVariablePanel
 			_graph,
 			undo =>
 			{
-				undo.AddDoMethod(this, MethodName.ApplyVariableValue, variable, newValue);
-				undo.AddUndoMethod(this, MethodName.ApplyVariableValue, variable, oldValue);
+				undo.AddDoMethod(this, MethodName.ApplyVariableValue, _graph, variable, newValue);
+				undo.AddUndoMethod(this, MethodName.ApplyVariableValue, _graph, variable, oldValue);
 			});
 	}
 
-	private void ApplyVariableValue(StatescriptGraphVariable variable, Variant value)
+	private void ApplyVariableValue(StatescriptGraph graph, StatescriptGraphVariable variable, Variant value)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
 		variable.InitialValue = value;
 		variable.EmitChanged();
+		graph.EmitChanged();
 		RebuildList();
 		VariableUndoRedoPerformed?.Invoke();
 	}
@@ -134,17 +153,18 @@ internal sealed partial class StatescriptVariablePanel
 		VariableUndoRedoPerformed?.Invoke();
 	}
 
-	private void DoAddArrayElement(StatescriptGraphVariable variable, Variant value)
+	private void DoAddArrayElement(StatescriptGraph graph, StatescriptGraphVariable variable, Variant value)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
 		variable.InitialArrayValues.Add(value);
 		variable.EmitChanged();
+		graph.EmitChanged();
 		EnsureArrayExpanded(variable.VariableName);
 		RebuildList();
 	}
 
-	private void UndoAddArrayElement(StatescriptGraphVariable variable)
+	private void UndoAddArrayElement(StatescriptGraph graph, StatescriptGraphVariable variable)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
@@ -152,6 +172,7 @@ internal sealed partial class StatescriptVariablePanel
 		{
 			variable.InitialArrayValues.RemoveAt(variable.InitialArrayValues.Count - 1);
 			variable.EmitChanged();
+			graph.EmitChanged();
 		}
 
 		EnsureArrayExpanded(variable.VariableName);
@@ -159,16 +180,21 @@ internal sealed partial class StatescriptVariablePanel
 		VariableUndoRedoPerformed?.Invoke();
 	}
 
-	private void DoRemoveArrayElement(StatescriptGraphVariable variable, int index)
+	private void DoRemoveArrayElement(StatescriptGraph graph, StatescriptGraphVariable variable, int index)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
 		variable.InitialArrayValues.RemoveAt(index);
 		variable.EmitChanged();
+		graph.EmitChanged();
 		RebuildList();
 	}
 
-	private void UndoRemoveArrayElement(StatescriptGraphVariable variable, int index, Variant value)
+	private void UndoRemoveArrayElement(
+		StatescriptGraph graph,
+		StatescriptGraphVariable variable,
+		int index,
+		Variant value)
 	{
 		using EditorUndoRedoUtils.ReplayScope replay = EditorUndoRedoUtils.EnterReplay();
 
@@ -182,6 +208,7 @@ internal sealed partial class StatescriptVariablePanel
 		}
 
 		variable.EmitChanged();
+		graph.EmitChanged();
 		EnsureArrayExpanded(variable.VariableName);
 		RebuildList();
 		VariableUndoRedoPerformed?.Invoke();

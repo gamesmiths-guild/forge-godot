@@ -12,12 +12,13 @@ using SysVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class DotCoordinateResolverEditor
-	: AsymmetricBinaryNestedResolverEditorBase<DotCoordinateResolverResource>
+internal sealed partial class DotCoordinateResolverEditor : AsymmetricBinaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Dot Coordinate";
 
 	public override string ResolverTypeId => "DotCoordinate";
+
+	protected override Type ResourceType => typeof(DotCoordinateResolverResource);
 
 	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysPlane)];
 

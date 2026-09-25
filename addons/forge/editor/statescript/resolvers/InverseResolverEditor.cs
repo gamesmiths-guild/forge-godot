@@ -11,11 +11,13 @@ using SysQuaternion = System.Numerics.Quaternion;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class InverseResolverEditor : UnaryNestedResolverEditorBase<InverseResolverResource>
+internal sealed partial class InverseResolverEditor : UnaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Inverse";
 
 	public override string ResolverTypeId => "Inverse";
+
+	protected override Type ResourceType => typeof(InverseResolverResource);
 
 	protected override Type[] FactoryExpectedTypes => [typeof(SysQuaternion)];
 

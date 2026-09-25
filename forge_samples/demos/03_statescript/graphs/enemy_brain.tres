@@ -356,7 +356,5 @@ StatescriptName = "Enemy Brain"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_attack_range"), SubResource("Resource_may_move"), SubResource("Resource_chase"), SubResource("Resource_attack_loop"), SubResource("Resource_attack"), SubResource("Resource_health_listener"), SubResource("Resource_is_dead"), SubResource("Resource_despawn"), SubResource("Resource_fallen_listener")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_7pxl0"), SubResource("Resource_tguad"), SubResource("Resource_mhwuj"), SubResource("Resource_iht5q"), SubResource("Resource_ssbih"), SubResource("Resource_m1k48"), SubResource("Resource_pbnfa"), SubResource("Resource_1qhvr"), SubResource("Resource_mcj36"), SubResource("Resource_be1nu")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_health_variable")])
-ScrollOffset = Vector2(0, 21.929321)
-Zoom = 0.82644624
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

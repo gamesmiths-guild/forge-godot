@@ -358,7 +358,5 @@ StatescriptName = "Brazier"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_show_flame"), SubResource("Resource_light_up"), SubResource("Resource_waves"), SubResource("Resource_room_for_more"), SubResource("Resource_spawn_enemy"), SubResource("Resource_ring"), SubResource("Resource_interact_key"), SubResource("Resource_toggle"), SubResource("Resource_p3lev")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_tl8rd"), SubResource("Resource_maesg"), SubResource("Resource_mtynk"), SubResource("Resource_d3b5t"), SubResource("Resource_v1pr5"), SubResource("Resource_7xmfw"), SubResource("Resource_1o0c2"), SubResource("Resource_7qbjb"), SubResource("Resource_nfbag")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_l2yiy")])
-ScrollOffset = Vector2(-802.85614, 210.67148)
-Zoom = 0.56447387
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

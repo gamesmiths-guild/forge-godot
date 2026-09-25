@@ -14,11 +14,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class LerpResolverEditor : NumericOrVectorTernaryResolverEditorBase<LerpResolverResource>
+internal sealed partial class LerpResolverEditor : NumericOrVectorTernaryResolverEditorBase
 {
 	public override string DisplayName => "Lerp";
 
 	public override string ResolverTypeId => "Lerp";
+
+	protected override Type ResourceType => typeof(LerpResolverResource);
 
 	protected override string FirstTitle => "A:";
 

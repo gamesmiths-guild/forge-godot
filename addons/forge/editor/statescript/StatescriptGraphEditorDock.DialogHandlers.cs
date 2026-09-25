@@ -177,13 +177,23 @@ public partial class StatescriptGraphEditorDock
 				SyncConnectionsToCurrentGraph();
 			}
 
-			ResourceSaver.Save(graph, path);
+			Error error = ResourceSaver.Save(graph, path);
+			if (error != Error.Ok)
+			{
+				GD.PushError($"Failed to save Statescript graph as {path}: {error}");
+				dialog.QueueFree();
+				return;
+			}
+
 			EditorInterface.Singleton.GetResourceFilesystem().Scan();
 			GD.Print($"Statescript graph saved as: {path}");
 
 			StatescriptGraph? savedGraph = ResourceLoader.Load<StatescriptGraph>(path);
 			if (savedGraph is not null)
 			{
+				// The view is not saved with the graph, so the copy opens where the original was being looked at.
+				savedGraph.ScrollOffset = graph.ScrollOffset;
+				savedGraph.Zoom = graph.Zoom;
 				OpenGraph(savedGraph);
 			}
 
@@ -215,7 +225,14 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		SaveGraphResource(graph);
+		Error error = SaveGraphResource(graph);
+		if (error != Error.Ok)
+		{
+			GD.PushError($"Failed to save Statescript graph {graph.ResourcePath}: {error}");
+			return;
+		}
+
+		MarkSaved(graph);
 		GD.Print($"Statescript graph saved: {graph.ResourcePath}");
 	}
 

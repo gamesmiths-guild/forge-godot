@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class MaxResolverEditor : NumericOrVectorBinaryResolverEditorBase<MaxResolverResource>
+internal sealed partial class MaxResolverEditor : NumericOrVectorBinaryResolverEditorBase
 {
 	public override string DisplayName => "Max";
 
 	public override string ResolverTypeId => "Max";
+
+	protected override Type ResourceType => typeof(MaxResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

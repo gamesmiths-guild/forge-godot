@@ -12,12 +12,13 @@ using SysVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class QuaternionFromAxisAngleResolverEditor
-	: AsymmetricBinaryNestedResolverEditorBase<QuaternionFromAxisAngleResolverResource>
+internal sealed partial class QuaternionFromAxisAngleResolverEditor : AsymmetricBinaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Quaternion From Axis Angle";
 
 	public override string ResolverTypeId => "QuaternionFromAxisAngle";
+
+	protected override Type ResourceType => typeof(QuaternionFromAxisAngleResolverResource);
 
 	protected override Type[] LeftFactoryExpectedTypes => [typeof(SysVector3)];
 

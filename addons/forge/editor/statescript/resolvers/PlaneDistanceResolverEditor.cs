@@ -11,11 +11,13 @@ using SysPlane = System.Numerics.Plane;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class PlaneDistanceResolverEditor : UnaryNestedResolverEditorBase<PlaneDistanceResolverResource>
+internal sealed partial class PlaneDistanceResolverEditor : UnaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Plane Distance";
 
 	public override string ResolverTypeId => "PlaneDistance";
+
+	protected override Type ResourceType => typeof(PlaneDistanceResolverResource);
 
 	protected override Type[] FactoryExpectedTypes => [typeof(SysPlane)];
 

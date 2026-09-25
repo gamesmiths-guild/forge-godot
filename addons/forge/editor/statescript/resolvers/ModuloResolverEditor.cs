@@ -10,11 +10,13 @@ using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class ModuloResolverEditor : BinaryNestedResolverEditorBase<ModuloResolverResource>
+internal sealed partial class ModuloResolverEditor : BinaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Modulo";
 
 	public override string ResolverTypeId => "Modulo";
+
+	protected override Type ResourceType => typeof(ModuloResolverResource);
 
 	protected override Type[] FactoryExpectedTypes => [typeof(int), typeof(float), typeof(double)];
 

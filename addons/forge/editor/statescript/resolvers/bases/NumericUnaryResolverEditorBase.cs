@@ -2,13 +2,11 @@
 
 #if TOOLS
 using System;
-using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using ForgeVariant128 = Gamesmiths.Forge.Statescript.Variant128;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
-internal abstract partial class NumericUnaryResolverEditorBase<TResource> : UnaryNestedResolverEditorBase<TResource>
-	where TResource : UnaryNestedResolverResourceBase, new()
+internal abstract partial class NumericUnaryResolverEditorBase : UnaryNestedResolverEditorBase
 {
 	protected override Type[] FactoryExpectedTypes => [typeof(int), typeof(float), typeof(double)];
 

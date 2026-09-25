@@ -13,11 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class MoveTowardsResolverEditor : TernaryNestedResolverEditorBase<MoveTowardsResolverResource>
+internal sealed partial class MoveTowardsResolverEditor : TernaryNestedResolverEditorBase
 {
 	public override string DisplayName => "Move Towards";
 
 	public override string ResolverTypeId => "MoveTowards";
+
+	protected override Type ResourceType => typeof(MoveTowardsResolverResource);
 
 	protected override Type[] FirstFactoryExpectedTypes =>
 		[typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
@@ -56,7 +58,14 @@ internal sealed partial class MoveTowardsResolverEditor : TernaryNestedResolverE
 		}
 		else if (expectedType == typeof(ForgeVariant128))
 		{
-			return [typeof(int), typeof(float), typeof(double), typeof(SysVector2), typeof(SysVector3), typeof(SysVector4)];
+			return [
+				typeof(int),
+				typeof(float),
+				typeof(double),
+				typeof(SysVector2),
+				typeof(SysVector3),
+				typeof(SysVector4)
+			];
 		}
 		else
 		{

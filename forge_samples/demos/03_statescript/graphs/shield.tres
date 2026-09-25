@@ -265,6 +265,4 @@ StatescriptName = "Shield"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_protection"), SubResource("Resource_shield_cue"), SubResource("Resource_damage_taken"), SubResource("Resource_pay_per_hit"), SubResource("Resource_mana_listener"), SubResource("Resource_out_of_mana"), SubResource("Resource_toggle_key"), SubResource("Resource_exit")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_0noie"), SubResource("Resource_gexgi"), SubResource("Resource_1dttu"), SubResource("Resource_soou3"), SubResource("Resource_tibfq"), SubResource("Resource_88x0m"), SubResource("Resource_06s6r"), SubResource("Resource_lrwhl"), SubResource("Resource_eqhqm"), SubResource("Resource_62yj7"), SubResource("Resource_f5nwf")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_mana_variable")])
-ScrollOffset = Vector2(-713.9574, 191.30606)
-Zoom = 0.5644737
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

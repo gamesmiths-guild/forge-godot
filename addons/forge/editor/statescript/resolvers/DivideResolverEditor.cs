@@ -13,12 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class DivideResolverEditor
-	: NumericVectorOrQuaternionBinaryResolverEditorBase<DivideResolverResource>
+internal sealed partial class DivideResolverEditor : NumericVectorOrQuaternionBinaryResolverEditorBase
 {
 	public override string DisplayName => "Divide";
 
 	public override string ResolverTypeId => "Divide";
+
+	protected override Type ResourceType => typeof(DivideResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

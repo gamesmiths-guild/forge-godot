@@ -13,12 +13,13 @@ using SysVector4 = System.Numerics.Vector4;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 [Tool]
-internal sealed partial class SubtractResolverEditor
-	: NumericVectorOrQuaternionBinaryResolverEditorBase<SubtractResolverResource>
+internal sealed partial class SubtractResolverEditor : NumericVectorOrQuaternionBinaryResolverEditorBase
 {
 	public override string DisplayName => "Subtract";
 
 	public override string ResolverTypeId => "Subtract";
+
+	protected override Type ResourceType => typeof(SubtractResolverResource);
 
 	protected override Type[] GetFactoryExpectedTypes(Type expectedType)
 	{

@@ -140,11 +140,11 @@ internal sealed partial class StatescriptVariablePanel
 				_graph,
 				undo =>
 				{
-					undo.AddDoMethod(this, MethodName.DoAddArrayElement, variable, defaultValue);
-					undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, variable);
+					undo.AddDoMethod(this, MethodName.DoAddArrayElement, _graph!, variable, defaultValue);
+					undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, _graph!, variable);
 				},
 				execute: true,
-				fallback: () => DoAddArrayElement(variable, defaultValue));
+				fallback: () => DoAddArrayElement(_graph!, variable, defaultValue));
 		};
 
 		headerRow.AddChild(addElementButton);
@@ -248,11 +248,17 @@ internal sealed partial class StatescriptVariablePanel
 				_graph,
 				undo =>
 				{
-					undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, variable, elementIndex);
-					undo.AddUndoMethod(this, MethodName.UndoRemoveArrayElement, variable, elementIndex, removedValue);
+					undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, _graph!, variable, elementIndex);
+					undo.AddUndoMethod(
+						this,
+						MethodName.UndoRemoveArrayElement,
+						_graph!,
+						variable,
+						elementIndex,
+						removedValue);
 				},
 				execute: true,
-				fallback: () => DoRemoveArrayElement(variable, elementIndex));
+				fallback: () => DoRemoveArrayElement(_graph!, variable, elementIndex));
 		};
 
 		row.AddChild(removeElementButton);
