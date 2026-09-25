@@ -61,6 +61,33 @@ internal static partial class SaveTests
 		context.Dock.CloseCurrentTab();
 	}
 
+	[EditorTest]
+	public static void Save_all_retries_a_graph_that_failed_to_save(EditorTestContext context)
+	{
+		const string directory = "user://forge_editor_tests_missing";
+		const string path = directory + "/graph.tres";
+		DirAccess.RemoveAbsolute(path);
+		DirAccess.RemoveAbsolute(directory);
+
+		StatescriptGraph graph = context.OpenNewGraph();
+		graph.TakeOverPath(path);
+		context.Dock.TestOnlyAddNode("Later", _debugNodeType);
+
+		// Expected to log a save error: the directory does not exist yet.
+		context.Dock.SaveAllOpenGraphs();
+
+		FileAccess.FileExists(path).Should().BeFalse("the save failed");
+
+		DirAccess.MakeDirAbsolute(directory);
+		context.Dock.SaveAllOpenGraphs();
+
+		FileAccess.FileExists(path).Should().BeTrue("a graph whose save failed is still unsaved");
+
+		context.Dock.CloseCurrentTab();
+		DirAccess.RemoveAbsolute(path);
+		DirAccess.RemoveAbsolute(directory);
+	}
+
 	// Two nodes hung off the entry, saved, then reopened from disk the way the editor does it.
 	private static StatescriptGraph OpenSavedGraph(EditorTestContext context, string path)
 	{

@@ -215,7 +215,13 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		SaveGraphResource(graph);
+		Error error = SaveGraphResource(graph);
+		if (error != Error.Ok)
+		{
+			GD.PushError($"Failed to save Statescript graph {graph.ResourcePath}: {error}");
+			return;
+		}
+
 		MarkSaved(graph);
 		GD.Print($"Statescript graph saved: {graph.ResourcePath}");
 	}

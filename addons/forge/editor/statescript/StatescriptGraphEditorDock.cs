@@ -55,8 +55,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private int _serializedActiveTab = -1;
 	private bool[]? _serializedVariablesStates;
 	private string?[]? _serializedSelectedVariables;
-	private string[]? _serializedConnections;
-	private int[]? _serializedConnectionCounts;
+	private Vector2[]? _serializedScrollOffsets;
+	private float[]? _serializedZooms;
 	private bool _persistedVariablesPanelVisible = true;
 	private bool _sharedVariableHighlightSubscribed;
 	private bool _uiSignalsConnected;
@@ -148,11 +148,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		SyncVisualNodePositionsToGraph();
 		SyncConnectionsToCurrentGraph();
 
-		if (CurrentGraph is not null && _graphEdit is not null)
-		{
-			CurrentGraph.ScrollOffset = _graphEdit.ScrollOffset;
-			CurrentGraph.Zoom = _graphEdit.Zoom;
-		}
+		// The shown tab's view has not reached its graph yet, and writing it there now is too late for the reload to
+		// carry it over, so the dock carries every tab's view itself.
+		GetViewStates(out _serializedScrollOffsets, out _serializedZooms);
 
 		var allConnections = new List<string>();
 		_serializedConnectionCounts = new int[_openTabs.Count];
@@ -397,8 +395,10 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				continue;
 			}
 
-			SaveGraphResource(tab.GraphResource);
-			tab.Unsaved = false;
+			if (SaveGraphResource(tab.GraphResource) == Error.Ok)
+			{
+				tab.Unsaved = false;
+			}
 		}
 	}
 
@@ -591,7 +591,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		return null;
 	}
 
-	private static void SaveGraphResource(StatescriptGraph graph)
+	private static Error SaveGraphResource(StatescriptGraph graph)
 	{
 		string path = graph.ResourcePath;
 
@@ -599,15 +599,15 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			string basePath = GetBaseFilePath(path);
 			Resource? parentResource = ResourceLoader.Load(basePath);
-			if (parentResource is not null)
+			if (parentResource is null)
 			{
-				ResourceSaver.Save(parentResource);
+				return Error.CantOpen;
 			}
+
+			return ResourceSaver.Save(parentResource);
 		}
-		else
-		{
-			ResourceSaver.Save(graph);
-		}
+
+		return ResourceSaver.Save(graph);
 	}
 
 	private void ReleaseAllTabs()
@@ -726,15 +726,15 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		int activeTab = _serializedActiveTab;
 		bool[]? varStates = _serializedVariablesStates;
 		string?[]? selectedVariables = _serializedSelectedVariables;
-		string[]? savedConnections = _serializedConnections;
-		int[]? connectionCounts = _serializedConnectionCounts;
+		Vector2[]? scrollOffsets = _serializedScrollOffsets;
+		float[]? zooms = _serializedZooms;
 
 		_serializedTabPaths = null;
 		_serializedActiveTab = -1;
 		_serializedVariablesStates = null;
 		_serializedSelectedVariables = null;
-		_serializedConnections = null;
-		_serializedConnectionCounts = null;
+		_serializedScrollOffsets = null;
+		_serializedZooms = null;
 
 		if (_tabBar is null || _graphEdit is null)
 		{
@@ -766,6 +766,13 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			}
 
 			graph.EnsureEntryNode();
+
+			if (scrollOffsets is not null && i < scrollOffsets.Length && zooms is not null && i < zooms.Length)
+			{
+				graph.ScrollOffset = scrollOffsets[i];
+				graph.Zoom = zooms[i];
+			}
+
 			var tab = new GraphTab(graph);
 			TrackChanges(tab);
 
