@@ -152,23 +152,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		// carry it over, so the dock carries every tab's view itself.
 		GetViewStates(out _serializedScrollOffsets, out _serializedZooms);
 
-		var allConnections = new List<string>();
-		_serializedConnectionCounts = new int[_openTabs.Count];
-		for (int i = 0; i < _openTabs.Count; i++)
-		{
-			StatescriptGraph graph = _openTabs[i].GraphResource;
-			int count = 0;
-			foreach (StatescriptConnection c in graph.Connections)
-			{
-				allConnections.Add($"{c.FromNode},{c.OutputPort},{c.ToNode},{c.InputPort}");
-				count++;
-			}
-
-			_serializedConnectionCounts[i] = count;
-		}
-
-		_serializedConnections = [.. allConnections];
-
 		ReleaseEditorRuntimeState();
 	}
 
@@ -367,8 +350,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	}
 
 	/// <summary>
-	/// Saves all open graphs that have a resource path. Called by the plugin's _SaveExternalData
-	/// so that Ctrl+S persists statescript graphs alongside scenes.
+	/// Saves the open graphs that have a resource path and changed since they were loaded or saved. Called by the
+	/// plugin's _SaveExternalData so that Ctrl+S persists statescript graphs alongside scenes.
 	/// </summary>
 	public void SaveAllOpenGraphs()
 	{
@@ -796,35 +779,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		_isLoadingGraph = false;
-
-		if (savedConnections is not null && connectionCounts is not null)
-		{
-			int offset = 0;
-			for (int i = 0; i < _openTabs.Count && i < connectionCounts.Length; i++)
-			{
-				StatescriptGraph graph = _openTabs[i].GraphResource;
-				graph.Connections.Clear();
-
-				for (int j = 0; j < connectionCounts[i] && offset < savedConnections.Length; j++, offset++)
-				{
-					string[] parts = savedConnections[offset].Split(',');
-					if (parts.Length != 4
-						|| !int.TryParse(parts[1], out int outPort)
-						|| !int.TryParse(parts[3], out int inPort))
-					{
-						continue;
-					}
-
-					graph.Connections.Add(new StatescriptConnection
-					{
-						FromNode = parts[0],
-						OutputPort = outPort,
-						ToNode = parts[2],
-						InputPort = inPort,
-					});
-				}
-			}
-		}
 
 		if (activeTab >= 0 && activeTab < _openTabs.Count)
 		{

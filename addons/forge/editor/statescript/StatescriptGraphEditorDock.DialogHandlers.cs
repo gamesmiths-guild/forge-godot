@@ -184,6 +184,9 @@ public partial class StatescriptGraphEditorDock
 			StatescriptGraph? savedGraph = ResourceLoader.Load<StatescriptGraph>(path);
 			if (savedGraph is not null)
 			{
+				// The view is not saved with the graph, so the copy opens where the original was being looked at.
+				savedGraph.ScrollOffset = graph.ScrollOffset;
+				savedGraph.Zoom = graph.Zoom;
 				OpenGraph(savedGraph);
 			}
 

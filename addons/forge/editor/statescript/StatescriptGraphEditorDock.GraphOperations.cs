@@ -306,10 +306,11 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
+		// Every node, not only the selected ones: arranging with nothing selected moves the whole graph.
 		_preMovePositions.Clear();
 		foreach (Node child in _graphEdit.GetChildren())
 		{
-			if (child is StatescriptGraphNode { Selected: true } sgn)
+			if (child is StatescriptGraphNode sgn)
 			{
 				_preMovePositions[sgn.Name] = sgn.PositionOffset;
 			}
@@ -360,6 +361,7 @@ public partial class StatescriptGraphEditorDock
 			});
 
 		SyncNodePositionsToResource(graph, movedNodes);
+		graph.EmitChanged();
 	}
 
 	private void DoMoveNodes(
@@ -375,6 +377,8 @@ public partial class StatescriptGraphEditorDock
 				node.PositionOffset = pos;
 			}
 		}
+
+		graph.EmitChanged();
 
 		if (CurrentGraph == graph && _graphEdit is not null)
 		{

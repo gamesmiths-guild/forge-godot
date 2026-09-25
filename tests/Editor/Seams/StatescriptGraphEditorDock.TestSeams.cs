@@ -90,6 +90,44 @@ public partial class StatescriptGraphEditorDock
 	}
 
 	/// <summary>
+	/// Drags a node to a new position, as the graph edit's node move signals do.
+	/// </summary>
+	/// <param name="nodeId">The node to move.</param>
+	/// <param name="position">The node's new position.</param>
+	internal void TestOnlyMoveNode(string nodeId, Vector2 position)
+	{
+		StatescriptGraphNode? visual = FindGraphNodeVisual(nodeId);
+		if (visual is null)
+		{
+			return;
+		}
+
+		visual.Selected = true;
+		OnBeginNodeMove();
+		visual.PositionOffset = position;
+		OnEndNodeMove();
+	}
+
+	/// <summary>
+	/// Arranges the nodes, as the graph edit's arrange button does.
+	/// </summary>
+	internal void TestOnlyArrangeNodes()
+	{
+		_graphEdit?.ArrangeNodes();
+	}
+
+	/// <summary>
+	/// Changes a graph variable's initial value in the variables panel, as its value editor does.
+	/// </summary>
+	/// <param name="variableName">The variable to change.</param>
+	/// <param name="value">The new initial value.</param>
+	internal void TestOnlySetVariableValue(string variableName, Variant value)
+	{
+		EnsureVariablesPanelVisible();
+		_variablePanel?.TestOnlySetVariableValue(variableName, value);
+	}
+
+	/// <summary>
 	/// Returns the open graph whose node visuals the graph edit is showing, regardless of which tab is selected.
 	/// </summary>
 	/// <returns>The displayed graph, or <see langword="null"/> when nothing is shown.</returns>
