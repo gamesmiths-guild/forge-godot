@@ -177,7 +177,14 @@ public partial class StatescriptGraphEditorDock
 				SyncConnectionsToCurrentGraph();
 			}
 
-			ResourceSaver.Save(graph, path);
+			Error error = ResourceSaver.Save(graph, path);
+			if (error != Error.Ok)
+			{
+				GD.PushError($"Failed to save Statescript graph as {path}: {error}");
+				dialog.QueueFree();
+				return;
+			}
+
 			EditorInterface.Singleton.GetResourceFilesystem().Scan();
 			GD.Print($"Statescript graph saved as: {path}");
 

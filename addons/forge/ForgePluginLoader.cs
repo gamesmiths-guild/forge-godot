@@ -292,6 +292,13 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		if (paths.Length == 0)
 		{
+			// The editor amends its layout file rather than rewriting it, so the tabs of an earlier save would come
+			// back.
+			if (configuration.HasSection("Forge"))
+			{
+				configuration.EraseSection("Forge");
+			}
+
 			return;
 		}
 

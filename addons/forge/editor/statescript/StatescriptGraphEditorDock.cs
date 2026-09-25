@@ -413,7 +413,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_tabBar.RemoveTab(0);
 		}
 
-		int skippedTabs = 0;
+		// The saved states line up with the saved paths, not with the tabs restored from them, which leave out a path
+		// that no longer loads.
+		int restoredActiveIndex = -1;
 		for (int i = 0; i < paths.Length; i++)
 		{
 			string path = paths[i];
@@ -421,7 +423,6 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			StatescriptGraph? graph = LoadGraphFromPath(path);
 			if (graph is null)
 			{
-				skippedTabs++;
 				continue;
 			}
 
@@ -436,10 +437,14 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			var tab = new GraphTab(graph);
 			TrackChanges(tab);
 
-			int currentTab = i - skippedTabs;
-			if (variablesStates is not null && currentTab < variablesStates.Length)
+			if (variablesStates is not null && i < variablesStates.Length)
 			{
-				tab.VariablesPanelOpen = variablesStates[currentTab];
+				tab.VariablesPanelOpen = variablesStates[i];
+			}
+
+			if (i == activeIndex)
+			{
+				restoredActiveIndex = _openTabs.Count;
 			}
 
 			_openTabs.Add(tab);
@@ -448,12 +453,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_isLoadingGraph = false;
 
-		if (activeIndex >= 0 && activeIndex < _openTabs.Count)
+		if (restoredActiveIndex >= 0)
 		{
-			_openTabs[activeIndex].VariablesPanelOpen = _persistedVariablesPanelVisible;
-			SetCurrentTabWithoutLoading(activeIndex);
-			LoadGraphIntoEditor(_openTabs[activeIndex].GraphResource);
-			ApplyVariablesPanelState(activeIndex);
+			_openTabs[restoredActiveIndex].VariablesPanelOpen = _persistedVariablesPanelVisible;
+			SetCurrentTabWithoutLoading(restoredActiveIndex);
+			LoadGraphIntoEditor(_openTabs[restoredActiveIndex].GraphResource);
+			ApplyVariablesPanelState(restoredActiveIndex);
 		}
 		else if (_openTabs.Count > 0)
 		{
@@ -732,19 +737,18 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_tabBar.RemoveTab(0);
 		}
 
-		int skippedTabs = 0;
+		// As in RestoreFromPaths, the saved states line up with the saved paths.
+		int restoredActiveTab = -1;
 		for (int i = 0; i < paths.Length; i++)
 		{
 			if (!ResourceLoader.Exists(paths[i]))
 			{
-				skippedTabs++;
 				continue;
 			}
 
 			StatescriptGraph? graph = ResourceLoader.Load<StatescriptGraph>(paths[i]);
 			if (graph is null)
 			{
-				skippedTabs++;
 				continue;
 			}
 
@@ -759,20 +763,24 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			var tab = new GraphTab(graph);
 			TrackChanges(tab);
 
-			int currentTab = i - skippedTabs;
-			if (varStates is not null && currentTab < varStates.Length)
+			if (varStates is not null && i < varStates.Length)
 			{
-				tab.VariablesPanelOpen = varStates[currentTab];
+				tab.VariablesPanelOpen = varStates[i];
 			}
 
-			if (selectedVariables is not null && currentTab < selectedVariables.Length)
+			if (selectedVariables is not null && i < selectedVariables.Length)
 			{
-				tab.SelectedVariableName = selectedVariables[currentTab];
+				tab.SelectedVariableName = selectedVariables[i];
 			}
 
 			// The graphs survive the reload in memory, edits included, and nothing is known about their state; a save
 			// that finds nothing changed rewrites nothing.
 			tab.Unsaved = true;
+
+			if (i == activeTab)
+			{
+				restoredActiveTab = _openTabs.Count;
+			}
 
 			_openTabs.Add(tab);
 			_tabBar.AddTab(graph.StatescriptName);
@@ -780,12 +788,12 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 
 		_isLoadingGraph = false;
 
-		if (activeTab >= 0 && activeTab < _openTabs.Count)
+		if (restoredActiveTab >= 0)
 		{
-			_openTabs[activeTab].VariablesPanelOpen = _persistedVariablesPanelVisible;
-			SetCurrentTabWithoutLoading(activeTab);
-			LoadGraphIntoEditor(_openTabs[activeTab].GraphResource);
-			ApplyVariablesPanelState(activeTab);
+			_openTabs[restoredActiveTab].VariablesPanelOpen = _persistedVariablesPanelVisible;
+			SetCurrentTabWithoutLoading(restoredActiveTab);
+			LoadGraphIntoEditor(_openTabs[restoredActiveTab].GraphResource);
+			ApplyVariablesPanelState(restoredActiveTab);
 		}
 		else if (_openTabs.Count > 0)
 		{
