@@ -115,6 +115,43 @@ internal static class UndoRedoTests
 		history.HasRedo().Should().BeTrue("redo has to survive undoing past the node's creation");
 	}
 
+	/// <summary>
+	/// Connecting and disconnecting were replayed on whichever graph the editor showed. Undone after switching to
+	/// another tab, a connection stayed in its own graph and came out of the shown one wherever the node ids matched.
+	/// </summary>
+	/// <param name="context">The test context.</param>
+	[EditorTest]
+	public static void Undoing_a_connection_from_another_tab_changes_its_own_graph(EditorTestContext context)
+	{
+		StatescriptGraph graph = context.OpenNewGraph();
+		string nodeId = context.Dock.TestOnlyAddNode("Debug", _debugNodeType);
+		context.Dock.TestOnlyConnect("entry", 0, nodeId, 0);
+
+		// The other graph has a node under the same id, connected the same way.
+		var other = new StatescriptGraph { StatescriptName = "EditorTests" };
+		other.EnsureEntryNode();
+		other.Nodes.Add(new StatescriptNode
+		{
+			NodeId = nodeId,
+			Title = "Debug",
+			NodeType = StatescriptNodeType.Action,
+			RuntimeTypeName = _debugNodeType,
+		});
+		other.Connections.Add(new StatescriptConnection { FromNode = "entry", ToNode = nodeId });
+		context.Dock.OpenGraph(other);
+
+		UndoRedo history = context.HistoryFor(graph);
+		history.Undo();
+
+		graph.Connections.Should().BeEmpty("the undone connection belongs to the first graph");
+		other.Connections.Should().ContainSingle("the graph on show had no part in the undone action");
+
+		history.Redo();
+
+		graph.Connections.Should().ContainSingle("redo puts the connection back into its own graph");
+		other.Connections.Should().ContainSingle("the graph on show had no part in the redone action");
+	}
+
 	private static StatescriptNode? FindNode(StatescriptGraph graph, string nodeId)
 	{
 		return graph.Nodes.FirstOrDefault(node => node.NodeId == nodeId);
