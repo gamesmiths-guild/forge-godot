@@ -87,10 +87,11 @@ public partial class QueryExpressionEditorControl : VBoxContainer, ISerializatio
 
 	private static void ClearContainer(Control container)
 	{
+		// Queued rather than freed now: an item's Remove button calls this while it is still emitting.
 		foreach (Node child in container.GetChildren())
 		{
 			container.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 	}
 

@@ -420,10 +420,11 @@ internal sealed partial class VariantResolverEditor : NodeEditorProperty
 			return;
 		}
 
+		// Queued rather than freed now: an element's remove button calls this while it is still emitting.
 		foreach (Node child in _elementsContainer.GetChildren())
 		{
 			_elementsContainer.RemoveChild(child);
-			child.Free();
+			child.QueueFree();
 		}
 
 		_toggleButton.Text = $"Array (size {_arrayValues.Count})";
