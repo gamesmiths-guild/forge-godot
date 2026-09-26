@@ -97,6 +97,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_setDropdown.ItemSelected += OnSetChanged;
+		_setDropdown.GetPopup().AboutToPopup += PopulateSetDropdown;
 		_setRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth);
 		root.AddChild(_setRow);
 

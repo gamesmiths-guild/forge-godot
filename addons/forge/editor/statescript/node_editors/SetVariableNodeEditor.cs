@@ -433,6 +433,7 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 		varRow.AddChild(_sharedVarDropdown);
 
 		_setDropdown.ItemSelected += OnSharedSetDropdownItemSelected;
+		_setDropdown.GetPopup().AboutToPopup += PopulateSetDropdown;
 		_sharedVarDropdown.ItemSelected += OnSharedVariableDropdownItemSelected;
 	}
 

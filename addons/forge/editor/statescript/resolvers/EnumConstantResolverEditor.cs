@@ -24,6 +24,7 @@ internal sealed partial class EnumConstantResolverEditor : NodeEditorProperty
 	private ForgeStatescriptEnum? _enumDefinition;
 	private int _value;
 
+	private OptionButton? _enumDropdown;
 	private OptionButton? _memberDropdown;
 
 	/// <inheritdoc/>
@@ -65,6 +66,10 @@ internal sealed partial class EnumConstantResolverEditor : NodeEditorProperty
 		enumDropdown.ItemSelected += index => OnEnumSelected(enumDropdown, (int)index);
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Enum:", enumDropdown, LabelWidth));
 
+		// Refilled whenever it opens, so an enum created since the node was drawn can be picked straight away.
+		_enumDropdown = enumDropdown;
+		enumDropdown.GetPopup().AboutToPopup += RefreshEnumDropdown;
+
 		_memberDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_memberDropdown.ItemSelected += OnMemberSelected;
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Value:", _memberDropdown, LabelWidth));
@@ -100,7 +105,16 @@ internal sealed partial class EnumConstantResolverEditor : NodeEditorProperty
 	{
 		base.ClearCallbacks();
 		_onChanged = null;
+		_enumDropdown = null;
 		_memberDropdown = null;
+	}
+
+	private void RefreshEnumDropdown()
+	{
+		if (_enumDropdown is not null)
+		{
+			StatescriptEnumUtilities.PopulateEnumDropdown(_enumDropdown, _enumDefinition);
+		}
 	}
 
 	private void OnEnumSelected(OptionButton dropdown, int index)
