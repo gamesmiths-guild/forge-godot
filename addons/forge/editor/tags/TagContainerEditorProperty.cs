@@ -33,8 +33,9 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 
 	public void OnBeforeSerialize()
 	{
+		// The children stay: EditorProperty keeps raw pointers to its own containers among them, and an Inspector
+		// hidden behind another dock tab keeps using this editor after the reload, until it is shown and rebuilds.
 		ReleaseUiState();
-		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -54,16 +55,6 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 		}
 
 		_editor = null;
-	}
-
-	private void FreeAllChildren()
-	{
-		for (int i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
 	}
 }
 #endif
