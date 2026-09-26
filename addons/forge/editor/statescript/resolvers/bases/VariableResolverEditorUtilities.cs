@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources;
-using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 
@@ -12,10 +11,9 @@ internal static class VariableResolverEditorUtilities
 {
 	public static List<string> FindAllSharedVariableSetPaths()
 	{
-		var results = new List<string>();
-		EditorFileSystemDirectory root = EditorInterface.Singleton.GetResourceFilesystem().GetFilesystem();
-		ScanFilesystemDirectory(root, results);
-		return results;
+		// Matched on each file's header rather than by loading it: loading every resource in the project here crashed
+		// the editor whenever this ran during layout restore, while the C# script instances were still being bound.
+		return ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeSharedVariableSet));
 	}
 
 	public static string GetResourceDisplayName(string path)
@@ -29,35 +27,6 @@ internal static class VariableResolverEditorUtilities
 		}
 
 		return displayName;
-	}
-
-	private static void ScanFilesystemDirectory(EditorFileSystemDirectory dir, List<string> results)
-	{
-		for (int i = 0; i < dir.GetFileCount(); i++)
-		{
-			string path = dir.GetFilePath(i);
-			if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.OrdinalIgnoreCase))
-			{
-				continue;
-			}
-
-			// The recorded script class comes from the resource header, so the type is known without opening the
-			// file. Loading every resource in the project here crashed the editor whenever this ran during layout
-			// restore, while the C# script instances were still being bound.
-			if (dir.GetFileScriptClassName(i) != nameof(ForgeSharedVariableSet)
-				&& dir.GetFileType(i) != nameof(ForgeSharedVariableSet))
-			{
-				continue;
-			}
-
-			results.Add(path);
-		}
-
-		for (int i = 0; i < dir.GetSubdirCount(); i++)
-		{
-			ScanFilesystemDirectory(dir.GetSubdir(i), results);
-		}
 	}
 }
 #endif
