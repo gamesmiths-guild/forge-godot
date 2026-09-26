@@ -8,6 +8,8 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
 public partial class StatescriptGraphEditorDock
 {
+	private const string SaveAsGraphMetaKey = "_save_as_graph";
+
 	private void OnFileMenuIdPressed(long id)
 	{
 		switch ((int)id)
@@ -130,25 +132,33 @@ public partial class StatescriptGraphEditorDock
 		};
 
 		dialog.AddFilter("*.tres;StatescriptGraph");
-		dialog.FileSelected += path =>
-		{
-			Resource? graph = ResourceLoader.Load(path);
-			if (graph is StatescriptGraph statescriptGraph)
-			{
-				OpenGraph(statescriptGraph);
-			}
-			else
-			{
-				GD.PushWarning($"Failed to load StatescriptGraph from: {path}");
-			}
 
-			dialog.QueueFree();
-		};
+		// A method callable handed the dialog, not a lambda: an assembly reload restores the objects a lambda captured
+		// as copies.
+		dialog.Connect(
+			FileDialog.SignalName.FileSelected,
+			new Callable(this, MethodName.OnLoadDialogFileSelected),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		dialog.Canceled += dialog.QueueFree;
 
 		AddChild(dialog);
 		dialog.PopupCentered(new Vector2I(700, 500));
+	}
+
+	private void OnLoadDialogFileSelected(string path, EditorFileDialog dialog)
+	{
+		Resource? graph = ResourceLoader.Load(path);
+		if (graph is StatescriptGraph statescriptGraph)
+		{
+			OpenGraph(statescriptGraph);
+		}
+		else
+		{
+			GD.PushWarning($"Failed to load StatescriptGraph from: {path}");
+		}
+
+		dialog.QueueFree();
 	}
 
 	private void ShowSaveAsDialog()
@@ -167,43 +177,51 @@ public partial class StatescriptGraphEditorDock
 		};
 
 		dialog.AddFilter("*.tres", "Godot Resource");
-		dialog.FileSelected += path =>
-		{
-			if (_graphEdit is not null)
-			{
-				graph.ScrollOffset = _graphEdit.ScrollOffset;
-				graph.Zoom = _graphEdit.Zoom;
-				SyncVisualNodePositionsToGraph();
-				SyncConnectionsToCurrentGraph();
-			}
-
-			Error error = ResourceSaver.Save(graph, path);
-			if (error != Error.Ok)
-			{
-				GD.PushError($"Failed to save Statescript graph as {path}: {error}");
-				dialog.QueueFree();
-				return;
-			}
-
-			EditorInterface.Singleton.GetResourceFilesystem().Scan();
-			GD.Print($"Statescript graph saved as: {path}");
-
-			StatescriptGraph? savedGraph = ResourceLoader.Load<StatescriptGraph>(path);
-			if (savedGraph is not null)
-			{
-				// The view is not saved with the graph, so the copy opens where the original was being looked at.
-				savedGraph.ScrollOffset = graph.ScrollOffset;
-				savedGraph.Zoom = graph.Zoom;
-				OpenGraph(savedGraph);
-			}
-
-			dialog.QueueFree();
-		};
+		dialog.SetMeta(SaveAsGraphMetaKey, graph);
+		dialog.Connect(
+			FileDialog.SignalName.FileSelected,
+			new Callable(this, MethodName.OnSaveAsDialogFileSelected),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		dialog.Canceled += dialog.QueueFree;
 
 		AddChild(dialog);
 		dialog.PopupCentered(new Vector2I(700, 500));
+	}
+
+	private void OnSaveAsDialogFileSelected(string path, EditorFileDialog dialog)
+	{
+		StatescriptGraph graph = dialog.GetMeta(SaveAsGraphMetaKey).As<StatescriptGraph>();
+
+		if (_graphEdit is not null)
+		{
+			graph.ScrollOffset = _graphEdit.ScrollOffset;
+			graph.Zoom = _graphEdit.Zoom;
+			SyncVisualNodePositionsToGraph();
+			SyncConnectionsToCurrentGraph();
+		}
+
+		Error error = ResourceSaver.Save(graph, path);
+		if (error != Error.Ok)
+		{
+			GD.PushError($"Failed to save Statescript graph as {path}: {error}");
+			dialog.QueueFree();
+			return;
+		}
+
+		EditorInterface.Singleton.GetResourceFilesystem().Scan();
+		GD.Print($"Statescript graph saved as: {path}");
+
+		StatescriptGraph? savedGraph = ResourceLoader.Load<StatescriptGraph>(path);
+		if (savedGraph is not null)
+		{
+			// The view is not saved with the graph, so the copy opens where the original was being looked at.
+			savedGraph.ScrollOffset = graph.ScrollOffset;
+			savedGraph.Zoom = graph.Zoom;
+			OpenGraph(savedGraph);
+		}
+
+		dialog.QueueFree();
 	}
 
 	private void OnSavePressed()

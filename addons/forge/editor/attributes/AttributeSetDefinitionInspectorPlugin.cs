@@ -17,6 +17,8 @@ public partial class AttributeSetDefinitionInspectorPlugin : EditorInspectorPlug
 	private const string ErrorColor = "error_color";
 	private const string WarningColor = "warning_color";
 	private const string SuccessColor = "success_color";
+	private const string StatusLabelMetaKey = "_status_label";
+	private const string DefinitionMetaKey = "_definition";
 
 	/// <inheritdoc/>
 	public override bool _CanHandle(GodotObject @object)
@@ -47,16 +49,24 @@ public partial class AttributeSetDefinitionInspectorPlugin : EditorInspectorPlug
 
 		// The banner is rewritten in place rather than left for the next inspector rebuild, so pressing the button
 		// visibly does something. Without it the label only refreshed after selecting something else and coming back,
-		// which reads as the button having done nothing.
-		button.Pressed += () => OnRegeneratePressed(status, definition);
+		// which reads as the button having done nothing. Both travel on the button rather than in a lambda, whose
+		// captured objects an assembly reload would restore as copies.
+		button.SetMeta(StatusLabelMetaKey, status);
+		button.SetMeta(DefinitionMetaKey, definition);
+		button.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnRegeneratePressed),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		container.AddChild(button);
 
 		AddCustomControl(container);
 	}
 
-	private static void OnRegeneratePressed(Label status, ForgeAttributeSetDefinition definition)
+	private static void OnRegeneratePressed(Button button)
 	{
+		Label status = button.GetMeta(StatusLabelMetaKey).As<Label>();
+		ForgeAttributeSetDefinition definition = button.GetMeta(DefinitionMetaKey).As<ForgeAttributeSetDefinition>();
 		AttributeSetGenerationReport report = AttributeSetCodeGenerator.RegenerateAll();
 
 		foreach (string error in report.Errors)

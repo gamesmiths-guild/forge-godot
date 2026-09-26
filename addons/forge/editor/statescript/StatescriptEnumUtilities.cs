@@ -163,40 +163,11 @@ internal static class StatescriptEnumUtilities
 
 	private static List<string> ScanForEnums()
 	{
-		var results = new List<string>();
-		ScanDirectory(EditorInterface.Singleton.GetResourceFilesystem().GetFilesystem(), results);
+		// Matched on each file's header rather than by loading it: loading every candidate here crashed the editor
+		// whenever this ran during layout restore, while the C# script instances were still being bound.
+		List<string> results = ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeStatescriptEnum));
 		results.Sort(StringComparer.OrdinalIgnoreCase);
 		return results;
-	}
-
-	private static void ScanDirectory(EditorFileSystemDirectory directory, List<string> results)
-	{
-		for (int i = 0; i < directory.GetFileCount(); i++)
-		{
-			string path = directory.GetFilePath(i);
-
-			if (!path.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)
-				&& !path.EndsWith(".res", StringComparison.OrdinalIgnoreCase))
-			{
-				continue;
-			}
-
-			// The recorded type and script class both come from the resource header, so a script-backed global class
-			// is recognized without opening the file. Loading every candidate here crashed the editor whenever this
-			// ran during layout restore, while the C# script instances were still being bound.
-			if (directory.GetFileScriptClassName(i) != nameof(ForgeStatescriptEnum)
-				&& directory.GetFileType(i) != nameof(ForgeStatescriptEnum))
-			{
-				continue;
-			}
-
-			results.Add(path);
-		}
-
-		for (int i = 0; i < directory.GetSubdirCount(); i++)
-		{
-			ScanDirectory(directory.GetSubdir(i), results);
-		}
 	}
 }
 #endif

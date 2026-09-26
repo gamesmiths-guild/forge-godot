@@ -97,6 +97,7 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 
 		_setDropdown = new SearchableOptionButton { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		_setDropdown.ItemSelected += OnSetChanged;
+		_setDropdown.GetPopup().AboutToPopup += PopulateSetDropdown;
 		_setRow = ResolverEditorLayoutUtilities.CreateLabeledRow("Set:", _setDropdown, LabelWidth);
 		root.AddChild(_setRow);
 
@@ -373,6 +374,15 @@ internal sealed partial class VariableResolverEditor : NodeEditorProperty
 		{
 			_setDropdown.AddItem(VariableResolverEditorUtilities.GetResourceDisplayName(path));
 			_setPaths.Add(path);
+		}
+
+		// A bound set that was moved or deleted keeps an entry of its own, as a missing enum does, so refreshing the
+		// list never unbinds it behind the variable dropdown's back.
+		if (!string.IsNullOrEmpty(_selectedSetPath) && !_setPaths.Contains(_selectedSetPath))
+		{
+			string displayName = VariableResolverEditorUtilities.GetResourceDisplayName(_selectedSetPath);
+			_setDropdown.AddItem($"{displayName} (missing)");
+			_setPaths.Add(_selectedSetPath);
 		}
 
 		ResolverEditorLayoutUtilities.RestoreSelection(_setDropdown, _setPaths, _selectedSetPath);

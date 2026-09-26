@@ -126,18 +126,11 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 	}
 
 	/// <inheritdoc/>
-	public override void _ExitTree()
-	{
-		ReleaseUiState();
-		FreeAllChildren();
-		base._ExitTree();
-	}
-
-	/// <inheritdoc/>
 	public void OnBeforeSerialize()
 	{
+		// The children stay: EditorProperty keeps raw pointers to its own containers among them, and an Inspector
+		// hidden behind another dock tab keeps using this editor after the reload, until it is shown and rebuilds.
 		ReleaseUiState();
-		FreeAllChildren();
 	}
 
 	/// <inheritdoc/>
@@ -247,16 +240,6 @@ public partial class AttributeEditorProperty : EditorProperty, ISerializationLis
 		_groupPanel = null;
 		_groupOutline = null;
 		_header = null;
-	}
-
-	private void FreeAllChildren()
-	{
-		for (int i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
 	}
 }
 #endif

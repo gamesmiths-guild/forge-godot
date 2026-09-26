@@ -121,17 +121,23 @@ public partial class TagsSourceEditorProperty : EditorProperty, ISerializationLi
 		RebuildTree();
 	}
 
-	public override void _ExitTree()
+	public override void _Notification(int what)
 	{
-		ReleaseUiState();
-		FreeAllChildren();
-		base._ExitTree();
+		base._Notification(what);
+
+		// The registry outlives this property, so the subscription ends with it rather than when it leaves the tree:
+		// moving the Inspector dock takes it out and puts it back, and _Ready does not run again.
+		if (what == NotificationPredelete)
+		{
+			ForgeTagsRegistry.Changed -= OnRegisteredTagsChanged;
+		}
 	}
 
 	public void OnBeforeSerialize()
 	{
+		// The children stay: EditorProperty keeps raw pointers to its own containers among them, and an Inspector
+		// hidden behind another dock tab keeps using this editor after the reload, until it is shown and rebuilds.
 		ReleaseUiState();
-		FreeAllChildren();
 	}
 
 	public void OnAfterDeserialize()
@@ -328,16 +334,6 @@ public partial class TagsSourceEditorProperty : EditorProperty, ISerializationLi
 		_tree = null;
 		_addIcon = null;
 		_removeIcon = null;
-	}
-
-	private void FreeAllChildren()
-	{
-		for (int i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
 	}
 }
 #endif

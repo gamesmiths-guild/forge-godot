@@ -35,6 +35,9 @@ internal abstract partial class PortCountNodeEditorBase : CustomNodeEditor
 
 	private const float LabelWidth = 60.0f;
 
+	[NonSerialized]
+	private OptionButton? _enumDropdown;
+
 	/// <summary>
 	/// Gets the CustomData key holding the port count, matching the runtime node's constructor parameter name.
 	/// </summary>
@@ -183,6 +186,10 @@ internal abstract partial class PortCountNodeEditorBase : CustomNodeEditor
 		enumDropdown.ItemSelected += index => OnEnumSelected(enumDropdown, (int)index);
 		root.AddChild(ResolverEditorLayoutUtilities.CreateLabeledRow("Enum:", enumDropdown, LabelWidth));
 
+		// Refilled whenever it opens, so an enum created since the node was drawn can be picked straight away.
+		_enumDropdown = enumDropdown;
+		enumDropdown.GetPopup().AboutToPopup += RefreshEnumDropdown;
+
 		var countSpinBox = new SpinBox
 		{
 			MinValue = MinCount,
@@ -236,6 +243,14 @@ internal abstract partial class PortCountNodeEditorBase : CustomNodeEditor
 		}
 
 		return enumCount;
+	}
+
+	private void RefreshEnumDropdown()
+	{
+		if (_enumDropdown is not null)
+		{
+			StatescriptEnumUtilities.PopulateEnumDropdown(_enumDropdown, ReadEnum());
+		}
 	}
 
 	private void OnEnumSelected(OptionButton dropdown, int index)

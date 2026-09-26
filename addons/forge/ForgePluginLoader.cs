@@ -8,6 +8,7 @@ using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
 using Gamesmiths.Forge.Godot.Editor.Statescript;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Editor.Tags;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Attributes;
@@ -43,6 +44,7 @@ public partial class ForgePluginLoader : EditorPlugin
 	private EditorFileSystem? _fileSystem;
 	private Callable _resourcesReimportedCallable;
 	private Callable _resourcesReloadCallable;
+	private Callable _filesystemChangedCallable;
 	private Callable _toolsMenuIdPressedCallable;
 
 	public override void _EnterTree()
@@ -110,10 +112,13 @@ public partial class ForgePluginLoader : EditorPlugin
 		_fileSystem = EditorInterface.Singleton.GetResourceFilesystem();
 		_resourcesReimportedCallable = new Callable(this, nameof(OnResourcesReimported));
 		_resourcesReloadCallable = new Callable(this, nameof(OnResourcesReload));
+		_filesystemChangedCallable = new Callable(this, nameof(OnFilesystemChanged));
 
 		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReimported, _resourcesReimportedCallable);
 
 		_fileSystem.Connect(EditorFileSystem.SignalName.ResourcesReload, _resourcesReloadCallable);
+
+		_fileSystem.Connect(EditorFileSystem.SignalName.FilesystemChanged, _filesystemChangedCallable);
 
 		ProjectSettings.SettingsChanged += OnProjectSettingsChanged;
 
@@ -140,6 +145,11 @@ public partial class ForgePluginLoader : EditorPlugin
 		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.ResourcesReload, _resourcesReloadCallable) == true)
 		{
 			_fileSystem.Disconnect(EditorFileSystem.SignalName.ResourcesReload, _resourcesReloadCallable);
+		}
+
+		if (_fileSystem?.IsConnected(EditorFileSystem.SignalName.FilesystemChanged, _filesystemChangedCallable) == true)
+		{
+			_fileSystem.Disconnect(EditorFileSystem.SignalName.FilesystemChanged, _filesystemChangedCallable);
 		}
 
 		ForgeTagsRegistry.Release();
@@ -186,6 +196,7 @@ public partial class ForgePluginLoader : EditorPlugin
 		_fileSystem = null;
 		_resourcesReimportedCallable = default;
 		_resourcesReloadCallable = default;
+		_filesystemChangedCallable = default;
 
 		if (_toolsMenu is not null && IsInstanceValid(_toolsMenu)
 			&& _toolsMenu.IsConnected(PopupMenu.SignalName.IdPressed, _toolsMenuIdPressedCallable))
@@ -409,6 +420,14 @@ public partial class ForgePluginLoader : EditorPlugin
 	private static void OnResourcesReload(string[] resources)
 	{
 		ForgeTagsRegistry.InvalidateIfAny(resources);
+	}
+
+	private static void OnFilesystemChanged()
+	{
+		// The enum and shared set pickers cache the project's assets, so one created, deleted or moved has to drop
+		// those lists.
+		StatescriptEnumUtilities.InvalidateCache();
+		VariableResolverEditorUtilities.InvalidateCache();
 	}
 
 	private static void OnProjectSettingsChanged()

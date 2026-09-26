@@ -76,17 +76,22 @@ public partial class TagContainerSelectionControl : VBoxContainer, ISerializatio
 		RebuildTree();
 	}
 
-	public override void _ExitTree()
+	public override void _Notification(int what)
 	{
-		ReleaseUiState();
-		base._ExitTree();
+		base._Notification(what);
+
+		// The registry outlives this control, so the subscription ends with it rather than when it leaves the tree:
+		// moving the dock or switching graph tabs takes it out and puts it back, and _Ready does not run again.
+		if (what == NotificationPredelete)
+		{
+			ForgeTagsRegistry.Changed -= OnRegisteredTagsChanged;
+		}
 	}
 
 	public void OnBeforeSerialize()
 	{
 		// An assembly reload drops every delegate-backed signal connection, so they have to be released here, while
-		// they still exist. Doing it from _ExitTree alone means the disconnect runs against connections Godot already
-		// took away, which it reports as an error.
+		// they still exist.
 		ReleaseUiState();
 	}
 
