@@ -8,6 +8,7 @@ using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
 using Gamesmiths.Forge.Godot.Editor.Statescript;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Editor.Tags;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Attributes;
@@ -423,8 +424,10 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private static void OnFilesystemChanged()
 	{
-		// The enum pickers cache the project's enum assets, so one created, deleted or moved has to drop that list.
+		// The enum and shared set pickers cache the project's assets, so one created, deleted or moved has to drop
+		// those lists.
 		StatescriptEnumUtilities.InvalidateCache();
+		VariableResolverEditorUtilities.InvalidateCache();
 	}
 
 	private static void OnProjectSettingsChanged()
