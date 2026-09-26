@@ -456,6 +456,15 @@ internal sealed partial class SetVariableNodeEditor : CustomNodeEditor
 			_setPaths.Add(path);
 		}
 
+		// A bound set that was moved or deleted keeps an entry of its own, as a missing enum does, so refreshing the
+		// list never clears the path the output binding is rewritten from.
+		if (!string.IsNullOrEmpty(_selectedSetPath) && !_setPaths.Contains(_selectedSetPath))
+		{
+			string displayName = VariableResolverEditorUtilities.GetResourceDisplayName(_selectedSetPath);
+			_setDropdown.AddItem($"{displayName} (missing)");
+			_setPaths.Add(_selectedSetPath);
+		}
+
 		// Restore selection.
 		for (int i = 0; i < _setPaths.Count; i++)
 		{
