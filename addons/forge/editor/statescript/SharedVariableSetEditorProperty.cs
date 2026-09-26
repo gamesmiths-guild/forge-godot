@@ -23,6 +23,10 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 	private const string AddButtonNodeName = "AddButton";
 	private const string VariableListNodeName = "VariableList";
 	private const string VariableNameButtonMetaKey = "_shared_variable_name_button";
+	private const string VariableIndexMetaKey = "_shared_variable_index";
+	private const string ArrayVariableMetaKey = "_shared_array_variable";
+	private const string ArrayElementsMetaKey = "_shared_array_elements";
+	private const string ArrayElementIndexMetaKey = "_shared_array_element_index";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
 
@@ -413,7 +417,13 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		nameButton.AddThemeFontOverride(
 			"font",
 			EditorInterface.Singleton.GetEditorTheme().GetFont("bold", "EditorFonts"));
-		nameButton.Toggled += pressed => SetSelectedVariable(def.VariableName, pressed);
+
+		// Method callables reading the row's data off the emitting button, not lambdas: an assembly reload restores the
+		// objects a lambda captured as copies.
+		nameButton.Connect(
+			BaseButton.SignalName.Toggled,
+			new Callable(this, MethodName.OnVariableNameToggled),
+			(uint)ConnectFlags.AppendSourceObject);
 		headerRow.AddChild(nameButton);
 
 		var typeLabel = new Label
@@ -425,8 +435,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		typeLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 		headerRow.AddChild(typeLabel);
 
-		int capturedIndex = index;
-
 		var deleteButton = new Button
 		{
 			Icon = _removeIcon,
@@ -435,7 +443,11 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			CustomMinimumSize = new Vector2(28, 28),
 		};
 
-		deleteButton.Pressed += () => OnDeletePressed(capturedIndex);
+		deleteButton.SetMeta(VariableIndexMetaKey, index);
+		deleteButton.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnDeletePressed),
+			(uint)ConnectFlags.AppendSourceObject);
 		headerRow.AddChild(deleteButton);
 
 		if (!def.IsArray)
@@ -596,21 +608,12 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			ButtonPressed = isExpanded,
 		};
 
-		toggleButton.Toggled += x =>
-		{
-			elementsContainer.Visible = x;
-
-			if (x)
-			{
-				_expandedArrays.Add(def.VariableName);
-			}
-			else
-			{
-				_expandedArrays.Remove(def.VariableName);
-			}
-
-			// Not recorded: expanding a row is view state, same as a collapsed foldable.
-		};
+		toggleButton.SetMeta(ArrayVariableMetaKey, def);
+		toggleButton.SetMeta(ArrayElementsMetaKey, elementsContainer);
+		toggleButton.Connect(
+			BaseButton.SignalName.Toggled,
+			new Callable(this, MethodName.OnArrayToggled),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		headerRow.AddChild(toggleButton);
 
@@ -622,12 +625,11 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			CustomMinimumSize = new Vector2(24, 24),
 		};
 
-		addElementButton.Pressed += () =>
-		{
-			Variant defaultValue =
-				StatescriptVariableTypeConverter.CreateDefaultGodotVariant(def.VariableType);
-			AddArrayElement(def, defaultValue);
-		};
+		addElementButton.SetMeta(ArrayVariableMetaKey, def);
+		addElementButton.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnAddArrayElementPressed),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		headerRow.AddChild(addElementButton);
 
@@ -717,9 +719,51 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 			CustomMinimumSize = new Vector2(24, 24),
 		};
 
-		removeElementButton.Pressed += () => RemoveArrayElement(def, elementIndex);
+		removeElementButton.SetMeta(ArrayVariableMetaKey, def);
+		removeElementButton.SetMeta(ArrayElementIndexMetaKey, elementIndex);
+		removeElementButton.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnRemoveArrayElementPressed),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		row.AddChild(removeElementButton);
+	}
+
+	private void OnVariableNameToggled(bool pressed, Button nameButton)
+	{
+		SetSelectedVariable(nameButton.GetMeta(VariableNameButtonMetaKey).AsString(), pressed);
+	}
+
+	private void OnArrayToggled(bool expanded, Button toggleButton)
+	{
+		toggleButton.GetMeta(ArrayElementsMetaKey).As<VBoxContainer>().Visible = expanded;
+		string variableName =
+			toggleButton.GetMeta(ArrayVariableMetaKey).As<ForgeSharedVariableDefinition>().VariableName;
+
+		if (expanded)
+		{
+			_expandedArrays.Add(variableName);
+		}
+		else
+		{
+			_expandedArrays.Remove(variableName);
+		}
+
+		// Not recorded: expanding a row is view state, same as a collapsed foldable.
+	}
+
+	private void OnAddArrayElementPressed(Button addElementButton)
+	{
+		ForgeSharedVariableDefinition def =
+			addElementButton.GetMeta(ArrayVariableMetaKey).As<ForgeSharedVariableDefinition>();
+		AddArrayElement(def, StatescriptVariableTypeConverter.CreateDefaultGodotVariant(def.VariableType));
+	}
+
+	private void OnRemoveArrayElementPressed(Button removeElementButton)
+	{
+		RemoveArrayElement(
+			removeElementButton.GetMeta(ArrayVariableMetaKey).As<ForgeSharedVariableDefinition>(),
+			removeElementButton.GetMeta(ArrayElementIndexMetaKey).AsInt32());
 	}
 
 	private void SetVariableValue(ForgeSharedVariableDefinition def, Variant newValue)
@@ -980,8 +1024,9 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		_newValueShapeDropdown = null;
 	}
 
-	private void OnDeletePressed(int index)
+	private void OnDeletePressed(Button deleteButton)
 	{
+		int index = deleteButton.GetMeta(VariableIndexMetaKey).AsInt32();
 		Array<ForgeSharedVariableDefinition> definitions = GetDefinitions();
 
 		if (index < 0 || index >= definitions.Count)

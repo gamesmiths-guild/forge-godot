@@ -109,6 +109,15 @@ public partial class StatescriptGraphEditorDock
 	}
 
 	/// <summary>
+	/// Picks an entry of the File menu, as the menu's item press does.
+	/// </summary>
+	/// <param name="id">The menu item id.</param>
+	internal void TestOnlyPressFileMenu(long id)
+	{
+		OnFileMenuIdPressed(id);
+	}
+
+	/// <summary>
 	/// Arranges the nodes, as the graph edit's arrange button does.
 	/// </summary>
 	internal void TestOnlyArrangeNodes()

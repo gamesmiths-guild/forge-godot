@@ -102,22 +102,14 @@ internal sealed partial class StatescriptVariablePanel
 			ButtonPressed = isExpanded,
 		};
 
-		toggleButton.Toggled += x =>
-		{
-			elementsContainer.Visible = x;
-
-			if (x)
-			{
-				_expandedArrays.Add(variable.VariableName);
-			}
-			else
-			{
-				_expandedArrays.Remove(variable.VariableName);
-			}
-
-			// Persisted but not recorded: expanding a row is view state, same as a collapsed foldable.
-			SaveExpandedArrayState();
-		};
+		// Method callables reading the row's data off the emitting button, not lambdas: an assembly reload restores the
+		// objects a lambda captured as copies.
+		toggleButton.SetMeta(ArrayVariableMetaKey, variable);
+		toggleButton.SetMeta(ArrayElementsMetaKey, elementsContainer);
+		toggleButton.Connect(
+			BaseButton.SignalName.Toggled,
+			new Callable(this, MethodName.OnArrayToggled),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		headerRow.AddChild(toggleButton);
 
@@ -129,23 +121,11 @@ internal sealed partial class StatescriptVariablePanel
 			CustomMinimumSize = new Vector2(24, 24),
 		};
 
-		addElementButton.Pressed += () =>
-		{
-			Variant defaultValue =
-				StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variable.VariableType);
-
-			EditorUndoRedoUtils.Record(
-				_undoRedo,
-				"Add Array Element",
-				_graph,
-				undo =>
-				{
-					undo.AddDoMethod(this, MethodName.DoAddArrayElement, _graph!, variable, defaultValue);
-					undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, _graph!, variable);
-				},
-				execute: true,
-				fallback: () => DoAddArrayElement(_graph!, variable, defaultValue));
-		};
+		addElementButton.SetMeta(ArrayVariableMetaKey, variable);
+		addElementButton.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnAddArrayElementPressed),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		headerRow.AddChild(addElementButton);
 
@@ -238,30 +218,77 @@ internal sealed partial class StatescriptVariablePanel
 			CustomMinimumSize = new Vector2(24, 24),
 		};
 
-		removeElementButton.Pressed += () =>
-		{
-			Variant removedValue = variable.InitialArrayValues[elementIndex];
-
-			EditorUndoRedoUtils.Record(
-				_undoRedo,
-				"Remove Array Element",
-				_graph,
-				undo =>
-				{
-					undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, _graph!, variable, elementIndex);
-					undo.AddUndoMethod(
-						this,
-						MethodName.UndoRemoveArrayElement,
-						_graph!,
-						variable,
-						elementIndex,
-						removedValue);
-				},
-				execute: true,
-				fallback: () => DoRemoveArrayElement(_graph!, variable, elementIndex));
-		};
+		removeElementButton.SetMeta(ArrayVariableMetaKey, variable);
+		removeElementButton.SetMeta(ArrayElementIndexMetaKey, elementIndex);
+		removeElementButton.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnRemoveArrayElementPressed),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		row.AddChild(removeElementButton);
+	}
+
+	private void OnArrayToggled(bool expanded, Button toggleButton)
+	{
+		toggleButton.GetMeta(ArrayElementsMetaKey).As<VBoxContainer>().Visible = expanded;
+		string variableName = toggleButton.GetMeta(ArrayVariableMetaKey).As<StatescriptGraphVariable>().VariableName;
+
+		if (expanded)
+		{
+			_expandedArrays.Add(variableName);
+		}
+		else
+		{
+			_expandedArrays.Remove(variableName);
+		}
+
+		// Persisted but not recorded: expanding a row is view state, same as a collapsed foldable.
+		SaveExpandedArrayState();
+	}
+
+	private void OnAddArrayElementPressed(Button addElementButton)
+	{
+		StatescriptGraphVariable variable =
+			addElementButton.GetMeta(ArrayVariableMetaKey).As<StatescriptGraphVariable>();
+		Variant defaultValue = StatescriptVariableTypeConverter.CreateDefaultGodotVariant(variable.VariableType);
+
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Add Array Element",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoAddArrayElement, _graph!, variable, defaultValue);
+				undo.AddUndoMethod(this, MethodName.UndoAddArrayElement, _graph!, variable);
+			},
+			execute: true,
+			fallback: () => DoAddArrayElement(_graph!, variable, defaultValue));
+	}
+
+	private void OnRemoveArrayElementPressed(Button removeElementButton)
+	{
+		StatescriptGraphVariable variable =
+			removeElementButton.GetMeta(ArrayVariableMetaKey).As<StatescriptGraphVariable>();
+		int elementIndex = removeElementButton.GetMeta(ArrayElementIndexMetaKey).AsInt32();
+		Variant removedValue = variable.InitialArrayValues[elementIndex];
+
+		EditorUndoRedoUtils.Record(
+			_undoRedo,
+			"Remove Array Element",
+			_graph,
+			undo =>
+			{
+				undo.AddDoMethod(this, MethodName.DoRemoveArrayElement, _graph!, variable, elementIndex);
+				undo.AddUndoMethod(
+					this,
+					MethodName.UndoRemoveArrayElement,
+					_graph!,
+					variable,
+					elementIndex,
+					removedValue);
+			},
+			execute: true,
+			fallback: () => DoRemoveArrayElement(_graph!, variable, elementIndex));
 	}
 }
 #endif

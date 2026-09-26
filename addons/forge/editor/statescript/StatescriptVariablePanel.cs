@@ -22,6 +22,10 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 	private const string VariablesScrollNodeName = "VariablesScroll";
 	private const string VariableListNodeName = "VariableList";
 	private const string VariableNameButtonMetaKey = "_variable_name_button";
+	private const string VariableIndexMetaKey = "_variable_index";
+	private const string ArrayVariableMetaKey = "_array_variable";
+	private const string ArrayElementsMetaKey = "_array_elements";
+	private const string ArrayElementIndexMetaKey = "_array_element_index";
 
 	private static readonly Color _variableColor = new(0xe5c07bff);
 
@@ -377,10 +381,12 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			"font",
 			EditorInterface.Singleton.GetEditorTheme().GetFont("bold", "EditorFonts"));
 
-		nameButton.Toggled += pressed =>
-		{
-			SetSelectedVariable(variable.VariableName, pressed);
-		};
+		// Method callables reading the row's data off the emitting button, not lambdas: an assembly reload restores the
+		// objects a lambda captured as copies.
+		nameButton.Connect(
+			BaseButton.SignalName.Toggled,
+			new Callable(this, MethodName.OnVariableNameToggled),
+			(uint)ConnectFlags.AppendSourceObject);
 
 		headerRow.AddChild(nameButton);
 
@@ -393,8 +399,6 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		typeLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 		headerRow.AddChild(typeLabel);
 
-		int capturedIndex = index;
-
 		var deleteButton = new Button
 		{
 			Icon = _removeIcon,
@@ -403,7 +407,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 			CustomMinimumSize = new Vector2(28, 28),
 		};
 
-		deleteButton.Pressed += () => OnDeletePressed(capturedIndex);
+		deleteButton.SetMeta(VariableIndexMetaKey, index);
+		deleteButton.Connect(
+			BaseButton.SignalName.Pressed,
+			new Callable(this, MethodName.OnDeletePressed),
+			(uint)ConnectFlags.AppendSourceObject);
 		headerRow.AddChild(deleteButton);
 
 		if (!variable.IsArray)
@@ -418,6 +426,11 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		}
 
 		rowContainer.AddChild(new HSeparator());
+	}
+
+	private void OnVariableNameToggled(bool pressed, Button nameButton)
+	{
+		SetSelectedVariable(nameButton.GetMeta(VariableNameButtonMetaKey).AsString(), pressed);
 	}
 
 	private void SetSelectedVariable(string variableName, bool selected)
@@ -570,8 +583,10 @@ internal sealed partial class StatescriptVariablePanel : VBoxContainer, ISeriali
 		_newValueShapeDropdown = null;
 	}
 
-	private void OnDeletePressed(int index)
+	private void OnDeletePressed(Button deleteButton)
 	{
+		int index = deleteButton.GetMeta(VariableIndexMetaKey).AsInt32();
+
 		if (_graph is null || index < 0 || index >= _graph.Variables.Count)
 		{
 			return;

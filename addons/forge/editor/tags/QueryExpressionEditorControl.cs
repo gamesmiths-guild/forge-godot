@@ -19,6 +19,8 @@ public partial class QueryExpressionEditorControl : VBoxContainer, ISerializatio
 	/// </summary>
 	public const float LabelWidth = 66.0f;
 
+	private const string ExpressionIndexMetaKey = "_expression_index";
+
 	private ForgeQueryExpression? _query;
 	private Action? _onChanged;
 	private OptionButton? _expressionTypeDropdown;
@@ -231,8 +233,14 @@ public partial class QueryExpressionEditorControl : VBoxContainer, ISerializatio
 			});
 
 			var removeButton = new Button { Text = "Remove" };
-			int index = i;
-			removeButton.Pressed += () => OnRemoveExpressionPressed(index);
+
+			// A method callable reading the index off the button, not a lambda: an assembly reload restores the objects
+			// a lambda captured as copies.
+			removeButton.SetMeta(ExpressionIndexMetaKey, i);
+			removeButton.Connect(
+				BaseButton.SignalName.Pressed,
+				new Callable(this, MethodName.OnRemoveExpressionPressed),
+				(uint)ConnectFlags.AppendSourceObject);
 			headerRow.AddChild(removeButton);
 			itemRoot.AddChild(headerRow);
 
@@ -286,8 +294,10 @@ public partial class QueryExpressionEditorControl : VBoxContainer, ISerializatio
 		NotifyChanged();
 	}
 
-	private void OnRemoveExpressionPressed(int index)
+	private void OnRemoveExpressionPressed(Button removeButton)
 	{
+		int index = removeButton.GetMeta(ExpressionIndexMetaKey).AsInt32();
+
 		if (_query?.Expressions is null || index < 0 || index >= _query.Expressions.Count)
 		{
 			return;
