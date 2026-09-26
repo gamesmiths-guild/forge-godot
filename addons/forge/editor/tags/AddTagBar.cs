@@ -67,12 +67,6 @@ internal sealed partial class AddTagBar : HBoxContainer, ISerializationListener
 		_destinationPicker.ItemSelected += OnDestinationSelected;
 	}
 
-	public override void _ExitTree()
-	{
-		ReleaseUiState();
-		base._ExitTree();
-	}
-
 	public void OnBeforeSerialize()
 	{
 		ReleaseUiState();

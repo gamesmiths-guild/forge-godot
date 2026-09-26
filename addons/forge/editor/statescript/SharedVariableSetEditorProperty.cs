@@ -139,8 +139,17 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		RebuildList();
 	}
 
-	public override void _ExitTree()
+	public override void _Notification(int what)
 	{
+		base._Notification(what);
+
+		// Released when the editor is freed rather than when it leaves the tree: moving the Inspector dock takes it out
+		// and puts it back, and _Ready does not run again to rebuild or re-register it.
+		if (what != NotificationPredelete)
+		{
+			return;
+		}
+
 		_controller?.UnregisterEditor(this);
 
 		DisconnectSignals();
@@ -151,9 +160,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		}
 
 		ReleaseUiState();
-		FreeAllChildren();
-
-		base._ExitTree();
 	}
 
 	public void OnBeforeSerialize()
@@ -349,16 +355,6 @@ internal sealed partial class SharedVariableSetEditorProperty : EditorProperty, 
 		}
 
 		_signalsConnected = false;
-	}
-
-	private void FreeAllChildren()
-	{
-		for (int i = GetChildCount() - 1; i >= 0; i--)
-		{
-			Node child = GetChild(i);
-			RemoveChild(child);
-			child.Free();
-		}
 	}
 
 	private void OnSharedVariableHighlightChanged()

@@ -121,11 +121,16 @@ public partial class TagsSourceEditorProperty : EditorProperty, ISerializationLi
 		RebuildTree();
 	}
 
-	public override void _ExitTree()
+	public override void _Notification(int what)
 	{
-		ReleaseUiState();
-		FreeAllChildren();
-		base._ExitTree();
+		base._Notification(what);
+
+		// The registry outlives this property, so the subscription ends with it rather than when it leaves the tree:
+		// moving the Inspector dock takes it out and puts it back, and _Ready does not run again.
+		if (what == NotificationPredelete)
+		{
+			ForgeTagsRegistry.Changed -= OnRegisteredTagsChanged;
+		}
 	}
 
 	public void OnBeforeSerialize()

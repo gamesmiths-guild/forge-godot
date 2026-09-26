@@ -104,12 +104,6 @@ internal sealed partial class TagTreeSearchBar : HBoxContainer, ISerializationLi
 		_sourcePicker.ItemSelected += OnSourceSelected;
 	}
 
-	public override void _ExitTree()
-	{
-		ReleaseUiState();
-		base._ExitTree();
-	}
-
 	/// <inheritdoc/>
 	public override void _Notification(int what)
 	{

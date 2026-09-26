@@ -31,13 +31,6 @@ public partial class TagContainerEditorProperty : EditorProperty, ISerialization
 		_editor.SetValue(obj.Get(propertyName).AsGodotArray<string>());
 	}
 
-	public override void _ExitTree()
-	{
-		ReleaseUiState();
-		FreeAllChildren();
-		base._ExitTree();
-	}
-
 	public void OnBeforeSerialize()
 	{
 		ReleaseUiState();

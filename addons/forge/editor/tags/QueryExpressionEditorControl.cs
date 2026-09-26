@@ -46,17 +46,11 @@ public partial class QueryExpressionEditorControl : VBoxContainer, ISerializatio
 		RefreshUi();
 	}
 
-	public override void _ExitTree()
-	{
-		ReleaseUiState();
-		base._ExitTree();
-	}
-
 	public void OnBeforeSerialize()
 	{
 		// An assembly reload drops every delegate-backed signal connection, so they have to be released here, while
-		// they still exist. Doing it from _ExitTree alone means the disconnect runs against connections Godot already
-		// took away, which it reports as an error.
+		// they still exist. Leaving the tree is no reason to release them: moving the dock or switching graph tabs
+		// takes this control out and puts it back, and _Ready does not run again to reconnect them.
 		ReleaseUiState();
 	}
 

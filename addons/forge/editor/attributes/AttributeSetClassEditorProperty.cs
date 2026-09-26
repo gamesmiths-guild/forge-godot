@@ -51,13 +51,6 @@ public partial class AttributeSetClassEditorProperty : EditorProperty, ISerializ
 		}
 	}
 
-	public override void _ExitTree()
-	{
-		ReleaseUiState();
-		FreeAllChildren();
-		base._ExitTree();
-	}
-
 	public void OnBeforeSerialize()
 	{
 		ReleaseUiState();
