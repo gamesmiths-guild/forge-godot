@@ -24,7 +24,8 @@ public partial class HitFlashCueHandler3D : ForgeCueHandler
 {
 	// Shared by every handler, because two of them can flash one mesh at once - a burning projectile lands its hit and
 	// the fire's first tick in the same instant - and each would otherwise record the other's flash as the material to
-	// put back. The first flash to reach a mesh records it, the last one to end restores it.
+	// put back. The first flash to reach a mesh records it, and the mesh shows the newest flash still running: one
+	// ending under another hands the mesh back to it, and only the last one to end restores the original.
 	private static readonly Dictionary<MeshInstance3D, Hold> _holds = [];
 
 	private readonly Dictionary<Node3D, Flash> _flashes = [];
@@ -61,22 +62,25 @@ public partial class HitFlashCueHandler3D : ForgeCueHandler
 			flash = new Flash();
 			CollectMeshes(node, flash.Meshes);
 			_flashes[node] = flash;
-
-			foreach (MeshInstance3D mesh in flash.Meshes)
-			{
-				if (_holds.TryGetValue(mesh, out Hold? hold))
-				{
-					hold.Holders++;
-				}
-				else
-				{
-					_holds[mesh] = new Hold(mesh.MaterialOverride);
-				}
-			}
 		}
 
 		foreach (MeshInstance3D mesh in flash.Meshes)
 		{
+			// Collected at the first flash, so it can have been freed since.
+			if (!IsInstanceValid(mesh))
+			{
+				continue;
+			}
+
+			if (!_holds.TryGetValue(mesh, out Hold? hold))
+			{
+				hold = new Hold(mesh.MaterialOverride);
+				_holds[mesh] = hold;
+			}
+
+			// A restarted flash is the newest again.
+			hold.Flashers.Remove(this);
+			hold.Flashers.Add(this);
 			mesh.MaterialOverride = FlashMaterial;
 		}
 
@@ -111,16 +115,21 @@ public partial class HitFlashCueHandler3D : ForgeCueHandler
 
 		foreach (MeshInstance3D mesh in flash.Meshes)
 		{
-			if (!_holds.TryGetValue(mesh, out Hold? hold) || --hold.Holders > 0)
+			if (!_holds.TryGetValue(mesh, out Hold? hold))
 			{
 				continue;
 			}
 
-			_holds.Remove(mesh);
+			hold.Flashers.Remove(this);
+
+			if (hold.Flashers.Count == 0)
+			{
+				_holds.Remove(mesh);
+			}
 
 			if (IsInstanceValid(mesh))
 			{
-				mesh.MaterialOverride = hold.Original;
+				mesh.MaterialOverride = hold.Flashers.Count > 0 ? hold.Flashers[^1].FlashMaterial : hold.Original;
 			}
 		}
 	}
@@ -129,7 +138,8 @@ public partial class HitFlashCueHandler3D : ForgeCueHandler
 	{
 		public Material? Original { get; } = original;
 
-		public int Holders { get; set; } = 1;
+		// Oldest first; the mesh shows the last.
+		public List<HitFlashCueHandler3D> Flashers { get; } = [];
 	}
 
 	private sealed class Flash
