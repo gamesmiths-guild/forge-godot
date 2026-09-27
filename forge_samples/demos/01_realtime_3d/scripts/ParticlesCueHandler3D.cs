@@ -56,6 +56,16 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 			_effectInstanceMapping[parent] = effectInstance;
 		}
 
+		// The entry goes when the effect leaves the tree, which covers a removal and a target freed mid-effect - an
+		// enemy that dies burning - alike.
+		effectInstance.TreeExiting += () =>
+		{
+			if (_effectInstanceMapping.TryGetValue(parent, out Node3D? tracked) && tracked == effectInstance)
+			{
+				_effectInstanceMapping.Remove(parent);
+			}
+		};
+
 		parent.AddChild(effectInstance);
 		effectInstance.Translate(Offset);
 		ApplyIntensity(effectInstance, parameters);
@@ -103,7 +113,6 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 
 		parent.RemoveChild(effectInstance);
 		effectInstance.QueueFree();
-		_effectInstanceMapping[parent] = null;
 	}
 
 	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
@@ -162,6 +171,11 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 		GD.Print($"Destroying node {node.Name} after {delay} seconds.");
 
 		await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
-		node.QueueFree();
+
+		// Gone already when its target was freed first.
+		if (IsInstanceValid(node))
+		{
+			node.QueueFree();
+		}
 	}
 }
