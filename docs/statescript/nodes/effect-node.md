@@ -18,6 +18,7 @@ Use the core Forge docs for runtime behavior and lifecycle details. This page co
 - The node follows the same effect/entity cross-product authoring flow as [ApplyEffectNode](apply-effect-node.md).
 - The node deactivates itself automatically once every applied non-instant effect ended or was removed elsewhere. If every applied effect is instant, it deactivates in the same frame.
 - The extra `OnEffectEnd` output fires only on that natural completion path. It does not fire when the node is deactivated externally and removes its own active effects during cleanup.
+- **Restart On Retrigger** (Settings, default off): a message that reaches the node while its effects are active removes them and applies them again with the inputs read again — a refresh. Off, the message is ignored. See [Restart On Retrigger](README.md#restart-on-retrigger).
 
 ## Related Docs
 
