@@ -46,9 +46,9 @@ public partial class AnimationCueHandler : ForgeCueHandler
 	public string RemoveAnimation { get; set; } = string.Empty;
 
 	/// <summary>
-	/// Gets or sets a value indicating whether a phase's animation replaces one already playing. Off yields to whatever
-	/// the player is in the middle of - a flinch should not cut an attack short - while a repeat of its own clip still
-	/// restarts it.
+	/// Gets or sets a value indicating whether a phase's animation replaces one already playing. Off yields to a
+	/// clip the player is in the middle of - a flinch should not cut an attack short - unless the clip is one of this
+	/// handler's own, so a removal still ends the loop its application started.
 	/// </summary>
 	[Export]
 	public bool Interrupt { get; set; } = true;
@@ -87,7 +87,7 @@ public partial class AnimationCueHandler : ForgeCueHandler
 			return;
 		}
 
-		if (!Interrupt && player.IsPlaying() && player.CurrentAnimation != animation)
+		if (!Interrupt && player.IsPlaying() && !IsOwnAnimation(player.CurrentAnimation))
 		{
 			return;
 		}
@@ -95,5 +95,10 @@ public partial class AnimationCueHandler : ForgeCueHandler
 		// A name the player does not have is left to Godot, which reports it clearly and once per attempt; a cue fires
 		// on application rather than every frame, so there is nothing to suppress.
 		player.Play(animation);
+	}
+
+	private bool IsOwnAnimation(string animation)
+	{
+		return animation == ApplyAnimation || animation == ExecuteAnimation || animation == RemoveAnimation;
 	}
 }

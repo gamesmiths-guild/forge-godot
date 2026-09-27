@@ -431,6 +431,7 @@ metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
 [node name="Burn SFX" type="Node" parent="." unique_id=1775380545]
 script = ExtResource("30_audio_cue")
 Stream = ExtResource("31_hit_sfx")
+PlayOnApply = false
 MagnitudeCurve = SubResource("Curve_burn_gain")
 CueTag = "cue.sfx.burn"
 metadata/_custom_type_script = "uid://bxw5ax6u4m82n"

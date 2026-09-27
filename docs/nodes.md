@@ -399,7 +399,7 @@ Two ways to say what plays: a path, for anything whose bus, attenuation or strea
 
 - `PlayerPath` (string): Empty means the target's first animation player child.
 - `ApplyAnimation`, `ExecuteAnimation`, `RemoveAnimation` (string): One clip per phase.
-- `Interrupt` (bool, default on): Off yields to a clip already playing, restarting only its own — a flinch that would cut an attack short is left to the attack.
+- `Interrupt` (bool, default on): Off yields to a clip already playing unless it is one of the handler's own — a flinch that would cut an attack short is left to the attack, while a removal still ends the loop its application started.
 
 Three names rather than one animation with a mode, because a stun that starts, holds and ends is three different clips and the alternative is three handlers under three cue tags. A phase left empty plays nothing, which makes a one-phase cue a single filled field.
 
