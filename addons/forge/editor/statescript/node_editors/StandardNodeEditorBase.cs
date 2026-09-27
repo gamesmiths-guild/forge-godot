@@ -37,7 +37,7 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 	/// <inheritdoc/>
 	public override void BuildPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
-		BuildSettingsSection();
+		BuildSettingsSection(typeInfo);
 		BuildInputSection(typeInfo);
 		BuildOutputSection(typeInfo);
 	}
@@ -201,9 +201,14 @@ internal abstract partial class StandardNodeEditorBase : CustomNodeEditor
 		return new VariantResolverResource { Value = value, ValueType = valueType };
 	}
 
-	private void BuildSettingsSection()
+	private void BuildSettingsSection(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)
 	{
 		List<NodeConfigParam> parameters = [.. ConstructorParams.Where(x => IsSettingVisible(x.Key))];
+
+		if (typeInfo.CanRestartOnRetrigger)
+		{
+			parameters.Add(NodeConfigParam.RestartOnRetrigger);
+		}
 
 		if (parameters.Count == 0)
 		{
