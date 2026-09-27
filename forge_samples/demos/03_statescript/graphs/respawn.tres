@@ -25,12 +25,17 @@ ToNode = "node_2"
 script = ExtResource("4_connection")
 FromNode = "node_2"
 OutputPort = 4
-ToNode = "node_3"
+ToNode = "node_5"
 
 [sub_resource type="Resource" id="Resource_5hky6"]
 script = ExtResource("4_connection")
 FromNode = "node_3"
 ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_5g3fu"]
+script = ExtResource("4_connection")
+FromNode = "node_5"
+ToNode = "node_3"
 
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
@@ -108,7 +113,7 @@ NodeId = "node_3"
 Title = "Set Position 3D"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetPosition3DNode"
-PositionOffset = Vector2(920, 200)
+PositionOffset = Vector2(1260, 200)
 CustomData = Dictionary[String, Variant]({
 "space": "Global"
 })
@@ -130,8 +135,19 @@ NodeId = "node_4"
 Title = "Set Velocity 3D"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetVelocity3DNode"
-PositionOffset = Vector2(1280, 200)
+PositionOffset = Vector2(1620, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_still_binding")])
+
+[sub_resource type="Resource" id="Resource_fall"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Play Audio One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
+PositionOffset = Vector2(900, 200)
+CustomData = Dictionary[String, Variant]({
+"playerPath": "FallSfx"
+})
 
 [sub_resource type="Resource" id="Resource_spawn_variable"]
 script = ExtResource("5_variable_definition")
@@ -142,8 +158,8 @@ InitialValue = Vector3(0, 0, 0)
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Respawn"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_remember_spawn"), SubResource("Resource_fallen_listener"), SubResource("Resource_put_back"), SubResource("Resource_stop_falling")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_2kab5"), SubResource("Resource_078ql"), SubResource("Resource_ut70n"), SubResource("Resource_5hky6")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_remember_spawn"), SubResource("Resource_fallen_listener"), SubResource("Resource_put_back"), SubResource("Resource_stop_falling"), SubResource("Resource_fall")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_2kab5"), SubResource("Resource_078ql"), SubResource("Resource_ut70n"), SubResource("Resource_5hky6"), SubResource("Resource_5g3fu")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_spawn_variable")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

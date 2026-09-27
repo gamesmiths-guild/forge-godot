@@ -23,6 +23,10 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 	[Export]
 	public bool UpdateEffectIntensity { get; set; }
 
+	// The emitter's speed at the lowest and the highest magnitude; the default leaves the scene at its authored pace.
+	[Export]
+	public Vector2 IntensitySpeed { get; set; } = new(1, 1);
+
 	[Export]
 	public Vector3 Offset { get; set; } = new(0, 0, 0);
 
@@ -52,8 +56,19 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 			_effectInstanceMapping[parent] = effectInstance;
 		}
 
+		// The entry goes when the effect leaves the tree, which covers a removal and a target freed mid-effect - an
+		// enemy that dies burning - alike.
+		effectInstance.TreeExiting += () =>
+		{
+			if (_effectInstanceMapping.TryGetValue(parent, out Node3D? tracked) && tracked == effectInstance)
+			{
+				_effectInstanceMapping.Remove(parent);
+			}
+		};
+
 		parent.AddChild(effectInstance);
 		effectInstance.Translate(Offset);
+		ApplyIntensity(effectInstance, parameters);
 	}
 
 	public override void _CueOnUpdate(IForgeEntity forgeEntity, CueParameters? parameters)
@@ -77,17 +92,7 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 			return;
 		}
 
-		if (effectInstance is not GpuParticles3D particle3D)
-		{
-			return;
-		}
-
-		if (!parameters.HasValue)
-		{
-			return;
-		}
-
-		particle3D.Amount = parameters.Value.Magnitude;
+		ApplyIntensity(effectInstance, parameters);
 	}
 
 	public override void _CueOnRemove(IForgeEntity forgeEntity, bool interrupted)
@@ -108,7 +113,6 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 
 		parent.RemoveChild(effectInstance);
 		effectInstance.QueueFree();
-		_effectInstanceMapping[parent] = null;
 	}
 
 	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
@@ -147,11 +151,31 @@ public partial class ParticlesCueHandler3D : ForgeCueHandler
 		_ = DestroyAfter(particles, (float)(particles.Lifetime + 0.1f));
 	}
 
+	// The amount ratio rather than the amount: the ratio scales emission without reallocating the particle buffer, and
+	// it reads the cue's normalized magnitude, so an effect scene decides how dense "full" is.
+	private void ApplyIntensity(Node3D effectInstance, CueParameters? parameters)
+	{
+		if (!UpdateEffectIntensity || effectInstance is not GpuParticles3D particles || !parameters.HasValue)
+		{
+			return;
+		}
+
+		float magnitude = parameters.Value.NormalizedMagnitude;
+
+		particles.AmountRatio = magnitude;
+		particles.SpeedScale = Mathf.Lerp(IntensitySpeed.X, IntensitySpeed.Y, magnitude);
+	}
+
 	private async Task DestroyAfter(Node node, float delay)
 	{
 		GD.Print($"Destroying node {node.Name} after {delay} seconds.");
 
 		await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
-		node.QueueFree();
+
+		// Gone already when its target was freed first.
+		if (IsInstanceValid(node))
+		{
+			node.QueueFree();
+		}
 	}
 }

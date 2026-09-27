@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://btewds1fqvri5"]
 
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/water.tres" id="1_water"]
+[ext_resource type="Material" uid="uid://dm25nvk6sef30" path="res://forge_samples/demos/03_statescript/materials/water.tres" id="1_water"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="3_area"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_effect"]
 [ext_resource type="Resource" uid="uid://dgybn25of4xpg" path="res://forge_samples/shared/effects/water.tres" id="5_wet"]
+[ext_resource type="Resource" uid="uid://8k7ei4wy1e4c" path="res://forge_samples/demos/03_statescript/effects/quench.tres" id="6_quench"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_surface"]
 top_radius = 5.45
@@ -30,6 +31,11 @@ metadata/_custom_type_script = "uid://cvhkilfepqpyi"
 [node name="Collision" type="CollisionShape3D" parent="Area" unique_id=1827714789]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.4, 0)
 shape = SubResource("CylinderShape3D_lake")
+
+[node name="Quench" type="Node" parent="Area" unique_id=445305202]
+script = ExtResource("4_effect")
+EffectData = ExtResource("6_quench")
+metadata/_custom_type_script = "uid://dps0oef50noil"
 
 [node name="Wet" type="Node" parent="Area" unique_id=1554556054]
 script = ExtResource("4_effect")

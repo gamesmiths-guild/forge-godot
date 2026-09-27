@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://iov02vf0vcss"]
+
+[ext_resource type="AudioStream" uid="uid://2qxa638wjo7" path="res://forge_samples/shared/audio/ember-landing.ogg" id="1_landing"]
+
+[sub_resource type="Gradient" id="Gradient_burst"]
+offsets = PackedFloat32Array(0, 0.4, 1)
+colors = PackedColorArray(1, 0.85, 0.45, 1, 1, 0.42, 0.12, 0.8, 0.5, 0.05, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_burst"]
+gradient = SubResource("Gradient_burst")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_burst"]
+lifetime_randomness = 0.3
+emission_shape_offset = Vector3(0, 0.3, 0)
+emission_shape = 1
+emission_sphere_radius = 0.3
+direction = Vector3(0, 1, 0)
+spread = 70.0
+initial_velocity_min = 3.0
+initial_velocity_max = 6.5
+scale_min = 0.15
+scale_max = 0.3
+color_ramp = SubResource("GradientTexture1D_burst")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_burst"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_burst"]
+material = SubResource("StandardMaterial3D_burst")
+
+[node name="SpawnBurst" type="GPUParticles3D" unique_id=1547727781]
+amount = 56
+lifetime = 0.8
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_burst")
+draw_pass_1 = SubResource("SphereMesh_burst")
+
+[node name="LandingSfx" type="AudioStreamPlayer3D" parent="." unique_id=1751867270]
+stream = ExtResource("1_landing")
+autoplay = true
+
+[node name="Lifetime" type="Timer" parent="." unique_id=1520851426]
+wait_time = 2.2
+one_shot = true
+autostart = true
+
+[connection signal="timeout" from="Lifetime" to="." method="queue_free"]

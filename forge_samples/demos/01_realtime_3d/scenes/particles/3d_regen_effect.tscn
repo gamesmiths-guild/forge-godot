@@ -28,7 +28,7 @@ material = SubResource("StandardMaterial3D_sgubq")
 
 [node name="GPUParticles3D" type="GPUParticles3D" unique_id=1312062388]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
-amount = 1
+amount = 3
 lifetime = 0.31
 preprocess = 1.0
 process_material = SubResource("ParticleProcessMaterial_kw1tj")

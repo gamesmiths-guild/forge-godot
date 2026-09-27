@@ -31,6 +31,11 @@ public partial class PlayerController3D : CharacterBody3D
 	// The aim ray stops on the world and on enemies, never on the player's own body under the cursor.
 	private const uint AimMask = (1u << 0) | (1u << 2);
 
+	// The refusals worth a click. Others stay silent: pressing the shield's key while it is up is refused as well,
+	// and that press is the toggle off.
+	private const AbilityActivationFailures RefusalsWorthAClick =
+		AbilityActivationFailures.Cooldown | AbilityActivationFailures.InsufficientResources;
+
 	private readonly float _gravity = ProjectSettings.GetSetting("physics/3d/default_gravity").AsSingle();
 
 	private SkillSlot[] _skillSlots = [];
@@ -67,6 +72,9 @@ public partial class PlayerController3D : CharacterBody3D
 
 	[Export]
 	public Label? TagsView { get; set; }
+
+	[Export]
+	public AudioStreamPlayer3D? ActivationFailedSfx { get; set; }
 
 	public override void _Ready()
 	{
@@ -107,7 +115,16 @@ public partial class PlayerController3D : CharacterBody3D
 			}
 
 			FaceCursor();
-			slot.Handle.TryActivate(AimActivationData.FromMouseGround(this, AimMask), out AbilityActivationFailures _);
+
+			bool activated = slot.Handle.TryActivate(
+				AimActivationData.FromMouseGround(this, AimMask),
+				out AbilityActivationFailures failures);
+
+			if (!activated && (failures & RefusalsWorthAClick) != 0)
+			{
+				ActivationFailedSfx?.Play();
+			}
+
 			GetViewport().SetInputAsHandled();
 			return;
 		}

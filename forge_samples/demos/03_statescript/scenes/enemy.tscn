@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ubxffu08xt3k"]
 
 [ext_resource type="Script" uid="uid://drcpkhvwu72yw" path="res://forge_samples/demos/03_statescript/scripts/PuppetBody3D.cs" id="1_puppet"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/enemy_body.tres" id="2_body"]
+[ext_resource type="Material" uid="uid://b7m0lrhal5u6" path="res://forge_samples/demos/03_statescript/materials/enemy_body.tres" id="2_body"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_entity"]
 [ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="4_attrset"]
 [ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="5_values"]
@@ -10,6 +10,7 @@
 [ext_resource type="Resource" uid="uid://d0ctw2d38gb15" path="res://forge_samples/shared/effects/natural_regen.tres" id="8_natural_regen"]
 [ext_resource type="Script" uid="uid://lgxurajmwoly" path="res://forge_samples/demos/01_realtime_3d/scripts/HealthBar3D.cs" id="9_health_bar"]
 [ext_resource type="Resource" uid="uid://hs0eraqvm22f" path="res://forge_samples/demos/03_statescript/abilities/enemy/grant_abilities.tres" id="10_grant_abilities"]
+[ext_resource type="AudioStream" uid="uid://ycjk5brw4t82" path="res://forge_samples/shared/audio/swing.ogg" id="11_swing"]
 
 [sub_resource type="Resource" id="Resource_tags"]
 script = ExtResource("6_tags")
@@ -41,6 +42,87 @@ bg_color = Color(0.17566097, 0.34232214, 1, 1)
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_bars"]
 viewport_path = NodePath("SubViewport")
+
+[sub_resource type="Animation" id="Animation_fx_reset"]
+length = 0.001
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.8, 0)
+tracks/1/type = "rotation_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1)
+tracks/2/type = "scale_3d"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = PackedFloat32Array(0, 1, 1, 1, 1)
+
+[sub_resource type="Animation" id="Animation_attack"]
+resource_name = "attack"
+length = 0.3
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.8, 0, 0.1, 1, 0, 0.8, -0.5, 0.3, 1, 0, 0.8, 0)
+tracks/1/type = "rotation_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1, 0.1, 1, -0.173648, 0, 0, 0.984808, 0.3, 1, 0, 0, 0, 1)
+tracks/2/type = "scale_3d"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = PackedFloat32Array(0, 1, 1, 1, 1, 0.1, 1, 0.9, 1.1, 0.9, 0.3, 1, 1, 1, 1)
+
+[sub_resource type="Animation" id="Animation_hit"]
+resource_name = "hit"
+length = 0.25
+tracks/0/type = "scale_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 1, 1, 1, 0.06, 1, 1.25, 0.8, 1.25, 0.25, 1, 1, 1, 1)
+tracks/1/type = "position_3d"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = PackedFloat32Array(0, 1, 0, 0.8, 0, 0.25, 1, 0, 0.8, 0)
+tracks/2/type = "rotation_3d"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1, 0.25, 1, 0, 0, 0, 1)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]
+_data = {
+&"RESET": SubResource("Animation_fx_reset"),
+&"attack": SubResource("Animation_attack"),
+&"hit": SubResource("Animation_hit")
+}
 
 [node name="Enemy" type="CharacterBody3D" unique_id=1112349522 groups=["enemies"]]
 collision_layer = 4
@@ -174,3 +256,10 @@ vertical_alignment = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
 billboard = 1
 texture = SubResource("ViewportTexture_bars")
+
+[node name="SwingSfx" type="AudioStreamPlayer3D" parent="." unique_id=128737801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+stream = ExtResource("11_swing")
+
+[node name="FxPlayer" type="AnimationPlayer" parent="." unique_id=1717104991]
+libraries/ = SubResource("AnimationLibrary_fx")

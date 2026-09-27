@@ -17,8 +17,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// cref="Stream"/> creates a player on the target instead, for the common case where a cue is one sound and adding a
 /// node to every entity that can receive it is the only obstacle.</para>
 /// <para>A created player matches the target's dimension, so a sound on a 3D character is positional without the cue
-/// having to say so. It lives as long as the cue does: a persistent cue's player is freed on removal, and a one-shot
-/// cue's frees itself when the sound ends.</para>
+/// having to say so. One is made per target and kept for the sounds after it: a removal frees it, and otherwise it goes
+/// with the target.</para>
 /// </remarks>
 [GlobalClass]
 public partial class AudioCueHandler : ForgeCueHandler
@@ -44,6 +44,22 @@ public partial class AudioCueHandler : ForgeCueHandler
 	public AudioStream? Stream { get; set; }
 
 	/// <summary>
+	/// Gets or sets a value indicating whether applying the cue plays the sound. Off leaves a persistent cue's sound
+	/// to its executions, which is what a one-shot stream on a periodic effect wants: the application is when the
+	/// effect starts, and the ticks are when it does something.
+	/// </summary>
+	[Export]
+	public bool PlayOnApply { get; set; } = true;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether executing the cue plays the sound. Off leaves a persistent cue's sound
+	/// to its application, which is what a looping stream on a periodic effect wants: every tick executes the cue, and
+	/// a loop restarted on each tick is a loop played on top of itself.
+	/// </summary>
+	[Export]
+	public bool PlayOnExecute { get; set; } = true;
+
+	/// <summary>
 	/// Gets or sets a value indicating whether removing the cue stops the sound. Off lets a tail finish after the
 	/// effect that started it has gone.
 	/// </summary>
@@ -62,13 +78,19 @@ public partial class AudioCueHandler : ForgeCueHandler
 	/// <inheritdoc/>
 	public override void _CueOnApply(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
-		Play(forgeEntity, parameters);
+		if (PlayOnApply)
+		{
+			Play(forgeEntity, parameters);
+		}
 	}
 
 	/// <inheritdoc/>
 	public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
 	{
-		Play(forgeEntity, parameters);
+		if (PlayOnExecute)
+		{
+			Play(forgeEntity, parameters);
+		}
 	}
 
 	/// <inheritdoc/>
@@ -119,7 +141,7 @@ public partial class AudioCueHandler : ForgeCueHandler
 
 			if (player is not null)
 			{
-				_persistentPlayers[forgeEntity] = player;
+				Track(forgeEntity, player);
 			}
 		}
 
@@ -178,6 +200,23 @@ public partial class AudioCueHandler : ForgeCueHandler
 
 		parent.AddChild(player);
 		return player;
+	}
+
+	// Released when the player leaves the tree as well as on removal. A target freed with no removal - an enemy killed
+	// by the hit this handler sounds - would otherwise stay a key, keeping its entity, for as long as the handler
+	// lives. Only an entry still pointing at this player goes: one left to finish its tail after a removal can leave
+	// after a newer player has taken its place.
+	private void Track(IForgeEntity forgeEntity, Node player)
+	{
+		_persistentPlayers[forgeEntity] = player;
+
+		player.TreeExiting += () =>
+		{
+			if (_persistentPlayers.TryGetValue(forgeEntity, out Node? tracked) && tracked == player)
+			{
+				_persistentPlayers.Remove(forgeEntity);
+			}
+		};
 	}
 
 	private double? ResolveVolumeDb(CueParameters? parameters)

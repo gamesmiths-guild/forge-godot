@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://4pos6f6d872y"]
+
+[ext_resource type="Material" uid="uid://dycuean8vaun" path="res://forge_samples/demos/03_statescript/materials/ember.tres" id="1_ember"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="2_entity"]
+[ext_resource type="AudioStream" uid="uid://cwou4ukxnw8ji" path="res://forge_samples/shared/audio/ember-launch.ogg" id="3_launch"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="Gradient" id="Gradient_trail"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.82, 0.4, 1, 1, 0.42, 0.12, 0.7, 0.55, 0.05, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_trail"]
+gradient = SubResource("Gradient_trail")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_trail"]
+lifetime_randomness = 0.3
+emission_shape = 1
+emission_sphere_radius = 0.12
+spread = 180.0
+initial_velocity_min = 0.2
+initial_velocity_max = 0.8
+gravity = Vector3(0, 1.5, 0)
+scale_min = 0.12
+scale_max = 0.22
+color_ramp = SubResource("GradientTexture1D_trail")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trail"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_trail"]
+material = SubResource("StandardMaterial3D_trail")
+
+[node name="SpawnEmber" type="Node3D" unique_id=1730474705]
+
+[node name="Forge Entity" type="Node" parent="." unique_id=1896797448]
+script = ExtResource("2_entity")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Core" type="MeshInstance3D" parent="." unique_id=1300312282]
+mesh = SubResource("SphereMesh_core")
+surface_material_override/0 = ExtResource("1_ember")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=1723210728]
+light_color = Color(1, 0.552941, 0.239216, 1)
+light_energy = 2.0
+
+[node name="LaunchSfx" type="AudioStreamPlayer3D" parent="." unique_id=454635212]
+stream = ExtResource("3_launch")
+autoplay = true
+
+[node name="Trail" type="GPUParticles3D" parent="." unique_id=223275459]
+amount = 48
+lifetime = 0.7
+process_material = SubResource("ParticleProcessMaterial_trail")
+draw_pass_1 = SubResource("SphereMesh_trail")

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c64aspqdedbua"]
 
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/verdant.tres" id="1_verdant"]
-[ext_resource type="Material" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
+[ext_resource type="Material" uid="uid://c83t0peckqgn2" path="res://forge_samples/demos/03_statescript/materials/verdant.tres" id="1_verdant"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
 [ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="3_area"]
 [ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_effect"]
 [ext_resource type="Resource" uid="uid://d13vhgx0ys5s3" path="res://forge_samples/shared/effects/heal.tres" id="5_heal"]

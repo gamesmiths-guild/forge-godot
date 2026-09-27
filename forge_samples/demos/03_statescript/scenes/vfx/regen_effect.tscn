@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://75gb6rjv4sf5"]
+
+[sub_resource type="Gradient" id="Gradient_regen"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(0.35, 1, 0.45, 1, 0.7, 1, 0.6, 0.9, 0.5, 1, 0.5, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_regen"]
+gradient = SubResource("Gradient_regen")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_regen"]
+lifetime_randomness = 0.3
+emission_shape = 6
+emission_ring_axis = Vector3(0, 1, 0)
+emission_ring_height = 0.2
+emission_ring_radius = 0.55
+emission_ring_inner_radius = 0.45
+emission_ring_cone_angle = 90.0
+direction = Vector3(0, 1, 0)
+spread = 10.0
+initial_velocity_min = 1.2
+initial_velocity_max = 1.8
+gravity = Vector3(0, 0.6, 0)
+tangential_accel_min = 2.0
+tangential_accel_max = 2.0
+scale_min = 0.12
+scale_max = 0.2
+color_ramp = SubResource("GradientTexture1D_regen")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_regen"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_regen"]
+material = SubResource("StandardMaterial3D_regen")
+
+[node name="RegenEffect" type="GPUParticles3D" unique_id=1679770945]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8, 0)
+amount = 48
+lifetime = 1.1
+preprocess = 0.5
+local_coords = true
+process_material = SubResource("ParticleProcessMaterial_regen")
+draw_pass_1 = SubResource("SphereMesh_regen")

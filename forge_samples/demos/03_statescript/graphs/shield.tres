@@ -38,7 +38,7 @@ ToNode = "node_8"
 script = ExtResource("4_connection")
 FromNode = "node_4"
 OutputPort = 4
-ToNode = "node_5"
+ToNode = "node_10"
 
 [sub_resource type="Resource" id="Resource_88x0m"]
 script = ExtResource("4_connection")
@@ -72,6 +72,11 @@ ToNode = "node_3"
 script = ExtResource("4_connection")
 FromNode = "node_3"
 ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_hj8co"]
+script = ExtResource("4_connection")
+FromNode = "node_10"
+ToNode = "node_5"
 
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
@@ -117,7 +122,7 @@ PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_protec
 
 [sub_resource type="Resource" id="Resource_shield_cue_tags"]
 script = ExtResource("8_tag")
-Tags = Array[String](["cue.vfx.shield"])
+Tags = Array[String](["cue.vfx.shield", "cue.sfx.shield"])
 
 [sub_resource type="Resource" id="Resource_shield_cue_tags_binding"]
 script = ExtResource("3_binding")
@@ -174,7 +179,7 @@ NodeId = "node_5"
 Title = "Try Commit Ability"
 NodeType = 3
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
-PositionOffset = Vector2(1920, 380)
+PositionOffset = Vector2(2120, 500)
 CustomData = Dictionary[String, Variant]({
 "operation": "CostOnly"
 })
@@ -252,7 +257,18 @@ script = ExtResource("2_node")
 NodeId = "node_9"
 Title = "Exit"
 NodeType = 1
-PositionOffset = Vector2(2520, 960)
+PositionOffset = Vector2(2620, 960)
+
+[sub_resource type="Resource" id="Resource_absorb"]
+script = ExtResource("2_node")
+NodeId = "node_10"
+Title = "Play Audio One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
+PositionOffset = Vector2(1820, 80)
+CustomData = Dictionary[String, Variant]({
+"playerPath": "ShieldHitSfx"
+})
 
 [sub_resource type="Resource" id="Resource_mana_variable"]
 script = ExtResource("5_variable_definition")
@@ -262,7 +278,7 @@ InitialValue = 0
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Shield"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_protection"), SubResource("Resource_shield_cue"), SubResource("Resource_damage_taken"), SubResource("Resource_pay_per_hit"), SubResource("Resource_mana_listener"), SubResource("Resource_out_of_mana"), SubResource("Resource_toggle_key"), SubResource("Resource_exit")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_0noie"), SubResource("Resource_gexgi"), SubResource("Resource_1dttu"), SubResource("Resource_soou3"), SubResource("Resource_tibfq"), SubResource("Resource_88x0m"), SubResource("Resource_06s6r"), SubResource("Resource_lrwhl"), SubResource("Resource_eqhqm"), SubResource("Resource_62yj7"), SubResource("Resource_f5nwf")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_protection"), SubResource("Resource_shield_cue"), SubResource("Resource_damage_taken"), SubResource("Resource_pay_per_hit"), SubResource("Resource_mana_listener"), SubResource("Resource_out_of_mana"), SubResource("Resource_toggle_key"), SubResource("Resource_exit"), SubResource("Resource_absorb")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_0noie"), SubResource("Resource_gexgi"), SubResource("Resource_1dttu"), SubResource("Resource_soou3"), SubResource("Resource_tibfq"), SubResource("Resource_88x0m"), SubResource("Resource_06s6r"), SubResource("Resource_lrwhl"), SubResource("Resource_eqhqm"), SubResource("Resource_62yj7"), SubResource("Resource_f5nwf"), SubResource("Resource_hj8co")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_mana_variable")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

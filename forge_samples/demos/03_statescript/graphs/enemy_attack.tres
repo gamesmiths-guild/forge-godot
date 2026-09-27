@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://bofma2reays8y" path="res://addons/forge/resources/statescript/resolvers/AbilityTargetResolverResource.cs" id="6_target"]
 [ext_resource type="Resource" uid="uid://xd3d6l0hqx8b" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_damage.tres" id="7_enemy_damage"]
 [ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="8_65jcq"]
+[ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="9_position"]
 
 [sub_resource type="Resource" id="Resource_k672h"]
 script = ExtResource("4_connection")
@@ -18,7 +19,22 @@ ToNode = "node_1"
 [sub_resource type="Resource" id="Resource_65jcq"]
 script = ExtResource("4_connection")
 FromNode = "node_1"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_cxma8"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
 ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_face_then_lunge"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+ToNode = "node_5"
+
+[sub_resource type="Resource" id="Resource_lunge_then_swing"]
+script = ExtResource("4_connection")
+FromNode = "node_5"
+ToNode = "node_3"
 
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
@@ -59,12 +75,59 @@ NodeId = "node_2"
 Title = "Apply Effect"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
-PositionOffset = Vector2(580, 200)
+PositionOffset = Vector2(1660, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_damage_effect_binding"), SubResource("Resource_damage_target_binding")])
+
+[sub_resource type="Resource" id="Resource_swing"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Play Audio One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
+PositionOffset = Vector2(1320, 200)
+CustomData = Dictionary[String, Variant]({
+"playerPath": "SwingSfx"
+})
+
+[sub_resource type="Resource" id="Resource_target_entity"]
+script = ExtResource("6_target")
+
+[sub_resource type="Resource" id="Resource_target_position"]
+script = ExtResource("9_position")
+EntityResolver = SubResource("Resource_target_entity")
+
+[sub_resource type="Resource" id="Resource_target_position_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_target_position")
+
+[sub_resource type="Resource" id="Resource_face_target"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Set Rotation Toward 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetRotationToward3DNode"
+PositionOffset = Vector2(640, 200)
+CustomData = Dictionary[String, Variant]({
+"flatten": true
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_target_position_binding")])
+
+[sub_resource type="Resource" id="Resource_lunge"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Play Animation One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAnimationOneShotNode"
+PositionOffset = Vector2(980, 200)
+CustomData = Dictionary[String, Variant]({
+"animation": "attack",
+"playerPath": "FxPlayer"
+})
 
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Enemy Attack"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_hit")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_k672h"), SubResource("Resource_65jcq")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_hit"), SubResource("Resource_swing"), SubResource("Resource_face_target"), SubResource("Resource_lunge")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_k672h"), SubResource("Resource_65jcq"), SubResource("Resource_cxma8"), SubResource("Resource_face_then_lunge"), SubResource("Resource_lunge_then_swing")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

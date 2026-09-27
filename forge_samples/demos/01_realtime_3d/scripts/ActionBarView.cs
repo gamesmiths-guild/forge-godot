@@ -7,7 +7,7 @@ namespace Gamesmiths.Forge.Example;
 public partial class ActionBarView : Control
 {
 	[Export]
-	public required TextureProgressBar CooldownProgressBar { get; set; }
+	public required Range CooldownProgressBar { get; set; }
 
 	[Export]
 	public required Label CooldownLabel { get; set; }
