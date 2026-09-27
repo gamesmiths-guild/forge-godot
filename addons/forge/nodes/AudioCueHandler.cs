@@ -17,8 +17,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// cref="Stream"/> creates a player on the target instead, for the common case where a cue is one sound and adding a
 /// node to every entity that can receive it is the only obstacle.</para>
 /// <para>A created player matches the target's dimension, so a sound on a 3D character is positional without the cue
-/// having to say so. It lives as long as the cue does: a persistent cue's player is freed on removal, and a one-shot
-/// cue's frees itself when the sound ends.</para>
+/// having to say so. One is made per target and kept for the sounds after it: a removal frees it, and otherwise it goes
+/// with the target.</para>
 /// </remarks>
 [GlobalClass]
 public partial class AudioCueHandler : ForgeCueHandler
@@ -141,7 +141,7 @@ public partial class AudioCueHandler : ForgeCueHandler
 
 			if (player is not null)
 			{
-				_persistentPlayers[forgeEntity] = player;
+				Track(forgeEntity, player);
 			}
 		}
 
@@ -200,6 +200,23 @@ public partial class AudioCueHandler : ForgeCueHandler
 
 		parent.AddChild(player);
 		return player;
+	}
+
+	// Released when the player leaves the tree as well as on removal. A target freed with no removal - an enemy killed
+	// by the hit this handler sounds - would otherwise stay a key, keeping its entity, for as long as the handler
+	// lives. Only an entry still pointing at this player goes: one left to finish its tail after a removal can leave
+	// after a newer player has taken its place.
+	private void Track(IForgeEntity forgeEntity, Node player)
+	{
+		_persistentPlayers[forgeEntity] = player;
+
+		player.TreeExiting += () =>
+		{
+			if (_persistentPlayers.TryGetValue(forgeEntity, out Node? tracked) && tracked == player)
+			{
+				_persistentPlayers.Remove(forgeEntity);
+			}
+		};
 	}
 
 	private double? ResolveVolumeDb(CueParameters? parameters)
