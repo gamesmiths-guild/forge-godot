@@ -105,6 +105,11 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 	protected override void OnActivate(GraphContext graphContext)
 	{
 		NavMoveTo3DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo3DNodeContext>(NodeID);
+
+		// Activating a node that is already active - a chase restarted from a timer - runs this again with no
+		// deactivation in between, so the connection the last activation made has to go before another is made.
+		DisconnectVelocityComputed(nodeContext);
+
 		nodeContext.Agent = null;
 		nodeContext.SafeVelocity = Vector3.Zero;
 		nodeContext.ActivationPhysicsFrame = Engine.GetPhysicsFrames();
@@ -145,16 +150,7 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		NavMoveTo3DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo3DNodeContext>(NodeID);
-		NavigationAgent3D? agent = nodeContext.Agent;
-
-		if (nodeContext.VelocityComputed is Callable callable
-			&& agent is not null
-			&& GodotObject.IsInstanceValid(agent))
-		{
-			agent.Disconnect(NavigationAgent3D.SignalName.VelocityComputed, callable);
-		}
-
-		nodeContext.VelocityComputed = null;
+		DisconnectVelocityComputed(nodeContext);
 		nodeContext.Agent = null;
 
 		// Stopping on the way out covers arrival, failure and abort with one rule. A body left holding the last
@@ -235,6 +231,20 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 		{
 			DeactivateNodeAndEmitMessage(graphContext, OnFailedPort);
 		}
+	}
+
+	private static void DisconnectVelocityComputed(NavMoveTo3DNodeContext nodeContext)
+	{
+		NavigationAgent3D? agent = nodeContext.Agent;
+
+		if (nodeContext.VelocityComputed is Callable callable
+			&& agent is not null
+			&& GodotObject.IsInstanceValid(agent))
+		{
+			agent.Disconnect(NavigationAgent3D.SignalName.VelocityComputed, callable);
+		}
+
+		nodeContext.VelocityComputed = null;
 	}
 
 	private bool TryApplyVelocity(Node3D spatialNode, Vector3 velocity)
