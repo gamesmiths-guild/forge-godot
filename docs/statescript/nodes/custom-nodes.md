@@ -181,7 +181,7 @@ public class CooldownNode(bool restartOnRetrigger = false)
 }
 ```
 
-The parameter is what the editor looks for: a node that takes it gets a **Restart On Retrigger** checkbox in its Settings section with no editor code, stored in `CustomData` like any other constructor argument. `OnRestart` runs without a deactivation first, so a node that holds something — an applied effect, a spawned instance, a signal connection — releases it there before acquiring it again. The rest of the rule is in the [core Retriggers docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#retriggers).
+The parameter is what the editor looks for: a node that takes it gets a **Restart On Retrigger** checkbox in its Settings section with no editor code, stored in `CustomData` like any other constructor argument. `OnRestart` runs without a deactivation first, so a node that holds something — an applied effect, a spawned instance, a signal connection — releases it there before acquiring it again. Releasing can reach the rest of the graph — a signal it emits, a subgraph it ends — and so end the node or stop the graph along the way, so check `IsNodeActive` before acquiring again. The rest of the rule is in the [core Retriggers docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#retriggers).
 
 ### Adding Custom Output Ports
 

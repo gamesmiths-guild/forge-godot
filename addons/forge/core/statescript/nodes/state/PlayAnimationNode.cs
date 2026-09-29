@@ -133,6 +133,12 @@ public class PlayAnimationNode(
 		if (player is not null && IsStillPlaying(player))
 		{
 			player.Stop();
+
+			// Stopping emits current_animation_changed, and whatever listens for it can end this node or the graph.
+			if (!IsNodeActive(graphContext))
+			{
+				return;
+			}
 		}
 
 		OnActivate(graphContext);

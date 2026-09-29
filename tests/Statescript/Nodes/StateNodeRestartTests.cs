@@ -74,6 +74,46 @@ public class StateNodeRestartTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void An_animation_restart_that_stops_the_graph_on_the_way_ends_with_it()
+	{
+		var entity = new TestEntity3D();
+		AnimationPlayer player = AddSwingPlayer(entity);
+		Root.AddChild(entity);
+
+		try
+		{
+			ForgeGraph graph = GraphWithEntity(entity);
+			var play = new PlayAnimationNode(animation: "swing", restartOnRetrigger: true);
+			play.BindInput(PlayAnimationNode.EntityInput, "entity");
+			AddWithRetrigger(graph, play);
+
+			// Stopping the animation for the restart emits current_animation_changed, and a listener on it stops the
+			// graph from under the restart. Started after Play Animation, so its first play goes unheard.
+			graph.VariableDefinitions.DefineObjectVariable<Node>("player", player);
+			var listener = new SignalListenerNode("current_animation_changed");
+			listener.BindInput(SignalListenerNode.NodeInput, "player");
+			var exit = new ExitNode();
+			graph.AddNode(listener);
+			graph.AddNode(exit);
+			Connect(graph, graph.EntryNode.OutputPorts[EntryNode.OutputPort], listener);
+			Connect(graph, listener.OutputPorts[SignalListenerNode.OnSignalPort], exit);
+
+			var processor = new GraphProcessor(graph);
+			processor.StartGraph();
+
+			processor.Invoking(x => x.UpdateGraph(RetriggerAt)).Should().NotThrow();
+
+			processor.GraphContext.IsActive.Should().BeFalse("the graph stopped");
+			player.IsPlaying().Should().BeFalse("the restart ends with the graph instead of playing again");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void A_retriggered_scene_keeps_its_instance_by_default()
 	{
 		SpawnAndRetrigger(restartOnRetrigger: false, (instances, output, subgraphElapsed) =>
@@ -170,15 +210,7 @@ public class StateNodeRestartTests
 	private static double PlayAndRetrigger(bool restartOnRetrigger)
 	{
 		var entity = new TestEntity3D();
-		var player = new AnimationPlayer
-		{
-			CallbackModeProcess = AnimationMixer.AnimationCallbackModeProcess.Manual,
-		};
-
-		var library = new AnimationLibrary();
-		library.AddAnimation("swing", new Animation { Length = 1.0f });
-		player.AddAnimationLibrary(string.Empty, library);
-		entity.AddChild(player);
+		AnimationPlayer player = AddSwingPlayer(entity);
 		Root.AddChild(entity);
 
 		try
@@ -237,6 +269,21 @@ public class StateNodeRestartTests
 		{
 			parent.Free();
 		}
+	}
+
+	private static AnimationPlayer AddSwingPlayer(TestEntity3D entity)
+	{
+		var player = new AnimationPlayer
+		{
+			CallbackModeProcess = AnimationMixer.AnimationCallbackModeProcess.Manual,
+		};
+
+		var library = new AnimationLibrary();
+		library.AddAnimation("swing", new Animation { Length = 1.0f });
+		player.AddAnimationLibrary(string.Empty, library);
+		entity.AddChild(player);
+
+		return player;
 	}
 
 	private static Scene3DNode AddSpawn(ForgeGraph graph, Node parent, bool restartOnRetrigger)
