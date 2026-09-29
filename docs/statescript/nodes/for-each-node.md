@@ -18,6 +18,8 @@ Use the core Forge docs for runtime behavior and lifecycle details. This page co
 
 Because the node is a state node, place it as a subgraph of another state (or straight off Entry) and route `OnIteration` into the per-element work. For what follows the loop, pick the port that matches the ending you care about: **OnFinished** (the array ran out), **OnConditionFailed** (the guard cut it short), or **OnAbort** (aborted from outside). Exactly one fires; wire **OnDeactivate** instead if any ending will do.
 
+**Restart On Retrigger** (Settings, default off) starts the walk over from the first element, with the array read again, when a message reaches the node mid-walk; off, the message is ignored. It matters for a walk spaced by an Interval, which stays active between iterations. See [Restart On Retrigger](README.md#restart-on-retrigger).
+
 ## Type mismatches are silent, by design
 
 Binding an element variable whose type does not match the source array is not an error: the source simply resolves nothing and the loop runs zero iterations, emitting only `OnFinished`. If a `ForEachNode` fires nothing at runtime, check that the element variable's type matches the array's element type before looking anywhere else.

@@ -20,14 +20,19 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// - belongs here, and gets cleaned up without the graph having to remember to free it on every exit path.</para>
 /// <para>An optional lifetime deactivates the node early through <see cref="OnLifetimeEndPort"/>, which is how a timed
 /// summon expires on its own while still being freed if the ability ends first.</para>
+/// <para>A retrigger while the instance is alive is ignored, or with <paramref name="restartOnRetrigger"/> the instance
+/// is freed and the scene instantiated again, with a fresh lifetime. The subgraph is disabled first and comes back
+/// for the new instance, since whatever ran in it was working on the one that was freed.</para>
 /// <para>As with the action pair, only the transform differs between the two dimensions, and declaring it in the middle
 /// of the parameter list keeps the operand indexes identical across the pair.</para>
 /// </remarks>
 /// <param name="parentMode">Where the instance is parented.</param>
 /// <param name="passOwnership">Whether to tell the instance who instantiated it.</param>
+/// <param name="restartOnRetrigger">Whether a retrigger replaces the instance instead of being ignored.</param>
 public abstract class SceneNodeBase(
 	InstantiateParentMode parentMode = InstantiateParentMode.CurrentScene,
-	bool passOwnership = true) : StateNode<SceneNodeContext>
+	bool passOwnership = true,
+	bool restartOnRetrigger = false) : StateNode<SceneNodeContext>(restartOnRetrigger)
 {
 	/// <summary>
 	/// Input property index for the scene to instantiate.
@@ -177,6 +182,14 @@ public abstract class SceneNodeBase(
 		{
 			instance.QueueFree();
 		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		((SubgraphPort)OutputPorts[SubgraphPort]).EmitDisableSubgraphMessage(graphContext);
+		OnDeactivate(graphContext);
+		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>

@@ -14,11 +14,13 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// </summary>
 /// <param name="parentMode">Where the instance is parented.</param>
 /// <param name="passOwnership">Whether to tell the instance who instantiated it.</param>
+/// <param name="restartOnRetrigger">Whether a retrigger replaces the instance instead of being ignored.</param>
 [StatescriptCategory("Scene")]
 [StatescriptAngleInputs(RotationInput)]
 public class Scene2DNode(
 	InstantiateParentMode parentMode = InstantiateParentMode.CurrentScene,
-	bool passOwnership = true) : SceneNodeBase(parentMode, passOwnership)
+	bool passOwnership = true,
+	bool restartOnRetrigger = false) : SceneNodeBase(parentMode, passOwnership, restartOnRetrigger)
 {
 	/// <inheritdoc/>
 	public override string Description =>

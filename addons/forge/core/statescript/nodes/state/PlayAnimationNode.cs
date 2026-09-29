@@ -26,15 +26,21 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>Deactivating stops playback under <paramref name="stopOnDeactivate"/>, which reaches an abort, a subgraph
 /// ending and the graph stopping alike - an interrupted cast should not leave the caster mid-gesture. A natural finish
 /// stops nothing, because by then the animation is over.</para>
+/// <para>A retrigger while the animation plays is ignored, or with <paramref name="restartOnRetrigger"/> the animation
+/// plays again from its start, with the speed and blend resolved again at that moment.</para>
 /// </remarks>
 /// <param name="playerPath">Optional path to the animation player, from the node the entity lives on. Empty means the
 /// entity's first animation player child.</param>
 /// <param name="animation">The name of the animation to play.</param>
 /// <param name="stopOnDeactivate">Whether playback is stopped when the node deactivates before the animation ends.
 /// </param>
+/// <param name="restartOnRetrigger">Whether a retrigger replays the animation instead of being ignored.</param>
 [StatescriptCategory("Presentation")]
-public class PlayAnimationNode(string playerPath = "", string animation = "", bool stopOnDeactivate = true)
-	: StateNode<PlayAnimationNodeContext>
+public class PlayAnimationNode(
+	string playerPath = "",
+	string animation = "",
+	bool stopOnDeactivate = true,
+	bool restartOnRetrigger = false) : StateNode<PlayAnimationNodeContext>(restartOnRetrigger)
 {
 	/// <summary>
 	/// Input property index for the entity to animate. Unbound means the ability's owner.
@@ -115,6 +121,21 @@ public class PlayAnimationNode(string playerPath = "", string animation = "", bo
 		{
 			player.Stop();
 		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		// Godot's Play leaves an animation that is already playing where it is, so it is stopped to play from the
+		// start.
+		AnimationPlayer? player = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Player;
+
+		if (player is not null && IsStillPlaying(player))
+		{
+			player.Stop();
+		}
+
+		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>

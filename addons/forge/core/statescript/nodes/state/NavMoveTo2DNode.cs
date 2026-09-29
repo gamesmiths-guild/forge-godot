@@ -105,11 +105,6 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 	protected override void OnActivate(GraphContext graphContext)
 	{
 		NavMoveTo2DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo2DNodeContext>(NodeID);
-
-		// Activating a node that is already active - a chase restarted from a timer - runs this again with no
-		// deactivation in between, so the connection the last activation made has to go before another is made.
-		DisconnectVelocityComputed(nodeContext);
-
 		nodeContext.Agent = null;
 		nodeContext.SafeVelocity = Vector2.Zero;
 		nodeContext.ActivationPhysicsFrame = Engine.GetPhysicsFrames();
@@ -150,7 +145,16 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		NavMoveTo2DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo2DNodeContext>(NodeID);
-		DisconnectVelocityComputed(nodeContext);
+		NavigationAgent2D? agent = nodeContext.Agent;
+
+		if (nodeContext.VelocityComputed is Callable callable
+			&& agent is not null
+			&& GodotObject.IsInstanceValid(agent))
+		{
+			agent.Disconnect(NavigationAgent2D.SignalName.VelocityComputed, callable);
+		}
+
+		nodeContext.VelocityComputed = null;
 		nodeContext.Agent = null;
 
 		// Stopping on the way out covers arrival, failure and abort with one rule. A body left holding the last
@@ -231,20 +235,6 @@ public class NavMoveTo2DNode(string agentPath = "", bool useSafeVelocity = false
 		{
 			DeactivateNodeAndEmitMessage(graphContext, OnFailedPort);
 		}
-	}
-
-	private static void DisconnectVelocityComputed(NavMoveTo2DNodeContext nodeContext)
-	{
-		NavigationAgent2D? agent = nodeContext.Agent;
-
-		if (nodeContext.VelocityComputed is Callable callable
-			&& agent is not null
-			&& GodotObject.IsInstanceValid(agent))
-		{
-			agent.Disconnect(NavigationAgent2D.SignalName.VelocityComputed, callable);
-		}
-
-		nodeContext.VelocityComputed = null;
 	}
 
 	private bool TryApplyVelocity(Node2D spatialNode, Vector2 velocity)

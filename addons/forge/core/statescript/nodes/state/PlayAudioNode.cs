@@ -20,12 +20,17 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>A sound that never started - no player, or a player with no stream - reports finished on its first update
 /// rather than waiting forever, since it is not a sound the graph can be waiting on. The missing player is warned
 /// about; a misconfigured presentation node should not be able to stall an ability on top of that.</para>
+/// <para>A retrigger while the sound plays is ignored, or with <paramref name="restartOnRetrigger"/> the sound starts
+/// over from the beginning, with the volume and pitch resolved again at that moment. It replaces the sound rather than
+/// layering a second one on a player that allows polyphony.</para>
 /// </remarks>
 /// <param name="playerPath">Optional path to the audio player, from the node the entity lives on. Empty means the
 /// entity's first audio player child.</param>
 /// <param name="stopOnDeactivate">Whether the sound is stopped when the node deactivates before it ends.</param>
+/// <param name="restartOnRetrigger">Whether a retrigger replays the sound instead of being ignored.</param>
 [StatescriptCategory("Presentation")]
-public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true) : StateNode<PlayAudioNodeContext>
+public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true, bool restartOnRetrigger = false)
+	: StateNode<PlayAudioNodeContext>(restartOnRetrigger)
 {
 	/// <summary>
 	/// Input property index for the entity that owns the player. Unbound means the ability's owner.
@@ -99,6 +104,19 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true)
 		{
 			AudioPlayers.Stop(player);
 		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		Node? player = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID).Player;
+
+		if (player is not null && GodotObject.IsInstanceValid(player))
+		{
+			AudioPlayers.Stop(player);
+		}
+
+		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>

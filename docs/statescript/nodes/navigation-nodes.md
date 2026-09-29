@@ -34,6 +34,8 @@ These nodes are **Godot-only** — there is no core Forge counterpart, so this p
 
 **Deactivating zeroes the body's velocity**, which covers arrival, failure and abort with one rule rather than three.
 
+**A message that reaches a walk under way is ignored**, and there is no setting to restart it: the walk already follows its target, so starting over would add nothing. A `Loop Timer` that keeps sending the input is still how a chase stays alive, because a walk ends when it arrives or fails and the next message starts a fresh one.
+
 ## An unsynced map reports everything as unreachable
 
 The delicate part is not the avoidance callback. `NavigationServer.MapGetPath` hands back an empty path from a navigation map that has not synced yet, and an empty path makes `IsTargetReachable` report *every* destination as unreachable — so a walk ordered on the frame its level loaded would fail instantly, for no reason a player could see.
