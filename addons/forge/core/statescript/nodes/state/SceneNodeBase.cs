@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Gamesmiths.Forge.Statescript.Ports;
@@ -156,6 +155,15 @@ public abstract class SceneNodeBase(
 
 		if (instance is null)
 		{
+			return;
+		}
+
+		// The instance readies and is handed its owner as it is added, and its own code can end this node or the
+		// graph - an effect it applies can cancel the ability the graph runs for. The deactivation that would free it
+		// has then already run, before the node held it.
+		if (!nodeContext.Active)
+		{
+			instance.QueueFree();
 			return;
 		}
 
