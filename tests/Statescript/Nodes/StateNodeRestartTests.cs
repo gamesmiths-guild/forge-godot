@@ -101,6 +101,40 @@ public class StateNodeRestartTests
 		});
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_scene_restart_whose_subgraph_stops_the_graph_ends_with_it()
+	{
+		var parent = new Node3D();
+		Root.AddChild(parent);
+
+		try
+		{
+			var graph = new ForgeGraph();
+			Scene3DNode spawn = AddSpawn(graph, parent, restartOnRetrigger: true);
+
+			// The restart disables the subgraph, which ends this timer, and its ending stops the graph from under the
+			// restart.
+			TimerNode subgraph = AddSubgraphTimer(graph, spawn);
+			var exit = new ExitNode();
+			graph.AddNode(exit);
+			Connect(graph, subgraph.OutputPorts[TimerNode.OnDeactivatePort], exit);
+
+			var processor = new GraphProcessor(graph);
+			processor.StartGraph();
+
+			processor.Invoking(x => x.UpdateGraph(RetriggerAt)).Should().NotThrow();
+
+			processor.GraphContext.IsActive.Should().BeFalse("the graph stopped");
+			parent.GetChildren().Should().ContainSingle("the restart ends with the graph instead of spawning again")
+				.Which.IsQueuedForDeletion().Should().BeTrue("stopping the graph freed the instance");
+		}
+		finally
+		{
+			parent.Free();
+		}
+	}
+
 	private static float MoveAndRetrigger(bool restartOnRetrigger)
 	{
 		var entity = new TestEntity3D();
@@ -175,34 +209,14 @@ public class StateNodeRestartTests
 		var parent = new Node3D();
 		Root.AddChild(parent);
 
-		var template = new Node3D();
-		var scene = new PackedScene();
-		scene.Pack(template);
-		template.Free();
-
 		try
 		{
 			var graph = new ForgeGraph();
-			graph.VariableDefinitions.DefineObjectVariable("scene", scene);
-			graph.VariableDefinitions.DefineObjectVariable<Node>("parent", parent);
-			graph.VariableDefinitions.DefineObjectVariable<Node>("instance");
-			graph.VariableDefinitions.DefineVariable("subgraphDuration", 10.0);
-
-			var spawn = new Scene3DNode(
-				InstantiateParentMode.Node,
-				passOwnership: false,
-				restartOnRetrigger: restartOnRetrigger);
-			spawn.BindInput(SceneNodeBase.SceneInput, "scene");
-			spawn.BindInput(SceneNodeBase.ParentNodeInput, "parent");
-			spawn.BindOutput(SceneNodeBase.InstanceOutput, "instance");
-			AddWithRetrigger(graph, spawn);
+			Scene3DNode spawn = AddSpawn(graph, parent, restartOnRetrigger);
 
 			// A timer stands in for whatever the subgraph does with the instance, and its elapsed time tells a subgraph
 			// that carried on from one that started over.
-			var subgraph = new TimerNode();
-			subgraph.BindInput(TimerNode.DurationInput, "subgraphDuration");
-			graph.AddNode(subgraph);
-			Connect(graph, spawn.OutputPorts[SceneNodeBase.SubgraphPort], subgraph);
+			TimerNode subgraph = AddSubgraphTimer(graph, spawn);
 
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
@@ -223,6 +237,41 @@ public class StateNodeRestartTests
 		{
 			parent.Free();
 		}
+	}
+
+	private static Scene3DNode AddSpawn(ForgeGraph graph, Node parent, bool restartOnRetrigger)
+	{
+		var template = new Node3D();
+		var scene = new PackedScene();
+		scene.Pack(template);
+		template.Free();
+
+		graph.VariableDefinitions.DefineObjectVariable("scene", scene);
+		graph.VariableDefinitions.DefineObjectVariable<Node>("parent", parent);
+		graph.VariableDefinitions.DefineObjectVariable<Node>("instance");
+
+		var spawn = new Scene3DNode(
+			InstantiateParentMode.Node,
+			passOwnership: false,
+			restartOnRetrigger: restartOnRetrigger);
+		spawn.BindInput(SceneNodeBase.SceneInput, "scene");
+		spawn.BindInput(SceneNodeBase.ParentNodeInput, "parent");
+		spawn.BindOutput(SceneNodeBase.InstanceOutput, "instance");
+		AddWithRetrigger(graph, spawn);
+
+		return spawn;
+	}
+
+	private static TimerNode AddSubgraphTimer(ForgeGraph graph, Scene3DNode spawn)
+	{
+		graph.VariableDefinitions.DefineVariable("subgraphDuration", 10.0);
+
+		var timer = new TimerNode();
+		timer.BindInput(TimerNode.DurationInput, "subgraphDuration");
+		graph.AddNode(timer);
+		Connect(graph, spawn.OutputPorts[SceneNodeBase.SubgraphPort], timer);
+
+		return timer;
 	}
 
 	private static ForgeGraph GraphWithEntity(TestEntity3D entity)
