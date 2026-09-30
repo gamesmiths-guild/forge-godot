@@ -128,14 +128,15 @@ public class PlayAnimationNode(
 	{
 		// Godot's Play leaves an animation that is already playing where it is, so it is stopped to play from the
 		// start.
-		AnimationPlayer? player = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Player;
+		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
+		AnimationPlayer? player = nodeContext.Player;
 
 		if (player is not null && IsStillPlaying(player))
 		{
 			player.Stop();
 
 			// Stopping emits current_animation_changed, and whatever listens for it can end this node or the graph.
-			if (!IsNodeActive(graphContext))
+			if (!nodeContext.Active)
 			{
 				return;
 			}

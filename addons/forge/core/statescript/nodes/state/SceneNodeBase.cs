@@ -187,11 +187,12 @@ public abstract class SceneNodeBase(
 	/// <inheritdoc/>
 	protected override void OnRestart(GraphContext graphContext)
 	{
+		SceneNodeContext nodeContext = graphContext.GetNodeContext<SceneNodeContext>(NodeID);
 		((SubgraphPort)OutputPorts[SubgraphPort]).EmitDisableSubgraphMessage(graphContext);
 
 		// Ending the subgraph can end this node too - an abort or an Exit reached from a child's OnDeactivate - and
 		// then its instance is already freed, with nothing left to restart.
-		if (!IsNodeActive(graphContext))
+		if (!nodeContext.Active)
 		{
 			return;
 		}

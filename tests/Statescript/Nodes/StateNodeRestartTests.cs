@@ -175,6 +175,49 @@ public class StateNodeRestartTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_scene_restart_whose_subgraph_starts_the_graph_over_leaves_the_new_run_its_instance()
+	{
+		var parent = new Node3D();
+		Root.AddChild(parent);
+
+		try
+		{
+			var graph = new ForgeGraph();
+			Scene3DNode spawn = AddSpawn(graph, parent, restartOnRetrigger: true);
+
+			// The restart disables the subgraph, which ends this timer, and its ending stops the graph; the graph
+			// starts over before the restart returns.
+			TimerNode subgraph = AddSubgraphTimer(graph, spawn);
+			var exit = new ExitNode();
+			graph.AddNode(exit);
+			Connect(graph, subgraph.OutputPorts[TimerNode.OnDeactivatePort], exit);
+
+			var processor = new GraphProcessor(graph);
+			int completions = 0;
+			processor.OnGraphCompleted = () =>
+			{
+				if (++completions == 1)
+				{
+					processor.StartGraph();
+				}
+			};
+
+			processor.StartGraph();
+			processor.UpdateGraph(RetriggerAt);
+
+			Node[] instances = [.. parent.GetChildren()];
+			instances.Should().HaveCount(2, "the new run spawned its own, and the restart it replaced did not");
+			instances[0].IsQueuedForDeletion().Should().BeTrue("stopping the graph freed the first instance");
+			instances[1].IsQueuedForDeletion().Should().BeFalse("the new run keeps its instance");
+		}
+		finally
+		{
+			parent.Free();
+		}
+	}
+
 	private static float MoveAndRetrigger(bool restartOnRetrigger)
 	{
 		var entity = new TestEntity3D();
@@ -294,7 +337,7 @@ public class StateNodeRestartTests
 		template.Free();
 
 		graph.VariableDefinitions.DefineObjectVariable("scene", scene);
-		graph.VariableDefinitions.DefineObjectVariable<Node>("parent", parent);
+		graph.VariableDefinitions.DefineObjectVariable("parent", parent);
 		graph.VariableDefinitions.DefineObjectVariable<Node>("instance");
 
 		var spawn = new Scene3DNode(
