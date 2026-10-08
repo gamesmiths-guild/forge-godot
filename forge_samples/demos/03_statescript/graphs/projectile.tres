@@ -109,6 +109,9 @@ NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
 PositionOffset = Vector2(980, 200)
 CustomData = Dictionary[String, Variant]({
+"_fold_input_property_0": true,
+"_fold_input_property_1": true,
+"_fold_input_property_2": true,
 "playerPath": "ShotSfx"
 })
 
