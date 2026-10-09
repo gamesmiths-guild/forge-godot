@@ -149,6 +149,12 @@ public class Ray2DNode(
 		{
 			var previousSubgraphPort = (SubgraphPort)OutputPorts[hit ? WhileClearPort : WhileHitPort];
 			previousSubgraphPort.EmitDisableSubgraphMessage(graphContext);
+
+			// Disabling the old subgraph can end this node or the graph, and then there is nothing to switch to.
+			if (!nodeContext.Active)
+			{
+				return;
+			}
 		}
 
 		if (hit)

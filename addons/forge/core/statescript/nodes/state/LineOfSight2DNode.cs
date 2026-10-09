@@ -243,6 +243,12 @@ public class LineOfSight2DNode(bool deactivateOnBlocked = false)
 		{
 			var previousSubgraphPort = (SubgraphPort)OutputPorts[clear ? WhileBlockedPort : WhileClearPort];
 			previousSubgraphPort.EmitDisableSubgraphMessage(graphContext);
+
+			// Disabling the old subgraph can end this node or the graph, and then there is nothing to switch to.
+			if (!nodeContext.Active)
+			{
+				return;
+			}
 		}
 
 		if (clear)

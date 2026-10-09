@@ -28,6 +28,12 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 /// </remarks>
 internal static class StatescriptNodeDiscovery
 {
+	/// <summary>
+	/// The constructor parameter a state node takes when it can restart on a retrigger instead of ignoring it, and so
+	/// the <c>CustomData</c> key its setting is stored under.
+	/// </summary>
+	internal const string RestartOnRetriggerKey = "restartOnRetrigger";
+
 	private static readonly Dictionary<string, NodeTypeInfo> _configuredLayoutCache = [];
 
 	private static List<NodeTypeInfo>? _cachedNodeTypes;
@@ -517,6 +523,12 @@ internal static class StatescriptNodeDiscovery
 		/// when the node is listed directly under its archetype.
 		/// </summary>
 		public string Category { get; }
+
+		/// <summary>
+		/// Gets a value indicating whether the node can restart on a retrigger instead of ignoring it, which the editor
+		/// offers as a setting.
+		/// </summary>
+		public bool CanRestartOnRetrigger => ConstructorParameterNames.Contains(RestartOnRetriggerKey);
 
 		public NodeTypeInfo(
 			string displayName,

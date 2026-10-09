@@ -230,7 +230,7 @@ NodeId = "node_4"
 Title = "Loop Timer"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
-PositionOffset = Vector2(720, -140)
+PositionOffset = Vector2(720, -180)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_attack_interval_binding"), SubResource("Resource_jbfxn")])
 
 [sub_resource type="Resource" id="Resource_attack_handle"]
@@ -265,7 +265,7 @@ NodeId = "node_5"
 Title = "Try Activate Ability"
 NodeType = 3
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryActivateAbilityNode"
-PositionOffset = Vector2(1080, -140)
+PositionOffset = Vector2(1080, -180)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_attack_handle_binding"), SubResource("Resource_attack_target_binding"), SubResource("Resource_p2372")])
 
 [sub_resource type="Resource" id="Resource_health_entity"]

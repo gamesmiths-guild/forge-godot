@@ -238,6 +238,12 @@ public class Overlap2DNode(
 			var previousSubgraphPort =
 				(SubgraphPort)OutputPorts[occupied ? WhileEmptyPort : WhileOverlappingPort];
 			previousSubgraphPort.EmitDisableSubgraphMessage(graphContext);
+
+			// Disabling the old subgraph can end this node or the graph, and then there is nothing to switch to.
+			if (!nodeContext.Active)
+			{
+				return;
+			}
 		}
 
 		EmitMessage(graphContext, occupied ? WhileOverlappingPort : WhileEmptyPort);

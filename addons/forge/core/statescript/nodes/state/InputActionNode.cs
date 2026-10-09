@@ -117,7 +117,13 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 		{
 			var whilePressedPort = (SubgraphPort)OutputPorts[WhilePressedPort];
 			whilePressedPort.EmitDisableSubgraphMessage(graphContext);
-			EmitMessage(graphContext, OnReleasedPort);
+
+			// Disabling the subgraph can end this node or the graph, and then there is no release left to report.
+			if (nodeContext.Active)
+			{
+				EmitMessage(graphContext, OnReleasedPort);
+			}
+
 			return;
 		}
 

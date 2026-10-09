@@ -36,6 +36,8 @@ The flip side: an instant writer run every tick — inside a `Loop Timer`, say �
 
 All four run on the **fixed step**, not the frame — see [the two update rails](../README.md#in-godot).
 
+Move To, Move Body and Rotate To take a **Restart On Retrigger** setting. Off, a message that reaches the node mid-move is ignored and the move keeps its course. On, the move starts over from wherever the entity is now, with its destination and duration read again, which is what re-aiming a dash in flight takes. Look At has nothing to restart, since it reads its target every step. See [Restart On Retrigger](README.md#restart-on-retrigger).
+
 ### Move To
 
 Interpolates the transform from where the entity is to a destination. **It does not solve collisions**: this is the leap, hook-and-pull and forced-reposition primitive, and it will move a body through a wall. Guard it with the [`Can Fit`](../resolvers/spatial-getters.md#the-physics-readers) resolver, or use [Move Body](#move-body) when the world has to stop it.
@@ -45,6 +47,7 @@ Interpolates the transform from where the entity is to a destination. **It does 
 | **Mode** | `Duration`, `Speed` | How the Value row is read. |
 | **Easing** | `Linear`, `EaseIn`, `EaseOut`, `EaseInOut` | Applied to progress. |
 | **Node** | text | As above. |
+| **Restart On Retrigger** | checkbox, default off | As above. |
 
 | Index | Label | Type | Notes |
 |---|---|---|---|
@@ -66,6 +69,7 @@ The solving counterpart. Sweeps the body toward the destination with `MoveAndCol
 | **Mode** | `Duration`, `Speed` | As Move To. |
 | **When Blocked** | `Stop`, `Slide` | Whether a refused step ends the move or slides along the surface. |
 | **Node** | text | As above. |
+| **Restart On Retrigger** | checkbox, default off | As above. |
 
 | Index | Label | Type | Notes |
 |---|---|---|---|
@@ -92,6 +96,7 @@ Turns to a rotation captured at activation, over a duration or at a rate.
 |---|---|
 | **Mode** | `Duration`, `Speed` — the same `MoveToMode` Move To uses |
 | **Node** | text |
+| **Restart On Retrigger** | checkbox, default off |
 
 Inputs are Entity (0, optional), **Rotation** (1, `Quaternion`, required) and **Value** (2, `double`, required). Port 4 is **OnAligned**. A zero quaternion — what an unfilled operand resolves to — is rejected rather than turned to.
 

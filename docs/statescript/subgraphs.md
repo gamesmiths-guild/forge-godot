@@ -141,6 +141,7 @@ This pattern is possible because **ownership lives at the port level**. Each Sub
 - **OnDeactivate always fires** regardless of deactivation reason (natural completion, abort, or disable-subgraph cascade). Use it for cleanup logic that must always run.
 - **OnAbort only fires** when the Abort input port receives an explicit message. It does **not** fire during disable-subgraph cascades.
 - **State nodes track activation status**: disable signals safely skip already-inactive nodes, preventing double-cleanup.
+- **A restart retriggers a subgraph rather than rebuilding it**: when a node set to [Restart On Retrigger](nodes/README.md#restart-on-retrigger) starts over, its Subgraph port emits again with no disable signal first, so each node in the subgraph follows its own setting. A Scene node is the exception, because its subgraph works on the instance it replaces: it disables the subgraph first, so the subgraph starts over too.
 - **Deferred deactivation**: If a state node's activation logic triggers immediate deactivation (e.g., a timer with duration 0), the deactivation is deferred until activation completes. This ensures OnActivate and Subgraph ports fire before any deactivation messages.
 - **Graph completion**: When the last active state node deactivates, the graph completes automatically and fires `GraphProcessor.OnGraphCompleted`.
 

@@ -19,7 +19,7 @@ The **Player** setting is a path to the player, from the node the entity lives o
 | Node | Arch | Settings | Ports |
 |---|---|---|---|
 | `PlayAnimationOneShotNode` | Action | Player; Animation | — |
-| `PlayAnimationNode` | State | Player; Animation; **Stop On Deactivate** (default on) | 4 `OnFinished` |
+| `PlayAnimationNode` | State | Player; Animation; **Stop On Deactivate** (default on); **Restart On Retrigger** (default off) | 4 `OnFinished` |
 
 | Index | Label | Type | Notes |
 |---|---|---|---|
@@ -31,6 +31,8 @@ The **Player** setting is a path to the player, from the node the entity lives o
 
 **Stop On Deactivate** stops the player if the node is still driving it when it deactivates, which covers an abort, a subgraph ending and the graph stopping — what an interrupted cast needs. A natural finish cannot trigger it, because by then the animation is over.
 
+**Restart On Retrigger** plays the animation again from its start when a message reaches the node mid-animation, with Speed and Blend read again; off, the message is ignored. Godot's `Play` leaves an animation that is already playing where it is, so the node stops it first — which also means a restart snaps to the first frame rather than blending into it.
+
 Melee swing timing, cast bars, windups.
 
 ## Audio
@@ -38,7 +40,7 @@ Melee swing timing, cast bars, windups.
 | Node | Arch | Settings | Ports |
 |---|---|---|---|
 | `PlayAudioOneShotNode` | Action | Player | — |
-| `PlayAudioNode` | State | Player; **Stop On Deactivate** (default on) | 4 `OnFinished` |
+| `PlayAudioNode` | State | Player; **Stop On Deactivate** (default on); **Restart On Retrigger** (default off) | 4 `OnFinished` |
 
 | Index | Label | Type | Notes |
 |---|---|---|---|
@@ -47,6 +49,8 @@ Melee swing timing, cast bars, windups.
 | 2 | Pitch | `double` | Optional. |
 
 Audio has the same shape one step simpler: `IsPlaying` going false is the end. Channel hums, beam loops.
+
+**Restart On Retrigger** plays the sound again from the beginning, with Volume Db and Pitch read again. The node stops the sound first, so a player that allows polyphony has it replaced rather than a second voice layered over it.
 
 The three Godot audio players derive from their dimension's spatial node and share no base, so an `AudioPlayers` switch written once resolves "the entity's player" for both these nodes and the [`AudioCueHandler`](../../nodes.md#audiocuehandler).
 

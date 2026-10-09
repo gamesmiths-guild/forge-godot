@@ -296,6 +296,7 @@ libraries/ = SubResource("AnimationLibrary_hn5xc")
 
 [node name="ShotSfx" type="AudioStreamPlayer3D" parent="." unique_id=1611099861]
 stream = ExtResource("15_shot")
+volume_db = -4.0
 
 [node name="DashSfx" type="AudioStreamPlayer3D" parent="." unique_id=1553954389]
 stream = ExtResource("16_woosh")

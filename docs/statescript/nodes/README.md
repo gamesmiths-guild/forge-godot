@@ -173,6 +173,21 @@ Both of those nodes select their ports with an integer, so both can follow a [St
 
 Lowering a count removes the ports past the new end, and the connections attached to them are removed with it — as one undoable action, so a single undo brings both back.
 
+## Restart On Retrigger
+
+A message that reaches a state node while it is already active is a **retrigger**, and by default the node ignores it and carries on with the activation it has. A node that knows how to start over shows a **Restart On Retrigger** checkbox in its **Settings** section; ticked, a retrigger restarts it in place instead. The full rule — what a restart calls, what its ports emit, and what happens to its subgraph — is in the [core Retriggers docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#retriggers).
+
+| Node | What a restart does |
+|------|---------------------|
+| `TimerNode`, `LoopTimerNode` | Starts the time over. |
+| `RepeatNode`, `ForEachNode` | Starts the iterations over. For Each reads its array again. |
+| `EffectNode`, `CueNode` | Removes what it applied and applies it again with the inputs read again. |
+| `MoveTo3DNode` / `2D`, `MoveBody3DNode` / `2D`, `RotateTo3DNode` / `2D` | Starts the move or turn over from where the entity is now, toward a destination and duration read again. |
+| `PlayAnimationNode`, `PlayAudioNode` | Plays again from the start. |
+| `Scene3DNode` / `2D` | Frees the instance and spawns a new one, and starts the subgraph over for it. |
+
+The other state nodes have nothing a restart would mean — they read their inputs again every step anyway, or hold something that starting over would only drop and take back — so they always ignore a retrigger. The checkbox appears on any node whose constructor takes `restartOnRetrigger`, your own included; see [Supporting restarts](custom-nodes.md#supporting-restarts).
+
 ## Adding New Node Pages
 
 Add new node pages to this folder as they are implemented, and keep the tables above linking both the canonical core docs and any Godot-specific authoring notes. A node with a core counterpart gets a page only when Godot authoring adds something; a Godot-only node always gets one, because there is nowhere else its ports and settings are written down.

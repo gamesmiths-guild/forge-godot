@@ -53,9 +53,17 @@ size = Vector3(30, 1.5, 5)
 [sub_resource type="BoxShape3D" id="BoxShape3D_void"]
 size = Vector3(200, 62.24588, 200)
 
+[sub_resource type="Curve" id="Curve_txqjd"]
+_data = [Vector2(0, 0.70000005), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_dqumm"]
+_data = [Vector2(0, 0.35), 0.0, 0.0, 0, 0]
+point_count = 1
+
 [sub_resource type="Curve" id="Curve_burn_gain"]
-_data = [Vector2(0, 0.35), 0.0, 0.0, 0, 0, Vector2(1, 0.35), 0.0, 0.0, 0, 0]
-point_count = 2
+_data = [Vector2(0, 0.35000008), 0.0, 0.0, 0, 0]
+point_count = 1
 
 [node name="SampleLevel" type="Node3D" unique_id=930093996]
 
@@ -386,6 +394,7 @@ metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
 script = ExtResource("30_audio_cue")
 Stream = ExtResource("32_fire_sfx")
 PlayOnExecute = false
+MagnitudeCurve = SubResource("Curve_txqjd")
 CueTag = "cue.sfx.fire"
 metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
 
@@ -406,6 +415,7 @@ script = ExtResource("30_audio_cue")
 Stream = ExtResource("35_heal_sfx")
 PlayOnApply = false
 StopOnRemove = false
+MagnitudeCurve = SubResource("Curve_dqumm")
 CueTag = "cue.sfx.heal"
 metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
 

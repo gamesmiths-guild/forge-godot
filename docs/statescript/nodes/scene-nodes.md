@@ -20,6 +20,7 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 |---|---|---|
 | **Parent** | `CurrentScene`, `Entity`, `Node` | Where the instance is added. `Entity` uses the Parent Entity row's node, `Node` uses the Parent Node row. |
 | **Pass ownership** | checkbox, default on | Calls `IInstantiationReceiver.OnInstantiated(owner, source)` on the instance with the ability's owner and source, which is how a spawned `ForgeProjectile3D` learns who fired it. |
+| **Restart On Retrigger** | checkbox, default off | **State nodes only.** When a message reaches the node while its instance lives, frees the instance and spawns a new one with a fresh lifetime; off, the message is ignored. The subgraph is disabled first and starts over for the new instance, since whatever ran in it was working on the one that was freed. |
 
 ### Inputs
 

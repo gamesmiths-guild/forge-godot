@@ -35,7 +35,7 @@ When the graph starts:
 2. That message travels through connections, reaching downstream nodes.
 3. **Action nodes** execute instantly and pass the message forward.
 4. **Condition nodes** evaluate and route the message to the True or False output.
-5. **State nodes** activate when they receive a message and remain active over time.
+5. **State nodes** activate when they receive a message and remain active over time. A message that reaches one already active is ignored, unless the node was set to [restart](nodes/README.md#restart-on-retrigger).
 
 Once all synchronous propagation is complete, only **state nodes** remain active. These nodes are updated each frame via `GraphProcessor.UpdateGraph(deltaTime)`. When a state node deactivates (e.g., a timer expires), it may emit messages that trigger further actions, conditions, or other state nodes.
 

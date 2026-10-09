@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using GodotCollections = Godot.Collections;
@@ -23,6 +24,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	internal const string FoldOutputKey = "_fold_output";
 	internal const string FoldInputPropertyKeyPrefix = "_fold_input_property_";
 	internal const string CustomWidthKey = "_custom_width";
+
+	private const string FoldSettingsKey = "_fold_settings";
 
 	private static readonly Color _entryColor = new(0x2a4a8dff);
 	private static readonly Color _exitColor = new(0x8a549aff);
@@ -634,6 +637,12 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 			}
 		}
 
+		// A standard editor lists the setting in its own Settings section, next to the node's other settings.
+		if (typeInfo.CanRestartOnRetrigger && _activeCustomEditor is not StandardNodeEditorBase)
+		{
+			AddRestartOnRetriggerSection();
+		}
+
 		if (_activeCustomEditor is not null)
 		{
 			_activeCustomEditor.BuildPropertySections(typeInfo);
@@ -696,6 +705,33 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 				AddOutputVariableRow(typeInfo.OutputVariablesInfo[i], i, outputRoot);
 			}
 		}
+	}
+
+	private void AddRestartOnRetriggerSection()
+	{
+		FoldableContainer container = AddPropertySectionDivider(
+			"Settings",
+			_inputPropertyColor,
+			FoldSettingsKey,
+			GetFoldState(FoldSettingsKey));
+
+		NodeConfigParam setting = NodeConfigParam.RestartOnRetrigger;
+
+		var checkBox = new CheckBox
+		{
+			Text = setting.Label,
+			ButtonPressed = NodeResource!.CustomData.TryGetValue(setting.Key, out Variant value) && value.AsBool(),
+			SizeFlagsHorizontal = SizeFlags.ExpandFill,
+		};
+
+		checkBox.Toggled += OnRestartOnRetriggerToggled;
+		container.AddChild(checkBox);
+	}
+
+	private void OnRestartOnRetriggerToggled(bool pressed)
+	{
+		NodeConfigParam setting = NodeConfigParam.RestartOnRetrigger;
+		SetNodeConfigWithUndo(setting.Key, pressed, $"Change {setting.Label}", rebuildOnChange: false);
 	}
 
 	private void BuildOutputPortMappings(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)

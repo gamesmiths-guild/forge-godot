@@ -25,14 +25,20 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// way round, and whatever follows the abort decides what happens next.</para>
 /// <para>A turn that cannot start - no node to turn, or no rotation authored - warns and reports alignment on its
 /// first update rather than holding the node open, since nothing gives the node a target after activation.</para>
+/// <para>A retrigger while the turn is under way is ignored, or with <paramref name="restartOnRetrigger"/> the turn
+/// starts over from the rotation the node has now, toward the rotation and duration resolved again at that moment.
+/// </para>
 /// <para>Configuration is captured in field initializers rather than a constructor body, because the base node
 /// constructor calls <see cref="DefinePorts"/> and <see cref="DefineParameters"/> before a body would run.</para>
 /// </remarks>
 /// <param name="mode">Whether the value input is a duration or an angular speed.</param>
 /// <param name="nodePath">Optional path to a descendant node to turn instead of the entity's own spatial node.</param>
+/// <param name="restartOnRetrigger">Whether a retrigger restarts the turn instead of being ignored.</param>
 [StatescriptCategory("Spatial")]
-public class RotateTo3DNode(MoveToMode mode = MoveToMode.Duration, string nodePath = "")
-	: StateNode<RotateTo3DNodeContext>
+public class RotateTo3DNode(
+	MoveToMode mode = MoveToMode.Duration,
+	string nodePath = "",
+	bool restartOnRetrigger = false) : StateNode<RotateTo3DNodeContext>(restartOnRetrigger)
 {
 	/// <summary>
 	/// Input property index for the entity to turn. Unbound means the ability's owner.
@@ -129,6 +135,12 @@ public class RotateTo3DNode(MoveToMode mode = MoveToMode.Duration, string nodePa
 	/// <inheritdoc/>
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>

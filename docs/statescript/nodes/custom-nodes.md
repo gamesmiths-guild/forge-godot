@@ -163,6 +163,26 @@ public class CooldownNode : StateNode<CooldownNodeContext>
 }
 ```
 
+### Supporting restarts
+
+A message that reaches a state node while it is active is a [retrigger](README.md#restart-on-retrigger), and it is ignored unless the node knows how to start over. To let it, take a `restartOnRetrigger` constructor parameter, pass it to the base constructor, and override `OnRestart`:
+
+```csharp
+public class CooldownNode(bool restartOnRetrigger = false)
+    : StateNode<CooldownNodeContext>(restartOnRetrigger)
+{
+    // ...
+
+    protected override void OnRestart(GraphContext graphContext)
+    {
+        // Activation only resets the elapsed time and reads the duration, so starting over is activating again.
+        OnActivate(graphContext);
+    }
+}
+```
+
+The parameter is what the editor looks for: a node that takes it gets a **Restart On Retrigger** checkbox in its Settings section with no editor code, stored in `CustomData` like any other constructor argument. `OnRestart` runs without a deactivation first, so a node that holds something — an applied effect, a spawned instance, a signal connection — releases it there before acquiring it again. Releasing can reach the rest of the graph — a signal it emits, a subgraph it ends — and so end the node or stop the graph along the way, so check that the node context it released from is still `Active` before acquiring again. The rest of the rule is in the [core Retriggers docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#retriggers).
+
 ### Adding Custom Output Ports
 
 State nodes can define additional output ports beyond the standard four (OnActivate, OnDeactivate, OnAbort, Subgraph). Custom ports can be `EventPort` instances for independent events, or `SubgraphPort` instances for lifetime-managed subgraphs.

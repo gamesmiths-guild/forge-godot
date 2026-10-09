@@ -15,6 +15,7 @@ Use the core Forge docs for runtime behavior and lifecycle details. This page co
 - The `Target` input uses the standard entity resolver flow and supports single or array bindings via the input-row shape toggle.
 - The node has no timer; it stays active until deactivated externally. Place it as a subgraph of another state node so it lives for that state's duration.
 - There is no interrupted input. Whether removal counts as an interruption is derived from how the node ends: a natural shutdown (the parent subgraph ending or the graph stopping) removes cues with `interrupted: false`, while routing a signal into the node's **Abort** port removes them with `interrupted: true`.
+- **Restart On Retrigger** (Settings, default off): a message that reaches the node while its cues are applied removes them, as interrupted, and applies them again with the inputs read again. Off, the message is ignored. See [Restart On Retrigger](README.md#restart-on-retrigger).
 
 ## Related Docs
 

@@ -40,17 +40,21 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// teleports it past the simulation rather than pushing it through, and the result fights whatever else is acting on
 /// it - but it is allowed here rather than refused, because a game that has made a rigid body kinematic for the
 /// duration of an ability has a real use for it.</para>
+/// <para>A retrigger while the move is under way is ignored, or with <paramref name="restartOnRetrigger"/> the move
+/// starts over from wherever the body is now, toward the destination and duration resolved again at that moment.</para>
 /// <para>Configuration is captured in field initializers rather than a constructor body, because the base node
 /// constructor calls <see cref="DefinePorts"/> and <see cref="DefineParameters"/> before a body would run.</para>
 /// </remarks>
 /// <param name="mode">Whether the value input is a duration or a speed.</param>
 /// <param name="blocked">What the move does with a step something refused.</param>
 /// <param name="nodePath">Optional path to a descendant body to move instead of the entity's own spatial node.</param>
+/// <param name="restartOnRetrigger">Whether a retrigger restarts the move instead of being ignored.</param>
 [StatescriptCategory("Spatial")]
 public class MoveBody2DNode(
 	MoveToMode mode = MoveToMode.Duration,
 	BlockedResponse blocked = BlockedResponse.Stop,
-	string nodePath = "") : StateNode<MoveBody2DNodeContext>
+	string nodePath = "",
+	bool restartOnRetrigger = false) : StateNode<MoveBody2DNodeContext>(restartOnRetrigger)
 {
 	/// <summary>
 	/// Input property index for the entity to move. Unbound means the ability's owner.
@@ -183,6 +187,12 @@ public class MoveBody2DNode(
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		graphContext.GetNodeContext<MoveBody2DNodeContext>(NodeID).Body = null;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>

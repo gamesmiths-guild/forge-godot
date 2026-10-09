@@ -25,17 +25,21 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>A move that cannot start - no node to move, or no destination - warns and reports arrival on its first update
 /// rather than holding the node open. Nothing gives the node a target after activation, so waiting would stall every
 /// graph whose next step hangs off <see cref="OnArrivedPort"/>.</para>
+/// <para>A retrigger while the move is under way is ignored, or with <paramref name="restartOnRetrigger"/> the move
+/// starts over from wherever the node is now, toward the destination and duration resolved again at that moment.</para>
 /// <para>Configuration is captured in field initializers rather than a constructor body, because the base node
 /// constructor calls <see cref="DefinePorts"/> and <see cref="DefineParameters"/> before a body would run.</para>
 /// </remarks>
 /// <param name="mode">Whether the value input is a duration or a speed.</param>
 /// <param name="easing">How the travel is distributed over time.</param>
 /// <param name="nodePath">Optional path to a descendant node to move instead of the entity's own spatial node.</param>
+/// <param name="restartOnRetrigger">Whether a retrigger restarts the move instead of being ignored.</param>
 [StatescriptCategory("Spatial")]
 public class MoveTo3DNode(
 	MoveToMode mode = MoveToMode.Duration,
 	MoveToEasing easing = MoveToEasing.Linear,
-	string nodePath = "") : StateNode<MoveTo3DNodeContext>
+	string nodePath = "",
+	bool restartOnRetrigger = false) : StateNode<MoveTo3DNodeContext>(restartOnRetrigger)
 {
 	/// <summary>
 	/// Input property index for the entity to move. Unbound means the ability's owner.
@@ -135,6 +139,12 @@ public class MoveTo3DNode(
 	/// <inheritdoc/>
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>

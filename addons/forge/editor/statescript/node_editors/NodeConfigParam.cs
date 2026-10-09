@@ -46,5 +46,12 @@ internal readonly record struct NodeConfigParam(
 	bool IsText = false,
 	string Placeholder = "",
 	bool SuggestsInputActions = false,
-	int? RetypesInput = null);
+	int? RetypesInput = null)
+{
+	/// <summary>
+	/// Gets the setting offered on every node that can restart on a retrigger instead of ignoring it.
+	/// </summary>
+	public static NodeConfigParam RestartOnRetrigger { get; } =
+		new(StatescriptNodeDiscovery.RestartOnRetriggerKey, "Restart On Retrigger");
+}
 #endif

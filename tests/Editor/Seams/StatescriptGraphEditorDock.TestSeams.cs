@@ -64,6 +64,17 @@ public partial class StatescriptGraphEditorDock
 	}
 
 	/// <summary>
+	/// Returns the visual the graph edit shows for a node, for tests that drive its controls directly.
+	/// </summary>
+	/// <param name="graph">The graph owning the node.</param>
+	/// <param name="nodeId">The node whose visual is wanted.</param>
+	/// <returns>The live visual, or <see langword="null"/> when the graph is not the one shown.</returns>
+	internal StatescriptGraphNode? TestOnlyNodeVisual(StatescriptGraph graph, string nodeId)
+	{
+		return TryGetLiveNodeVisual(graph, nodeId, out StatescriptGraphNode? visual) ? visual : null;
+	}
+
+	/// <summary>
 	/// Resizes a node through the same path the resize handle uses.
 	/// </summary>
 	/// <param name="graph">The graph owning the node.</param>
