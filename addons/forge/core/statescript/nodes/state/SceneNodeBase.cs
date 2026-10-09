@@ -138,6 +138,11 @@ public abstract class SceneNodeBase(
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Lifetime = 0;
 
+		// Cleared first, so an activation that spawns nothing - a restart whose scene can no longer be resolved -
+		// leaves no output naming an instance from before, freed or about to be.
+		SceneInstantiationInputs.WriteObjectOutput(graphContext, OutputVariables[InstanceOutput], null);
+		SceneInstantiationInputs.WriteObjectOutput(graphContext, OutputVariables[InstanceEntityOutput], null);
+
 		if (!graphContext.TryResolveObject(InputProperties[SceneInput].BoundName, out PackedScene? scene)
 			|| scene is null)
 		{

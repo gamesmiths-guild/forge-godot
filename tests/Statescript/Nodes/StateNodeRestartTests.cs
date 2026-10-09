@@ -218,6 +218,99 @@ public class StateNodeRestartTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_scene_restart_that_spawns_nothing_leaves_no_output_naming_the_freed_instance()
+	{
+		var parent = new Node3D();
+		Root.AddChild(parent);
+
+		try
+		{
+			var graph = new ForgeGraph();
+			AddSpawn(graph, parent, restartOnRetrigger: true);
+
+			var processor = new GraphProcessor(graph);
+			processor.StartGraph();
+
+			// The scene can no longer be resolved by the time the retrigger comes.
+			processor.GraphContext.GraphVariables.SetObject("scene", null);
+			processor.UpdateGraph(RetriggerAt);
+
+			Node[] instances = [.. parent.GetChildren()];
+			instances.Should().ContainSingle("nothing replaced the first instance");
+			instances[0].IsQueuedForDeletion().Should().BeTrue("the restart freed it");
+			processor.GraphContext.GraphVariables.TryGetObject("instance", out Node? output);
+			output.Should().BeNull("the output no longer names an instance that is gone");
+		}
+		finally
+		{
+			parent.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_retriggered_sound_keeps_its_settings_by_default()
+	{
+		PlaySoundAndRetrigger(restartOnRetrigger: false).Should().BeApproximately(
+			-3.0f,
+			Tolerance,
+			"the sound carries on as it was started.");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_restarted_sound_plays_again_with_its_settings_resolved_again()
+	{
+		PlaySoundAndRetrigger(restartOnRetrigger: true).Should().BeApproximately(
+			-9.0f,
+			Tolerance,
+			"the restart plays the sound again with the volume the graph holds now.");
+	}
+
+	private static float PlaySoundAndRetrigger(bool restartOnRetrigger)
+	{
+		var entity = new TestEntity3D();
+
+		// A second of silence, long enough to still be playing when the retrigger comes.
+		var player = new AudioStreamPlayer
+		{
+			Stream = new AudioStreamWav
+			{
+				Data = new byte[88200],
+				MixRate = 44100,
+				Format = AudioStreamWav.FormatEnum.Format16Bits,
+			},
+		};
+
+		entity.AddChild(player);
+		Root.AddChild(entity);
+
+		try
+		{
+			ForgeGraph graph = GraphWithEntity(entity);
+			graph.VariableDefinitions.DefineVariable("volume", -3.0);
+
+			var play = new PlayAudioNode(restartOnRetrigger: restartOnRetrigger);
+			play.BindInput(PlayAudioNode.EntityInput, "entity");
+			play.BindInput(PlayAudioNode.VolumeDbInput, "volume");
+			AddWithRetrigger(graph, play);
+
+			var processor = new GraphProcessor(graph);
+			processor.StartGraph();
+			processor.GraphContext.GraphVariables.SetVar("volume", -9.0);
+			processor.UpdateGraph(RetriggerAt);
+
+			player.Playing.Should().BeTrue("the sound is still playing either way");
+			return player.VolumeDb;
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
 	private static float MoveAndRetrigger(bool restartOnRetrigger)
 	{
 		var entity = new TestEntity3D();
