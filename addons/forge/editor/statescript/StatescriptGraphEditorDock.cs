@@ -1703,7 +1703,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 	}
 
-	private void OnFilesystemChanged()
+#pragma warning disable RCS1163, S1172, SA1313, IDE0060 // Signal callback must match resources_reimported's signature
+	private void OnFilesystemChanged(string[] resources)
+#pragma warning restore RCS1163, S1172, SA1313, IDE0060 // Signal callback must match resources_reimported's signature
 	{
 		for (int i = 0; i < _openTabs.Count; i++)
 		{
