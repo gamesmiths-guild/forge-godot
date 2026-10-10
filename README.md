@@ -4,159 +4,96 @@
 [![Godot .NET](https://img.shields.io/badge/Godot-4.7%2B%20.NET-478cbf)](https://godotengine.org/download/)
 [![License](https://img.shields.io/github/license/gamesmiths-guild/forge-godot)](LICENSE)
 
-Forge for Godot is an Unreal GAS-like gameplay framework built for the Godot Engine.
+**A gameplay framework for Godot, bringing Unreal’s Gameplay Ability System concepts to Godot.** Attributes, effects, abilities, gameplay tags, events and cues, configured in the Inspector and scripted visually with Statescript graphs.
 
-It integrates the [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot, providing a robust, data-driven foundation for implementing gameplay features such as attributes, effects, gameplay tags, abilities, events, cues, and visual ability scripting through Statescript, fully aligned with Godot’s node, resource, and editor workflows.
+https://github.com/user-attachments/assets/01f66ab9-999f-4593-9b36-a7138bdfef85
 
-Forge for Godot provides custom nodes, resources, and editor extensions that make building scalable and maintainable gameplay systems straightforward, allowing developers to leverage Forge’s architecture without reimplementing complex gameplay logic from scratch.
+Forge for Godot brings the engine-agnostic [Forge Gameplay System](https://github.com/gamesmiths-guild/forge) into Godot as nodes, resources and editor tools. A burning floor, a dash with a cooldown, a shield that drains mana, an enemy that chases and attacks: you build these from data and graphs, so they stay readable as your game grows.
 
-Forge for Godot is available from the Godot Asset Store — search for **Forge Gameplay System** in the editor's **Asset Store** tab — or as a manual install from this repository.
+## What it looks like
 
-**Keywords:** godot plugin, gameplay framework, C#, attributes, gameplay effects, abilities, gameplay tags
+### Abilities as graphs
 
-## Quick Start
+Statescript is a visual, state-based scripting system for ability behavior. This is the shield from the samples: commit the mana cost, apply damage reduction, show the bubble, pay again on every hit, and drop when mana runs low or the key is pressed again. No C#.
 
-New to Forge for Godot? Check out the [Quick Start Guide](docs/quick-start.md) to integrate Forge into your Godot project in minutes.
+![A Statescript graph for a toggled shield](docs/images/statescript/shield-graph.png)
 
-If you'd like to see sample scenes demonstrating the system in action, install the optional `forge_samples` folder along with the plugin, or clone this repository and open it directly. See [Sample Project](#sample-project) for details.
+Built-in nodes reach the scene, physics, navigation, input, animation and audio, so a dash, a projectile or a spawner can be authored rather than coded. See [Statescript](docs/statescript/README.md).
 
-## Architecture Overview
+The dash, running next to its graph:
 
-Forge for Godot extends the core Forge system architecture with Godot-specific implementations:
+https://github.com/user-attachments/assets/7ee8bfe0-ae47-42ea-8988-a500ff96c49b
 
-### Core Integration
+### Gameplay data in the Inspector
 
-- **ForgeBootstrap**: Autoload singleton that initializes the core system managers.
-- **Tags Editor**: Built-in editor tool for managing hierarchical gameplay tags.
-- **Custom Resources**: Godot resources for configuring Forge components through the Inspector.
-- **Custom Nodes**: Node classes that encapsulate Forge concepts for easy integration and visual composition in the scene tree.
+Effects, abilities, cues and attribute sets are resources. A damage-over-time effect is a few fields: a modifier, a duration, a period.
 
-### Entity Integration
+<img src="docs/images/quick-start/burning-effect.png" alt="A periodic Burning effect in the Inspector" width="380">
+<img src="docs/images/quick-start/attribute-set-definition.png" alt="An attribute set defined in the Inspector" width="380">
 
-Game objects use Forge in one of two ways:
+Attribute sets can be written in C# or described in the Inspector, and the plugin generates the class for you. See [Attribute Set Definitions](docs/attribute-set-definitions.md).
 
-- **ForgeEntity Node**: Add this node as a child to provide Forge capabilities to any Godot node.
-- **IForgeEntity Implementation**: Implement the interface directly on your custom node classes.
+### Nodes that fit Godot
 
-Both approaches provide:
+Add a `ForgeEntity` to any node to give it attributes, tags, effects and abilities. `EffectArea2D/3D`, `EffectRayCast2D/3D`, `EffectShapeCast2D/3D` and `ForgeProjectile2D/3D` apply effects through physics. Ready-made cue handlers play particles, sounds, animations, camera shake and hit stop when an effect says so.
 
-- **Attributes**: Manages all attribute sets, with lifecycle and modification handled by Forge.
-- **Tags**: Handles base and modifier tags with automatic inheritance; supports runtime addition and removal via effects.
-- **EffectsManager**: Controls effect application, stacking, periodic execution, expiration, and clean up.
-- **Abilities**: Grants, activates, or removes gameplay abilities, including custom ability logic, cooldowns, costs, and triggers.
-- **Events**: Entity or global event bus for raising, subscribing, and handling gameplay events.
-- **SharedVariables**: Entity-level variable bag for cross-ability communication through Statescript graphs.
+![The Quick Start scene in the editor](docs/images/quick-start/editor-overview.png)
 
-### Godot-Specific Features
+### Tags you can manage
 
-Forge for Godot includes specialized nodes and resources to integrate Forge concepts into Godot's workflow:
+Hierarchical gameplay tags (`cue.burn`, `cooldown.skill.dash`) drive requirements, immunities, cooldowns and cue routing. The **Tags** dock edits them across several source files and repairs broken references. See [Gameplay Tags](docs/gameplay-tags.md).
 
-- **ForgeAttributeSet**: Configure attribute sets directly in the Godot editor.
-- **EffectArea2D/3D**: Apply effects to entities entering/exiting areas.
-- **EffectRayCast2D/3D**: Apply effects to entities hit by raycasts.
-- **EffectShapeCast2D/3D**: Apply effects to entities hit by shape casts.
-- **ForgeCueHandler**: Base class for implementing visual and audio feedback in response to gameplay cues.
-- **Statescript Editor**: Visual graph editor for creating Statescript ability behaviors directly in the Godot editor.
+<img src="docs/images/quick-start/tags.png" alt="The Tags dock" width="380">
 
-## Project Status
+## Get started
 
-⚠️ **Work in Progress**: This plugin is under active development and is not yet recommended for production use.
+1. Install **Forge Gameplay System** from the editor's **Asset Store** tab, or grab the `.zip` from the [latest release](https://github.com/gamesmiths-guild/forge-godot/releases/latest). The [installation guide](docs/installation.md) has the details.
+2. Build, then enable the plugin under **Project Settings → Plugins**.
+3. Follow the **[Quick Start](docs/quick-start.md)**: a character, a campfire that burns and a heal ability in about fifteen minutes.
 
-⚠️ **Godot C# Only**: Currently only works with Godot projects using C#.
+[![The Quick Start result](docs/images/quick-start/quick-start.gif)](docs/quick-start.md)
 
-### Current Features ✅
+Requires **Godot 4.7+ .NET** and the **.NET 8 SDK** or later. Forge is C# only.
 
-- **Attributes System**: Attribute management, supporting sets, modifiers, and configuration.
-- **Effects System**: Comprehensive effect application and management, including stacking, periodic, instant, and infinite effects.
-- **Tags System**: Full hierarchical tag system with Godot editor integration.
-- **Abilities System**: Feature-complete ability system, supporting grant/removal, custom behaviors, triggers, cooldowns, and costs.
-- **Events System**: Gameplay event bus supporting event-driven logic, subscriptions, and triggers.
-- **Cues System**: Visual/audio feedback layer; decouples presentation from game logic.
-- **Statescript**: Visual state-based scripting system for implementing ability behaviors and custom logic with a built-in graph editor.
-- **Editor Extensions**: Custom inspector elements, tag editor, and Statescript graph editor with Godot integration.
-- **Custom Nodes**: Includes nodes like `ForgeEntity`, `ForgeAttributeSet`, `EffectArea2D`, and more.
-- **Built-in Content**: Godot resources, editors, and documentation for the full library of effect components, Statescript nodes, and resolvers.
+## Samples
 
-### Planned Features 🚧
+![The Statescript demo: projectiles catch fire passing through the bonfire, and a brazier spawns enemies](docs/images/samples/statescript-demo.gif)
 
-- **Multiplayer Support**: Network replication for all systems, deterministic/authoritative support.
-- **Godot-specific Statescript Nodes**: Additional built-in nodes for Godot-specific functionality, such as scene instantiation and physics queries.
-- **More sample scenes**: Sample scenes for statescript and multiplayer integration.
+The optional `forge_samples` folder holds playable demos. Open `forge_samples/Main.tscn` and pick one from the hub:
 
-## Installation
+| Demo | What it shows |
+| --- | --- |
+| **Quick Start** | The finished result of the Quick Start guide. |
+| **Real-Time 3D** | A character with dash, projectile, shield and reflect, enemies, and fire, water and regen areas, with every ability written in C#. |
+| **Turn-Based 2D** | The same effects on a board where time only moves when you do, and a node that implements `IForgeEntity` itself. |
+| **Statescript** | The Real-Time 3D demo rebuilt with every ability and the enemy AI as Statescript graphs, plus enemy waves, spreading fire, sounds and juice. |
 
-### Requirements
-
-- Godot 4.7 or later, .NET version.
-- .NET SDK 8.0 or later.
-- **C# only.** Forge does not support GDScript-only projects.
-
-### Steps
-
-1. Install **Forge Gameplay System** from the Godot Asset Store, via the **Asset Store** tab in the Godot editor.
-
-   When choosing which files to import, keep `Directory.Build.props` selected. MSBuild imports it automatically, and it is what wires Forge into your build without any edit to your `.csproj`. The `forge_samples` folder is optional; see [Sample Project](#sample-project).
-
-2. If your project has no C# solution yet, create one via `Project > Tools > C# > Create C# solution`.
-
-3. Build your project by clicking `Build` in the top-right corner of the editor.
-
-4. Enable **Forge Gameplay System** under `Project > Project Settings > Plugins`.
-
-> **Already have a `Directory.Build.props`?** Don't let Forge's copy replace it. Skip that file when importing, and add this line to your own instead:
-> ```xml
-> <Import Project="addons/forge/Forge.props" />
->  ```
-
-### Manual installation
-
-Download the `.zip` attached to the [latest release](https://github.com/gamesmiths-guild/forge-godot/releases/latest) and extract it into your project root. It contains exactly the same files as the Asset Store package.
-
-Alternatively, copy the `addons/forge` folder and `Directory.Build.props` from this repository into your project. If you'd rather not add `Directory.Build.props`, add this line to your `.csproj` before the closing `</Project>` tag instead:
-
-```xml
-<Import Project="addons/forge/Forge.props" />
-```
-
-Then follow steps 2–4 above.
-
-### Sample Project
-
-The `forge_samples` folder contains 2D and 3D scenes demonstrating attributes, effects, abilities, cues, and Statescript in a running game. It is optional — skip it during import if you don't want sample code compiled into your project.
-
-The samples declare their own gameplay tags in `forge_samples/forge_samples_tags.tres`. To run them, open the **Tags** dock and click **Find Sources**, which will offer to add it.
-
-### Local Core Development (Optional)
-
-When developing `forge-godot` together with the core `forge` repository, `Forge.props` automatically switches to local project references when both repositories are cloned as sibling folders:
-
-```text
-Projects/
-├── forge/
-└── forge-godot/
-```
-
-This allows direct source-level development across both repositories without requiring local NuGet packages.
+The samples use their own tag source. Add it once from the **Tags** dock with **Find Sources** (see [Sample Project](docs/installation.md#sample-project)).
 
 ## Documentation
 
-For comprehensive documentation, explore the [docs](docs) directory:
+- [Quick Start](docs/quick-start.md) and [Installation](docs/installation.md)
+- [Documentation overview](docs/README.md): architecture and how the pieces fit
+- [Forge Nodes](docs/nodes.md) and [Forge Resources](docs/resources.md)
+- [Statescript](docs/statescript/README.md): graphs, variables, subgraphs, the [node library](docs/statescript/nodes/README.md) and [resolvers](docs/statescript/resolvers/README.md)
+- [Gameplay Tags](docs/gameplay-tags.md), [Attribute Set Definitions](docs/attribute-set-definitions.md) and [Helper Classes](docs/helper-classes.md)
+- [Core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md): the concepts behind it all
 
-- [Documentation Overview](docs/README.md)
-- [Quick Start Guide](docs/quick-start.md)
-- [Gameplay Tags](docs/gameplay-tags.md)
-- [Attribute Set Definitions](docs/attribute-set-definitions.md)
-- [Forge Nodes](docs/nodes.md)
-- [Forge Resources](docs/resources.md)
-- [Helper Classes](docs/helper-classes.md)
+## Project status
+
+⚠️ **Work in progress.** Forge is under active development and its API may still change between releases.
+
+**Available:** attributes, effects, tags, abilities, events, cues, Statescript with its editor and Godot node library, attribute set definitions, effect areas, casts and projectiles, the cue handler library, and the tags editor.
+
+**Planned:** multiplayer, with network replication for all systems, and more samples.
 
 ## Debugging
 
-The Forge NuGet package ships with [Source Link](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink) and a symbol package (`.snupkg`) published to the [NuGet symbol server](https://learn.microsoft.com/en-us/nuget/create-packages/symbol-packages-snupkg#nugetorg-symbol-server). This means you can step into Forge's source code while debugging your project. For setup instructions, see the [Debugging section](docs/README.md#debugging) in the documentation.
+The Forge NuGet package ships with [Source Link](https://learn.microsoft.com/en-us/dotnet/standard/library-guidance/sourcelink) and symbols, so you can step into Forge's source while debugging. See [Debugging](docs/README.md#debugging).
 
 ## Contributing
 
-This project is not currently accepting contributions as it's still in early development. However, if you're interested in contributing or have suggestions, feel free to reach out via GitHub issues or discussions.
+This project is not currently accepting contributions as it's still in early development. If you have suggestions or questions, feel free to reach out through GitHub issues or discussions.
 
 ## License
 
