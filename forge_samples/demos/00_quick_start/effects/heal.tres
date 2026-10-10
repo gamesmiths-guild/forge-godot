@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://dp5v2pkxi7kmh"]
+
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_ih78u"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="2_54a0i"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_5qihl"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_l6bet"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="5_o60aj"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_odrf3"]
+
+[sub_resource type="Resource" id="Resource_ih78u"]
+script = ExtResource("1_ih78u")
+ContainerTags = ["cue.heal"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_54a0i"]
+script = ExtResource("2_54a0i")
+CueKeys = SubResource("Resource_ih78u")
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_5qihl"]
+script = ExtResource("3_5qihl")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_l6bet"]
+script = ExtResource("4_l6bet")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_o60aj"]
+script = ExtResource("4_l6bet")
+
+[sub_resource type="Resource" id="Resource_odrf3"]
+script = ExtResource("4_l6bet")
+
+[sub_resource type="Resource" id="Resource_mt3so"]
+script = ExtResource("4_l6bet")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_x3spn"]
+script = ExtResource("4_l6bet")
+
+[sub_resource type="Resource" id="Resource_xcv2a"]
+script = ExtResource("4_l6bet")
+
+[sub_resource type="Resource" id="Resource_j0ibw"]
+script = ExtResource("4_l6bet")
+BaseValue = 30.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_yotct"]
+script = ExtResource("5_o60aj")
+Attribute = "HeroAttributes.Health"
+ScalableFloat = SubResource("Resource_j0ibw")
+Coefficient = SubResource("Resource_mt3so")
+PreMultiplyAdditiveValue = SubResource("Resource_xcv2a")
+PostMultiplyAdditiveValue = SubResource("Resource_x3spn")
+CalculatorCoefficient = SubResource("Resource_l6bet")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_odrf3")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_o60aj")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_pslma"]
+script = ExtResource("3_5qihl")
+BaseValue = 1
+
+[resource]
+script = ExtResource("6_odrf3")
+Name = "Heal"
+Modifiers = [SubResource("Resource_yotct")]
+Components = []
+Executions = []
+StackLimit = SubResource("Resource_pslma")
+InitialStack = SubResource("Resource_5qihl")
+Cues = [SubResource("Resource_54a0i")]
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

@@ -1,0 +1,149 @@
+[gd_scene format=3 uid="uid://dleep1u2xxx06"]
+
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://forge_samples/shared/QuitScene.cs" id="1_byd1c"]
+[ext_resource type="Script" uid="uid://bc8wkfv6rdpu1" path="res://addons/forge/nodes/EffectArea2D.cs" id="2_j13tk"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="3_6g7ph"]
+[ext_resource type="Resource" uid="uid://b0gxvmfrn1yqh" path="res://forge_samples/demos/00_quick_start/effects/burning.tres" id="4_hrpvi"]
+[ext_resource type="PackedScene" uid="uid://d6tvjkjl2f2w" path="res://forge_samples/demos/00_quick_start/scenes/player.tscn" id="5_6fh83"]
+[ext_resource type="Script" uid="uid://7vreqs1fxnky" path="res://addons/forge/nodes/ParticlesCueHandler.cs" id="6_xfs6t"]
+[ext_resource type="Script" uid="uid://d3v5ni4eocbqr" path="res://addons/forge/nodes/AnimationCueHandler.cs" id="7_oojj0"]
+[ext_resource type="Script" uid="uid://bxw5ax6u4m82n" path="res://addons/forge/nodes/AudioCueHandler.cs" id="8_6fp5t"]
+[ext_resource type="AudioStream" uid="uid://ddltr6pp8vhxs" path="res://forge_samples/shared/audio/fire-loop.ogg" id="9_6ptfs"]
+[ext_resource type="AudioStream" uid="uid://b2rg3674ittqt" path="res://forge_samples/shared/audio/heal.ogg" id="10_p4og3"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_byd1c"]
+radius = 70.0
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_j13tk"]
+blend_mode = 1
+
+[sub_resource type="Gradient" id="Gradient_6g7ph"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_hrpvi"]
+gradient = SubResource("Gradient_6g7ph")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="Gradient" id="Gradient_6fh83"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.8, 0.35, 0.8, 1, 0.45, 0.08, 0.7, 0.7, 0.12, 0.04, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_xfs6t"]
+gradient = SubResource("Gradient_6fh83")
+
+[sub_resource type="Curve" id="Curve_oojj0"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_6fp5t"]
+curve = SubResource("Curve_oojj0")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_6ptfs"]
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector3(0, -1, 0)
+spread = 12.0
+initial_velocity_min = 30.0
+initial_velocity_max = 70.0
+gravity = Vector3(0, -40, 0)
+scale_min = 0.77
+scale_max = 1.1
+scale_curve = SubResource("CurveTexture_6fp5t")
+color_ramp = SubResource("GradientTexture1D_xfs6t")
+
+[node name="QuickStart" type="Node2D" unique_id=1652310169]
+
+[node name="QuitScene" type="Node" parent="." unique_id=1723456462]
+script = ExtResource("1_byd1c")
+
+[node name="Ground" type="ColorRect" parent="." unique_id=901621893]
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.13, 0.17, 0.15, 1)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=849841071]
+position = Vector2(545, 340)
+zoom = Vector2(1.6, 1.6)
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1180533433]
+
+[node name="Hint" type="Label" parent="HUD" unique_id=179017003]
+modulate = Color(1, 1, 1, 0.7)
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 24.0
+offset_bottom = 20.0
+text = "Arrow keys: move    Space: heal (25 mana, 2 s cooldown)    Esc: back to the hub"
+
+[node name="Campfire" type="Area2D" parent="." unique_id=872303527]
+position = Vector2(760, 340)
+script = ExtResource("2_j13tk")
+TriggerMode = 2
+
+[node name="Scorch" type="Polygon2D" parent="Campfire" unique_id=867048487]
+color = Color(0.4, 0.17, 0.08, 0.35)
+polygon = PackedVector2Array(70, 0, 69.40114, 9.136834, 67.61481, 18.117332, 64.67156, 26.787842, 60.621777, 35, 55.534733, 42.6133, 49.497475, 49.497475, 42.6133, 55.534733, 34.999996, 60.62178, 26.78784, 64.67156, 18.117334, 67.61481, 9.136837, 69.40114, -3.059797e-06, 70, -9.136835, 69.40114, -18.117332, 67.61481, -26.787838, 64.67157, -35.000004, 60.621777, -42.6133, 55.534733, -49.497475, 49.497475, -55.534733, 42.6133, -60.621777, 35.000004, -64.67156, 26.787844, -67.61481, 18.11734, -69.40114, 9.136826, -70, -6.119594e-06, -69.40114, -9.136838, -67.61481, -18.117334, -64.67156, -26.78784, -60.621777, -34.999996, -55.534737, -42.613297, -49.49748, -49.49747, -42.613304, -55.53473, -34.999992, -60.62178, -26.78785, -64.67156, -18.117329, -67.614815, -9.1368475, -69.40114, 8.347416e-07, -70, 9.136848, -69.40114, 18.11733, -67.61481, 26.787853, -64.67156, 34.999992, -60.62178, 42.613308, -55.53473, 49.497467, -49.497482, 55.534737, -42.613297, 60.621773, -35.00001, 64.67157, -26.78784, 67.614815, -18.11732, 69.40114, -9.136836)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Campfire" unique_id=550308540]
+shape = SubResource("CircleShape2D_byd1c")
+
+[node name="Log" type="Polygon2D" parent="Campfire" unique_id=1042362192]
+position = Vector2(0, 14)
+rotation = -0.35
+color = Color(0.36, 0.22, 0.12, 1)
+polygon = PackedVector2Array(-34, -6, 34, -6, 34, 6, -34, 6)
+
+[node name="Log2" type="Polygon2D" parent="Campfire" unique_id=35283756]
+position = Vector2(0, 14)
+rotation = 0.35
+color = Color(0.36, 0.22, 0.12, 1)
+polygon = PackedVector2Array(-34, -6, 34, -6, 34, 6, -34, 6)
+
+[node name="Flames" type="GPUParticles2D" parent="Campfire" unique_id=719502683]
+material = SubResource("CanvasItemMaterial_j13tk")
+amount = 90
+texture = SubResource("GradientTexture2D_hrpvi")
+lifetime = 1.1
+preprocess = 1.0
+process_material = SubResource("ParticleProcessMaterial_6ptfs")
+
+[node name="Burning" type="Node" parent="Campfire" unique_id=1537872820]
+script = ExtResource("3_6g7ph")
+EffectData = ExtResource("4_hrpvi")
+
+[node name="Player" parent="." unique_id=691527485 instance=ExtResource("5_6fh83")]
+position = Vector2(330, 340)
+
+[node name="Cues" type="Node" parent="." unique_id=240205857]
+
+[node name="Burn Particles" type="Node" parent="Cues" unique_id=1517129403]
+script = ExtResource("6_xfs6t")
+ParticlesPath = "BurnParticles"
+OneShotOnExecute = false
+CueTag = "cue.burn"
+
+[node name="Burn Flash" type="Node" parent="Cues" unique_id=710912989]
+script = ExtResource("7_oojj0")
+PlayerPath = "FxPlayer"
+ExecuteAnimation = "hit"
+CueTag = "cue.burn"
+
+[node name="Burn Sound" type="Node" parent="Cues" unique_id=359649349]
+script = ExtResource("8_6fp5t")
+Stream = ExtResource("9_6ptfs")
+PlayOnExecute = false
+CueTag = "cue.burn"
+
+[node name="Heal Particles" type="Node" parent="Cues" unique_id=121559120]
+script = ExtResource("6_xfs6t")
+ParticlesPath = "HealParticles"
+CueTag = "cue.heal"
+
+[node name="Heal Sound" type="Node" parent="Cues" unique_id=548543073]
+script = ExtResource("8_6fp5t")
+Stream = ExtResource("10_p4og3")
+CueTag = "cue.heal"

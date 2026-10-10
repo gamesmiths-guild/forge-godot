@@ -28,6 +28,8 @@
 # samples are installed, and deletes these the first time it runs after the samples are removed.
 /forge_generated                                                     !export-ignore
 /forge_generated/attribute_sets                                      !export-ignore
+/forge_generated/attribute_sets/HeroAttributes.generated.cs          !export-ignore
+/forge_generated/attribute_sets/HeroAttributes.generated.cs.uid      !export-ignore
 /forge_generated/attribute_sets/MovementAttributes.generated.cs      !export-ignore
 /forge_generated/attribute_sets/MovementAttributes.generated.cs.uid  !export-ignore
 

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DemoEntry" format=3 uid="uid://d226qkxx5p28p"]
+
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="PackedScene" uid="uid://dleep1u2xxx06" path="res://forge_samples/demos/00_quick_start/scenes/quick_start.tscn" id="2_level"]
+
+[resource]
+script = ExtResource("1_entry")
+Title = "Quick Start"
+Tagline = "The finished result of the Quick Start guide: a campfire that burns and a heal built as a graph."
+Blurb = "Everything the Quick Start guide builds, step by step, in its finished form. Open it next to the guide to compare your own work.
+
+Arrow keys move. Walk into the campfire to burn, walk out to stop. Press Space to heal: it costs 25 mana and has a 2 second cooldown, and mana comes back on its own."
+Highlights = Array[String](["HeroAttributes is generated from a definition resource, not written by hand", "The campfire is an EffectArea2D with a periodic Burning effect, no graph and no code", "Burn and heal feedback are library cue handlers: particles, a flash and sound", "Heal is a four-node Statescript graph with a cost and a cooldown", "The only C# is arrow-key movement and the two attribute bars"])
+Scene = ExtResource("2_level")
+Accent = Color(0.45, 0.75, 1, 1)

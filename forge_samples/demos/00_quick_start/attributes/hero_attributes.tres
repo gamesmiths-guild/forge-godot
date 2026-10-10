@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ForgeAttributeSetDefinition" format=3 uid="uid://ce6xgaisk5760"]
+
+[ext_resource type="Script" uid="uid://kakarw7w5eke" path="res://addons/forge/resources/attributes/ForgeAttributeDefinition.cs" id="1_attribute"]
+[ext_resource type="Script" uid="uid://c4ex3nut7plyb" path="res://addons/forge/resources/attributes/ForgeAttributeSetDefinition.cs" id="2_set"]
+
+[sub_resource type="Resource" id="Resource_health"]
+script = ExtResource("1_attribute")
+AttributeName = "Health"
+DefaultValue = 100
+MaxValue = 100
+metadata/_custom_type_script = "uid://kakarw7w5eke"
+
+[sub_resource type="Resource" id="Resource_mana"]
+script = ExtResource("1_attribute")
+AttributeName = "Mana"
+DefaultValue = 100
+MaxValue = 100
+metadata/_custom_type_script = "uid://kakarw7w5eke"
+
+[resource]
+script = ExtResource("2_set")
+AttributeSetName = "HeroAttributes"
+Attributes = Array[ExtResource("1_attribute")]([SubResource("Resource_health"), SubResource("Resource_mana")])
+metadata/_custom_type_script = "uid://c4ex3nut7plyb"

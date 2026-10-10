@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://evoqrkdbr7km"]
+
+[ext_resource type="Resource" path="res://forge_samples/demos/00_quick_start/abilities/heal_graph.tres" id="1_62xy6"]
+[ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="2_gh4rn"]
+[ext_resource type="Resource" uid="uid://btlma1ggiplu2" path="res://forge_samples/demos/00_quick_start/effects/heal_cooldown.tres" id="3_i38uc"]
+[ext_resource type="Resource" uid="uid://bq1n4lap0ljm8" path="res://forge_samples/demos/00_quick_start/effects/heal_cost.tres" id="4_ou6t2"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_wb8g5"]
+
+[sub_resource type="Resource" id="Resource_62xy6"]
+script = ExtResource("2_gh4rn")
+Statescript = ExtResource("1_62xy6")
+metadata/_custom_type_script = "uid://dapjjbxrv801t"
+
+[resource]
+script = ExtResource("5_wb8g5")
+Name = "Heal"
+CooldownEffects = [ExtResource("3_i38uc")]
+CostEffect = ExtResource("4_ou6t2")
+AbilityBehavior = SubResource("Resource_62xy6")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"
