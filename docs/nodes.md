@@ -8,6 +8,8 @@ This page documents all custom nodes provided by the Forge for Godot plugin.
 
 The central node for adding Forge system functionality to any game object.
 
+<img src="images/quick-start/player-scene.png" alt="A player scene with a ForgeEntity holding an attribute set and two effects" width="280">
+
 **Properties:**
 
 - `BaseTags` (ForgeTagContainer): Container for the entity's immutable tags.
@@ -130,6 +132,8 @@ The feeds carry more than the lifecycle shown above. `EffectsManager` also repor
 
 Configuration node for attribute sets used with ForgeEntity.
 
+<img src="images/quick-start/attribute-set-node.png" alt="A ForgeAttributeSet node with per-instance starting values" width="420">
+
 **Properties:**
 
 - `AttributeSetClass` (string): Name of the C# class extending AttributeSet.
@@ -196,6 +200,9 @@ var effectData = effectNode.EffectData.GetEffectData();
 ### EffectArea2D / EffectArea3D
 
 Extends Godot's Area2D/Area3D; applies effects to entities that enter, stay in, or exit the area, using child ForgeEffect nodes.
+
+<img src="images/quick-start/level-scene.png" alt="A campfire EffectArea2D with a collision shape and a ForgeEffect child" width="280">
+<img src="images/quick-start/campfire-area.png" alt="EffectArea2D properties" width="420">
 
 **Properties:**
 
@@ -354,6 +361,8 @@ public partial class DamageCueHandler : ForgeCueHandler
 ## Cue Handler Library
 
 Six concrete handlers ship with the plugin, so the common visual and audio hookups need no C# at all. Add one to the scene, set its `CueTag`, and fill in its exports.
+
+![Particles, animation and audio handlers sharing the cue.burn tag](images/quick-start/burn-cues.png)
 
 All six inherit `CueTag` and `WarnOnce` from [`ForgeCueHandler`](#forgecuehandler-abstract). **(M)** marks an optional `MagnitudeCurve`, sampled at the cue's normalized magnitude.
 

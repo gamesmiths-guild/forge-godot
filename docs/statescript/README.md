@@ -5,6 +5,8 @@ Statescript is a state-based scripting system for defining ability behaviors in 
 
 In Forge for Godot, graphs are authored visually through the built-in **Statescript graph editor** in the Godot editor.
 
+![The shield ability from the samples as a Statescript graph](../images/statescript/shield-graph.png)
+
 **Key benefits:**
 
 - **Visual authoring**: Build ability logic in a node graph editor without writing code.

@@ -8,6 +8,10 @@ For C# API details and code examples, see the [core Variables documentation](htt
 
 Graph variables are **mutable values** scoped to a single graph execution instance. They are defined at graph construction time with a name, type, and initial value. When a graph starts, each variable is initialized from its definition. Multiple executions of the same graph each get their own independent copy.
 
+They are declared in the graph editor's **Variables** panel. This is the brazier from the Statescript sample: a `lit` flag, the next spawn position, and the ember it sends there.
+
+<img src="../images/statescript/graph-variables.png" alt="The Variables panel with a Bool, a Vector3 and an Entity variable" width="360">
+
 **Supported authoring types in Godot:**
 
 `Bool`, `Int`, `Float`, `Vector2`, `Vector3`, `Vector4`, `Plane`, and `Quaternion`.

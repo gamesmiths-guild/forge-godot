@@ -8,6 +8,8 @@ Forge is an engine-agnostic gameplay framework that provides a robust foundation
 
 For detailed documentation on the core framework concepts, see the [main Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
 
+![The Godot editor with a Forge scene, an effect in the Inspector and a Statescript graph in the bottom panel](images/quick-start/editor-overview.png)
+
 ## Architecture
 
 Forge for Godot connects the Forge system to Godot's node architecture through:
@@ -105,7 +107,7 @@ Statescript is a state-based scripting system for defining ability behaviors:
 When enabled, the plugin:
 
 1. Registers the ForgeBootstrap autoload.
-2. Adds the Forge tab to Godot's right dock.
+2. Adds the **Tags** dock and the **Statescript** panel to the editor.
 3. Loads and persists tag data.
 
 ### Entity Creation
@@ -137,7 +139,8 @@ Refer to your IDE's documentation for the specific settings locations. Most mode
 
 ## Next Steps
 
-- [Quick Start Guide](quick-start.md): Get started with Forge for Godot in minutes.
+- [Installation](installation.md): Requirements, Asset Store and manual installs, and the samples.
+- [Quick Start Guide](quick-start.md): Build a character, a burning campfire and a Statescript heal in about fifteen minutes.
 - [Gameplay Tags](gameplay-tags.md): Organize tags across sources, use the Tags dock, and repair broken references.
 - [Attribute Set Definitions](attribute-set-definitions.md): Define attribute sets in the inspector and have their C# class generated for you.
 - [Forge Nodes Documentation](nodes.md): Learn about the Forge nodes provided by the plugin.

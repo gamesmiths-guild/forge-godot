@@ -14,6 +14,10 @@ Because a state node owns all of its Subgraph ports, when the node deactivates, 
 
 For example, a node that switches between two combat stances could have two custom Subgraph ports. While the node is active, it activates the subgraph for the current stance and disables the other. When the node deactivates, both subgraphs are cleaned up regardless of which one was active.
 
+The dash in the Statescript sample shows a subgraph doing its job. `Play Animation` plays the roll; through its **Subgraph** port it owns a `Collision Override 3D`, which in turn owns the `Move Body 3D` that sweeps the body forward. When the clip finishes, `Play Animation` deactivates, and the move and the collision change go with it. Nothing in the graph has to stop the move or restore the mask.
+
+![The dash graph: Play Animation owns Collision Override 3D, which owns Move Body 3D](../images/statescript/dash-graph.png)
+
 ## Subgraph Port vs. OnActivate Port
 
 Every state node has both an **OnActivate** port (Event port) and a **Subgraph** port. Both emit a regular message when the state node activates. The critical difference is what happens when a disable signal is sent:
