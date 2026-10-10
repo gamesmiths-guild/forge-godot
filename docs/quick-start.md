@@ -1,480 +1,434 @@
-# Quick Start Guide
+# Quick Start
 
-This guide will help you quickly set up and use the Forge system in your Godot project.
+In about fifteen minutes you'll build a small 2D scene with Forge. It has a character with Health and Mana, a campfire that burns them, and a heal on the Space key. Almost all of it is resources and nodes made in the Godot editor. The only C# is two short scripts that move the character and draw its bars.
 
-> **Note:** For detailed information about how specific Forge systems work (attributes, effects, tags, etc.), please refer to the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).
+![The finished Quick Start: walking into the campfire, burning, walking out and healing](images/quick-start/quick-start.gif)
 
-If you'd like to see sample scenes demonstrating the system in action, install the optional `forge_samples` folder along with the plugin, or clone this repository and open it directly. See [The Sample Project](#the-sample-project) below.
+The finished version ships with the samples as **Demo 00 — Quick Start** (`forge_samples/demos/00_quick_start/`). Open it whenever you want to compare.
 
-## Installation
+- [Before you start](#before-you-start)
+- [Part 1 — A character that burns](#part-1--a-character-that-burns)
+- [Part 2 — A heal ability in Statescript](#part-2--a-heal-ability-in-statescript)
+- [Where to go next](#where-to-go-next)
 
-### Requirements
+> **Coming from code?** Every step has a collapsed **Prefer C#?** note showing the code equivalent. Resources and code can be mixed freely, so use whichever fits each piece. To build the same character entirely in C#, with no engine, follow the [core Quick Start](https://github.com/gamesmiths-guild/forge/blob/main/docs/quick-start.md).
 
-- Godot 4.7 or later, .NET version.
-- .NET SDK 8.0 or later.
-- **C# only.** Forge does not support GDScript-only projects.
+## Before you start
 
-### Steps
+You need **Godot 4.7+ .NET** and the **.NET 8 SDK** or later. Install **Forge Gameplay System** from the editor's **Asset Store** tab, build once, and enable the plugin under **Project Settings → Plugins**. The [installation guide](installation.md) has the details.
 
-1. Install **Forge Gameplay System** from the Godot Asset Store, via the **Asset Store** tab in the Godot editor.
+Forge works on any node, but this guide assumes a fresh 2D project. Create the folders `attributes/`, `effects/`, `abilities/`, `scenes/` and `scripts/` to match the sample's layout.
 
-   When choosing which files to import, keep `Directory.Build.props` selected. MSBuild imports it automatically, and it is what wires Forge into your build without any edit to your `.csproj`. The `forge_samples` folder is optional.
+## Part 1 — A character that burns
 
-2. If your project has no C# solution yet, create one via `Project > Tools > C# > Create C# solution`.
+### 1. Register the tags
 
-3. Back in the Godot editor, build your project by clicking `Build` in the top-right corner of the editor.
+Forge identifies things with **gameplay tags**: dot-separated names like `cue.burn` that live in tag source resources. Open the **Tags** dock, click **New Source** to create `tags.tres`, then add three tags with the **Tag Name** field: `cue.burn`, `cue.heal` and `cooldown.heal`.
 
-4. Enable **Forge Gameplay System** in `Project > Project Settings > Plugins`.
+<img src="images/quick-start/tags.png" alt="The Tags dock with cooldown.heal, cue.burn and cue.heal" width="420">
 
-> **Already have a `Directory.Build.props`?** Don't let Forge's copy replace it. Skip that file when importing, and add this line to your own instead:
-> ```xml
-> <Import Project="addons/forge/Forge.props" />
-> ```
+Part 1 only needs `cue.burn`. The other two are for Part 2. [Gameplay Tags](gameplay-tags.md) covers sources, the merged view and repairs.
 
-For manual installation, download the `.zip` attached to the [latest release](https://github.com/gamesmiths-guild/forge-godot/releases/latest) and extract it into your project root — it contains exactly the same files as the Asset Store package.
+### 2. Describe Health and Mana
 
-### The Sample Project
+Stats live in an **attribute set**. You can describe one in the Inspector and let the plugin write the class.
 
-The `forge_samples` folder contains 2D and 3D scenes demonstrating attributes, effects, abilities, cues, and Statescript in a running game. It is optional — skip it during import if you don't want sample code compiled into your project.
+1. In the FileSystem dock, right-click `attributes/` and choose **Create New → Resource → ForgeAttributeSetDefinition**. Save it as `hero_attributes.tres`.
+2. Set **Attribute Set Name** to `HeroAttributes`.
+3. Add two **Attributes**: `Health` and `Mana`, each with **Default Value** `100` and **Max Value** `100`.
+4. Save, then click **Build** (top right of the editor). The banner turns green once the class exists.
 
-The samples declare their own gameplay tags in `forge_samples/forge_samples_tags.tres`. To run them, open the **Tags** dock and click **Find Sources**, which will offer to add it.
+<img src="images/quick-start/attribute-set-definition.png" alt="A HeroAttributes definition with Health and Mana, showing the green built banner" width="420">
 
-## The ForgeManagers Singleton
+Attribute values are integers, which keeps the simulation deterministic. For a stat that needs decimals, set **Decimal Places**: a `Speed` of `475` with two decimal places reads as `4.75`. See [Attribute Set Definitions](attribute-set-definitions.md).
 
-When you enable the plugin, it automatically registers a `ForgeBootstrap` autoload that initializes the `ForgeManagers` singleton. This singleton provides access to core system managers:
-
-```csharp
-// Access the TagsManager and CuesManager from anywhere in your code
-var tagsManager = ForgeManagers.Instance.TagsManager;
-var cuesManager = ForgeManagers.Instance.CuesManager;
-
-// Request a tag through the TagsManager
-var playerTag = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "character.player");
-```
-
-The `ForgeManagers` singleton handles:
-
-- Initializing the tag system with registered tags.
-- Managing the cue system for audio/visual feedback.
-- Providing global access to these systems through a static Instance property.
-
-### Validation Behavior
-
-By default, validation is **enabled** in the Godot editor and during development builds. For exported **Release builds**, validation is automatically **disabled** unless the "Include Debug Symbols" option is checked during the export process. This ensures that validation checks are not run in production builds unless explicitly requested.
-
-## Creating Your First Forge Entity
-
-### Step 1: Create a Character Scene
-
-1. Create a new scene with a CharacterBody2D or CharacterBody3D as the root.
-2. Save the scene (e.g., "Player.tscn").
-
-### Step 2: Add Forge Components
-
-1. Add a ForgeEntity node as a child of your character.
-2. Add a ForgeAttributeSet node as a child of the ForgeEntity.
-
-Alternatively, you can implement the IForgeEntity interface directly. See the [CustomForgeEntity.cs](https://github.com/gamesmiths-guild/forge-godot/blob/main/forge_samples/demos/02_turnbased_2d/scripts/CustomForgeEntity.cs) in the 2D sample scenes for an example. This approach requires more work but gives you more control over your entity.
-
-### Step 3: Define an Attribute Set
-
-> **Prefer not to write code?** You can describe an attribute set in the inspector instead and have this class generated for you. See [Attribute Set Definitions](attribute-set-definitions.md). The rest of this guide works the same either way.
-
-1. Create a new C# script in your project (e.g., "PlayerAttributes.cs").
-2. Define your attribute set:
+<details>
+<summary><b>Prefer C#?</b> Write the attribute set as a class.</summary>
 
 ```csharp
 using Gamesmiths.Forge.Attributes;
 
-public class PlayerAttributes : AttributeSet
+public class HeroAttributes : AttributeSet
 {
     public EntityAttribute Health { get; private set; }
-    public EntityAttribute Strength { get; private set; }
-    public EntityAttribute Speed { get; private set; }
 
-    public PlayerAttributes()
+    public EntityAttribute Mana { get; private set; }
+
+    public HeroAttributes()
     {
-        // Initialize the attributes with the current, min and max values
+        // Current, minimum and maximum values.
         Health = InitializeAttribute(nameof(Health), 100, 0, 100);
-        Strength = InitializeAttribute(nameof(Strength), 10, 0, 99);
-        Speed = InitializeAttribute(nameof(Speed), 5, 0, 10);
+        Mana = InitializeAttribute(nameof(Mana), 100, 0, 100);
     }
 }
 ```
 
-> **Attribute values are integers**, by design — the simulation stays deterministic. When a stat needs decimals, store it scaled (e.g., `Speed = 475` meaning `4.75`) and declare the scale with `InitializeAttribute(nameof(Speed), 475, 0, 10_000, decimalPlaces: 2)`. The attribute then hands presentation code the converted value through `DisplayValue` / `ToDisplayString(...)`, and the `ForgeAttributeSet` inspector shows you what each raw number reads as. Everything you type in the editor — these values, modifier magnitudes, requirement bounds — stays raw. See [Attribute Values Are Integers](https://github.com/gamesmiths-guild/forge/blob/main/docs/attributes.md#attribute-values-are-integers).
- 
-### Step 4: Configure the Attribute Set
+Use one approach or the other for a given set name, not both.
+</details>
 
-1. Select the ForgeAttributeSet node in your scene.
-2. In the Inspector, set "Attribute Set Class" to "PlayerAttributes".
-3. Configure initial values for your attributes in the inspector.
+### 3. Build the player
 
-### Step 5: Add a Script to Your Character
+Create `scenes/player.tscn` with this tree:
+
+<img src="images/quick-start/player-scene.png" alt="The player scene tree" width="280">
+
+| Node | Type | Setup |
+| --- | --- | --- |
+| `Player` | `CharacterBody2D` | Attach `scripts/QuickStartPlayer.cs` (below). Set **Motion Mode** to *Floating*, since this is top-down. |
+| `CollisionShape2D` | `CollisionShape2D` | A `CircleShape2D` with radius `22`. |
+| `Body` | `Polygon2D` | Anything visible. The sample uses a light-blue circle. |
+| `ForgeEntity` | `ForgeEntity` | The node that makes `Player` a Forge entity. |
+| `HeroAttributes` | `ForgeAttributeSet` | Child of `ForgeEntity`. Set **Attribute Set Class** to `HeroAttributes`. |
+
+Choosing the class fills in **Initial Attribute Values** from the definition. Edit them per scene if this character should start differently.
+
+<img src="images/quick-start/attribute-set-node.png" alt="The ForgeAttributeSet node with HeroAttributes selected" width="420">
+
+The movement script is plain Godot and doesn't touch Forge:
 
 ```csharp
 using Godot;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Godot.Nodes;
 
-public partial class Player : CharacterBody2D
+public partial class QuickStartPlayer : CharacterBody2D
 {
-    private ForgeEntity? _forgeEntity;
-
-    public override void _Ready()
-    {
-        // Get a reference to our ForgeEntity component
-        _forgeEntity = GetNode<ForgeEntity>("ForgeEntity");
-    }
+    [Export]
+    public float Speed { get; set; } = 250;
 
     public override void _PhysicsProcess(double delta)
     {
-        if (_forgeEntity is null) return;
-
-        // Get the speed attribute from our entity
-        int speed = _forgeEntity.Attributes["PlayerAttributes.Speed"].CurrentValue;
-
-        // Get movement input
-        Vector2 direction = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
-
-        // Apply movement using the speed attribute
-        Velocity = direction * speed * 100;
+        Velocity = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down") * Speed;
         MoveAndSlide();
     }
-
-    public int GetHealthValue()
-    {
-        // Access health attribute directly from the ForgeEntity
-        return _forgeEntity?.Attributes["PlayerAttributes.Health"].CurrentValue ?? 0;
-    }
 }
 ```
 
-## Working with Tags
-
-Tags are hierarchical identifiers used throughout the Forge system for classification and targeting.
-
-### Using the Tags Editor
-
-Open the **Tags** dock in the right panel of the Godot editor. To add a tag, type its key in the **Tag Name** field using dot notation — for example `character.player` — pick the destination source beside it if the project has more than one, and press Enter.
-
-To remove a tag, click the **🗑️** on its row. That takes it out of *that source only*; if another source also declares it, the tag still exists.
-
-For everything else — organizing tags across sources, the Merged view, and repairing broken references — see [Gameplay Tags](gameplay-tags.md).
-
-### Configuring Entity Tags
-
-1. Select your ForgeEntity node.
-2. In the Inspector, locate the "Base Tags" property.
-3. Expand the Container Tags property.
-4. In the container, mark the checkbox next to the desired tags.
-
-### Checking Tags in Code
+**Show the bars.** Forge keeps gameplay state out of the UI, so drawing a bar is your game's job. It takes one event subscription. Add a `VBoxContainer` named `Bars` *below* `ForgeEntity` (so the entity is ready first). Give it two `ProgressBar`s, each with this script, and point **Entity** at `ForgeEntity`. Set **Attribute** to `HeroAttributes.Health` on one and `HeroAttributes.Mana` on the other.
 
 ```csharp
-// Check if an entity has a tag
-bool isPlayer = forgeEntity.Tags.AllTags.HasTag(
-    Tag.RequestTag(ForgeManagers.Instance.TagsManager, "character.player"));
-
-// Check for tag inheritance (will match "character.player.wizard" too)
-bool isCharacter = forgeEntity.Tags.AllTags.HasTag(
-    Tag.RequestTag(ForgeManagers.Instance.TagsManager, "character"));
-```
-
-Note: To add or remove tags at runtime, you need to use effects with ModifierTagsEffectComponent. See the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/quick-start.md) for examples.
-
-## Creating and Applying Effects
-
-The plugin offers an easy way to define new effects through resource files.
-
-### Step 1: Create an Effect Resource
-
-1. Right-click in the FileSystem panel and select "New Resource...".
-2. Choose "ForgeEffectData" as the resource type.
-3. Save the resource (e.g., "DamageEffect.tres").
-
-### Step 2: Configure the Effect
-
-1. Select the effect resource in the FileSystem panel.
-2. In the Inspector:
-   - Set "Name" to "Damage".
-   - Set "Duration Type" to "Instant" (for immediate damage).
-   - Add a modifier:
-     - Click "+ Add Element" under "Modifiers" to add one.
-     - Create a "New ForgeModifier".
-     - Set "Attribute" to "PlayerAttributes.Health".
-     - Set "Operation" to "FlatBonus".
-     - Set "Calculation Type" to "ScalableFloat".
-     - For the "Scalable Float" create a "New ForgeScalableFloat".
-     - Set "Base Value" to a negative value (e.g., -10).
-
-### Step 3: Apply the Effect in Code
-
-```csharp
-using Godot;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Effects;
-using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Godot.Nodes;
+using Godot;
 
-public partial class Enemy : CharacterBody2D
+public partial class AttributeBar : ProgressBar
 {
-    // Reference the effect resource in the Inspector
     [Export]
-    public ForgeEffectData? DamageEffectData { get; set; }
+    public ForgeEntity? Entity { get; set; }
 
-    private void AttackPlayer(Player player)
+    [Export]
+    public string Attribute { get; set; } = "HeroAttributes.Health";
+
+    private EntityAttribute? _attribute;
+
+    public override void _Ready()
     {
-        if (DamageEffectData == null) return;
+        if (Entity is null)
+        {
+            return;
+        }
 
-        // Get the player's ForgeEntity
-        var playerEntity = player.GetNode<ForgeEntity>("ForgeEntity");
+        _attribute = Entity.Attributes[Attribute];
+        _attribute.OnValueChanged += OnAttributeChanged;
+        OnAttributeChanged(_attribute, 0);
+    }
 
-        // Create and apply the effect
-        var effectData = DamageEffectData.GetEffectData();
-        var effect = new Effect(effectData, new EffectOwnership(this, this));
-        playerEntity.EffectsManager.ApplyEffect(effect);
+    public override void _ExitTree()
+    {
+        if (_attribute is not null)
+        {
+            _attribute.OnValueChanged -= OnAttributeChanged;
+        }
+    }
+
+    private void OnAttributeChanged(EntityAttribute attribute, int change)
+    {
+        MaxValue = attribute.Max;
+        Value = attribute.CurrentValue;
     }
 }
 ```
 
-## Using Area-Based Effects
+<img src="images/quick-start/attribute-bar.png" alt="An AttributeBar pointed at ForgeEntity and HeroAttributes.Health" width="420">
 
-The following principles apply similarly to EffectRayCast2D/3D and EffectShapeCast2D/3D nodes, with appropriate collision configuration for each node type.
+[Observing an Entity from a Godot Node](nodes.md#observing-an-entity-from-a-godot-node) covers the tag, effect and ability feeds as well.
 
-### Step 1: Create a Damage Area
+<details>
+<summary><b>Prefer C#?</b> Make the node itself the entity.</summary>
 
-1. Add an EffectArea2D (or EffectArea3D) node to your scene.
-2. Configure its collision shape.
-3. Set "Area Owner" to the node that should be considered the owner of the effects, if any.
-4. Set "Trigger Mode" to "OnEnter" to apply effects when entities enter the area.
+Instead of adding a `ForgeEntity` child, a node can implement `IForgeEntity` directly. That's more work, but it lets your own base class be the entity. `CustomForgeEntity.cs` in the Turn-Based 2D sample (`forge_samples/demos/02_turnbased_2d/scripts/`) is a complete example. Reading an attribute is the same either way:
 
-### Step 2: Add Effect to the Area
+```csharp
+int health = forgeEntity.Attributes["HeroAttributes.Health"].CurrentValue;
+```
+</details>
 
-1. Add a ForgeEffect node as a child of the EffectArea.
-2. In the Inspector, set "Effect Data" to your effect resource.
+### 4. Make fire
 
-### Step 3: Ensure Target Entities Have ForgeEntity Components
+An **effect** changes attributes and tags. Create `effects/burning.tres` with **Create New → Resource → ForgeEffectData** and set it up:
 
-Any entity that enters the area must have a ForgeEntity component or implement IForgeEntity to receive the effect.
+- **Name**: `Burning`.
+- **Modifiers**: add one, targeting `HeroAttributes` / `Health`. Leave the operation as *FlatBonus*, and under **Scalable Float** create a `ForgeScalableFloat` with **Base Value** `-5`.
+- **Duration Type**: *Infinite*. The area in the next step removes it when you walk out.
+- **Has Periodic Application**: on, with a **Period** of `0.5`. **Execute On Application**: on, so the first tick lands at once.
+- **Cues**: add a `ForgeCue` whose **Cue Keys** hold `cue.burn`. The effect announces itself and step 6 decides what that looks like.
 
-## Creating a Simple Ability
+<img src="images/quick-start/burning-effect.png" alt="The Burning effect: a -5 Health modifier, infinite, every 0.5 seconds" width="420">
 
-Let’s add a “SimpleAttack” ability to your player. This covers the full process: making the effect, the ability, a simple ability behavior, granting to the player, and using it in gameplay.
+The result is 5 damage every half second for as long as the effect is active. [Resources](resources.md) documents every field, including stacking, which this guide doesn't need.
 
-### Step 1: Create the Attack Effect Resource
+### 5. Place a campfire
 
-1. Right-click in the FileSystem panel, choose **New Resource > ForgeEffectData**.
-2. Save as `simple_attack_effect.tres`.
-3. In the Inspector, configure:
-   - `Name`: "PlayerAttack"
-   - `Duration Type`: "Instant"
-   - _Under Modifiers:_
-     1. Add a new ForgeModifier.
-     2. `Attribute`: `"PlayerAttributes.Health"`
-     3. `Operation`: `FlatBonus`
-     4. `Calculation Type`: `ScalableFloat`
-     5. For "Scalable Float," create a new ForgeScalableFloat, set its **Base Value** to (e.g.) `-20` for damage.
+Create `scenes/quick_start.tscn` with a `Node2D` root, and instance `player.tscn` into it. Then add the campfire:
 
-### Step 2: Implement the Ability Behavior
+| Node | Type | Setup |
+| --- | --- | --- |
+| `Campfire` | `EffectArea2D` | **Trigger Mode**: *OnStay*. Effects are applied on entering and removed on leaving. |
+| `CollisionShape2D` | `CollisionShape2D` | A `CircleShape2D` with radius `70`. |
+| `Burning` | `ForgeEffect` | Child of `Campfire`. Set **Effect Data** to `burning.tres`. |
 
-Create a new script called `SimpleAttackAbilityBehavior.cs`:
+<img src="images/quick-start/level-scene.png" alt="The level scene tree with the campfire, the player and the cue handlers" width="280">
+<img src="images/quick-start/campfire-area.png" alt="The EffectArea2D set to OnStay" width="420">
+
+The sample's ring, logs and flames are a `Polygon2D` and a `GPUParticles2D`, purely decorative. Run the scene and walk into the fire: the Health bar drops by 5 twice a second and stops when you step out.
+
+<details>
+<summary><b>Prefer C#?</b> Apply an effect from code.</summary>
+
+```csharp
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Nodes;
+using Gamesmiths.Forge.Godot.Resources;
+using Godot;
+
+public partial class Trap : Area2D
+{
+    [Export]
+    public ForgeEffectData? Burning { get; set; }
+
+    public override void _Ready()
+    {
+        BodyEntered += OnBodyEntered;
+    }
+
+    private void OnBodyEntered(Node2D body)
+    {
+        if (body.GetNodeOrNull<ForgeEntity>("ForgeEntity") is not { } target)
+        {
+            return;
+        }
+
+        var effect = new Effect(Burning!.GetEffectData(), new EffectOwnership(null, null));
+        ActiveEffectHandle? handle = target.EffectsManager.ApplyEffect(effect);
+
+        // An infinite effect stays until removed: target.EffectsManager.RemoveEffect(handle).
+    }
+}
+```
+
+`EffectRayCast2D/3D` and `EffectShapeCast2D/3D` apply effects the same way as the area. See [Forge Nodes](nodes.md#effect-nodes).
+</details>
+
+### 6. Show it with cues
+
+The effect raises `cue.burn` when it's applied, on every tick, and when it's removed. **Cue handlers** decide what that looks like. The plugin ships handlers for particles, sounds, animations, spawned scenes, camera shake and hit stop, so this step needs no code.
+
+Add a plain `Node` called `Cues` to the level, and under it:
+
+| Handler | Cue Tag | Setup |
+| --- | --- | --- |
+| `ParticlesCueHandler` | `cue.burn` | **Particles Path** `BurnParticles` (a `GPUParticles2D` under the player, **Emitting** off). Turn **One Shot On Execute** off: the flames burn from apply to remove instead of bursting each tick. |
+| `AnimationCueHandler` | `cue.burn` | **Player Path** `FxPlayer` (an `AnimationPlayer` under the player). **Execute Animation** `hit`: a 0.2 s clip that flashes `Body:color` red. |
+| `AudioCueHandler` | `cue.burn` | **Stream**: a fire loop. Turn **Play On Execute** off so the loop doesn't restart every tick. |
+
+![The three burn handlers](images/quick-start/burn-cues.png)
+
+Paths are resolved from the node the target entity lives on, so one set of handlers in the level serves every entity that catches fire. Run it again:
+
+![The player standing in the campfire, burning](images/quick-start/result-burning.png)
+
+<details>
+<summary><b>Prefer C#?</b> Write your own handler.</summary>
+
+When the library doesn't cover it, extend `ForgeCueHandler` and override the phases you need:
+
+```csharp
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Cues;
+using Gamesmiths.Forge.Godot.Nodes;
+using Godot;
+
+[GlobalClass]
+public partial class DamageNumbersCueHandler : ForgeCueHandler
+{
+    [Export]
+    public PackedScene? NumberScene { get; set; }
+
+    public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
+    {
+        if (NumberScene is null || parameters is null || forgeEntity is not Node { } node
+            || node.GetParent() is not Node2D body)
+        {
+            return;
+        }
+
+        var number = NumberScene.Instantiate<Label>();
+        number.Text = parameters.Value.Magnitude.ToString();
+        GetTree().CurrentScene.AddChild(number);
+        number.GlobalPosition = body.GlobalPosition;
+    }
+}
+```
+
+Set a cue's **Magnitude Type** to *AttributeValueChange* to receive the amount of Health actually lost in `parameters.Value.Magnitude`. See [Cue Nodes](nodes.md#cue-nodes).
+</details>
+
+## Part 2 — A heal ability in Statescript
+
+An **ability** is something an entity can do, with a cost, a cooldown, and a behavior that runs while it's active. The behavior can be a C# class or a **Statescript graph** built in the editor. This part builds the heal as a graph.
+
+### 1. Make the effects
+
+Four more `ForgeEffectData` resources in `effects/`, made the same way as `burning.tres`:
+
+| Resource | Setup |
+| --- | --- |
+| `heal.tres` | **Instant**, `+30` to `HeroAttributes.Health`, and a cue with key `cue.heal`. |
+| `heal_cost.tres` | **Instant**, `-25` to `HeroAttributes.Mana`. |
+| `heal_cooldown.tres` | **HasDuration** with **Duration** `2`. Add a **ModifierTags** component whose **Tags To Add** hold `cooldown.heal`. |
+| `mana_regen.tres` | **Infinite**, periodic every `1` second, `+5` to `HeroAttributes.Mana`. |
+
+<img src="images/quick-start/heal-effect.png" alt="The Heal effect" width="300">
+<img src="images/quick-start/heal-cooldown.png" alt="The Heal Cooldown effect, adding cooldown.heal for 2 seconds" width="300">
+
+A cooldown is simply an effect that adds a tag for a while. The ability is blocked while the tag is present.
+
+### 2. Draw the graph
+
+Create `abilities/heal_graph.tres` as a **StatescriptGraph** resource and double-click it. The **Statescript** panel opens at the bottom of the editor. Use **Add Node…** to place three nodes after **Entry**, and wire them left to right:
+
+![The heal graph: Entry, Input Action, Try Commit Ability, Apply Effect](images/quick-start/heal-graph.png)
+
+| Node | Setting | Connect |
+| --- | --- | --- |
+| **Input Action** (State → Input) | **Action** `ui_accept`, which is Space and Enter in every project. | Entry **Start** → **Input** |
+| **Try Commit Ability** (Condition) | **Commit** *CostAndCooldown*. | Input Action **OnPressed** → **Input** |
+| **Apply Effect** (Action) | **Effect** input: *Constant* with `heal.tres`. **Target** input: *Ability Owner*. | Try Commit **True** → **Input** |
+
+Read it left to right: once the ability is running, wait for Space. On each press, try to pay 25 Mana and start the cooldown, and if that worked, heal. A failed commit, from lack of Mana or a cooldown still running, follows **False**, which isn't connected, so nothing happens.
+
+Statescript graphs are made of **state** nodes that stay active (the Input Action keeps listening) and **action** and **condition** nodes that run instantly. The [Statescript guide](statescript/README.md) explains the model, and the [node reference](statescript/nodes/README.md) lists every node, including movement, physics, spawning and animation.
+
+### 3. Turn it into an ability
+
+Create `abilities/heal.tres` as a **ForgeAbilityData**:
+
+- **Name**: `Heal`.
+- **Cooldown Effects**: `heal_cooldown.tres`. **Cost Effect**: `heal_cost.tres`.
+- **Ability Behavior**: a new **StatescriptAbilityBehavior** whose **Statescript** is `heal_graph.tres`.
+
+<img src="images/quick-start/heal-ability.png" alt="The Heal ability data" width="420">
+
+### 4. Grant it to the player
+
+An entity has to be **granted** an ability before it can use it. The editor way is another effect: create `effects/grant_heal.tres`, **Infinite**, with a **GrantAbility** component. In its config, set **Ability Data** to `heal.tres` and turn on **Try Activate On Grant**. The graph then starts as soon as the grant lands, and its Input Action begins listening.
+
+<img src="images/quick-start/grant-heal.png" alt="Grant Heal: a GrantAbility component with Try Activate On Grant" width="420">
+
+In `player.tscn`, add two `ForgeEffect` children under `ForgeEntity`: **Mana Regen** with `mana_regen.tres` and **Grant Heal** with `grant_heal.tres`. A `ForgeEffect` under an entity is applied to it when the scene is ready.
+
+<details>
+<summary><b>Prefer C#?</b> Grant and activate from code, or write the behavior in C#.</summary>
+
+Grant permanently and keep the handle:
+
+```csharp
+using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Core;
+
+AbilityHandle heal = forgeEntity.Abilities.GrantAbilityPermanently(
+    HealAbility.GetAbilityData(), abilityLevel: 1, LevelComparison.None, sourceEntity: null);
+
+// Later, on input:
+heal.TryActivate(out AbilityActivationFailures failures);
+```
+
+A behavior can be C# instead of a graph. Derive a resource from `ForgeAbilityBehavior` (with `[Tool]` and `[GlobalClass]` so the Inspector offers it) and return an `IAbilityBehavior`:
 
 ```csharp
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Godot;
 
-// This script must have [Tool] and [GlobalClass] so it can be assigned in the inspector
 [Tool]
 [GlobalClass]
-public partial class SimpleAttackAbilityBehavior : ForgeAbilityBehavior
+public partial class HealAbilityBehavior : ForgeAbilityBehavior
 {
     [Export]
-    public required ForgeEffectData AttackEffect { get; set; }
+    public ForgeEffectData? Heal { get; set; }
 
-    public override IAbilityBehavior GetBehavior()
-    {
-        // Wrap effect application logic for the ability
-        return new SimpleAttackBehavior(AttackEffect.GetEffectData());
-    }
+    public override IAbilityBehavior GetBehavior() => new HealBehavior(Heal!.GetEffectData());
 }
 
-public sealed class SimpleAttackBehavior : IAbilityBehavior
+public sealed class HealBehavior(EffectData heal) : IAbilityBehavior
 {
-    private readonly EffectData _effectData;
-    private Effect? _attackEffect;
-
-    public SimpleAttackBehavior(EffectData effectData)
-    {
-        _effectData = effectData;
-    }
-
     public void OnStarted(AbilityBehaviorContext context)
     {
-        _attackEffect ??= new Effect(
-            _effectData,
-            new EffectOwnership(context.Owner, context.Source)
-        );
-
-        // (Optional) If using cooldowns via cooldown effect, try commit here
-        if (context.AbilityHandle.TryCommitCooldown())
+        if (context.AbilityHandle.TryCommitAbility())
         {
-            context.Target!.EffectsManager.ApplyEffect(_attackEffect);
+            context.Owner.EffectsManager.ApplyEffect(new Effect(heal, new EffectOwnership(context.Owner, context.Owner)));
         }
 
         context.InstanceHandle.End();
     }
 
-    public void OnEnded(AbilityBehaviorContext context) { }
+    public void OnEnded(AbilityBehaviorContext context)
+    {
+    }
 }
 ```
 
-### Step 3: Create the Ability Resource
+The Real-Time 3D sample (`forge_samples/demos/01_realtime_3d/`) implements all its abilities this way, and the Statescript sample rebuilds the same abilities as graphs, so you can compare the two.
+</details>
 
-1. Right-click, **New Resource > ForgeAbilityData**. Save as `simple_attack_ability.tres`.
-2. In Inspector:
-   - `Name`: "SimpleAttack"
-   - Assign your `SimpleAttackAbilityBehavior` script as the `AbilityBehavior`.
-   - Under the behavior, set the `AttackEffect` property to your `simple_attack_effect.tres`.
-   - (Optional) Add tags, cooldown, or requirements as desired.
+### 5. Feedback, and play
 
-### Step 4: Grant the Ability to the Player
+Add two more handlers under `Cues` for `cue.heal`: a `ParticlesCueHandler` pointing at a one-shot `HealParticles` emitter on the player, and an `AudioCueHandler` with a heal sound. Run the scene, burn a little, step out and press **Space**:
 
-In most games, you want the player to always have their basic attack. For clarity, grant this ability permanently and save the handle for activation.
+![The player healing, with green sparkles and a full Health bar](images/quick-start/result-heal.png)
 
-Update your Player script:
+Try pressing Space twice quickly: the second press does nothing until the 2 second cooldown ends. Keep healing and Mana runs dry after about six casts, until the regen catches up.
+
+## What you built
+
+![The finished scene in the editor, with the Burning effect in the Inspector and the heal graph in the Statescript panel](images/quick-start/editor-overview.png)
+
+- **Attributes** from a definition resource, put on a node by `ForgeAttributeSet`.
+- An **entity**: the `ForgeEntity` node, which owns attributes, tags, effects and abilities, and drives them every frame.
+- **Effects**: an instant heal, a periodic burn, a cost, a cooldown, a regen, and an effect whose only job is to grant an ability.
+- An **EffectArea2D** that applies and removes an effect by overlap.
+- **Cues** that decouple what happens from how it looks and sounds.
+- An **ability** with a cost and a cooldown, whose behavior is a **Statescript** graph.
+
+## Where to go next
+
+- Play the other samples: open `forge_samples/Main.tscn`. The Statescript demo has a dash, projectiles, a shield, enemies and waves, all as graphs. See [Sample Project](installation.md#sample-project).
+- [Statescript](statescript/README.md): the graph model, variables, subgraphs and the full node library.
+- [Forge Nodes](nodes.md) and [Forge Resources](resources.md): everything you can place in a scene or create in the FileSystem.
+- [Gameplay Tags](gameplay-tags.md) and [Attribute Set Definitions](attribute-set-definitions.md) in depth.
+- [Helper Classes](helper-classes.md) for common C# workflows.
+- The [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) explains the concepts behind all of this: how modifiers aggregate, stacking, ability lifecycles, events and more.
+
+## Under the hood
+
+Enabling the plugin registers a `ForgeBootstrap` autoload. It initializes the `ForgeManagers` singleton, which holds the `TagsManager` (built from your tag sources) and the `CuesManager` that routes cues to handlers:
 
 ```csharp
-using Godot;
-using Gamesmiths.Forge.Abilities;
-using Gamesmiths.Forge.Godot.Nodes;
-using Gamesmiths.Forge.Godot.Resources.Abilities;
+using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Tags;
 
-public partial class Player : CharacterBody2D
-{
-    private ForgeEntity? _forgeEntity;
-    private AbilityHandle? _attackHandle;
-
-    [Export]
-    public ForgeAbilityData? SimpleAttackAbilityData { get; set; }
-
-    public override void _Ready()
-    {
-        _forgeEntity = GetNode<ForgeEntity>("ForgeEntity");
-        if (_forgeEntity != null && SimpleAttackAbilityData != null)
-        {
-            // Grant ability permanently and get handle
-            _attackHandle = _forgeEntity.Abilities.GrantAbilityPermanently(
-                SimpleAttackAbilityData.GetAbilityData(),
-                abilityLevel: 1,
-                levelOverridePolicy: Core.LevelComparison.None,
-                sourceEntity: null // or the object granting the ability
-            );
-        }
-    }
-
-    public override void _Input(InputEvent @event)
-    {
-        // On attack input (e.g., pressing "attack"), activate the ability
-        if (@event.IsActionPressed("attack") && _attackHandle != null)
-        {
-            // Target selection logic here; for example, get nearest enemy
-            // For simplicity, suppose target is set externally
-            IForgeEntity? target = GetNearestEnemy();
-            if (target != null)
-            {
-                _attackHandle.TryActivate(out var failures, target);
-            }
-        }
-    }
-
-    private IForgeEntity? GetNearestEnemy()
-    {
-        // Your targeting logic ...
-        return null;
-    }
-}
+Tag burn = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.burn");
+bool burning = forgeEntity.Tags.AllTags.HasTag(burn);
 ```
 
-**Note:**
-
-You can also grant abilities via effects using the **GrantAbility** effect component, which links the ability's lifetime to the effect (for temporary or conditional grants). To use this method, add a `ForgeEffectData` with a **GrantAbility** component, apply the effect to the entity, and fetch the handle with `TryGetAbility()`.
-
-**Summary:**
-- Create a `ForgeEffectData` for your damage.
-- Create an ability behavior (with `[Tool]` and `[GlobalClass]`).
-- Create a `ForgeAbilityData` and assign the behavior/effect to it.
-- Add the ability to your player (via API or effect) and hold onto the handle.
-- Call `Activate` on input, passing the intended target.
-
-This pattern works for simple and complex abilities alike; just expand the effect logic and ability behavior for more advanced needs.
-
-## Setting Up Visual Feedback with Cues
-
-> **Check the library first.** Particles, a spawned scene, audio, an animation, camera shake and hit stop already have handlers that ship with the plugin — add the node, set its `CueTag`, fill in the exports. See the [cue handler library](nodes.md#cue-handler-library). The steps below are for feedback none of those covers.
-
-### Step 1: Create a Cue Handler
-
-```csharp
-using Godot;
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Cues;
-using Gamesmiths.Forge.Godot.Nodes;
-
-[GlobalClass]
-public partial class DamageCueHandler : ForgeCueHandler
-{
-    // Reference a visual effect scene in the Inspector
-    [Export]
-    public PackedScene? DamageEffectScene { get; set; }
-
-    public override void _CueOnExecute(IForgeEntity forgeEntity, CueParameters? parameters)
-    {
-        // Ensure we have valid parameters and scene
-        if (parameters == null || DamageEffectScene == null) return;
-        if (forgeEntity is not Node node) return;
-
-        // Create the visual effect
-        Node2D effect = DamageEffectScene.Instantiate<Node2D>();
-        GetTree().Root.AddChild(effect);
-
-        // Position the effect at the entity
-        if (node.GetParent() is Node2D node2D)
-        {
-            effect.GlobalPosition = node2D.GlobalPosition;
-        }
-
-        // Scale the effect based on damage amount
-        float magnitude = parameters.Value.Magnitude;
-        effect.Scale = Vector2.One * Mathf.Clamp(Mathf.Abs(magnitude) / 10f, 0.5f, 2.0f);
-    }
-}
-```
-
-### Step 2: Add the Cue Handler to Your Scene
-
-1. Add your custom cue handler to the scene.
-2. Go to the Forge tab and add a new tag for your cue (e.g., "cue.effect.damage").
-3. Set the "Cue Tag" property to the cue handler node you created.
-
-### Step 3: Update Your Effect Resource to Trigger the Cue
-
-1. Select your effect resource.
-2. In the Inspector, add a cue:
-   - Click "+ Add Element" under "Cues".
-   - Create a "New ForgeCue".
-   - Under "Cue Keys" create a "New ForgeTagContainer"
-   - Set the container to match your handler's tag (e.g., "cue.effect.damage").
-   - Set "Magnitude Type" to "AttributeValueChange".
-   - Select "PlayerAttributes.Health" as your "Magnitude Attribute".
-
-## Next Steps
-
-- Learn more about the [Forge nodes](nodes.md) provided by the plugin.
-- Browse all available [Forge resources](resources.md) for configuring effects, abilities, tags, and more.
-- Build ability behaviors visually with [Statescript](statescript/README.md) — including the spatial, physics, input and interop nodes that let a dash, a projectile or an area of effect be authored instead of coded. See [Reaching the Engine](statescript/README.md#reaching-the-engine).
-- Discover [helper classes](helper-classes.md) for streamlining common Forge workflows in Godot.
-- Explore the scenes in the `forge_samples` folder.
-- Check out the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md) for advanced topics and reference.
+Forge validates its data at runtime in the editor and in debug builds. Exported release builds skip validation unless **Include Debug Symbols** is checked in the export.

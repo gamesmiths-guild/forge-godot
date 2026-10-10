@@ -60,7 +60,7 @@ For example, the `SetVariable` action node reads a value from an input property 
 
 Shared variables are **entity-level values** accessible by all Statescript graph instances running on the same entity. They live on the `IForgeEntity.SharedVariables` property and provide cross-ability communication.
 
-> **Note:** [Attributes](../quick-start.md#step-3-define-an-attribute-set) and [Tags](../quick-start.md#working-with-tags) are also shared across all abilities on an entity and are often the preferred way to communicate state between graphs. Attributes handle numeric values and Tags handle boolean-like flags, and both integrate directly with the rest of Forge (effects, requirements, resolvers). Shared variables are useful when Attributes and Tags are not sufficient, for example when you need to share types beyond integer values and flags, or when you need entity-wide mutable state that doesn't map naturally to an attribute or tag.
+> **Note:** [Attributes](../attribute-set-definitions.md) and [Tags](../gameplay-tags.md) are also shared across all abilities on an entity and are often the preferred way to communicate state between graphs. Attributes handle numeric values and Tags handle boolean-like flags, and both integrate directly with the rest of Forge (effects, requirements, resolvers). Shared variables are useful when Attributes and Tags are not sufficient, for example when you need to share types beyond integer values and flags, or when you need entity-wide mutable state that doesn't map naturally to an attribute or tag.
 
 **Example use cases:**
 

@@ -163,4 +163,4 @@ Commit the contents of `res://forge_generated/`. They are ordinary source files,
 
 - [Forge Nodes](nodes.md#forgeattributeset) — the `ForgeAttributeSet` node that puts a set on an entity.
 - [Resources](resources.md) — the effect, cue and requirement resources that consume attributes.
-- [Quick Start](quick-start.md) — the code-first path for defining an attribute set.
+- [Quick Start](quick-start.md) — builds a scene around a definition, with the hand-written class shown alongside.
