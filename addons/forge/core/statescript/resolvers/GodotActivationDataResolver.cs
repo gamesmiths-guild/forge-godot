@@ -30,10 +30,13 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Resolvers;
 /// </remarks>
 internal sealed class GodotActivationDataResolver : IPropertyResolver
 {
-	private readonly Type _activationContextType;
-	private readonly PropertyInfo _dataProperty;
+	private readonly Type _activationDataType;
 	private readonly Func<object, object?> _readMember;
 	private readonly Func<object, Variant128> _convert;
+
+	// Taken from the context itself on first resolve: an AOT build has that type, but not necessarily one built with
+	// MakeGenericType.
+	private PropertyInfo? _dataProperty;
 
 	/// <inheritdoc/>
 	public Type ValueType { get; }
@@ -44,8 +47,7 @@ internal sealed class GodotActivationDataResolver : IPropertyResolver
 		Func<object, Variant128> convert,
 		Type valueType)
 	{
-		_activationContextType = typeof(AbilityBehaviorContext<>).MakeGenericType(activationDataType);
-		_dataProperty = _activationContextType.GetProperty(nameof(AbilityBehaviorContext<int>.Data))!;
+		_activationDataType = activationDataType;
 		_readMember = readMember;
 		_convert = convert;
 		ValueType = valueType;
@@ -82,12 +84,13 @@ internal sealed class GodotActivationDataResolver : IPropertyResolver
 	/// <inheritdoc/>
 	public Variant128 Resolve(GraphContext graphContext)
 	{
-		object? activationContext = graphContext.ActivationContext;
-		if (activationContext is null || !_activationContextType.IsInstanceOfType(activationContext))
+		if (graphContext.ActivationContext is not AbilityBehaviorContext activationContext
+			|| activationContext.DataType != _activationDataType)
 		{
 			return default;
 		}
 
+		_dataProperty ??= activationContext.GetType().GetProperty(nameof(AbilityBehaviorContext<int>.Data))!;
 		object? data = _dataProperty.GetValue(activationContext);
 		if (data is null)
 		{
