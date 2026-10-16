@@ -95,10 +95,10 @@ public partial class RandomElementResolverResource : StatescriptResolverResource
 			return false;
 		}
 
-		objectResolver = (IObjectResolver)Activator.CreateInstance(
-			typeof(ObjectRandomElementResolver<>).MakeGenericType(sourceObjectArray.ElementType),
+		objectResolver = ArrayResolverResourceUtilities.CreateObjectAccessResolver(
+			typeof(ObjectRandomElementResolver<>),
 			sourceObjectArray,
-			new ForgeRandom())!;
+			new ForgeRandom());
 
 		return true;
 	}

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -55,24 +56,17 @@ internal static class ArrayResolverResourceUtilities
 		Type elementType,
 		IReadOnlyList<IObjectResolver> elements)
 	{
-		Type resolverInterface = typeof(IObjectResolver<>).MakeGenericType(elementType);
-		var typedElements = Array.CreateInstance(resolverInterface, elements.Count);
-
-		for (int i = 0; i < elements.Count; i++)
+		var factory = new ObjectResolverFactory(typeof(ObjectArrayCompositeResolver<>), [elements]);
+		if (TryCreateRegistered(elementType, factory, out object? composite))
 		{
-			if (!resolverInterface.IsInstanceOfType(elements[i]))
-			{
-				GD.PushError(
-					$"Statescript: array element {i} resolves to '{elements[i].ValueType.Name}', which is not " +
-					$"assignable to the array element type '{elementType.Name}'.");
-				return null;
-			}
-
-			typedElements.SetValue(elements[i], i);
+			return (IObjectArrayResolver?)composite;
 		}
 
-		Type compositeType = typeof(ObjectArrayCompositeResolver<>).MakeGenericType(elementType);
-		return (IObjectArrayResolver)Activator.CreateInstance(compositeType, [typedElements])!;
+		GD.PushError(
+			$"Statescript: array element {factory.IncompatibleElement} resolves to " +
+			$"'{elements[factory.IncompatibleElement].ValueType.Name}', which is not assignable to the array element " +
+			$"type '{elementType.Name}'.");
+		return null;
 	}
 
 	/// <summary>
@@ -86,25 +80,19 @@ internal static class ArrayResolverResourceUtilities
 		IObjectArrayResolver source,
 		IReadOnlyList<IObjectResolver> elements)
 	{
-		Type elementType = source.ElementType;
-		Type resolverInterface = typeof(IObjectResolver<>).MakeGenericType(elementType);
-		var typedElements = Array.CreateInstance(resolverInterface, elements.Count);
-
-		for (int i = 0; i < elements.Count; i++)
+		var factory = new ObjectResolverFactory(typeof(ObjectAppendResolver<>), [source, elements]);
+		if (TryCreateRegistered(source.ElementType, factory, out object? append))
 		{
-			if (!resolverInterface.IsInstanceOfType(elements[i]))
-			{
-				GD.PushError(
-					$"Statescript: Append resolver element {i} resolves to '{elements[i].ValueType.Name}', which is " +
-					$"not assignable to the array element type '{elementType.Name}'. Skipping the append.");
-				return null;
-			}
-
-			typedElements.SetValue(elements[i], i);
+			return (IObjectArrayResolver?)append;
 		}
 
-		Type resolverType = typeof(ObjectAppendResolver<>).MakeGenericType(elementType);
-		return (IObjectArrayResolver)Activator.CreateInstance(resolverType, [source, typedElements])!;
+		GD.PushError(factory.IncompatibleElement < 0
+			? $"Statescript: Append resolver source '{source.ElementType.Name}[]' is not an array of a registered " +
+				"object variable type. Skipping the append."
+			: $"Statescript: Append resolver element {factory.IncompatibleElement} resolves to " +
+				$"'{elements[factory.IncompatibleElement].ValueType.Name}', which is not assignable to the array " +
+				$"element type '{source.ElementType.Name}'. Skipping the append.");
+		return null;
 	}
 
 	/// <summary>
@@ -121,11 +109,10 @@ internal static class ArrayResolverResourceUtilities
 		IObjectArrayResolver source,
 		params object?[] additionalArguments)
 	{
-		Type closedType = openGenericType.MakeGenericType(source.ElementType);
-		object?[] arguments = new object?[additionalArguments.Length + 1];
-		arguments[0] = source;
-		Array.Copy(additionalArguments, 0, arguments, 1, additionalArguments.Length);
-		return (IObjectArrayResolver)Activator.CreateInstance(closedType, arguments)!;
+		return (IObjectArrayResolver)CreateObjectResolver(
+			source.ElementType,
+			openGenericType,
+			[source, .. additionalArguments]);
 	}
 
 	/// <summary>
@@ -143,11 +130,33 @@ internal static class ArrayResolverResourceUtilities
 		IObjectArrayResolver source,
 		params object?[] additionalArguments)
 	{
-		Type closedType = openGenericType.MakeGenericType(source.ElementType);
-		object?[] arguments = new object?[additionalArguments.Length + 1];
-		arguments[0] = source;
-		Array.Copy(additionalArguments, 0, arguments, 1, additionalArguments.Length);
-		return (IObjectResolver)Activator.CreateInstance(closedType, arguments)!;
+		return (IObjectResolver)CreateObjectResolver(
+			source.ElementType,
+			openGenericType,
+			[source, .. additionalArguments]);
+	}
+
+	/// <summary>
+	/// Instantiates an object-lane resolver (e.g. <c>ConditionalObjectResolver&lt;T&gt;</c>) closed over
+	/// <paramref name="elementType"/>.
+	/// </summary>
+	/// <param name="elementType">The type argument to close the resolver over.</param>
+	/// <param name="openGenericType">The open generic resolver type.</param>
+	/// <param name="arguments">The constructor arguments, in order.</param>
+	/// <returns>The closed resolver.</returns>
+	internal static object CreateObjectResolver(Type elementType, Type openGenericType, params object?[] arguments)
+	{
+		if (TryCreateRegistered(
+			elementType,
+			new ObjectResolverFactory(openGenericType, arguments),
+			out object? resolver))
+		{
+			return resolver!;
+		}
+
+		// Only registered object types can be closed ahead of time. Anything else (a conditional over EffectOwnership,
+		// say) is closed at runtime, which AOT builds support for reference types only.
+		return Activator.CreateInstance(openGenericType.MakeGenericType(elementType), arguments)!;
 	}
 
 	/// <summary>
@@ -326,5 +335,110 @@ internal static class ArrayResolverResourceUtilities
 		}
 
 		return resolver;
+	}
+
+	private static bool TryCreateRegistered(Type elementType, ObjectResolverFactory factory, out object? resolver)
+	{
+		if (!StatescriptObjectVariableTypeRegistry.TryGetByClrType(
+			elementType,
+			out StatescriptObjectVariableType? objectType))
+		{
+			resolver = null;
+			return false;
+		}
+
+		resolver = objectType.Accept(factory);
+		return resolver is not null;
+	}
+
+	// Closes the object-lane resolvers with the element type as a compile-time type argument, so AOT builds have them.
+	private sealed class ObjectResolverFactory(Type openGenericType, object?[] arguments)
+		: StatescriptObjectVariableType.IVisitor<object?>
+	{
+		public int IncompatibleElement { get; private set; } = -1;
+
+		public object? Visit<T>()
+		{
+			if (openGenericType == typeof(ObjectArrayCompositeResolver<>))
+			{
+				return TryCastElements(Arg<IReadOnlyList<IObjectResolver>>(0), out IObjectResolver<T>[] elements)
+					? new ObjectArrayCompositeResolver<T>(elements)
+					: null;
+			}
+
+			if (openGenericType == typeof(ObjectAppendResolver<>))
+			{
+				return TryCastElements(Arg<IReadOnlyList<IObjectResolver>>(1), out IObjectResolver<T>[] elements)
+					? new ObjectAppendResolver<T>(Arg<IObjectArrayResolver<T>>(0), elements)
+					: null;
+			}
+
+			return openGenericType switch
+			{
+				_ when openGenericType == typeof(ElementResolver<>) => new ElementResolver<T>(),
+				_ when openGenericType == typeof(ConditionalObjectResolver<>) => new ConditionalObjectResolver<T>(
+					Arg<IPropertyResolver>(0),
+					Arg<IObjectResolver<T>>(1),
+					Arg<IObjectResolver<T>>(2)),
+				_ when openGenericType == typeof(ObjectConcatResolver<>) =>
+					new ObjectConcatResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IObjectArrayResolver<T>>(1)),
+				_ when openGenericType == typeof(ObjectDistinctResolver<>) =>
+					new ObjectDistinctResolver<T>(Arg<IObjectArrayResolver<T>>(0)),
+				_ when openGenericType == typeof(ObjectExceptResolver<>) =>
+					new ObjectExceptResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IObjectArrayResolver<T>>(1)),
+				_ when openGenericType == typeof(ObjectIntersectResolver<>) =>
+					new ObjectIntersectResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IObjectArrayResolver<T>>(1)),
+				_ when openGenericType == typeof(ObjectElementAtResolver<>) =>
+					new ObjectElementAtResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IPropertyResolver>(1)),
+				_ when openGenericType == typeof(ObjectFirstResolver<>) =>
+					new ObjectFirstResolver<T>(Arg<IObjectArrayResolver<T>>(0)),
+				_ when openGenericType == typeof(ObjectLastResolver<>) =>
+					new ObjectLastResolver<T>(Arg<IObjectArrayResolver<T>>(0)),
+				_ when openGenericType == typeof(ObjectOrderByResolver<>) => new ObjectOrderByResolver<T>(
+					Arg<IObjectArrayResolver<T>>(0),
+					Arg<IPropertyResolver>(1),
+					Arg<SortDirection>(2)),
+				_ when openGenericType == typeof(ObjectRemoveAtResolver<>) =>
+					new ObjectRemoveAtResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IPropertyResolver>(1)),
+				_ when openGenericType == typeof(ObjectReverseResolver<>) =>
+					new ObjectReverseResolver<T>(Arg<IObjectArrayResolver<T>>(0)),
+				_ when openGenericType == typeof(ObjectSkipResolver<>) =>
+					new ObjectSkipResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IPropertyResolver>(1)),
+				_ when openGenericType == typeof(ObjectTakeResolver<>) =>
+					new ObjectTakeResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IPropertyResolver>(1)),
+				_ when openGenericType == typeof(ObjectWhereResolver<>) =>
+					new ObjectWhereResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IPropertyResolver>(1)),
+				_ when openGenericType == typeof(ObjectRandomElementResolver<>) =>
+					new ObjectRandomElementResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IRandom>(1)),
+				_ when openGenericType == typeof(ObjectShuffleResolver<>) =>
+					new ObjectShuffleResolver<T>(Arg<IObjectArrayResolver<T>>(0), Arg<IRandom>(1)),
+				_ => throw new ArgumentException(
+					$"'{openGenericType.Name}' is not an object-lane resolver this factory closes.",
+					nameof(openGenericType)),
+			};
+		}
+
+		private TArg Arg<TArg>(int index)
+		{
+			return (TArg)arguments[index]!;
+		}
+
+		private bool TryCastElements<T>(IReadOnlyList<IObjectResolver> elements, out IObjectResolver<T>[] typedElements)
+		{
+			typedElements = new IObjectResolver<T>[elements.Count];
+
+			for (int i = 0; i < elements.Count; i++)
+			{
+				if (elements[i] is not IObjectResolver<T> typedElement)
+				{
+					IncompatibleElement = i;
+					return false;
+				}
+
+				typedElements[i] = typedElement;
+			}
+
+			return true;
+		}
 	}
 }

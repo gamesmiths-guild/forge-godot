@@ -44,10 +44,10 @@ public partial class ShuffleResolverResource : ArrayTransformResolverResourceBas
 
 		if (sourceObjectArray is not null)
 		{
-			objectArrayResolver = (IObjectArrayResolver)Activator.CreateInstance(
-				typeof(ObjectShuffleResolver<>).MakeGenericType(sourceObjectArray.ElementType),
+			objectArrayResolver = ArrayResolverResourceUtilities.CreateObjectArrayOperation(
+				typeof(ObjectShuffleResolver<>),
 				sourceObjectArray,
-				random)!;
+				random);
 			return true;
 		}
 

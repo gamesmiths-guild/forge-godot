@@ -19,6 +19,9 @@ public abstract class StatescriptObjectVariableType<T> : StatescriptObjectVariab
 	public sealed override Type ClrType => typeof(T);
 
 	/// <inheritdoc/>
+	public sealed override Type ArrayClrType => typeof(T[]);
+
+	/// <inheritdoc/>
 	public sealed override void DefineGraphVariable(GraphVariableDefinitions definitions, StringKey name)
 	{
 		definitions.DefineObjectVariable<T>(name);
@@ -52,5 +55,11 @@ public abstract class StatescriptObjectVariableType<T> : StatescriptObjectVariab
 	public sealed override IObjectArrayResolver BuildArrayVariableResolver(StringKey variableName, VariableScope scope)
 	{
 		return new ObjectArrayVariableResolver<T>(variableName, scope);
+	}
+
+	/// <inheritdoc/>
+	public sealed override TResult Accept<TResult>(IVisitor<TResult> visitor)
+	{
+		return visitor.Visit<T>();
 	}
 }
