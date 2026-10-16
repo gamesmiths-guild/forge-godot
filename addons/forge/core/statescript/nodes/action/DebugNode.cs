@@ -42,14 +42,22 @@ public sealed class DebugNode(
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		Type clrType =
-			!string.IsNullOrEmpty(_objectTypeId)
+		Type clrType;
+		if (!string.IsNullOrEmpty(_objectTypeId)
 			&& StatescriptObjectVariableTypeRegistry.TryGet(
 				_objectTypeId,
-				out StatescriptObjectVariableType? descriptor)
-					? descriptor.ClrType
-					: StatescriptVariableTypeConverter.ToSystemType(_valueType);
-		inputProperties.Add(new InputProperty("Value", _isArray ? clrType.MakeArrayType() : clrType));
+				out StatescriptObjectVariableType? descriptor))
+		{
+			clrType = _isArray ? descriptor.ArrayClrType : descriptor.ClrType;
+		}
+		else
+		{
+			clrType = _isArray
+				? StatescriptVariableTypeConverter.ToSystemArrayType(_valueType)
+				: StatescriptVariableTypeConverter.ToSystemType(_valueType);
+		}
+
+		inputProperties.Add(new InputProperty("Value", clrType));
 	}
 
 	/// <inheritdoc/>
