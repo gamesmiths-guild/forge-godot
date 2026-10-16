@@ -2,6 +2,7 @@
 
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
@@ -17,5 +18,10 @@ public partial class SpreadFireAbilityBehavior : ForgeAbilityBehavior
 	public override IAbilityBehavior GetBehavior()
 	{
 		return new SpreadFireAbilityBehaviorImplementation(FireEffectUID);
+	}
+
+	public override AbilityTriggerData CreateEventTrigger(Tag triggerTag, int priority)
+	{
+		return AbilityTriggerData.ForEvent<DamageType>(triggerTag, priority);
 	}
 }

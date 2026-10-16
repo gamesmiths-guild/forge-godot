@@ -1,8 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Effects;
 using Godot;
@@ -143,30 +141,12 @@ public partial class ForgeAbilityData : Resource
 		switch (TriggerSource)
 		{
 			case TriggerSource.Event:
-				IAbilityBehavior? behavior = AbilityBehavior?.GetBehavior();
-
-				if (behavior is not null)
-				{
-					System.Type behaviorType = behavior.GetType();
-					System.Type? payloadInterface =
-						System.Array.Find(behaviorType.GetInterfaces(), x =>
-							x.IsGenericType &&
-							x.GetGenericTypeDefinition() == typeof(IAbilityBehavior<>));
-
-					if (payloadInterface is not null)
-					{
-						System.Type payloadType = payloadInterface.GetGenericArguments()[0];
-						MethodInfo method = typeof(AbilityTriggerData)
-							.GetMethods(BindingFlags.Public | BindingFlags.Static)
-							.First(x => x.Name == nameof(AbilityTriggerData.ForEvent)
-								&& x.IsGenericMethodDefinition)
-							.MakeGenericMethod(payloadType);
-
-						return (AbilityTriggerData)method.Invoke(null, [triggerTag, Priority])!;
-					}
-				}
-
-				return AbilityTriggerData.ForEvent(triggerTag, Priority);
+				AbilityTriggerData eventTrigger = AbilityBehavior?.CreateEventTrigger(triggerTag, Priority)
+					?? AbilityTriggerData.ForEvent(triggerTag, Priority);
+#if TOOLS
+				ReportDroppedPayload(eventTrigger, triggerTag);
+#endif
+				return eventTrigger;
 			case TriggerSource.TagAdded:
 				return AbilityTriggerData.ForTagAdded(triggerTag);
 			case TriggerSource.TagPresent:
@@ -175,4 +155,31 @@ public partial class ForgeAbilityData : Resource
 				return null;
 		}
 	}
+
+#if TOOLS
+	// A typed trigger can't be discovered by reflection in AOT builds, so a typed behavior has to name its payload
+	// type through CreateEventTrigger. Missing that would only drop the payload, so it is caught here in the editor.
+	private void ReportDroppedPayload(AbilityTriggerData eventTrigger, Tags.Tag triggerTag)
+	{
+		if (AbilityBehavior is null || eventTrigger != AbilityTriggerData.ForEvent(triggerTag, Priority))
+		{
+			return;
+		}
+
+		System.Type? payloadInterface = System.Array.Find(
+			AbilityBehavior.GetBehavior().GetType().GetInterfaces(),
+			x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IAbilityBehavior<>));
+
+		if (payloadInterface is null)
+		{
+			return;
+		}
+
+		string payloadType = payloadInterface.GetGenericArguments()[0].Name;
+		GD.PushError(
+			$"Ability '{Name}': {AbilityBehavior.GetType().Name} builds an IAbilityBehavior<{payloadType}> but does " +
+			"not override CreateEventTrigger, so the event payload is dropped. Override it to return " +
+			$"AbilityTriggerData.ForEvent<{payloadType}>(triggerTag, priority).");
+	}
+#endif
 }
