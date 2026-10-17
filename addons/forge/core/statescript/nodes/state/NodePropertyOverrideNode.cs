@@ -48,8 +48,9 @@ public class NodePropertyOverrideNode(
 		List<InputProperty> inputProperties,
 		List<OutputVariable> outputVariables)
 	{
-		Type clrType = InteropValues.ToClrType(_valueType);
-		inputProperties.Add(new InputProperty("Value", _isArray ? clrType.MakeArrayType() : clrType));
+		inputProperties.Add(new InputProperty(
+			"Value",
+			_isArray ? InteropValues.ToClrArrayType(_valueType) : InteropValues.ToClrType(_valueType)));
 	}
 
 	/// <inheritdoc/>

@@ -2,6 +2,7 @@
 
 using System;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -122,11 +123,12 @@ public partial class ConditionalResolverResource : StatescriptResolverResource
 			return false;
 		}
 
-		objectResolver = (IObjectResolver)Activator.CreateInstance(
-			typeof(ConditionalObjectResolver<>).MakeGenericType(whenTrueResolver.ValueType),
+		objectResolver = (IObjectResolver)ArrayResolverResourceUtilities.CreateObjectResolver(
+			whenTrueResolver.ValueType,
+			typeof(ConditionalObjectResolver<>),
 			BuildConditionResolver(graph),
 			whenTrueResolver,
-			whenFalseResolver)!;
+			whenFalseResolver);
 
 		return true;
 	}

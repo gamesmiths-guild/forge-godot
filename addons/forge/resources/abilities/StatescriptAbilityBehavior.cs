@@ -8,6 +8,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Providers;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Resources.Abilities;
@@ -77,19 +78,14 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 
 		_cachedGraph ??= StatescriptGraphBuilder.Build(Statescript);
 
-		if (!_providerResolved)
-		{
-			_cachedProvider = FindActivationDataProvider(Statescript);
-			_providerResolved = true;
-		}
+		return GetActivationDataProvider()?.CreateGraphBehavior(_cachedGraph) ?? new GraphAbilityBehavior(_cachedGraph);
+	}
 
-		if (_cachedProvider is not null)
-		{
-			Type behaviorType = typeof(GraphAbilityBehavior<>).MakeGenericType(_cachedProvider.DataType);
-			return (IAbilityBehavior)Activator.CreateInstance(behaviorType, _cachedGraph)!;
-		}
-
-		return new GraphAbilityBehavior(_cachedGraph);
+	/// <inheritdoc/>
+	public override AbilityTriggerData CreateEventTrigger(Tag triggerTag, int priority)
+	{
+		return GetActivationDataProvider()?.CreateEventTrigger(triggerTag, priority)
+			?? base.CreateEventTrigger(triggerTag, priority);
 	}
 
 	// Only the read-side resolver counts: it means this graph reads the data its own ability was activated with, so the
@@ -113,6 +109,17 @@ public partial class StatescriptAbilityBehavior : ForgeAbilityBehavior
 		}
 
 		return null;
+	}
+
+	private IAbilityActivationDataProvider? GetActivationDataProvider()
+	{
+		if (!_providerResolved && Statescript is not null)
+		{
+			_cachedProvider = FindActivationDataProvider(Statescript);
+			_providerResolved = true;
+		}
+
+		return _cachedProvider;
 	}
 
 	private void InvalidateCachedBehavior()

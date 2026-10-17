@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(LocalForgeProjectPath)" Condition="Exists('$(LocalForgeProjectPath)')" />
+    <!-- Statescript resources name Forge types by string, which a trimmed (NativeAOT) build would otherwise remove. -->
+    <TrimmerRootAssembly Include="Gamesmiths.Forge" />
   </ItemGroup>
   <ItemGroup Condition="!Exists('$(LocalForgeProjectPath)')">
     <PackageReference Include="Gamesmiths.Forge" Version="0.4.0" />

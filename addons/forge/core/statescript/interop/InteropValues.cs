@@ -38,6 +38,21 @@ internal static class InteropValues
 	}
 
 	/// <summary>
+	/// Gets the array type an input or output of this kind declares to the graph.
+	/// </summary>
+	/// <param name="valueType">The interop value type.</param>
+	/// <returns>The array of <see cref="ToClrType"/>.</returns>
+	public static Type ToClrArrayType(InteropValueType valueType)
+	{
+		return valueType switch
+		{
+			InteropValueType.Node => typeof(Node[]),
+			InteropValueType.None => typeof(double[]),
+			_ => StatescriptVariableTypeConverter.ToSystemArrayType(ToVariableType(valueType)),
+		};
+	}
+
+	/// <summary>
 	/// Gets whether values of this kind travel the object lane rather than the value lane.
 	/// </summary>
 	/// <param name="valueType">The interop value type.</param>

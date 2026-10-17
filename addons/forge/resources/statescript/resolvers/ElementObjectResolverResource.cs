@@ -2,6 +2,7 @@
 
 using System;
 using Gamesmiths.Forge.Godot.Core.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -40,8 +41,9 @@ public partial class ElementObjectResolverResource : StatescriptResolverResource
 			return false;
 		}
 
-		Type closedType = typeof(ElementResolver<>).MakeGenericType(descriptor.ClrType);
-		objectResolver = (IObjectResolver)Activator.CreateInstance(closedType)!;
+		objectResolver = (IObjectResolver)ArrayResolverResourceUtilities.CreateObjectResolver(
+			descriptor.ClrType,
+			typeof(ElementResolver<>));
 		return true;
 	}
 }

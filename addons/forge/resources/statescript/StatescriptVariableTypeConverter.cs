@@ -55,6 +55,29 @@ public static class StatescriptVariableTypeConverter
 		[StatescriptVariableType.Quaternion] = typeof(System.Numerics.Quaternion),
 	};
 
+	// Spelled out rather than built with MakeArrayType, which AOT builds can't do for value types.
+	private static readonly Dictionary<StatescriptVariableType, Type> _arrayTypeMap = new()
+	{
+		[StatescriptVariableType.Bool] = typeof(bool[]),
+		[StatescriptVariableType.Byte] = typeof(byte[]),
+		[StatescriptVariableType.SByte] = typeof(sbyte[]),
+		[StatescriptVariableType.Char] = typeof(char[]),
+		[StatescriptVariableType.Decimal] = typeof(decimal[]),
+		[StatescriptVariableType.Double] = typeof(double[]),
+		[StatescriptVariableType.Float] = typeof(float[]),
+		[StatescriptVariableType.Int] = typeof(int[]),
+		[StatescriptVariableType.UInt] = typeof(uint[]),
+		[StatescriptVariableType.Long] = typeof(long[]),
+		[StatescriptVariableType.ULong] = typeof(ulong[]),
+		[StatescriptVariableType.Short] = typeof(short[]),
+		[StatescriptVariableType.UShort] = typeof(ushort[]),
+		[StatescriptVariableType.Vector2] = typeof(SysVector2[]),
+		[StatescriptVariableType.Vector3] = typeof(SysVector3[]),
+		[StatescriptVariableType.Vector4] = typeof(SysVector4[]),
+		[StatescriptVariableType.Plane] = typeof(System.Numerics.Plane[]),
+		[StatescriptVariableType.Quaternion] = typeof(System.Numerics.Quaternion[]),
+	};
+
 	private static readonly Dictionary<Type, StatescriptVariableType> _authoringTypeMap = new()
 	{
 		[typeof(bool)] = StatescriptVariableType.Bool,
@@ -97,6 +120,16 @@ public static class StatescriptVariableTypeConverter
 	public static Type ToSystemType(StatescriptVariableType variableType)
 	{
 		return _typeMap.TryGetValue(variableType, out Type? type) ? type : typeof(int);
+	}
+
+	/// <summary>
+	/// Converts a <see cref="StatescriptVariableType"/> to the array of its <see cref="ToSystemType"/> type.
+	/// </summary>
+	/// <param name="variableType">The variable type enum value.</param>
+	/// <returns>The corresponding CLR array type.</returns>
+	public static Type ToSystemArrayType(StatescriptVariableType variableType)
+	{
+		return _arrayTypeMap.TryGetValue(variableType, out Type? type) ? type : typeof(int[]);
 	}
 
 	/// <summary>

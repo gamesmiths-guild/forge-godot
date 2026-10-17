@@ -79,6 +79,20 @@ public abstract class StatescriptObjectVariableType
 	public abstract IObjectArrayResolver BuildArrayVariableResolver(StringKey variableName, VariableScope scope);
 
 	/// <summary>
+	/// Gets the array type of <see cref="ClrType"/>.
+	/// </summary>
+	public abstract Type ArrayClrType { get; }
+
+	/// <summary>
+	/// Calls <paramref name="visitor"/> with <see cref="ClrType"/> as a compile-time type argument, so generic code
+	/// over it is compiled ahead of time instead of closed by reflection, which AOT builds can't do for value types.
+	/// </summary>
+	/// <typeparam name="TResult">The visitor's result type.</typeparam>
+	/// <param name="visitor">The visitor to call.</param>
+	/// <returns>The visitor's result.</returns>
+	public abstract TResult Accept<TResult>(IVisitor<TResult> visitor);
+
+	/// <summary>
 	/// Formats a runtime value of this type for debug output.
 	/// </summary>
 	/// <param name="value">The value to format, may be <see langword="null"/>.</param>
@@ -86,5 +100,14 @@ public abstract class StatescriptObjectVariableType
 	public virtual string FormatDebugValue(object? value)
 	{
 		return value?.ToString() ?? "<null>";
+	}
+
+	/// <summary>
+	/// Generic code run over an object variable type's <see cref="ClrType"/>.
+	/// </summary>
+	/// <typeparam name="TResult">The result type.</typeparam>
+	public interface IVisitor<out TResult>
+	{
+		TResult Visit<T>();
 	}
 }
