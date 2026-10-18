@@ -42,6 +42,7 @@ Implement `IPropertyResolver` to create the runtime resolver. This is pure C# an
 ```csharp
 using System;
 using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
@@ -66,21 +67,14 @@ public class EntityHealthPercentResolver : IPropertyResolver
             return default;
         }
 
-        if (!context.Owner.Attributes.ContainsAttribute(_healthAttribute)
-            || !context.Owner.Attributes.ContainsAttribute(_maxHealthAttribute))
+        if (!context.Owner.Attributes.TryGetAttribute(_healthAttribute, out EntityAttribute? health)
+            || !context.Owner.Attributes.TryGetAttribute(_maxHealthAttribute, out EntityAttribute? maxHealth)
+            || maxHealth.CurrentValue == 0)
         {
             return default;
         }
 
-        int health = context.Owner.Attributes[_healthAttribute].CurrentValue;
-        int maxHealth = context.Owner.Attributes[_maxHealthAttribute].CurrentValue;
-
-        if (maxHealth == 0)
-        {
-            return default;
-        }
-
-        return new Variant128((float)health / maxHealth);
+        return new Variant128((float)health.CurrentValue / maxHealth.CurrentValue);
     }
 }
 ```
@@ -102,6 +96,7 @@ Create a Godot resource that serializes the resolver's configuration. This resou
 
 ```csharp
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
@@ -170,9 +165,11 @@ Create the editor UI control that appears inside the Statescript graph editor wh
 ```csharp
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Statescript;
 using Godot;
+using MyGame.Resources;
 
 namespace MyGame.Editor;
 
@@ -226,7 +223,7 @@ internal sealed partial class HealthPercentResolverEditor : NodeEditorProperty
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             PlaceholderText = "e.g. CombatAttributeSet.Health",
         };
-        _healthInput.TextChanged += _ => _onChanged?.Invoke();
+        _healthInput.TextChanged += OnTextChanged;
         healthRow.AddChild(_healthInput);
 
         // Max health attribute input.
@@ -239,7 +236,7 @@ internal sealed partial class HealthPercentResolverEditor : NodeEditorProperty
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             PlaceholderText = "e.g. CombatAttributeSet.MaxHealth",
         };
-        _maxHealthInput.TextChanged += _ => _onChanged?.Invoke();
+        _maxHealthInput.TextChanged += OnTextChanged;
         maxRow.AddChild(_maxHealthInput);
     }
 
@@ -252,6 +249,12 @@ internal sealed partial class HealthPercentResolverEditor : NodeEditorProperty
         resource.MaxHealthAttribute = _maxHealthInput?.Text ?? string.Empty;
 
         property.Resolver = resource;
+    }
+
+    // A named method rather than a lambda, so the connection survives a C# assembly reload.
+    private void OnTextChanged(string newText)
+    {
+        _onChanged?.Invoke();
     }
 }
 #endif
