@@ -1,0 +1,226 @@
+[gd_scene format=3 uid="uid://d6tvjkjl2f2w"]
+
+[ext_resource type="Script" uid="uid://7uh37s3bx7in" path="res://forge_samples/demos/00_quick_start/scripts/QuickStartPlayer.cs" id="1_uyibm"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="2_vcjt7"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="3_2pqgm"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="4_vcjt7"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="4_yh56p"]
+[ext_resource type="Resource" uid="uid://cvcn3j13nnuoy" path="res://forge_samples/demos/00_quick_start/effects/mana_regen.tres" id="5_i8pt2"]
+[ext_resource type="Resource" uid="uid://ca6ai4d4r4hvx" path="res://forge_samples/demos/00_quick_start/effects/grant_heal.tres" id="6_poe4q"]
+[ext_resource type="Script" uid="uid://bc6qoee24fk6g" path="res://forge_samples/demos/00_quick_start/scripts/AttributeBar.cs" id="7_wg02o"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_2pqgm"]
+radius = 22.0
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_yh56p"]
+blend_mode = 1
+
+[sub_resource type="Gradient" id="Gradient_i8pt2"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_poe4q"]
+gradient = SubResource("Gradient_i8pt2")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="Gradient" id="Gradient_wg02o"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.8, 0.35, 0.8, 1, 0.45, 0.08, 0.7, 0.7, 0.12, 0.04, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_o51nr"]
+gradient = SubResource("Gradient_wg02o")
+
+[sub_resource type="Curve" id="Curve_skp7p"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_4614u"]
+curve = SubResource("Curve_skp7p")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_k4268"]
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector3(0, -1, 0)
+spread = 12.0
+initial_velocity_min = 30.0
+initial_velocity_max = 70.0
+gravity = Vector3(0, -40, 0)
+scale_min = 0.385
+scale_max = 0.55
+scale_curve = SubResource("CurveTexture_4614u")
+color_ramp = SubResource("GradientTexture1D_o51nr")
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_gt0hj"]
+blend_mode = 1
+
+[sub_resource type="Gradient" id="Gradient_84n5g"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_tu0pa"]
+gradient = SubResource("Gradient_84n5g")
+width = 32
+height = 32
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0)
+
+[sub_resource type="Gradient" id="Gradient_4pruj"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.75, 1, 0.7, 1, 0.3, 0.95, 0.45, 0.8, 0.1, 0.7, 0.3, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_bl0ap"]
+gradient = SubResource("Gradient_4pruj")
+
+[sub_resource type="Curve" id="Curve_63ng5"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_djchx"]
+curve = SubResource("Curve_63ng5")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_d4v6q"]
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 0.0
+emission_ring_radius = 26.0
+emission_ring_inner_radius = 18.0
+emission_ring_cone_angle = 90.0
+direction = Vector3(0, -1, 0)
+spread = 20.0
+initial_velocity_min = 30.0
+initial_velocity_max = 60.0
+gravity = Vector3(0, -60, 0)
+scale_min = 0.25
+scale_max = 0.45
+scale_curve = SubResource("CurveTexture_djchx")
+color_ramp = SubResource("GradientTexture1D_bl0ap")
+
+[sub_resource type="Animation" id="Animation_7p2ol"]
+length = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body:color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 0.35, 0.25, 1), Color(0.45, 0.75, 1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_yarwn"]
+_data = {
+&"hit": SubResource("Animation_7p2ol")
+}
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5eklm"]
+bg_color = Color(0, 0, 0, 0.55)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7j17v"]
+bg_color = Color(0.9, 0.25, 0.25, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7u0um"]
+bg_color = Color(0, 0, 0, 0.55)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vbl68"]
+bg_color = Color(0.3, 0.55, 1, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="Player" type="CharacterBody2D" unique_id=691527485]
+motion_mode = 1
+script = ExtResource("1_uyibm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=681402492]
+shape = SubResource("CircleShape2D_2pqgm")
+
+[node name="Body" type="Polygon2D" parent="." unique_id=794381870]
+color = Color(0.45, 0.75, 1, 1)
+polygon = PackedVector2Array(22, 0, 21.729143, 3.4415584, 20.923244, 6.798374, 19.602144, 9.987791, 17.798374, 12.931275, 15.556349, 15.556349, 12.931275, 17.798374, 9.987791, 19.602144, 6.798373, 20.923244, 3.4415588, 21.729143, -9.616506e-07, 22, -3.441558, 21.729143, -6.7983747, 20.923243, -9.987793, 19.602142, -12.931274, 17.798374, -15.556349, 15.556349, -17.798376, 12.931274, -19.602142, 9.987793, -20.923243, 6.7983747, -21.729143, 3.441558, -22, -1.9233012e-06, -21.729143, -3.4415562, -20.923244, -6.798373, -19.602144, -9.987792, -17.798372, -12.931278, -15.556351, -15.556348, -12.931272, -17.798376, -9.987795, -19.602142, -6.798376, -20.923243, -3.4415596, -21.729143, 2.6234738e-07, -22, 3.4415598, -21.729143, 6.7983766, -20.923243, 9.987795, -19.60214, 12.931272, -17.798376, 15.556346, -15.556352, 17.798372, -12.931276, 19.602144, -9.987791, 20.923244, -6.7983727, 21.729143, -3.441556)
+
+[node name="ForgeEntity" type="Node" parent="." unique_id=1897705157]
+script = ExtResource("2_vcjt7")
+
+[node name="HeroAttributes" type="Node" parent="ForgeEntity" unique_id=558121315]
+script = ExtResource("3_2pqgm")
+AttributeSetClass = "HeroAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("4_vcjt7")]({
+"Health": Object(RefCounted,"script":ExtResource("4_vcjt7"),"Default":100,"Min":0,"Max":100)
+,
+"Mana": Object(RefCounted,"script":ExtResource("4_vcjt7"),"Default":100,"Min":0,"Max":100)
+
+})
+
+[node name="Mana Regen" type="Node" parent="ForgeEntity" unique_id=1126494934]
+script = ExtResource("4_yh56p")
+EffectData = ExtResource("5_i8pt2")
+
+[node name="Grant Heal" type="Node" parent="ForgeEntity" unique_id=1005296993]
+script = ExtResource("4_yh56p")
+EffectData = ExtResource("6_poe4q")
+
+[node name="BurnParticles" type="GPUParticles2D" parent="." unique_id=1408602834]
+material = SubResource("CanvasItemMaterial_yh56p")
+emitting = false
+amount = 24
+texture = SubResource("GradientTexture2D_poe4q")
+lifetime = 0.9
+process_material = SubResource("ParticleProcessMaterial_k4268")
+
+[node name="HealParticles" type="GPUParticles2D" parent="." unique_id=1975930622]
+material = SubResource("CanvasItemMaterial_gt0hj")
+emitting = false
+amount = 32
+texture = SubResource("GradientTexture2D_tu0pa")
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.85
+process_material = SubResource("ParticleProcessMaterial_d4v6q")
+
+[node name="FxPlayer" type="AnimationPlayer" parent="." unique_id=1152914526]
+libraries/ = SubResource("AnimationLibrary_yarwn")
+
+[node name="Bars" type="VBoxContainer" parent="." unique_id=521013585]
+offset_left = -36.0
+offset_top = -48.0
+offset_right = -36.0
+offset_bottom = -48.0
+theme_override_constants/separation = 3
+
+[node name="HealthBar" type="ProgressBar" parent="Bars" unique_id=19754152 node_paths=PackedStringArray("Entity")]
+custom_minimum_size = Vector2(72, 8)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_5eklm")
+theme_override_styles/fill = SubResource("StyleBoxFlat_7j17v")
+show_percentage = false
+script = ExtResource("7_wg02o")
+Entity = NodePath("../../ForgeEntity")
+
+[node name="ManaBar" type="ProgressBar" parent="Bars" unique_id=208359900 node_paths=PackedStringArray("Entity")]
+custom_minimum_size = Vector2(72, 8)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_7u0um")
+theme_override_styles/fill = SubResource("StyleBoxFlat_vbl68")
+show_percentage = false
+script = ExtResource("7_wg02o")
+Entity = NodePath("../../ForgeEntity")
+Attribute = "HeroAttributes.Mana"

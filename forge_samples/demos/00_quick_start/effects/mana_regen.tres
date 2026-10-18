@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://cvcn3j13nnuoy"]
+
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="1_grglx"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="2_j0jup"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="3_enkr8"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="4_b471r"]
+
+[sub_resource type="Resource" id="Resource_grglx"]
+script = ExtResource("1_grglx")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_j0jup"]
+script = ExtResource("2_j0jup")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_enkr8"]
+script = ExtResource("2_j0jup")
+
+[sub_resource type="Resource" id="Resource_b471r"]
+script = ExtResource("2_j0jup")
+
+[sub_resource type="Resource" id="Resource_wn58h"]
+script = ExtResource("2_j0jup")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_c386a"]
+script = ExtResource("2_j0jup")
+
+[sub_resource type="Resource" id="Resource_5b8fr"]
+script = ExtResource("2_j0jup")
+
+[sub_resource type="Resource" id="Resource_f2du4"]
+script = ExtResource("2_j0jup")
+BaseValue = 5.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_vd71p"]
+script = ExtResource("3_enkr8")
+Attribute = "HeroAttributes.Mana"
+ScalableFloat = SubResource("Resource_f2du4")
+Coefficient = SubResource("Resource_wn58h")
+PreMultiplyAdditiveValue = SubResource("Resource_5b8fr")
+PostMultiplyAdditiveValue = SubResource("Resource_c386a")
+CalculatorCoefficient = SubResource("Resource_j0jup")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_b471r")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_enkr8")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_ngpce"]
+script = ExtResource("2_j0jup")
+BaseValue = 1.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_e440a"]
+script = ExtResource("1_grglx")
+BaseValue = 1
+
+[resource]
+script = ExtResource("4_b471r")
+Name = "Mana Regen"
+Modifiers = [SubResource("Resource_vd71p")]
+Components = []
+Executions = []
+DurationType = 1
+HasPeriodicApplication = true
+Period = SubResource("Resource_ngpce")
+StackLimit = SubResource("Resource_e440a")
+InitialStack = SubResource("Resource_grglx")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

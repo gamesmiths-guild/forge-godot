@@ -4,6 +4,8 @@ A player, two enemies that walk at it and swing, four abilities on an action bar
 
 Movement is WASD or the arrow keys. Aim is the mouse: the abilities that need a direction fire toward where the cursor meets the floor. The camera is bolted to the player.
 
+![The Real-Time 3D demo: the player between two enemies, with the effect pads around them](../../../docs/images/samples/realtime-3d.png)
+
 ## Who is in it
 
 Everyone runs the shared `CharacterAttributes` (Health and Mana at 1000) and `MetaAttributes` (the `IncomingDamage` that `DamageExecution` turns into a Health loss) sets from `shared/scripts/attribute_sets/`, and carries `natural_regen.tres`: +1 Health and +1 Mana a second, forever. Player and enemies alike are tagged `trait.damageable`, `trait.flammable`, `trait.healable` and `trait.wettable`, which is what every area below checks for. Each is a `ForgeEntity` node under its body, with the attribute sets, the regen and a grant-abilities effect as children.

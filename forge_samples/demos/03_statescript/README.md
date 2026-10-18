@@ -4,6 +4,8 @@ The Real-Time 3D demo's four player abilities, its enemy and its HUD, rebuilt so
 
 Movement is WASD or the arrow keys. Aim is the mouse.
 
+![The Statescript demo level: the bonfire, the lake, the dummies and the brazier](../../../docs/images/samples/statescript.png)
+
 ## Before running it
 
 `MovementAttributes` is an **attribute set definition** (`attributes/movement_attributes.tres`) rather than a hand-written C# class. The generated class ships in `res://forge_generated/attribute_sets/`; if it is ever missing, open the definition, press **Regenerate Attribute Set Code** (or just save it), and build.
@@ -11,6 +13,8 @@ Movement is WASD or the arrow keys. Aim is the mouse.
 `Speed` is stored with two decimal places, so `500` is 5.00 units per second — the scaled-integer convention Forge uses for fractional stats. The player has 500, the enemy 200, the same speeds the Real-Time 3D demo hardcodes; the controller and the `enemy_brain` graph both divide by 100 before moving anything.
 
 ## The graphs
+
+![The shield graph in the Statescript panel](../../../docs/images/statescript/shield-graph.png)
 
 | Graph | Who runs it | What it does |
 | --- | --- | --- |

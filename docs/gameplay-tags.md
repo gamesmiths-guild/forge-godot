@@ -40,6 +40,8 @@ Open the **Tags** dock from the right-hand panel. It has two views.
 
 The editable view. Each source is a collapsible section: a header row naming the file, with that source's tags beneath it.
 
+<img src="images/tags/tags-by-source.png" alt="The Tags dock By Source view with a game source and the samples source" width="420">
+
 **Adding a tag**
 
 1. Type the key in the **Tag Name** field, using dot notation.
@@ -66,6 +68,8 @@ A source whose file is missing shows as `MISSING` in red, keeping its entry so y
 ### Merged
 
 The union of every source, exactly as the running game resolves it, with a **Declared by** column naming the sources behind each tag — useful for spotting a tag that comes from somewhere you did not expect.
+
+<img src="images/tags/tags-merged.png" alt="The Tags dock Merged view with the Declared by column" width="420">
 
 This view is read-only. A tag here can come from several sources at once, so removing it would have to ask which one you meant, and adding one would have no obvious destination — questions the By Source view answers by construction.
 

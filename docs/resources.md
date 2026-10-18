@@ -48,6 +48,8 @@ Use in tag requirements when basic include/exclude isn’t enough.
 
 Describes all aspects of an effect: what it does and how it behaves.
 
+<img src="images/quick-start/burning-effect.png" alt="A periodic Burning effect: a Health modifier, infinite duration, a 0.5 second period" width="420">
+
 **Properties:**
 
 - `Name` (string): Display name.
@@ -223,6 +225,8 @@ Assign in a ForgeEffectData `Cues` list; matched at runtime by a ForgeCueHandler
 
 Describes, configures, and links a gameplay ability.
 
+<img src="images/quick-start/heal-ability.png" alt="A Heal ability with a cooldown, a cost and a Statescript behavior" width="420">
+
 **Properties:**
 
 - `Name` (string): Ability identifier.
@@ -286,6 +290,8 @@ For detailed documentation on Statescript concepts, see the [Statescript documen
 ### StatescriptGraph
 
 Resource representing a complete Statescript graph definition.
+
+![A four-node heal graph](images/quick-start/heal-graph.png)
 
 **Properties:**
 

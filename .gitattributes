@@ -23,6 +23,16 @@
 /forge_samples          !export-ignore
 /forge_samples/**       !export-ignore
 
+# Classes generated from the sample definitions. The plugin only regenerates them when a definition is saved, so
+# without these the demos' entities would start with no attributes. The generator rewrites identical files while the
+# samples are installed, and deletes these the first time it runs after the samples are removed.
+/forge_generated                                                     !export-ignore
+/forge_generated/attribute_sets                                      !export-ignore
+/forge_generated/attribute_sets/HeroAttributes.generated.cs          !export-ignore
+/forge_generated/attribute_sets/HeroAttributes.generated.cs.uid      !export-ignore
+/forge_generated/attribute_sets/MovementAttributes.generated.cs      !export-ignore
+/forge_generated/attribute_sets/MovementAttributes.generated.cs.uid  !export-ignore
+
 # Auto-imported by MSBuild, so installing the plugin needs no .csproj edits.
 /Directory.Build.props  !export-ignore
 

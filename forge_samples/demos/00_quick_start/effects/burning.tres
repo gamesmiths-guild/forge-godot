@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://b0gxvmfrn1yqh"]
+
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="1_ahq1r"]
+[ext_resource type="Script" uid="uid://cmrsxccn0ei4j" path="res://addons/forge/resources/ForgeCue.cs" id="2_r721f"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="3_csvdj"]
+[ext_resource type="Script" uid="uid://cn3b4ya15fg7e" path="res://addons/forge/resources/magnitudes/ForgeScalableFloat.cs" id="4_pwb2j"]
+[ext_resource type="Script" uid="uid://bdfcavbjyhxxa" path="res://addons/forge/resources/ForgeModifier.cs" id="5_6h3vm"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="6_hkei4"]
+
+[sub_resource type="Resource" id="Resource_ahq1r"]
+script = ExtResource("1_ahq1r")
+ContainerTags = ["cue.burn"]
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_r721f"]
+script = ExtResource("2_r721f")
+CueKeys = SubResource("Resource_ahq1r")
+metadata/_custom_type_script = "uid://cmrsxccn0ei4j"
+
+[sub_resource type="Resource" id="Resource_csvdj"]
+script = ExtResource("3_csvdj")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_pwb2j"]
+script = ExtResource("4_pwb2j")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_6h3vm"]
+script = ExtResource("4_pwb2j")
+
+[sub_resource type="Resource" id="Resource_hkei4"]
+script = ExtResource("4_pwb2j")
+
+[sub_resource type="Resource" id="Resource_b24on"]
+script = ExtResource("4_pwb2j")
+BaseValue = 1.0
+
+[sub_resource type="Resource" id="Resource_vjj37"]
+script = ExtResource("4_pwb2j")
+
+[sub_resource type="Resource" id="Resource_r552g"]
+script = ExtResource("4_pwb2j")
+
+[sub_resource type="Resource" id="Resource_pvwui"]
+script = ExtResource("4_pwb2j")
+BaseValue = -5.0
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_anq45"]
+script = ExtResource("5_6h3vm")
+Attribute = "HeroAttributes.Health"
+ScalableFloat = SubResource("Resource_pvwui")
+Coefficient = SubResource("Resource_b24on")
+PreMultiplyAdditiveValue = SubResource("Resource_r552g")
+PostMultiplyAdditiveValue = SubResource("Resource_vjj37")
+CalculatorCoefficient = SubResource("Resource_pwb2j")
+CalculatorPreMultiplyAdditiveValue = SubResource("Resource_hkei4")
+CalculatorPostMultiplyAdditiveValue = SubResource("Resource_6h3vm")
+metadata/_custom_type_script = "uid://bdfcavbjyhxxa"
+
+[sub_resource type="Resource" id="Resource_gbvrc"]
+script = ExtResource("4_pwb2j")
+BaseValue = 0.5
+metadata/_custom_type_script = "uid://cn3b4ya15fg7e"
+
+[sub_resource type="Resource" id="Resource_7jr17"]
+script = ExtResource("3_csvdj")
+BaseValue = 1
+
+[resource]
+script = ExtResource("6_hkei4")
+Name = "Burning"
+Modifiers = [SubResource("Resource_anq45")]
+Components = []
+Executions = []
+DurationType = 1
+HasPeriodicApplication = true
+Period = SubResource("Resource_gbvrc")
+ExecuteOnApplication = true
+StackLimit = SubResource("Resource_7jr17")
+InitialStack = SubResource("Resource_csvdj")
+Cues = [SubResource("Resource_r721f")]
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

@@ -14,6 +14,10 @@ Because a state node owns all of its Subgraph ports, when the node deactivates, 
 
 For example, a node that switches between two combat stances could have two custom Subgraph ports. While the node is active, it activates the subgraph for the current stance and disables the other. When the node deactivates, both subgraphs are cleaned up regardless of which one was active.
 
+The dash in the Statescript sample shows a subgraph doing its job. `Play Animation` plays the roll; through its **Subgraph** port it owns a `Collision Override 3D`, which in turn owns the `Move Body 3D` that sweeps the body forward. When the clip finishes, `Play Animation` deactivates, and the move and the collision change go with it. Nothing in the graph has to stop the move or restore the mask.
+
+![The dash graph: Play Animation owns Collision Override 3D, which owns Move Body 3D](../images/statescript/dash-graph.png)
+
 ## Subgraph Port vs. OnActivate Port
 
 Every state node has both an **OnActivate** port (Event port) and a **Subgraph** port. Both emit a regular message when the state node activates. The critical difference is what happens when a disable signal is sent:
@@ -49,15 +53,18 @@ The Entry node's output port is a **Subgraph port**. This means the entire graph
 
 ## Common Patterns
 
+In the diagrams below, **thick arrows** leave a Subgraph port and own what they reach; **thin arrows** leave an event port. The Entry node's output is a Subgraph port, so its arrow is thick too.
+
 ### Pattern 1: Timed Behavior with Cleanup
 
 The most common subgraph pattern: a parent timer controls the overall duration, and child nodes handle behavior during that time.
 
-```
-Entry → Timer(5s)
-            ├── Subgraph → [apply buff effect]
-            │                    └── Tick(1s) → [apply periodic heal]
-            └── OnDeactivate → [remove buff, play end animation]
+```mermaid
+flowchart LR
+    Entry ==> Timer["Timer 5s"]
+    Timer ==>|Subgraph| Buff["Apply buff effect"]
+    Buff --> Tick["Tick 1s"] --> Heal["Apply periodic heal"]
+    Timer -->|OnDeactivate| End["Remove buff,<br/>play end animation"]
 ```
 
 When the 5-second timer expires:
@@ -68,11 +75,12 @@ When the 5-second timer expires:
 
 Conditions inside a subgraph can route to different state nodes. The parent's deactivation cleans up whichever branch was taken.
 
-```
-Entry → Timer(3s)
-            └── Subgraph → Condition(is health > 50?)
-                                ├── True → Tick(2s) → [apply strong effect]
-                                └── False → Tick(1s) → [apply weak effect]
+```mermaid
+flowchart LR
+    Entry ==> Timer["Timer 3s"]
+    Timer ==>|Subgraph| Check{"Health > 50?"}
+    Check -->|True| Slow["Tick 2s"] --> Strong["Apply strong effect"]
+    Check -->|False| Fast["Tick 1s"] --> Weak["Apply weak effect"]
 ```
 
 Only one branch activates based on the condition. When the parent timer deactivates, whichever inner tick is still active gets cleaned up automatically.
@@ -81,11 +89,12 @@ Only one branch activates based on the condition. When the parent timer deactiva
 
 Use OnDeactivate to chain phases where each phase owns its own subgraph:
 
-```
-Entry → Timer(WindUp: 1s)
-            └── OnDeactivate → Timer(Active: 3s)
-                                     ├── Subgraph → [Damage Loop]
-                                     └── OnDeactivate → Timer(Recovery: 2s)
+```mermaid
+flowchart LR
+    Entry ==> WindUp["Timer<br/>wind-up 1s"]
+    WindUp -->|OnDeactivate| Active["Timer<br/>active 3s"]
+    Active ==>|Subgraph| Loop["Damage loop"]
+    Active -->|OnDeactivate| Recovery["Timer<br/>recovery 2s"]
 ```
 
 Each phase's subgraph is independent. The damage loop is cleaned up when the Active phase ends, and the Recovery phase starts.
@@ -94,11 +103,12 @@ Each phase's subgraph is independent. The damage loop is cleaned up when the Act
 
 Subgraphs can be nested to any depth. Each level of nesting adds a layer of lifetime management.
 
-```
-Entry → TimerA(10s)
-            └── Subgraph → TimerB(5s)
-                                └── Subgraph → TimerC(2s)
-                                                    └── Subgraph → [repeating action]
+```mermaid
+flowchart LR
+    Entry ==> A["TimerA 10s"]
+    A ==>|Subgraph| B["TimerB 5s"]
+    B ==>|Subgraph| C["TimerC 2s"]
+    C ==>|Subgraph| Action["Repeating action"]
 ```
 
 - TimerC is owned by TimerB.
@@ -109,11 +119,12 @@ Entry → TimerA(10s)
 
 A single state node can have multiple nodes connected to its Subgraph port. All of them activate when the parent activates, and all are disabled when the parent deactivates.
 
-```
-Entry → Timer(5s)
-            └── Subgraph → Tick(1s) → [effect A]
-                         → Tick(2s) → [effect B]
-                         → [immediate setup action]
+```mermaid
+flowchart LR
+    Entry ==> Timer["Timer 5s"]
+    Timer ==>|Subgraph| T1["Tick 1s"] --> A["Effect A"]
+    Timer ==>|Subgraph| T2["Tick 2s"] --> B["Effect B"]
+    Timer ==>|Subgraph| Setup["Immediate setup action"]
 ```
 
 All three downstream paths activate simultaneously when the parent timer starts. When the parent deactivates, both inner ticks are cleaned up.
@@ -124,10 +135,11 @@ Custom state nodes can define additional Subgraph ports and control them indepen
 
 For example, a combat stance node could have two Subgraph ports, one for each stance. While active, the node switches between stances by disabling one subgraph and activating the other:
 
-```
-Entry → StanceNode
-             ├── SubgraphA → [Aggressive Stance Effects]
-             └── SubgraphB → [Defensive Stance Effects]
+```mermaid
+flowchart LR
+    Entry ==> Stance["StanceNode"]
+    Stance ==>|SubgraphA| Aggressive["Aggressive stance effects"]
+    Stance ==>|SubgraphB| Defensive["Defensive stance effects"]
 ```
 
 When the stance node starts, it activates SubgraphA. When a stance switch is triggered (e.g., via a condition in `OnUpdate`), the node calls `EmitDisableSubgraphMessage()` on SubgraphA to clean up the aggressive effects, then calls `EmitMessage()` on SubgraphB to activate the defensive effects. The node itself never deactivates during this transition.

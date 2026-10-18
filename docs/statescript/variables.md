@@ -8,6 +8,10 @@ For C# API details and code examples, see the [core Variables documentation](htt
 
 Graph variables are **mutable values** scoped to a single graph execution instance. They are defined at graph construction time with a name, type, and initial value. When a graph starts, each variable is initialized from its definition. Multiple executions of the same graph each get their own independent copy.
 
+They are declared in the graph editor's **Variables** panel. This is the brazier from the Statescript sample: a `lit` flag, the next spawn position, and the ember it sends there.
+
+<img src="../images/statescript/graph-variables.png" alt="The Variables panel with a Bool, a Vector3 and an Entity variable" width="360">
+
 **Supported authoring types in Godot:**
 
 `Bool`, `Int`, `Float`, `Vector2`, `Vector3`, `Vector4`, `Plane`, and `Quaternion`.
@@ -60,7 +64,7 @@ For example, the `SetVariable` action node reads a value from an input property 
 
 Shared variables are **entity-level values** accessible by all Statescript graph instances running on the same entity. They live on the `IForgeEntity.SharedVariables` property and provide cross-ability communication.
 
-> **Note:** [Attributes](../quick-start.md#step-3-define-an-attribute-set) and [Tags](../quick-start.md#working-with-tags) are also shared across all abilities on an entity and are often the preferred way to communicate state between graphs. Attributes handle numeric values and Tags handle boolean-like flags, and both integrate directly with the rest of Forge (effects, requirements, resolvers). Shared variables are useful when Attributes and Tags are not sufficient, for example when you need to share types beyond integer values and flags, or when you need entity-wide mutable state that doesn't map naturally to an attribute or tag.
+> **Note:** [Attributes](../attribute-set-definitions.md) and [Tags](../gameplay-tags.md) are also shared across all abilities on an entity and are often the preferred way to communicate state between graphs. Attributes handle numeric values and Tags handle boolean-like flags, and both integrate directly with the rest of Forge (effects, requirements, resolvers). Shared variables are useful when Attributes and Tags are not sufficient, for example when you need to share types beyond integer values and flags, or when you need entity-wide mutable state that doesn't map naturally to an attribute or tag.
 
 **Example use cases:**
 
@@ -140,27 +144,21 @@ When a graph executes:
 4. Resolvers query the **GraphContext** for variables, shared variables, attributes, tags, activation data, or activation context.
 5. Nodes write values through **output variables** to either graph-scoped or shared-scoped variable bags.
 
-```
-+----------------------------------------------------------+
-|                    GraphContext                          |
-|                                                          |
-|  +-------------+  +-------------+  +----------------+    |
-|  | Graph Vars  |  | Shared Vars |  | Activation Ctx |    |
-|  | (per-graph) |  | (per-entity)|  | (ability data) |    |
-|  +------+------+  +------+------+  +-------+--------+    |
-|         |                |                 |             |
-|         +--------+-------+-----------------+             |
-|                  |                                       |
-|          +-------v-------+                               |
-|          |   Resolvers   |  Attribute, Tag, Comparison,  |
-|          |               |  Variable, Shared, Magnitude, |
-|          |               |  Variant                      |
-|          +-------+-------+                               |
-|                  |                                       |
-|          +-------v-------+                               |
-|          |  Node Inputs  |                               |
-|          +---------------+                               |
-+----------------------------------------------------------+
+```mermaid
+flowchart TB
+    subgraph Context["GraphContext"]
+        Graph["Graph variables<br/>per graph run"]
+        Shared["Shared variables<br/>per entity"]
+        Activation["Activation data<br/>and context"]
+    end
+    Entity["Owner entity<br/>attributes and tags"]
+    Graph --> Resolvers
+    Shared --> Resolvers
+    Activation --> Resolvers
+    Entity --> Resolvers
+    Resolvers["Resolvers<br/>Attribute, Tag, Comparison,<br/>Variable, Shared, Magnitude, Variant…"] --> Inputs["Node inputs"]
+    Inputs --> Node["Node runs"]
+    Node -->|writes| Outputs["Output variables<br/>into graph or shared variables"]
 ```
 
 ## Best Practices
