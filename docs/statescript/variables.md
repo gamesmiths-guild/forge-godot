@@ -144,27 +144,21 @@ When a graph executes:
 4. Resolvers query the **GraphContext** for variables, shared variables, attributes, tags, activation data, or activation context.
 5. Nodes write values through **output variables** to either graph-scoped or shared-scoped variable bags.
 
-```
-+----------------------------------------------------------+
-|                    GraphContext                          |
-|                                                          |
-|  +-------------+  +-------------+  +----------------+    |
-|  | Graph Vars  |  | Shared Vars |  | Activation Ctx |    |
-|  | (per-graph) |  | (per-entity)|  | (ability data) |    |
-|  +------+------+  +------+------+  +-------+--------+    |
-|         |                |                 |             |
-|         +--------+-------+-----------------+             |
-|                  |                                       |
-|          +-------v-------+                               |
-|          |   Resolvers   |  Attribute, Tag, Comparison,  |
-|          |               |  Variable, Shared, Magnitude, |
-|          |               |  Variant                      |
-|          +-------+-------+                               |
-|                  |                                       |
-|          +-------v-------+                               |
-|          |  Node Inputs  |                               |
-|          +---------------+                               |
-+----------------------------------------------------------+
+```mermaid
+flowchart TB
+    subgraph Context["GraphContext"]
+        Graph["Graph variables<br/>per graph run"]
+        Shared["Shared variables<br/>per entity"]
+        Activation["Activation data<br/>and context"]
+    end
+    Entity["Owner entity<br/>attributes and tags"]
+    Graph --> Resolvers
+    Shared --> Resolvers
+    Activation --> Resolvers
+    Entity --> Resolvers
+    Resolvers["Resolvers<br/>Attribute, Tag, Comparison,<br/>Variable, Shared, Magnitude, Variant…"] --> Inputs["Node inputs"]
+    Inputs --> Node["Node runs"]
+    Node -->|writes| Outputs["Output variables<br/>into graph or shared variables"]
 ```
 
 ## Best Practices

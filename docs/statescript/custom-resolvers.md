@@ -25,15 +25,14 @@ In Forge for Godot, a custom resolver has **three parts**:
 
 All three parts are matched together by a shared **`ResolverTypeId`** string. Both the resource and the editor must return the same `ResolverTypeId`.
 
-```
-+---------------------------+     +-----------------------------+     +---------------------------+
-|   IPropertyResolver       |     | StatescriptResolverResource |     | NodeEditorProperty        |
-|   (core runtime logic)    |     | (Godot resource)            |     | (editor UI)               |
-|                           |     |                             |     |                           |
-|   Resolve(GraphContext)   |     | ResolverTypeId: "MyType"    |     | ResolverTypeId: "MyType"  |
-|   ValueType: typeof(T)    |     | BindInput(graph, node...)   |     | Setup(graph, property...) |
-|                           |     | BuildResolver(graph)        |     | SaveTo(property)          |
-+---------------------------+     +-----------------------------+     +---------------------------+
+```mermaid
+flowchart LR
+    Editor["<b>NodeEditorProperty</b><br/>editor UI<br/>Setup(graph, property…)<br/>SaveTo(property)"]
+    Resource["<b>StatescriptResolverResource</b><br/>saved in the graph resource<br/>BindInput(graph, node…)<br/>BuildResolver(graph)"]
+    Core["<b>IPropertyResolver</b><br/>core runtime logic<br/>Resolve(GraphContext)<br/>ValueType"]
+    Editor -->|"configures and saves"| Resource
+    Resource -->|"builds when the graph is built"| Core
+    Editor -.-|"same ResolverTypeId"| Resource
 ```
 
 ## Step 1: Implement the Core Resolver
