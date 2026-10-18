@@ -201,8 +201,10 @@ var effectData = effectNode.EffectData.GetEffectData();
 
 Extends Godot's Area2D/Area3D; applies effects to entities that enter, stay in, or exit the area, using child ForgeEffect nodes.
 
+<p>
 <img src="images/quick-start/level-scene.png" alt="A campfire EffectArea2D with a collision shape and a ForgeEffect child" width="280">
 <img src="images/quick-start/campfire-area.png" alt="EffectArea2D properties" width="420">
+</p>
 
 **Properties:**
 

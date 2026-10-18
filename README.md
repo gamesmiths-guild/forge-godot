@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/gamesmiths-guild/forge-godot/actions/workflows/validate-project.yml/badge.svg)](https://github.com/gamesmiths-guild/forge-godot/actions/workflows/validate-project.yml)
 [![Godot .NET](https://img.shields.io/badge/Godot-4.7%2B%20.NET-478cbf)](https://godotengine.org/download/)
-[![License](https://img.shields.io/github/license/gamesmiths-guild/forge-godot)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **A gameplay framework for Godot, bringing Unreal’s Gameplay Ability System concepts to Godot.** Attributes, effects, abilities, gameplay tags, events and cues, configured in the Inspector and scripted visually with Statescript graphs.
 
@@ -28,8 +28,10 @@ https://github.com/user-attachments/assets/7ee8bfe0-ae47-42ea-8988-a500ff96c49b
 
 Effects, abilities, cues and attribute sets are resources. A damage-over-time effect is a few fields: a modifier, a duration, a period.
 
+<p>
 <img src="docs/images/quick-start/burning-effect.png" alt="A periodic Burning effect in the Inspector" width="380">
 <img src="docs/images/quick-start/attribute-set-definition.png" alt="An attribute set defined in the Inspector" width="380">
+</p>
 
 Attribute sets can be written in C# or described in the Inspector, and the plugin generates the class for you. See [Attribute Set Definitions](docs/attribute-set-definitions.md).
 

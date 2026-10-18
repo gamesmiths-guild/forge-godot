@@ -185,8 +185,10 @@ Create `scenes/quick_start.tscn` with a `Node2D` root, and instance `player.tscn
 | `CollisionShape2D` | `CollisionShape2D` | A `CircleShape2D` with radius `70`. |
 | `Burning` | `ForgeEffect` | Child of `Campfire`. Set **Effect Data** to `burning.tres`. |
 
+<p>
 <img src="images/quick-start/level-scene.png" alt="The level scene tree with the campfire, the player and the cue handlers" width="280">
 <img src="images/quick-start/campfire-area.png" alt="The EffectArea2D set to OnStay" width="420">
+</p>
 
 The sample's ring, logs and flames are a `Polygon2D` and a `GPUParticles2D`, purely decorative. Run the scene and walk into the fire: the Health bar drops by 5 twice a second and stops when you step out.
 
@@ -296,8 +298,10 @@ Four more `ForgeEffectData` resources in `effects/`, made the same way as `burni
 | `heal_cooldown.tres` | **HasDuration** with **Duration** `2`. Add a **ModifierTags** component whose **Tags To Add** hold `cooldown.heal`. |
 | `mana_regen.tres` | **Infinite**, periodic every `1` second, `+5` to `HeroAttributes.Mana`. |
 
+<p>
 <img src="images/quick-start/heal-effect.png" alt="The Heal effect" width="300">
 <img src="images/quick-start/heal-cooldown.png" alt="The Heal Cooldown effect, adding cooldown.heal for 2 seconds" width="300">
+</p>
 
 A cooldown is simply an effect that adds a tag for a while. The ability is blocked while the tag is present.
 
