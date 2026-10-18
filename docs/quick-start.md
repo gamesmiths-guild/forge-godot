@@ -38,6 +38,8 @@ Stats live in an **attribute set**. You can describe one in the Inspector and le
 3. Add two **Attributes**: `Health` and `Mana`, each with **Default Value** `100` and **Max Value** `100`.
 4. Save, then click **Build** (top right of the editor). The banner turns green once the class exists.
 
+> **Imported the samples?** The Quick Start sample already defines `HeroAttributes`, and two sets can't share a name. Skip this step and use the sample's definition, `forge_samples/demos/00_quick_start/attributes/hero_attributes.tres`.
+
 <img src="images/quick-start/attribute-set-definition.png" alt="A HeroAttributes definition with Health and Mana, showing the green built banner" width="420">
 
 Attribute values are integers, which keeps the simulation deterministic. For a stat that needs decimals, set **Decimal Places**: a `Speed` of `475` with two decimal places reads as `4.75`. See [Attribute Set Definitions](attribute-set-definitions.md).
@@ -280,7 +282,7 @@ public partial class DamageNumbersCueHandler : ForgeCueHandler
 }
 ```
 
-Set a cue's **Magnitude Type** to *AttributeValueChange* to receive the amount of Health actually lost in `parameters.Value.Magnitude`. See [Cue Nodes](nodes.md#cue-nodes).
+Set a cue's **Magnitude Type** to *AttributeValueChange* and its **Magnitude Attribute** to `HeroAttributes.Health` to receive the amount of Health actually lost in `parameters.Value.Magnitude`. See [Cue Nodes](nodes.md#cue-nodes).
 </details>
 
 ## Part 2 — A heal ability in Statescript
@@ -351,7 +353,8 @@ using Gamesmiths.Forge.Core;
 AbilityHandle heal = forgeEntity.Abilities.GrantAbilityPermanently(
     HealAbility.GetAbilityData(), abilityLevel: 1, LevelComparison.None, sourceEntity: null);
 
-// Later, on input:
+// The heal graph listens for Space itself, so activate it once, right after granting.
+// A one-shot C# behavior, like the one below, is activated on each press instead.
 heal.TryActivate(out AbilityActivationFailures failures);
 ```
 
@@ -431,8 +434,8 @@ Enabling the plugin registers a `ForgeBootstrap` autoload. It initializes the `F
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Tags;
 
-Tag burn = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue.burn");
-bool burning = forgeEntity.Tags.AllTags.HasTag(burn);
+Tag cooldown = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cooldown.heal");
+bool healOnCooldown = forgeEntity.Tags.AllTags.HasTag(cooldown);
 ```
 
 Forge validates its data at runtime in the editor and in debug builds. Exported release builds skip validation unless **Include Debug Symbols** is checked in the export.
