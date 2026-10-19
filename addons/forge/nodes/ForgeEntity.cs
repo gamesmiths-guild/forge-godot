@@ -38,6 +38,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public Variables SharedVariables { get; set; } = null!;
 
+	public DeterministicRandom Random { get; private set; } = null!;
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
 	/// </summary>
@@ -56,6 +58,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Ready();
 
+		Random = new DeterministicRandom(((ulong)GD.Randi() << 32) | GD.Randi());
 		Tags = new(BaseTags.GetTagContainer());
 		CuesManager = ForgeManagers.Instance.CuesManager;
 		EffectsManager = new EffectsManager(this, CuesManager);
@@ -90,7 +93,6 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Process(delta);
 
-		EffectsManager.UpdateEffects(delta);
 		Abilities.UpdateAbilities(delta);
 	}
 
@@ -98,6 +100,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._PhysicsProcess(delta);
 
-		Abilities.FixedUpdateAbilities(delta);
+		// Effects and the fixed rail advance together, once per physics tick, in the order EntitySimulation defines.
+		EntitySimulation.Tick(this, (long)Engine.GetPhysicsFrames(), delta);
 	}
 }
