@@ -92,9 +92,10 @@ public class ForgeEntityTickTests
 			Root.GetChildren().OfType<ForgeBootstrap>().Single()._PhysicsProcess(Step);
 
 			long tick = (long)Engine.GetPhysicsFrames();
-			second.Random.NextInt64().Should().Be(FirstDraw(second.Random.Seed, tick));
+			second.Random.NextInt64().Should().Be(Draws(second.Random.Seed, tick)[0]);
+			first.Random.NextInt64().Should().Be(Draws(first.Random.Seed, tick)[0]);
 			first._PhysicsProcess(Step);
-			first.Random.NextInt64().Should().Be(FirstDraw(first.Random.Seed, tick), "advancing does not restart it");
+			first.Random.NextInt64().Should().Be(Draws(first.Random.Seed, tick)[1], "advancing does not restart it");
 		}
 		finally
 		{
@@ -103,10 +104,19 @@ public class ForgeEntityTickTests
 		}
 	}
 
-	private static long FirstDraw(ulong seed, long tick)
+	[TestCase]
+	[RequireGodotRuntime]
+	public void The_bootstrap_restarts_randoms_while_the_tree_is_paused()
+	{
+		Root.GetChildren().OfType<ForgeBootstrap>().Single().ProcessMode.Should().Be(
+			Node.ProcessModeEnum.Always,
+			"an entity set to process while paused still advances, so its random must still restart");
+	}
+
+	private static long[] Draws(ulong seed, long tick)
 	{
 		var random = new DeterministicRandom(seed);
 		random.BeginTick(tick);
-		return random.NextInt64();
+		return [random.NextInt64(), random.NextInt64()];
 	}
 }

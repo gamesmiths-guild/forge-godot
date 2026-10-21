@@ -14,10 +14,12 @@ public partial class ForgeBootstrap : Node
 	/// </summary>
 	/// <remarks>
 	/// Runs its physics step before every other node, so every entity's random restarts before any entity advances.
+	/// It also runs while the tree is paused, for entities that keep advancing then.
 	/// </remarks>
 	public ForgeBootstrap()
 	{
 		ProcessPhysicsPriority = int.MinValue;
+		ProcessMode = ProcessModeEnum.Always;
 	}
 
 	public override void _Ready()
