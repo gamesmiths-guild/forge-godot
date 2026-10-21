@@ -65,7 +65,7 @@ These resolvers add no Godot-specific authoring beyond the standard nested-opera
 
 - `RemapResolver`, `InverseLerpResolver`, `SmoothStepResolver`, `WrapResolver`, `PingPongResolver`, `DeltaAngleResolver`, `ApproximatelyResolver` — [core Math reference](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#math). The `Approximately` resource exposes its tolerance as a direct editor field rather than a nested resolver; it defaults to `0.00001` (6-decimal float input precision), and the field itself accepts finer values.
 - `ConditionalResolver` / `ConditionalObjectResolver` — ternary select over value and object lanes.
-- `IntersectResolver`, `RandomElementResolver`, `ShuffleResolver` (and their `Object...<T>` variants) — [core Array Operations reference](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#array-operations). The random ones use Godot's `ForgeRandom`.
+- `IntersectResolver`, `RandomElementResolver`, `ShuffleResolver` (and their `Object...<T>` variants) — [core Array Operations reference](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/README.md#array-operations). The random ones draw from the owning entity's deterministic `Random` in an ability graph, and from Godot's `ForgeRandom` otherwise.
 
 ### Object Variable Types
 

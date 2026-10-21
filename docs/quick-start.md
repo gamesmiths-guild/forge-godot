@@ -411,7 +411,7 @@ Try pressing Space twice quickly: the second press does nothing until the 2 seco
 ![The finished scene in the editor, with the Burning effect in the Inspector and the heal graph in the Statescript panel](images/quick-start/editor-overview.png)
 
 - **Attributes** from a definition resource, put on a node by `ForgeAttributeSet`.
-- An **entity**: the `ForgeEntity` node, which owns attributes, tags, effects and abilities, and drives them every frame.
+- An **entity**: the `ForgeEntity` node, which owns attributes, tags, effects and abilities, and drives them every frame and physics step.
 - **Effects**: an instant heal, a periodic burn, a cost, a cooldown, a regen, and an effect whose only job is to grant an ability.
 - An **EffectArea2D** that applies and removes an effect by overlap.
 - **Cues** that decouple what happens from how it looks and sounds.

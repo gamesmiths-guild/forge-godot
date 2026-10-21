@@ -18,6 +18,12 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 [Icon("uid://cu6ncpuumjo20")]
 public partial class ForgeEntity : Node, IForgeEntity
 {
+	/// <summary>
+	/// The group every ready <see cref="ForgeEntity"/> joins, so <see cref="ForgeBootstrap"/> can restart their randoms
+	/// before any of them advances.
+	/// </summary>
+	public const string SimulationGroup = "forge_simulation";
+
 	[Export]
 	public ForgeTagContainer BaseTags { get; set; } = new();
 
@@ -38,6 +44,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public Variables SharedVariables { get; set; } = null!;
 
+	public DeterministicRandom Random { get; private set; } = null!;
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
 	/// </summary>
@@ -56,6 +64,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Ready();
 
+		Random = new DeterministicRandom(((ulong)GD.Randi() << 32) | GD.Randi());
+		EntitySimulation.BeginTick(this, (long)Engine.GetPhysicsFrames());
+		AddToGroup(SimulationGroup);
 		Tags = new(BaseTags.GetTagContainer());
 		CuesManager = ForgeManagers.Instance.CuesManager;
 		EffectsManager = new EffectsManager(this, CuesManager);
@@ -90,7 +101,6 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Process(delta);
 
-		EffectsManager.UpdateEffects(delta);
 		Abilities.UpdateAbilities(delta);
 	}
 
@@ -98,6 +108,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._PhysicsProcess(delta);
 
-		Abilities.FixedUpdateAbilities(delta);
+		// ForgeBootstrap already restarted the random for this tick, before any entity advanced.
+		EntitySimulation.Advance(this, delta);
 	}
 }
