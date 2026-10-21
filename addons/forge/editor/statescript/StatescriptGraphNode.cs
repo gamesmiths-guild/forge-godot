@@ -37,6 +37,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private static readonly Color _subgraphColor = new(0xc678ddff);
 	private static readonly Color _inputPropertyColor = new(0x61afefff);
 	private static readonly Color _outputVariableColor = new(0xe5c07bff);
+	private static readonly Color _presentationColor = new(0x2f7f8aff);
+	private static readonly Color _authorityColor = new(0xa8692cff);
 
 	private readonly Dictionary<PropertySlotKey, NodeEditorProperty> _activeResolverEditors = [];
 	private readonly Dictionary<FoldableContainer, string> _foldableKeys = [];
@@ -48,6 +50,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private int[] _visualToRuntimeOutputPortMap = [];
 	private int[] _runtimeToVisualOutputPortMap = [];
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
+	private Label? _networkKindBadge;
 	private StatescriptGraph? _graph;
 	private EditorUndoRedoManager? _undoRedo;
 	private StatescriptGraphEditorDock? _replayHost;
@@ -181,6 +184,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		}
 
 		ClearSlots();
+		RemoveNetworkKindBadge();
 
 		if (resource.NodeType is StatescriptNodeType.Entry or StatescriptNodeType.Exit
 			|| string.IsNullOrEmpty(resource.RuntimeTypeName))
@@ -664,6 +668,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		};
 
 		ApplyTitleBarColor(titleColor);
+		AddNetworkKindBadge(typeInfo.NetworkKind);
 	}
 
 	private void BuildDefaultPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)

@@ -253,6 +253,7 @@ internal static class StatescriptNodeDiscovery
 		string description;
 		InputPropertyInfo[] inputPropertiesInfo;
 		OutputVariableInfo[] outputVariablesInfo;
+		NodeNetworkKind networkKind = NodeNetworkKind.Simulation;
 
 		try
 		{
@@ -261,6 +262,7 @@ internal static class StatescriptNodeDiscovery
 			outputLabels = GetOutputPortLabels(tempNode, nodeType);
 			isSubgraph = GetSubgraphFlags(tempNode);
 			description = tempNode.Description;
+			networkKind = tempNode.NetworkKind;
 			inputPropertiesInfo = GetInputPropertiesInfo(
 				tempNode,
 				type.GetCustomAttribute<StatescriptAngleInputsAttribute>(),
@@ -290,7 +292,8 @@ internal static class StatescriptNodeDiscovery
 			description,
 			inputPropertiesInfo,
 			outputVariablesInfo,
-			category);
+			category,
+			networkKind);
 	}
 
 	private static string[] GetInputPortLabels(ForgeNode node, StatescriptNodeType nodeType)
@@ -525,6 +528,12 @@ internal static class StatescriptNodeDiscovery
 		public string Category { get; }
 
 		/// <summary>
+		/// Gets what the node's work means to a networked game, for this configuration. Read from the
+		/// <see cref="ForgeNode.NetworkKind"/> property at discovery time.
+		/// </summary>
+		public NodeNetworkKind NetworkKind { get; }
+
+		/// <summary>
 		/// Gets a value indicating whether the node can restart on a retrigger instead of ignoring it, which the editor
 		/// offers as a setting.
 		/// </summary>
@@ -541,7 +550,8 @@ internal static class StatescriptNodeDiscovery
 			string description,
 			InputPropertyInfo[] inputPropertiesInfo,
 			OutputVariableInfo[] outputVariablesInfo,
-			string category = "")
+			string category = "",
+			NodeNetworkKind networkKind = NodeNetworkKind.Simulation)
 		{
 			DisplayName = displayName;
 			RuntimeTypeName = runtimeTypeName;
@@ -554,6 +564,7 @@ internal static class StatescriptNodeDiscovery
 			InputPropertiesInfo = inputPropertiesInfo;
 			OutputVariablesInfo = outputVariablesInfo;
 			Category = category;
+			NetworkKind = networkKind;
 		}
 	}
 
