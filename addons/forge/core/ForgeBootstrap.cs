@@ -25,6 +25,16 @@ public partial class ForgeBootstrap : Node
 	public override void _Ready()
 	{
 		_ = new ForgeManagers(ForgeTagsSource.LoadRegisteredTags());
+
+		// Cue handlers wait for the end of the frame and see only what the frame changed. The highest priority
+		// processes last, after every entity has ticked and updated.
+		ForgeManagers.Instance.CuesManager.DeferDispatch = true;
+		ProcessPriority = int.MaxValue;
+	}
+
+	public override void _Process(double delta)
+	{
+		ForgeManagers.Instance.CuesManager.PresentCues();
 	}
 
 	public override void _PhysicsProcess(double delta)

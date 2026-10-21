@@ -18,7 +18,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// a zone, a held visual effect - anything that should disappear when the ability ends, is cancelled, or is interrupted
 /// - belongs here, and gets cleaned up without the graph having to remember to free it on every exit path.</para>
 /// <para>An optional lifetime deactivates the node early through <see cref="OnLifetimeEndPort"/>, which is how a timed
-/// summon expires on its own while still being freed if the ability ends first.</para>
+/// summon expires on its own while still being freed if the ability ends first. The lifetime is counted in fixed steps,
+/// so it ends on the same step on every machine.</para>
 /// <para>A retrigger while the instance is alive is ignored, or with <paramref name="restartOnRetrigger"/> the instance
 /// is freed and the scene instantiated again, with a fresh lifetime. The subgraph is disabled first and comes back
 /// for the new instance, since whatever ran in it was working on the one that was freed.</para>
@@ -215,7 +216,7 @@ public abstract class SceneNodeBase(
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		SceneNodeContext nodeContext = graphContext.GetNodeContext<SceneNodeContext>(NodeID);
 

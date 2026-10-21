@@ -102,6 +102,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._Process(delta);
 
 		Abilities.UpdateAbilities(delta);
+
+		// What the abilities show follows the state this frame's ticks and updates left them in.
+		Abilities.PresentAbilities();
 	}
 
 	public override void _PhysicsProcess(double delta)

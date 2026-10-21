@@ -1,18 +1,23 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Statescript.Nodes;
-using Godot;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// The context for a <see cref="PlayAnimationNode"/>. Holds the player the node started, so it watches and stops
-/// exactly the one it drove rather than looking it up again against an entity that may since have been freed.
+/// The context for a <see cref="PlayAnimationNode"/>. Holds how long the animation plays and how much of that has run,
+/// counted in fixed steps.
 /// </summary>
 public class PlayAnimationNodeContext : StateNodeContext
 {
 	/// <summary>
-	/// Gets or sets the animation player the node is driving, or <see langword="null"/> when nothing was played.
+	/// Gets or sets how long the animation plays at the speed it was started with, in seconds. Infinite for a looping
+	/// clip, and zero when there was nothing to play.
 	/// </summary>
-	public AnimationPlayer? Player { get; set; }
+	public double Duration { get; set; }
+
+	/// <summary>
+	/// Gets or sets the time counted since the node activated or restarted, in seconds.
+	/// </summary>
+	public double ElapsedTime { get; set; }
 }

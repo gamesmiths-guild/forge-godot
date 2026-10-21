@@ -25,6 +25,34 @@ internal static class AudioPlayers
 	}
 
 	/// <summary>
+	/// Gets how long a player's stream plays at a pitch, in seconds.
+	/// </summary>
+	/// <param name="player">The audio player.</param>
+	/// <param name="pitch">The pitch scale it plays at, or <see langword="null"/> for the player's own.</param>
+	/// <returns>The stream's length divided by the pitch; infinite for a looping stream, one whose length is unknown or
+	/// a pitch of zero; zero when the player has no stream.</returns>
+	public static double PlayLength(Node player, double? pitch)
+	{
+		(AudioStream? stream, float pitchScale) = player switch
+		{
+			AudioStreamPlayer plain => (plain.Stream, plain.PitchScale),
+			AudioStreamPlayer2D player2D => (player2D.Stream, player2D.PitchScale),
+			AudioStreamPlayer3D player3D => (player3D.Stream, player3D.PitchScale),
+			_ => (null, 1),
+		};
+
+		if (stream is null)
+		{
+			return 0;
+		}
+
+		double length = stream.GetLength();
+		double rate = pitch ?? pitchScale;
+
+		return Loops(stream) || length <= 0 || rate <= 0 ? double.PositiveInfinity : length / rate;
+	}
+
+	/// <summary>
 	/// Plays a player from the start, overriding its authored volume and pitch when values are given.
 	/// </summary>
 	/// <param name="player">The audio player to play.</param>
@@ -94,5 +122,16 @@ internal static class AudioPlayers
 				player3D.Stop();
 				break;
 		}
+	}
+
+	private static bool Loops(AudioStream stream)
+	{
+		return stream switch
+		{
+			AudioStreamWav wav => wav.LoopMode != AudioStreamWav.LoopModeEnum.Disabled,
+			AudioStreamOggVorbis ogg => ogg.Loop,
+			AudioStreamMP3 mp3 => mp3.Loop,
+			_ => false,
+		};
 	}
 }

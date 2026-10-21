@@ -1,18 +1,23 @@
 // Copyright © Gamesmiths Guild.
 
 using Gamesmiths.Forge.Statescript.Nodes;
-using Godot;
 
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// The context for a <see cref="PlayAudioNode"/>. Holds the player the node started, so it watches and stops exactly
-/// the one it drove rather than looking it up again against an entity that may since have been freed.
+/// The context for a <see cref="PlayAudioNode"/>. Holds how long the sound plays and how much of that has run, counted
+/// in fixed steps.
 /// </summary>
 public class PlayAudioNodeContext : StateNodeContext
 {
 	/// <summary>
-	/// Gets or sets the audio player the node is driving, or <see langword="null"/> when nothing was played.
+	/// Gets or sets how long the sound plays at the pitch it was started with, in seconds. Infinite for a looping
+	/// stream or one whose length is unknown, and zero when there was nothing to play.
 	/// </summary>
-	public Node? Player { get; set; }
+	public double Duration { get; set; }
+
+	/// <summary>
+	/// Gets or sets the time counted since the node activated or restarted, in seconds.
+	/// </summary>
+	public double ElapsedTime { get; set; }
 }

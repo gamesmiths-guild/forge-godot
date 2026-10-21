@@ -11,18 +11,23 @@ using Node = Godot.Node;
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// State node that holds a sound for as long as it plays, emitting <see cref="OnFinishedPort"/> when it ends.
+/// State node that plays a sound for as long as the sound lasts, emitting <see cref="OnFinishedPort"/> once its length
+/// has run.
 /// </summary>
 /// <remarks>
 /// <para>The audio counterpart of Play Animation, and the node for sound that belongs to a stretch of gameplay rather
-/// than to a moment: a channel hum, a beam loop, a windup whine. A looping stream never finishes on its own, so the
-/// node runs until the ability ends and takes the sound with it.</para>
-/// <para>A sound that never started - no player, or a player with no stream - reports finished on its first update
-/// rather than waiting forever, since it is not a sound the graph can be waiting on. The missing player is warned
-/// about; a misconfigured presentation node should not be able to stall an ability on top of that.</para>
+/// than to a moment: a channel hum, a beam loop, a windup whine. The length is the stream's length divided by the
+/// pitch, counted in fixed steps from activation. A looping stream, or one whose length Godot cannot tell, never
+/// finishes on its own, so the node runs until the ability ends and takes the sound with it.</para>
+/// <para>The node is a presentation node: the sound starts in the presentation pass at the end of the frame, so an
+/// activation that ends within the frame plays nothing. A sound with nothing to play - no player, or a player with no
+/// stream - has no length and finishes on the next step rather than waiting forever, since it is not a sound the graph
+/// can be waiting on. The missing player is warned about; a misconfigured presentation node should not be able to
+/// stall an ability on top of that.</para>
 /// <para>A retrigger while the sound plays is ignored, or with <paramref name="restartOnRetrigger"/> the sound starts
-/// over from the beginning, with the volume and pitch resolved again at that moment. It replaces the sound rather than
-/// layering a second one on a player that allows polyphony.</para>
+/// over from the beginning, with the volume and pitch resolved again at that moment. Under
+/// <paramref name="stopOnDeactivate"/> it replaces the sound rather than layering a second one on a player that allows
+/// polyphony.</para>
 /// </remarks>
 /// <param name="playerPath">Optional path to the audio player, from the node the entity lives on. Empty means the
 /// entity's first audio player child.</param>
@@ -48,7 +53,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 	public const byte PitchInput = 2;
 
 	/// <summary>
-	/// Output port index for the event emitted when the sound ends.
+	/// Output port index for the event emitted when the sound's length has run.
 	/// </summary>
 	public const byte OnFinishedPort = 4;
 
@@ -57,7 +62,11 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 
 	/// <inheritdoc/>
 	public override string Description =>
-		"Plays a sound while active, emitting OnFinished when it ends and optionally stopping it on an early exit.";
+		"Plays a sound while active, emitting OnFinished once its length has run and optionally stopping it on an " +
+		"early exit.";
+
+	/// <inheritdoc/>
+	public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
 
 	/// <inheritdoc/>
 	protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
@@ -78,11 +87,48 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 	protected override void OnActivate(GraphContext graphContext)
 	{
 		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
-		nodeContext.Player = null;
+		nodeContext.ElapsedTime = 0;
+		nodeContext.Duration = 0;
 
+		if (_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
+		{
+			nodeContext.Duration = AudioPlayers.PlayLength(
+				player,
+				PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName));
+		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnDeactivate(GraphContext graphContext)
+	{
+		// The presentation pass stops the sound.
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestart(GraphContext graphContext)
+	{
+		// The presentation pass plays the restart from the start; only the length starts over here.
+		OnActivate(graphContext);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
+	{
+		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
+		nodeContext.ElapsedTime += deltaTime;
+
+		if (nodeContext.ElapsedTime >= nodeContext.Duration)
+		{
+			DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
+		}
+	}
+
+	/// <inheritdoc/>
+	protected override object? OnPresentationActivated(GraphContext graphContext)
+	{
 		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
 		{
-			return;
+			return null;
 		}
 
 		AudioPlayers.TryPlay(
@@ -90,46 +136,18 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[VolumeDbInput].BoundName),
 			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName));
 
-		nodeContext.Player = player;
+		return player;
 	}
 
 	/// <inheritdoc/>
-	protected override void OnDeactivate(GraphContext graphContext)
+	protected override void OnPresentationDeactivated(object? presentation)
 	{
-		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
-		Node? player = nodeContext.Player;
-		nodeContext.Player = null;
-
-		if (_stopOnDeactivate && player is not null && GodotObject.IsInstanceValid(player))
+		if (_stopOnDeactivate
+			&& presentation is Node player
+			&& GodotObject.IsInstanceValid(player)
+			&& AudioPlayers.IsPlaying(player))
 		{
 			AudioPlayers.Stop(player);
 		}
-	}
-
-	/// <inheritdoc/>
-	protected override void OnRestart(GraphContext graphContext)
-	{
-		Node? player = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID).Player;
-
-		if (player is not null && GodotObject.IsInstanceValid(player))
-		{
-			AudioPlayers.Stop(player);
-		}
-
-		OnActivate(graphContext);
-	}
-
-	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
-	{
-		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
-		Node? player = nodeContext.Player;
-
-		if (player is not null && GodotObject.IsInstanceValid(player) && AudioPlayers.IsPlaying(player))
-		{
-			return;
-		}
-
-		DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 	}
 }

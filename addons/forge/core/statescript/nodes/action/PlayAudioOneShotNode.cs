@@ -45,6 +45,9 @@ public class PlayAudioOneShotNode(string playerPath = "") : ActionNode
 	public override string Description => "Plays an entity's audio player once and moves on.";
 
 	/// <inheritdoc/>
+	public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
+
+	/// <inheritdoc/>
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
 		inputProperties.Add(new InputProperty("Entity", typeof(IForgeEntity), IsOptional: true));

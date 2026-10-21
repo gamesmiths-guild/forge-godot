@@ -85,23 +85,25 @@ public class StateNodeRestartTests
 			ForgeGraph graph = GraphWithEntity(entity);
 			var play = new PlayAnimationNode(animation: "swing", restartOnRetrigger: true);
 			play.BindInput(PlayAnimationNode.EntityInput, "entity");
-			AddWithRetrigger(graph, play);
+			TimerNode retrigger = AddWithRetrigger(graph, play);
 
 			// Stopping the animation for the restart emits current_animation_changed, and a listener on it stops the
-			// graph from under the restart. Started after Play Animation, so its first play goes unheard.
+			// graph from under the presentation pass. Started by the retrigger, so the first play goes unheard.
 			graph.VariableDefinitions.DefineObjectVariable<Node>("player", player);
 			var listener = new SignalListenerNode("current_animation_changed");
 			listener.BindInput(SignalListenerNode.NodeInput, "player");
 			var exit = new ExitNode();
 			graph.AddNode(listener);
 			graph.AddNode(exit);
-			Connect(graph, graph.EntryNode.OutputPorts[EntryNode.OutputPort], listener);
+			Connect(graph, retrigger.OutputPorts[TimerNode.OnTimerEndPort], listener);
 			Connect(graph, listener.OutputPorts[SignalListenerNode.OnSignalPort], exit);
 
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
+			processor.Present();
+			processor.UpdateGraph(RetriggerAt);
 
-			processor.Invoking(x => x.UpdateGraph(RetriggerAt)).Should().NotThrow();
+			processor.Invoking(x => x.Present()).Should().NotThrow();
 
 			processor.GraphContext.IsActive.Should().BeFalse("the graph stopped");
 			player.IsPlaying().Should().BeFalse("the restart ends with the graph instead of playing again");
@@ -299,8 +301,10 @@ public class StateNodeRestartTests
 
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
+			processor.Present();
 			processor.GraphContext.GraphVariables.SetVar("volume", -9.0);
 			processor.UpdateGraph(RetriggerAt);
+			processor.Present();
 
 			player.Playing.Should().BeTrue("the sound is still playing either way");
 			return player.VolumeDb;
@@ -359,9 +363,11 @@ public class StateNodeRestartTests
 
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
+			processor.Present();
 
 			player.Advance(0.4);
 			processor.UpdateGraph(0.5);
+			processor.Present();
 
 			player.CurrentAnimation.ToString().Should().Be("swing", "the animation is still playing either way");
 			return player.CurrentAnimationPosition;
@@ -465,7 +471,7 @@ public class StateNodeRestartTests
 	}
 
 	// The node starts from the entry, and a timer started alongside it sends its input again once it is under way.
-	private static void AddWithRetrigger(ForgeGraph graph, ForgeNode node)
+	private static TimerNode AddWithRetrigger(ForgeGraph graph, ForgeNode node)
 	{
 		graph.VariableDefinitions.DefineVariable("retriggerAt", RetriggerAt);
 
@@ -477,6 +483,8 @@ public class StateNodeRestartTests
 		Connect(graph, graph.EntryNode.OutputPorts[EntryNode.OutputPort], timer);
 		Connect(graph, graph.EntryNode.OutputPorts[EntryNode.OutputPort], node);
 		Connect(graph, timer.OutputPorts[TimerNode.OnTimerEndPort], node);
+
+		return timer;
 	}
 
 	private static void Connect(ForgeGraph graph, OutputPort from, ForgeNode to)

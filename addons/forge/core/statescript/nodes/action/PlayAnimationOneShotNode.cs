@@ -48,6 +48,9 @@ public class PlayAnimationOneShotNode(string playerPath = "", string animation =
 	public override string Description => "Starts an animation on an entity's animation player and moves on.";
 
 	/// <inheritdoc/>
+	public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
+
+	/// <inheritdoc/>
 	protected override void DefineParameters(List<InputProperty> inputProperties, List<OutputVariable> outputVariables)
 	{
 		inputProperties.Add(new InputProperty("Entity", typeof(IForgeEntity), IsOptional: true));

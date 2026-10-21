@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
@@ -10,24 +11,26 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// State node that owns an animation for as long as it plays, emitting <see cref="OnFinishedPort"/> when it ends.
+/// State node that plays an animation for as long as the animation lasts, emitting <see cref="OnFinishedPort"/> once
+/// its length has run.
 /// </summary>
 /// <remarks>
 /// <para>This is the node for an ability whose timing is the animation's timing: a melee swing that hits when the swing
-/// lands, a cast bar that ends when the cast animation does. The graph waits on the animator's timing instead of
+/// lands, a cast bar that ends when the cast animation does. The graph waits on the animation's length instead of
 /// duplicating it in a timer that has to be kept in sync by hand.</para>
-/// <para>The node is done when its animation is no longer the one playing, which covers the three ways that happens
-/// with one rule: the animation ended, something stopped the player, or another animation took over. A looping
-/// animation therefore never finishes on its own and runs until the node is aborted, which is what makes it the
-/// channelling shape.</para>
-/// <para>An animation that never started - no player, or a name the player does not have - counts as one that is no
-/// longer playing, so the node warns and finishes rather than holding open a graph that is waiting on it. A
-/// misconfigured presentation node should not be able to stall an ability.</para>
-/// <para>Deactivating stops playback under <paramref name="stopOnDeactivate"/>, which reaches an abort, a subgraph
-/// ending and the graph stopping alike - an interrupted cast should not leave the caster mid-gesture. A natural finish
-/// stops nothing, because by then the animation is over.</para>
+/// <para>The length is the clip's length divided by the speed it plays at, counted in fixed steps from activation, so
+/// the node finishes on the same step on every machine, whatever the engine is doing with playback. Another animation
+/// taking over the player does not end it. A looping clip, or a speed of zero, never finishes on its own and runs until
+/// the node is aborted, which is what makes it the channelling shape.</para>
+/// <para>The node is a presentation node: the animation starts in the presentation pass at the end of the frame, so an
+/// activation that ends within the frame plays nothing. A clip the player does not have, or no player at all, counts as
+/// one with no length, so the node warns and finishes on the next step rather than holding open a graph that is waiting
+/// on it. A misconfigured presentation node should not be able to stall an ability.</para>
+/// <para>Once the node ends early, the presentation pass stops playback under <paramref name="stopOnDeactivate"/>,
+/// which reaches an abort, a subgraph ending and the graph stopping alike - an interrupted cast should not leave the
+/// caster mid-gesture. A natural finish stops nothing, because by then the animation is over.</para>
 /// <para>A retrigger while the animation plays is ignored, or with <paramref name="restartOnRetrigger"/> the animation
-/// plays again from its start, with the speed and blend resolved again at that moment.</para>
+/// plays again from its start, with the speed and blend resolved again and its length counted from the restart.</para>
 /// </remarks>
 /// <param name="playerPath">Optional path to the animation player, from the node the entity lives on. Empty means the
 /// entity's first animation player child.</param>
@@ -58,7 +61,7 @@ public class PlayAnimationNode(
 	public const byte BlendInput = 2;
 
 	/// <summary>
-	/// Output port index for the event emitted when the animation ends.
+	/// Output port index for the event emitted when the animation's length has run.
 	/// </summary>
 	public const byte OnFinishedPort = 4;
 
@@ -68,8 +71,11 @@ public class PlayAnimationNode(
 
 	/// <inheritdoc/>
 	public override string Description =>
-		"Plays an animation while active, emitting OnFinished when it ends and optionally stopping it on an early " +
-		"exit.";
+		"Plays an animation while active, emitting OnFinished once its length has run and optionally stopping it on " +
+		"an early exit.";
+
+	/// <inheritdoc/>
+	public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
 
 	/// <inheritdoc/>
 	protected override void DefinePorts(List<InputPort> inputPorts, List<OutputPort> outputPorts)
@@ -90,79 +96,97 @@ public class PlayAnimationNode(
 	protected override void OnActivate(GraphContext graphContext)
 	{
 		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
-		nodeContext.Player = null;
+		nodeContext.ElapsedTime = 0;
+		nodeContext.Duration = 0;
 
-		if (!_inputs.TryGetAnimationPlayer(
-			graphContext,
-			InputProperties[EntityInput].BoundName,
-			out AnimationPlayer? player))
+		if (_inputs.TryGetAnimationPlayer(graphContext, InputProperties[EntityInput].BoundName, out AnimationPlayer? player))
 		{
-			return;
-		}
-
-		if (_inputs.TryPlayAnimation(
-			player,
-			_animation,
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName),
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName)))
-		{
-			nodeContext.Player = player;
+			nodeContext.Duration = PlayLength(
+				player,
+				PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName));
 		}
 	}
 
 	/// <inheritdoc/>
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
-		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
-		AnimationPlayer? player = nodeContext.Player;
-		nodeContext.Player = null;
-
-		if (_stopOnDeactivate && player is not null && IsStillPlaying(player))
-		{
-			player.Stop();
-		}
+		// The presentation pass stops playback.
 	}
 
 	/// <inheritdoc/>
 	protected override void OnRestart(GraphContext graphContext)
 	{
-		// Godot's Play leaves an animation that is already playing where it is, so it is stopped to play from the
-		// start.
-		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
-		AnimationPlayer? player = nodeContext.Player;
-
-		if (player is not null && IsStillPlaying(player))
-		{
-			player.Stop();
-
-			// Stopping emits current_animation_changed, and whatever listens for it can end this node or the graph.
-			if (!nodeContext.Active)
-			{
-				return;
-			}
-		}
-
+		// The presentation pass plays the restart from the start; only the length starts over here.
 		OnActivate(graphContext);
 	}
 
 	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
-		AnimationPlayer? player = nodeContext.Player;
+		nodeContext.ElapsedTime += deltaTime;
 
-		if (player is not null && IsStillPlaying(player))
+		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
-			return;
+			DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 		}
-
-		DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 	}
 
-	// Godot reports the assigned animation only while the player is playing, so one comparison answers all three ways
-	// this node's animation stops being the one running: it ended, it was stopped, or another animation replaced it.
+	/// <inheritdoc/>
+	protected override object? OnPresentationActivated(GraphContext graphContext)
+	{
+		if (!_inputs.TryGetAnimationPlayer(
+			graphContext,
+			InputProperties[EntityInput].BoundName,
+			out AnimationPlayer? player))
+		{
+			return null;
+		}
+
+		// Godot's Play leaves an animation that is already playing where it is, and the length is counted from the
+		// start, so it is stopped to play from there.
+		if (IsStillPlaying(player))
+		{
+			player.Stop();
+		}
+
+		return _inputs.TryPlayAnimation(
+			player,
+			_animation,
+			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName),
+			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName))
+				? player
+				: null;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnPresentationDeactivated(object? presentation)
+	{
+		if (_stopOnDeactivate && presentation is AnimationPlayer player && IsStillPlaying(player))
+		{
+			player.Stop();
+		}
+	}
+
+	// Godot reports the assigned animation only while the player is playing, so one comparison tells whether this
+	// node's animation is still the one running.
 	private bool IsStillPlaying(AnimationPlayer player)
 	{
 		return GodotObject.IsInstanceValid(player) && player.CurrentAnimation == _animation;
+	}
+
+	private double PlayLength(AnimationPlayer player, double? speed)
+	{
+		if (!player.HasAnimation(_animation))
+		{
+			return 0;
+		}
+
+		Animation clip = player.GetAnimation(_animation);
+		double rate = Math.Abs((speed ?? 1) * player.SpeedScale);
+
+		return clip.LoopMode != Animation.LoopModeEnum.None || rate <= 0
+			? double.PositiveInfinity
+			: clip.Length / rate;
 	}
 }

@@ -11,10 +11,12 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// Action node that turns one of a scene node's switches on or off.
 /// </summary>
 /// <remarks>
-/// These are the switches Set Node Property cannot reach with a path alone: two of them are named differently in 2D and
-/// 3D, and processing is a method rather than a property. Hiding a decoy, arming a trap by turning its area's
+/// <para>These are the switches Set Node Property cannot reach with a path alone: two of them are named differently in
+/// 2D and 3D, and processing is a method rather than a property. Hiding a decoy, arming a trap by turning its area's
 /// monitoring on, or stopping a spawner's own script from running are all one row here. The write is permanent, for
-/// state that outlives the ability; Node Enabled Override is the form that puts the switch back.
+/// state that outlives the ability; Node Enabled Override is the form that puts the switch back.</para>
+/// <para>Visibility only changes what is seen, so for <see cref="NodeEnabledAspect.Visible"/> the node is a
+/// presentation node. Processing and monitoring change gameplay, so for those it is a simulation node.</para>
 /// </remarks>
 /// <param name="aspect">Which switch to write.</param>
 [StatescriptCategory("Interop")]
@@ -29,6 +31,10 @@ public sealed class SetNodeEnabledNode(NodeEnabledAspect aspect = NodeEnabledAsp
 
 	/// <inheritdoc/>
 	public override string Description => "Turns a scene node's visibility, processing or monitoring on or off.";
+
+	/// <inheritdoc/>
+	public override NodeNetworkKind NetworkKind =>
+		_aspect == NodeEnabledAspect.Visible ? NodeNetworkKind.Presentation : NodeNetworkKind.Simulation;
 
 	/// <inheritdoc/>
 	protected override void DefineInteropParameters(
