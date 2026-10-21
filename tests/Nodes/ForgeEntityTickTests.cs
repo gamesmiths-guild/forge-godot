@@ -1,10 +1,12 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Linq;
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Effects.Magnitudes;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using GdUnit4;
 using Godot;
@@ -71,5 +73,40 @@ public class ForgeEntityTickTests
 		{
 			entity.Free();
 		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void The_bootstrap_restarts_every_entity_random_before_any_entity_advances()
+	{
+		var first = new ForgeEntity();
+		var second = new ForgeEntity();
+		Root.AddChild(first);
+		Root.AddChild(second);
+
+		try
+		{
+			first.Random.NextInt64();
+			second.Random.NextInt64();
+
+			Root.GetChildren().OfType<ForgeBootstrap>().Single()._PhysicsProcess(Step);
+
+			long tick = (long)Engine.GetPhysicsFrames();
+			second.Random.NextInt64().Should().Be(FirstDraw(second.Random.Seed, tick));
+			first._PhysicsProcess(Step);
+			first.Random.NextInt64().Should().Be(FirstDraw(first.Random.Seed, tick), "advancing does not restart it");
+		}
+		finally
+		{
+			first.Free();
+			second.Free();
+		}
+	}
+
+	private static long FirstDraw(ulong seed, long tick)
+	{
+		var random = new DeterministicRandom(seed);
+		random.BeginTick(tick);
+		return random.NextInt64();
 	}
 }
