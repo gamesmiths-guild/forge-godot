@@ -104,7 +104,7 @@ State nodes are more complex because they persist over time and manage their own
 2. Create the node class that extends `StateNode<T>`.
 3. Override `OnActivate` to initialize state when the node receives a message.
 4. Override `OnDeactivate` to clean up state.
-5. Override `OnUpdate` to advance logic each frame, or `OnFixedUpdate` to advance it on each physics step. Use the fixed rail for anything that moves a body or queries the physics world, so the result does not depend on the frame rate; use the frame rail for timers, input and presentation.
+5. Override `OnUpdate` to advance logic each frame, or `OnFixedUpdate` to advance it on each physics step. Use the fixed rail for anything that moves a body or queries the physics world, or that ends the node after a length of time it plays something for, so the result does not depend on the frame rate; use the frame rail for timers and input.
 6. Call `DeactivateNode` or `DeactivateNodeAndEmitMessage` when the node should deactivate.
 
 **Example - Cooldown State Node:**
@@ -182,6 +182,46 @@ public class CooldownNode(bool restartOnRetrigger = false)
 ```
 
 The parameter is what the editor looks for: a node that takes it gets a **Restart On Retrigger** checkbox in its Settings section with no editor code, stored in `CustomData` like any other constructor argument. `OnRestart` runs without a deactivation first, so a node that holds something — an applied effect, a spawned instance, a signal connection — releases it there before acquiring it again. Releasing can reach the rest of the graph — a signal it emits, a subgraph it ends — and so end the node or stop the graph along the way, so check that the node context it released from is still `Active` before acquiring again. The rest of the rule is in the [core Retriggers docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#retriggers).
+
+### Nodes that only show something
+
+A node that plays an animation, starts a sound or writes a visual property declares `NetworkKind => NodeNetworkKind.Presentation`, and the editor marks it with a **Presentation** badge. A state node of that kind does its engine work in `OnPresentationActivated` and undoes it in `OnPresentationDeactivated`, which the entity's presentation pass calls at the end of the frame, on net change. Its `OnActivate` keeps what gameplay needs, such as counting the length of what it plays in `OnFixedUpdate`. `PlayAnimationNode` and `NodePropertyOverrideNode` are the worked examples; the full contract is in the [core Simulation and presentation docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
+
+```csharp
+public class GlowNode(string lightPath = "") : StateNode<StateNodeContext>
+{
+    public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
+
+    protected override void OnActivate(GraphContext graphContext)
+    {
+    }
+
+    protected override void OnDeactivate(GraphContext graphContext)
+    {
+    }
+
+    protected override object? OnPresentationActivated(GraphContext graphContext)
+    {
+        graphContext.TryGetActivationContext(out AbilityBehaviorContext? ability);
+
+        if (!ForgeEntityBridge.TryGetEntityChild(ability?.Owner, lightPath, out Light3D? light))
+        {
+            return null;
+        }
+
+        light.Visible = true;
+        return light;
+    }
+
+    protected override void OnPresentationDeactivated(object? presentation)
+    {
+        if (presentation is Light3D light && GodotObject.IsInstanceValid(light))
+        {
+            light.Visible = false;
+        }
+    }
+}
+```
 
 ### Adding Custom Output Ports
 

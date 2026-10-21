@@ -3,6 +3,8 @@
 > **Runtime Types:** `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NavMoveTo3DNode` / `NavMoveTo2DNode`
 >
 > **Add Node group:** State → **Navigation**
+>
+> **Network kind:** Simulation
 
 These nodes are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
 

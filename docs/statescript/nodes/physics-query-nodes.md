@@ -3,6 +3,8 @@
 > **Namespace:** `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Condition` and `.State`
 >
 > **Add Node group:** Condition → **Physics**, State → **Physics**
+>
+> **Network kind:** Simulation
 
 These nodes are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
 

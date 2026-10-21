@@ -3,6 +3,8 @@
 > **Runtime Type:** `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.InputActionNode`
 >
 > **Add Node group:** State → **Input**
+>
+> **Network kind:** Simulation
 
 This node is **Godot-only** — there is no core Forge counterpart, so this page is its reference rather than a Godot-authoring supplement to one.
 

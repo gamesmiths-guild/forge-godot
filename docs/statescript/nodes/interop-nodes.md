@@ -3,6 +3,8 @@
 > **Namespace:** `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action` and `.State`
 >
 > **Add Node group:** Action → **Interop**, State → **Interop**
+>
+> **Network kind:** Simulation, except the property nodes and the `Visible` aspect of the enabled-state nodes, which are Presentation
 
 These nodes are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
 
@@ -33,7 +35,9 @@ Both settings are declared `AffectsLayout`, so changing either rebuilds the node
 
 `SetNodeProperty` is the direct answer to "Set Variable does not reach the scene nodes": graph variables are two in-memory bags and nothing observes them.
 
-`NodePropertyOverride` captures what it found on activation and restores it on deactivation *or abort*, so a cancelled ability cannot leave a light dimmed or a material swapped for the rest of the run. The Action form is for state meant to outlive the ability — the same pairing [`SetCollisionBits` and `CollisionOverride`](physics-nodes.md#collision-bits) have, for the same reason.
+`NodePropertyOverride` captures what it found when it writes and restores it after deactivation *or abort*, so a cancelled ability cannot leave a light dimmed or a material swapped for the rest of the run. The Action form is for state meant to outlive the ability — the same pairing [`SetCollisionBits` and `CollisionOverride`](physics-nodes.md#collision-bits) have, for the same reason.
+
+**Both are presentation nodes**, marked with a **Presentation** badge, and are for what is seen: light energy, a shader parameter, a sprite's tint. `NodePropertyOverride` writes in the presentation pass at the end of the frame it activates in and restores at the end of the frame it ends in, so an override that comes and goes within a frame writes nothing. Gameplay must not read these properties back. A change that gameplay depends on belongs in a simulation node instead, such as an effect, an attribute, [`CollisionOverride`](physics-nodes.md#collision-bits) or a [spatial node](spatial-nodes.md). See [Simulation and presentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
 
 Reading a property back is the [`Node Property`](../resolvers/scene-graph-resolvers.md#reading-a-nodes-own-state) resolver.
 
@@ -47,6 +51,8 @@ Reading a property back is the [`Node Property`](../resolvers/scene-graph-resolv
 | `NodeEnabledOverrideNode` | State | **Aspect** | 0 Node (optional); 1 Enabled (`bool`, required) |
 
 **Aspect** is one of `Visible`, `Processing`, `PhysicsProcessing`, `Monitoring`, `Monitorable`.
+
+**The aspect decides the network kind.** `Visible` only changes what is seen, so with it both nodes are presentation nodes and `NodeEnabledOverride` switches and restores in the presentation pass, like `NodePropertyOverride`. The other four change gameplay, so with them both are simulation nodes and switch the moment they run. The badge on the node follows the aspect.
 
 **Monitoring is an area's switch.** Godot puts `Monitoring` and `Monitorable` on `Area2D` and `Area3D` alone, so pointing one at a body warns and names the distinction: a body's collision *layer and mask* say which layers it occupies and scans, while monitoring says whether an area tracks what is inside it. The warning points at [Set Collision Bits and Collision Override](physics-nodes.md#collision-bits) instead.
 

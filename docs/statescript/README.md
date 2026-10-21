@@ -77,6 +77,10 @@ The core Statescript library is engine-agnostic, so nothing in it knows about sc
 
 Presentation driven by *effects* rather than by a graph goes through cues instead — see the [cue handler library](../nodes.md#cue-handler-library).
 
+### Simulation and Presentation
+
+Nodes that only show something — playing an animation or a sound, writing a visual property — are **presentation** nodes, and the editor marks them with a **Presentation** badge in the title bar. Nodes with no badge are **simulation** nodes: they change gameplay. A presentation state node starts and stops what it shows in the presentation pass each `ForgeEntity` runs at the end of its frame, so something that comes and goes within one frame is never shown, and how long it lasts is counted in physics steps rather than read from the engine. Gameplay must never depend on what a presentation node writes. See [Simulation and presentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
+
 ## Subgraphs
 
 State nodes have **Subgraph** output ports in addition to regular Event output ports. Both emit a regular message when the state node activates, but the critical difference is what happens when a disable signal is sent:

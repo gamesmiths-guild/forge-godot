@@ -22,7 +22,7 @@ The central node for adding Forge system functionality to any game object.
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
 - **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already restarted every entity's random for the physics frame number, before any entity advances, so a roll one entity makes on another uses the current step. `Advance` timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
-- **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates.
+- **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates, then `Abilities.PresentAbilities` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 
 **Usage:**
@@ -318,6 +318,8 @@ Base node for implementing handlers for visual and audio feedback.
 **Description:**
 
 Extend `ForgeCueHandler` to implement custom logic for visual/audio response to gameplay events. Registers and unregisters with the Forge CuesManager automatically. Before writing one, check whether the [cue handler library](#cue-handler-library) below already covers it.
+
+Handlers run at the end of the frame, not the moment a cue fires. The Forge bootstrap autoload turns on the CuesManager's [deferred dispatch](https://github.com/gamesmiths-guild/forge/blob/main/docs/cues.md#deferred-dispatch) and dispatches the frame's cues after every other node has processed, so a cue applied and removed within one frame never reaches a handler.
 
 Each phase has **two overloads**: one taking the target entity, and one taking only the parameters. Override the second when the effect belongs to the screen rather than to whoever was hit — that is what the camera shake and hit stop handlers do.
 
