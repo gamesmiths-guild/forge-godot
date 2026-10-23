@@ -37,7 +37,7 @@ The **Player** setting is a path to the player, from the node the entity lives o
 | 1 | Speed | `double` | Optional. |
 | 2 | Blend | `double` | Optional. Cross-fade seconds. |
 
-`PlayAnimationNode` deactivates and emits `OnFinished` once the clip's length has run: the clip's length divided by its speed (the Speed input times the player's own Speed Scale), counted in fixed steps from activation. **A looping clip, or a speed of zero, never finishes on its own**, which is the channelling shape: the node runs until something aborts it. Another animation taking over the player does not end the node; its length does.
+`PlayAnimationNode` deactivates and emits `OnFinished` once the clip's length has run: the clip's length divided by its speed (the Speed input times the player's own Speed Scale), counted in fixed steps from activation. Both are read when the node activates, so a game must not drive the player's Speed Scale from a presentation node such as Node Property Override: what was presented would change how long the node lasts. **A looping clip, or a speed of zero, never finishes on its own**, which is the channelling shape: the node runs until something aborts it. Another animation taking over the player does not end the node; its length does.
 
 The animation starts in the presentation pass, from its first frame: if the same animation is already playing, the node stops it first, because the length it counts starts at the beginning.
 

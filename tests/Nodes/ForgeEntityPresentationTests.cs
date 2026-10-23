@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using FluentAssertions;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
@@ -116,6 +117,41 @@ public class ForgeEntityPresentationTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void An_entity_whose_presentation_throws_keeps_the_rest_of_the_pass()
+	{
+		var failing = new ForgeEntity();
+		var presented = new ForgeEntity();
+		Root.AddChild(failing);
+		Root.AddChild(presented);
+		ForgeBootstrap bootstrap = Root.GetNode<ForgeBootstrap>("Forge Bootstrap");
+		CuesManager cues = ForgeManagers.Instance.CuesManager;
+		var cue = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue");
+		var handler = new CountingCueHandler();
+		cues.RegisterCue(cue, handler);
+
+		try
+		{
+			var throwing = new ThrowingBehavior();
+			var counting = new ThrowingBehavior { Throws = false };
+			Grant(failing, throwing).TryActivate(out _).Should().BeTrue();
+			Grant(presented, counting).TryActivate(out _).Should().BeTrue();
+			cues.ExecuteCue(cue, null, null);
+
+			bootstrap.Invoking(x => x._Process(Step)).Should().Throw<InvalidOperationException>();
+
+			counting.Presentations.Should().Be(1, "the other entity is still presented");
+			handler.Executions.Should().Be(1, "the frame's cues are still dispatched");
+		}
+		finally
+		{
+			cues.UnregisterCue(cue, handler);
+			failing.Free();
+			presented.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void The_sample_dash_lasts_exactly_one_roll_whatever_the_animation_player_does()
 	{
 		CharacterBody3D body = GD.Load<PackedScene>("res://forge_samples/demos/03_statescript/scenes/player.tscn")
@@ -158,6 +194,15 @@ public class ForgeEntityPresentationTests
 		}
 	}
 
+	private static AbilityHandle Grant(ForgeEntity entity, IAbilityBehavior behavior)
+	{
+		return entity.Abilities.GrantAbilityPermanently(
+			new AbilityData("Present", behaviorFactory: () => behavior),
+			1,
+			LevelComparison.Higher,
+			null);
+	}
+
 	private sealed class CountingCueHandler : ICueHandler
 	{
 		public int Executions { get; private set; }
@@ -177,6 +222,31 @@ public class ForgeEntityPresentationTests
 
 		public void OnUpdate(IForgeEntity? target, CueParameters? parameters)
 		{
+		}
+	}
+
+	private sealed class ThrowingBehavior : IAbilityBehavior
+	{
+		public bool Throws { get; init; } = true;
+
+		public int Presentations { get; private set; }
+
+		public void OnStarted(AbilityBehaviorContext context)
+		{
+		}
+
+		public void OnEnded(AbilityBehaviorContext context)
+		{
+		}
+
+		public void OnPresent()
+		{
+			Presentations++;
+
+			if (Throws)
+			{
+				throw new InvalidOperationException("Presentation failed.");
+			}
 		}
 	}
 }

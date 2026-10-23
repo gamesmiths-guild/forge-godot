@@ -221,13 +221,56 @@ public class PresentationNodeTests
 
 		try
 		{
-			GraphProcessor processor = Start(entity, PlayNode());
+			// Already playing, so the pass stops it before playing it again, and a listener on that stop ends the graph.
 			player.Play("swing");
-			player.CurrentAnimationChanged += _ => processor.StopGraph();
+
+			var graph = new ForgeGraph();
+			graph.VariableDefinitions.DefineObjectVariable<IForgeEntity>("entity", entity);
+			graph.VariableDefinitions.DefineObjectVariable<Node>("player", player);
+			graph.VariableDefinitions.DefineVariable("speed", 1.0);
+
+			var listener = new SignalListenerNode("current_animation_changed");
+			listener.BindInput(SignalListenerNode.NodeInput, "player");
+			var exit = new ExitNode();
+			graph.AddNode(listener);
+			graph.AddNode(exit);
+			graph.AddConnection(new Connection(
+				graph.EntryNode.OutputPorts[EntryNode.OutputPort],
+				listener.InputPorts[StateNode<StateNodeContext>.InputPort]));
+			graph.AddConnection(new Connection(
+				listener.OutputPorts[SignalListenerNode.OnSignalPort],
+				exit.InputPorts[ExitNode.InputPort]));
+			GraphProcessor processor = Start(graph, PlayNode());
 
 			processor.Present();
 
-			player.IsPlaying().Should().BeFalse("stopping the copy already playing ended the node");
+			processor.GraphContext.IsActive.Should().BeFalse("stopping the copy already playing ended the graph");
+			player.IsPlaying().Should().BeFalse("what the ended node would play is not started");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_animation_that_finishes_naturally_is_left_to_play_out()
+	{
+		var entity = new TestEntity3D();
+		AnimationPlayer player = AddPlayer(entity, length: 1.0f);
+		Root.AddChild(entity);
+
+		try
+		{
+			GraphProcessor processor = Start(entity, PlayNode());
+			processor.Present();
+
+			processor.FixedUpdateGraph(1.0);
+			processor.GraphContext.IsActive.Should().BeFalse();
+			processor.Present();
+
+			player.IsPlaying().Should().BeTrue("playback trails the steps, and stopping it would snap it to its start");
 		}
 		finally
 		{

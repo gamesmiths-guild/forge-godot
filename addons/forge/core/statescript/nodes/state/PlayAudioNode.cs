@@ -90,6 +90,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Duration = 0;
 		nodeContext.Player = null;
+		nodeContext.Playback = null;
 
 		// Resolved here, once, for the presentation pass to play: see PlayAudioNodeContext.
 		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
@@ -125,6 +126,11 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 
 		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
+			if (nodeContext.Playback is not null)
+			{
+				nodeContext.Playback.Finished = true;
+			}
+
 			DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 		}
 	}
@@ -141,14 +147,15 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 		}
 
 		AudioPlayers.TryPlay(player, nodeContext.VolumeDb, nodeContext.Pitch);
-		return player;
+		nodeContext.Playback = new PresentationPlayback(player);
+		return nodeContext.Playback;
 	}
 
 	/// <inheritdoc/>
 	protected override void OnPresentationDeactivated(object? presentation)
 	{
 		if (_stopOnDeactivate
-			&& presentation is Node player
+			&& presentation is PresentationPlayback { Finished: false, Player: Node player }
 			&& GodotObject.IsInstanceValid(player)
 			&& AudioPlayers.IsPlaying(player))
 		{

@@ -41,4 +41,7 @@ public class PlayAudioNodeContext : StateNodeContext
 	/// Gets or sets the time counted since the node activated or restarted, in seconds.
 	/// </summary>
 	public double ElapsedTime { get; set; }
+
+	// What the presentation pass started for this activation, marked finished when the length runs out.
+	internal PresentationPlayback? Playback { get; set; }
 }

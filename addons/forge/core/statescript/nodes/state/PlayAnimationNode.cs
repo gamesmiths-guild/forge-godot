@@ -99,6 +99,7 @@ public class PlayAnimationNode(
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Duration = 0;
 		nodeContext.Player = null;
+		nodeContext.Playback = null;
 
 		// Resolved here, once, for the presentation pass to play: see PlayAnimationNodeContext.
 		if (!_inputs.TryGetAnimationPlayer(
@@ -136,6 +137,11 @@ public class PlayAnimationNode(
 
 		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
+			if (nodeContext.Playback is not null)
+			{
+				nodeContext.Playback.Finished = true;
+			}
+
 			DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 		}
 	}
@@ -165,13 +171,21 @@ public class PlayAnimationNode(
 			}
 		}
 
-		return _inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend) ? player : null;
+		if (!_inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend))
+		{
+			return null;
+		}
+
+		nodeContext.Playback = new PresentationPlayback(player);
+		return nodeContext.Playback;
 	}
 
 	/// <inheritdoc/>
 	protected override void OnPresentationDeactivated(object? presentation)
 	{
-		if (_stopOnDeactivate && presentation is AnimationPlayer player && IsStillPlaying(player))
+		if (_stopOnDeactivate
+			&& presentation is PresentationPlayback { Finished: false, Player: AnimationPlayer player }
+			&& IsStillPlaying(player))
 		{
 			player.Stop();
 		}

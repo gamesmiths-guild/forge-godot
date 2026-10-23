@@ -42,9 +42,14 @@ public partial class ForgeBootstrap : Node
 		// ended within the frame is never shown. An entity whose presentation throws keeps no other from presenting.
 		foreach (Node node in GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
 		{
+			if (node is not ForgeEntity entity)
+			{
+				continue;
+			}
+
 			try
 			{
-				((ForgeEntity)node).Abilities.PresentAbilities();
+				entity.Abilities.PresentAbilities();
 			}
 			catch (Exception exception)
 			{
@@ -62,7 +67,10 @@ public partial class ForgeBootstrap : Node
 
 		foreach (Node node in GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
 		{
-			EntitySimulation.BeginTick((ForgeEntity)node, tick);
+			if (node is ForgeEntity entity)
+			{
+				EntitySimulation.BeginTick(entity, tick);
+			}
 		}
 	}
 }
