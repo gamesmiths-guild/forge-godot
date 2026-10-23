@@ -46,6 +46,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public DeterministicRandom Random { get; private set; } = null!;
 
+	public EntityInput? Input { get; set; }
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
 	/// </summary>
@@ -64,8 +66,12 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Ready();
 
-		Random = new DeterministicRandom(((ulong)GD.Randi() << 32) | GD.Randi());
-		EntitySimulation.BeginTick(this, (long)Engine.GetPhysicsFrames());
+		var random = new DeterministicRandom(((ulong)GD.Randi() << 32) | GD.Randi());
+
+		// Only the random restarts here, so rolls made before the first tick are seeded; the input frame waits for that
+		// tick.
+		random.BeginTick((long)Engine.GetPhysicsFrames());
+		Random = random;
 		AddToGroup(SimulationGroup);
 		Tags = new(BaseTags.GetTagContainer());
 		CuesManager = ForgeManagers.Instance.CuesManager;
@@ -108,7 +114,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._PhysicsProcess(delta);
 
-		// ForgeBootstrap already restarted the random for this tick, before any entity advanced.
+		// ForgeBootstrap already began this tick for every entity, before any entity advanced.
 		EntitySimulation.Advance(this, delta);
 	}
 }

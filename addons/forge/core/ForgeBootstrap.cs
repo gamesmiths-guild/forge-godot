@@ -15,12 +15,13 @@ public partial class ForgeBootstrap : Node
 	/// Initializes a new instance of the <see cref="ForgeBootstrap"/> class.
 	/// </summary>
 	/// <remarks>
-	/// Runs its physics step before every other node, so every entity's random restarts before any entity advances.
-	/// It also runs while the tree is paused, for entities that keep advancing then.
+	/// Runs its physics step right after the input collectors and before every other node, so every entity begins its
+	/// tick, its random restarted and its input frame taken, before any entity advances, and the frame taken is the one
+	/// collected in the same step. It also runs while the tree is paused, for entities that keep advancing then.
 	/// </remarks>
 	public ForgeBootstrap()
 	{
-		ProcessPhysicsPriority = int.MinValue;
+		ProcessPhysicsPriority = int.MinValue + 1;
 		ProcessMode = ProcessModeEnum.Always;
 	}
 

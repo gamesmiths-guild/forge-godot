@@ -137,7 +137,7 @@ internal static class StatescriptNodeDiscovery
 
 	private static List<NodeTypeInfo> DiscoverNodeTypes()
 	{
-		var results = new List<NodeTypeInfo>();
+		var discovered = new Dictionary<Type, NodeTypeInfo>();
 
 		Type flowNodeType = typeof(ForgeNode);
 		Type actionNodeType = typeof(ActionNode);
@@ -172,25 +172,34 @@ internal static class StatescriptNodeDiscovery
 
 				if (actionNodeType.IsAssignableFrom(type))
 				{
-					results.Add(BuildNodeTypeInfo(type, StatescriptNodeType.Action));
+					discovered.Add(type, BuildNodeTypeInfo(type, StatescriptNodeType.Action));
 				}
 				else if (conditionNodeType.IsAssignableFrom(type))
 				{
-					results.Add(BuildNodeTypeInfo(type, StatescriptNodeType.Condition));
+					discovered.Add(type, BuildNodeTypeInfo(type, StatescriptNodeType.Condition));
 				}
 				else if (IsConcreteStateNode(type, stateNodeOpenType))
 				{
-					results.Add(BuildNodeTypeInfo(type, StatescriptNodeType.State));
+					discovered.Add(type, BuildNodeTypeInfo(type, StatescriptNodeType.State));
 				}
 				else if (flowNodeType.IsAssignableFrom(type))
 				{
 					// Nodes deriving straight from the base Node define their own port layout (SwitchNode and any
 					// custom flow node), so they get their own palette category instead of being forced into an
 					// archetype.
-					results.Add(BuildNodeTypeInfo(type, StatescriptNodeType.Flow));
+					discovered.Add(type, BuildNodeTypeInfo(type, StatescriptNodeType.Flow));
 				}
 			}
 		}
+
+		// A node that derives from another and keeps its name is that node with the engine's side added, such as Input
+		// Action reading the local device, so only the derived one is listed.
+		List<NodeTypeInfo> results =
+		[
+			.. discovered
+				.Where(x => !discovered.Any(y => y.Key.BaseType == x.Key && y.Value.DisplayName == x.Value.DisplayName))
+				.Select(x => x.Value),
+		];
 
 		results.Sort((a, b) => string.CompareOrdinal(a.DisplayName, b.DisplayName));
 		return results;

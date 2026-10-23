@@ -1,0 +1,287 @@
+// Copyright © Gamesmiths Guild.
+
+using System;
+using FluentAssertions;
+using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Nodes;
+using Gamesmiths.Forge.Godot.Resources.Abilities;
+using Gamesmiths.Forge.Godot.Tests.Helpers;
+using GdUnit4;
+using Godot;
+using NumericsVector2 = System.Numerics.Vector2;
+using NumericsVector3 = System.Numerics.Vector3;
+
+namespace Gamesmiths.Forge.Godot.Tests.Nodes;
+
+/// <summary>
+/// How the local player's input reaches a <see cref="ForgeEntity"/>: a <see cref="ForgeInputCollector"/> latches the
+/// presses and releases it sees and submits one frame per physics tick, which the entity's tick then reads.
+/// </summary>
+[TestSuite]
+public class ForgeInputCollectorTests
+{
+	private const double Step = 1.0 / 60.0;
+
+	private const string Fire = "forge_test_fire";
+	private const string Left = "forge_test_left";
+	private const string Right = "forge_test_right";
+	private const string Up = "forge_test_up";
+	private const string Down = "forge_test_down";
+
+	private static Window Root => ((SceneTree)Engine.GetMainLoop()).Root;
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_collector_gives_its_entity_an_input_with_the_projects_actions_and_vectors()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out _, out Node3D body);
+
+			try
+			{
+				entity.Input.Should().NotBeNull();
+				entity.Input!.Actions.Actions.Should().Equal(Fire);
+				entity.Input.Actions.Vectors.Should().ContainSingle()
+					.Which.Should().Be(new InputVector(Left, Right, Up, Down));
+			}
+			finally
+			{
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_tap_between_two_physics_ticks_reaches_the_tick_as_a_press_and_a_release()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Press(collector, Fire);
+				Release(collector, Fire);
+				Tick(collector, entity);
+
+				entity.Input!.WasPressed(Fire).Should().BeTrue();
+				entity.Input.WasReleased(Fire).Should().BeTrue();
+				entity.Input.IsHeld(Fire).Should().BeFalse();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_held_action_is_pressed_once_and_then_only_held()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Press(collector, Fire);
+				Tick(collector, entity);
+				entity.Input!.WasPressed(Fire).Should().BeTrue();
+
+				Tick(collector, entity);
+
+				entity.Input.WasPressed(Fire).Should().BeFalse();
+				entity.Input.IsHeld(Fire).Should().BeTrue();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_press_the_interface_consumed_is_held_without_being_pressed()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				// Godot's action state changes, but no unhandled event reaches the collector.
+				Input.ActionPress(Fire);
+				Tick(collector, entity);
+
+				entity.Input!.IsHeld(Fire).Should().BeTrue();
+				entity.Input.WasPressed(Fire).Should().BeFalse();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void Vectors_carry_the_projects_analog_actions()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Input.ActionPress(Right);
+				Tick(collector, entity);
+
+				entity.Input!.GetVector(Left, Right, Up, Down).Should().Be(new NumericsVector2(1, 0));
+				entity.Input.GetAxis(Left, Right).Should().Be(1);
+			}
+			finally
+			{
+				Input.ActionRelease(Right);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void The_aim_is_carried_only_when_the_collector_has_an_aim_source()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity aimed = CreatePlayer(out ForgeInputCollector aimedCollector, out Node3D aimedBody);
+			aimedCollector.AimSource = ForgeAimSource.MouseGround3D;
+			aimedBody.Position = new Vector3(1, 0, 2);
+			ForgeEntity unaimed = CreatePlayer(out ForgeInputCollector unaimedCollector, out Node3D unaimedBody);
+
+			try
+			{
+				Tick(aimedCollector, aimed);
+				Tick(unaimedCollector, unaimed);
+
+				// With no camera to cast from, the mouse aim falls back to the body's own position.
+				aimed.Input!.Current.HasAim.Should().BeTrue();
+				aimed.Input.Current.AimPoint.Should().Be(new NumericsVector3(1, 0, 2));
+				unaimed.Input!.Current.HasAim.Should().BeFalse();
+			}
+			finally
+			{
+				aimedBody.Free();
+				unaimedBody.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_ability_bound_to_an_input_action_activates_on_the_ticks_press_with_the_aim()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+			body.Position = new Vector3(3, 0, 0);
+			var behavior = new RecordingAimBehavior();
+
+			var abilityData = new ForgeAbilityData
+			{
+				Name = "Fire",
+				AbilityBehavior = behavior,
+				InputAction = Fire,
+				InputActivationData = new AimInputActivationData(),
+			};
+
+			try
+			{
+				entity.Abilities.GrantAbilityPermanently(abilityData.GetAbilityData(), 1, LevelComparison.Higher, null);
+
+				Tick(collector, entity);
+				behavior.Activations.Should().Be(0);
+
+				Press(collector, Fire);
+				Tick(collector, entity);
+				Tick(collector, entity);
+
+				behavior.Activations.Should().Be(1, "holding the action does not activate it again");
+				behavior.Received!.Value.Origin.Should().Be(new Vector3(3, 0, 0));
+				behavior.Received.Value.Direction.Should().Be(Vector3.Forward, "an input without aim aims ahead");
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	private static ForgeEntity CreatePlayer(out ForgeInputCollector collector, out Node3D body)
+	{
+		body = new Node3D();
+		var entity = new ForgeEntity();
+		collector = new ForgeInputCollector();
+		entity.AddChild(collector);
+		body.AddChild(entity);
+		Root.AddChild(body);
+		return entity;
+	}
+
+	private static void Press(ForgeInputCollector collector, string action)
+	{
+		Input.ActionPress(action);
+		collector._UnhandledInput(new InputEventAction { Action = action, Pressed = true });
+	}
+
+	private static void Release(ForgeInputCollector collector, string action)
+	{
+		Input.ActionRelease(action);
+		collector._UnhandledInput(new InputEventAction { Action = action, Pressed = false });
+	}
+
+	// The collector runs its physics step before the entity's, as its priority makes Godot do.
+	private static void Tick(ForgeInputCollector collector, ForgeEntity entity)
+	{
+		collector._PhysicsProcess(Step);
+		entity._PhysicsProcess(Step);
+	}
+
+	private static void WithProjectInput(Action test)
+	{
+		Variant actions = ProjectSettings.GetSetting(ForgeSettings.InputActionsSetting, Array.Empty<string>());
+		Variant vectors = ProjectSettings.GetSetting(ForgeSettings.InputVectorsSetting, Array.Empty<string>());
+		string[] inputActions = [Fire, Left, Right, Up, Down];
+
+		foreach (string action in inputActions)
+		{
+			InputMap.AddAction(action);
+		}
+
+		ProjectSettings.SetSetting(ForgeSettings.InputActionsSetting, new[] { Fire });
+		ProjectSettings.SetSetting(ForgeSettings.InputVectorsSetting, new[] { $"{Left}, {Right}, {Up}, {Down}" });
+
+		try
+		{
+			test();
+		}
+		finally
+		{
+			ProjectSettings.SetSetting(ForgeSettings.InputActionsSetting, actions);
+			ProjectSettings.SetSetting(ForgeSettings.InputVectorsSetting, vectors);
+
+			foreach (string action in inputActions)
+			{
+				InputMap.EraseAction(action);
+			}
+		}
+	}
+}
