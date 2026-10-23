@@ -98,13 +98,21 @@ public class PlayAnimationNode(
 		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Duration = 0;
+		nodeContext.Player = null;
 
-		if (_inputs.TryGetAnimationPlayer(graphContext, InputProperties[EntityInput].BoundName, out AnimationPlayer? player))
+		// Resolved here, once, for the presentation pass to play: see PlayAnimationNodeContext.
+		if (!_inputs.TryGetAnimationPlayer(
+			graphContext,
+			InputProperties[EntityInput].BoundName,
+			out AnimationPlayer? player))
 		{
-			nodeContext.Duration = PlayLength(
-				player,
-				PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName));
+			return;
 		}
+
+		nodeContext.Player = player;
+		nodeContext.Speed = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName);
+		nodeContext.Blend = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName);
+		nodeContext.Duration = PlayLength(player, nodeContext.Speed);
 	}
 
 	/// <inheritdoc/>
@@ -135,10 +143,10 @@ public class PlayAnimationNode(
 	/// <inheritdoc/>
 	protected override object? OnPresentationActivated(GraphContext graphContext)
 	{
-		if (!_inputs.TryGetAnimationPlayer(
-			graphContext,
-			InputProperties[EntityInput].BoundName,
-			out AnimationPlayer? player))
+		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
+		AnimationPlayer? player = nodeContext.Player;
+
+		if (player is null || !GodotObject.IsInstanceValid(player))
 		{
 			return null;
 		}
@@ -148,15 +156,16 @@ public class PlayAnimationNode(
 		if (IsStillPlaying(player))
 		{
 			player.Stop();
+
+			// Stopping emits current_animation_changed, and a listener can end this node: playing now would outlive it
+			// until the next pass.
+			if (!nodeContext.Active)
+			{
+				return null;
+			}
 		}
 
-		return _inputs.TryPlayAnimation(
-			player,
-			_animation,
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName),
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName))
-				? player
-				: null;
+		return _inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend) ? player : null;
 	}
 
 	/// <inheritdoc/>

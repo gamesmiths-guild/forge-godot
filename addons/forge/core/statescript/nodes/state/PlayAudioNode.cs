@@ -89,13 +89,19 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Duration = 0;
+		nodeContext.Player = null;
 
-		if (_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
+		// Resolved here, once, for the presentation pass to play: see PlayAudioNodeContext.
+		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
 		{
-			nodeContext.Duration = AudioPlayers.PlayLength(
-				player,
-				PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName));
+			return;
 		}
+
+		nodeContext.Player = player;
+		nodeContext.VolumeDb =
+			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[VolumeDbInput].BoundName);
+		nodeContext.Pitch = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName);
+		nodeContext.Duration = AudioPlayers.PlayLength(player, nodeContext.Pitch);
 	}
 
 	/// <inheritdoc/>
@@ -126,16 +132,15 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 	/// <inheritdoc/>
 	protected override object? OnPresentationActivated(GraphContext graphContext)
 	{
-		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
+		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
+		Node? player = nodeContext.Player;
+
+		if (player is null || !GodotObject.IsInstanceValid(player))
 		{
 			return null;
 		}
 
-		AudioPlayers.TryPlay(
-			player,
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[VolumeDbInput].BoundName),
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName));
-
+		AudioPlayers.TryPlay(player, nodeContext.VolumeDb, nodeContext.Pitch);
 		return player;
 	}
 

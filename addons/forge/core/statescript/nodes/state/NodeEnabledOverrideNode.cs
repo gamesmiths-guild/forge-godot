@@ -62,8 +62,21 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 			graphContext.GetNodeContext<NodeEnabledOverrideNodeContext>(NodeID);
 		nodeContext.Node = null;
 
-		// A presentation switch waits for the presentation pass.
-		if (NetworkKind == NodeNetworkKind.Simulation && TryHold(graphContext, out Node? node, out bool original))
+		if (!TryResolve(graphContext, out Node? node, out bool enabled))
+		{
+			return;
+		}
+
+		// A presentation switch is made by the presentation pass, with what was resolved here: resolving in the pass
+		// could draw from the graph's random, which presentation must not touch.
+		if (NetworkKind == NodeNetworkKind.Presentation)
+		{
+			nodeContext.Node = node;
+			nodeContext.Enabled = enabled;
+			return;
+		}
+
+		if (TryHold(node, enabled, out bool original))
 		{
 			nodeContext.Node = node;
 			nodeContext.OriginalEnabled = original;
@@ -78,13 +91,24 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 		Node? node = nodeContext.Node;
 		nodeContext.Node = null;
 
-		Restore(node, nodeContext.OriginalEnabled);
+		// The presentation pass restores a presentation switch.
+		if (NetworkKind == NodeNetworkKind.Simulation)
+		{
+			Restore(node, nodeContext.OriginalEnabled);
+		}
 	}
 
 	/// <inheritdoc/>
 	protected override object? OnPresentationActivated(GraphContext graphContext)
 	{
-		return TryHold(graphContext, out Node? node, out bool original) ? new HeldSwitch(node, original) : null;
+		NodeEnabledOverrideNodeContext nodeContext =
+			graphContext.GetNodeContext<NodeEnabledOverrideNodeContext>(NodeID);
+
+		return nodeContext.Node is Node node
+			&& GodotObject.IsInstanceValid(node)
+			&& TryHold(node, nodeContext.Enabled, out bool original)
+				? new HeldSwitch(node, original)
+				: null;
 	}
 
 	/// <inheritdoc/>
@@ -96,9 +120,9 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 		}
 	}
 
-	private bool TryHold(GraphContext graphContext, [NotNullWhen(true)] out Node? node, out bool original)
+	private bool TryResolve(GraphContext graphContext, [NotNullWhen(true)] out Node? node, out bool enabled)
 	{
-		original = false;
+		enabled = false;
 		node = ResolveNode(graphContext);
 
 		if (node is null)
@@ -107,19 +131,23 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 			return false;
 		}
 
-		if (!NodeEnabledAspects.TryRead(node, _aspect, out original))
-		{
-			WarnOnce(NodeEnabledAspects.DescribeUnsupported(node, _aspect));
-			node = null;
-			return false;
-		}
-
-		if (!graphContext.TryResolve(InputProperties[EnabledInput].BoundName, out bool enabled))
+		if (!graphContext.TryResolve(InputProperties[EnabledInput].BoundName, out enabled))
 		{
 			// Nothing is captured either: an override that could not read what to hold must leave the node alone, not
 			// hold it at the false a failed read returns and then claim to restore it.
 			WarnOnce("could not resolve whether to enable or disable. The override was skipped.");
 			node = null;
+			return false;
+		}
+
+		return true;
+	}
+
+	private bool TryHold(Node node, bool enabled, out bool original)
+	{
+		if (!NodeEnabledAspects.TryRead(node, _aspect, out original))
+		{
+			WarnOnce(NodeEnabledAspects.DescribeUnsupported(node, _aspect));
 			return false;
 		}
 

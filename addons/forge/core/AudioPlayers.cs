@@ -14,6 +14,14 @@ namespace Gamesmiths.Forge.Godot.Core;
 /// </remarks>
 internal static class AudioPlayers
 {
+	// The player's own volume and pitch, kept on it the first time one is overridden. Unbound then means the player's
+	// own setting rather than whatever override played on it last: an override is presentation, which a peer that does
+	// not present never writes, so a length read from it would differ between peers.
+	private static readonly StringName _volumeDb = "volume_db";
+	private static readonly StringName _pitchScale = "pitch_scale";
+	private static readonly StringName _authoredVolumeDb = "forge_authored_volume_db";
+	private static readonly StringName _authoredPitchScale = "forge_authored_pitch_scale";
+
 	/// <summary>
 	/// Gets whether a node is one of the audio players.
 	/// </summary>
@@ -33,12 +41,12 @@ internal static class AudioPlayers
 	/// a pitch of zero; zero when the player has no stream.</returns>
 	public static double PlayLength(Node player, double? pitch)
 	{
-		(AudioStream? stream, float pitchScale) = player switch
+		AudioStream? stream = player switch
 		{
-			AudioStreamPlayer plain => (plain.Stream, plain.PitchScale),
-			AudioStreamPlayer2D player2D => (player2D.Stream, player2D.PitchScale),
-			AudioStreamPlayer3D player3D => (player3D.Stream, player3D.PitchScale),
-			_ => (null, 1),
+			AudioStreamPlayer plain => plain.Stream,
+			AudioStreamPlayer2D player2D => player2D.Stream,
+			AudioStreamPlayer3D player3D => player3D.Stream,
+			_ => null,
 		};
 
 		if (stream is null)
@@ -47,7 +55,7 @@ internal static class AudioPlayers
 		}
 
 		double length = stream.GetLength();
-		double rate = pitch ?? pitchScale;
+		double rate = pitch ?? Authored(player, _pitchScale, _authoredPitchScale);
 
 		return Loops(stream) || length <= 0 || rate <= 0 ? double.PositiveInfinity : length / rate;
 	}
@@ -56,28 +64,30 @@ internal static class AudioPlayers
 	/// Plays a player from the start, overriding its authored volume and pitch when values are given.
 	/// </summary>
 	/// <param name="player">The audio player to play.</param>
-	/// <param name="volumeDb">The volume to set, or <see langword="null"/> to keep the authored one.</param>
-	/// <param name="pitch">The pitch scale to set, or <see langword="null"/> to keep the authored one.</param>
+	/// <param name="volumeDb">The volume to set, or <see langword="null"/> for the player's own.</param>
+	/// <param name="pitch">The pitch scale to set, or <see langword="null"/> for the player's own.</param>
 	/// <returns><see langword="true"/> if the node was an audio player and was played.</returns>
 	public static bool TryPlay(Node player, double? volumeDb, double? pitch)
 	{
+		if (!IsPlayer(player))
+		{
+			return false;
+		}
+
+		Override(player, _volumeDb, _authoredVolumeDb, volumeDb);
+		Override(player, _pitchScale, _authoredPitchScale, pitch);
+
 		switch (player)
 		{
 			case AudioStreamPlayer plain:
-				plain.VolumeDb = (float)(volumeDb ?? plain.VolumeDb);
-				plain.PitchScale = (float)(pitch ?? plain.PitchScale);
 				plain.Play();
 				return true;
 
 			case AudioStreamPlayer2D player2D:
-				player2D.VolumeDb = (float)(volumeDb ?? player2D.VolumeDb);
-				player2D.PitchScale = (float)(pitch ?? player2D.PitchScale);
 				player2D.Play();
 				return true;
 
 			case AudioStreamPlayer3D player3D:
-				player3D.VolumeDb = (float)(volumeDb ?? player3D.VolumeDb);
-				player3D.PitchScale = (float)(pitch ?? player3D.PitchScale);
 				player3D.Play();
 				return true;
 
@@ -122,6 +132,33 @@ internal static class AudioPlayers
 				player3D.Stop();
 				break;
 		}
+	}
+
+	private static double Authored(Node player, StringName property, StringName authored)
+	{
+		return (player.HasMeta(authored) ? player.GetMeta(authored) : player.Get(property)).AsDouble();
+	}
+
+	// Sets the value, or puts the player's own back when there is none, keeping the player's own the first time it is
+	// overridden.
+	private static void Override(Node player, StringName property, StringName authored, double? value)
+	{
+		if (value is null)
+		{
+			if (player.HasMeta(authored))
+			{
+				player.Set(property, player.GetMeta(authored));
+			}
+
+			return;
+		}
+
+		if (!player.HasMeta(authored))
+		{
+			player.SetMeta(authored, player.Get(property));
+		}
+
+		player.Set(property, (float)value.Value);
 	}
 
 	private static bool Loops(AudioStream stream)

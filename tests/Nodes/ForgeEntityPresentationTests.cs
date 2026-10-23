@@ -21,8 +21,8 @@ using Node = Godot.Node;
 namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 
 /// <summary>
-/// Where the presentation pass runs in a Godot game: each <see cref="ForgeEntity"/> presents its abilities at the end
-/// of its frame, and the Forge bootstrap dispatches the frame's cues once everything else has processed.
+/// Where the presentation pass runs in a Godot game: once everything else has processed, the Forge bootstrap presents
+/// every <see cref="ForgeEntity"/>'s abilities and then dispatches the frame's cues.
 /// </summary>
 [TestSuite]
 public class ForgeEntityPresentationTests
@@ -33,12 +33,13 @@ public class ForgeEntityPresentationTests
 
 	[TestCase]
 	[RequireGodotRuntime]
-	public void An_entity_presents_its_abilities_at_the_end_of_its_frame()
+	public void The_bootstrap_presents_abilities_once_every_entity_has_updated()
 	{
 		var entity = new ForgeEntity();
 		var light = new OmniLight3D { LightEnergy = 1.0f };
 		Root.AddChild(entity);
 		Root.AddChild(light);
+		ForgeBootstrap bootstrap = Root.GetNode<ForgeBootstrap>("Forge Bootstrap");
 
 		try
 		{
@@ -60,14 +61,22 @@ public class ForgeEntityPresentationTests
 				LevelComparison.Higher,
 				null);
 
+			// Started before this entity's frame update and ended by a later node's: never shown.
 			handle.TryActivate(out _).Should().BeTrue();
-			light.LightEnergy.Should().Be(1.0f, "nothing is shown before the frame ends");
-
 			entity._Process(Step);
+			handle.Cancel();
+			bootstrap._Process(Step);
+			light.LightEnergy.Should().Be(1.0f, "the ability came and went within the frame");
+
+			handle.TryActivate(out _).Should().BeTrue();
+			entity._Process(Step);
+			light.LightEnergy.Should().Be(1.0f, "an entity's own frame update presents nothing");
+
+			bootstrap._Process(Step);
 			light.LightEnergy.Should().Be(5.0f);
 
 			handle.Cancel();
-			entity._Process(Step);
+			bootstrap._Process(Step);
 			light.LightEnergy.Should().Be(1.0f, "the ended ability's graph is presented once more");
 		}
 		finally

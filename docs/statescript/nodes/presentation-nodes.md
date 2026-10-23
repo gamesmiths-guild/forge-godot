@@ -16,7 +16,7 @@ Each comes in a fire-and-forget Action and a State that plays for as long as wha
 
 All four are [presentation nodes](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation): the editor marks them with a **Presentation** badge.
 
-- **The state nodes start and stop playback in the presentation pass**, which each `ForgeEntity` runs at the end of its frame. A node that activates and ends within one frame plays nothing, and one that keeps running is started once.
+- **The state nodes start and stop playback in the presentation pass**, which the Forge bootstrap runs at the end of each frame, once every node has processed. They play what was resolved when they activated: Speed, Blend, Volume Db and Pitch are read then, not in the pass. A node that activates and ends within one frame plays nothing, and one that keeps running is started once.
 - **Their length is counted in fixed steps from activation**, not read from the player. The node finishes on the same physics step on every machine, whatever the engine is doing with playback — a graph waiting on `OnFinished` never depends on whether a frame was dropped.
 - **The one-shot actions play when they execute.**
 
@@ -60,7 +60,7 @@ Melee swing timing, cast bars, windups.
 | 1 | Volume Db | `double` | Optional. |
 | 2 | Pitch | `double` | Optional. |
 
-Audio has the same shape: the length is the stream's length divided by the pitch (the Pitch input, or the player's own Pitch Scale when it is unbound), counted in fixed steps. **A looping stream, or one whose length Godot cannot tell, such as a generator, never finishes on its own.** Channel hums, beam loops.
+Audio has the same shape: the length is the stream's length divided by the pitch (the Pitch input, or when it is unbound the Pitch Scale the player had before any node overrode it, so a length never depends on what an earlier node played), counted in fixed steps. **A looping stream, or one whose length Godot cannot tell, such as a generator, never finishes on its own.** Channel hums, beam loops.
 
 **Restart On Retrigger** plays the sound again from the beginning, with Volume Db and Pitch read again. With **Stop On Deactivate** on, the old sound is stopped first, so a player that allows polyphony has it replaced rather than a second voice layered over it.
 
@@ -74,7 +74,7 @@ Blend is an input rather than a setting for the same reason a poll interval is: 
 
 ## A node that cannot play does not stall the ability
 
-If the player, the stream or the animation is missing, both state nodes finish on their next fixed step rather than holding themselves open, and the presentation pass warns. Their whole job is to be waited on, so a graph whose next step hangs off `OnFinished` would never continue and the ability would stay active until something aborted it — which for an ability with no timer is never. Nothing having started is the same answer as having stopped; the warning is what reports the misconfiguration.
+If the player, the stream or the animation is missing, both state nodes finish on their next fixed step rather than holding themselves open, and warn. Their whole job is to be waited on, so a graph whose next step hangs off `OnFinished` would never continue and the ability would stay active until something aborted it — which for an ability with no timer is never. Nothing having started is the same answer as having stopped; the warning is what reports the misconfiguration.
 
 ## Two recipes that replace nodes
 

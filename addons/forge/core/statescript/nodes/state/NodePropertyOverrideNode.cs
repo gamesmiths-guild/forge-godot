@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Core.Statescript.Interop;
 using Gamesmiths.Forge.Statescript;
-using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
 using Node = Godot.Node;
 
@@ -31,7 +30,7 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 public class NodePropertyOverrideNode(
 	string propertyPath = "",
 	InteropValueType valueType = InteropValueType.Float,
-	bool isArray = false) : InteropStateNodeBase<StateNodeContext>
+	bool isArray = false) : InteropStateNodeBase<NodePropertyOverrideNodeContext>
 {
 	/// <summary>
 	/// Input property index for the value to hold while active.
@@ -62,22 +61,15 @@ public class NodePropertyOverrideNode(
 	/// <inheritdoc/>
 	protected override void OnActivate(GraphContext graphContext)
 	{
-		// The presentation pass writes the value.
-	}
+		NodePropertyOverrideNodeContext nodeContext =
+			graphContext.GetNodeContext<NodePropertyOverrideNodeContext>(NodeID);
+		nodeContext.Node = null;
 
-	/// <inheritdoc/>
-	protected override void OnDeactivate(GraphContext graphContext)
-	{
-		// The presentation pass restores the value.
-	}
-
-	/// <inheritdoc/>
-	protected override object? OnPresentationActivated(GraphContext graphContext)
-	{
+		// The presentation pass writes what is resolved here: see NodePropertyOverrideNodeContext.
 		if (_propertyPath.Length == 0)
 		{
 			WarnOnce("has no property path, so there is nothing for it to hold.");
-			return null;
+			return;
 		}
 
 		Node? node = ResolveNode(graphContext);
@@ -85,7 +77,7 @@ public class NodePropertyOverrideNode(
 		if (node is null)
 		{
 			WarnOnce("resolved no node to act on, and the ability's owner has none either.");
-			return null;
+			return;
 		}
 
 		using var path = new NodePath(_propertyPath);
@@ -93,7 +85,7 @@ public class NodePropertyOverrideNode(
 		if (!NodePropertyAccess.DeclaresProperty(node, path))
 		{
 			WarnOnce($"found no property [{_propertyPath}] on [{node.GetPath()}]. The override was skipped.");
-			return null;
+			return;
 		}
 
 		if (!InteropNodeInputs.TryResolveTypedValue(
@@ -104,11 +96,35 @@ public class NodePropertyOverrideNode(
 			out Variant value))
 		{
 			WarnOnce($"could not resolve a {_valueType} to write to [{_propertyPath}]. The override was skipped.");
+			return;
+		}
+
+		nodeContext.Node = node;
+		nodeContext.Value = value;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnDeactivate(GraphContext graphContext)
+	{
+		// The presentation pass restores the value.
+		graphContext.GetNodeContext<NodePropertyOverrideNodeContext>(NodeID).Node = null;
+	}
+
+	/// <inheritdoc/>
+	protected override object? OnPresentationActivated(GraphContext graphContext)
+	{
+		NodePropertyOverrideNodeContext nodeContext =
+			graphContext.GetNodeContext<NodePropertyOverrideNodeContext>(NodeID);
+		Node? node = nodeContext.Node;
+
+		if (node is null || !GodotObject.IsInstanceValid(node))
+		{
 			return null;
 		}
 
+		using var path = new NodePath(_propertyPath);
 		var held = new HeldValue(node, node.GetIndexed(path));
-		node.SetIndexed(path, value);
+		node.SetIndexed(path, nodeContext.Value);
 
 		return held;
 	}

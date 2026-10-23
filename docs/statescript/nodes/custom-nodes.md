@@ -185,15 +185,28 @@ The parameter is what the editor looks for: a node that takes it gets a **Restar
 
 ### Nodes that only show something
 
-A node that plays an animation, starts a sound or writes a visual property declares `NetworkKind => NodeNetworkKind.Presentation`, and the editor marks it with a **Presentation** badge. A state node of that kind does its engine work in `OnPresentationActivated` and undoes it in `OnPresentationDeactivated`, which the entity's presentation pass calls at the end of the frame, on net change. Its `OnActivate` keeps what gameplay needs, such as counting the length of what it plays in `OnFixedUpdate`. `PlayAnimationNode` and `NodePropertyOverrideNode` are the worked examples; the full contract is in the [core Simulation and presentation docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
+A node that plays an animation, starts a sound or writes a visual property declares `NetworkKind => NodeNetworkKind.Presentation`, and the editor marks it with a **Presentation** badge. A state node of that kind does its engine work in `OnPresentationActivated` and undoes it in `OnPresentationDeactivated`, which the presentation pass calls at the end of the frame, on net change. Its `OnActivate` keeps what gameplay needs, such as counting the length of what it plays in `OnFixedUpdate`.
+
+**Resolve inputs in `OnActivate`, not in the pass.** Keep what the presentation needs — the player, the light, the values to show — in the node context, and have `OnPresentationActivated` read it from there. A resolver can draw from the graph's random, which presentation must not touch since a peer that does not present would draw differently, and an input can change before the pass runs. `PlayAnimationNode` and `NodePropertyOverrideNode` are the worked examples; the full contract is in the [core Simulation and presentation docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
 
 ```csharp
-public class GlowNode(string lightPath = "") : StateNode<StateNodeContext>
+public class GlowNodeContext : StateNodeContext
+{
+    public Light3D? Light { get; set; }
+}
+
+public class GlowNode(string lightPath = "") : StateNode<GlowNodeContext>
 {
     public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
 
     protected override void OnActivate(GraphContext graphContext)
     {
+        GlowNodeContext nodeContext = graphContext.GetNodeContext<GlowNodeContext>(NodeID);
+        graphContext.TryGetActivationContext(out AbilityBehaviorContext? ability);
+
+        nodeContext.Light = ForgeEntityBridge.TryGetEntityChild(ability?.Owner, lightPath, out Light3D? light)
+            ? light
+            : null;
     }
 
     protected override void OnDeactivate(GraphContext graphContext)
@@ -202,9 +215,9 @@ public class GlowNode(string lightPath = "") : StateNode<StateNodeContext>
 
     protected override object? OnPresentationActivated(GraphContext graphContext)
     {
-        graphContext.TryGetActivationContext(out AbilityBehaviorContext? ability);
+        Light3D? light = graphContext.GetNodeContext<GlowNodeContext>(NodeID).Light;
 
-        if (!ForgeEntityBridge.TryGetEntityChild(ability?.Owner, lightPath, out Light3D? light))
+        if (light is null || !GodotObject.IsInstanceValid(light))
         {
             return null;
         }

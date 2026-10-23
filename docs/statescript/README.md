@@ -79,7 +79,7 @@ Presentation driven by *effects* rather than by a graph goes through cues instea
 
 ### Simulation and Presentation
 
-Nodes that only show something — playing an animation or a sound, writing a visual property — are **presentation** nodes, and the editor marks them with a **Presentation** badge in the title bar. Nodes with no badge are **simulation** nodes: they change gameplay. A presentation state node starts and stops what it shows in the presentation pass each `ForgeEntity` runs at the end of its frame, so something that comes and goes within one frame is never shown, and how long it lasts is counted in physics steps rather than read from the engine. Gameplay must never depend on what a presentation node writes. See [Simulation and presentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
+Nodes that only show something — playing an animation or a sound, writing a visual property — are **presentation** nodes, and the editor marks them with a **Presentation** badge in the title bar. Nodes with no badge are **simulation** nodes: they change gameplay. A presentation state node starts and stops what it shows in the presentation pass the Forge bootstrap runs at the end of each frame, once every node has processed, so something that comes and goes within one frame is never shown, and how long it lasts is counted in physics steps rather than read from the engine. Gameplay must never depend on what a presentation node writes. See [Simulation and presentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
 
 ## Subgraphs
 

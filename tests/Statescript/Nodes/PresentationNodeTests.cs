@@ -190,6 +190,53 @@ public class PresentationNodeTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void An_animation_plays_at_the_speed_resolved_when_it_activated()
+	{
+		var entity = new TestEntity3D();
+		AnimationPlayer player = AddPlayer(entity, length: 1.0f);
+		Root.AddChild(entity);
+
+		try
+		{
+			GraphProcessor processor = Start(entity, PlayNode(), speed: 2.0);
+
+			processor.GraphContext.GraphVariables.SetVar("speed", 1.0);
+			processor.Present();
+
+			player.GetPlayingSpeed().Should().Be(2.0f, "the length counted from activation is at speed 2");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_animation_whose_restart_stop_ends_the_node_is_not_played()
+	{
+		var entity = new TestEntity3D();
+		AnimationPlayer player = AddPlayer(entity, length: 1.0f);
+		Root.AddChild(entity);
+
+		try
+		{
+			GraphProcessor processor = Start(entity, PlayNode());
+			player.Play("swing");
+			player.CurrentAnimationChanged += _ => processor.StopGraph();
+
+			processor.Present();
+
+			player.IsPlaying().Should().BeFalse("stopping the copy already playing ended the node");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void A_missing_animation_finishes_on_the_next_step()
 	{
 		var entity = new TestEntity3D();
@@ -343,6 +390,80 @@ public class PresentationNodeTests
 		{
 			hidden.Free();
 			area.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_sound_without_a_pitch_plays_at_the_player_s_own_pitch_after_an_override()
+	{
+		var entity = new TestEntity3D();
+		AudioStreamPlayer player = AddSound(entity, seconds: 0.5);
+		Root.AddChild(entity);
+
+		try
+		{
+			var raised = new PlayAudioNode();
+			raised.BindInput(PlayAudioNode.EntityInput, "entity");
+			raised.BindInput(PlayAudioNode.PitchInput, "pitch");
+			Start(entity, raised, pitch: 2.0).Present();
+			player.PitchScale.Should().Be(2.0f);
+
+			var plain = new PlayAudioNode();
+			plain.BindInput(PlayAudioNode.EntityInput, "entity");
+			GraphProcessor processor = Start(entity, plain);
+			processor.Present();
+
+			player.PitchScale.Should().Be(1.0f, "an unbound pitch is the player's own, not the last override");
+
+			processor.FixedUpdateGraph(0.25);
+			processor.GraphContext.IsActive.Should().BeTrue(
+				"half a second at the player's own pitch lasts half a second, presented or not");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_override_holds_the_value_resolved_when_it_activated()
+	{
+		var hidden = new Node3D();
+		var light = new OmniLight3D { LightEnergy = 1.0f };
+		Root.AddChild(hidden);
+		Root.AddChild(light);
+
+		try
+		{
+			var graph = new ForgeGraph();
+			graph.VariableDefinitions.DefineObjectVariable<Node>("hidden", hidden);
+			graph.VariableDefinitions.DefineObjectVariable<Node>("light", light);
+			graph.VariableDefinitions.DefineVariable("enabled", false);
+			graph.VariableDefinitions.DefineVariable("energy", 5.0);
+
+			var hide = new NodeEnabledOverrideNode(NodeEnabledAspect.Visible);
+			hide.BindInput(NodeEnabledOverrideNode.NodeInput, "hidden");
+			hide.BindInput(NodeEnabledOverrideNode.EnabledInput, "enabled");
+
+			var glow = new NodePropertyOverrideNode("light_energy", InteropValueType.Float);
+			glow.BindInput(NodePropertyOverrideNode.NodeInput, "light");
+			glow.BindInput(NodePropertyOverrideNode.ValueInput, "energy");
+
+			GraphProcessor processor = Start(graph, hide, glow);
+			processor.GraphContext.GraphVariables.SetVar("enabled", true);
+			processor.GraphContext.GraphVariables.SetVar("energy", 2.0);
+
+			processor.Present();
+
+			hidden.Visible.Should().BeFalse();
+			light.LightEnergy.Should().Be(5.0f);
+		}
+		finally
+		{
+			hidden.Free();
+			light.Free();
 		}
 	}
 
