@@ -541,7 +541,7 @@ Declaring the three members makes the payload readable in graphs through the Act
 
 > **There is deliberately no target-entity member.** Activation-data members resolve through the value lane, which carries numbers and math structs but not object references, so an entity member would look bindable in the editor and never resolve. Entity targeting already has a home: the ability's own target.
 
-Sampling aim once at activation is also what makes an ability work under authority — see [input is client-local](input-action-node.md#input-is-client-local).
+Sampling aim once at activation is also what makes an ability work under authority. An ability bound to an input action gets its aim from the same physics step's input through `AimInputActivationData` - see [ForgeAbilityData](../../resources.md#forgeabilitydata) and [Input Source](input-action-node.md#input-is-read-from-the-input-source).
 
 ## Effect Context Data Providers
 

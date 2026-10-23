@@ -4,7 +4,7 @@
 >
 > **Runtime:** `Gamesmiths.Forge.Godot.Core.Statescript.Resolvers`
 
-These resolvers are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
+Each is a core Forge input resolver with the local device added, read when the Input Source entity has no input of its own: **Input Action Pressed** is [InputActionResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/input-action-resolver.md), **Input Action Strength** is [InputStrengthResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/input-strength-resolver.md), **Input Axis** is [InputAxisResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/input-axis-resolver.md) and **Input Vector 2** is [InputVectorResolver](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/resolvers/input-vector-resolver.md).
 
 They read Godot input actions as values, for `ExpressionNode` gates, `ConditionMonitorNode` conditions, and any numeric or vector input. Waiting on a button is the [`InputActionNode`](../nodes/input-action-node.md) instead.
 
@@ -27,9 +27,12 @@ The same control serves these four and the [node's Action setting](../nodes/inpu
 
 It stays free text because the project's list is a *subset* of what the runtime accepts — Godot's `ui_*` presets are valid and deliberately hidden, and a game may register actions from code — so a dropdown would be authoritative about something it is not. A resolver editor rebuilds its resource from its controls on every save, so a dropdown would also silently rewrite a stored name the next time anything in the node was touched.
 
-## Input is client-local
+## Input Source
 
-These read the local machine's input state. Authoritative or networked games should sample aim and button state once at activation into [`AimActivationData`](../nodes/custom-nodes.md#built-in-activation-data-providers) rather than polling them inside a server-side graph.
+Each of the four takes an **Input Source** entity, the ability's owner when left on its default, and reads it the way the [`InputActionNode`](../nodes/input-action-node.md#input-is-read-from-the-input-source) does:
+
+- **From an entity with an `Input`**, the value is the current physics step's, the same on every machine. `Just Pressed` and `Just Released` hold for the whole step. Strengths, axes and vectors are analog only for actions that belong to one of the project's input vectors (`forge/input/vectors`); a vector's four actions give that vector exactly, and any other action reads as fully on while held.
+- **From an entity without one**, the value comes from the local device, as before.
 
 ## Related Docs
 

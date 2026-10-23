@@ -21,9 +21,10 @@ The central node for adding Forge system functionality to any game object.
 
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
-- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already restarted every entity's random for the physics frame number, before any entity advances, so a roll one entity makes on another uses the current step. `Advance` timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
+- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
 - **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates. Once every node has processed, the Forge bootstrap autoload calls `Abilities.PresentAbilities` on every `ForgeEntity` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. An ability one node starts and a later one ends within the same frame is never shown. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
+- **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
 
 **Usage:**
 
@@ -131,6 +132,31 @@ Two Godot-specific points:
 Both `ActiveEffectHandle` and `AbilityHandle` are stable for the whole life of what they point at, which makes them good dictionary keys for the icon or slot they belong to. Each is still readable inside its removal handler and invalid immediately after, so read the name, stacks, level or duration there rather than storing the handle for later.
 
 The feeds carry more than the lifecycle shown above. `EffectsManager` also reports applications, executions and denials; `EntityAbilities` reports activation, ending and refused activations — `OnAbilityActivationFailed` is the one to hook for "why did nothing happen when I pressed the button", since it also fires for activations driven by triggers and Statescript nodes. See the linked core pages for the full tables.
+
+### ForgeInputCollector
+
+Collects the local player's input for its parent `ForgeEntity`, one frame per physics step.
+
+**Properties:**
+
+- `AimSource` (ForgeAimSource): Where the aim comes from: `None`, `MouseGround3D` (the point under the cursor on the ground, as `AimActivationData.FromMouseGround` finds it), `Camera3D` (what the active camera looks at) or `Mouse2D` (the point under the cursor in 2D).
+- `AimCollisionMask` (3D physics layers): What a 3D aim's ray hits.
+
+**Description:**
+
+Add it as a child of the player's `ForgeEntity`. On ready it gives the entity an `Input` carrying the project's input actions and vectors, two project settings:
+
+| Setting | Holds |
+|---|---|
+| `forge/input/actions` | The input actions, in the order that gives each its slot. Up to 64. |
+| `forge/input/vectors` | Analog vectors, each written as four comma-separated actions: negative x, positive x, negative y, positive y. Up to 4. |
+
+Every physics step, before any other node's, it submits one frame:
+
+- **Presses and releases** are caught from unhandled input as they arrive. A press the interface consumes never reaches the game, and a tap shorter than a physics step still counts as a press and a release.
+- **Held actions, vectors and the aim** are sampled when the step begins. A vector comes from `Input.GetVector` over its four actions, so a stick and four keys behave the same.
+
+Abilities whose `ForgeAbilityData` names an input action activate from it, and the input nodes and resolvers read it through their **Input Source**. See [Input is read from the Input Source](statescript/nodes/input-action-node.md#input-is-read-from-the-input-source).
 
 ### ForgeAttributeSet
 

@@ -69,6 +69,7 @@ Defines, grants, and activates gameplay powers or actions:
 - Supports cooldowns, resource costs, activation requirements, instancing policies, and custom behaviors.
 - Can be granted via effects or directly to entities.
 - Triggers automatically from events or tags, or manually from code.
+- Activates from the player's input actions, collected once per physics step by a [`ForgeInputCollector`](nodes.md#forgeinputcollector).
 - Change notifications an ability bar can subscribe to — see [Observing an Entity from a Godot Node](nodes.md#observing-an-entity-from-a-godot-node).
 
 ### Events System

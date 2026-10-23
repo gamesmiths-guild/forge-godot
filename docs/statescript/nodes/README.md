@@ -4,7 +4,7 @@ This folder keeps Godot-specific node documentation alongside the canonical core
 
 Use the local pages here when a node needs Godot editor, resource, or authoring notes. Use the core docs for runtime behavior, ports, lifecycle, and C# API details.
 
-**[Godot-only nodes](#godot-only-nodes)** — everything that reaches the scene tree, physics, input, navigation or a game's own scripts — have no core counterpart at all, so their pages here are the canonical reference for ports, settings and behavior as well as authoring.
+**[Godot-only nodes](#godot-only-nodes)** — everything that reaches the scene tree, physics, navigation or a game's own scripts — have no core counterpart at all, so their pages here are the canonical reference for ports, settings and behavior as well as authoring.
 
 ## Core Nodes
 
@@ -41,6 +41,7 @@ Use the local pages here when a node needs Godot editor, resource, or authoring 
 | **State** | `EventListenerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/event-listener-node.md) | [EventListenerNode](event-listener-node.md) | Listens for events while active and emits OnEvent each time a matching event fires. |
 | **State** | `ForEachNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/for-each-node.md) | [ForEachNode](for-each-node.md) | Walks an array, publishing each element to a variable; the bound element variable types the Array input. |
 | **State** | `GrantAbilityNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/grant-ability-node.md) | — | Grants an ability while active; policy dropdowns + `AbilityHandle` object output. |
+| **State** | `InputActionNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/input-action-node.md) | [InputActionNode](input-action-node.md) | Watches a button of an entity's input: `OnPressed`, `OnReleased` and a `WhilePressed` subgraph. The Add Node dialog lists the plugin's own `InputActionNode`, which also reads the local device. |
 | **State** | `LoopTimerNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/loop-timer-node.md) | — | Emits an interval event every period, optionally finishing after N loops. |
 | **State** | `RepeatNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/repeat-node.md) | — | Emits an iteration event a fixed number of times, on the activation frame or spaced by an interval; separate OnFinished / OnConditionFailed ports, and the Condition row is seeded to a constant `true`. |
 | **State** | `StateMachineNode` | [Core Doc](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/state-machine-node.md) | [StateMachineNode](state-machine-node.md) | Keeps one state subgraph active by an integer selector. |
@@ -53,7 +54,7 @@ Two more editors exist for narrower reasons: the `ForEachNode` editor types its 
 
 ## Godot-only Nodes
 
-These have no core Forge counterpart: they reach the scene tree, the physics world, input, navigation and a game's own scripts, none of which the engine-agnostic library has a concept of. Their pages here are the canonical reference — ports, settings, inputs, behavior — as well as the authoring notes.
+These have no core Forge counterpart: they reach the scene tree, the physics world, navigation and a game's own scripts, none of which the engine-agnostic library has a concept of. Their pages here are the canonical reference — ports, settings, inputs, behavior — as well as the authoring notes.
 
 They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one carries a `[StatescriptCategory]` that places it in a [subgroup](#node-categories-in-the-palette) of its archetype in the Add Node dialog.
 
@@ -109,11 +110,10 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 | **State** | `PlayAnimationNode` | [Presentation Nodes](presentation-nodes.md#animation) | Owns playback; `OnFinished`, and optionally stops on an early exit. |
 | **State** | `PlayAudioNode` | [Presentation Nodes](presentation-nodes.md#audio) | Holds audio for the node's lifetime. Channel hums, beam loops. |
 
-### Input and Navigation
+### Navigation
 
 | Arch | Node | Docs | Description |
 |------|------|------|-------------|
-| **State** | `InputActionNode` | [InputActionNode](input-action-node.md) | Watches a button: `OnPressed`, `OnReleased`, and a `WhilePressed` subgraph. |
 | **State** | `NavMoveTo3DNode` / `2D` | [Navigation Nodes](navigation-nodes.md) | Steers a body along a navigation path; `OnReached` / `OnFailed`. |
 
 ### Interop
@@ -133,7 +133,7 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 Only **State** nodes have a rail: Action and Condition nodes run the moment a message reaches them, so a one-shot `Raycast`, `Shapecast`, `Set Velocity` or `Apply Impulse` executes on whatever pass delivered it and never waits for a tick.
 
-Among the State nodes, the ones that move a body, steer an agent, or poll the physics world update on the **fixed step** — Move To, Move Body, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep and Line Of Sight, in both dimensions. Timers, `InputActionNode`, the presentation nodes and the scene lifetimes stay on the **frame**, because their delta is wall-clock time. Collision Override sits on neither: it writes once on activation and undoes it once on deactivation.
+Among the State nodes, the ones that move a body, steer an agent, or poll the physics world update on the **fixed step** — Move To, Move Body, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep and Line Of Sight, in both dimensions. Timers, the presentation nodes and the scene lifetimes stay on the **frame**, because their delta is wall-clock time. `InputActionNode` reads an entity's input on the fixed step and the local device on the frame. Collision Override sits on neither: it writes once on activation and undoes it once on deactivation.
 
 The split is by what a node's delta *means*, not by what the node touches. A host that implements `IForgeEntity` itself must drive both rails; see [Ability Integration](../README.md#in-godot).
 
@@ -154,7 +154,7 @@ Any concrete node type in a loaded assembly is discovered and categorized automa
 
 `[StatescriptCategory("...")]` adds a **second level inside an archetype**. The archetypes and their colors are untouched — they group by Statescript behavior, which is the right top level — and a node without the attribute, which is every core node, stays directly under its archetype.
 
-The Godot-only nodes use `Scene`, `Spatial`, `Physics`, `Presentation`, `Input`, `Navigation` and `Interop`. Your own nodes can declare any category name; put it on the node class:
+The Godot nodes use `Scene`, `Spatial`, `Physics`, `Presentation`, `Input`, `Navigation` and `Interop`. Your own nodes can declare any category name; put it on the node class:
 
 ```csharp
 [StatescriptCategory("Vehicles")]

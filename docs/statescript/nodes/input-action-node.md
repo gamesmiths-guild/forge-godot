@@ -6,7 +6,7 @@
 >
 > **Network kind:** Simulation
 
-This node is **Godot-only** — there is no core Forge counterpart, so this page is its reference rather than a Godot-authoring supplement to one.
+This is the core [InputActionNode](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/input-action-node.md) with the local device added: an Input Source entity without an input of its own is read from the device every frame. The core node is hidden from the Add Node dialog, since this one does everything it does.
 
 Watches a Godot input action while active: the "wait for a button before continuing" node. Unpaired — a button has no dimension.
 
@@ -16,6 +16,12 @@ Watches a Godot input action while active: the "wait for a button before continu
 |---|---|---|
 | **Action** | text, with a project-action dropdown beside it | The input action name to watch. |
 | **Deactivate On Pressed** | checkbox, default off | Ends the node on the first press it sees, which is what makes a combo window a window. |
+
+## Inputs
+
+| Index | Label | Type | Notes |
+|---|---|---|---|
+| 0 | Input Source | `IForgeEntity` | Optional. Unbound means the ability's owner. See [below](#input-is-read-from-the-input-source). |
 
 ## Ports
 
@@ -49,11 +55,14 @@ A name the project does not define is drawn in the editor's warning colour with 
 
 The dropdown reads the project's `input/<action>` settings — the same list, in the same order, that the Input Map tab shows — rather than the `InputMap` singleton, whose editor copy holds the *editor's* shortcuts. Feature overrides such as `input/skill_1.macos` are skipped, since they are a second setting under one action rather than a name anything can be watched by.
 
-## Input is client-local
+## Input is read from the Input Source
 
-This node and the input resolvers read the local machine's input state. Authoritative or networked games should sample aim and button state **once at activation** into [`AimActivationData`](custom-nodes.md#built-in-activation-data-providers) rather than polling inside a server-side graph.
+The button is read from the **Input Source** entity, the ability's owner when unbound, and how depends on that entity:
 
-Unlike the physics nodes, `InputActionNode` runs on the **frame** rail, because its delta is wall-clock time.
+- **An entity with an `Input`**, such as a player with a [`ForgeInputCollector`](../../nodes.md#forgeinputcollector), is read from that input, once per physics step. The node sees what every machine simulating the entity sees, and a tap shorter than a step still shows as a press and a release, in that order. The action must be one of the project's input actions (`forge/input/actions`).
+- **An entity without one** is read from the local device every frame, as `Input.IsActionPressed` reports it. Only the machine with the device can do that, so a graph that a networked game runs on its server should watch an entity with an input.
+
+The four [input resolvers](../resolvers/input-resolvers.md) and the [mouse and camera-forward resolvers](../resolvers/camera-and-aim.md) take an Input Source the same way.
 
 ## Related Docs
 
