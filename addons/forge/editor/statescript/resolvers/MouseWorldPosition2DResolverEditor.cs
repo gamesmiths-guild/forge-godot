@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -11,14 +12,11 @@ using NumericsVector2 = System.Numerics.Vector2;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver editor that reads the point in the world the mouse cursor is over.
+/// Editor for <see cref="MouseWorldPosition2DResolverResource"/>: its only row picks the entity whose input supplies
+/// the aim.
 /// </summary>
-/// <remarks>
-/// No rows, unlike its 3D twin. A 2D cursor is already a point on the plane the game is played on, so there is no mode
-/// to pick between, no ray to mask, and no reach to limit.
-/// </remarks>
 [Tool]
-internal sealed partial class MouseWorldPosition2DResolverEditor : NodeEditorProperty
+internal sealed partial class MouseWorldPosition2DResolverEditor : EntityScopedResolverEditorBase
 {
 	public override string DisplayName => "Mouse World Position 2D";
 
@@ -36,13 +34,22 @@ internal sealed partial class MouseWorldPosition2DResolverEditor : NodeEditorPro
 		Action onChanged,
 		bool isArray)
 	{
+		InitializeEntityScope(
+			graph,
+			onChanged,
+			(property?.Resolver as MouseWorldPosition2DResolverResource)?.InputSource);
+
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
-		AddChild(new Label { Text = "Uses the owner's viewport." });
+		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		AddChild(root);
+
+		root.AddChild(CreateEntitySelectorRow("Input Source:"));
+		root.AddChild(new Label { Text = "The input source's aim, or the owner's viewport without one." });
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new MouseWorldPosition2DResolverResource();
+		property.Resolver = new MouseWorldPosition2DResolverResource { InputSource = BuildEntityResolverResource() };
 	}
 
 	public override bool TryGetInlineSummary(out string summary)
