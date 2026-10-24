@@ -52,7 +52,7 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
 	public void OnApply(IForgeEntity? target, CueParameters? parameters)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnApply(forgeEntity, parameters);
 		}
@@ -70,7 +70,7 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 	public void OnExecute(IForgeEntity? target, CueParameters? parameters)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnExecute(forgeEntity, parameters);
 		}
@@ -88,7 +88,7 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 	public void OnRemove(IForgeEntity? target, bool interrupted)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnRemove(forgeEntity, interrupted);
 		}
@@ -106,7 +106,7 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 	public void OnUpdate(IForgeEntity? target, CueParameters? parameters)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnUpdate(forgeEntity, parameters);
 		}
@@ -141,5 +141,12 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 		}
 
 		GD.PushWarning($"Forge cue handler [{Name}]: {message}");
+	}
+
+	// Cues are dispatched at the end of the frame, and an entity freed during the frame, such as one that died, has no
+	// node left to play them on. Their target-free half still plays.
+	private static bool IsAlive(IForgeEntity forgeEntity)
+	{
+		return forgeEntity is not GodotObject godotObject || IsInstanceValid(godotObject);
 	}
 }
