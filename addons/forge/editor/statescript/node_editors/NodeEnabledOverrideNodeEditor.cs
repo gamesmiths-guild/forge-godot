@@ -18,7 +18,8 @@ internal sealed partial class NodeEnabledOverrideNodeEditor : StandardNodeEditor
 			"aspect",
 			"Aspect",
 			["Visible", "Processing", "PhysicsProcessing", "Monitoring", "Monitorable"],
-			DefaultName: "Visible"),
+			DefaultName: "Visible",
+			AffectsLayout: true),
 	];
 
 	public override string HandledRuntimeTypeName =>

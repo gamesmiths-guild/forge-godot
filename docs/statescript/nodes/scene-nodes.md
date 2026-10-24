@@ -3,6 +3,8 @@
 > **Namespace:** `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action` and `.State`
 >
 > **Add Node group:** Action → **Scene**, State → **Scene**
+>
+> **Network kind:** Simulation
 
 These nodes are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
 
@@ -31,7 +33,7 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 | 2 | Rotation | `Quaternion` / `double` | Optional. Unbound, and in 3D a zero quaternion, leave the scene's authored rotation. |
 | 3 | Parent Entity | `IForgeEntity` | **Shown under `Entity` parenting only.** What the instance is parented to, and what an unbound Position is measured from. |
 | 4 | Parent Node | `Node` | **Shown under `Node` parenting only.** |
-| 5 | Lifetime | `double` | **State nodes only.** Seconds before the node self-deactivates. Zero or less means "until aborted". |
+| 5 | Lifetime | `double` | **State nodes only.** Seconds before the node self-deactivates, counted in fixed steps. Zero or less means "until aborted". |
 
 ### Outputs and ports
 

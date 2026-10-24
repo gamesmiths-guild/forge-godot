@@ -14,11 +14,13 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// </summary>
 /// <remarks>
 /// <para>The direct answer to "Set Variable does not reach the scene". Graph variables are two in-memory bags that
-/// nothing outside the graph observes, so a light that should dim, a shader parameter that should follow a charge, or a
-/// game's own exported field are all out of reach until something writes to the node itself.</para>
-/// <para>The path is a property path rather than a name, so <c>position:y</c> and <c>material:shader_parameter/glow</c>
-/// reach into a property as well as at it. The supported value set is closed - see <see cref="InteropValueType"/> - and
-/// everything outside it is reported rather than guessed at.</para>
+/// nothing outside the graph observes, so a light that should dim or a shader parameter that should follow a charge
+/// are out of reach until something writes to the node itself.</para>
+/// <para>The path is a property path rather than a name, so <c>modulate:a</c> and
+/// <c>material:shader_parameter/glow</c> reach into a property as well as at it. The supported value set is closed -
+/// see <see cref="InteropValueType"/> - and everything outside it is reported rather than guessed at.</para>
+/// <para>It is a presentation node, for what is seen: gameplay must not read the property back, and a change that
+/// gameplay depends on belongs in a simulation node instead, such as an effect, an attribute or Set Position.</para>
 /// <para>The write is permanent, for state that outlives the ability. Node Property Override is the form that puts the
 /// old value back.</para>
 /// </remarks>
@@ -42,6 +44,9 @@ public sealed class SetNodePropertyNode(
 
 	/// <inheritdoc/>
 	public override string Description => "Writes a value onto a property of a scene node.";
+
+	/// <inheritdoc/>
+	public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
 
 	/// <inheritdoc/>
 	protected override void DefineInteropParameters(

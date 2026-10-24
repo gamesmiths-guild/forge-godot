@@ -3,6 +3,7 @@
 #if TOOLS
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
+using NodeNetworkKind = Gamesmiths.Forge.Statescript.NodeNetworkKind;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -209,6 +210,60 @@ public partial class StatescriptGraphNode
 			RemoveChild(child);
 			child.Free();
 		}
+	}
+
+	// Simulation is the default and goes unmarked; the other kinds change where and when the node's work runs, which a
+	// designer needs to see without opening the node's documentation.
+	private void AddNetworkKindBadge(NodeNetworkKind kind)
+	{
+		if (kind == NodeNetworkKind.Simulation)
+		{
+			return;
+		}
+
+		bool presentation = kind == NodeNetworkKind.Presentation;
+
+		var style = new StyleBoxFlat
+		{
+			BgColor = presentation ? _presentationColor : _authorityColor,
+			ContentMarginLeft = 6,
+			ContentMarginRight = 6,
+			CornerRadiusTopLeft = 6,
+			CornerRadiusTopRight = 6,
+			CornerRadiusBottomLeft = 6,
+			CornerRadiusBottomRight = 6,
+		};
+
+		_networkKindBadge = new Label
+		{
+			Text = presentation ? "Presentation" : "Authority",
+			TooltipText = presentation
+				? "Presentation: only shows something. It runs in the presentation pass at the end of the frame, on "
+					+ "net change, and never changes gameplay."
+				: "Authority: only the server may do this.",
+			MouseFilter = MouseFilterEnum.Pass,
+			VerticalAlignment = VerticalAlignment.Center,
+		};
+
+		_networkKindBadge.AddThemeStyleboxOverride("normal", style);
+		_networkKindBadge.AddThemeFontSizeOverride("font_size", 11);
+		GetTitlebarHBox().AddChild(_networkKindBadge);
+	}
+
+	private void RemoveNetworkKindBadge()
+	{
+		if (_networkKindBadge is null)
+		{
+			return;
+		}
+
+		if (IsInstanceValid(_networkKindBadge))
+		{
+			_networkKindBadge.GetParent()?.RemoveChild(_networkKindBadge);
+			_networkKindBadge.Free();
+		}
+
+		_networkKindBadge = null;
 	}
 
 	private void ApplyTitleBarColor(Color color)

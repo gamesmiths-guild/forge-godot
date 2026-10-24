@@ -3,12 +3,22 @@
 > **Namespace:** `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action` and `.State`
 >
 > **Add Node group:** Action → **Presentation**, State → **Presentation**
+>
+> **Network kind:** Presentation
 
 These nodes are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
 
 They drive an animation player or an audio player that is already in the entity's scene. All four are **unpaired**: an `AnimationPlayer` is the same node whether the game is 2D or 3D, so they resolve from the nearest spatial ancestor of *either* kind.
 
-Each comes in a fire-and-forget Action and a State that owns the playback for its own lifetime.
+Each comes in a fire-and-forget Action and a State that plays for as long as what it plays lasts.
+
+## Shown at the end of the frame, timed in fixed steps
+
+All four are [presentation nodes](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation): the editor marks them with a **Presentation** badge.
+
+- **The state nodes start and stop playback in the presentation pass**, which the Forge bootstrap runs at the end of each frame, once every node has processed. They play what was resolved when they activated: Speed, Blend, Volume Db and Pitch are read then, not in the pass. A node that activates and ends within one frame plays nothing, and one that keeps running is started once.
+- **Their length is counted in fixed steps from activation**, not read from the player. The node finishes on the same physics step on every machine, whatever the engine is doing with playback — a graph waiting on `OnFinished` never depends on whether a frame was dropped.
+- **The one-shot actions play when they execute.**
 
 ## The player path
 
@@ -27,11 +37,13 @@ The **Player** setting is a path to the player, from the node the entity lives o
 | 1 | Speed | `double` | Optional. |
 | 2 | Blend | `double` | Optional. Cross-fade seconds. |
 
-`PlayAnimationNode` deactivates and emits `OnFinished` when the animation stops being the one playing. **One comparison answers three questions**: Godot reports `CurrentAnimation` only while the player is playing, so `CurrentAnimation != animation` covers the animation ending, something stopping the player, and another animation taking over — three endings a graph has no reason to tell apart, since in all three the node has stopped being the thing driving the character.
+`PlayAnimationNode` deactivates and emits `OnFinished` once the clip's length has run: the clip's length divided by its speed (the Speed input times the player's own Speed Scale), counted in fixed steps from activation. Both are read when the node activates, so a game must not drive the player's Speed Scale from a presentation node such as Node Property Override: what was presented would change how long the node lasts. **A looping clip, or a speed of zero, never finishes on its own**, which is the channelling shape: the node runs until something aborts it. Another animation taking over the player does not end the node; its length does.
 
-**Stop On Deactivate** stops the player if the node is still driving it when it deactivates, which covers an abort, a subgraph ending and the graph stopping — what an interrupted cast needs. A natural finish cannot trigger it, because by then the animation is over.
+The animation starts in the presentation pass, from its first frame: if the same animation is already playing, the node stops it first, because the length it counts starts at the beginning.
 
-**Restart On Retrigger** plays the animation again from its start when a message reaches the node mid-animation, with Speed and Blend read again; off, the message is ignored. Godot's `Play` leaves an animation that is already playing where it is, so the node stops it first — which also means a restart snaps to the first frame rather than blending into it.
+**Stop On Deactivate** stops the player, in the next presentation pass, if the node's animation is still the one playing when the node ends early, which covers an abort, a subgraph ending and the graph stopping — what an interrupted cast needs. A natural finish cannot trigger it, because by then the animation is over.
+
+**Restart On Retrigger** plays the animation again from its start when a message reaches the node mid-animation, with Speed and Blend read again and the length counted from the restart; off, the message is ignored. Godot's `Play` leaves an animation that is already playing where it is, so the restart stops it first — which also means a restart snaps to the first frame rather than blending into it.
 
 Melee swing timing, cast bars, windups.
 
@@ -48,9 +60,9 @@ Melee swing timing, cast bars, windups.
 | 1 | Volume Db | `double` | Optional. |
 | 2 | Pitch | `double` | Optional. |
 
-Audio has the same shape one step simpler: `IsPlaying` going false is the end. Channel hums, beam loops.
+Audio has the same shape: the length is the stream's length divided by the pitch (the Pitch input, or when it is unbound the Pitch Scale the player had before any node overrode it, so a length never depends on what an earlier node played), counted in fixed steps. **A looping stream, or one whose length Godot cannot tell, such as a generator, never finishes on its own.** Channel hums, beam loops.
 
-**Restart On Retrigger** plays the sound again from the beginning, with Volume Db and Pitch read again. The node stops the sound first, so a player that allows polyphony has it replaced rather than a second voice layered over it.
+**Restart On Retrigger** plays the sound again from the beginning, with Volume Db and Pitch read again. With **Stop On Deactivate** on, the old sound is stopped first, so a player that allows polyphony has it replaced rather than a second voice layered over it.
 
 The three Godot audio players derive from their dimension's spatial node and share no base, so an `AudioPlayers` switch written once resolves "the entity's player" for both these nodes and the [`AudioCueHandler`](../../nodes.md#audiocuehandler).
 
@@ -62,7 +74,7 @@ Blend is an input rather than a setting for the same reason a poll interval is: 
 
 ## A node that cannot play does not stall the ability
 
-If the player or the animation is missing, both state nodes warn and finish on their first update rather than holding themselves open. Their whole job is to be waited on, so a graph whose next step hangs off `OnFinished` would never continue and the ability would stay active until something aborted it — which for an ability with no timer is never. Nothing having started is the same answer as having stopped; the warning is what reports the misconfiguration.
+If the player, the stream or the animation is missing, both state nodes finish on their next fixed step rather than holding themselves open, and warn. Their whole job is to be waited on, so a graph whose next step hangs off `OnFinished` would never continue and the ability would stay active until something aborted it — which for an ability with no timer is never. Nothing having started is the same answer as having stopped; the warning is what reports the misconfiguration.
 
 ## Two recipes that replace nodes
 

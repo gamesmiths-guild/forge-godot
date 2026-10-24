@@ -20,7 +20,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 {
 	/// <summary>
 	/// The group every ready <see cref="ForgeEntity"/> joins, so <see cref="ForgeBootstrap"/> can restart their randoms
-	/// before any of them advances.
+	/// before any of them advances, and present their abilities once every one of them has updated.
 	/// </summary>
 	public const string SimulationGroup = "forge_simulation";
 

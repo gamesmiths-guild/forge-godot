@@ -7,23 +7,22 @@ using Node = Godot.Node;
 namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 
 /// <summary>
-/// The context for a <see cref="NodePropertyOverrideNode"/>. Holds the node it wrote to and the value it found there,
-/// so deactivation restores what the scene had rather than what the node assumes.
+/// The context for a <see cref="NodePropertyOverrideNode"/>. Holds the node and the value the activation resolved, for
+/// the presentation pass to write.
 /// </summary>
 /// <remarks>
-/// The original is kept as the raw Godot value the property gave back, not as a graph value converted to the authored
-/// type and back. A round trip through the value lane would quantise a float, drop a colour, or turn an unset
-/// reference into something else - and none of that belongs in a restore whose whole job is to leave no trace.
+/// They are resolved once, when the node activates, because resolving them in the pass could draw from the graph's
+/// random, which presentation must not touch.
 /// </remarks>
 public class NodePropertyOverrideNodeContext : StateNodeContext
 {
 	/// <summary>
-	/// Gets or sets the node the override was applied to.
+	/// Gets or sets the node the override acts on, or <see langword="null"/> when there was nothing to override.
 	/// </summary>
 	public Node? Node { get; set; }
 
 	/// <summary>
-	/// Gets or sets the property value as it was before the override.
+	/// Gets or sets the value to hold on the property.
 	/// </summary>
-	public Variant OriginalValue { get; set; }
+	public Variant Value { get; set; }
 }

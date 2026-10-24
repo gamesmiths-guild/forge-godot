@@ -12,6 +12,7 @@ Use the core Forge docs for runtime behavior, ports, lifecycle, and C# API detai
 - Mention any custom flow, event, or subgraph port labels defined by the runtime node, especially if they differ from the default ports users expect.
 - Mention any Godot-specific resolver resources or custom editor behavior.
 - Mention array/single input behavior when relevant.
+- Mention the network kind badge the editor shows on the node when it is not Simulation, and when a setting changes it.
 
 ## Related Docs
 
