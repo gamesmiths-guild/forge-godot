@@ -80,6 +80,7 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 		{
 			nodeContext.Node = node;
 			nodeContext.OriginalEnabled = original;
+			nodeContext.Enabled = enabled;
 		}
 	}
 
@@ -95,6 +96,32 @@ public class NodeEnabledOverrideNode(NodeEnabledAspect aspect = NodeEnabledAspec
 		if (NetworkKind == NodeNetworkKind.Simulation)
 		{
 			Restore(node, nodeContext.OriginalEnabled);
+		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		// The presentation pass brings a presentation switch in line with the restored run.
+		if (NetworkKind == NodeNetworkKind.Simulation)
+		{
+			NodeEnabledOverrideNodeContext nodeContext =
+				graphContext.GetNodeContext<NodeEnabledOverrideNodeContext>(NodeID);
+			Restore(nodeContext.Node, nodeContext.OriginalEnabled);
+		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		NodeEnabledOverrideNodeContext nodeContext =
+			graphContext.GetNodeContext<NodeEnabledOverrideNodeContext>(NodeID);
+
+		if (NetworkKind == NodeNetworkKind.Simulation
+			&& nodeContext.Node is Node node
+			&& GodotObject.IsInstanceValid(node))
+		{
+			NodeEnabledAspects.TryWrite(node, _aspect, nodeContext.Enabled);
 		}
 	}
 

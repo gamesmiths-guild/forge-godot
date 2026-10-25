@@ -130,6 +130,16 @@ public class PlayAnimationNode(
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// A running activation has not played out, whatever its presentation was told after the snapshot was taken.
+		if (graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Playback is PresentationPlayback playback)
+		{
+			playback.Finished = false;
+		}
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);

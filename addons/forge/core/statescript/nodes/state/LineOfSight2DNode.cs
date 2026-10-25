@@ -142,6 +142,19 @@ public class LineOfSight2DNode(bool deactivateOnBlocked = false)
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PhysicsDebugDraw2D.Release(graphContext.GetNodeContext<LineOfSight2DNodeContext>(NodeID).DebugMarker);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// The marker went with the activation it was drawn for, and the next check draws a new one.
+		graphContext.GetNodeContext<LineOfSight2DNodeContext>(NodeID).DebugMarker = null;
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Check(graphContext);

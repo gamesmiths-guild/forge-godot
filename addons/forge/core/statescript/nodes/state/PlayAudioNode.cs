@@ -119,6 +119,16 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// A running activation has not played out, whatever its presentation was told after the snapshot was taken.
+		if (graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID).Playback is PresentationPlayback playback)
+		{
+			playback.Finished = false;
+		}
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);

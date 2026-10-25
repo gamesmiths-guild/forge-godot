@@ -172,6 +172,19 @@ public class Overlap3DNode(
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PhysicsDebugDraw3D.Release(graphContext.GetNodeContext<Overlap3DNodeContext>(NodeID).DebugMarker);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// The marker went with the activation it was drawn for, and the next check draws a new one.
+		graphContext.GetNodeContext<Overlap3DNodeContext>(NodeID).DebugMarker = null;
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Overlap3DNodeContext nodeContext = graphContext.GetNodeContext<Overlap3DNodeContext>(NodeID);
@@ -254,8 +267,8 @@ public class Overlap3DNode(
 	private void ReportChanges(
 		GraphContext graphContext,
 		Overlap3DNodeContext nodeContext,
-		HashSet<IForgeEntity> from,
-		HashSet<IForgeEntity> to,
+		ICollection<IForgeEntity> from,
+		ICollection<IForgeEntity> to,
 		byte eventPort)
 	{
 		nodeContext.Changed.Clear();

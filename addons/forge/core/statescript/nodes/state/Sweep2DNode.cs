@@ -94,6 +94,19 @@ public class Sweep2DNode(bool collideWithAreas = false, bool oneShot = false) : 
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PhysicsDebugDraw2D.Release(graphContext.GetNodeContext<Sweep2DNodeContext>(NodeID).DebugMarker);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// The marker went with the activation it was drawn for, and the next check draws a new one.
+		graphContext.GetNodeContext<Sweep2DNodeContext>(NodeID).DebugMarker = null;
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Cast(graphContext);

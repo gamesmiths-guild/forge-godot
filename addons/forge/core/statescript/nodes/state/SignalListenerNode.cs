@@ -83,20 +83,12 @@ public class SignalListenerNode(string signalName = "", bool oneShot = false)
 			return;
 		}
 
-		if (!SignalArguments.TryCreateCallable(
-			argumentCount,
-			() => OnSignalReceived(graphContext, nodeContext),
-			out Callable callable))
+		if (!TryConnect(graphContext, nodeContext, node, argumentCount))
 		{
 			WarnOnce(
 				$"cannot watch [{_signalName}], which declares {argumentCount} arguments - more than the " +
 				$"{SignalArguments.MaxArguments} a handler can be built for.");
-			return;
 		}
-
-		node.Connect(_signalName, callable);
-		nodeContext.ConnectedNode = node;
-		nodeContext.ConnectedCallable = callable;
 	}
 
 	/// <inheritdoc/>
@@ -104,15 +96,61 @@ public class SignalListenerNode(string signalName = "", bool oneShot = false)
 	{
 		SignalListenerNodeContext nodeContext = graphContext.GetNodeContext<SignalListenerNodeContext>(NodeID);
 
+		Disconnect(nodeContext);
+
+		nodeContext.ConnectedNode = null;
+		nodeContext.ConnectedCallable = default;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		Disconnect(graphContext.GetNodeContext<SignalListenerNodeContext>(NodeID));
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		SignalListenerNodeContext nodeContext = graphContext.GetNodeContext<SignalListenerNodeContext>(NodeID);
+		Node? node = nodeContext.ConnectedNode;
+		nodeContext.ConnectedNode = null;
+		nodeContext.ConnectedCallable = default;
+
+		// The restored callable was made for the context this one was copied from, so a new one is made for this one.
+		if (node is not null && GodotObject.IsInstanceValid(node))
+		{
+			TryConnect(graphContext, nodeContext, node, SignalArguments.GetArgumentCount(node, _signalName));
+		}
+	}
+
+	private void Disconnect(SignalListenerNodeContext nodeContext)
+	{
 		if (nodeContext.ConnectedNode is not null
 			&& GodotObject.IsInstanceValid(nodeContext.ConnectedNode)
 			&& nodeContext.ConnectedNode.IsConnected(_signalName, nodeContext.ConnectedCallable))
 		{
 			nodeContext.ConnectedNode.Disconnect(_signalName, nodeContext.ConnectedCallable);
 		}
+	}
 
-		nodeContext.ConnectedNode = null;
-		nodeContext.ConnectedCallable = default;
+	private bool TryConnect(
+		GraphContext graphContext,
+		SignalListenerNodeContext nodeContext,
+		Node node,
+		int argumentCount)
+	{
+		if (!SignalArguments.TryCreateCallable(
+			argumentCount,
+			() => OnSignalReceived(graphContext, nodeContext),
+			out Callable callable))
+		{
+			return false;
+		}
+
+		node.Connect(_signalName, callable);
+		nodeContext.ConnectedNode = node;
+		nodeContext.ConnectedCallable = callable;
+		return true;
 	}
 
 	// The signal fires from wherever Godot emitted it, which is outside the graph's own update, so this re-checks that

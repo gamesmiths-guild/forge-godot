@@ -18,20 +18,22 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 public class Overlap3DNodeContext : StateNodeContext
 {
 	/// <summary>
-	/// Gets the entities currently inside, as of the last poll.
+	/// Gets the entities currently inside as of the last poll, in the order they entered.
 	/// </summary>
-	public HashSet<IForgeEntity> Overlapping { get; } = [];
+	// A list rather than a set: where a set puts what it adds depends on what it removed before, which a copy does not
+	// carry, so a restored context would report exits in another order than the run it was taken from.
+	public List<IForgeEntity> Overlapping { get; private set; } = [];
 
 	/// <summary>
 	/// Gets the entities the current poll found, before it is diffed against <see cref="Overlapping"/>.
 	/// </summary>
-	public HashSet<IForgeEntity> Pending { get; } = [];
+	public HashSet<IForgeEntity> Pending { get; private set; } = [];
 
 	/// <summary>
 	/// Gets the entities that changed in the current poll, collected before they are reported so the set being
 	/// reported from is not modified while it is walked.
 	/// </summary>
-	public List<IForgeEntity> Changed { get; } = [];
+	public List<IForgeEntity> Changed { get; private set; } = [];
 
 	/// <summary>
 	/// Gets or sets the debug marker drawing the watched volume while the node is active. Null unless the game is
@@ -50,4 +52,13 @@ public class Overlap3DNodeContext : StateNodeContext
 	/// as a transition into whatever it found.
 	/// </summary>
 	public bool? LastOccupied { get; set; }
+
+	/// <inheritdoc/>
+	protected override void OnCopied()
+	{
+		base.OnCopied();
+		Overlapping = [.. Overlapping];
+		Pending = [.. Pending];
+		Changed = [.. Changed];
+	}
 }

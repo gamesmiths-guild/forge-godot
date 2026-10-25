@@ -27,7 +27,7 @@ public class NodeEnabledOverrideNodeContext : StateNodeContext
 
 	/// <summary>
 	/// Gets or sets a value indicating whether the override enables the setting. Resolved on activation, for the
-	/// presentation pass to apply to a visibility switch.
+	/// presentation pass to apply to a visibility switch, and for a restore to apply again to any other.
 	/// </summary>
 	public bool Enabled { get; set; }
 }

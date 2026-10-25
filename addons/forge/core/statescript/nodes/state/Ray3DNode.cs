@@ -95,6 +95,19 @@ public class Ray3DNode(
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PhysicsDebugDraw3D.Release(graphContext.GetNodeContext<Ray3DNodeContext>(NodeID).DebugMarker);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// The marker went with the activation it was drawn for, and the next check draws a new one.
+		graphContext.GetNodeContext<Ray3DNodeContext>(NodeID).DebugMarker = null;
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Cast(graphContext);

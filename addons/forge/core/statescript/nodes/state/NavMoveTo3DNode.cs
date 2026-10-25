@@ -136,23 +136,14 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 			return;
 		}
 
-		var callable = Callable.From((Vector3 safeVelocity) => nodeContext.SafeVelocity = safeVelocity);
-		agent.Connect(NavigationAgent3D.SignalName.VelocityComputed, callable);
-		nodeContext.VelocityComputed = callable;
+		Connect(nodeContext, agent);
 	}
 
 	/// <inheritdoc/>
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		NavMoveTo3DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo3DNodeContext>(NodeID);
-		NavigationAgent3D? agent = nodeContext.Agent;
-
-		if (nodeContext.VelocityComputed is Callable callable
-			&& agent is not null
-			&& GodotObject.IsInstanceValid(agent))
-		{
-			agent.Disconnect(NavigationAgent3D.SignalName.VelocityComputed, callable);
-		}
+		Disconnect(nodeContext);
 
 		nodeContext.VelocityComputed = null;
 		nodeContext.Agent = null;
@@ -162,6 +153,29 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 		if (ForgeEntityBridge.TryGetSpatialNode3D(ResolveEntityOrOwner(graphContext), out Node3D? spatialNode))
 		{
 			TryApplyVelocity(spatialNode, Vector3.Zero);
+		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		Disconnect(graphContext.GetNodeContext<NavMoveTo3DNodeContext>(NodeID));
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		NavMoveTo3DNodeContext nodeContext = graphContext.GetNodeContext<NavMoveTo3DNodeContext>(NodeID);
+		NavigationAgent3D? agent = nodeContext.Agent;
+		nodeContext.VelocityComputed = null;
+
+		// The agent may be walking to a target submitted after the snapshot was taken, so the next step submits the
+		// restored one again.
+		nodeContext.HasSubmittedTarget = false;
+
+		if (nodeContext.SafeVelocityActive && agent is not null && GodotObject.IsInstanceValid(agent))
+		{
+			Connect(nodeContext, agent);
 		}
 	}
 
@@ -234,6 +248,25 @@ public class NavMoveTo3DNode(string agentPath = "", bool useSafeVelocity = false
 		if (!TryApplyVelocity(spatialNode, desired))
 		{
 			DeactivateNodeAndEmitMessage(graphContext, OnFailedPort);
+		}
+	}
+
+	private static void Connect(NavMoveTo3DNodeContext nodeContext, NavigationAgent3D agent)
+	{
+		var callable = Callable.From((Vector3 safeVelocity) => nodeContext.SafeVelocity = safeVelocity);
+		agent.Connect(NavigationAgent3D.SignalName.VelocityComputed, callable);
+		nodeContext.VelocityComputed = callable;
+	}
+
+	private static void Disconnect(NavMoveTo3DNodeContext nodeContext)
+	{
+		NavigationAgent3D? agent = nodeContext.Agent;
+
+		if (nodeContext.VelocityComputed is Callable callable
+			&& agent is not null
+			&& GodotObject.IsInstanceValid(agent))
+		{
+			agent.Disconnect(NavigationAgent3D.SignalName.VelocityComputed, callable);
 		}
 	}
 

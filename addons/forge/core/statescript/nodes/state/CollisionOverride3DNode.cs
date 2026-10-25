@@ -94,8 +94,41 @@ public class CollisionOverride3DNode(
 	{
 		CollisionOverride3DNodeContext nodeContext =
 			graphContext.GetNodeContext<CollisionOverride3DNodeContext>(NodeID);
-		CollisionObject3D? body = nodeContext.Body;
+		PutBack(nodeContext);
 		nodeContext.Body = null;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PutBack(graphContext.GetNodeContext<CollisionOverride3DNodeContext>(NodeID));
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		CollisionOverride3DNodeContext nodeContext =
+			graphContext.GetNodeContext<CollisionOverride3DNodeContext>(NodeID);
+		CollisionObject3D? body = nodeContext.Body;
+
+		if (body is not null && GodotObject.IsInstanceValid(body))
+		{
+			CollisionBits3D.Write(
+				body,
+				_target,
+				CollisionBits3D.Apply(CollisionBits3D.Read(body, _target), nodeContext.OverriddenBits, _operation));
+		}
+	}
+
+	/// <inheritdoc/>
+	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+	{
+		// Nothing to do per tick: the override is applied once on activation and undone once on deactivation.
+	}
+
+	private void PutBack(CollisionOverride3DNodeContext nodeContext)
+	{
+		CollisionObject3D? body = nodeContext.Body;
 
 		if (body is not null && GodotObject.IsInstanceValid(body))
 		{
@@ -107,12 +140,6 @@ public class CollisionOverride3DNode(
 					nodeContext.OriginalBits,
 					nodeContext.OverriddenBits));
 		}
-	}
-
-	/// <inheritdoc/>
-	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
-	{
-		// Nothing to do per tick: the override is applied once on activation and undone once on deactivation.
 	}
 
 	private IForgeEntity? ResolveEntityOrOwner(GraphContext graphContext)

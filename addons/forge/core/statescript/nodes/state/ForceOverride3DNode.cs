@@ -114,10 +114,31 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		ForceOverride3DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride3DNodeContext>(NodeID);
-		RigidBody3D? body = nodeContext.Body;
-		nodeContext.Body = null;
 
 		PhysicsDebugDraw3D.Release(nodeContext.DebugMarker);
+		nodeContext.DebugMarker = null;
+
+		PutBack(nodeContext);
+		nodeContext.Body = null;
+		nodeContext.WroteForce = false;
+		nodeContext.WroteTorque = false;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		ForceOverride3DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride3DNodeContext>(NodeID);
+		PhysicsDebugDraw3D.Release(nodeContext.DebugMarker);
+		PutBack(nodeContext);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		ForceOverride3DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride3DNodeContext>(NodeID);
+		RigidBody3D? body = nodeContext.Body;
+
+		// The marker went with the activation it was drawn for.
 		nodeContext.DebugMarker = null;
 
 		if (body is null || !GodotObject.IsInstanceValid(body))
@@ -125,20 +146,10 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 			return;
 		}
 
-		// Each half is put back only if this node wrote it, so an ability that pushed without twisting cannot clear a
-		// constant torque the scene authored.
-		if (nodeContext.WroteForce)
-		{
-			body.ConstantForce = nodeContext.PreviousForce;
-		}
-
-		if (nodeContext.WroteTorque)
-		{
-			body.ConstantTorque = nodeContext.PreviousTorque;
-		}
-
-		nodeContext.WroteForce = false;
-		nodeContext.WroteTorque = false;
+		// What the body carried before the node is still in the context, and the push is resolved again, as every
+		// update resolves it.
+		Hold(graphContext, nodeContext, body);
+		nodeContext.DebugMarker = PhysicsDebugDraw3D.EnsureMarker(graphContext, null, PhysicsDebugDraw3D.ForceColor);
 	}
 
 	/// <inheritdoc/>
@@ -154,6 +165,37 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 
 		// Re-resolved every update rather than only on activation, so a thrust bound to an attribute or a charge level
 		// tracks it. The capture is untouched: what is restored is still what the body carried before the node ran.
+		Hold(graphContext, nodeContext, body);
+
+		// Held rather than flashed, matching the other monitored nodes: a push that lasts should read as one arrow
+		// following the body, not as a new marker every frame.
+		PhysicsDebugDraw3D.SetArrow(nodeContext.DebugMarker, body.GlobalPosition, body.ConstantForce);
+	}
+
+	// Each half is put back only if this node wrote it, so an ability that pushed without twisting cannot clear a
+	// constant torque the scene authored.
+	private static void PutBack(ForceOverride3DNodeContext nodeContext)
+	{
+		RigidBody3D? body = nodeContext.Body;
+
+		if (body is null || !GodotObject.IsInstanceValid(body))
+		{
+			return;
+		}
+
+		if (nodeContext.WroteForce)
+		{
+			body.ConstantForce = nodeContext.PreviousForce;
+		}
+
+		if (nodeContext.WroteTorque)
+		{
+			body.ConstantTorque = nodeContext.PreviousTorque;
+		}
+	}
+
+	private void Hold(GraphContext graphContext, ForceOverride3DNodeContext nodeContext, RigidBody3D body)
+	{
 		if (nodeContext.WroteForce
 			&& graphContext.TryResolve(InputProperties[ForceInput].BoundName, out NumericsVector3 force))
 		{
@@ -165,10 +207,6 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 		{
 			body.ConstantTorque = new Vector3(torque.X, torque.Y, torque.Z);
 		}
-
-		// Held rather than flashed, matching the other monitored nodes: a push that lasts should read as one arrow
-		// following the body, not as a new marker every frame.
-		PhysicsDebugDraw3D.SetArrow(nodeContext.DebugMarker, body.GlobalPosition, body.ConstantForce);
 	}
 
 	private IForgeEntity? ResolveEntityOrOwner(GraphContext graphContext)
