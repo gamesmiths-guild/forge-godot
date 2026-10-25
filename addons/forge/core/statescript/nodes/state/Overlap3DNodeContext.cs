@@ -25,6 +25,11 @@ public class Overlap3DNodeContext : StateNodeContext
 	public List<IForgeEntity> Overlapping { get; private set; } = [];
 
 	/// <summary>
+	/// Gets the same entities as <see cref="Overlapping"/>, for the poll to look them up in without walking the list.
+	/// </summary>
+	public HashSet<IForgeEntity> OverlappingSet { get; private set; } = [];
+
+	/// <summary>
 	/// Gets the entities the current poll found, before it is diffed against <see cref="Overlapping"/>.
 	/// </summary>
 	public HashSet<IForgeEntity> Pending { get; private set; } = [];
@@ -58,6 +63,7 @@ public class Overlap3DNodeContext : StateNodeContext
 	{
 		base.OnCopied();
 		Overlapping = [.. Overlapping];
+		OverlappingSet = [.. OverlappingSet];
 		Pending = [.. Pending];
 		Changed = [.. Changed];
 	}
