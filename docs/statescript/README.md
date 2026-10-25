@@ -81,6 +81,21 @@ Presentation driven by *effects* rather than by a graph goes through cues instea
 
 Nodes that only show something — playing an animation or a sound, writing a visual property — are **presentation** nodes, and the editor marks them with a **Presentation** badge in the title bar. Nodes with no badge are **simulation** nodes: they change gameplay. A presentation state node starts and stops what it shows in the presentation pass the Forge bootstrap runs at the end of each frame, once every node has processed, so something that comes and goes within one frame is never shown, and how long it lasts is counted in physics steps rather than read from the engine. Gameplay must never depend on what a presentation node writes. See [Simulation and presentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#simulation-and-presentation).
 
+### Snapshots
+
+A graph run can be taken as a snapshot and put back later (`GraphProcessor.CaptureSnapshot` and `RestoreSnapshot`), which is what rollback builds on. A restore runs no node code: it swaps in copies of the node contexts and graph variables, and the presentation pass then shows only what changed. See [Snapshots](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/README.md#snapshots).
+
+The plugin's nodes that hold something in the engine while they run let go of it for the activation a restore replaces and take hold of it again for the one it brings back, so the engine matches the restored run:
+
+| What the node holds | Nodes |
+|---|---|
+| A signal connection | Signal Listener, and Nav Move To's avoidance callback |
+| An override it puts back when it ends | Collision Override, Force Override, Node Enabled Override (the four simulation aspects) |
+| A group membership | Node Group |
+| A debug marker | the monitored physics queries and Force Override, which draw a new one on their next step |
+
+What a graph spawned with Scene or Instantiate Scene belongs to the world, not to the graph, so a restore doesn't take it back. Custom nodes follow the same rules, described in [Rollback-safe nodes](nodes/custom-nodes.md#rollback-safe-nodes).
+
 ## Subgraphs
 
 State nodes have **Subgraph** output ports in addition to regular Event output ports. Both emit a regular message when the state node activates, but the critical difference is what happens when a disable signal is sent:
