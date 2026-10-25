@@ -16,6 +16,7 @@ using GdUnit4;
 using Godot;
 using ForgeGraph = Gamesmiths.Forge.Statescript.Graph;
 using ForgeNode = Gamesmiths.Forge.Statescript.Node;
+using InputActionNode = Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.InputActionNode;
 using Node = Godot.Node;
 using NumericsVector2 = System.Numerics.Vector2;
 using NumericsVector3 = System.Numerics.Vector3;
@@ -43,7 +44,10 @@ public class SubgraphSwitchTests
 		try
 		{
 			var graph = new ForgeGraph();
-			TimerNode pressed = WireSwitch(graph, new InputActionNode(action), InputActionNode.WhilePressedPort);
+			TimerNode pressed = WireSwitch(
+				graph,
+				new InputActionNode(action),
+				Forge.Statescript.Nodes.State.InputActionNode.WhilePressedPort);
 
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();

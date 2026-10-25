@@ -5,6 +5,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
+using InputAimResolver = Gamesmiths.Forge.Godot.Core.Statescript.Resolvers.InputAimResolver;
 
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
@@ -13,7 +14,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class MouseWorldPosition3DResolverResource : ValueResolverResourceBase
+public partial class MouseWorldPosition3DResolverResource : InputResolverResourceBase
 {
 	/// <summary>
 	/// How far the cursor's ray reaches when nothing was authored, matching the aim payload's own default.
@@ -65,6 +66,9 @@ public partial class MouseWorldPosition3DResolverResource : ValueResolverResourc
 			? new VariantResolver(new Variant128(DefaultMaxDistance), typeof(double))
 			: AdaptResolverForExpectedType(MaxDistance.BuildResolver(graph), typeof(double));
 
-		return new MouseWorldPosition3DResolver(Mode, Mask?.BuildResolver(graph), maxDistanceResolver);
+		return new InputAimResolver(
+			BuildInputSource(graph),
+			new MouseWorldPosition3DResolver(Mode, Mask?.BuildResolver(graph), maxDistanceResolver),
+			InputAimValue.Point3D);
 	}
 }

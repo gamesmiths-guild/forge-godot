@@ -2,7 +2,9 @@
 
 using System.Collections.Generic;
 using Gamesmiths.Forge.Abilities;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
 using Godot.Collections;
 
@@ -52,6 +54,26 @@ public partial class ForgeAbilityData : Resource
 
 	[Export]
 	public int Priority { get; set; }
+
+	/// <summary>
+	/// Gets or sets the input action the ability activates from, one of the project's input actions
+	/// (<see cref="ForgeSettings.InputActionsSetting"/>). Empty means the ability is not bound to input.
+	/// </summary>
+	[ExportGroup("Input")]
+	[Export]
+	public string InputAction { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Gets or sets the change of <see cref="InputAction"/> that activates the ability.
+	/// </summary>
+	[Export]
+	public InputEdge InputEdge { get; set; }
+
+	/// <summary>
+	/// Gets or sets what builds the activation data from the tick's input. Unset activates the ability without data.
+	/// </summary>
+	[Export]
+	public ForgeInputActivationData? InputActivationData { get; set; }
 
 	[ExportGroup("Tags")]
 	[Export]
@@ -114,7 +136,8 @@ public partial class ForgeAbilityData : Resource
 			SourceBlockedTags?.GetTagContainer(),
 			TargetRequiredTags?.GetTagContainer(),
 			TargetBlockedTags?.GetTagContainer(),
-			() => AbilityBehavior?.GetBehavior()!);
+			() => AbilityBehavior?.GetBehavior()!,
+			GetInputBinding());
 		return _data.Value;
 	}
 
@@ -126,8 +149,26 @@ public partial class ForgeAbilityData : Resource
 		{
 			property["usage"] = (int)PropertyUsageFlags.NoEditor;
 		}
+
+		// Suggested rather than enforced, so a name typed before its action is added to the settings is kept.
+		if (property["name"].AsStringName() == PropertyName.InputAction)
+		{
+			property["hint"] = (int)PropertyHint.EnumSuggestion;
+			property["hint_string"] = string.Join(',', ForgeSettings.GetInputActionSet().Actions);
+		}
 	}
 #endif
+
+	private AbilityInputBinding? GetInputBinding()
+	{
+		if (string.IsNullOrEmpty(InputAction))
+		{
+			return null;
+		}
+
+		return InputActivationData?.CreateBinding(InputAction, InputEdge)
+			?? AbilityInputBinding.ForAction(InputAction, InputEdge);
+	}
 
 	private AbilityTriggerData? GetTriggerData()
 	{

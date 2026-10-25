@@ -37,6 +37,7 @@ internal sealed partial class InputActionPressedResolverEditor : InputResolverEd
 		{
 			ActionName = ReadActionName(_actionField),
 			Mode = (InputActionMode)(_modeDropdown?.Selected ?? 0),
+			InputSource = BuildEntityResolverResource(),
 		};
 	}
 

@@ -39,6 +39,7 @@ internal sealed partial class InputVector2ResolverEditor : InputResolverEditorBa
 			RightAction = ReadActionName(_rightField),
 			UpAction = ReadActionName(_upField),
 			DownAction = ReadActionName(_downField),
+			InputSource = BuildEntityResolverResource(),
 		};
 	}
 

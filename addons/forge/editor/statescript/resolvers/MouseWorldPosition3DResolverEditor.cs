@@ -17,7 +17,7 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 /// Resolver editor that reads the point in the world the mouse cursor is over.
 /// </summary>
 [Tool]
-internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorProperty
+internal sealed partial class MouseWorldPosition3DResolverEditor : EntityScopedResolverEditorBase
 {
 	private const double DefaultMaxDistance = 1000.0;
 
@@ -25,7 +25,6 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 	private static readonly Type[] _maskExpectedTypes = [typeof(int)];
 	private static readonly Type[] _maxDistanceExpectedTypes = [typeof(double)];
 
-	private Action? _onChanged;
 	private OptionButton? _modeDropdown;
 	private NestedResolverPicker? _maskPicker;
 	private NestedResolverPicker? _maxDistancePicker;
@@ -47,11 +46,13 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 		bool isArray)
 	{
 		var resource = property?.Resolver as MouseWorldPosition3DResolverResource;
-		_onChanged = onChanged;
+		InitializeEntityScope(graph, onChanged, resource?.InputSource);
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
+
+		root.AddChild(CreateEntitySelectorRow("Input Source:"));
 
 		_modeDropdown = ResolverEditorLayoutUtilities.CreateEnumRow(
 			root,
@@ -91,6 +92,7 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 			MaskFolded = _maskPicker?.Folded ?? true,
 			MaxDistance = _maxDistancePicker?.BuildResource(),
 			MaxDistanceFolded = _maxDistancePicker?.Folded ?? true,
+			InputSource = BuildEntityResolverResource(),
 		};
 	}
 
@@ -103,7 +105,6 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
-		_onChanged = null;
 		_modeDropdown = null;
 		_maskPicker?.ClearCallbacks();
 		_maskPicker = null;
@@ -161,11 +162,6 @@ internal sealed partial class MouseWorldPosition3DResolverEditor : NodeEditorPro
 		{
 			_maskPicker.Visible = _modeDropdown?.Selected == (int)MouseWorldMode.PhysicsRay;
 		}
-	}
-
-	private void NotifyChanged()
-	{
-		_onChanged?.Invoke();
 	}
 }
 #endif

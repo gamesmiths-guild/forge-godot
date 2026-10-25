@@ -13,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class InputVector2ResolverResource : ValueResolverResourceBase
+public partial class InputVector2ResolverResource : InputResolverResourceBase
 {
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "InputVector2";
@@ -48,6 +48,6 @@ public partial class InputVector2ResolverResource : ValueResolverResourceBase
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(Graph graph)
 	{
-		return new InputVector2Resolver(LeftAction, RightAction, UpAction, DownAction);
+		return new InputVector2Resolver(BuildInputSource(graph), LeftAction, RightAction, UpAction, DownAction);
 	}
 }

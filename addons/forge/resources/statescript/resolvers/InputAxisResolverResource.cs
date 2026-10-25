@@ -5,6 +5,7 @@ using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Properties;
 using Godot;
+using InputAxisResolver = Gamesmiths.Forge.Godot.Core.Statescript.Resolvers.InputAxisResolver;
 
 namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 
@@ -13,7 +14,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class InputAxisResolverResource : ValueResolverResourceBase
+public partial class InputAxisResolverResource : InputResolverResourceBase
 {
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "InputAxis";
@@ -36,6 +37,6 @@ public partial class InputAxisResolverResource : ValueResolverResourceBase
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(Graph graph)
 	{
-		return new InputAxisResolver(NegativeAction, PositiveAction);
+		return new InputAxisResolver(BuildInputSource(graph), NegativeAction, PositiveAction);
 	}
 }

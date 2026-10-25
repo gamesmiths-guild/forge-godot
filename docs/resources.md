@@ -235,10 +235,14 @@ Describes, configures, and links a gameplay ability.
 - `CostEffect` (ForgeEffectData): Effect applied as a cost.
 - `AbilityBehavior` (ForgeAbilityBehavior): Custom ability logic (see below).
 - Tag filters: `AbilityTags`, `ActivationRequiredTags`, etc.
+- Input group:
+  - `InputAction` (string): An input action from `forge/input/actions` the ability activates from. Empty means the ability is not bound to input.
+  - `InputEdge` (InputEdge): `Pressed` activates on the press, `Released` on the release.
+  - `InputActivationData` (ForgeInputActivationData): Builds the activation data from the same physics step's input. `AimInputActivationData` gives an `AimActivationData` and `Aim2DInputActivationData` an `AimActivationData2D`, aimed from the entity's node at the input's aim. Unset activates the ability without data.
 
 **Usage:**
 
-Add to GrantAbility component, trigger via scripts/abilities.
+Add to GrantAbility component, trigger via scripts/abilities. An ability with an `InputAction` activates on its own from its owner's [input](nodes.md#forgeinputcollector), in the physics step the action is pressed or released.
 
 ### ForgeAbilityBehavior (Abstract)
 

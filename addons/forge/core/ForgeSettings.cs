@@ -1,6 +1,8 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
+using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Godot;
 using GodotDictionary = Godot.Collections.Dictionary;
@@ -33,6 +35,17 @@ public static class ForgeSettings
 	public const string HighlightQueryTargetsSetting = "forge/statescript/highlight_query_targets";
 
 	/// <summary>
+	/// Setting listing the input actions a player's input carries each tick, in the order that gives each its slot.
+	/// </summary>
+	public const string InputActionsSetting = "forge/input/actions";
+
+	/// <summary>
+	/// Setting listing the analog vectors a player's input carries each tick, each as four comma-separated actions:
+	/// negative x, positive x, negative y, positive y.
+	/// </summary>
+	public const string InputVectorsSetting = "forge/input/vectors";
+
+	/// <summary>
 	/// Gets a value indicating whether a physics query outlines the entities it found.
 	/// </summary>
 	/// <remarks>
@@ -47,6 +60,35 @@ public static class ForgeSettings
 	/// </remarks>
 	public static bool HighlightQueryTargets =>
 		ProjectSettings.GetSetting(HighlightQueryTargetsSetting, true).AsBool();
+
+	/// <summary>
+	/// Builds the input action set the project's settings describe: the actions of <see cref="InputActionsSetting"/>
+	/// and the vectors of <see cref="InputVectorsSetting"/>.
+	/// </summary>
+	/// <returns>The set. A vector entry that does not name four actions is reported and left out.</returns>
+	public static InputActionSet GetInputActionSet()
+	{
+		string[] actions = ProjectSettings.GetSetting(InputActionsSetting, Array.Empty<string>()).AsStringArray();
+		string[] vectors = ProjectSettings.GetSetting(InputVectorsSetting, Array.Empty<string>()).AsStringArray();
+		var parsedVectors = new List<InputVector>(vectors.Length);
+
+		foreach (string vector in vectors)
+		{
+			string[] parts = vector.Split(',', StringSplitOptions.TrimEntries);
+
+			if (parts.Length != 4)
+			{
+				GD.PushError(
+					$"Forge: the input vector [{vector}] in {InputVectorsSetting} needs four comma-separated " +
+					"actions: negative x, positive x, negative y, positive y. It was left out.");
+				continue;
+			}
+
+			parsedVectors.Add(new InputVector(parts[0], parts[1], parts[2], parts[3]));
+		}
+
+		return new InputActionSet(actions, parsedVectors);
+	}
 
 	/// <summary>
 	/// Gets the configured tag source references, each a <c>uid://</c> or <c>res://</c> string.
@@ -157,6 +199,26 @@ public static class ForgeSettings
 
 		ProjectSettings.SetInitialValue(SourcesSetting, Array.Empty<string>());
 		ProjectSettings.SetAsBasic(SourcesSetting, true);
+
+		RegisterStringArray(InputActionsSetting);
+		RegisterStringArray(InputVectorsSetting);
+	}
+
+	private static void RegisterStringArray(string setting)
+	{
+		if (!ProjectSettings.HasSetting(setting))
+		{
+			ProjectSettings.SetSetting(setting, Array.Empty<string>());
+		}
+
+		ProjectSettings.AddPropertyInfo(new GodotDictionary
+		{
+			{ "name", setting },
+			{ "type", (int)Variant.Type.PackedStringArray },
+		});
+
+		ProjectSettings.SetInitialValue(setting, Array.Empty<string>());
+		ProjectSettings.SetAsBasic(setting, true);
 	}
 
 	private static void RegisterColor(PhysicsDebugColor color)

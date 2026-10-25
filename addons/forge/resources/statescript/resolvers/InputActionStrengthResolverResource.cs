@@ -13,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class InputActionStrengthResolverResource : ValueResolverResourceBase
+public partial class InputActionStrengthResolverResource : InputResolverResourceBase
 {
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "InputActionStrength";
@@ -30,6 +30,6 @@ public partial class InputActionStrengthResolverResource : ValueResolverResource
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(Graph graph)
 	{
-		return new InputActionStrengthResolver(ActionName);
+		return new InputActionStrengthResolver(BuildInputSource(graph), ActionName);
 	}
 }

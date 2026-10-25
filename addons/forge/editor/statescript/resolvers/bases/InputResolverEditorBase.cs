@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers.Bases;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
@@ -15,11 +16,9 @@ namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 /// They differ only in how many actions they name - one for a button, two for an axis, four for a vector - so the base
 /// renders the rows and the subclass says which ones it wants and what to build from them.
 /// </remarks>
-internal abstract partial class InputResolverEditorBase : NodeEditorProperty
+internal abstract partial class InputResolverEditorBase : EntityScopedResolverEditorBase
 {
 	private readonly List<InputActionNameField> _actionFields = [];
-
-	private Action? _onChanged;
 
 	/// <summary>
 	/// Adds this resolver's rows. Called with the container everything goes into.
@@ -37,12 +36,13 @@ internal abstract partial class InputResolverEditorBase : NodeEditorProperty
 		Action onChanged,
 		bool isArray)
 	{
-		_onChanged = onChanged;
+		InitializeEntityScope(graph, onChanged, (property?.Resolver as InputResolverResourceBase)?.InputSource);
 
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
 		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 		AddChild(root);
 
+		root.AddChild(CreateEntitySelectorRow("Input Source:"));
 		BuildRows(root, property?.Resolver);
 	}
 
@@ -50,7 +50,6 @@ internal abstract partial class InputResolverEditorBase : NodeEditorProperty
 	public override void ClearCallbacks()
 	{
 		base.ClearCallbacks();
-		_onChanged = null;
 
 		foreach (InputActionNameField actionField in _actionFields)
 		{
@@ -111,14 +110,6 @@ internal abstract partial class InputResolverEditorBase : NodeEditorProperty
 	protected OptionButton AddEnumRow(VBoxContainer root, string label, string[] itemNames, int selectedIndex)
 	{
 		return ResolverEditorLayoutUtilities.CreateEnumRow(root, label, itemNames, selectedIndex, NotifyChanged);
-	}
-
-	/// <summary>
-	/// Runs the editor's change callback.
-	/// </summary>
-	protected void NotifyChanged()
-	{
-		_onChanged?.Invoke();
 	}
 }
 #endif

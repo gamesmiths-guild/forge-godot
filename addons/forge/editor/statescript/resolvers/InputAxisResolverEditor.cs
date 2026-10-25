@@ -36,6 +36,7 @@ internal sealed partial class InputAxisResolverEditor : InputResolverEditorBase
 		{
 			NegativeAction = ReadActionName(_negativeField),
 			PositiveAction = ReadActionName(_positiveField),
+			InputSource = BuildEntityResolverResource(),
 		};
 	}
 

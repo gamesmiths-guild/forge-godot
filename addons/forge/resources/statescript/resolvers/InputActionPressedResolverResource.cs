@@ -13,7 +13,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 /// </summary>
 [Tool]
 [GlobalClass]
-public partial class InputActionPressedResolverResource : ValueResolverResourceBase
+public partial class InputActionPressedResolverResource : InputResolverResourceBase
 {
 	/// <inheritdoc/>
 	public override string ResolverTypeId => "InputActionPressed";
@@ -40,6 +40,6 @@ public partial class InputActionPressedResolverResource : ValueResolverResourceB
 	/// <inheritdoc/>
 	protected override IPropertyResolver CreateResolver(Graph graph)
 	{
-		return new InputActionPressedResolver(ActionName, Mode);
+		return new InputActionPressedResolver(BuildInputSource(graph), ActionName, Mode);
 	}
 }

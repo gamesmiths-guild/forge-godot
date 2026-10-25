@@ -52,7 +52,7 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 #pragma warning disable CA1707, IDE1006, SA1300 // Identifiers should not contain underscores
 	public void OnApply(IForgeEntity? target, CueParameters? parameters)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnApply(forgeEntity, parameters);
 		}
@@ -70,7 +70,7 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 	public void OnExecute(IForgeEntity? target, CueParameters? parameters)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnExecute(forgeEntity, parameters);
 		}
@@ -90,7 +90,14 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 	{
 		if (target is IForgeEntity forgeEntity)
 		{
-			_CueOnRemove(forgeEntity, interrupted);
+			if (IsAlive(forgeEntity))
+			{
+				_CueOnRemove(forgeEntity, interrupted);
+			}
+			else
+			{
+				_CueOnRemoveFreedTarget(forgeEntity, interrupted);
+			}
 		}
 
 		_CueOnRemove(interrupted);
@@ -104,9 +111,20 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 	{
 	}
 
+	/// <summary>
+	/// Called on removal in place of <see cref="_CueOnRemove(IForgeEntity, bool)"/> when the target was freed before
+	/// the removal was dispatched. Override it to release what the handler keeps for the target outside of the
+	/// target's node, without touching that node.
+	/// </summary>
+	/// <param name="forgeEntity">The freed target, usable only as a key.</param>
+	/// <param name="interrupted">Whether the cue was interrupted.</param>
+	public virtual void _CueOnRemoveFreedTarget(IForgeEntity forgeEntity, bool interrupted)
+	{
+	}
+
 	public void OnUpdate(IForgeEntity? target, CueParameters? parameters)
 	{
-		if (target is IForgeEntity forgeEntity)
+		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
 		{
 			_CueOnUpdate(forgeEntity, parameters);
 		}
@@ -141,5 +159,12 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 		}
 
 		GD.PushWarning($"Forge cue handler [{Name}]: {message}");
+	}
+
+	// Cues are dispatched at the end of the frame, and an entity freed during the frame, such as one that died, has no
+	// node left to play them on. Their target-free half still plays.
+	private static bool IsAlive(IForgeEntity forgeEntity)
+	{
+		return forgeEntity is not GodotObject godotObject || IsInstanceValid(godotObject);
 	}
 }

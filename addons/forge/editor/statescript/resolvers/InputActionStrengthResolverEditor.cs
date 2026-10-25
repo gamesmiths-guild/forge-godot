@@ -34,6 +34,7 @@ internal sealed partial class InputActionStrengthResolverEditor : InputResolverE
 		property.Resolver = new InputActionStrengthResolverResource
 		{
 			ActionName = ReadActionName(_actionField),
+			InputSource = BuildEntityResolverResource(),
 		};
 	}
 

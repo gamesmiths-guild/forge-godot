@@ -2,6 +2,7 @@
 
 #if TOOLS
 using System;
+using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Godot.Resources.Statescript.Resolvers;
 using Godot;
@@ -11,13 +12,11 @@ using NumericsVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers;
 
 /// <summary>
-/// Resolver editor that reads the direction the camera a graph is looking through faces.
+/// Editor for <see cref="CameraForward3DResolverResource"/>: its only row picks the entity whose input supplies the
+/// aim.
 /// </summary>
-/// <remarks>
-/// No rows: which camera is decided by the graph's own owner, so there is nothing to author.
-/// </remarks>
 [Tool]
-internal sealed partial class CameraForward3DResolverEditor : NodeEditorProperty
+internal sealed partial class CameraForward3DResolverEditor : EntityScopedResolverEditorBase
 {
 	public override string DisplayName => "Camera Forward 3D";
 
@@ -35,13 +34,19 @@ internal sealed partial class CameraForward3DResolverEditor : NodeEditorProperty
 		Action onChanged,
 		bool isArray)
 	{
+		InitializeEntityScope(graph, onChanged, (property?.Resolver as CameraForward3DResolverResource)?.InputSource);
+
 		SizeFlagsHorizontal = SizeFlags.ExpandFill;
-		AddChild(new Label { Text = "Uses the owner's active camera." });
+		var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+		AddChild(root);
+
+		root.AddChild(CreateEntitySelectorRow("Input Source:"));
+		root.AddChild(new Label { Text = "The input source's aim, or the owner's active camera without one." });
 	}
 
 	public override void SaveTo(StatescriptNodeProperty property)
 	{
-		property.Resolver = new CameraForward3DResolverResource();
+		property.Resolver = new CameraForward3DResolverResource { InputSource = BuildEntityResolverResource() };
 	}
 
 	public override bool TryGetInlineSummary(out string summary)

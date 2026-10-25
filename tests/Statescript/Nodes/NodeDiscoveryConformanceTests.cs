@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using FluentAssertions;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Tests.Helpers;
 using GdUnit4;
+using ForgeInputActionNode = Gamesmiths.Forge.Statescript.Nodes.State.InputActionNode;
 
 namespace Gamesmiths.Forge.Godot.Tests.Statescript.Nodes;
 
@@ -82,6 +84,26 @@ public class NodeDiscoveryConformanceTests
 		info.IsSubgraphPort.Should().HaveCount(
 			info.OutputPortLabels.Length,
 			"the subgraph flags are read positionally against the output ports.");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_core_node_the_plugin_extends_under_its_own_name_is_offered_only_as_the_plugins()
+	{
+		IEnumerable<string> offered =
+			StatescriptNodeDiscovery.GetPaletteNodeTypes().Select(info => info.RuntimeTypeName);
+
+		offered.Should().NotContain(
+			typeof(ForgeInputActionNode).FullName!,
+			"the plugin's Input Action does everything the core one does, so it would be listed twice.");
+		offered.Should().Contain(typeof(InputActionNode).FullName!);
+
+		StatescriptNodeDiscovery.NodeTypeInfo? core =
+			StatescriptNodeDiscovery.FindByRuntimeTypeName(typeof(ForgeInputActionNode).FullName!);
+		StatescriptNodeDiscovery.NodeTypeInfo plugin =
+			StatescriptNodeDiscovery.FindByRuntimeTypeName(typeof(InputActionNode).FullName!)!;
+		core.Should().NotBeNull("graphs that already use the core node still have to load with its ports.");
+		core!.OutputPortLabels.Should().Equal(plugin.OutputPortLabels);
 	}
 
 	[TestCase]

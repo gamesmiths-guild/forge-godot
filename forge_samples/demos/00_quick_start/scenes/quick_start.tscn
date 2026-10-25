@@ -66,6 +66,7 @@ offset_bottom = 648.0
 color = Color(0.13, 0.17, 0.15, 1)
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=849841071]
+process_callback = 0
 position = Vector2(545, 340)
 zoom = Vector2(1.6, 1.6)
 
