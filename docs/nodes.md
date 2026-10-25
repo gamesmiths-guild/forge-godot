@@ -153,8 +153,10 @@ Add it as a child of the player's `ForgeEntity`. On ready it gives the entity an
 
 Every physics step, before any other node's, it submits one frame:
 
-- **Presses and releases** are caught from unhandled input as they arrive. A press the interface consumes never reaches the game, and a tap shorter than a physics step still counts as a press and a release.
+- **Presses and releases** are caught from unhandled input as they arrive. A press the interface consumes never reaches the game, not even as held, until it is let go. A tap shorter than a physics step still counts as a press and a release.
 - **Held actions, vectors and the aim** are sampled when the step begins. A vector comes from `Input.GetVector` over its four actions, so a stick and four keys behave the same.
+
+When the collector leaves the tree it submits an empty frame, so nothing it held stays held.
 
 Abilities whose `ForgeAbilityData` names an input action activate from it, and the input nodes and resolvers read it through their **Input Source**. See [Input is read from the Input Source](statescript/nodes/input-action-node.md#input-is-read-from-the-input-source).
 
@@ -388,6 +390,12 @@ public partial class DamageCueHandler : ForgeCueHandler
     public override void _CueOnRemove(IForgeEntity forgeEntity, bool interrupted)
     {
         // Clean up or spawn removal effects
+    }
+
+    // Called on removal instead of _CueOnRemove when the target was freed first, such as an enemy killed by the hit.
+    // Release what the handler keeps for it elsewhere, without touching its node.
+    public override void _CueOnRemoveFreedTarget(IForgeEntity forgeEntity, bool interrupted)
+    {
     }
 }
 ```
