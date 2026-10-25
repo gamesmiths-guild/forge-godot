@@ -13,6 +13,7 @@ Use the core Forge docs for runtime behavior, ports, lifecycle, and C# API detai
 - Mention any Godot-specific resolver resources or custom editor behavior.
 - Mention array/single input behavior when relevant.
 - Mention the network kind badge the editor shows on the node when it is not Simulation, and when a setting changes it.
+- Mention what the node lets go of and takes hold of again when a [graph snapshot](../README.md#snapshots) is restored, if it holds something in the engine while it runs.
 
 ## Related Docs
 

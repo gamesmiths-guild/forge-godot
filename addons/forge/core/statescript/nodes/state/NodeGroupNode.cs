@@ -72,9 +72,29 @@ public class NodeGroupNode(string group = "") : StateNode<NodeGroupNodeContext>
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		NodeGroupNodeContext nodeContext = graphContext.GetNodeContext<NodeGroupNodeContext>(NodeID);
-		Node? node = nodeContext.Node;
+		Leave(nodeContext.Node);
 		nodeContext.Node = null;
+	}
 
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		Leave(graphContext.GetNodeContext<NodeGroupNodeContext>(NodeID).Node);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		Node? node = graphContext.GetNodeContext<NodeGroupNodeContext>(NodeID).Node;
+
+		if (node is not null && GodotObject.IsInstanceValid(node))
+		{
+			node.AddToGroup(_group);
+		}
+	}
+
+	private void Leave(Node? node)
+	{
 		if (node is not null && GodotObject.IsInstanceValid(node))
 		{
 			node.RemoveFromGroup(_group);

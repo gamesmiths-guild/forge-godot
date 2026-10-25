@@ -93,6 +93,19 @@ public class Sweep3DNode(bool collideWithAreas = false, bool oneShot = false) : 
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PhysicsDebugDraw3D.Release(graphContext.GetNodeContext<Sweep3DNodeContext>(NodeID).DebugMarker);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// The marker went with the activation it was drawn for, and the next check draws a new one.
+		graphContext.GetNodeContext<Sweep3DNodeContext>(NodeID).DebugMarker = null;
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		Cast(graphContext);

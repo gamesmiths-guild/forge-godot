@@ -13,10 +13,9 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// runs out, the player can still be a frame short of the end, and stopping it there would snap an animation back to
 /// its first frame or cut a sound's tail.
 /// </remarks>
-/// <param name="player">The player that was started.</param>
-internal sealed class PresentationPlayback(Node player)
+internal sealed class PresentationPlayback
 {
-	public Node Player { get; } = player;
+	public Node? Player { get; set; }
 
 	public bool Finished { get; set; }
 }

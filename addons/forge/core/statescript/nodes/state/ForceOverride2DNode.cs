@@ -95,14 +95,16 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 		{
 			nodeContext.PreviousForce = rigidBody.ConstantForce;
 			nodeContext.WroteForce = true;
-			rigidBody.ConstantForce = new Vector2(force.X, force.Y);
+			nodeContext.HeldForce = new Vector2(force.X, force.Y);
+			rigidBody.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (graphContext.TryResolve(InputProperties[TorqueInput].BoundName, out double torque))
 		{
 			nodeContext.PreviousTorque = rigidBody.ConstantTorque;
 			nodeContext.WroteTorque = true;
-			rigidBody.ConstantTorque = (float)torque;
+			nodeContext.HeldTorque = (float)torque;
+			rigidBody.ConstantTorque = nodeContext.HeldTorque;
 		}
 
 		nodeContext.DebugMarker = PhysicsDebugDraw2D.EnsureMarker(
@@ -115,10 +117,31 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
 		ForceOverride2DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride2DNodeContext>(NodeID);
-		RigidBody2D? body = nodeContext.Body;
-		nodeContext.Body = null;
 
 		PhysicsDebugDraw2D.Release(nodeContext.DebugMarker);
+		nodeContext.DebugMarker = null;
+
+		PutBack(nodeContext);
+		nodeContext.Body = null;
+		nodeContext.WroteForce = false;
+		nodeContext.WroteTorque = false;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		ForceOverride2DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride2DNodeContext>(NodeID);
+		PhysicsDebugDraw2D.Release(nodeContext.DebugMarker);
+		PutBack(nodeContext);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		ForceOverride2DNodeContext nodeContext = graphContext.GetNodeContext<ForceOverride2DNodeContext>(NodeID);
+		RigidBody2D? body = nodeContext.Body;
+
+		// The marker went with the activation it was drawn for.
 		nodeContext.DebugMarker = null;
 
 		if (body is null || !GodotObject.IsInstanceValid(body))
@@ -126,20 +149,19 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 			return;
 		}
 
-		// Each half is put back only if this node wrote it, so an ability that pushed without twisting cannot clear a
-		// constant torque the scene authored.
+		// What the body carried before the node is still in the context, and so is what the node last held. Inputs are
+		// resolved again only by the updates that step the simulation.
 		if (nodeContext.WroteForce)
 		{
-			body.ConstantForce = nodeContext.PreviousForce;
+			body.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (nodeContext.WroteTorque)
 		{
-			body.ConstantTorque = nodeContext.PreviousTorque;
+			body.ConstantTorque = nodeContext.HeldTorque;
 		}
 
-		nodeContext.WroteForce = false;
-		nodeContext.WroteTorque = false;
+		nodeContext.DebugMarker = PhysicsDebugDraw2D.EnsureMarker(graphContext, null, PhysicsDebugDraw2D.ForceColor);
 	}
 
 	/// <inheritdoc/>
@@ -155,21 +177,50 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 
 		// Re-resolved every update rather than only on activation, so a thrust bound to an attribute or a charge level
 		// tracks it. The capture is untouched: what is restored is still what the body carried before the node ran.
+		Hold(graphContext, nodeContext, body);
+
+		// Held rather than flashed, matching the other monitored nodes: a push that lasts should read as one arrow
+		// following the body, not as a new marker every frame.
+		PhysicsDebugDraw2D.SetArrow(nodeContext.DebugMarker, body.GlobalPosition, body.ConstantForce);
+	}
+
+	// Each half is put back only if this node wrote it, so an ability that pushed without twisting cannot clear a
+	// constant torque the scene authored.
+	private static void PutBack(ForceOverride2DNodeContext nodeContext)
+	{
+		RigidBody2D? body = nodeContext.Body;
+
+		if (body is null || !GodotObject.IsInstanceValid(body))
+		{
+			return;
+		}
+
+		if (nodeContext.WroteForce)
+		{
+			body.ConstantForce = nodeContext.PreviousForce;
+		}
+
+		if (nodeContext.WroteTorque)
+		{
+			body.ConstantTorque = nodeContext.PreviousTorque;
+		}
+	}
+
+	private void Hold(GraphContext graphContext, ForceOverride2DNodeContext nodeContext, RigidBody2D body)
+	{
 		if (nodeContext.WroteForce
 			&& graphContext.TryResolve(InputProperties[ForceInput].BoundName, out NumericsVector2 force))
 		{
-			body.ConstantForce = new Vector2(force.X, force.Y);
+			nodeContext.HeldForce = new Vector2(force.X, force.Y);
+			body.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (nodeContext.WroteTorque
 			&& graphContext.TryResolve(InputProperties[TorqueInput].BoundName, out double torque))
 		{
-			body.ConstantTorque = (float)torque;
+			nodeContext.HeldTorque = (float)torque;
+			body.ConstantTorque = nodeContext.HeldTorque;
 		}
-
-		// Held rather than flashed, matching the other monitored nodes: a push that lasts should read as one arrow
-		// following the body, not as a new marker every frame.
-		PhysicsDebugDraw2D.SetArrow(nodeContext.DebugMarker, body.GlobalPosition, body.ConstantForce);
 	}
 
 	private IForgeEntity? ResolveEntityOrOwner(GraphContext graphContext)

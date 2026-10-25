@@ -90,7 +90,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Duration = 0;
 		nodeContext.Player = null;
-		nodeContext.Playback = null;
+		nodeContext.Playback = new PresentationPlayback();
 
 		// Resolved here, once, for the presentation pass to play: see PlayAudioNodeContext.
 		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
@@ -119,6 +119,13 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 	}
 
 	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// A running activation has not played out, whatever its presentation was told after the snapshot was taken.
+		graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID).Playback.Finished = false;
+	}
+
+	/// <inheritdoc/>
 	protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
 	{
 		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
@@ -126,10 +133,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 
 		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
-			if (nodeContext.Playback is not null)
-			{
-				nodeContext.Playback.Finished = true;
-			}
+			nodeContext.Playback.Finished = true;
 
 			DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 		}
@@ -147,7 +151,7 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 		}
 
 		AudioPlayers.TryPlay(player, nodeContext.VolumeDb, nodeContext.Pitch);
-		nodeContext.Playback = new PresentationPlayback(player);
+		nodeContext.Playback.Player = player;
 		return nodeContext.Playback;
 	}
 

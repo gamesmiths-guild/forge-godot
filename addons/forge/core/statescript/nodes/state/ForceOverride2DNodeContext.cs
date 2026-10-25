@@ -33,6 +33,16 @@ public class ForceOverride2DNodeContext : StateNodeContext
 	public float PreviousTorque { get; set; }
 
 	/// <summary>
+	/// Gets or sets the constant force this node last wrote, which a restore writes again.
+	/// </summary>
+	public Vector2 HeldForce { get; set; }
+
+	/// <summary>
+	/// Gets or sets the constant torque this node last wrote, which a restore writes again.
+	/// </summary>
+	public float HeldTorque { get; set; }
+
+	/// <summary>
 	/// Gets or sets a value indicating whether this node wrote the constant force, and so owes it back.
 	/// </summary>
 	public bool WroteForce { get; set; }

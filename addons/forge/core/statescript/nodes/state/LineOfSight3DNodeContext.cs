@@ -16,7 +16,7 @@ public class LineOfSight3DNodeContext : StateNodeContext
 	/// Gets the collision objects the line passes through, rebuilt each check and kept between them so a node watching
 	/// a line for ten seconds does not leave ten seconds of garbage behind it.
 	/// </summary>
-	public GodotRidArray Exclusions { get; } = [];
+	public GodotRidArray Exclusions { get; private set; } = [];
 
 	/// <summary>
 	/// Gets or sets whether the line was clear on the last check. Null before the first one, so that check counts as a
@@ -29,4 +29,11 @@ public class LineOfSight3DNodeContext : StateNodeContext
 	/// Visible Collision Shapes on.
 	/// </summary>
 	public MeshInstance3D? DebugMarker { get; set; }
+
+	/// <inheritdoc/>
+	protected override void OnCopied()
+	{
+		base.OnCopied();
+		Exclusions = [.. Exclusions];
+	}
 }

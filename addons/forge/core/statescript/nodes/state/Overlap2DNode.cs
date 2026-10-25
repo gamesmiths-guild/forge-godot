@@ -148,6 +148,7 @@ public class Overlap2DNode(
 	{
 		Overlap2DNodeContext nodeContext = graphContext.GetNodeContext<Overlap2DNodeContext>(NodeID);
 		nodeContext.Overlapping.Clear();
+		nodeContext.OverlappingSet.Clear();
 		nodeContext.Pending.Clear();
 		nodeContext.Changed.Clear();
 		nodeContext.LastOccupied = null;
@@ -165,11 +166,25 @@ public class Overlap2DNode(
 	{
 		Overlap2DNodeContext nodeContext = graphContext.GetNodeContext<Overlap2DNodeContext>(NodeID);
 		nodeContext.Overlapping.Clear();
+		nodeContext.OverlappingSet.Clear();
 		nodeContext.Pending.Clear();
 		nodeContext.Changed.Clear();
 
 		PhysicsDebugDraw2D.Release(nodeContext.DebugMarker);
 		nodeContext.DebugMarker = null;
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreDetach(GraphContext graphContext)
+	{
+		PhysicsDebugDraw2D.Release(graphContext.GetNodeContext<Overlap2DNodeContext>(NodeID).DebugMarker);
+	}
+
+	/// <inheritdoc/>
+	protected override void OnRestoreAttach(GraphContext graphContext)
+	{
+		// The marker went with the activation it was drawn for, and the next check draws a new one.
+		graphContext.GetNodeContext<Overlap2DNodeContext>(NodeID).DebugMarker = null;
 	}
 
 	/// <inheritdoc/>
@@ -219,7 +234,7 @@ public class Overlap2DNode(
 		}
 
 		ReportChanges(graphContext, nodeContext, nodeContext.Overlapping, nodeContext.Pending, OnExitedPort);
-		ReportChanges(graphContext, nodeContext, nodeContext.Pending, nodeContext.Overlapping, OnEnteredPort);
+		ReportChanges(graphContext, nodeContext, nodeContext.Pending, nodeContext.OverlappingSet, OnEnteredPort);
 
 		bool occupied = nodeContext.Overlapping.Count > 0;
 
@@ -251,11 +266,11 @@ public class Overlap2DNode(
 
 	// Walks `from`, reporting every entity `to` does not have and moving it across. Called once each way round, which
 	// is what makes exits and entries the same code: an exit is what the poll no longer has, an entry is what the
-	// committed set does not have yet.
+	// committed entities do not have yet. Those are kept as a list, for the order, and as a set, to look up in.
 	private void ReportChanges(
 		GraphContext graphContext,
 		Overlap2DNodeContext nodeContext,
-		HashSet<IForgeEntity> from,
+		ICollection<IForgeEntity> from,
 		HashSet<IForgeEntity> to,
 		byte eventPort)
 	{
@@ -277,11 +292,12 @@ public class Overlap2DNode(
 
 			if (eventPort == OnExitedPort)
 			{
-				from.Remove(changed);
+				nodeContext.OverlappingSet.Remove(changed);
 			}
 			else
 			{
-				to.Add(changed);
+				nodeContext.Overlapping.Add(changed);
+				nodeContext.OverlappingSet.Add(changed);
 
 				// Once, as it enters. The watched volume is held for as long as the node is, and says nothing about who
 				// is inside it; an outline redrawn every poll would stack up rather than read as a highlight.
@@ -291,6 +307,13 @@ public class Overlap2DNode(
 
 			WriteEventEntity(graphContext, OutputVariables[EventEntityOutput], changed);
 			EmitMessage(graphContext, eventPort);
+		}
+
+		// The list is compacted once the exits are reported, rather than scanned for each one. A report that ended the
+		// node cleared what changed along with the rest.
+		if (eventPort == OnExitedPort && nodeContext.Changed.Count > 0)
+		{
+			nodeContext.Overlapping.RemoveAll(entity => !nodeContext.OverlappingSet.Contains(entity));
 		}
 	}
 

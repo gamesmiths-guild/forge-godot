@@ -32,6 +32,16 @@ public class ForceOverride3DNodeContext : StateNodeContext
 	public Vector3 PreviousTorque { get; set; }
 
 	/// <summary>
+	/// Gets or sets the constant force this node last wrote, which a restore writes again.
+	/// </summary>
+	public Vector3 HeldForce { get; set; }
+
+	/// <summary>
+	/// Gets or sets the constant torque this node last wrote, which a restore writes again.
+	/// </summary>
+	public Vector3 HeldTorque { get; set; }
+
+	/// <summary>
 	/// Gets or sets a value indicating whether this node wrote the constant force, and so owes it back.
 	/// </summary>
 	public bool WroteForce { get; set; }

@@ -236,6 +236,76 @@ public class GlowNode(string lightPath = "") : StateNode<GlowNodeContext>
 }
 ```
 
+### Rollback-safe nodes
+
+A [graph snapshot](../README.md#snapshots) copies every node context member by member and puts copies back on restore, without running `OnActivate` or `OnDeactivate`. Three rules keep a node correct through that, and the [core docs](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/nodes/state/README.md#writing-rollback-safe-nodes) have the full contract:
+
+- **Keep what a run changes in the node context**, never in fields of the node, which every run shares.
+- **Give a copy collections of its own.** Override `OnCopied` and replace each collection the node changes in place, such as a `List`, a `HashSet` or a `Godot.Collections.Array` it fills each step. Values and references the node only reads need nothing.
+- **Let go of engine holds and take hold again.** A node that holds something in the engine while it runs, such as a signal connection or an overridden property, overrides `OnRestoreDetach` to let go of it for the activation a restore replaces and `OnRestoreAttach` to take hold of it again from what its context recorded. Neither emits or changes gameplay.
+
+A callable connected to a signal captures what it was built with, so attaching builds a new one for the restored context rather than connecting the recorded one again:
+
+```csharp
+public class PickupNodeContext : StateNodeContext
+{
+    public Area3D? Area { get; set; }
+
+    public Callable Entered { get; set; }
+}
+
+public class PickupNode : StateNode<PickupNodeContext>
+{
+    protected override void OnActivate(GraphContext graphContext)
+    {
+        PickupNodeContext nodeContext = graphContext.GetNodeContext<PickupNodeContext>(NodeID);
+        graphContext.TryGetActivationContext(out AbilityBehaviorContext? ability);
+
+        nodeContext.Area = ForgeEntityBridge.TryGetEntityChild(ability?.Owner, "%Pickup", out Area3D? area)
+            ? area
+            : null;
+
+        Connect(graphContext, nodeContext);
+    }
+
+    protected override void OnDeactivate(GraphContext graphContext)
+    {
+        Disconnect(graphContext.GetNodeContext<PickupNodeContext>(NodeID));
+    }
+
+    protected override void OnRestoreDetach(GraphContext graphContext)
+    {
+        Disconnect(graphContext.GetNodeContext<PickupNodeContext>(NodeID));
+    }
+
+    protected override void OnRestoreAttach(GraphContext graphContext)
+    {
+        Connect(graphContext, graphContext.GetNodeContext<PickupNodeContext>(NodeID));
+    }
+
+    private static void Disconnect(PickupNodeContext nodeContext)
+    {
+        if (nodeContext.Area is not null
+            && GodotObject.IsInstanceValid(nodeContext.Area)
+            && nodeContext.Area.IsConnected(Area3D.SignalName.BodyEntered, nodeContext.Entered))
+        {
+            nodeContext.Area.Disconnect(Area3D.SignalName.BodyEntered, nodeContext.Entered);
+        }
+    }
+
+    private void Connect(GraphContext graphContext, PickupNodeContext nodeContext)
+    {
+        if (nodeContext.Area is null || !GodotObject.IsInstanceValid(nodeContext.Area))
+        {
+            return;
+        }
+
+        nodeContext.Entered = Callable.From((Node3D _) => DeactivateNode(graphContext));
+        nodeContext.Area.Connect(Area3D.SignalName.BodyEntered, nodeContext.Entered);
+    }
+}
+```
+
 ### Adding Custom Output Ports
 
 State nodes can define additional output ports beyond the standard four (OnActivate, OnDeactivate, OnAbort, Subgraph). Custom ports can be `EventPort` instances for independent events, or `SubgraphPort` instances for lifetime-managed subgraphs.
