@@ -8,6 +8,7 @@ using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 using Gamesmiths.Forge.Godot.Tests.Helpers;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
+using Gamesmiths.Forge.Statescript.Properties;
 using GdUnit4;
 using Godot;
 using ForgeGraph = Gamesmiths.Forge.Statescript.Graph;
@@ -193,7 +194,12 @@ public class NodeRestoreTests
 		try
 		{
 			var graph = new ForgeGraph();
-			graph.VariableDefinitions.DefineVariable("force", new NumericsVector3(5, 0, 0));
+
+			// Shared, so a restore leaves it as it is now rather than as it was.
+			entity.SharedVariables.DefineVariable("force", new NumericsVector3(5, 0, 0));
+			graph.VariableDefinitions.DefineProperty(
+				"force",
+				new VariableResolver("force", typeof(NumericsVector3), VariableScope.Shared));
 			var push = new ForceOverride3DNode("Body");
 			push.BindInput(ForceOverride3DNode.ForceInput, "force");
 			AddFromEntry(graph, push);
@@ -210,13 +216,16 @@ public class NodeRestoreTests
 			MeshInstance3D? arrow = Context(behavior.Processor, push).DebugMarker;
 			arrow.Should().NotBeNull();
 			GraphSnapshot pushing = behavior.Processor.CaptureSnapshot();
+			entity.SharedVariables.SetVar("force", new NumericsVector3(9, 0, 0));
 
 			behavior.Processor.RestoreSnapshot(idle);
 			body.ConstantForce.Should().Be(new Vector3(0, 1, 0));
 			arrow!.IsQueuedForDeletion().Should().BeTrue("the arrow went with the activation it was drawn for");
 
 			behavior.Processor.RestoreSnapshot(pushing);
-			body.ConstantForce.Should().Be(new Vector3(5, 0, 0));
+			body.ConstantForce.Should().Be(
+				new Vector3(5, 0, 0),
+				"a restore puts back what the run held; only the next fixed update resolves the input again");
 			Context(behavior.Processor, push).DebugMarker.Should().NotBeNull().And.NotBeSameAs(arrow);
 		}
 		finally
@@ -291,9 +300,12 @@ public class NodeRestoreTests
 
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
-			processor.Present();
-			PresentationPlayback playback = Context<PlayAnimationNodeContext>(processor, play).Playback!;
+
+			// Taken before the pass starts playback, so it holds the activation's handle before the pass has used it.
 			GraphSnapshot playing = processor.CaptureSnapshot();
+			processor.Present();
+			PresentationPlayback playback = Context<PlayAnimationNodeContext>(processor, play).Playback;
+			playback.Player.Should().BeSameAs(player);
 
 			processor.FixedUpdateGraph(1.0);
 			playback.Finished.Should().BeTrue();

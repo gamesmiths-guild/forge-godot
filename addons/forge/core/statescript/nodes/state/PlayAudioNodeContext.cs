@@ -42,6 +42,7 @@ public class PlayAudioNodeContext : StateNodeContext
 	/// </summary>
 	public double ElapsedTime { get; set; }
 
-	// What the presentation pass started for this activation, marked finished when the length runs out.
-	internal PresentationPlayback? Playback { get; set; }
+	// One per activation, made as it starts so that a snapshot taken before the presentation pass shares it: what the
+	// pass started for the activation, marked finished when the length runs out.
+	internal PresentationPlayback Playback { get; set; } = new();
 }

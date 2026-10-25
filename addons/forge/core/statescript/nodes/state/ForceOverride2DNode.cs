@@ -95,14 +95,16 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 		{
 			nodeContext.PreviousForce = rigidBody.ConstantForce;
 			nodeContext.WroteForce = true;
-			rigidBody.ConstantForce = new Vector2(force.X, force.Y);
+			nodeContext.HeldForce = new Vector2(force.X, force.Y);
+			rigidBody.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (graphContext.TryResolve(InputProperties[TorqueInput].BoundName, out double torque))
 		{
 			nodeContext.PreviousTorque = rigidBody.ConstantTorque;
 			nodeContext.WroteTorque = true;
-			rigidBody.ConstantTorque = (float)torque;
+			nodeContext.HeldTorque = (float)torque;
+			rigidBody.ConstantTorque = nodeContext.HeldTorque;
 		}
 
 		nodeContext.DebugMarker = PhysicsDebugDraw2D.EnsureMarker(
@@ -147,9 +149,18 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 			return;
 		}
 
-		// What the body carried before the node is still in the context, and the push is resolved again, as every
-		// update resolves it.
-		Hold(graphContext, nodeContext, body);
+		// What the body carried before the node is still in the context, and so is what the node last held. Inputs are
+		// resolved again only by the updates that step the simulation.
+		if (nodeContext.WroteForce)
+		{
+			body.ConstantForce = nodeContext.HeldForce;
+		}
+
+		if (nodeContext.WroteTorque)
+		{
+			body.ConstantTorque = nodeContext.HeldTorque;
+		}
+
 		nodeContext.DebugMarker = PhysicsDebugDraw2D.EnsureMarker(graphContext, null, PhysicsDebugDraw2D.ForceColor);
 	}
 
@@ -200,13 +211,15 @@ public class ForceOverride2DNode(string nodePath = "") : StateNode<ForceOverride
 		if (nodeContext.WroteForce
 			&& graphContext.TryResolve(InputProperties[ForceInput].BoundName, out NumericsVector2 force))
 		{
-			body.ConstantForce = new Vector2(force.X, force.Y);
+			nodeContext.HeldForce = new Vector2(force.X, force.Y);
+			body.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (nodeContext.WroteTorque
 			&& graphContext.TryResolve(InputProperties[TorqueInput].BoundName, out double torque))
 		{
-			body.ConstantTorque = (float)torque;
+			nodeContext.HeldTorque = (float)torque;
+			body.ConstantTorque = nodeContext.HeldTorque;
 		}
 	}
 

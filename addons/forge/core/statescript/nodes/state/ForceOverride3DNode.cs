@@ -94,14 +94,16 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 		{
 			nodeContext.PreviousForce = rigidBody.ConstantForce;
 			nodeContext.WroteForce = true;
-			rigidBody.ConstantForce = new Vector3(force.X, force.Y, force.Z);
+			nodeContext.HeldForce = new Vector3(force.X, force.Y, force.Z);
+			rigidBody.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (graphContext.TryResolve(InputProperties[TorqueInput].BoundName, out NumericsVector3 torque))
 		{
 			nodeContext.PreviousTorque = rigidBody.ConstantTorque;
 			nodeContext.WroteTorque = true;
-			rigidBody.ConstantTorque = new Vector3(torque.X, torque.Y, torque.Z);
+			nodeContext.HeldTorque = new Vector3(torque.X, torque.Y, torque.Z);
+			rigidBody.ConstantTorque = nodeContext.HeldTorque;
 		}
 
 		nodeContext.DebugMarker = PhysicsDebugDraw3D.EnsureMarker(
@@ -146,9 +148,18 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 			return;
 		}
 
-		// What the body carried before the node is still in the context, and the push is resolved again, as every
-		// update resolves it.
-		Hold(graphContext, nodeContext, body);
+		// What the body carried before the node is still in the context, and so is what the node last held. Inputs are
+		// resolved again only by the updates that step the simulation.
+		if (nodeContext.WroteForce)
+		{
+			body.ConstantForce = nodeContext.HeldForce;
+		}
+
+		if (nodeContext.WroteTorque)
+		{
+			body.ConstantTorque = nodeContext.HeldTorque;
+		}
+
 		nodeContext.DebugMarker = PhysicsDebugDraw3D.EnsureMarker(graphContext, null, PhysicsDebugDraw3D.ForceColor);
 	}
 
@@ -199,13 +210,15 @@ public class ForceOverride3DNode(string nodePath = "") : StateNode<ForceOverride
 		if (nodeContext.WroteForce
 			&& graphContext.TryResolve(InputProperties[ForceInput].BoundName, out NumericsVector3 force))
 		{
-			body.ConstantForce = new Vector3(force.X, force.Y, force.Z);
+			nodeContext.HeldForce = new Vector3(force.X, force.Y, force.Z);
+			body.ConstantForce = nodeContext.HeldForce;
 		}
 
 		if (nodeContext.WroteTorque
 			&& graphContext.TryResolve(InputProperties[TorqueInput].BoundName, out NumericsVector3 torque))
 		{
-			body.ConstantTorque = new Vector3(torque.X, torque.Y, torque.Z);
+			nodeContext.HeldTorque = new Vector3(torque.X, torque.Y, torque.Z);
+			body.ConstantTorque = nodeContext.HeldTorque;
 		}
 	}
 

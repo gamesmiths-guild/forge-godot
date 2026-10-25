@@ -99,7 +99,7 @@ public class PlayAnimationNode(
 		nodeContext.ElapsedTime = 0;
 		nodeContext.Duration = 0;
 		nodeContext.Player = null;
-		nodeContext.Playback = null;
+		nodeContext.Playback = new PresentationPlayback();
 
 		// Resolved here, once, for the presentation pass to play: see PlayAnimationNodeContext.
 		if (!_inputs.TryGetAnimationPlayer(
@@ -133,10 +133,7 @@ public class PlayAnimationNode(
 	protected override void OnRestoreAttach(GraphContext graphContext)
 	{
 		// A running activation has not played out, whatever its presentation was told after the snapshot was taken.
-		if (graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Playback is PresentationPlayback playback)
-		{
-			playback.Finished = false;
-		}
+		graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Playback.Finished = false;
 	}
 
 	/// <inheritdoc/>
@@ -147,10 +144,7 @@ public class PlayAnimationNode(
 
 		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
-			if (nodeContext.Playback is not null)
-			{
-				nodeContext.Playback.Finished = true;
-			}
+			nodeContext.Playback.Finished = true;
 
 			DeactivateNodeAndEmitMessage(graphContext, OnFinishedPort);
 		}
@@ -186,7 +180,7 @@ public class PlayAnimationNode(
 			return null;
 		}
 
-		nodeContext.Playback = new PresentationPlayback(player);
+		nodeContext.Playback.Player = player;
 		return nodeContext.Playback;
 	}
 
