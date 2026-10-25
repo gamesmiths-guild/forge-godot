@@ -144,6 +144,9 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 		}
 
 		_body = body;
+		_speed = null;
+		_reportedMissingSpeed = false;
+		_grounded = body.IsOnFloor();
 		_entity.Mover = this;
 	}
 
@@ -156,6 +159,9 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 		{
 			_entity.Mover = null;
 		}
+
+		_entity = null;
+		_body = null;
 	}
 
 	/// <inheritdoc/>
@@ -183,17 +189,19 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 		}
 		else
 		{
-			NumericsVector2 move = _entity.Input?.GetVector(MoveLeft, MoveRight, MoveUp, MoveDown) ?? default;
 			float speed = ReadSpeed(_entity);
 
 			if (floating)
 			{
+				NumericsVector2 move = _entity.Input?.GetVector(MoveLeft, MoveRight, MoveUp, MoveDown) ?? default;
 				Vector2 target = new Vector2(move.X, move.Y) * speed;
 				velocity = velocity.MoveToward(target, (target.IsZeroApprox() ? Friction : Acceleration) * delta);
 			}
 			else
 			{
-				float target = move.X * speed;
+				// The walk axis alone, since a move vector cuts a diagonal to a length of 1 and holding up would slow
+				// it.
+				float target = (_entity.Input?.GetAxis(MoveLeft, MoveRight) ?? 0f) * speed;
 				velocity.X = Mathf.MoveToward(
 					velocity.X,
 					target,
@@ -203,7 +211,7 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 			if (FaceAim && _entity.Input?.Current is { HasAim: true } frame
 				&& !new Vector2(frame.AimDirection.X, frame.AimDirection.Y).IsZeroApprox())
 			{
-				_body.Rotation = Mathf.Atan2(frame.AimDirection.Y, frame.AimDirection.X);
+				_body.GlobalRotation = Mathf.Atan2(frame.AimDirection.Y, frame.AimDirection.X);
 			}
 		}
 
@@ -238,8 +246,19 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 			return;
 		}
 
-		_body.GlobalPosition = new Vector2(state.Position.X, state.Position.Y);
+		var position = new Vector2(state.Position.X, state.Position.Y);
+		float floorSnapLength = _body.FloorSnapLength;
+
+		// The body's floor, wall and ceiling contacts only update as it slides, and its next slide starts from them, so
+		// it slides in place to find the restored place's contacts. It doesn't snap, which could pull it down to a
+		// floor it only reached later, and any nudge out of a contact is undone.
+		_body.GlobalPosition = position;
 		_body.GlobalRotation = 2f * Mathf.Atan2(state.Rotation.Z, state.Rotation.W);
+		_body.Velocity = Vector2.Zero;
+		_body.FloorSnapLength = 0f;
+		_body.MoveAndSlide();
+		_body.FloorSnapLength = floorSnapLength;
+		_body.GlobalPosition = position;
 		_body.Velocity = new Vector2(state.Velocity.X, state.Velocity.Y);
 		_grounded = state.Grounded;
 	}

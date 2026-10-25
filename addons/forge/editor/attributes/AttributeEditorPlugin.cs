@@ -36,8 +36,8 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 			or "SpeedAttribute")
 		{
 			// MagnitudeAttribute and ModifyingAttribute are filters rather than targets: leaving either unset is a
-			// valid configuration, so the picker has to offer a way back to it. Attribute and CapturedAttribute are
-			// required, and stay unclearable.
+			// valid configuration, so the picker has to offer a way back to it. Attribute, CapturedAttribute and
+			// SpeedAttribute are required, and stay unclearable.
 			AddPropertyEditor(name, new AttributeEditorProperty
 			{
 				AllowNone = name is "MagnitudeAttribute" or "ModifyingAttribute",

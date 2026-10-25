@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -193,11 +194,15 @@ public class ForgeCharacterMovementTests
 				world, CharacterBody2D.MotionModeEnum.Grounded, out CharacterBody2D sideViewBody, out _);
 			sideViewBody.Position = new Vector2(1000, 0);
 
+			// Right and up held on four buttons rather than a vector, a diagonal GetVector cuts to a length of 1.
+			sideView.Input = new EntityInput(new InputActionSet(["move_left", "move_right", "move_up", "move_down"]));
+
 			Walk(topDown, new NumericsVector2(0, 1));
-			Walk(sideView, new NumericsVector2(1, -1));
+			sideView.Input.Submit(default(InputFrame) with { Held = 0b0110 });
+			sideView._PhysicsProcess(Step);
 
 			topDownBody.Velocity.Should().Be(new Vector2(0, 5));
-			sideViewBody.Velocity.X.Should().Be(5);
+			sideViewBody.Velocity.X.Should().Be(5, "holding up doesn't slow the walk");
 			sideViewBody.Velocity.Y.Should().BePositive("it falls, and the up input doesn't lift it");
 		}
 		finally
@@ -239,16 +244,143 @@ public class ForgeCharacterMovementTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_body_faces_the_aim_in_world_space_under_a_turned_parent()
+	{
+		var world3D = new Node3D { Rotation = new Vector3(0, Mathf.Pi / 2, 0) };
+		var world2D = new Node2D { Rotation = Mathf.Pi / 2 };
+		Root.AddChild(world3D);
+		Root.AddChild(world2D);
+
+		try
+		{
+			ForgeEntity entity3D = AddCharacter3D(
+				world3D,
+				CharacterBody3D.MotionModeEnum.Floating,
+				out CharacterBody3D body3D,
+				out ForgeCharacterMovement3D movement3D);
+			ForgeEntity entity2D = AddCharacter2D(
+				world2D,
+				CharacterBody2D.MotionModeEnum.Floating,
+				out CharacterBody2D body2D,
+				out ForgeCharacterMovement2D movement2D);
+			movement3D.FaceAim = true;
+			movement2D.FaceAim = true;
+
+			Walk(entity3D, NumericsVector2.Zero, aim: new NumericsVector3(1, 0, 0));
+			Walk(entity2D, NumericsVector2.Zero, aim: new NumericsVector3(1, 0, 0));
+
+			Faces(body3D, Vector3.Right).Should().BeTrue("the aim is in world space");
+			body2D.GlobalRotation.Should().BeApproximately(0, 1e-5f, "the aim is in world space");
+		}
+		finally
+		{
+			world3D.Free();
+			world2D.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_body_restored_in_the_air_after_it_landed_falls_the_same_way_again()
+	{
+		var world3D = new Node3D();
+		var world2D = new Node2D();
+		Root.AddChild(world3D);
+		Root.AddChild(world2D);
+
+		try
+		{
+			await AddFloor(world3D);
+			await AddFloor(world2D);
+
+			ForgeEntity entity3D = AddCharacter3D(
+				world3D,
+				CharacterBody3D.MotionModeEnum.Grounded,
+				out CharacterBody3D body3D,
+				out ForgeCharacterMovement3D movement3D);
+			ForgeEntity entity2D = AddCharacter2D(
+				world2D,
+				CharacterBody2D.MotionModeEnum.Grounded,
+				out CharacterBody2D body2D,
+				out ForgeCharacterMovement2D movement2D);
+			body3D.Position = new Vector3(0, 1.5f, 0);
+			body2D.Position = new Vector2(0, -50);
+
+			ReplayEachTickOfTheFall(entity3D, movement3D, body3D.IsOnFloor);
+			ReplayEachTickOfTheFall(entity2D, movement2D, body2D.IsOnFloor);
+		}
+		finally
+		{
+			world3D.Free();
+			world2D.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task The_component_moved_to_another_entity_walks_that_entitys_body_at_its_speed()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			await AddFloor(world);
+
+			ForgeEntity first = AddCharacter3D(
+				world,
+				CharacterBody3D.MotionModeEnum.Grounded,
+				out CharacterBody3D firstBody,
+				out ForgeCharacterMovement3D movement);
+			ForgeEntity second = AddCharacter3D(
+				world,
+				CharacterBody3D.MotionModeEnum.Grounded,
+				out CharacterBody3D secondBody,
+				out ForgeCharacterMovement3D secondMovement,
+				speed: 1000);
+			secondBody.Position = new Vector3(1000, 1, 0);
+
+			Walk(first, new NumericsVector2(1, 0));
+			firstBody.IsOnFloor().Should().BeTrue();
+
+			second.RemoveChild(secondMovement);
+			secondMovement.Free();
+			first.RemoveChild(movement);
+			movement.CaptureState().Should().Be(default(BodyState), "out of an entity, it has no body");
+			second.AddChild(movement);
+
+			second.Mover.Should().BeSameAs(movement);
+			first.Mover.Should().BeNull();
+
+			Walk(second, new NumericsVector2(1, 0));
+			secondBody.Velocity.Y.Should().BeNegative("the second body isn't on the floor the first one stood on");
+
+			for (int i = 0; i < 20; i++)
+			{
+				Walk(second, new NumericsVector2(1, 0));
+			}
+
+			secondBody.Velocity.X.Should().Be(10, "the second entity's speed is 1000 with two decimal places");
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
 	private static ForgeEntity AddCharacter3D(
 		Node world,
 		CharacterBody3D.MotionModeEnum mode,
 		out CharacterBody3D body,
-		out ForgeCharacterMovement3D movement)
+		out ForgeCharacterMovement3D movement,
+		int speed = 500)
 	{
 		body = new CharacterBody3D { MotionMode = mode, Position = new Vector3(0, 1, 0) };
 		body.AddChild(new CollisionShape3D { Shape = new CapsuleShape3D() });
 		movement = new ForgeCharacterMovement3D { SpeedAttribute = SpeedKey };
-		return AddEntity(world, body, movement);
+		return AddEntity(world, body, movement, speed);
 	}
 
 	private static ForgeEntity AddCharacter2D(
@@ -263,13 +395,13 @@ public class ForgeCharacterMovementTests
 		return AddEntity(world, body, movement);
 	}
 
-	private static ForgeEntity AddEntity(Node world, Node body, Node movement)
+	private static ForgeEntity AddEntity(Node world, Node body, Node movement, int speed = 500)
 	{
 		var entity = new ForgeEntity();
 		entity.AddChild(movement);
 		body.AddChild(entity);
 		world.AddChild(body);
-		entity.Attributes.AddAttributeSet(new TestSpeedAttributes());
+		entity.Attributes.AddAttributeSet(new TestSpeedAttributes(speed));
 		entity.Input = new EntityInput(
 			new InputActionSet([], [new InputVector("move_left", "move_right", "move_up", "move_down")]));
 		return entity;
@@ -284,6 +416,37 @@ public class ForgeCharacterMovementTests
 		world.AddChild(floor);
 
 		await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+	}
+
+	// The same in 2D: a floor whose top is at ten, under a circle standing at zero.
+	private static async Task AddFloor(Node2D world)
+	{
+		var floor = new StaticBody2D { Position = new Vector2(0, 20) };
+		floor.AddChild(new CollisionShape2D { Shape = new RectangleShape2D { Size = new Vector2(10000, 20) } });
+		world.AddChild(floor);
+
+		await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+	}
+
+	// Lets the body fall onto the floor, then restores each tick it was still in the air and replays from there. The
+	// body has landed since, so its floor contact has to come back with the restore.
+	private static void ReplayEachTickOfTheFall(ForgeEntity entity, IEntityMover mover, Func<bool> isOnFloor)
+	{
+		BodyState[] fall = [.. Enumerable.Range(0, 40)
+			.Select(_ => WalkAndCapture(entity, mover, NumericsVector2.Zero))];
+		int landing = Array.FindIndex(fall, x => x.Grounded);
+
+		landing.Should().BePositive("the body starts in the air and lands");
+
+		for (int tick = 0; tick < landing; tick++)
+		{
+			mover.RestoreState(fall[tick]);
+			isOnFloor().Should().BeFalse("the body is restored in the air");
+
+			BodyState[] replayed =
+				[.. fall.Skip(tick + 1).Select(_ => WalkAndCapture(entity, mover, NumericsVector2.Zero))];
+			replayed.Should().Equal(fall.Skip(tick + 1));
+		}
 	}
 
 	private static BodyState[] Record(Node3D world)
@@ -304,7 +467,7 @@ public class ForgeCharacterMovementTests
 		}
 	}
 
-	private static BodyState WalkAndCapture(ForgeEntity entity, ForgeCharacterMovement3D mover, NumericsVector2 move)
+	private static BodyState WalkAndCapture(ForgeEntity entity, IEntityMover mover, NumericsVector2 move)
 	{
 		Walk(entity, move);
 		return mover.CaptureState();
@@ -346,9 +509,9 @@ public class ForgeCharacterMovementTests
 	{
 		public EntityAttribute Speed { get; }
 
-		public TestSpeedAttributes()
+		public TestSpeedAttributes(int speed)
 		{
-			Speed = InitializeAttribute(nameof(Speed), 500, 0, 2000, decimalPlaces: 2);
+			Speed = InitializeAttribute(nameof(Speed), speed, 0, 2000, decimalPlaces: 2);
 		}
 	}
 }

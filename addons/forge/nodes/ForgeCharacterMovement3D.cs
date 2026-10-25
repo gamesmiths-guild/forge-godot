@@ -143,6 +143,9 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 		}
 
 		_body = body;
+		_speed = null;
+		_reportedMissingSpeed = false;
+		_grounded = body.IsOnFloor();
 		_entity.Mover = this;
 	}
 
@@ -155,6 +158,9 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 		{
 			_entity.Mover = null;
 		}
+
+		_entity = null;
+		_body = null;
 	}
 
 	/// <inheritdoc/>
@@ -192,7 +198,7 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 			if (FaceAim && _entity.Input?.Current is { HasAim: true } frame
 				&& !new Vector2(frame.AimDirection.X, frame.AimDirection.Z).IsZeroApprox())
 			{
-				_body.Rotation = new Vector3(0f, Mathf.Atan2(-frame.AimDirection.X, -frame.AimDirection.Z), 0f);
+				_body.GlobalRotation = new Vector3(0f, Mathf.Atan2(-frame.AimDirection.X, -frame.AimDirection.Z), 0f);
 			}
 		}
 
@@ -228,8 +234,20 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 		}
 
 		var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
-		Basis basis = new Basis(rotation) * Basis.FromScale(_body.GlobalBasis.Scale);
-		_body.GlobalTransform = new Transform3D(basis, ToGodot(state.Position));
+		var transform = new Transform3D(
+			new Basis(rotation) * Basis.FromScale(_body.GlobalBasis.Scale),
+			ToGodot(state.Position));
+		float floorSnapLength = _body.FloorSnapLength;
+
+		// The body's floor, wall and ceiling contacts only update as it slides, and its next slide starts from them, so
+		// it slides in place to find the restored place's contacts. It doesn't snap, which could pull it down to a
+		// floor it only reached later, and any nudge out of a contact is undone.
+		_body.GlobalTransform = transform;
+		_body.Velocity = Vector3.Zero;
+		_body.FloorSnapLength = 0f;
+		_body.MoveAndSlide();
+		_body.FloorSnapLength = floorSnapLength;
+		_body.GlobalTransform = transform;
 		_body.Velocity = ToGodot(state.Velocity);
 		_grounded = state.Grounded;
 	}
