@@ -184,15 +184,15 @@ Each step, the component:
 2. **Walks.** The move vector is the entity's input read with `GetVector` over the four move actions, so a registered vector and four buttons both work. The body's velocity moves toward the move vector times the speed by `Acceleration`, or toward zero by `Friction` when there's no move input.
    - **3D:** the body walks on X and Z. `MoveForward` walks toward -Z.
    - **2D, floating motion mode** (top-down): the body walks on both axes.
-   - **2D, grounded motion mode** (side view): the body walks on X only.
-3. **Turns** to the input's aim direction, with `FaceAim` on.
+   - **2D, grounded motion mode** (side view): the body walks on X only, from the axis of `MoveLeft` and `MoveRight` alone. Register those as actions rather than in a vector with up and down: a vector cuts a diagonal to a length of 1, so holding up would slow the walk.
+3. **Turns** to face the input's aim direction in world space, with `FaceAim` on.
 4. **Moves** with `MoveAndSlide`, and records whether the body ended on the floor.
 
 While the entity has a blocking tag, the component skips steps 2 and 3: the walking velocity drops to zero, the facing stays put, and the body still falls. A dash's [Move Body](statescript/nodes/spatial-nodes.md#move-body) then sweeps the body on its own. Give the dash ability a tag such as `movement.block` while it runs, and list that tag here.
 
 The component owns the body's velocity. [Nav Move To](statescript/nodes/navigation-nodes.md) writes a velocity for the game's own controller to move by, so it doesn't combine with this component.
 
-It captures and restores the body for rollback: position, rotation, velocity and whether the body is on the floor. Custom movement can implement the same contract; see [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
+It captures and restores the body for rollback: position, rotation, velocity and whether the body is on the floor. A restore also refreshes the body's floor, wall and ceiling contacts for the restored place, so the [character readers](statescript/resolvers/spatial-getters.md#the-character-readers) see them right away. What the body's last move reported, such as its real velocity, reads as standing still until it moves again. Custom movement can implement the same contract; see [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
 
 **Usage:**
 
