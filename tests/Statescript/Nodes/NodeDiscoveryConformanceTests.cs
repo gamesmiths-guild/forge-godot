@@ -88,12 +88,22 @@ public class NodeDiscoveryConformanceTests
 
 	[TestCase]
 	[RequireGodotRuntime]
-	public void A_core_node_the_plugin_extends_under_its_own_name_is_listed_only_as_the_plugins()
+	public void A_core_node_the_plugin_extends_under_its_own_name_is_offered_only_as_the_plugins()
 	{
-		StatescriptNodeDiscovery.FindByRuntimeTypeName(typeof(ForgeInputActionNode).FullName!).Should().BeNull(
-			"the plugin's Input Action does everything the core one does, so listing both would offer the same node "
-			+ "twice.");
-		StatescriptNodeDiscovery.FindByRuntimeTypeName(typeof(InputActionNode).FullName!).Should().NotBeNull();
+		IEnumerable<string> offered =
+			StatescriptNodeDiscovery.GetPaletteNodeTypes().Select(info => info.RuntimeTypeName);
+
+		offered.Should().NotContain(
+			typeof(ForgeInputActionNode).FullName!,
+			"the plugin's Input Action does everything the core one does, so it would be listed twice.");
+		offered.Should().Contain(typeof(InputActionNode).FullName!);
+
+		StatescriptNodeDiscovery.NodeTypeInfo? core =
+			StatescriptNodeDiscovery.FindByRuntimeTypeName(typeof(ForgeInputActionNode).FullName!);
+		StatescriptNodeDiscovery.NodeTypeInfo plugin =
+			StatescriptNodeDiscovery.FindByRuntimeTypeName(typeof(InputActionNode).FullName!)!;
+		core.Should().NotBeNull("graphs that already use the core node still have to load with its ports.");
+		core!.OutputPortLabels.Should().Equal(plugin.OutputPortLabels);
 	}
 
 	[TestCase]

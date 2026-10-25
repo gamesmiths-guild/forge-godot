@@ -93,6 +93,7 @@ Gamesmiths.Forge.Statescript.Nodes.State.EffectNode
 Gamesmiths.Forge.Statescript.Nodes.State.EventListenerNode
 Gamesmiths.Forge.Statescript.Nodes.State.ForEachNode
 Gamesmiths.Forge.Statescript.Nodes.State.GrantAbilityNode
+Gamesmiths.Forge.Statescript.Nodes.State.InputActionNode
 Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode
 Gamesmiths.Forge.Statescript.Nodes.State.RepeatNode
 Gamesmiths.Forge.Statescript.Nodes.State.StateMachineNode

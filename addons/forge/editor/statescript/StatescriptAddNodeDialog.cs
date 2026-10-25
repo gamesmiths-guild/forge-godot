@@ -246,7 +246,7 @@ internal sealed partial class StatescriptAddNodeDialog : ConfirmationDialog, ISe
 		TreeItem root = _tree.CreateItem();
 
 		IReadOnlyList<StatescriptNodeDiscovery.NodeTypeInfo> discoveredTypes =
-			StatescriptNodeDiscovery.GetDiscoveredNodeTypes();
+			StatescriptNodeDiscovery.GetPaletteNodeTypes();
 
 		string squeezedFilter = SqueezeWhitespace(filter);
 

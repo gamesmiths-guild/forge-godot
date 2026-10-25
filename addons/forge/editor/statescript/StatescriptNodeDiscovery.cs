@@ -38,6 +38,8 @@ internal static class StatescriptNodeDiscovery
 
 	private static List<NodeTypeInfo>? _cachedNodeTypes;
 
+	private static List<NodeTypeInfo>? _cachedPaletteNodeTypes;
+
 	/// <summary>
 	/// Gets all discovered concrete node types, each with the port layout of its default configuration. Results are
 	/// cached after first discovery.
@@ -45,8 +47,31 @@ internal static class StatescriptNodeDiscovery
 	/// <returns>A read-only list of node type info.</returns>
 	internal static IReadOnlyList<NodeTypeInfo> GetDiscoveredNodeTypes()
 	{
-		_cachedNodeTypes ??= DiscoverNodeTypes();
-		return _cachedNodeTypes;
+		if (_cachedNodeTypes is null)
+		{
+			DiscoverNodeTypes();
+		}
+
+		return _cachedNodeTypes!;
+	}
+
+	/// <summary>
+	/// Gets the discovered node types offered in the Add Node dialog.
+	/// </summary>
+	/// <remarks>
+	/// A node that derives from another and keeps its name is that node with the engine's side added, such as Input
+	/// Action reading the local device, so only the derived one is offered. The base stays discovered, so graphs that
+	/// already use it still load.
+	/// </remarks>
+	/// <returns>A read-only list of node type info.</returns>
+	internal static IReadOnlyList<NodeTypeInfo> GetPaletteNodeTypes()
+	{
+		if (_cachedPaletteNodeTypes is null)
+		{
+			DiscoverNodeTypes();
+		}
+
+		return _cachedPaletteNodeTypes!;
 	}
 
 	/// <summary>
@@ -55,6 +80,7 @@ internal static class StatescriptNodeDiscovery
 	internal static void InvalidateCache()
 	{
 		_cachedNodeTypes = null;
+		_cachedPaletteNodeTypes = null;
 		_configuredLayoutCache.Clear();
 	}
 
@@ -135,7 +161,7 @@ internal static class StatescriptNodeDiscovery
 		return null;
 	}
 
-	private static List<NodeTypeInfo> DiscoverNodeTypes()
+	private static void DiscoverNodeTypes()
 	{
 		var discovered = new Dictionary<Type, NodeTypeInfo>();
 
@@ -192,17 +218,15 @@ internal static class StatescriptNodeDiscovery
 			}
 		}
 
-		// A node that derives from another and keeps its name is that node with the engine's side added, such as Input
-		// Action reading the local device, so only the derived one is listed.
-		List<NodeTypeInfo> results =
-		[
-			.. discovered
-				.Where(x => !discovered.Any(y => y.Key.BaseType == x.Key && y.Value.DisplayName == x.Value.DisplayName))
-				.Select(x => x.Value),
-		];
-
+		List<NodeTypeInfo> results = [.. discovered.Values];
 		results.Sort((a, b) => string.CompareOrdinal(a.DisplayName, b.DisplayName));
-		return results;
+
+		_cachedNodeTypes = results;
+		_cachedPaletteNodeTypes =
+		[
+			.. results.Where(x => !discovered.Any(
+				y => y.Key.BaseType?.FullName == x.RuntimeTypeName && y.Value.DisplayName == x.DisplayName)),
+		];
 	}
 
 	private static bool IsConcreteStateNode(Type type, Type stateNodeOpenType)
