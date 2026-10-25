@@ -10,7 +10,7 @@ namespace Gamesmiths.Forge.Godot.Resources.Abilities;
 
 /// <summary>
 /// Activates an ability bound to an input action with an <see cref="AimActivationData"/> built from the tick's input:
-/// aimed from the entity's node, in the input's aim direction, at the input's aim point.
+/// aimed from the entity's node at the input's aim point.
 /// </summary>
 /// <remarks>
 /// An input without an aim - its collector has no aim source - aims along the node's horizontal forward instead, at the
@@ -36,10 +36,21 @@ public partial class AimInputActivationData : ForgeInputActivationData
 
 		if (frame.HasAim)
 		{
-			return new AimActivationData(
-				origin,
-				new Vector3(frame.AimDirection.X, frame.AimDirection.Y, frame.AimDirection.Z),
-				new Vector3(frame.AimPoint.X, frame.AimPoint.Y, frame.AimPoint.Z));
+			var direction = new Vector3(frame.AimDirection.X, frame.AimDirection.Y, frame.AimDirection.Z);
+			var point = new Vector3(frame.AimPoint.X, frame.AimPoint.Y, frame.AimPoint.Z);
+
+			// An aim taken from elsewhere, such as a camera behind the entity, is turned to meet the same point from
+			// the entity. One that already points at it across the ground from the entity, as the ground aim does,
+			// stays horizontal; loosely, since the input carries the direction quantized.
+			Vector3 toPoint = point - origin;
+			Vector3 acrossGround = new Vector3(toPoint.X, 0, toPoint.Z).Normalized();
+
+			if (toPoint.IsZeroApprox() || direction.Dot(acrossGround) > 0.9999f)
+			{
+				return new AimActivationData(origin, direction, point);
+			}
+
+			return new AimActivationData(origin, toPoint.Normalized(), point);
 		}
 
 		Vector3 forward = node is null ? Vector3.Forward : -node.GlobalBasis.Z;

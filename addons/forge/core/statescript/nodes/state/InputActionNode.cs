@@ -29,7 +29,7 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 	private readonly StringName _actionName = actionName ?? string.Empty;
 
 	private bool _reportedMissingAction;
-	private bool _checkedAction;
+	private EntityInput? _checkedInput;
 
 	/// <inheritdoc/>
 	protected override void OnActivate(GraphContext graphContext)
@@ -51,7 +51,7 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 	{
 		base.OnFixedUpdate(deltaTime, graphContext);
 
-		if (!_checkedAction && ResolveInputSource(graphContext)?.Input is EntityInput input)
+		if (ResolveInputSource(graphContext)?.Input is EntityInput input)
 		{
 			ReportUncarriedAction(input);
 		}
@@ -66,15 +66,15 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 		}
 	}
 
-	// Checked once, on the first read of an input, since the action set never changes.
+	// Checked on the first read of each input, since an input's action set never changes.
 	private void ReportUncarriedAction(EntityInput input)
 	{
-		if (_checkedAction)
+		if (input == _checkedInput)
 		{
 			return;
 		}
 
-		_checkedAction = true;
+		_checkedInput = input;
 
 		if (input.Actions.IndexOf(_action) < 0)
 		{

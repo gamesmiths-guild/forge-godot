@@ -32,6 +32,7 @@ public partial class ForgeInputCollector : Node
 	private ulong _held;
 	private ulong _pressed;
 	private ulong _released;
+	private ulong _consumed;
 
 	/// <summary>
 	/// Gets or sets where the aim is read from.
@@ -83,6 +84,19 @@ public partial class ForgeInputCollector : Node
 	}
 
 	/// <inheritdoc/>
+	public override void _ExitTree()
+	{
+		base._ExitTree();
+
+		// An input nothing submits to repeats its last frame, so every button held in it is let go.
+		_input?.Submit(default);
+		_held = 0;
+		_pressed = 0;
+		_released = 0;
+		_consumed = 0;
+	}
+
+	/// <inheritdoc/>
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		base._UnhandledInput(@event);
@@ -103,12 +117,13 @@ public partial class ForgeInputCollector : Node
 			{
 				_pressed |= bit;
 			}
-			else if (!held && (_held & bit) != 0)
+			else if (!held && (_held & bit) != 0 && (_consumed & bit) == 0)
 			{
 				_released |= bit;
 			}
 
 			_held = held ? _held | bit : _held & ~bit;
+			_consumed = held ? _consumed : _consumed & ~bit;
 		}
 	}
 
@@ -132,10 +147,12 @@ public partial class ForgeInputCollector : Node
 			}
 		}
 
-		// A change no unhandled event announced - a press the interface consumed - is taken as it stands, with no edge.
+		// A press no unhandled event announced was consumed by the interface, and stays the interface's until it is let
+		// go, so nothing downstream takes it for a press.
+		_consumed = (_consumed | (held & ~_held)) & held;
 		_held = held;
 
-		var frame = new InputFrame { Held = held, Pressed = _pressed, Released = _released };
+		var frame = new InputFrame { Held = held & ~_consumed, Pressed = _pressed, Released = _released };
 
 		for (int i = 0; i < _vectors.Length; i++)
 		{

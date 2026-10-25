@@ -4,11 +4,17 @@ using System;
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Godot.Tests.Helpers;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Nodes;
+using Gamesmiths.Forge.Statescript.Nodes.Action;
 using GdUnit4;
 using Godot;
+using ForgeGraph = Gamesmiths.Forge.Statescript.Graph;
+using ForgeInputActionNode = Gamesmiths.Forge.Statescript.Nodes.State.InputActionNode;
 using NumericsVector2 = System.Numerics.Vector2;
 using NumericsVector3 = System.Numerics.Vector3;
 
@@ -108,7 +114,50 @@ public class ForgeInputCollectorTests
 
 	[TestCase]
 	[RequireGodotRuntime]
-	public void A_press_the_interface_consumed_is_held_without_being_pressed()
+	public void A_press_the_interface_consumed_stays_out_of_the_game_until_it_is_let_go()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+			GraphProcessor watch = WatchFire(entity);
+
+			try
+			{
+				Tick(collector, entity);
+				watch.FixedUpdateGraph(Step);
+
+				// Godot's action state changes, but no unhandled event reaches the collector.
+				Input.ActionPress(Fire);
+				Tick(collector, entity);
+				watch.FixedUpdateGraph(Step);
+
+				entity.Input!.IsHeld(Fire).Should().BeFalse();
+				entity.Input.WasPressed(Fire).Should().BeFalse();
+				Pressed(watch).Should().BeFalse("a watch already listening takes a held button for a press");
+
+				Release(collector, Fire);
+				Tick(collector, entity);
+				entity.Input.WasReleased(Fire).Should().BeFalse("the game never saw it go down");
+
+				Press(collector, Fire);
+				Tick(collector, entity);
+				watch.FixedUpdateGraph(Step);
+
+				entity.Input.WasPressed(Fire).Should().BeTrue();
+				entity.Input.IsHeld(Fire).Should().BeTrue();
+				Pressed(watch).Should().BeTrue();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_collector_leaving_the_tree_lets_go_of_what_it_held()
 	{
 		WithProjectInput(() =>
 		{
@@ -116,16 +165,19 @@ public class ForgeInputCollectorTests
 
 			try
 			{
-				// Godot's action state changes, but no unhandled event reaches the collector.
-				Input.ActionPress(Fire);
+				Press(collector, Fire);
 				Tick(collector, entity);
-
 				entity.Input!.IsHeld(Fire).Should().BeTrue();
-				entity.Input.WasPressed(Fire).Should().BeFalse();
+
+				entity.RemoveChild(collector);
+				entity._PhysicsProcess(Step);
+
+				entity.Input.IsHeld(Fire).Should().BeFalse("nothing collects the button any more");
 			}
 			finally
 			{
 				Input.ActionRelease(Fire);
+				collector.Free();
 				body.Free();
 			}
 		});
@@ -225,6 +277,68 @@ public class ForgeInputCollectorTests
 		});
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_aim_taken_from_elsewhere_is_turned_to_meet_its_point_from_the_entity()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out _, out Node3D body);
+			body.Position = new Vector3(3, 0, 0);
+			var behavior = new RecordingAimBehavior();
+
+			var abilityData = new ForgeAbilityData
+			{
+				Name = "Fire",
+				AbilityBehavior = behavior,
+				InputAction = Fire,
+				InputActivationData = new AimInputActivationData(),
+			};
+
+			try
+			{
+				entity.Abilities.GrantAbilityPermanently(abilityData.GetAbilityData(), 1, LevelComparison.Higher, null);
+
+				// A camera above the origin looking at a point ahead of it, and a ground aim at a point on a ledge.
+				var point = new NumericsVector3(0, 1, -10);
+				Shoot(entity, 1, point, NumericsVector3.Normalize(new NumericsVector3(0, -1, -10)));
+				Toward(behavior, new Vector3(-3, 1, -10)).Should().BeApproximately(
+					1,
+					1e-4f,
+					"from the entity, the camera's direction would pass beside the point");
+
+				Shoot(entity, 3, point, NumericsVector3.Normalize(new NumericsVector3(-3, 0, -10)));
+				Toward(behavior, new Vector3(-3, 0, -10)).Should().BeApproximately(
+					1,
+					1e-4f,
+					"a ground aim turns the entity rather than tilting it");
+
+				Shoot(entity, 5, point, new NumericsVector3(0, 0, -1));
+				Toward(behavior, new Vector3(-3, 1, -10)).Should().BeApproximately(
+					1,
+					1e-4f,
+					"a level camera is not a ground aim");
+			}
+			finally
+			{
+				body.Free();
+			}
+		});
+
+		static float Toward(RecordingAimBehavior behavior, Vector3 expected)
+		{
+			return behavior.Received!.Value.Direction.Dot(expected.Normalized());
+		}
+
+		static void Shoot(ForgeEntity entity, long tick, NumericsVector3 point, NumericsVector3 direction)
+		{
+			entity.Input!.Submit(new InputFrame { Held = 0b1, Pressed = 0b1 }.WithAim(point, direction));
+			EntitySimulation.Tick(entity, tick, Step);
+			entity.Input.Submit(default);
+			EntitySimulation.Tick(entity, tick + 1, Step);
+		}
+	}
+
 	private static ForgeEntity CreatePlayer(out ForgeInputCollector collector, out Node3D body)
 	{
 		body = new Node3D();
@@ -234,6 +348,38 @@ public class ForgeInputCollectorTests
 		body.AddChild(entity);
 		Root.AddChild(body);
 		return entity;
+	}
+
+	private static GraphProcessor WatchFire(ForgeEntity entity)
+	{
+		var graph = new ForgeGraph();
+		graph.VariableDefinitions.DefineObjectVariable<IForgeEntity>("source", entity);
+		graph.VariableDefinitions.DefineVariable("yes", true);
+		graph.VariableDefinitions.DefineVariable("pressed", false);
+
+		var watch = new InputActionNode(Fire);
+		watch.BindInput(ForgeInputActionNode.InputSourceInput, "source");
+		var pressed = new SetVariableNode();
+		pressed.BindInput(SetVariableNode.SourceInput, "yes");
+		pressed.BindOutput(SetVariableNode.TargetOutput, "pressed");
+
+		graph.AddNode(watch);
+		graph.AddNode(pressed);
+		graph.AddConnection(new Connection(
+			graph.EntryNode.OutputPorts[EntryNode.OutputPort],
+			watch.InputPorts[InputActionNode.InputPort]));
+		graph.AddConnection(new Connection(
+			watch.OutputPorts[ForgeInputActionNode.OnPressedPort],
+			pressed.InputPorts[ActionNode.InputPort]));
+
+		var processor = new GraphProcessor(graph);
+		processor.StartGraph();
+		return processor;
+	}
+
+	private static bool Pressed(GraphProcessor processor)
+	{
+		return processor.GraphContext.GraphVariables.TryGetVar("pressed", out bool value) && value;
 	}
 
 	private static void Press(ForgeInputCollector collector, string action)
