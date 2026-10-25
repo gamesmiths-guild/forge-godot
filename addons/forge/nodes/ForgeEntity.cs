@@ -48,6 +48,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public EntityInput? Input { get; set; }
 
+	public IEntityMover? Mover { get; set; }
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
 	/// </summary>

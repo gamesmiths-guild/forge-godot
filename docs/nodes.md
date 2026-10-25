@@ -21,10 +21,11 @@ The central node for adding Forge system functionality to any game object.
 
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
-- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
+- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
 - **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates. Once every node has processed, the Forge bootstrap autoload calls `Abilities.PresentAbilities` on every `ForgeEntity` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. An ability one node starts and a later one ends within the same frame is never shown. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 - **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
+- **Its `Mover`** moves its body in the movement stage of each physics step, or is `null` for an entity the simulation doesn't move. A [`ForgeCharacterMovement2D` or `ForgeCharacterMovement3D`](#forgecharactermovement2d--forgecharactermovement3d) child sets it. See [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
 
 **Usage:**
 
@@ -159,6 +160,50 @@ Every physics step, before any other node's, it submits one frame:
 When the collector leaves the tree it submits an empty frame, so nothing it held stays held.
 
 Abilities whose `ForgeAbilityData` names an input action activate from it, and the input nodes and resolvers read it through their **Input Source**. See [Input is read from the Input Source](statescript/nodes/input-action-node.md#input-is-read-from-the-input-source).
+
+### ForgeCharacterMovement2D / ForgeCharacterMovement3D
+
+Walks the character body an entity lives on from the entity's input, once per physics step.
+
+**Properties:**
+
+- `SpeedAttribute` (string): The attribute the walking speed comes from, picked from the project's attribute sets. Its decimal places give its unit: a `Speed` of `500` with two decimal places walks at 5 units per second.
+- `Acceleration` (float): How fast the body speeds up toward the move vector, in units per second squared. The default is 45 in 3D and 4500 in 2D.
+- `Friction` (float): How fast the body slows down with no move input, in units per second squared. The default is 60 in 3D and 6000 in 2D.
+- `BlockingTags` (ForgeTagContainer): While the entity has any of these tags, the body doesn't walk or turn.
+- `FaceAim` (bool): Whether the body turns to face the input's aim.
+- `MoveLeft`, `MoveRight`, `MoveForward`, `MoveBack` in 3D, or `MoveLeft`, `MoveRight`, `MoveUp`, `MoveDown` in 2D: The four input actions of the move vector. They default to `move_left`, `move_right`, `move_up` and `move_down`.
+
+**Description:**
+
+Add it as a child of a `ForgeEntity` that sits inside a `CharacterBody3D` or `CharacterBody2D`, usually next to a [`ForgeInputCollector`](#forgeinputcollector). It becomes the entity's `Mover` and runs in the movement stage of the entity's tick: after the abilities bound to the tick's input activate, and before effects advance and graphs run.
+
+Each step, the component:
+
+1. **Applies gravity.** In the body's grounded motion mode, a body that wasn't on the floor after the last step gains the project's default gravity. The floating motion mode has none.
+2. **Walks.** The move vector is the entity's input read with `GetVector` over the four move actions, so a registered vector and four buttons both work. The body's velocity moves toward the move vector times the speed by `Acceleration`, or toward zero by `Friction` when there's no move input.
+   - **3D:** the body walks on X and Z. `MoveForward` walks toward -Z.
+   - **2D, floating motion mode** (top-down): the body walks on both axes.
+   - **2D, grounded motion mode** (side view): the body walks on X only, from the axis of `MoveLeft` and `MoveRight` alone. Register those as actions rather than in a vector with up and down: a vector cuts a diagonal to a length of 1, so holding up would slow the walk.
+3. **Turns** to face the input's aim direction in world space, with `FaceAim` on.
+4. **Moves** with `MoveAndSlide`, and records whether the body ended on the floor.
+
+While the entity has a blocking tag, the component skips steps 2 and 3: the walking velocity drops to zero, the facing stays put, and the body still falls. A dash's [Move Body](statescript/nodes/spatial-nodes.md#move-body) then sweeps the body on its own. Give the dash ability a tag such as `movement.block` while it runs, and list that tag here.
+
+The component owns the body's velocity. [Nav Move To](statescript/nodes/navigation-nodes.md) writes a velocity for the game's own controller to move by, so it doesn't combine with this component.
+
+It captures and restores the body for rollback: position, rotation, velocity and whether the body is on the floor. A restore also refreshes the body's floor, wall and ceiling contacts for the restored place, so the [character readers](statescript/resolvers/spatial-getters.md#the-character-readers) see them right away. What the body's last move reported, such as its real velocity, reads as standing still until it moves again. Custom movement can implement the same contract; see [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
+
+**Usage:**
+
+```text
+Player (CharacterBody3D)
+├── CollisionShape3D
+└── ForgeEntity
+    ├── ForgeAttributeSet          AttributeSetClass = MovementAttributes
+    ├── ForgeInputCollector        AimSource = MouseGround3D
+    └── ForgeCharacterMovement3D   SpeedAttribute = MovementAttributes.Speed, FaceAim = on
+```
 
 ### ForgeAttributeSet
 

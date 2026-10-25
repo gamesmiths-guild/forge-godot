@@ -66,6 +66,8 @@ The solving counterpart. Sweeps the body toward the destination with `MoveAndCol
 
 `MoveAndCollide` rather than `MoveAndSlide` is not an implementation detail: `MoveAndSlide` is the game's own character-controller entry point, is `CharacterBody`-only, and reads and writes the body's velocity while applying floor snapping and slope detection. An ability calling it would move the body a second time each step and fight the controller for ownership of that velocity — the exact layering mistake [Nav Move To](navigation-nodes.md) avoids by writing a velocity and letting the game move.
 
+The controller still walks the body while the sweep runs. On a body a [`ForgeCharacterMovement3D`](../../nodes.md#forgecharactermovement2d--forgecharactermovement3d) walks, give the ability one of the component's blocking tags while it runs, so the body only falls and the sweep moves it alone.
+
 | Setting | Values | Meaning |
 |---|---|---|
 | **Mode** | `Duration`, `Speed` | As Move To. |
