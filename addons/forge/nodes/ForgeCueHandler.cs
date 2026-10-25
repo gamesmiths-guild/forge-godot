@@ -88,9 +88,16 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 
 	public void OnRemove(IForgeEntity? target, bool interrupted)
 	{
-		if (target is IForgeEntity forgeEntity && IsAlive(forgeEntity))
+		if (target is IForgeEntity forgeEntity)
 		{
-			_CueOnRemove(forgeEntity, interrupted);
+			if (IsAlive(forgeEntity))
+			{
+				_CueOnRemove(forgeEntity, interrupted);
+			}
+			else
+			{
+				_CueOnRemoveFreedTarget(forgeEntity, interrupted);
+			}
 		}
 
 		_CueOnRemove(interrupted);
@@ -101,6 +108,17 @@ public abstract partial class ForgeCueHandler : Node, ICueHandler
 	}
 
 	public virtual void _CueOnRemove(bool interrupted)
+	{
+	}
+
+	/// <summary>
+	/// Called on removal in place of <see cref="_CueOnRemove(IForgeEntity, bool)"/> when the target was freed before
+	/// the removal was dispatched. Override it to release what the handler keeps for the target outside of the
+	/// target's node, without touching that node.
+	/// </summary>
+	/// <param name="forgeEntity">The freed target, usable only as a key.</param>
+	/// <param name="interrupted">Whether the cue was interrupted.</param>
+	public virtual void _CueOnRemoveFreedTarget(IForgeEntity forgeEntity, bool interrupted)
 	{
 	}
 

@@ -98,6 +98,13 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 		FreeApplied(forgeEntity);
 	}
 
+	/// <inheritdoc/>
+	public override void _CueOnRemoveFreedTarget(IForgeEntity forgeEntity, bool interrupted)
+	{
+		// A world-attached instance outlives its target, so it is freed here.
+		FreeApplied(forgeEntity);
+	}
+
 	private static bool TryReadPosition(CueParameters? parameters, out Vector3 position3D, out Vector2 position2D)
 	{
 		position3D = Vector3.Zero;
