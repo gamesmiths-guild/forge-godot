@@ -15,7 +15,9 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 			|| @object is Resources.ForgeEffectQuery
 			|| @object is Resources.ForgeModifierMagnitude
 			|| @object is Resources.Components.ForgeAttributeRequirement
-			|| @object is Resources.Components.AttributeAccumulator;
+			|| @object is Resources.Components.AttributeAccumulator
+			|| @object is Nodes.ForgeCharacterMovement3D
+			|| @object is Nodes.ForgeCharacterMovement2D;
 	}
 
 	public override bool _ParseProperty(
@@ -27,7 +29,11 @@ public partial class AttributeEditorPlugin : EditorInspectorPlugin
 		PropertyUsageFlags usageFlags,
 		bool wide)
 	{
-		if (name is "Attribute" or "CapturedAttribute" or "MagnitudeAttribute" or "ModifyingAttribute")
+		if (name is "Attribute"
+			or "CapturedAttribute"
+			or "MagnitudeAttribute"
+			or "ModifyingAttribute"
+			or "SpeedAttribute")
 		{
 			// MagnitudeAttribute and ModifyingAttribute are filters rather than targets: leaving either unset is a
 			// valid configuration, so the picker has to offer a way back to it. Attribute and CapturedAttribute are
