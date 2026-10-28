@@ -39,7 +39,7 @@ When the graph starts:
 4. **Condition nodes** evaluate and route the message to the True or False output.
 5. **State nodes** activate when they receive a message and remain active over time. A message that reaches one already active is ignored, unless the node was set to [restart](nodes/README.md#restart-on-retrigger).
 
-Once all synchronous propagation is complete, only **state nodes** remain active. These nodes are updated each frame via `GraphProcessor.UpdateGraph(deltaTime)`. When a state node deactivates (e.g., a timer expires), it may emit messages that trigger further actions, conditions, or other state nodes.
+Once all synchronous propagation is complete, only **state nodes** remain active. These nodes are updated on each physics step via `GraphProcessor.FixedUpdateGraph(deltaTime)`, and each frame via `GraphProcessor.UpdateGraph(deltaTime)`. When a state node deactivates (e.g., a timer expires), it may emit messages that trigger further actions, conditions, or other state nodes.
 
 **The graph completes when no state nodes remain active.**
 
@@ -83,7 +83,7 @@ Nodes that only show something — playing an animation or a sound, writing a vi
 
 ### Snapshots
 
-A graph run can be taken as a snapshot and put back later (`GraphProcessor.CaptureSnapshot` and `RestoreSnapshot`), which is what rollback builds on. A restore runs no node code: it swaps in copies of the node contexts and graph variables, and the presentation pass then shows only what changed. See [Snapshots](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/README.md#snapshots).
+A graph run can be taken as a snapshot and put back later (`GraphProcessor.CaptureSnapshot` and `RestoreSnapshot`), which is what rollback builds on. A restore runs no node code: it swaps in copies of the node contexts and graph variables, and the presentation pass then shows only what changed. See [Snapshots](https://github.com/gamesmiths-guild/forge/blob/main/docs/statescript/README.md#snapshots). An entity snapshot takes one of every graph the entity's abilities run, along with the rest of the entity; see [Rolling an Entity Back](../nodes.md#rolling-an-entity-back).
 
 The plugin's nodes that hold something in the engine while they run let go of it for the activation a restore replaces and take hold of it again for the one it brings back, so the engine matches the restored run:
 
@@ -152,7 +152,7 @@ A row whose unit depends on how the node is configured is never marked as an ang
 Statescript integrates with the Abilities system through `GraphAbilityBehavior`:
 
 1. When the ability **activates**, the graph starts processing.
-2. Each frame, `OnUpdate(deltaTime)` advances all active state nodes.
+2. Each physics step, `OnFixedUpdate(deltaTime)` advances the active state nodes, and each frame `OnUpdate(deltaTime)` advances the few that follow the frame.
 3. When the graph **completes** or an **Exit node** is reached, the ability instance ends.
 4. If the ability is **canceled**, the graph is stopped and all active nodes are disabled.
 
@@ -168,9 +168,9 @@ In Forge for Godot, you use the **Statescript graph editor** to create graphs vi
 4. Set the ability's `AbilityBehavior` to a `StatescriptAbilityBehavior`.
 5. Assign your `StatescriptGraph` to the behavior's `Statescript` property.
 
-The `ForgeEntity` node drives graph updates on two rails: `Abilities.UpdateAbilities(delta)` in its `_Process` method, and `EntitySimulation.Advance` in its `_PhysicsProcess` method, which advances effects and then runs `Abilities.FixedUpdateAbilities`. `ForgeBootstrap` begins each `ForgeEntity`'s tick, restarting its random and taking its input frame, before any of them advances. If you implement `IForgeEntity` directly, you must drive **both** yourself — the built-in nodes that move a body, steer an agent or query physics (Move To, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep, Line Of Sight) only run on the fixed rail, and a host that never calls it leaves them activated and stuck. Restart its random each step too: call `EntitySimulation.Tick(entity, tick, delta)`, which restarts it and then advances, or, when entities affect each other, `EntitySimulation.BeginTick` for all of them before `EntitySimulation.Advance` for any. And present it: the bootstrap presents only `ForgeEntity` nodes, so call `Abilities.PresentAbilities()` once per frame, after every update of that frame, or its presentation nodes never show anything.
+The `ForgeEntity` node drives graph updates on two rails: `Abilities.UpdateAbilities(delta)` in its `_Process` method, and `EntitySimulation.Advance` in its `_PhysicsProcess` method, which advances effects and then runs `Abilities.FixedUpdateAbilities`. `ForgeBootstrap` begins each `ForgeEntity`'s tick, restarting its random and taking its input frame, before any of them advances. If you implement `IForgeEntity` directly, you must drive **both** yourself — the timers and the built-in nodes that move a body, steer an agent or query physics (Move To, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep, Line Of Sight) only run on the fixed rail, and a host that never calls it leaves them activated and stuck. Restart its random each step too: call `EntitySimulation.Tick(entity, tick, delta)`, which restarts it and then advances, or, when entities affect each other, `EntitySimulation.BeginTick` for all of them before `EntitySimulation.Advance` for any. And present it: the bootstrap presents only `ForgeEntity` nodes, so call `Abilities.PresentAbilities()` once per frame, after every update of that frame, or its presentation nodes never show anything.
 
-> **Threaded physics is not supported.** Overlap, Ray, Sweep and Line Of Sight run their first query during activation, so that a watch reports what is already there on the frame it begins rather than one frame later. Activation happens wherever the graph was driven from, which is usually the frame rail. Godot only guarantees `World2D`/`World3D.direct_space_state` inside `_physics_process` when `physics/2d/run_on_separate_thread` or `physics/3d/run_on_separate_thread` is on, so those settings must stay off.
+> **Threaded physics is not supported.** Overlap, Ray, Sweep and Line Of Sight run their first query during activation, so that a watch reports what is already there on the frame it begins rather than one frame later. Activation happens wherever the graph was driven from, which isn't always a physics step: an ability activated from `_Input` or `_Process` starts its graph there. Godot only guarantees `World2D`/`World3D.direct_space_state` inside `_physics_process` when `physics/2d/run_on_separate_thread` or `physics/3d/run_on_separate_thread` is on, so those settings must stay off.
 
 ## Loop Detection
 
