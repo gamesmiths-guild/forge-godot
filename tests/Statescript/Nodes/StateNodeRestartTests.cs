@@ -101,7 +101,7 @@ public class StateNodeRestartTests
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
 			processor.Present();
-			processor.UpdateGraph(RetriggerAt);
+			processor.FixedUpdateGraph(RetriggerAt);
 
 			processor.Invoking(x => x.Present()).Should().NotThrow();
 
@@ -165,7 +165,7 @@ public class StateNodeRestartTests
 			var processor = new GraphProcessor(graph);
 			processor.StartGraph();
 
-			processor.Invoking(x => x.UpdateGraph(RetriggerAt)).Should().NotThrow();
+			processor.Invoking(x => x.FixedUpdateGraph(RetriggerAt)).Should().NotThrow();
 
 			processor.GraphContext.IsActive.Should().BeFalse("the graph stopped");
 			parent.GetChildren().Should().ContainSingle("the restart ends with the graph instead of spawning again")
@@ -207,7 +207,7 @@ public class StateNodeRestartTests
 			};
 
 			processor.StartGraph();
-			processor.UpdateGraph(RetriggerAt);
+			processor.FixedUpdateGraph(RetriggerAt);
 
 			Node[] instances = [.. parent.GetChildren()];
 			instances.Should().HaveCount(2, "the new run spawned its own, and the restart it replaced did not");
@@ -237,7 +237,7 @@ public class StateNodeRestartTests
 
 			// The scene can no longer be resolved by the time the retrigger comes.
 			processor.GraphContext.GraphVariables.SetObject("scene", null);
-			processor.UpdateGraph(RetriggerAt);
+			processor.FixedUpdateGraph(RetriggerAt);
 
 			Node[] instances = [.. parent.GetChildren()];
 			instances.Should().ContainSingle("nothing replaced the first instance");
@@ -303,7 +303,7 @@ public class StateNodeRestartTests
 			processor.StartGraph();
 			processor.Present();
 			processor.GraphContext.GraphVariables.SetVar("volume", -9.0);
-			processor.UpdateGraph(RetriggerAt);
+			processor.FixedUpdateGraph(RetriggerAt);
 			processor.Present();
 
 			player.Playing.Should().BeTrue("the sound is still playing either way");
@@ -336,7 +336,6 @@ public class StateNodeRestartTests
 			processor.StartGraph();
 
 			processor.FixedUpdateGraph(0.5);
-			processor.UpdateGraph(0.5);
 			processor.FixedUpdateGraph(0.5);
 
 			return entity.GlobalPosition.X;
@@ -366,7 +365,7 @@ public class StateNodeRestartTests
 			processor.Present();
 
 			player.Advance(0.4);
-			processor.UpdateGraph(0.5);
+			processor.FixedUpdateGraph(0.5);
 			processor.Present();
 
 			player.CurrentAnimation.ToString().Should().Be("swing", "the animation is still playing either way");
@@ -397,8 +396,8 @@ public class StateNodeRestartTests
 
 			// Split so the retrigger lands in a pass of its own: however the pass orders the two timers, a subgraph
 			// that started over has run for at most that last tenth of a second.
-			processor.UpdateGraph(0.4);
-			processor.UpdateGraph(0.1);
+			processor.FixedUpdateGraph(0.4);
+			processor.FixedUpdateGraph(0.1);
 
 			processor.GraphContext.GraphVariables.TryGetObject("instance", out Node? output);
 

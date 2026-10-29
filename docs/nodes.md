@@ -21,7 +21,7 @@ The central node for adding Forge system functionality to any game object.
 
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
-- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
+- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
 - **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates. Once every node has processed, the Forge bootstrap autoload calls `Abilities.PresentAbilities` on every `ForgeEntity` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. An ability one node starts and a later one ends within the same frame is never shown. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 - **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
@@ -40,6 +40,26 @@ int health = forgeEntity.Attributes["PlayerAttributes.Health"].CurrentValue;
 bool hasFireTag = forgeEntity.Tags.AllTags.HasTag(
     Tag.RequestTag(ForgeManagers.Instance.TagsManager, "element.fire"));
 ```
+
+#### Rolling an Entity Back
+
+A `ForgeEntity` can be put back as it was after an earlier physics step, like any Forge entity. `EntitySimulation.CaptureSnapshot` takes its attributes, tags, effects, abilities with their Statescript graphs, shared variables, input, random and body, and `EntitySimulation.RestoreSnapshot` puts them back without raising anything. `EntityHistory` keeps the recent steps to roll back to, and replays the ones after. See [Rollback](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md).
+
+```csharp
+EntitySnapshot snapshot = EntitySimulation.CaptureSnapshot(forgeEntity);
+
+// ...physics steps later...
+
+EntitySimulation.RestoreSnapshot(forgeEntity, snapshot);
+```
+
+What Godot adds:
+
+- **The body** comes back through its [`ForgeCharacterMovement2D` or `ForgeCharacterMovement3D`](#forgecharactermovement2d--forgecharactermovement3d): position, rotation, velocity and floor contact. Godot's physics world can't be rewound, so a replayed step moves the body against the world as it is now.
+- **What graphs do in the scene** follows the restore. Nodes that hold something there, such as a Collision Override's layers or the signal a Signal Listener watches, let go of it before the restore and take hold again after. Presentation nodes, such as Node Property Override and Play Animation, show the net change in the presentation pass at the end of the frame.
+- **Nodes outside the entity**, scenes its graphs instantiated among them, stay as they are.
+
+Take and restore snapshots between physics steps, from your own code rather than from a signal or handler the simulation raised.
 
 #### Observing an Entity from a Godot Node
 

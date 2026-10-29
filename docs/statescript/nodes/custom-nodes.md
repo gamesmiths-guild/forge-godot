@@ -104,7 +104,7 @@ State nodes are more complex because they persist over time and manage their own
 2. Create the node class that extends `StateNode<T>`.
 3. Override `OnActivate` to initialize state when the node receives a message.
 4. Override `OnDeactivate` to clean up state.
-5. Override `OnUpdate` to advance logic each frame, or `OnFixedUpdate` to advance it on each physics step. Use the fixed rail for anything that moves a body or queries the physics world, or that ends the node after a length of time it plays something for, so the result does not depend on the frame rate; use the frame rail for timers and input.
+5. Override `OnFixedUpdate` to advance logic on each physics step, or `OnUpdate` to advance it each frame. Use the fixed rail for anything that changes gameplay — counting time, moving a body, querying the physics world — so the result doesn't depend on the frame rate and comes out the same when its ticks are [replayed](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md); use the frame rail only for what follows the rendered frame, such as polling a device.
 6. Call `DeactivateNode` or `DeactivateNodeAndEmitMessage` when the node should deactivate.
 
 **Example - Cooldown State Node:**
@@ -150,7 +150,7 @@ public class CooldownNode : StateNode<CooldownNodeContext>
         // Cleanup if needed.
     }
 
-    protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+    protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
     {
         var context = graphContext.GetNodeContext<CooldownNodeContext>(NodeID);
         context.ElapsedTime += deltaTime;
@@ -368,7 +368,7 @@ public class TickingNode : StateNode<TickingNodeContext>
     {
     }
 
-    protected override void OnUpdate(double deltaTime, GraphContext graphContext)
+    protected override void OnFixedUpdate(double deltaTime, GraphContext graphContext)
     {
         var ctx = graphContext.GetNodeContext<TickingNodeContext>(NodeID);
         ctx.ElapsedTime += deltaTime;
@@ -780,7 +780,7 @@ Providers are discovered via reflection and shared as cached instances, so keep 
 4. **Use OnDeactivate for cleanup**: Any resources, effects, or state set up during `OnActivate` should be cleaned up in `OnDeactivate`.
 5. **Handle missing context gracefully**: Not all graphs are driven by abilities. Check `TryGetActivationContext` before accessing ability data.
 6. **Use EmitMessage for ongoing events, DeactivateNodeAndEmitMessage for terminal events**: This distinction is important for correct message ordering.
-7. **Test with the graph processor**: Create unit tests that build a graph, start the processor, advance time with `UpdateGraph`, and verify the expected behavior.
+7. **Test with the graph processor**: Create unit tests that build a graph, start the processor, advance time with `FixedUpdateGraph`, and verify the expected behavior.
 
 ## See Also
 

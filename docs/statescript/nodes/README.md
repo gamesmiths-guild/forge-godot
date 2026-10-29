@@ -133,9 +133,9 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 Only **State** nodes have a rail: Action and Condition nodes run the moment a message reaches them, so a one-shot `Raycast`, `Shapecast`, `Set Velocity` or `Apply Impulse` executes on whatever pass delivered it and never waits for a tick.
 
-Among the State nodes, the ones that move a body, steer an agent, or poll the physics world update on the **fixed step** — Move To, Move Body, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep and Line Of Sight, in both dimensions. Timers, the presentation nodes and the scene lifetimes stay on the **frame**, because their delta is wall-clock time. `InputActionNode` reads an entity's input on the fixed step and the local device on the frame. Collision Override sits on neither: it writes once on activation and undoes it once on deactivation.
+Among the State nodes, everything that counts time or changes gameplay updates on the **fixed step**: the timers, the nodes that move a body, steer an agent or poll the physics world — Move To, Move Body, Rotate To, Look At, Nav Move To, Force Override, Overlap, Ray, Sweep and Line Of Sight, in both dimensions — and the presentation nodes and scene lifetimes, which count how long they last in steps. `InputActionNode` reads an entity's input on the fixed step and the local device on the frame. Collision Override sits on neither: it writes once on activation and undoes it once on deactivation.
 
-The split is by what a node's delta *means*, not by what the node touches. A host that implements `IForgeEntity` itself must drive both rails; see [Ability Integration](../README.md#in-godot).
+The fixed step is the gameplay clock: a node on it lasts the same number of steps on every machine and when its ticks are [replayed](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md). A host that implements `IForgeEntity` itself must drive it; see [Ability Integration](../README.md#in-godot).
 
 ## Node Categories in the Palette
 
