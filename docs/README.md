@@ -118,6 +118,10 @@ Forge-enabled entities can be created by:
 1. Adding a ForgeEntity node as a child, or
 2. Implementing IForgeEntity on your custom node class.
 
+### Rewinding a Level
+
+A [`ForgeWorldHistory`](nodes.md#forgeworldhistory) keeps the last few seconds of every entity in a level, so the game can pause and roll the whole level back, with the entities that died or spawned meanwhile. The Rewind sample in `forge_samples/demos/04_rewind/` shows it.
+
 ### Effect and Ability Application
 
 Apply effects and activate abilities via:
