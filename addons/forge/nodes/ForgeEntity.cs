@@ -50,6 +50,14 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 	public IEntityMover? Mover { get; set; }
 
+	public IEntityStateHook? StateHook { get; set; }
+
+	/// <summary>
+	/// Gets the world history that advances this entity, or <see langword="null"/> when the entity advances in its own
+	/// physics step.
+	/// </summary>
+	public ForgeWorldHistory? WorldHistory { get; internal set; }
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
 	/// </summary>
@@ -116,7 +124,21 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._PhysicsProcess(delta);
 
-		// ForgeBootstrap already began this tick for every entity, before any entity advanced.
-		EntitySimulation.Advance(this, delta);
+		// ForgeBootstrap already began this tick for every entity, before any entity advanced. A world history advances
+		// its entities itself.
+		if (WorldHistory is null)
+		{
+			EntitySimulation.Advance(this, delta);
+		}
+	}
+
+	public override void _Notification(int what)
+	{
+		base._Notification(what);
+
+		if (what == NotificationPredelete)
+		{
+			WorldHistory?.OnEntityFreed(this);
+		}
 	}
 }
