@@ -1,0 +1,133 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://doupts1iol2yf"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://bjc7ugk07pyar" path="res://addons/forge/resources/statescript/resolvers/ScenePickerResolverResource.cs" id="5_scene"]
+[ext_resource type="Script" uid="uid://cejdt4ulsx7r1" path="res://addons/forge/resources/statescript/resolvers/EntityTransformPoint3DResolverResource.cs" id="6_transform_point"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="7_variant"]
+[ext_resource type="Script" uid="uid://1b7hhmtgee63" path="res://addons/forge/resources/statescript/resolvers/EntityRotation3DResolverResource.cs" id="8_rotation"]
+[ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="9_node_path"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="10_mtd1b"]
+[ext_resource type="PackedScene" uid="uid://d3kjqnmkupaew" path="res://forge_samples/demos/04_rewind/scenes/projectile.tscn" id="10_projectile"]
+
+[sub_resource type="Resource" id="Resource_to_commit"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_to_spawn"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_to_shot"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_to_recoil"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_commit"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Try Commit Ability"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.TryCommitAbilityNode"
+PositionOffset = Vector2(220, 200)
+CustomData = Dictionary[String, Variant]({
+"operation": "CostAndCooldown"
+})
+
+[sub_resource type="Resource" id="Resource_scene"]
+script = ExtResource("5_scene")
+Scene = ExtResource("10_projectile")
+
+[sub_resource type="Resource" id="Resource_spawn_scene"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_scene")
+
+[sub_resource type="Resource" id="Resource_cast_point_offset"]
+script = ExtResource("7_variant")
+Value = Vector3(0, 1.05, -0.7)
+ValueType = 14
+
+[sub_resource type="Resource" id="Resource_cast_point"]
+script = ExtResource("6_transform_point")
+Offset = SubResource("Resource_cast_point_offset")
+
+[sub_resource type="Resource" id="Resource_spawn_position"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_cast_point")
+
+[sub_resource type="Resource" id="Resource_caster_facing"]
+script = ExtResource("8_rotation")
+
+[sub_resource type="Resource" id="Resource_spawn_rotation"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_caster_facing")
+
+[sub_resource type="Resource" id="Resource_spawned_container"]
+script = ExtResource("9_node_path")
+NodePath = "%Spawned"
+
+[sub_resource type="Resource" id="Resource_spawn_parent"]
+script = ExtResource("3_binding")
+PropertyIndex = 4
+Resolver = SubResource("Resource_spawned_container")
+
+[sub_resource type="Resource" id="Resource_spawn"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Instantiate Scene 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
+PositionOffset = Vector2(620, 200)
+CustomData = Dictionary[String, Variant]({
+"parentMode": "Node",
+"passOwnership": false
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_spawn_scene"), SubResource("Resource_spawn_position"), SubResource("Resource_spawn_rotation"), SubResource("Resource_spawn_parent")])
+
+[sub_resource type="Resource" id="Resource_shot"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Play Audio One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
+PositionOffset = Vector2(980, 200)
+CustomData = Dictionary[String, Variant]({
+"playerPath": "ShotSfx"
+})
+
+[sub_resource type="Resource" id="Resource_recoil"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Play Animation One Shot"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAnimationOneShotNode"
+PositionOffset = Vector2(1300, 200)
+CustomData = Dictionary[String, Variant]({
+"animation": "shoot",
+"playerPath": "FxPlayer"
+})
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Projectile"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_commit"), SubResource("Resource_spawn"), SubResource("Resource_shot"), SubResource("Resource_recoil")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_commit"), SubResource("Resource_to_spawn"), SubResource("Resource_to_shot"), SubResource("Resource_to_recoil")])
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()

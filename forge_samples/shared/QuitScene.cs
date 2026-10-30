@@ -1,5 +1,8 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
+using System.Linq;
+using Gamesmiths.Forge.Godot.Core;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
@@ -39,6 +42,14 @@ public partial class QuitScene : Node
 		AddMissingAction("skill_2", KeyEvent(Key.Key2), KeyEvent(Key.Space));
 		AddMissingAction("skill_3", KeyEvent(Key.Key3));
 		AddMissingAction("interact", KeyEvent(Key.E));
+		AddMissingAction(
+			"rewind",
+			KeyEvent(Key.Backspace),
+			new InputEventMouseButton { ButtonIndex = MouseButton.Right, Device = -1 });
+
+		// The rewind demo's entities read their input through Forge's settings rather than the input map.
+		AddMissingSetting(ForgeSettings.InputActionsSetting, "skill_1", "skill_2");
+		AddMissingSetting(ForgeSettings.InputVectorsSetting, "move_left, move_right, move_up, move_down");
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -61,6 +72,17 @@ public partial class QuitScene : Node
 		foreach (InputEvent inputEvent in events)
 		{
 			InputMap.ActionAddEvent(action, inputEvent);
+		}
+	}
+
+	private static void AddMissingSetting(string setting, params string[] values)
+	{
+		string[] current = ProjectSettings.GetSetting(setting, Array.Empty<string>()).AsStringArray();
+		string[] missing = [.. values.Except(current)];
+
+		if (missing.Length > 0)
+		{
+			ProjectSettings.SetSetting(setting, (string[])[.. current, .. missing]);
 		}
 	}
 
