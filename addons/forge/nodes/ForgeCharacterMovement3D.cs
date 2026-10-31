@@ -228,7 +228,9 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 	/// <inheritdoc/>
 	public void RestoreState(in BodyState state)
 	{
-		if (_body is null)
+		// A body already where the restore puts it, as each tick of a replay ends with, keeps the contacts its last
+		// slide found, which are the ones its next slide starts from.
+		if (_body is null || CaptureState() == state)
 		{
 			return;
 		}
