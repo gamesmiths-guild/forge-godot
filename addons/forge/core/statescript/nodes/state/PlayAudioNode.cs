@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Statescript;
@@ -150,9 +151,48 @@ public class PlayAudioNode(string playerPath = "", bool stopOnDeactivate = true,
 			return null;
 		}
 
-		AudioPlayers.TryPlay(player, nodeContext.VolumeDb, nodeContext.Pitch);
+		AudioPlayers.TryPlay(
+			player,
+			nodeContext.VolumeDb,
+			nodeContext.Pitch,
+			AudioPlayers.StreamPosition(player, nodeContext.Pitch, nodeContext.ElapsedTime));
+
 		nodeContext.Playback.Player = player;
 		return nodeContext.Playback;
+	}
+
+	/// <inheritdoc/>
+	protected override bool OnPresentationRestored(GraphContext graphContext, object? presentation)
+	{
+		if (presentation is not PresentationPlayback { Player: Node player } || !GodotObject.IsInstanceValid(player))
+		{
+			return true;
+		}
+
+		// Godot plays a moment of a sound moved while its player can't process, so while the game is paused the sound
+		// waits where it is, and catches up once it can play again.
+		if (!player.CanProcess())
+		{
+			return false;
+		}
+
+		PlayAudioNodeContext nodeContext = graphContext.GetNodeContext<PlayAudioNodeContext>(NodeID);
+		double position = AudioPlayers.StreamPosition(player, nodeContext.Pitch, nodeContext.ElapsedTime);
+
+		if (!AudioPlayers.IsPlaying(player))
+		{
+			// Played out, and put back to while it still plays.
+			if (nodeContext.Duration - nodeContext.ElapsedTime > PresentationPlayback.SoundTolerance)
+			{
+				AudioPlayers.TryPlay(player, nodeContext.VolumeDb, nodeContext.Pitch, position);
+			}
+		}
+		else if (Math.Abs(AudioPlayers.PlaybackPosition(player) - position) > PresentationPlayback.SoundTolerance)
+		{
+			AudioPlayers.Seek(player, position);
+		}
+
+		return true;
 	}
 
 	/// <inheritdoc/>

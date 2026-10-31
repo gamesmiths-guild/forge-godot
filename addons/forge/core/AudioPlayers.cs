@@ -41,13 +41,7 @@ internal static class AudioPlayers
 	/// a pitch of zero; zero when the player has no stream.</returns>
 	public static double PlayLength(Node player, double? pitch)
 	{
-		AudioStream? stream = player switch
-		{
-			AudioStreamPlayer plain => plain.Stream,
-			AudioStreamPlayer2D player2D => player2D.Stream,
-			AudioStreamPlayer3D player3D => player3D.Stream,
-			_ => null,
-		};
+		AudioStream? stream = StreamOf(player);
 
 		if (stream is null)
 		{
@@ -61,13 +55,34 @@ internal static class AudioPlayers
 	}
 
 	/// <summary>
-	/// Plays a player from the start, overriding its authored volume and pitch when values are given.
+	/// Gets where in a player's stream a sound played for some time at a pitch has got to.
 	/// </summary>
+	/// <param name="player">The audio player.</param>
+	/// <param name="pitch">The pitch scale it plays at, or <see langword="null"/> for the player's own.</param>
+	/// <param name="elapsedTime">How long the sound has played, in seconds.</param>
+	/// <returns>The position in the stream, in seconds, wrapped around for a looping stream.</returns>
+	public static double StreamPosition(Node player, double? pitch, double elapsedTime)
+	{
+		AudioStream? stream = StreamOf(player);
+		double position = elapsedTime * (pitch ?? Authored(player, _pitchScale, _authoredPitchScale));
+		double length = stream?.GetLength() ?? 0;
+
+		return stream is not null && Loops(stream) && length > 0 ? position % length : position;
+	}
+
+	/// <summary>
+	/// Plays a player, overriding its authored volume and pitch when values are given.
+	/// </summary>
+	/// <remarks>
+	/// A sound started on a player that can't process, as while the tree is paused, waits for it to process again, the
+	/// way the sounds that were playing when the tree paused do.
+	/// </remarks>
 	/// <param name="player">The audio player to play.</param>
 	/// <param name="volumeDb">The volume to set, or <see langword="null"/> for the player's own.</param>
 	/// <param name="pitch">The pitch scale to set, or <see langword="null"/> for the player's own.</param>
+	/// <param name="fromPosition">Where in the stream to start, in seconds.</param>
 	/// <returns><see langword="true"/> if the node was an audio player and was played.</returns>
-	public static bool TryPlay(Node player, double? volumeDb, double? pitch)
+	public static bool TryPlay(Node player, double? volumeDb, double? pitch, double fromPosition = 0)
 	{
 		if (!IsPlayer(player))
 		{
@@ -80,34 +95,78 @@ internal static class AudioPlayers
 		switch (player)
 		{
 			case AudioStreamPlayer plain:
-				plain.Play();
-				return true;
+				plain.Play((float)fromPosition);
+				break;
 
 			case AudioStreamPlayer2D player2D:
-				player2D.Play();
-				return true;
+				player2D.Play((float)fromPosition);
+				break;
 
 			case AudioStreamPlayer3D player3D:
-				player3D.Play();
-				return true;
-
-			default:
-				return false;
+				player3D.Play((float)fromPosition);
+				break;
 		}
+
+		HoldWhilePaused(player);
+		return true;
 	}
 
 	/// <summary>
-	/// Gets whether a player is currently making sound.
+	/// Moves a playing player's sound to a position in its stream.
 	/// </summary>
+	/// <param name="player">The audio player.</param>
+	/// <param name="position">The position, in seconds.</param>
+	public static void Seek(Node player, double position)
+	{
+		switch (player)
+		{
+			case AudioStreamPlayer plain:
+				plain.Seek((float)position);
+				break;
+
+			case AudioStreamPlayer2D player2D:
+				player2D.Seek((float)position);
+				break;
+
+			case AudioStreamPlayer3D player3D:
+				player3D.Seek((float)position);
+				break;
+		}
+
+		HoldWhilePaused(player);
+	}
+
+	/// <summary>
+	/// Gets where in its stream a player's sound is playing.
+	/// </summary>
+	/// <param name="player">The audio player.</param>
+	/// <returns>The position, in seconds.</returns>
+	public static double PlaybackPosition(Node player)
+	{
+		return player switch
+		{
+			AudioStreamPlayer plain => plain.GetPlaybackPosition(),
+			AudioStreamPlayer2D player2D => player2D.GetPlaybackPosition(),
+			AudioStreamPlayer3D player3D => player3D.GetPlaybackPosition(),
+			_ => 0,
+		};
+	}
+
+	/// <summary>
+	/// Gets whether a player has a sound going, playing or held while it can't process.
+	/// </summary>
+	/// <remarks>
+	/// Godot counts a held sound as not playing, though it plays on once the player processes again.
+	/// </remarks>
 	/// <param name="player">The audio player to check.</param>
-	/// <returns><see langword="true"/> if the node is an audio player and is playing.</returns>
+	/// <returns><see langword="true"/> if the node is an audio player with a sound going.</returns>
 	public static bool IsPlaying(Node player)
 	{
 		return player switch
 		{
-			AudioStreamPlayer plain => plain.Playing,
-			AudioStreamPlayer2D player2D => player2D.Playing,
-			AudioStreamPlayer3D player3D => player3D.Playing,
+			AudioStreamPlayer plain => plain.Playing || plain.StreamPaused,
+			AudioStreamPlayer2D player2D => player2D.Playing || player2D.StreamPaused,
+			AudioStreamPlayer3D player3D => player3D.Playing || player3D.StreamPaused,
 			_ => false,
 		};
 	}
@@ -130,6 +189,42 @@ internal static class AudioPlayers
 
 			case AudioStreamPlayer3D player3D:
 				player3D.Stop();
+				break;
+		}
+	}
+
+	private static AudioStream? StreamOf(Node player)
+	{
+		return player switch
+		{
+			AudioStreamPlayer plain => plain.Stream,
+			AudioStreamPlayer2D player2D => player2D.Stream,
+			AudioStreamPlayer3D player3D => player3D.Stream,
+			_ => null,
+		};
+	}
+
+	// Godot starts a sound even on a player that can't process, and resumes the paused ones once it can again, so a
+	// sound started or moved then is paused at once to wait with them.
+	private static void HoldWhilePaused(Node player)
+	{
+		if (player.CanProcess())
+		{
+			return;
+		}
+
+		switch (player)
+		{
+			case AudioStreamPlayer plain:
+				plain.StreamPaused = true;
+				break;
+
+			case AudioStreamPlayer2D player2D:
+				player2D.StreamPaused = true;
+				break;
+
+			case AudioStreamPlayer3D player3D:
+				player3D.StreamPaused = true;
 				break;
 		}
 	}

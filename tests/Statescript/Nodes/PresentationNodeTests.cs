@@ -549,6 +549,115 @@ public class PresentationNodeTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_animation_presented_part_way_through_shows_the_pose_it_is_at()
+	{
+		var entity = new TestEntity3D();
+		AnimationPlayer player = AddPlayer(entity, length: 1.0f);
+		Root.AddChild(entity);
+
+		try
+		{
+			GraphProcessor processor = Start(entity, PlayNode(), speed: 2.0);
+			processor.FixedUpdateGraph(0.125);
+			processor.Present();
+
+			player.CurrentAnimationPosition.Should().BeApproximately(0.25, 1e-6, "an eighth of a second at double speed");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_animation_a_restore_kept_running_seeks_to_where_the_activation_is()
+	{
+		var entity = new TestEntity3D();
+		AnimationPlayer player = AddPlayer(entity, length: 1.0f);
+		Root.AddChild(entity);
+
+		try
+		{
+			GraphProcessor processor = Start(entity, PlayNode());
+			processor.Present();
+			processor.FixedUpdateGraph(0.25);
+			GraphSnapshot quarter = processor.CaptureSnapshot();
+			processor.FixedUpdateGraph(0.5);
+
+			processor.RestoreSnapshot(quarter);
+			processor.Present();
+
+			player.CurrentAnimationPosition.Should().BeApproximately(0.25, 1e-6);
+			player.CurrentAnimation.ToString().Should().Be("swing", "it's the same activation, not played again");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_sound_started_on_a_player_that_cannot_process_waits_paused()
+	{
+		var entity = new TestEntity3D();
+		AudioStreamPlayer player = AddSound(entity, seconds: 1.0);
+		player.ProcessMode = Node.ProcessModeEnum.Disabled;
+		Root.AddChild(entity);
+
+		try
+		{
+			var play = new PlayAudioNode();
+			play.BindInput(PlayAudioNode.EntityInput, "entity");
+			GraphProcessor processor = Start(entity, play);
+			processor.Present();
+
+			player.StreamPaused.Should().BeTrue("it waits for the game to go on");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_sound_a_restore_kept_running_catches_up_once_its_player_can_play()
+	{
+		var entity = new TestEntity3D();
+		AudioStreamPlayer player = AddSound(entity, seconds: 1.0);
+		Root.AddChild(entity);
+
+		try
+		{
+			var play = new PlayAudioNode();
+			play.BindInput(PlayAudioNode.EntityInput, "entity");
+			GraphProcessor processor = Start(entity, play);
+			processor.Present();
+			processor.FixedUpdateGraph(0.5);
+			GraphSnapshot half = processor.CaptureSnapshot();
+			processor.FixedUpdateGraph(0.25);
+
+			player.ProcessMode = Node.ProcessModeEnum.Disabled;
+			processor.RestoreSnapshot(half);
+			processor.Present();
+
+			player.GetPlaybackPosition().Should().BeLessThan(0.1f, "a sound is left where it is while its player can't play");
+
+			player.ProcessMode = Node.ProcessModeEnum.Inherit;
+			processor.Present();
+
+			player.GetPlaybackPosition().Should().BeApproximately(0.5f, 0.05f, "it caught up once it could play");
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
 	private static PlayAnimationNode PlayNode()
 	{
 		var play = new PlayAnimationNode(animation: "swing");
