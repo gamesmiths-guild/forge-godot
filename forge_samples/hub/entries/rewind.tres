@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DemoEntry" format=3 uid="uid://5oi1rh0ujc2s"]
+
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="PackedScene" uid="uid://m6dhggzk8l2g" path="res://forge_samples/demos/04_rewind/scenes/rewind_level.tscn" id="2_level"]
+
+[resource]
+script = ExtResource("1_entry")
+Title = "Rewind"
+Tagline = "Pause the fight, drag it back up to five seconds, and play on from any moment."
+Blurb = "A small arena where every bit of gameplay state lives in Forge, so a ForgeWorldHistory can roll the whole world back together. Catch fire at the bonfire, spread it to the enemies, and watch them burn. Then pause, drag the timeline back past a death and the spawn that replaced it, drag it forward again, and resume from wherever the needle stands.
+
+Movement is WASD or the arrow keys, left click shoots, and Space dashes toward the mouse. Backspace or right click pauses and shows the timeline, and pressing it again resumes from the tick shown."
+Highlights = Array[String](["World history - one node keeps five seconds of every entity in the level and rolls them back as one", "Limbo - an enemy that dies is hidden and kept rather than freed, so rewinding brings it back", "Spawns - the replacement enemy goes back into limbo when the timeline is dragged before it appeared", "Projectiles - each shot is an entity of its own, so a rewind takes back a shot in flight and the hit it landed", "Fire that spreads - a graph on everything burning sets alight whatever it touches", "Live readout - the snapshots held, about how much memory they take, and how long a tick takes to capture"])
+Scene = ExtResource("2_level")
+Accent = Color(0.384314, 0.639216, 1, 1)

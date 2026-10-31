@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
+using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Godot;
@@ -12,9 +13,11 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// Action node that frees a node from the scene.
 /// </summary>
 /// <remarks>
-/// The free is queued rather than immediate, which is what makes it safe to call on something mid-signal or
+/// <para>The free is queued rather than immediate, which is what makes it safe to call on something mid-signal or
 /// mid-physics. A node that has already been freed is ignored rather than reported, since a graph reaching this twice,
-/// or racing something else that frees the same node, is ordinary rather than a mistake.
+/// or racing something else that frees the same node, is ordinary rather than a mistake.</para>
+/// <para>The node an entity of a <see cref="ForgeWorldHistory"/> lives on goes to limbo instead of being freed, so
+/// rolling the world back brings the entity back.</para>
 /// </remarks>
 [StatescriptCategory("Scene")]
 public sealed class QueueFreeNode : ActionNode
@@ -40,7 +43,35 @@ public sealed class QueueFreeNode : ActionNode
 			&& node is not null
 			&& GodotObject.IsInstanceValid(node))
 		{
+			if (FindEntityLivingOn(node) is ForgeEntity { WorldHistory: ForgeWorldHistory worldHistory } forgeEntity
+				&& ForgeEntityBridge.TryGetOwningNode(forgeEntity, null, out Node? owningNode)
+				&& owningNode == node)
+			{
+				worldHistory.Despawn(forgeEntity);
+				return;
+			}
+
 			node.QueueFree();
 		}
+	}
+
+	// An entity lives on its nearest spatial ancestor, so the one living on a node is the node itself or is found below
+	// it through children that aren't spatial.
+	private static ForgeEntity? FindEntityLivingOn(Node node)
+	{
+		if (node is ForgeEntity entity)
+		{
+			return entity;
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			if (child is not (Node2D or Node3D) && FindEntityLivingOn(child) is ForgeEntity found)
+			{
+				return found;
+			}
+		}
+
+		return null;
 	}
 }

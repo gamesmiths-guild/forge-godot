@@ -21,7 +21,7 @@ The central node for adding Forge system functionality to any game object.
 
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
-- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md).
+- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md). An entity a [`ForgeWorldHistory`](#forgeworldhistory) keeps is begun and advanced by it instead.
 - **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates. Once every node has processed, the Forge bootstrap autoload calls `Abilities.PresentAbilities` on every `ForgeEntity` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. An ability one node starts and a later one ends within the same frame is never shown. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 - **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
@@ -60,6 +60,8 @@ What Godot adds:
 - **Nodes outside the entity**, scenes its graphs instantiated among them, stay as they are.
 
 Take and restore snapshots between physics steps, from your own code rather than from a signal or handler the simulation raised.
+
+To roll a whole level back together, with the entities that died or were spawned since, add a [`ForgeWorldHistory`](#forgeworldhistory). State a node keeps outside Forge can join the entity's snapshots through the entity's `StateHook`; see [State outside Forge](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#state-outside-forge).
 
 #### Observing an Entity from a Godot Node
 
@@ -177,6 +179,8 @@ Every physics step, before any other node's, it submits one frame:
 - **Presses and releases** are caught from unhandled input as they arrive. A press the interface consumes never reaches the game, not even as held, until it is let go. A tap shorter than a physics step still counts as a press and a release.
 - **Held actions, vectors and the aim** are sampled when the step begins. A vector comes from `Input.GetVector` over its four actions, so a stick and four keys behave the same.
 
+- **Pausing the tree** drops the presses and releases caught but not yet sent, and on resuming the collector reads what is held afresh: a button held through the pause, or pushed during it, is held without a press.
+
 When the collector leaves the tree it submits an empty frame, so nothing it held stays held.
 
 Abilities whose `ForgeAbilityData` names an input action activate from it, and the input nodes and resolvers read it through their **Input Source**. See [Input is read from the Input Source](statescript/nodes/input-action-node.md#input-is-read-from-the-input-source).
@@ -223,6 +227,51 @@ Player (CharacterBody3D)
     ├── ForgeAttributeSet          AttributeSetClass = MovementAttributes
     ├── ForgeInputCollector        AimSource = MouseGround3D
     └── ForgeCharacterMovement3D   SpeedAttribute = MovementAttributes.Speed, FaceAim = on
+```
+
+### ForgeWorldHistory
+
+Keeps the recent physics steps of every `ForgeEntity` under its parent, so the game can pause and roll the whole level back together.
+
+**Properties:**
+
+- `HistorySeconds` (double): How far back the level can be rolled, in seconds. The default is 5.
+
+**Description:**
+
+Add it to a level, under the node the level's entities live under. On ready it takes every `ForgeEntity` under its parent, and entities spawned there later join as they become ready. An entity moved out from under its parent leaves the history, and can join another; a history taken out of the tree and put back takes its entities back and starts over. From then on it runs them through a core [`WorldHistory`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#world-history):
+
+- **Each physics step**, right after the input collectors, it begins every entity's tick, advances each in the order they joined, and records the step. An entity whose processing is off, by its own physics step or a disabled ancestor, isn't advanced but is still recorded. `ForgeBootstrap` and the entities' own physics steps leave its entities alone. The history numbers the steps itself, so they carry on from a step rolled back to.
+- **An entity that dies goes to limbo** instead of being freed. The [Queue Free](statescript/nodes/scene-nodes.md#queue-free) node on the node an entity lives on, or `Despawn(entity)` from code, takes it out of the world: its node leaves processing, physics and visibility, and is freed once no step held has it. An entity freed any other way can't come back, so the history forgets it and warns.
+- **`Seek(tick)`** shows the level as a step held left it: every entity in it then is restored, entities that died since come back from limbo, and entities spawned since go there. Bodies are put in place without interpolating.
+
+Pause the tree to stop the level. The node pauses with it, so the level always stops between two steps. While paused, seek to any step from `History.OldestTick` to `History.NewestTick`, back or forward, as often as needed. Unpausing continues from the step shown: the steps after it are left behind, the entities spawned in them are freed, and the ones that died in them live on. The first physics step after a seek records nothing, which lets the physics server catch up with the bodies the seek put back before a step queries them.
+
+Everything the level must bring back lives in Forge: attributes, tags, effects, abilities and their graphs, shared variables, input, and the bodies the movement components move. A script's own fields stay as they are, unless they go through the entity's `StateHook`. On screen, graph presentation nodes show the restored state in the next presentation pass, and views that read Forge state every frame, rather than waiting for change events, show it straight away. A cue an effect started stays shown when a rollback takes the effect away.
+
+`LastRecordTime` and `LastRecordBytes` say what recording the last step cost, for a readout like the Rewind sample's.
+
+**Usage:**
+
+```text
+Level (Node3D)
+├── Player (CharacterBody3D)
+│   └── ForgeEntity ...
+├── Spawned (Node3D)
+│   └── Enemy (CharacterBody3D)
+│       └── ForgeEntity ...
+└── ForgeWorldHistory              HistorySeconds = 5
+```
+
+```csharp
+// From a pause menu that keeps processing while the tree is paused.
+GetTree().Paused = true;
+
+// One second back, at 60 physics steps per second.
+worldHistory.Seek(worldHistory.History.NewestTick!.Value - 60);
+
+// Carries on from there.
+GetTree().Paused = false;
 ```
 
 ### ForgeAttributeSet

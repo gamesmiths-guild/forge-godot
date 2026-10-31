@@ -1,0 +1,200 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://2s600d7tr0gm"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="6_variable"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="7_variant"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="8_owner"]
+[ext_resource type="Script" uid="uid://c3hb4x0majsfa" path="res://addons/forge/resources/statescript/resolvers/ComparisonResolverResource.cs" id="9_comparison"]
+[ext_resource type="Script" uid="uid://bjc7ugk07pyar" path="res://addons/forge/resources/statescript/resolvers/ScenePickerResolverResource.cs" id="10_scene"]
+[ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="11_node_path"]
+[ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="12_tag"]
+[ext_resource type="Script" uid="uid://7wnn3h38rl5q" path="res://addons/forge/resources/statescript/resolvers/EntityAtPathResolverResource.cs" id="13_entity_at_path"]
+[ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="14_node_from_entity"]
+[ext_resource type="PackedScene" uid="uid://y6dw4xnr8s7x" path="res://forge_samples/demos/03_statescript/scenes/vfx/death_burst.tscn" id="15_death_burst"]
+
+[sub_resource type="Resource" id="Resource_to_listener"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_to_check"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+OutputPort = 4
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_to_burst"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_to_tell"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_to_despawn"]
+script = ExtResource("4_connection")
+FromNode = "node_4"
+ToNode = "node_5"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_health_entity"]
+script = ExtResource("8_owner")
+
+[sub_resource type="Resource" id="Resource_health_entity_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_health_entity")
+
+[sub_resource type="Resource" id="Resource_health_output"]
+script = ExtResource("6_variable")
+VariableName = "health"
+
+[sub_resource type="Resource" id="Resource_health_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_health_output")
+
+[sub_resource type="Resource" id="Resource_health_listener"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Attribute Listener"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.AttributeListenerNode"
+PositionOffset = Vector2(300, 200)
+CustomData = Dictionary[String, Variant]({
+"attributeKey": "CharacterAttributes.Health"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_health_entity_binding"), SubResource("Resource_health_output_binding")])
+
+[sub_resource type="Resource" id="Resource_health_value"]
+script = ExtResource("6_variable")
+VariableName = "health"
+
+[sub_resource type="Resource" id="Resource_zero"]
+script = ExtResource("7_variant")
+Value = 0
+ValueType = 7
+
+[sub_resource type="Resource" id="Resource_dead"]
+script = ExtResource("9_comparison")
+Left = SubResource("Resource_health_value")
+Operation = 3
+Right = SubResource("Resource_zero")
+
+[sub_resource type="Resource" id="Resource_dead_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_dead")
+
+[sub_resource type="Resource" id="Resource_is_dead"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Expression"
+NodeType = 3
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.ExpressionNode"
+PositionOffset = Vector2(640, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_dead_binding")])
+
+[sub_resource type="Resource" id="Resource_burst_scene"]
+script = ExtResource("10_scene")
+Scene = ExtResource("15_death_burst")
+
+[sub_resource type="Resource" id="Resource_burst_scene_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_burst_scene")
+
+[sub_resource type="Resource" id="Resource_burst_container"]
+script = ExtResource("11_node_path")
+NodePath = "%Spawned"
+
+[sub_resource type="Resource" id="Resource_burst_parent_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 4
+Resolver = SubResource("Resource_burst_container")
+
+[sub_resource type="Resource" id="Resource_death_burst"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Instantiate Scene 3D"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
+PositionOffset = Vector2(960, 200)
+CustomData = Dictionary[String, Variant]({
+"parentMode": "Node",
+"passOwnership": false
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_burst_scene_binding"), SubResource("Resource_burst_parent_binding")])
+
+[sub_resource type="Resource" id="Resource_death_tags"]
+script = ExtResource("12_tag")
+Tags = Array[String](["event.death"])
+
+[sub_resource type="Resource" id="Resource_death_tags_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_death_tags")
+
+[sub_resource type="Resource" id="Resource_spawner"]
+script = ExtResource("13_entity_at_path")
+NodePath = "%Spawner"
+
+[sub_resource type="Resource" id="Resource_spawner_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_spawner")
+
+[sub_resource type="Resource" id="Resource_dv2sr"]
+script = ExtResource("7_variant")
+Value = 0.0
+
+[sub_resource type="Resource" id="Resource_5bfo8"]
+script = ExtResource("3_binding")
+PropertyIndex = 3
+Resolver = SubResource("Resource_dv2sr")
+
+[sub_resource type="Resource" id="Resource_tell_spawner"]
+script = ExtResource("2_node")
+NodeId = "node_4"
+Title = "Raise Event"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.RaiseEventNode"
+PositionOffset = Vector2(1300, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_death_tags_binding"), SubResource("Resource_spawner_binding"), SubResource("Resource_5bfo8")])
+
+[sub_resource type="Resource" id="Resource_own_node"]
+script = ExtResource("14_node_from_entity")
+
+[sub_resource type="Resource" id="Resource_own_node_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_own_node")
+
+[sub_resource type="Resource" id="Resource_despawn"]
+script = ExtResource("2_node")
+NodeId = "node_5"
+Title = "Queue Free"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.QueueFreeNode"
+PositionOffset = Vector2(1640, 200)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_own_node_binding")])
+
+[sub_resource type="Resource" id="Resource_health_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "health"
+InitialValue = 100
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Enemy Death"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_health_listener"), SubResource("Resource_is_dead"), SubResource("Resource_death_burst"), SubResource("Resource_tell_spawner"), SubResource("Resource_despawn")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_listener"), SubResource("Resource_to_check"), SubResource("Resource_to_burst"), SubResource("Resource_to_tell"), SubResource("Resource_to_despawn")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_health_variable")])
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()

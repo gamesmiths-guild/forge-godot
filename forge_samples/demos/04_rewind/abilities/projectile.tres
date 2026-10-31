@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://bo310w5aprvai"]
+
+[ext_resource type="Resource" uid="uid://f3qvdu866wvj" path="res://forge_samples/demos/03_statescript/abilities/player/projectile_cooldown.tres" id="1_cooldown"]
+[ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="2_behavior"]
+[ext_resource type="Resource" uid="uid://doupts1iol2yf" path="res://forge_samples/demos/04_rewind/graphs/projectile.tres" id="3_graph"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="4_ability"]
+
+[sub_resource type="Resource" id="Resource_behavior"]
+script = ExtResource("2_behavior")
+Statescript = ExtResource("3_graph")
+metadata/_custom_type_script = "uid://dapjjbxrv801t"
+
+[resource]
+script = ExtResource("4_ability")
+Name = "Projectile"
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("1_cooldown")]
+AbilityBehavior = SubResource("Resource_behavior")
+InputAction = "skill_1"
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

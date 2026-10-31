@@ -1,0 +1,269 @@
+[gd_scene format=3 uid="uid://m6dhgg0k8l2g"]
+
+[ext_resource type="Environment" uid="uid://curphkq8itbej" path="res://forge_samples/demos/03_statescript/materials/environment.tres" id="1_environment"]
+[ext_resource type="Material" uid="uid://bfepc7hp0hd8h" path="res://forge_samples/demos/03_statescript/materials/ground.tres" id="2_ground"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="3_stone"]
+[ext_resource type="PackedScene" uid="uid://40a83p5usycy" path="res://forge_samples/demos/04_rewind/scenes/bonfire.tscn" id="4_bonfire"]
+[ext_resource type="PackedScene" uid="uid://vefuiuoh44x8" path="res://forge_samples/demos/04_rewind/scenes/player.tscn" id="5_player"]
+[ext_resource type="PackedScene" uid="uid://x7aeul1flxq6" path="res://forge_samples/demos/04_rewind/scenes/enemy.tscn" id="6_enemy"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="7_entity"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="8_effect"]
+[ext_resource type="Resource" uid="uid://oqm0b57dw2p" path="res://forge_samples/demos/04_rewind/abilities/spawner_grants.tres" id="9_spawner_grants"]
+[ext_resource type="Script" uid="uid://cjxvisddjj00" path="res://addons/forge/nodes/ForgeWorldHistory.cs" id="10_world_history"]
+[ext_resource type="Script" uid="uid://63vjefnnvydj" path="res://forge_samples/demos/04_rewind/scripts/RewindTimeline.cs" id="11_timeline"]
+[ext_resource type="PackedScene" uid="uid://bgw7wp5ey33l4" path="res://forge_samples/demos/03_statescript/scenes/props/tree.tscn" id="12_tree"]
+[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://forge_samples/demos/01_realtime_3d/scripts/FloatingTextCueHandler3D.cs" id="13_floating_cue"]
+[ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://forge_samples/demos/01_realtime_3d/scenes/3d_floating_text.tscn" id="14_floating_text"]
+[ext_resource type="Script" uid="uid://4r6wjmvrq18e" path="res://forge_samples/demos/03_statescript/scripts/HitFlashCueHandler3D.cs" id="15_flash_cue"]
+[ext_resource type="Material" uid="uid://mkfty8mek62t" path="res://forge_samples/demos/03_statescript/materials/burn_flash.tres" id="16_burn_flash"]
+[ext_resource type="Script" uid="uid://bxw5ax6u4m82n" path="res://addons/forge/nodes/AudioCueHandler.cs" id="17_audio_cue"]
+[ext_resource type="AudioStream" uid="uid://fe2dybr470eu" path="res://forge_samples/shared/audio/hit.ogg" id="18_hit_sfx"]
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://forge_samples/shared/QuitScene.cs" id="19_quit"]
+[ext_resource type="Material" uid="uid://slep1ateetaq" path="res://forge_samples/demos/03_statescript/materials/hit_flash.tres" id="20_hit_flash"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(24, 1, 24)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+size = Vector3(24, 1, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_x"]
+size = Vector3(25, 2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_x"]
+size = Vector3(25, 2, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wall_z"]
+size = Vector3(1, 2, 23)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_z"]
+size = Vector3(1, 2, 23)
+
+[sub_resource type="Curve" id="Curve_burn_gain"]
+_data = [Vector2(0, 0.35000008), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0, 0, 0, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="RewindLevel" type="Node3D" unique_id=329882475]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=313522204]
+environment = ExtResource("1_environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=795101304]
+transform = Transform3D(0.866025, 0.286788, 0.409576, 0, 0.819152, -0.573576, -0.5, 0.496732, 0.709406, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Camera" type="Camera3D" parent="." unique_id=745789221]
+transform = Transform3D(1, 0, 0, 0, 0.607, 0.794, 0, -0.794, 0.607, 0, 17, 13)
+current = true
+fov = 50.0
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=27197538]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Ground" unique_id=1724150737]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground" unique_id=1518826521]
+mesh = SubResource("BoxMesh_ground")
+surface_material_override/0 = ExtResource("2_ground")
+
+[node name="Walls" type="StaticBody3D" parent="." unique_id=1975501591]
+
+[node name="North" type="CollisionShape3D" parent="Walls" unique_id=1091873870]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -12)
+shape = SubResource("BoxShape3D_wall_x")
+
+[node name="NorthMesh" type="MeshInstance3D" parent="Walls" unique_id=642702795]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -12)
+mesh = SubResource("BoxMesh_wall_x")
+surface_material_override/0 = ExtResource("3_stone")
+
+[node name="South" type="CollisionShape3D" parent="Walls" unique_id=2043917172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 12)
+shape = SubResource("BoxShape3D_wall_x")
+
+[node name="SouthMesh" type="MeshInstance3D" parent="Walls" unique_id=1000576024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 12)
+mesh = SubResource("BoxMesh_wall_x")
+surface_material_override/0 = ExtResource("3_stone")
+
+[node name="West" type="CollisionShape3D" parent="Walls" unique_id=1078273962]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, 0)
+shape = SubResource("BoxShape3D_wall_z")
+
+[node name="WestMesh" type="MeshInstance3D" parent="Walls" unique_id=56193999]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, 0)
+mesh = SubResource("BoxMesh_wall_z")
+surface_material_override/0 = ExtResource("3_stone")
+
+[node name="East" type="CollisionShape3D" parent="Walls" unique_id=150516378]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1, 0)
+shape = SubResource("BoxShape3D_wall_z")
+
+[node name="EastMesh" type="MeshInstance3D" parent="Walls" unique_id=1004207209]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1, 0)
+mesh = SubResource("BoxMesh_wall_z")
+surface_material_override/0 = ExtResource("3_stone")
+
+[node name="Bonfire" parent="." unique_id=1629258375 instance=ExtResource("4_bonfire")]
+
+[node name="Player" parent="." unique_id=1339020769 instance=ExtResource("5_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="Spawner" type="Node3D" parent="." unique_id=556845264]
+unique_name_in_owner = true
+
+[node name="Forge Entity" type="Node" parent="Spawner" unique_id=750754891]
+script = ExtResource("7_entity")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Grant Abilities" type="Node" parent="Spawner/Forge Entity" unique_id=654020988]
+script = ExtResource("8_effect")
+EffectData = ExtResource("9_spawner_grants")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Spawned" type="Node3D" parent="." unique_id=1315370861]
+unique_name_in_owner = true
+
+[node name="Enemy1" parent="Spawned" unique_id=1185959618 instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -6)
+
+[node name="Enemy2" parent="Spawned" unique_id=1518501437 instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, -6)
+
+[node name="Enemy3" parent="Spawned" unique_id=601635143 instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -9)
+
+[node name="SpawnPoints" type="Node3D" parent="." unique_id=770757505]
+
+[node name="NorthWest" type="Marker3D" parent="SpawnPoints" unique_id=593039845 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -9)
+
+[node name="NorthEast" type="Marker3D" parent="SpawnPoints" unique_id=1318729950 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, -9)
+
+[node name="SouthWest" type="Marker3D" parent="SpawnPoints" unique_id=1759093326 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 9)
+
+[node name="SouthEast" type="Marker3D" parent="SpawnPoints" unique_id=1518872374 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 9)
+
+[node name="Trees" type="Node3D" parent="." unique_id=1766546487]
+
+[node name="Tree1" parent="Trees" unique_id=646081268 instance=ExtResource("12_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -14)
+
+[node name="Tree2" parent="Trees" unique_id=1097664183 instance=ExtResource("12_tree")]
+transform = Transform3D(0.7659215, 0, 0.6429341, 0, 1, 0, -0.6429341, 0, 0.7659215, -4, 0, -16)
+
+[node name="Tree3" parent="Trees" unique_id=1598279408 instance=ExtResource("12_tree")]
+transform = Transform3D(0.34190366, 0, -0.939735, 0, 1, 0, 0.939735, 0, 0.34190366, 9, 0, -15)
+
+[node name="Tree4" parent="Trees" unique_id=2000143388 instance=ExtResource("12_tree")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, -3)
+
+[node name="Tree5" parent="Trees" unique_id=2114737923 instance=ExtResource("12_tree")]
+transform = Transform3D(-0.34190363, 0, 0.93973505, 0, 1, 0, -0.93973505, 0, -0.34190363, -16, 0, 4)
+
+[node name="FloatingText Cues" type="Node" parent="." unique_id=2118396432]
+script = ExtResource("13_floating_cue")
+FloatingTextScene = ExtResource("14_floating_text")
+CueTag = "cue.floating.text"
+
+[node name="BurnFlash Cues" type="Node" parent="." unique_id=89206714]
+script = ExtResource("15_flash_cue")
+FlashMaterial = ExtResource("16_burn_flash")
+Duration = 0.12
+CueTag = "cue.vfx.burn"
+
+[node name="HitFlash Cues" type="Node" parent="." unique_id=1915915254]
+script = ExtResource("15_flash_cue")
+FlashMaterial = ExtResource("20_hit_flash")
+Duration = 0.15
+CueTag = "cue.vfx.hit"
+
+[node name="Burn SFX" type="Node" parent="." unique_id=1517326186]
+script = ExtResource("17_audio_cue")
+Stream = ExtResource("18_hit_sfx")
+PlayOnApply = false
+MagnitudeCurve = SubResource("Curve_burn_gain")
+CueTag = "cue.sfx.burn"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Hit SFX" type="Node" parent="." unique_id=655891199]
+script = ExtResource("17_audio_cue")
+Stream = ExtResource("18_hit_sfx")
+CueTag = "cue.sfx.hit"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="QuitScene" type="Node" parent="." unique_id=1171445251]
+process_mode = 3
+script = ExtResource("19_quit")
+
+[node name="World History" type="Node" parent="." unique_id=1422315577]
+script = ExtResource("10_world_history")
+metadata/_custom_type_script = "uid://cjxvisddjj00"
+
+[node name="Rewind" type="CanvasLayer" parent="." unique_id=969102207 node_paths=PackedStringArray("WorldHistory", "Panel", "Timeline", "TimeLabel", "CostLabel")]
+script = ExtResource("11_timeline")
+WorldHistory = NodePath("../World History")
+Panel = NodePath("Panel")
+Timeline = NodePath("Panel/Rows/Timeline")
+TimeLabel = NodePath("Panel/Rows/Time")
+CostLabel = NodePath("Cost")
+
+[node name="Cost" type="Label" parent="Rewind" unique_id=1874789528]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 616.0
+offset_bottom = 35.0
+text = "0 snapshots held"
+
+[node name="Help" type="Label" parent="Rewind" unique_id=153410292]
+offset_left = 16.0
+offset_top = 40.0
+offset_right = 616.0
+offset_bottom = 86.0
+text = "WASD to walk, left click to shoot, Space to dash toward the mouse
+Backspace or right click to pause and rewind, Esc for the hub"
+
+[node name="Panel" type="PanelContainer" parent="Rewind" unique_id=1359510610]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -112.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="Rewind/Panel" unique_id=1673939250]
+layout_mode = 2
+
+[node name="Time" type="Label" parent="Rewind/Panel/Rows" unique_id=1744745315]
+layout_mode = 2
+text = "0.00 s back"
+horizontal_alignment = 1
+
+[node name="Timeline" type="HSlider" parent="Rewind/Panel/Rows" unique_id=1226725168]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+
+[node name="Hint" type="Label" parent="Rewind/Panel/Rows" unique_id=1167804357]
+layout_mode = 2
+text = "Drag the needle, or use the arrow keys, to go back. Backspace or right click resumes from the tick shown."
+horizontal_alignment = 1

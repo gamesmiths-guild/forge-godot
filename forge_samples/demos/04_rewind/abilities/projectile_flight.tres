@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://blt43t2drk3tr"]
+
+[ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="1_behavior"]
+[ext_resource type="Resource" uid="uid://cpr4sasmntsnb" path="res://forge_samples/demos/04_rewind/graphs/projectile_flight.tres" id="2_graph"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="3_tag"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="4_tags"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_ability"]
+
+[sub_resource type="Resource" id="Resource_behavior"]
+script = ExtResource("1_behavior")
+Statescript = ExtResource("2_graph")
+metadata/_custom_type_script = "uid://dapjjbxrv801t"
+
+[sub_resource type="Resource" id="Resource_owned_tags"]
+script = ExtResource("4_tags")
+ContainerTags = Array[String](["movement.block"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_trigger_tag"]
+script = ExtResource("3_tag")
+Tag = "state.awake"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[resource]
+script = ExtResource("5_ability")
+Name = "Projectile Flight"
+CooldownEffects = []
+AbilityBehavior = SubResource("Resource_behavior")
+TriggerSource = 3
+TriggerTag = SubResource("Resource_trigger_tag")
+ActivationOwnedTags = SubResource("Resource_owned_tags")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

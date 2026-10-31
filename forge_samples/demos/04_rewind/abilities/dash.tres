@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://5afgj4d6q1i4"]
+
+[ext_resource type="Resource" uid="uid://v3b0vpysninn" path="res://forge_samples/demos/03_statescript/abilities/player/dash_cooldown.tres" id="1_cooldown"]
+[ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="2_behavior"]
+[ext_resource type="Resource" uid="uid://1yjpinwh7aex" path="res://forge_samples/demos/03_statescript/graphs/dash.tres" id="3_graph"]
+[ext_resource type="Script" uid="uid://cvb8xdfj1djoi" path="res://addons/forge/resources/abilities/AimInputActivationData.cs" id="4_aim"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_tags"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="6_ability"]
+
+[sub_resource type="Resource" id="Resource_behavior"]
+script = ExtResource("2_behavior")
+Statescript = ExtResource("3_graph")
+metadata/_custom_type_script = "uid://dapjjbxrv801t"
+
+[sub_resource type="Resource" id="Resource_owned_tags"]
+script = ExtResource("5_tags")
+ContainerTags = Array[String](["movement.block"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_aim"]
+script = ExtResource("4_aim")
+metadata/_custom_type_script = "uid://cvb8xdfj1djoi"
+
+[resource]
+script = ExtResource("6_ability")
+Name = "Dash"
+RetriggerInstancedAbility = true
+CooldownEffects = [ExtResource("1_cooldown")]
+AbilityBehavior = SubResource("Resource_behavior")
+InputAction = "skill_2"
+InputActivationData = SubResource("Resource_aim")
+ActivationOwnedTags = SubResource("Resource_owned_tags")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

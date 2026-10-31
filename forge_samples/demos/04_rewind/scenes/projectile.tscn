@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://d3kjqnmkupaew"]
+
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="1_entity"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="2_effect"]
+[ext_resource type="Resource" uid="uid://bsfvro5ageh0y" path="res://forge_samples/demos/04_rewind/abilities/projectile_grants.tres" id="3_grants"]
+[ext_resource type="Script" uid="uid://bu2rl26hcxgv1" path="res://addons/forge/nodes/ForgeCharacterMovement3D.cs" id="4_movement"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_tags"]
+
+[sub_resource type="Resource" id="Resource_blocking_tags"]
+script = ExtResource("5_tags")
+ContainerTags = Array[String](["movement.block"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_body"]
+radius = 0.3
+
+[sub_resource type="SphereMesh" id="SphereMesh_body"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.9019608, 0.7647059, 0, 1)
+roughness = 0.6
+
+[node name="Projectile" type="CharacterBody3D"]
+collision_layer = 8
+collision_mask = 5
+motion_mode = 1
+
+[node name="Forge Entity" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("1_entity")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+script = ExtResource("2_effect")
+EffectData = ExtResource("3_grants")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Movement" type="Node" parent="Forge Entity"]
+script = ExtResource("4_movement")
+BlockingTags = SubResource("Resource_blocking_tags")
+metadata/_custom_type_script = "uid://bu2rl26hcxgv1"
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_body")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")

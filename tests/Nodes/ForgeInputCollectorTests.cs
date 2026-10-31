@@ -87,6 +87,67 @@ public class ForgeInputCollectorTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void A_press_caught_as_the_tree_pauses_is_dropped()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Press(collector, Fire);
+				collector._Notification((int)global::Godot.Node.NotificationPaused);
+				collector._Notification((int)global::Godot.Node.NotificationUnpaused);
+				Tick(collector, entity);
+
+				entity.Input!.WasPressed(Fire).Should().BeFalse();
+				entity.Input.IsHeld(Fire).Should().BeTrue("what is held is read afresh");
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void What_changed_while_paused_is_read_afresh_without_a_press_or_release()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Tick(collector, entity);
+				collector._Notification((int)global::Godot.Node.NotificationPaused);
+				Input.ActionPress(Fire);
+				collector._Notification((int)global::Godot.Node.NotificationUnpaused);
+				Tick(collector, entity);
+
+				entity.Input!.IsHeld(Fire).Should().BeTrue("a button pushed while paused counts as held once resumed");
+				entity.Input.WasPressed(Fire).Should().BeFalse();
+
+				collector._Notification((int)global::Godot.Node.NotificationPaused);
+				Input.ActionRelease(Fire);
+				collector._Notification((int)global::Godot.Node.NotificationUnpaused);
+				Tick(collector, entity);
+
+				entity.Input.IsHeld(Fire).Should().BeFalse();
+				entity.Input.WasReleased(Fire).Should().BeFalse();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void A_held_action_is_pressed_once_and_then_only_held()
 	{
 		WithProjectInput(() =>
@@ -146,6 +207,37 @@ public class ForgeInputCollectorTests
 				entity.Input.WasPressed(Fire).Should().BeTrue();
 				entity.Input.IsHeld(Fire).Should().BeTrue();
 				Pressed(watch).Should().BeTrue();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_consumed_press_let_go_and_pressed_again_while_paused_is_held_once_resumed()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Tick(collector, entity);
+				Input.ActionPress(Fire);
+				Tick(collector, entity);
+				entity.Input!.IsHeld(Fire).Should().BeFalse("the interface consumed the press");
+
+				collector._Notification((int)global::Godot.Node.NotificationPaused);
+				Input.ActionRelease(Fire);
+				Input.ActionPress(Fire);
+				collector._Notification((int)global::Godot.Node.NotificationUnpaused);
+				Tick(collector, entity);
+
+				entity.Input.IsHeld(Fire).Should().BeTrue();
 			}
 			finally
 			{
