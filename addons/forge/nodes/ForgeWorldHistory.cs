@@ -297,8 +297,11 @@ public partial class ForgeWorldHistory : Node
 
 	private void Join(ForgeEntity entity)
 	{
-		// A limbo node the history freed as it left the tree is still there if it comes back within the frame.
-		if (entity.WorldHistory is not null || LimboNode(entity).IsQueuedForDeletion())
+		// One that waited to be ready may have moved away meanwhile, and a limbo node the history freed as it left the
+		// tree is still there if it comes back within the frame.
+		if (entity.WorldHistory is not null
+			|| _root?.IsAncestorOf(entity) != true
+			|| LimboNode(entity).IsQueuedForDeletion())
 		{
 			return;
 		}
