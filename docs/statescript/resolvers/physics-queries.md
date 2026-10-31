@@ -8,6 +8,8 @@ These resolvers are **Godot-only** — there is no core Forge counterpart, so th
 
 They ask the physics world a question and hand back a value, so they compose: an `Entity[]` feeds `ForEach`, `Where`, `OrderBy` and `Except`, and a `bool` works inside a `Where` lambda. Queries whose answer is several values at once — a hit position *and* a normal *and* a distance — are [nodes](../nodes/physics-query-nodes.md) instead, so one query writes them all atomically.
 
+An `Entity[]` lists what it found nearest the query's position first. The physics server's own order follows how it keeps its bodies, which moving them changes, so a `ForEach` over the result runs in the same order every time the same tick runs, rewinds and replays included.
+
 Every one is a 2D/3D pair.
 
 ## Shared operands

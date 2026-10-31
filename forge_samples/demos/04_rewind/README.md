@@ -16,7 +16,7 @@ What you see follows the needle: an enemy's flames come and go with the fire cue
 
 With the game paused, R plays the steps after the needle again, from the recording and with the input each entity had, and checks every step against the one recorded: each entity's state is hashed, its body to a thousandth of a unit, and the two hashes compared. The needle moves on as the replay goes, and the replay stops at the present and pauses there. R or Backspace stops it early, where it is.
 
-A step that came out differently is marked red on the timeline. Put the needle on a mark to see, under the timeline, each value that differed, as recorded and as replayed. The sample is meant to replay without a mark from any step: one would mean something in it ran outside Forge's simulation.
+A step that came out differently is marked red on the timeline. Put the needle on a mark to see, under the timeline, each value that differed, as recorded and as replayed. The sample is meant to replay without a mark from any step, with one exception: bodies pressed into each other, such as a dash through the bonfire, now and then come out of a replay a thousandth of a unit from where they were recorded. Godot keeps physics state that a rollback can't reach, and how it pushes overlapping bodies apart depends on it. Any other mark would mean something in the sample ran outside Forge's simulation.
 
 The corner readout shows what the history costs: how many entity snapshots it holds, about how much memory they take (what recording the last step allocated, times the steps held), and how long the last step took to capture.
 

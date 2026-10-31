@@ -39,7 +39,9 @@ The **Player** setting is a path to the player, from the node the entity lives o
 
 `PlayAnimationNode` deactivates and emits `OnFinished` once the clip's length has run: the clip's length divided by its speed (the Speed input times the player's own Speed Scale), counted in fixed steps from activation. Both are read when the node activates, so a game must not drive the player's Speed Scale from a presentation node such as Node Property Override: what was presented would change how long the node lasts. **A looping clip, or a speed of zero, never finishes on its own**, which is the channelling shape: the node runs until something aborts it. Another animation taking over the player does not end the node; its length does.
 
-The animation starts in the presentation pass, from its first frame: if the same animation is already playing, the node stops it first, because the length it counts starts at the beginning.
+The animation starts in the presentation pass, from its first frame: if the same animation is already playing, the node stops it first, because the length it counts starts at the beginning. An activation presented part way through, as a [rewind](../../nodes.md#forgeworldhistory) brings one back, starts at the pose its elapsed fixed steps give it instead.
+
+**After a rollback** that keeps the activation running at another point of it, as scrubbing a timeline does, the animation seeks to the pose the restored step gives it: exactly while the game is paused, and only when it's off by more than a few steps while the game runs, so a replay that comes out the same never makes it hitch. Scrubbing while paused plays it again if it had played out or another animation had taken over the player; a running game leaves what took the player over in place.
 
 **Stop On Deactivate** stops the player, in the next presentation pass, if the node's animation is still the one playing when the node ends early, which covers an abort, a subgraph ending and the graph stopping — what an interrupted cast needs. A natural finish cannot trigger it, because by then the animation is over.
 
@@ -63,6 +65,8 @@ Melee swing timing, cast bars, windups.
 Audio has the same shape: the length is the stream's length divided by the pitch (the Pitch input, or when it is unbound the Pitch Scale the player had before any node overrode it, so a length never depends on what an earlier node played), counted in fixed steps. **A looping stream, or one whose length Godot cannot tell, such as a generator, never finishes on its own.** Channel hums, beam loops.
 
 **Restart On Retrigger** plays the sound again from the beginning, with Volume Db and Pitch read again. With **Stop On Deactivate** on, the old sound is stopped first, so a player that allows polyphony has it replaced rather than a second voice layered over it.
+
+A sound presented part way through its activation starts where its elapsed fixed steps put it, wrapped around for a loop. **While the game is paused, sounds stay quiet**: a sound started then waits for the game to go on, as the sounds that were playing when it paused do, and one a [rewind](../../nodes.md#forgeworldhistory) moves to another point waits where it is, then plays on from the right place once the game goes on. Godot would play a moment of a sound moved while paused, so the move waits rather than crackling as the timeline is scrubbed. While the game runs, a sound is moved only when it's off by more than a tenth of a second.
 
 The three Godot audio players derive from their dimension's spatial node and share no base, so an `AudioPlayers` switch written once resolves "the entity's player" for both these nodes and the [`AudioCueHandler`](../../nodes.md#audiocuehandler).
 

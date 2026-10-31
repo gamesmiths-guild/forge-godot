@@ -216,7 +216,7 @@ While the entity has a blocking tag, the component skips steps 2 and 3: the walk
 
 The component owns the body's velocity. [Nav Move To](statescript/nodes/navigation-nodes.md) writes a velocity for the game's own controller to move by, so it doesn't combine with this component.
 
-It captures and restores the body for rollback: position, rotation, velocity and whether the body is on the floor. A restore also refreshes the body's floor, wall and ceiling contacts for the restored place, so the [character readers](statescript/resolvers/spatial-getters.md#the-character-readers) see them right away. What the body's last move reported, such as its real velocity, reads as standing still until it moves again. Custom movement can implement the same contract; see [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
+It captures and restores the body for rollback: position, rotation, velocity and whether the body is on the floor. A restore also refreshes the body's floor, wall and ceiling contacts for the restored place, so the [character readers](statescript/resolvers/spatial-getters.md#the-character-readers) see them right away. What the body's last move reported, such as its real velocity, reads as standing still until it moves again. A restore that puts the body exactly where it already is, as each step of a [replay](#forgeworldhistory) ends with, leaves it alone, so its next move starts from the contacts its last one found. Custom movement can implement the same contract; see [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
 
 **Usage:**
 
@@ -242,12 +242,20 @@ Keeps the recent physics steps of every `ForgeEntity` under its parent, so the g
 Add it to a level, under the node the level's entities live under. On ready it takes every `ForgeEntity` under its parent, and entities spawned there later join as they become ready. An entity moved out from under its parent leaves the history, and can join another; a history taken out of the tree and put back takes its entities back and starts over. From then on it runs them through a core [`WorldHistory`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#world-history):
 
 - **Each physics step**, right after the input collectors, it begins every entity's tick, advances each in the order they joined, and records the step. An entity whose processing is off, by its own physics step or a disabled ancestor, isn't advanced but is still recorded. `ForgeBootstrap` and the entities' own physics steps leave its entities alone. The history numbers the steps itself, so they carry on from a step rolled back to.
-- **An entity that dies goes to limbo** instead of being freed. The [Queue Free](statescript/nodes/scene-nodes.md#queue-free) node on the node an entity lives on, or `Despawn(entity)` from code, takes it out of the world: its node leaves processing, physics and visibility, and is freed once no step held has it. An entity freed any other way can't come back, so the history forgets it and warns.
+- **An entity that dies goes to limbo** instead of being freed. The [Queue Free](statescript/nodes/scene-nodes.md#queue-free) node on the node an entity lives on, a [Scene](statescript/nodes/scene-nodes.md) node letting go of an entity it spawned, or `Despawn(entity)` from code, takes it out of the world: its node leaves processing, physics and visibility, and is freed once no step held has it. An entity freed any other way can't come back, so the history forgets it and warns.
+- **An entity spawned into the level is seeded from the step**, and its place among that step's spawns, rather than at random, so one a replay spawns again rolls the way the one spawned first did.
 - **`Seek(tick)`** shows the level as a step held left it: every entity in it then is restored, entities that died since come back from limbo, and entities spawned since go there. Bodies are put in place without interpolating.
 
 Pause the tree to stop the level. The node pauses with it, so the level always stops between two steps. While paused, seek to any step from `History.OldestTick` to `History.NewestTick`, back or forward, as often as needed. Unpausing continues from the step shown: the steps after it are left behind, the entities spawned in them are freed, and the ones that died in them live on. The first physics step after a seek records nothing, which lets the physics server catch up with the bodies the seek put back before a step queries them.
 
-Everything the level must bring back lives in Forge: attributes, tags, effects, abilities and their graphs, shared variables, input, and the bodies the movement components move. A script's own fields stay as they are, unless they go through the entity's `StateHook`. On screen, graph presentation nodes show the restored state in the next presentation pass, and views that read Forge state every frame, rather than waiting for change events, show it straight away. A cue an effect started stays shown when a rollback takes the effect away.
+Everything the level must bring back lives in Forge: attributes, tags, effects, abilities and their graphs, shared variables, input, and the bodies the movement components move. A script's own fields stay as they are, unless they go through the entity's `StateHook`. On screen, the next presentation pass shows the restored state:
+
+- **Cues** follow the rollback: the persistent cues of effects it took away end, and those it brought back start again. See [Cues after a restore](https://github.com/gamesmiths-guild/forge/blob/main/docs/cues.md#cues-after-a-restore).
+- **Graph presentation nodes** show the restored activations. A [Play Animation](statescript/nodes/presentation-nodes.md#play-animation) still running shows the pose the restored step gives it, and a [Play Audio](statescript/nodes/presentation-nodes.md#play-audio) waits while the game is paused and plays on from the right place once it isn't.
+- **Particle systems** on an entity that the seek showed, hid or moved start over if they're emitting, since particles can't go back with the level: a hidden system would otherwise keep its particles where they froze, and a moved one where it was.
+- **Views** that read Forge state every frame, rather than waiting for change events, show it straight away.
+
+**Replaying.** With `Replaying` on, each physics step runs the step after the one shown again, from the recording and with the input frames it was recorded with, through [`WorldHistory.Replay`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#replaying-a-world), instead of a live step. `Desynced` is raised for each step that came out differently from the recording, with a `WorldDesync` that can describe every value that differed. The level stays as the recording left each step, and waits at the newest step held until `Replaying` is turned off. Seek, turn `Replaying` on and unpause to watch the level play back; anything a step did that a replay can't do again, such as a body moved by hand between steps, shows up as a desync. Bodies pressed into each other can also show one: how Godot pushes overlapping bodies apart depends on physics state a rollback can't reach, so a replay can leave one a thousandth of a unit from where it was recorded.
 
 `LastRecordTime` and `LastRecordBytes` say what recording the last step cost, for a readout like the Rewind sample's.
 
@@ -271,6 +279,13 @@ GetTree().Paused = true;
 worldHistory.Seek(worldHistory.History.NewestTick!.Value - 60);
 
 // Carries on from there.
+GetTree().Paused = false;
+```
+
+```csharp
+// Or plays the steps after it again, checking each against the recording.
+worldHistory.Desynced += desync => GD.Print($"Step {desync.Tick} ran differently:\n{desync.Describe()}");
+worldHistory.Replaying = true;
 GetTree().Paused = false;
 ```
 
@@ -555,6 +570,8 @@ Executing spawns and forgets; applying spawns and holds, and removing frees what
 - `MagnitudeCurve` (Curve) **(M)**: Sets the volume as a linear gain where one is full.
 
 Two ways to say what plays: a path, for anything whose bus, attenuation or stream randomization is authored; or a bare stream, for the common case where a cue is one sound and adding a node to every entity that can receive it is the only obstacle. A created player matches the target's dimension, so a sound on a 3D character is positional without the cue saying so.
+
+A sound the cue starts while its player can't process, such as one a rewind brings back while the game is paused, waits for the game to go on, as the sounds playing when it paused do. Godot would otherwise play it straight away.
 
 **One player per target, not one per playback.** A player created per execution and freed on `Finished` never frees for a looping stream, so a hit cue firing ten times a second would stack ten never-freed players a second onto its target. `MaxPolyphony` keeps what made per-playback players attractive — repeated executes still overlap instead of cutting each other off.
 
