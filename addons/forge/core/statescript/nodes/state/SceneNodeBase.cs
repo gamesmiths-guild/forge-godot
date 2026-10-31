@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Gamesmiths.Forge.Statescript.Ports;
@@ -23,6 +24,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <para>A retrigger while the instance is alive is ignored, or with <paramref name="restartOnRetrigger"/> the instance
 /// is freed and the scene instantiated again, with a fresh lifetime. The subgraph is disabled first and comes back
 /// for the new instance, since whatever ran in it was working on the one that was freed.</para>
+/// <para>An instance that is an entity of a <see cref="ForgeWorldHistory"/> goes to limbo instead of being freed, as
+/// the Queue Free node sends one, so rolling the world back to while this node held it brings it back.</para>
 /// <para>As with the action pair, only the transform differs between the two dimensions, and declaring it in the middle
 /// of the parameter list keeps the operand indexes identical across the pair.</para>
 /// </remarks>
@@ -169,7 +172,7 @@ public abstract class SceneNodeBase(
 		// has then already run, before the node held it.
 		if (!nodeContext.Active)
 		{
-			instance.QueueFree();
+			Free(instance);
 			return;
 		}
 
@@ -194,7 +197,7 @@ public abstract class SceneNodeBase(
 		// rather than an instantiate followed by a free the graph has to remember on each exit.
 		if (instance is not null && GodotObject.IsInstanceValid(instance))
 		{
-			instance.QueueFree();
+			Free(instance);
 		}
 	}
 
@@ -231,6 +234,16 @@ public abstract class SceneNodeBase(
 		{
 			// OnDeactivate does the freeing, so the timed path and the interrupted path clean up identically.
 			DeactivateNodeAndEmitMessage(graphContext, OnLifetimeEndPort);
+		}
+	}
+
+	// An instance that is an entity of a world history goes to limbo rather than away, so a rollback to while this node
+	// held it brings it back.
+	private static void Free(Node instance)
+	{
+		if (!ForgeWorldHistory.TryDespawn(instance))
+		{
+			instance.QueueFree();
 		}
 	}
 }

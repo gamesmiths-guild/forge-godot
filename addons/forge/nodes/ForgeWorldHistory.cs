@@ -23,7 +23,10 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// node the entity lives on, takes that node out of processing, physics and visibility, and keeps it until no tick held
 /// has it.</para>
 /// <para>Pause the tree to stop the world, and call <see cref="Seek"/> to show a tick held as it was. Unpausing
-/// continues the world from that tick, leaving the ticks after it behind.</para>
+/// continues the world from that tick, leaving the ticks after it behind, or, with <see cref="Replaying"/> on, runs the
+/// recorded ticks after it again and checks each against the recording.</para>
+/// <para>An entity spawned into the world is seeded from the tick it spawns in and its place among that tick's spawns,
+/// so one a replay spawns again rolls the way the one spawned first did.</para>
 /// </remarks>
 [GlobalClass]
 [Icon("uid://baypv15ai34rl")]
@@ -33,6 +36,17 @@ public partial class ForgeWorldHistory : Node
 	private readonly Dictionary<IForgeEntity, LimboState> _limbo = [];
 	private Node? _root;
 	private bool _settling;
+	private ulong _sessionSeed;
+	private long _spawnTick;
+	private int _spawnIndex;
+
+	// The particle systems on the world's entities as the first seek since the last presentation pass found them.
+	private List<ParticleState>? _particles;
+
+	/// <summary>
+	/// Raised when a replayed tick came out differently from the recording.
+	/// </summary>
+	public event Action<WorldDesync>? Desynced;
 
 	/// <summary>
 	/// Gets or sets how far back the world can be rolled, in seconds.
@@ -54,6 +68,17 @@ public partial class ForgeWorldHistory : Node
 	/// Gets how many bytes recording the last tick allocated, which is about what its snapshots hold.
 	/// </summary>
 	public long LastRecordBytes { get; private set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the world replays its recorded ticks instead of running live ones.
+	/// </summary>
+	/// <remarks>
+	/// While it's on, each physics step runs the tick after the one the world is at again, from the recording and with
+	/// the input frames it was recorded with, through <see cref="WorldHistory.Replay"/>, and raises
+	/// <see cref="Desynced"/> when the tick came out differently. The world stays as the recording left each tick, and
+	/// waits at the newest tick held until replaying is turned off.
+	/// </remarks>
+	public bool Replaying { get; set; }
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeWorldHistory"/> class.
@@ -87,12 +112,16 @@ public partial class ForgeWorldHistory : Node
 	/// <para>The first physics step after a seek doesn't tick: the physics server can take until its next step to move
 	/// a character body put back in place, and a tick that queried it before then would find the body where it was.
 	/// </para>
+	/// <para>A particle system on an entity that the seek showed, hid or moved, as of the presentation pass after it,
+	/// starts over if it's emitting: particles can't go back with the world, and Godot keeps a hidden system's where
+	/// they froze and a moved one's where it was.</para>
 	/// </remarks>
 	/// <param name="tick">A tick between <see cref="WorldHistory.OldestTick"/> and
 	/// <see cref="WorldHistory.NewestTick"/>.
 	/// </param>
 	public void Seek(long tick)
 	{
+		_particles ??= Particles();
 		History.Rollback(tick);
 		_settling = true;
 
@@ -160,31 +189,21 @@ public partial class ForgeWorldHistory : Node
 		}
 
 		long tick = (History.CurrentTick ?? (long)Engine.GetPhysicsFrames()) + 1;
-		IReadOnlyList<IForgeEntity> entities = History.Entities;
-		ExceptionDispatchInfo? failure = null;
 
-		foreach (IForgeEntity entity in entities)
+		if (Replaying)
 		{
-			EntitySimulation.BeginTick(entity, tick);
-		}
-
-		// An entity that throws keeps no other from advancing, as when each advanced in its own physics step. One whose
-		// processing is off stays as it is, as it would without the history, and is still recorded.
-		foreach (IForgeEntity entity in entities)
-		{
-			try
+			if (tick <= History.NewestTick)
 			{
-				if (entity is not Node node || (node.CanProcess() && node.IsPhysicsProcessing()))
+				foreach (WorldDesync desync in History.Replay(tick, x => Advance(x, delta)?.Throw()))
 				{
-					EntitySimulation.Advance(entity, delta);
+					Desynced?.Invoke(desync);
 				}
 			}
-			catch (Exception exception)
-			{
-				failure ??= ExceptionDispatchInfo.Capture(exception);
-			}
+
+			return;
 		}
 
+		ExceptionDispatchInfo? failure = Advance(tick, delta);
 		long startBytes = GC.GetAllocatedBytesForCurrentThread();
 		long start = Stopwatch.GetTimestamp();
 		History.Record(tick);
@@ -192,6 +211,42 @@ public partial class ForgeWorldHistory : Node
 		LastRecordBytes = GC.GetAllocatedBytesForCurrentThread() - startBytes;
 
 		failure?.Throw();
+	}
+
+	// Sends the entity living on the node to its world history's limbo, when one drives it, instead of freeing the
+	// node, so a rollback can bring it back.
+	internal static bool TryDespawn(Node node)
+	{
+		if (FindEntityLivingOn(node) is ForgeEntity { WorldHistory: ForgeWorldHistory worldHistory } entity
+			&& ForgeEntityBridge.TryGetOwningNode(entity, null, out Node? owningNode)
+			&& owningNode == node)
+		{
+			worldHistory.Despawn(entity);
+			return true;
+		}
+
+		return false;
+	}
+
+	// Called after the presentation pass: the particle systems a seek since the last pass showed, hid or moved start
+	// over.
+	internal void AfterPresentation()
+	{
+		if (_particles is not List<ParticleState> particles)
+		{
+			return;
+		}
+
+		_particles = null;
+
+		foreach (ParticleState particle in particles)
+		{
+			// A cue handler can take its particles out of the tree on a seek, freeing them at the frame's end.
+			if (IsInstanceValid(particle.Node) && particle.Node.IsInsideTree() && Particle(particle.Node) != particle)
+			{
+				Restart(particle.Node);
+			}
+		}
 	}
 
 	// An entity freed some other way than by going to limbo can't come back.
@@ -209,6 +264,75 @@ public partial class ForgeWorldHistory : Node
 	private static Node LimboNode(IForgeEntity entity)
 	{
 		return ForgeEntityBridge.TryGetOwningNode(entity, null, out Node? node) ? node : (Node)entity;
+	}
+
+	// An entity lives on its nearest spatial ancestor, so the one living on a node is the node itself or is found below
+	// it through children that aren't spatial.
+	private static ForgeEntity? FindEntityLivingOn(Node node)
+	{
+		if (node is ForgeEntity entity)
+		{
+			return entity;
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			if (child is not (Node2D or Node3D) && FindEntityLivingOn(child) is ForgeEntity found)
+			{
+				return found;
+			}
+		}
+
+		return null;
+	}
+
+	private static void AddParticles(Node node, List<ParticleState> particles)
+	{
+		if (node is GpuParticles3D or GpuParticles2D or CpuParticles3D or CpuParticles2D)
+		{
+			particles.Add(Particle(node));
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			AddParticles(child, particles);
+		}
+	}
+
+	private static ParticleState Particle(Node node)
+	{
+		return node switch
+		{
+			Node3D node3D => new ParticleState(node, node3D.IsVisibleInTree(), node3D.GlobalPosition),
+			Node2D node2D => new ParticleState(
+				node,
+				node2D.IsVisibleInTree(),
+				new Vector3(node2D.GlobalPosition.X, node2D.GlobalPosition.Y, 0)),
+			_ => new ParticleState(node, true, Vector3.Zero),
+		};
+	}
+
+	// One that has stopped emitting, such as a one-shot that played out, is left alone rather than played again.
+	private static void Restart(Node particles)
+	{
+		switch (particles)
+		{
+			case GpuParticles3D { Emitting: true } gpu3D:
+				gpu3D.Restart();
+				break;
+
+			case GpuParticles2D { Emitting: true } gpu2D:
+				gpu2D.Restart();
+				break;
+
+			case CpuParticles3D { Emitting: true } cpu3D:
+				cpu3D.Restart();
+				break;
+
+			case CpuParticles2D { Emitting: true } cpu2D:
+				cpu2D.Restart();
+				break;
+		}
 	}
 
 	private static bool IsVisible(Node node)
@@ -235,9 +359,58 @@ public partial class ForgeWorldHistory : Node
 		}
 	}
 
+	// Begins every entity's tick, then advances each. An entity that throws keeps no other from advancing, as when each
+	// advanced in its own physics step, and the first exception is handed back. One whose processing is off stays as
+	// it is, as it would without the history, and is still recorded.
+	private ExceptionDispatchInfo? Advance(long tick, double delta)
+	{
+		IReadOnlyList<IForgeEntity> entities = History.Entities;
+		ExceptionDispatchInfo? failure = null;
+
+		// Each run of the tick counts its spawns from the first, however often it runs again.
+		_spawnTick = tick;
+		_spawnIndex = 0;
+
+		foreach (IForgeEntity entity in entities)
+		{
+			EntitySimulation.BeginTick(entity, tick);
+		}
+
+		foreach (IForgeEntity entity in entities)
+		{
+			try
+			{
+				if (entity is not Node node || (node.CanProcess() && node.IsPhysicsProcessing()))
+				{
+					EntitySimulation.Advance(entity, delta);
+				}
+			}
+			catch (Exception exception)
+			{
+				failure ??= ExceptionDispatchInfo.Capture(exception);
+			}
+		}
+
+		return failure;
+	}
+
+	private List<ParticleState> Particles()
+	{
+		List<ParticleState> particles = [];
+
+		foreach (ForgeEntity entity in _entities)
+		{
+			AddParticles(LimboNode(entity), particles);
+		}
+
+		return particles;
+	}
+
 	private void Start()
 	{
 		_settling = false;
+		_particles = null;
+		_sessionSeed = ((ulong)GD.Randi() << 32) | GD.Randi();
 		int ticksPerSecond = Engine.PhysicsTicksPerSecond;
 		History = new WorldHistory(
 			(int)Math.Ceiling(Math.Max(HistorySeconds, 0) * ticksPerSecond) + 1,
@@ -279,8 +452,30 @@ public partial class ForgeWorldHistory : Node
 
 		if (entity.WorldHistory is null)
 		{
+			if (!entity.IsNodeReady())
+			{
+				SeedSpawn(entity);
+			}
+
 			JoinWhenReady(entity);
 		}
+	}
+
+	// Seeds an entity spawning into the world from the tick it spawns in and its place among that tick's spawns, which
+	// a replay of the tick gives the entity it spawns again too.
+	private void SeedSpawn(ForgeEntity entity)
+	{
+		long tick = (History.CurrentTick ?? (long)Engine.GetPhysicsFrames()) + 1;
+
+		if (tick != _spawnTick)
+		{
+			_spawnTick = tick;
+			_spawnIndex = 0;
+		}
+
+		entity.SpawnTick = tick;
+		entity.SpawnSeed = unchecked(
+			_sessionSeed ^ ((ulong)tick * 0x9E3779B97F4A7C15UL) ^ ((ulong)_spawnIndex++ * 0xC2B2AE3D27D4EB4FUL));
 	}
 
 	private void JoinWhenReady(ForgeEntity entity)
@@ -357,4 +552,6 @@ public partial class ForgeWorldHistory : Node
 	}
 
 	private readonly record struct LimboState(ProcessModeEnum ProcessMode, bool Visible);
+
+	private readonly record struct ParticleState(Node Node, bool Visible, Vector3 Position);
 }

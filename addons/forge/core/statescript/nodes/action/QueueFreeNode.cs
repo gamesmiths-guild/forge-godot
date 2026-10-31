@@ -41,37 +41,10 @@ public sealed class QueueFreeNode : ActionNode
 	{
 		if (graphContext.TryResolveObject(InputProperties[NodeInput].BoundName, out Node? node)
 			&& node is not null
-			&& GodotObject.IsInstanceValid(node))
+			&& GodotObject.IsInstanceValid(node)
+			&& !ForgeWorldHistory.TryDespawn(node))
 		{
-			if (FindEntityLivingOn(node) is ForgeEntity { WorldHistory: ForgeWorldHistory worldHistory } forgeEntity
-				&& ForgeEntityBridge.TryGetOwningNode(forgeEntity, null, out Node? owningNode)
-				&& owningNode == node)
-			{
-				worldHistory.Despawn(forgeEntity);
-				return;
-			}
-
 			node.QueueFree();
 		}
-	}
-
-	// An entity lives on its nearest spatial ancestor, so the one living on a node is the node itself or is found below
-	// it through children that aren't spatial.
-	private static ForgeEntity? FindEntityLivingOn(Node node)
-	{
-		if (node is ForgeEntity entity)
-		{
-			return entity;
-		}
-
-		foreach (Node child in node.GetChildren())
-		{
-			if (child is not (Node2D or Node3D) && FindEntityLivingOn(child) is ForgeEntity found)
-			{
-				return found;
-			}
-		}
-
-		return null;
 	}
 }
