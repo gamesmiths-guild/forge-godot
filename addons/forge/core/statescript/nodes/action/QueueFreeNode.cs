@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
-using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
@@ -44,8 +43,7 @@ public sealed class QueueFreeNode : ActionNode
 			&& node is not null
 			&& GodotObject.IsInstanceValid(node))
 		{
-			if (ForgeEntityBridge.TryGetEntity(node, out IForgeEntity? entity)
-				&& entity is ForgeEntity { WorldHistory: ForgeWorldHistory worldHistory } forgeEntity
+			if (FindEntityLivingOn(node) is ForgeEntity { WorldHistory: ForgeWorldHistory worldHistory } forgeEntity
 				&& ForgeEntityBridge.TryGetOwningNode(forgeEntity, null, out Node? owningNode)
 				&& owningNode == node)
 			{
@@ -55,5 +53,25 @@ public sealed class QueueFreeNode : ActionNode
 
 			node.QueueFree();
 		}
+	}
+
+	// An entity lives on its nearest spatial ancestor, so the one living on a node is the node itself or is found below
+	// it through children that aren't spatial.
+	private static ForgeEntity? FindEntityLivingOn(Node node)
+	{
+		if (node is ForgeEntity entity)
+		{
+			return entity;
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			if (child is not (Node2D or Node3D) && FindEntityLivingOn(child) is ForgeEntity found)
+			{
+				return found;
+			}
+		}
+
+		return null;
 	}
 }

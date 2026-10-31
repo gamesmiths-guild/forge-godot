@@ -239,9 +239,9 @@ Keeps the recent physics steps of every `ForgeEntity` under its parent, so the g
 
 **Description:**
 
-Add it to a level, under the node the level's entities live under. On ready it takes every `ForgeEntity` under its parent, and entities spawned there later join as they become ready. From then on it runs them through a core [`WorldHistory`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#world-history):
+Add it to a level, under the node the level's entities live under. On ready it takes every `ForgeEntity` under its parent, and entities spawned there later join as they become ready. An entity moved out from under its parent leaves the history, and can join another; a history taken out of the tree and put back takes its entities back and starts over. From then on it runs them through a core [`WorldHistory`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#world-history):
 
-- **Each physics step**, right after the input collectors, it begins every entity's tick, advances each in the order they joined, and records the step. `ForgeBootstrap` and the entities' own physics steps leave its entities alone. The history numbers the steps itself, so they carry on from a step rolled back to.
+- **Each physics step**, right after the input collectors, it begins every entity's tick, advances each in the order they joined, and records the step. An entity whose processing is off, by its own physics step or a disabled ancestor, isn't advanced but is still recorded. `ForgeBootstrap` and the entities' own physics steps leave its entities alone. The history numbers the steps itself, so they carry on from a step rolled back to.
 - **An entity that dies goes to limbo** instead of being freed. The [Queue Free](statescript/nodes/scene-nodes.md#queue-free) node on the node an entity lives on, or `Despawn(entity)` from code, takes it out of the world: its node leaves processing, physics and visibility, and is freed once no step held has it. An entity freed any other way can't come back, so the history forgets it and warns.
 - **`Seek(tick)`** shows the level as a step held left it: every entity in it then is restored, entities that died since come back from limbo, and entities spawned since go there. Bodies are put in place without interpolating.
 

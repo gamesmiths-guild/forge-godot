@@ -103,21 +103,22 @@ public partial class ForgeWorldHistory : Node
 	}
 
 	/// <inheritdoc/>
+	public override void _EnterTree()
+	{
+		base._EnterTree();
+
+		// Godot readies a node once, so a history put back in the tree starts over here.
+		if (IsNodeReady())
+		{
+			Start();
+		}
+	}
+
+	/// <inheritdoc/>
 	public override void _Ready()
 	{
 		base._Ready();
-
-		int ticksPerSecond = Engine.PhysicsTicksPerSecond;
-		History = new WorldHistory(
-			(int)Math.Ceiling(Math.Max(HistorySeconds, 0) * ticksPerSecond) + 1,
-			1.0 / ticksPerSecond);
-		History.EnteredLimbo += OnEnteredLimbo;
-		History.LeftLimbo += OnLeftLimbo;
-		History.Released += OnReleased;
-
-		_root = GetParent();
-		JoinUnder(_root);
-		GetTree().NodeAdded += OnNodeAdded;
+		Start();
 	}
 
 	/// <inheritdoc/>
@@ -153,6 +154,11 @@ public partial class ForgeWorldHistory : Node
 			return;
 		}
 
+		for (int i = _entities.Count - 1; i >= 0; i--)
+		{
+			LeaveIfMovedOut(_entities[i]);
+		}
+
 		long tick = (History.CurrentTick ?? (long)Engine.GetPhysicsFrames()) + 1;
 		IReadOnlyList<IForgeEntity> entities = History.Entities;
 		ExceptionDispatchInfo? failure = null;
@@ -162,12 +168,16 @@ public partial class ForgeWorldHistory : Node
 			EntitySimulation.BeginTick(entity, tick);
 		}
 
-		// An entity that throws keeps no other from advancing, as when each advanced in its own physics step.
+		// An entity that throws keeps no other from advancing, as when each advanced in its own physics step. One whose
+		// processing is off stays as it is, as it would without the history, and is still recorded.
 		foreach (IForgeEntity entity in entities)
 		{
 			try
 			{
-				EntitySimulation.Advance(entity, delta);
+				if (entity is not Node node || (node.CanProcess() && node.IsPhysicsProcessing()))
+				{
+					EntitySimulation.Advance(entity, delta);
+				}
 			}
 			catch (Exception exception)
 			{
@@ -225,6 +235,22 @@ public partial class ForgeWorldHistory : Node
 		}
 	}
 
+	private void Start()
+	{
+		_settling = false;
+		int ticksPerSecond = Engine.PhysicsTicksPerSecond;
+		History = new WorldHistory(
+			(int)Math.Ceiling(Math.Max(HistorySeconds, 0) * ticksPerSecond) + 1,
+			1.0 / ticksPerSecond);
+		History.EnteredLimbo += OnEnteredLimbo;
+		History.LeftLimbo += OnLeftLimbo;
+		History.Released += OnReleased;
+
+		_root = GetParent();
+		JoinUnder(_root);
+		GetTree().NodeAdded += OnNodeAdded;
+	}
+
 	private void JoinUnder(Node node)
 	{
 		foreach (Node child in node.GetChildren())
@@ -240,7 +266,18 @@ public partial class ForgeWorldHistory : Node
 
 	private void OnNodeAdded(Node node)
 	{
-		if (node is ForgeEntity { WorldHistory: null } entity && _root?.IsAncestorOf(entity) == true)
+		if (node is not ForgeEntity entity || _root?.IsAncestorOf(entity) != true)
+		{
+			return;
+		}
+
+		// One moved here from another history's world leaves it first.
+		if (entity.WorldHistory is ForgeWorldHistory other && other != this)
+		{
+			other.LeaveIfMovedOut(entity);
+		}
+
+		if (entity.WorldHistory is null)
 		{
 			JoinWhenReady(entity);
 		}
@@ -260,7 +297,8 @@ public partial class ForgeWorldHistory : Node
 
 	private void Join(ForgeEntity entity)
 	{
-		if (entity.WorldHistory is not null)
+		// A limbo node the history freed as it left the tree is still there if it comes back within the frame.
+		if (entity.WorldHistory is not null || LimboNode(entity).IsQueuedForDeletion())
 		{
 			return;
 		}
@@ -268,6 +306,20 @@ public partial class ForgeWorldHistory : Node
 		entity.WorldHistory = this;
 		_entities.Add(entity);
 		History.Add(entity);
+	}
+
+	// An entity moved out from under the history's parent leaves its world, free to join another.
+	private void LeaveIfMovedOut(ForgeEntity entity)
+	{
+		if (entity.IsInsideTree() && _root?.IsAncestorOf(entity) == true)
+		{
+			return;
+		}
+
+		History.Forget(entity);
+		_entities.Remove(entity);
+		OnLeftLimbo(entity);
+		entity.WorldHistory = null;
 	}
 
 	private void OnEnteredLimbo(IForgeEntity entity)

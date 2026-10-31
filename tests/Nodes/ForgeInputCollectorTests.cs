@@ -218,6 +218,37 @@ public class ForgeInputCollectorTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void A_consumed_press_let_go_and_pressed_again_while_paused_is_held_once_resumed()
+	{
+		WithProjectInput(() =>
+		{
+			ForgeEntity entity = CreatePlayer(out ForgeInputCollector collector, out Node3D body);
+
+			try
+			{
+				Tick(collector, entity);
+				Input.ActionPress(Fire);
+				Tick(collector, entity);
+				entity.Input!.IsHeld(Fire).Should().BeFalse("the interface consumed the press");
+
+				collector._Notification((int)global::Godot.Node.NotificationPaused);
+				Input.ActionRelease(Fire);
+				Input.ActionPress(Fire);
+				collector._Notification((int)global::Godot.Node.NotificationUnpaused);
+				Tick(collector, entity);
+
+				entity.Input.IsHeld(Fire).Should().BeTrue();
+			}
+			finally
+			{
+				Input.ActionRelease(Fire);
+				body.Free();
+			}
+		});
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void A_collector_leaving_the_tree_lets_go_of_what_it_held()
 	{
 		WithProjectInput(() =>

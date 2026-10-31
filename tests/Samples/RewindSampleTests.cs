@@ -292,7 +292,7 @@ public class RewindSampleTests
 			await SettlePhysics(level);
 
 			var press = new InputEventAction { Action = "rewind", Pressed = true };
-			level.GetNode<RewindTimeline>("Rewind")._UnhandledInput(press);
+			level.GetNode<RewindTimeline>("Rewind")._Input(press);
 
 			tree.Paused.Should().BeTrue();
 			level.GetNode("QuitScene").CanProcess().Should().BeTrue("Esc leaves for the hub from the timeline too");

@@ -268,6 +268,127 @@ public class ForgeWorldHistoryTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void Queue_Free_on_a_body_whose_entity_sits_below_a_plain_node_sends_it_to_limbo()
+	{
+		var level = new Node3D();
+		var body = new Node3D();
+		var holder = new Node();
+		var entity = new ForgeEntity();
+		holder.AddChild(entity);
+		body.AddChild(holder);
+		level.AddChild(body);
+		entity.Ready += () => entity.Attributes.AddAttributeSet(new WorldHealthAttributes());
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			RunTicks(world, 2);
+			AbilityHandle vanish = entity.Abilities.GrantAbilityPermanently(
+				VanishAbility(body),
+				1,
+				LevelComparison.None,
+				null);
+
+			vanish.TryActivate(out _).Should().BeTrue();
+			RunTicks(world, 1);
+
+			body.IsQueuedForDeletion().Should().BeFalse();
+			body.Visible.Should().BeFalse();
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_entity_moved_out_from_under_the_world_leaves_it_and_can_join_another()
+	{
+		var level = new Node3D();
+		ForgeEntity entity = AddEntity(level, out Node3D body);
+		ForgeWorldHistory world = AddWorld(level);
+		var otherLevel = new Node3D();
+		ForgeWorldHistory other = AddWorld(otherLevel);
+
+		try
+		{
+			RunTicks(world, 2);
+
+			level.RemoveChild(body);
+			RunTicks(world, 1);
+
+			entity.WorldHistory.Should().BeNull();
+			world.History.Entities.Should().NotContain(entity);
+
+			otherLevel.AddChild(body);
+
+			entity.WorldHistory.Should().BeSameAs(other);
+			other.History.Entities.Should().Contain(entity);
+		}
+		finally
+		{
+			level.Free();
+			otherLevel.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_world_put_back_in_the_tree_takes_its_entities_back()
+	{
+		var level = new Node3D();
+		ForgeEntity entity = AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			RunTicks(world, 2);
+
+			level.RemoveChild(world);
+			entity.WorldHistory.Should().BeNull();
+			level.AddChild(world);
+
+			entity.WorldHistory.Should().BeSameAs(world);
+			ForgeEntity spawned = AddEntity(level, out _);
+			spawned.WorldHistory.Should().BeSameAs(world);
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_entity_whose_processing_is_off_stays_as_it_is()
+	{
+		var level = new Node3D();
+		ForgeEntity entity = AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			Burn(entity);
+			entity.SetPhysicsProcess(false);
+			RunTicks(world, 8);
+
+			HealthOf(entity).Should().Be(100);
+			world.History.Entities.Should().Contain(entity);
+
+			entity.SetPhysicsProcess(true);
+			RunTicks(world, 8);
+
+			HealthOf(entity).Should().BeLessThan(100);
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
 	private static ForgeEntity AddEntity(Node3D level, out Node3D body)
 	{
 		body = new Node3D();

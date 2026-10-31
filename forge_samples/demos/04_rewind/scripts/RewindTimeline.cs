@@ -47,9 +47,9 @@ public partial class RewindTimeline : CanvasLayer
 		GetTree().Paused = false;
 	}
 
-	public override void _UnhandledInput(InputEvent @event)
+	public override void _Input(InputEvent @event)
 	{
-		base._UnhandledInput(@event);
+		base._Input(@event);
 
 		if (!@event.IsActionPressed("rewind"))
 		{

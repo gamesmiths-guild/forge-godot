@@ -104,11 +104,13 @@ public partial class ForgeInputCollector : Node
 		base._Notification(what);
 
 		// A press caught as the tree paused is dropped, and on resume what is held is read afresh, so nothing pressed
-		// or let go while paused counts as a press or a release.
+		// or let go while paused counts as a press or a release. A press the interface consumed may have been let go
+		// and pressed again unseen, so it's read afresh too.
 		if (what == NotificationPaused || what == NotificationUnpaused)
 		{
 			_pressed = 0;
 			_released = 0;
+			_consumed = 0;
 			_held = ReadHeld();
 		}
 	}
