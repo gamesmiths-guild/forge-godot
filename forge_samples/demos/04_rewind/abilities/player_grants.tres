@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://luakabpdxvai"]
+
+[ext_resource type="Resource" uid="uid://5afgj4d6q1i4" path="res://forge_samples/demos/04_rewind/abilities/dash.tres" id="1_ability"]
+[ext_resource type="Resource" uid="uid://gyhloc5hajwb" path="res://forge_samples/demos/04_rewind/abilities/spread_fire.tres" id="2_ability"]
+[ext_resource type="Resource" uid="uid://bo310w5aprvai" path="res://forge_samples/demos/04_rewind/abilities/projectile.tres" id="3_ability"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="10_int"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="11_grant_config"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="12_grant"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="15_effect"]
+
+[sub_resource type="Resource" id="Resource_level_1"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_1"]
+script = ExtResource("11_grant_config")
+AbilityData = ExtResource("1_ability")
+AbilityLevel = SubResource("Resource_level_1")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_2"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_2"]
+script = ExtResource("11_grant_config")
+AbilityData = ExtResource("2_ability")
+AbilityLevel = SubResource("Resource_level_2")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_level_3"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_3"]
+script = ExtResource("11_grant_config")
+AbilityData = ExtResource("3_ability")
+AbilityLevel = SubResource("Resource_level_3")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_grant"]
+script = ExtResource("12_grant")
+GrantAbilityConfigs = [SubResource("Resource_grant_1"), SubResource("Resource_grant_2"), SubResource("Resource_grant_3")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_ph1ka"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_1vx7n"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("15_effect")
+Name = "Grant Player Abilities"
+Modifiers = []
+Components = [SubResource("Resource_grant")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_1vx7n")
+InitialStack = SubResource("Resource_ph1ka")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

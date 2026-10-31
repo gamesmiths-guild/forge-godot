@@ -21,6 +21,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// aim are sampled when the tick begins.</para>
 /// <para>The collector processes its physics step before every other node, so the frame it submits is the one the
 /// entity's tick reads in the same physics step.</para>
+/// <para>A press or release caught as the tree pauses is dropped, and what is held is read afresh when it resumes, so
+/// the first frame after a pause carries no edge from it.</para>
 /// </remarks>
 [GlobalClass]
 public partial class ForgeInputCollector : Node
@@ -97,6 +99,21 @@ public partial class ForgeInputCollector : Node
 	}
 
 	/// <inheritdoc/>
+	public override void _Notification(int what)
+	{
+		base._Notification(what);
+
+		// A press caught as the tree paused is dropped, and on resume what is held is read afresh, so nothing pressed
+		// or let go while paused counts as a press or a release.
+		if (what == NotificationPaused || what == NotificationUnpaused)
+		{
+			_pressed = 0;
+			_released = 0;
+			_held = ReadHeld();
+		}
+	}
+
+	/// <inheritdoc/>
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		base._UnhandledInput(@event);
@@ -137,15 +154,7 @@ public partial class ForgeInputCollector : Node
 			return;
 		}
 
-		ulong held = 0;
-
-		for (int i = 0; i < _actions.Length; i++)
-		{
-			if (Input.IsActionPressed(_actions[i]))
-			{
-				held |= 1UL << i;
-			}
-		}
+		ulong held = ReadHeld();
 
 		// A press no unhandled event announced was consumed by the interface, and stays the interface's until it is let
 		// go, so nothing downstream takes it for a press.
@@ -169,6 +178,21 @@ public partial class ForgeInputCollector : Node
 	private static NumericsVector3 ToNumerics(Vector3 value)
 	{
 		return new NumericsVector3(value.X, value.Y, value.Z);
+	}
+
+	private ulong ReadHeld()
+	{
+		ulong held = 0;
+
+		for (int i = 0; i < _actions.Length; i++)
+		{
+			if (Input.IsActionPressed(_actions[i]))
+			{
+				held |= 1UL << i;
+			}
+		}
+
+		return held;
 	}
 
 	private InputFrame WithAim(InputFrame frame)

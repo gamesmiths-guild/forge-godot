@@ -1,0 +1,140 @@
+[gd_scene format=3 uid="uid://x7aeul1flxq6"]
+
+[ext_resource type="Material" uid="uid://b7m0lrhal5u6" path="res://forge_samples/demos/03_statescript/materials/enemy_body.tres" id="1_body"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn" id="2_fire_vfx"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_entity"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="4_attrset"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="5_values"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="6_tags"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="7_effect"]
+[ext_resource type="Resource" uid="uid://gp667l8l9m4q" path="res://forge_samples/demos/04_rewind/abilities/enemy_grants.tres" id="8_grants"]
+[ext_resource type="Script" uid="uid://bu2rl26hcxgv1" path="res://addons/forge/nodes/ForgeCharacterMovement3D.cs" id="9_movement"]
+[ext_resource type="Script" uid="uid://prg8l0ddhj7y" path="res://forge_samples/demos/04_rewind/scripts/ChaseInput.cs" id="10_chase"]
+[ext_resource type="Script" uid="uid://zm2442kact29" path="res://forge_samples/demos/04_rewind/scripts/LiveHealthBar.cs" id="11_health_bar"]
+[ext_resource type="AudioStream" uid="uid://ddltr6pp8vhxs" path="res://forge_samples/shared/audio/fire-loop.ogg" id="12_fire_sfx"]
+[ext_resource type="Script" uid="uid://cip8gyuiykaaw" path="res://forge_samples/demos/04_rewind/scripts/RestartOnShow.cs" id="13_restart"]
+
+[sub_resource type="Resource" id="Resource_tags"]
+script = ExtResource("6_tags")
+ContainerTags = Array[String](["trait.flammable"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_bg"]
+bg_color = Color(0.215432, 6.34724e-07, 0.000667838, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health_fill"]
+bg_color = Color(1, 0.0364741, 0.0496456, 1)
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_bars"]
+viewport_path = NodePath("SubViewport")
+
+[node name="Enemy" type="CharacterBody3D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 7
+floor_block_on_wall = false
+
+[node name="Forge Entity" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_entity")
+BaseTags = SubResource("Resource_tags")
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Character Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("4_attrset")
+AttributeSetClass = "CharacterAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("5_values")]({
+"Health": Object(RefCounted,"script":ExtResource("5_values"),"Default":100,"Min":0,"Max":100)
+
+})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Movement Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("4_attrset")
+AttributeSetClass = "MovementAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("5_values")]({
+"Speed": Object(RefCounted,"script":ExtResource("5_values"),"Default":180,"Min":0,"Max":2000)
+
+})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+script = ExtResource("7_effect")
+EffectData = ExtResource("8_grants")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Movement" type="Node" parent="Forge Entity"]
+script = ExtResource("9_movement")
+SpeedAttribute = "MovementAttributes.Speed"
+metadata/_custom_type_script = "uid://bu2rl26hcxgv1"
+
+[node name="Chase" type="Node" parent="Forge Entity"]
+script = ExtResource("10_chase")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = ExtResource("1_body")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Flames" parent="." instance=ExtResource("2_fire_vfx")]
+unique_name_in_owner = true
+visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+script = ExtResource("13_restart")
+
+[node name="FireSfx" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("12_fire_sfx")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+size = Vector2i(100, 20)
+
+[node name="Bars" type="VBoxContainer" parent="SubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="HealthBar" type="ProgressBar" parent="SubViewport/Bars" node_paths=PackedStringArray("HealthBarLabel")]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/background = SubResource("StyleBoxFlat_health_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_health_fill")
+value = 100.0
+show_percentage = false
+script = ExtResource("11_health_bar")
+HealthBarLabel = NodePath("Label")
+
+[node name="Label" type="Label" parent="SubViewport/Bars/HealthBar"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -35.5
+offset_top = -11.5
+offset_right = 35.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "100/100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BarsSprite" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+billboard = 1
+texture = SubResource("ViewportTexture_bars")

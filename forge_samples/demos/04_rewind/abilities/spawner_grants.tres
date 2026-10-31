@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://oqm0b57dw2p"]
+
+[ext_resource type="Resource" uid="uid://iew0wg6hi61m" path="res://forge_samples/demos/04_rewind/abilities/respawn_enemy.tres" id="1_ability"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="10_int"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="11_grant_config"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="12_grant"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="15_effect"]
+
+[sub_resource type="Resource" id="Resource_level_1"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_grant_1"]
+script = ExtResource("11_grant_config")
+AbilityData = ExtResource("1_ability")
+AbilityLevel = SubResource("Resource_level_1")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_grant"]
+script = ExtResource("12_grant")
+GrantAbilityConfigs = [SubResource("Resource_grant_1")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_bmtyg"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_32awe"]
+script = ExtResource("10_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("15_effect")
+Name = "Grant Spawner Abilities"
+Modifiers = []
+Components = [SubResource("Resource_grant")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_32awe")
+InitialStack = SubResource("Resource_bmtyg")
+Cues = []
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

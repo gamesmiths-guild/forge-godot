@@ -51,6 +51,8 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 
 Frees a node from the scene, guarded against a node that has already been freed. Unpaired: a node to free is a node in either dimension.
 
+The node an entity of a [`ForgeWorldHistory`](../../nodes.md#forgeworldhistory) lives on goes to limbo instead of being freed, so rolling the level back brings the entity back.
+
 | Index | Label | Type | Notes |
 |---|---|---|---|
 | 0 | Node | `Node` | Required. |

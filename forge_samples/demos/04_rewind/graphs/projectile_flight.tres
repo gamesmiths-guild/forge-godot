@@ -1,0 +1,146 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://cpr4sasmntsnb"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="5_variable_definition"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="6_variable"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="7_variant"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="8_ip4hp"]
+[ext_resource type="Script" uid="uid://cejdt4ulsx7r1" path="res://addons/forge/resources/statescript/resolvers/EntityTransformPoint3DResolverResource.cs" id="8_transform_point"]
+[ext_resource type="Script" uid="uid://b8sny7pwgn1jf" path="res://addons/forge/resources/statescript/resolvers/EffectResolverResource.cs" id="9_effect"]
+[ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="10_node_from_entity"]
+[ext_resource type="Resource" uid="uid://brs1h8sai04yo" path="res://forge_samples/demos/04_rewind/effects/projectile_hit.tres" id="11_hit"]
+
+[sub_resource type="Resource" id="Resource_to_fly"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_to_damage"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+OutputPort = 5
+ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_damage_to_despawn"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_spent_to_despawn"]
+script = ExtResource("4_connection")
+FromNode = "node_1"
+OutputPort = 4
+ToNode = "node_3"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_range_offset"]
+script = ExtResource("7_variant")
+Value = Vector3(0, 0, -16)
+ValueType = 14
+
+[sub_resource type="Resource" id="Resource_range_end"]
+script = ExtResource("8_transform_point")
+Offset = SubResource("Resource_range_offset")
+
+[sub_resource type="Resource" id="Resource_range_end_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_range_end")
+
+[sub_resource type="Resource" id="Resource_speed"]
+script = ExtResource("7_variant")
+Value = 18.0
+
+[sub_resource type="Resource" id="Resource_speed_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_speed")
+
+[sub_resource type="Resource" id="Resource_hit_output"]
+script = ExtResource("6_variable")
+VariableName = "hit"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_hit_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_hit_output")
+
+[sub_resource type="Resource" id="Resource_fly"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Move Body 3D"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.MoveBody3DNode"
+PositionOffset = Vector2(300, 200)
+CustomData = Dictionary[String, Variant]({
+"blocked": "Stop",
+"mode": "Speed"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_range_end_binding"), SubResource("Resource_speed_binding"), SubResource("Resource_hit_output_binding")])
+
+[sub_resource type="Resource" id="Resource_hit_effect"]
+script = ExtResource("9_effect")
+Effect = ExtResource("11_hit")
+
+[sub_resource type="Resource" id="Resource_hit_effect_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_hit_effect")
+
+[sub_resource type="Resource" id="Resource_hit_target"]
+script = ExtResource("6_variable")
+VariableName = "hit"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_hit_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_hit_target")
+
+[sub_resource type="Resource" id="Resource_damage"]
+script = ExtResource("2_node")
+NodeId = "node_2"
+Title = "Apply Effect"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
+PositionOffset = Vector2(700, 440)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_hit_effect_binding"), SubResource("Resource_hit_target_binding")])
+
+[sub_resource type="Resource" id="Resource_own_node"]
+script = ExtResource("10_node_from_entity")
+
+[sub_resource type="Resource" id="Resource_own_node_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_own_node")
+
+[sub_resource type="Resource" id="Resource_despawn"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Queue Free"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.QueueFreeNode"
+PositionOffset = Vector2(1040, 280)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_own_node_binding")])
+
+[sub_resource type="Resource" id="Resource_hit_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "hit"
+ObjectTypeId = "Entity"
+InitialValue = null
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Projectile Flight"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_fly"), SubResource("Resource_damage"), SubResource("Resource_despawn")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_fly"), SubResource("Resource_to_damage"), SubResource("Resource_damage_to_despawn"), SubResource("Resource_spent_to_despawn")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_hit_variable")])
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
+metadata/_expanded_arrays = PackedStringArray()
