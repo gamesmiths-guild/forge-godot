@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://vefuiuoh44x8"]
 
 [ext_resource type="Material" uid="uid://busfmqa4bdqna" path="res://forge_samples/demos/03_statescript/materials/player_body.tres" id="1_body"]
-[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn" id="2_fire_vfx"]
 [ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_entity"]
 [ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="4_attrset"]
 [ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="5_values"]
@@ -12,7 +11,6 @@
 [ext_resource type="Script" uid="uid://baro6rmmxgvso" path="res://addons/forge/nodes/ForgeInputCollector.cs" id="10_input"]
 [ext_resource type="AudioStream" uid="uid://b15cfkgnv2vag" path="res://forge_samples/shared/audio/woosh.ogg" id="11_woosh"]
 [ext_resource type="AudioStream" uid="uid://ddltr6pp8vhxs" path="res://forge_samples/shared/audio/fire-loop.ogg" id="12_fire_sfx"]
-[ext_resource type="Script" uid="uid://cip8gyuiykaaw" path="res://forge_samples/demos/04_rewind/scripts/RestartOnShow.cs" id="13_restart"]
 [ext_resource type="AudioStream" uid="uid://c2jkjy0k5jyyu" path="res://forge_samples/shared/audio/shot.ogg" id="14_shot"]
 
 [sub_resource type="Resource" id="Resource_tags"]
@@ -159,12 +157,6 @@ surface_material_override/0 = ExtResource("1_body")
 [node name="Collision" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_body")
-
-[node name="Flames" parent="." instance=ExtResource("2_fire_vfx")]
-unique_name_in_owner = true
-visible = false
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
-script = ExtResource("13_restart")
 
 [node name="FireSfx" type="AudioStreamPlayer3D" parent="."]
 stream = ExtResource("12_fire_sfx")
