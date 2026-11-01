@@ -125,6 +125,9 @@ public partial class ForgeWorldHistory : Node
 		History.Rollback(tick);
 		_settling = true;
 
+		// The ticks after this one run again, each counting its spawns from the first.
+		_spawnTick = long.MinValue;
+
 		foreach (IForgeEntity entity in History.Entities)
 		{
 			LimboNode(entity).ResetPhysicsInterpolation();
@@ -367,9 +370,12 @@ public partial class ForgeWorldHistory : Node
 		IReadOnlyList<IForgeEntity> entities = History.Entities;
 		ExceptionDispatchInfo? failure = null;
 
-		// Each run of the tick counts its spawns from the first, however often it runs again.
-		_spawnTick = tick;
-		_spawnIndex = 0;
+		// Spawns made between ticks were counted for this one already; a seek starts every tick's count over.
+		if (tick != _spawnTick)
+		{
+			_spawnTick = tick;
+			_spawnIndex = 0;
+		}
 
 		foreach (IForgeEntity entity in entities)
 		{

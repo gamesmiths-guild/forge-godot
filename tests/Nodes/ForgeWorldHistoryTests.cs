@@ -463,6 +463,33 @@ public class ForgeWorldHistoryTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void A_spawn_between_ticks_and_one_the_next_tick_makes_get_seeds_of_their_own()
+	{
+		var level = new Node3D();
+		ForgeEntity spawner = AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			RunTicks(world, 3);
+			ForgeEntity between = AddEntity(level, out _);
+			ForgeEntity? during = null;
+			spawner.Mover = new SpawningMover(() => during = AddEntity(level, out _));
+
+			RunTicks(world, 1);
+
+			during.Should().NotBeNull();
+			during!.SpawnTick.Should().Be(between.SpawnTick);
+			during.SpawnSeed.Should().NotBe(between.SpawnSeed);
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void A_seek_leaves_a_one_shot_that_played_out_alone()
 	{
 		var level = new Node3D();
@@ -633,6 +660,30 @@ public class ForgeWorldHistoryTests
 			summon.InputPorts[Scene3DNode.InputPort]));
 
 		return new AbilityData("Summon", behaviorFactory: () => new GraphAbilityBehavior(graph));
+	}
+
+	// Spawns once, the first time it moves, which is during a tick.
+	private sealed class SpawningMover(System.Action spawn) : IEntityMover
+	{
+		private bool _spawned;
+
+		public void Move(double fixedDeltaTime)
+		{
+			if (!_spawned)
+			{
+				_spawned = true;
+				spawn();
+			}
+		}
+
+		public BodyState CaptureState()
+		{
+			return default;
+		}
+
+		public void RestoreState(in BodyState state)
+		{
+		}
 	}
 
 	private sealed class WorldHealthAttributes : AttributeSet

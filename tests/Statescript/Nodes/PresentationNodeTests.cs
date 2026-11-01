@@ -2,6 +2,7 @@
 
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Interop;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
@@ -348,6 +349,33 @@ public class PresentationNodeTests
 			processor.FixedUpdateGraph(100.0);
 
 			processor.GraphContext.IsActive.Should().BeTrue();
+		}
+		finally
+		{
+			entity.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_looping_sound_restores_into_its_loop_rather_than_from_the_stream_s_start()
+	{
+		var entity = new TestEntity3D();
+		AudioStreamPlayer player = AddSound(entity, seconds: 1);
+		var stream = (AudioStreamWav)player.Stream;
+		stream.LoopMode = AudioStreamWav.LoopModeEnum.Forward;
+		stream.LoopBegin = 44100 / 5;
+		stream.LoopEnd = 44100;
+
+		try
+		{
+			AudioPlayers.StreamPosition(player, 1, 0.5).Should().BeApproximately(0.5, 1e-6);
+			AudioPlayers.StreamPosition(player, 1, 1.5).Should().BeApproximately(0.7, 1e-6, "the loop starts at 0.2 s");
+
+			stream.LoopMode = AudioStreamWav.LoopModeEnum.Pingpong;
+
+			AudioPlayers.StreamPosition(player, 1, 1.3)
+				.Should().BeApproximately(0.7, 1e-6, "it plays back from the end");
 		}
 		finally
 		{

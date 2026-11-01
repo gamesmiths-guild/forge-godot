@@ -319,6 +319,8 @@ public class RewindSampleTests
 
 			Flames(enemy).Should().ContainSingle("its burning shows the fire cue");
 
+			// Paused, so no physics step runs on from the tick sought while the cues are presented.
+			level.GetTree().Paused = true;
 			world.Seek(ignition!.Value - 1);
 			await Present(level);
 
@@ -332,6 +334,7 @@ public class RewindSampleTests
 		finally
 		{
 			level.Free();
+			Root.GetTree().Paused = false;
 		}
 	}
 

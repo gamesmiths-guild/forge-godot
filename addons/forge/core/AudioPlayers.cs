@@ -67,7 +67,7 @@ internal static class AudioPlayers
 		double position = elapsedTime * (pitch ?? Authored(player, _pitchScale, _authoredPitchScale));
 		double length = stream?.GetLength() ?? 0;
 
-		return stream is not null && Loops(stream) && length > 0 ? position % length : position;
+		return stream is not null && Loops(stream) && length > 0 ? LoopedPosition(stream, position, length) : position;
 	}
 
 	/// <summary>
@@ -254,6 +254,43 @@ internal static class AudioPlayers
 		}
 
 		player.Set(property, (float)value.Value);
+	}
+
+	// A looping stream plays through to its loop's end once, then repeats the loop: from its start, from its end
+	// backward, or back and forth. A seek can't set the direction, so a backward stretch only gets the place right.
+	private static double LoopedPosition(AudioStream stream, double position, double length)
+	{
+		(double begin, double end) = stream switch
+		{
+			AudioStreamWav wav => (
+				(double)wav.LoopBegin / wav.MixRate,
+				wav.LoopEnd > wav.LoopBegin ? (double)wav.LoopEnd / wav.MixRate : length),
+			AudioStreamOggVorbis ogg => (ogg.LoopOffset, length),
+			AudioStreamMP3 mp3 => (mp3.LoopOffset, length),
+			_ => (0, length),
+		};
+
+		double loop = end - begin;
+
+		if (position < end || loop <= 0)
+		{
+			return position;
+		}
+
+		double past = position - end;
+
+		switch ((stream as AudioStreamWav)?.LoopMode)
+		{
+			case AudioStreamWav.LoopModeEnum.Backward:
+				return end - (past % loop);
+
+			case AudioStreamWav.LoopModeEnum.Pingpong:
+				past %= 2 * loop;
+				return past < loop ? end - past : begin + (past - loop);
+
+			default:
+				return begin + (past % loop);
+		}
 	}
 
 	private static bool Loops(AudioStream stream)

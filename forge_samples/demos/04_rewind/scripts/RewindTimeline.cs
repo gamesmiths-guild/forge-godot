@@ -127,6 +127,12 @@ public partial class RewindTimeline : CanvasLayer
 			return;
 		}
 
+		// Marks of ticks the history no longer holds go, with the snapshots they keep.
+		foreach (long tick in _desyncs.Keys.TakeWhile(x => x < oldest).ToList())
+		{
+			_desyncs.Remove(tick);
+		}
+
 		double megabytes = WorldHistory.LastRecordBytes * (newest - oldest + 1) / (1024.0 * 1024.0);
 		CostLabel.Text =
 			$"{history.SnapshotCount} snapshots held, about {megabytes:0.0} MB, " +
