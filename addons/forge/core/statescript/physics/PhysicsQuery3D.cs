@@ -274,10 +274,14 @@ internal static class PhysicsQuery3D
 			CollideWithAreas = includeAreas,
 		};
 
+		List<Node> colliders = [];
+
 		foreach (GodotDictionary hit in world.DirectSpaceState.IntersectShape(query, MaxResults))
 		{
-			AddEntity(hit["collider"].As<Node>(), excluded, into);
+			colliders.Add(hit["collider"].As<Node>());
 		}
+
+		AddNearestFirst(colliders, transform.Origin, excluded, into);
 	}
 
 	/// <summary>
@@ -311,10 +315,14 @@ internal static class PhysicsQuery3D
 			CollideWithAreas = includeAreas,
 		};
 
+		List<Node> colliders = [];
+
 		foreach (GodotDictionary hit in world.DirectSpaceState.IntersectPoint(query, MaxResults))
 		{
-			AddEntity(hit["collider"].As<Node>(), excluded, into);
+			colliders.Add(hit["collider"].As<Node>());
 		}
+
+		AddNearestFirst(colliders, position, excluded, into);
 	}
 
 	/// <summary>
@@ -359,20 +367,14 @@ internal static class PhysicsQuery3D
 			return;
 		}
 
-		foreach (Node3D body in area.GetOverlappingBodies())
+		List<Node> colliders = [.. area.GetOverlappingBodies()];
+
+		if (includeAreas)
 		{
-			AddEntity(body, excluded, into);
+			colliders.AddRange(area.GetOverlappingAreas());
 		}
 
-		if (!includeAreas)
-		{
-			return;
-		}
-
-		foreach (Area3D overlapping in area.GetOverlappingAreas())
-		{
-			AddEntity(overlapping, excluded, into);
-		}
+		AddNearestFirst(colliders, area.GlobalPosition, excluded, into);
 	}
 
 	/// <summary>
@@ -496,6 +498,41 @@ internal static class PhysicsQuery3D
 		{
 			CollectCollisionObjects(child, into);
 		}
+	}
+
+	// The physics server reports what a query found in an order that follows how it keeps its bodies, which moving them
+	// changes, so the found entities are added nearest the origin first, the same order whichever run found them.
+	private static void AddNearestFirst(
+		List<Node> colliders,
+		Vector3 origin,
+		IReadOnlyList<object?>? excluded,
+		ISet<IForgeEntity> into)
+	{
+		colliders.Sort((x, y) => CompareNearest(x, y, origin));
+
+		foreach (Node collider in colliders)
+		{
+			AddEntity(collider, excluded, into);
+		}
+	}
+
+	private static int CompareNearest(Node x, Node y, Vector3 origin)
+	{
+		Vector3 a = (x as Node3D)?.GlobalPosition ?? origin;
+		Vector3 b = (y as Node3D)?.GlobalPosition ?? origin;
+		int order = a.DistanceSquaredTo(origin).CompareTo(b.DistanceSquaredTo(origin));
+
+		if (order == 0)
+		{
+			order = a.X.CompareTo(b.X);
+		}
+
+		if (order == 0)
+		{
+			order = a.Y.CompareTo(b.Y);
+		}
+
+		return order != 0 ? order : a.Z.CompareTo(b.Z);
 	}
 
 	private static void AddEntity(Node? collider, IReadOnlyList<object?>? excluded, ISet<IForgeEntity> into)

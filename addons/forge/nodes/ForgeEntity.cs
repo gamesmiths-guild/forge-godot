@@ -58,6 +58,12 @@ public partial class ForgeEntity : Node, IForgeEntity
 	/// </summary>
 	public ForgeWorldHistory? WorldHistory { get; internal set; }
 
+	// The seed and tick a world history gave the entity as it spawned into its world, before it was ready, so an entity
+	// a replay spawns again rolls the way the one spawned first did. Null for an entity that seeds itself.
+	internal ulong? SpawnSeed { get; set; }
+
+	internal long SpawnTick { get; set; }
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ForgeEntity"/> class.
 	/// </summary>
@@ -76,11 +82,11 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Ready();
 
-		var random = new DeterministicRandom(((ulong)GD.Randi() << 32) | GD.Randi());
+		var random = new DeterministicRandom(SpawnSeed ?? (((ulong)GD.Randi() << 32) | GD.Randi()));
 
 		// Only the random restarts here, so rolls made before the first tick are seeded; the input frame waits for that
 		// tick.
-		random.BeginTick((long)Engine.GetPhysicsFrames());
+		random.BeginTick(SpawnSeed is null ? (long)Engine.GetPhysicsFrames() : SpawnTick);
 		Random = random;
 		AddToGroup(SimulationGroup);
 		Tags = new(BaseTags.GetTagContainer());

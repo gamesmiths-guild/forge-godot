@@ -14,7 +14,7 @@ They cover the two things a graph does to the scene tree itself: putting scenes 
 
 `InstantiateScene3D`/`InstantiateScene2D` (Action) spawn and forget. `Scene3D`/`Scene2D` (State) own what they spawned: the instance is created on activation and freed on deactivation, so a summon lasts exactly as long as the node does.
 
-What they spawn belongs to the world rather than to the graph, so restoring a [graph snapshot](../README.md#snapshots) neither frees an instance spawned after it nor brings back one freed since.
+What they spawn belongs to the world rather than to the graph, so restoring a [graph snapshot](../README.md#snapshots) neither frees an instance spawned after it nor brings back one freed since. In a level with a [`ForgeWorldHistory`](../../nodes.md#forgeworldhistory), an instance that is an entity goes to limbo rather than being freed when the State node lets go of it, as [Queue Free](#queue-free) sends one, so rolling the level back to while the node held it brings it back.
 
 They are a 2D/3D pair even though a scene carries its own dimension, because the *transform* the graph hands them does not: Position and Rotation are a `Vector3` and a `Quaternion` in 3D, and a `Vector2` and a single angle in 2D — a `Rotation (deg)` row, [typed in degrees](../README.md#angles-radians-flow-degrees-are-typed).
 

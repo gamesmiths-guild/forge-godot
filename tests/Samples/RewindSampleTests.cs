@@ -30,6 +30,9 @@ public class RewindSampleTests
 
 	private const string ProjectilePath = "res://forge_samples/demos/04_rewind/scenes/projectile.tscn";
 
+	private const string FireEffectPath =
+		"res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn";
+
 	private static Window Root => ((SceneTree)Engine.GetMainLoop()).Root;
 
 	private static double Step => 1.0 / Engine.PhysicsTicksPerSecond;
@@ -279,6 +282,137 @@ public class RewindSampleTests
 		}
 	}
 
+	[TestCase(Timeout = 120000)]
+	[RequireGodotRuntime]
+	public async Task A_burning_enemy_s_flames_come_and_go_with_the_timeline()
+	{
+		Node level = GD.Load<PackedScene>(LevelPath).Instantiate();
+		Root.AddChild(level);
+
+		try
+		{
+			await SettlePhysics(level);
+
+			ForgeWorldHistory world = level.GetNode<ForgeWorldHistory>("World History");
+			CharacterBody3D enemy = level.GetNode("%Spawned").GetChildren().OfType<CharacterBody3D>().First();
+			ForgeEntity enemyEntity = enemy.GetNode<ForgeEntity>("%Forge Entity");
+			var fire = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "effect.fire");
+
+			level.GetNode<CharacterBody3D>("Player").GlobalPosition = new Vector3(0, 0, 1.3f);
+			enemy.GlobalPosition = new Vector3(1.2f, 0, 1.3f);
+			await SettlePhysics(level);
+			long? ignition = null;
+
+			for (int i = 0; i < 200 && ignition is null; i++)
+			{
+				RunTicks(level, world, 1);
+
+				if (enemyEntity.Tags.AllTags.HasTag(fire))
+				{
+					ignition = world.History.CurrentTick;
+				}
+			}
+
+			ignition.Should().NotBeNull("the fire spread to the enemy");
+			RunTicks(level, world, 10);
+			await Present(level);
+
+			Flames(enemy).Should().ContainSingle("its burning shows the fire cue");
+
+			// Paused, so no physics step runs on from the tick sought while the cues are presented.
+			level.GetTree().Paused = true;
+			world.Seek(ignition!.Value - 1);
+			await Present(level);
+
+			Flames(enemy).Should().BeEmpty("it wasn't burning yet");
+
+			world.Seek(ignition.Value + 5);
+			await Present(level);
+
+			Flames(enemy).Should().ContainSingle("it's burning again");
+		}
+		finally
+		{
+			level.Free();
+			Root.GetTree().Paused = false;
+		}
+	}
+
+	[TestCase(Timeout = 180000)]
+	[RequireGodotRuntime]
+	public async Task A_replay_of_a_fight_runs_every_tick_the_way_it_was_recorded()
+	{
+		Node level = GD.Load<PackedScene>(LevelPath).Instantiate();
+		Root.AddChild(level);
+		SceneTree tree = level.GetTree();
+
+		try
+		{
+			await SettlePhysics(level);
+
+			ForgeWorldHistory world = level.GetNode<ForgeWorldHistory>("World History");
+			ForgeEntity playerEntity = level.GetNode<ForgeEntity>("Player/%Forge Entity");
+			Node spawned = level.GetNode("%Spawned");
+			CharacterBody3D[] enemies = [.. spawned.GetChildren().OfType<CharacterBody3D>()];
+			var desyncs = new List<WorldDesync>();
+			world.Desynced += desyncs.Add;
+
+			// Set by hand before the stretch replayed, since a replay runs only the simulation: the player by the
+			// bonfire and an enemy beside it.
+			level.GetNode<CharacterBody3D>("Player").GlobalPosition = new Vector3(0, 0, 1.3f);
+			enemies[0].GlobalPosition = new Vector3(1.2f, 0, 1.3f);
+			await SettlePhysics(level, 120);
+			long start = world.History.CurrentTick!.Value;
+
+			// The enemy burns to death and is replaced, the fire spreads, and the player shoots and dashes.
+			ulong shoot = 1UL << playerEntity.Input!.Actions.IndexOf("skill_1");
+			ulong dash = 1UL << playerEntity.Input.Actions.IndexOf("skill_2");
+
+			for (int i = 0; i < 260; i++)
+			{
+				if (i == 30)
+				{
+					playerEntity.Input.Submit(new InputFrame { Held = shoot, Pressed = shoot });
+				}
+
+				if (i == 120)
+				{
+					playerEntity.Input.Submit(new InputFrame { Held = dash, Pressed = dash });
+				}
+
+				await SettlePhysics(level);
+			}
+
+			Replacements(spawned, enemies).Should().NotBeEmpty("the stretch replayed has a death and a spawn");
+
+			// From the start of the stretch, and from part way into it.
+			foreach (long from in (long[])[start, start + 90, start + 200])
+			{
+				tree.Paused = true;
+				world.Seek(from);
+				world.Replaying = true;
+				tree.Paused = false;
+
+				for (int i = 0; i < 400 && world.History.CurrentTick < world.History.NewestTick; i++)
+				{
+					await SettlePhysics(level);
+				}
+
+				world.Replaying = false;
+				world.History.CurrentTick.Should().Be(world.History.NewestTick, "the replay reached the present");
+			}
+
+			desyncs.Should().BeEmpty(string.Join(
+				"\n\n",
+				desyncs.Select(x => $"{x.Tick - start} ticks in:\n{x.Describe(BodyName)}")));
+		}
+		finally
+		{
+			level.Free();
+			tree.Paused = false;
+		}
+	}
+
 	[TestCase(Timeout = 60000)]
 	[RequireGodotRuntime]
 	public async Task Leaving_for_the_hub_from_the_paused_timeline_unpauses()
@@ -315,6 +449,18 @@ public class RewindSampleTests
 		}
 	}
 
+	// Lets a frame end, which is when cues and abilities are presented.
+	private static async Task Present(Node level)
+	{
+		await level.ToSignal(level.GetTree(), SceneTree.SignalName.ProcessFrame);
+		await level.ToSignal(level.GetTree(), SceneTree.SignalName.ProcessFrame);
+	}
+
+	private static IEnumerable<Node> Flames(Node body)
+	{
+		return body.GetChildren().Where(x => x.SceneFilePath == FireEffectPath);
+	}
+
 	// Steers the enemies and ticks the world, as a physics step does.
 	private static void RunTicks(Node level, ForgeWorldHistory world, int ticks)
 	{
@@ -327,6 +473,11 @@ public class RewindSampleTests
 
 			world._PhysicsProcess(Step);
 		}
+	}
+
+	private static string BodyName(IForgeEntity entity)
+	{
+		return entity is Node node && GodotObject.IsInstanceValid(node) ? node.GetParent().Name : "a released entity";
 	}
 
 	private static IEnumerable<CharacterBody3D> Replacements(Node spawned, CharacterBody3D[] enemies)

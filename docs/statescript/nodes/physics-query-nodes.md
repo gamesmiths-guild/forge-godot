@@ -125,7 +125,7 @@ Watches a volume and reports the entities that enter and leave it. The port shap
 
 **Both modes poll and diff; neither subscribes to the area's signals.** One diff routine means the two modes report entry and exit identically, and it is what makes an entity with several colliders count once — a hurtbox leaving while a hitbox stays is not an exit. It also removes a connect/disconnect lifetime that would have to survive aborts and assembly reloads.
 
-**Exits are reported in the order the entities entered**, and entries in the order the poll found them, so a run restored from a [graph snapshot](../README.md#snapshots) reports them in the same order as the run it was taken from.
+**Exits are reported in the order the entities entered**, and entries nearest the overlap's position first, so a run restored from a [graph snapshot](../README.md#snapshots), or a step of a [replay](../../nodes.md#forgeworldhistory), reports them in the same order as the run it was taken from. The physics server's own order follows how it keeps its bodies, which moving them changes, so the found entities are put in order by distance. The overlap resolvers return theirs in the same order.
 
 **The first poll runs during activation**, so a trap triggers on the frame it arms, one entity per event. Because the node polls on the physics step and Godot's overlap list is per physics step, nothing is missed at any frame rate — at the default Poll Interval of zero the two rates are the same one. An authored interval is what skips overlaps that start and end between polls.
 

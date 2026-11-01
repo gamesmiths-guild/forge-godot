@@ -180,8 +180,49 @@ public class PlayAnimationNode(
 			return null;
 		}
 
+		// An activation presented part way through, as a restore puts one, shows the pose it's at.
+		if (nodeContext.ElapsedTime > 0)
+		{
+			player.Seek(Position(player, nodeContext), update: true);
+		}
+
 		nodeContext.Playback.Player = player;
 		return nodeContext.Playback;
+	}
+
+	/// <inheritdoc/>
+	protected override bool OnPresentationRestored(GraphContext graphContext, object? presentation)
+	{
+		if (presentation is not PresentationPlayback { Player: AnimationPlayer player }
+			|| !GodotObject.IsInstanceValid(player))
+		{
+			return true;
+		}
+
+		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
+
+		// Scrubbing while paused shows the pose at the tick shown exactly, so an animation that played out or that
+		// another took over plays again from there. A running game leaves what took the player over in place, as the
+		// tick it replaces did.
+		bool scrubbing = !player.CanProcess();
+
+		if (!IsStillPlaying(player)
+			&& (!scrubbing
+				|| nodeContext.ElapsedTime >= nodeContext.Duration
+				|| !_inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend)))
+		{
+			return true;
+		}
+
+		double position = Position(player, nodeContext);
+
+		if (Math.Abs(player.CurrentAnimationPosition - position)
+			> (scrubbing ? 0 : PresentationPlayback.AnimationTolerance))
+		{
+			player.Seek(position, update: true);
+		}
+
+		return true;
 	}
 
 	/// <inheritdoc/>
@@ -200,6 +241,39 @@ public class PlayAnimationNode(
 	private bool IsStillPlaying(AnimationPlayer player)
 	{
 		return GodotObject.IsInstanceValid(player) && player.CurrentAnimation == _animation;
+	}
+
+	// Where the clip is after the activation's elapsed time at the speed it plays at: from its end when it plays
+	// backwards, and wrapped around, or back and forth, when it loops.
+	private double Position(AnimationPlayer player, PlayAnimationNodeContext nodeContext)
+	{
+		Animation clip = player.GetAnimation(_animation);
+		double speed = (nodeContext.Speed ?? 1) * player.SpeedScale;
+		double played = nodeContext.ElapsedTime * Math.Abs(speed);
+		double length = clip.Length;
+
+		if (length <= 0)
+		{
+			return 0;
+		}
+
+		switch (clip.LoopMode)
+		{
+			case Animation.LoopModeEnum.Linear:
+				played %= length;
+				break;
+
+			case Animation.LoopModeEnum.Pingpong:
+				played %= 2 * length;
+				played = played > length ? (2 * length) - played : played;
+				break;
+
+			default:
+				played = Math.Min(played, length);
+				break;
+		}
+
+		return speed < 0 ? length - played : played;
 	}
 
 	private double PlayLength(AnimationPlayer player, double? speed)

@@ -15,24 +15,18 @@
 [ext_resource type="Script" uid="uid://b1hsjpddc45b" path="res://addons/forge/resources/statescript/resolvers/SphereShape3DResolverResource.cs" id="10_sphere"]
 [ext_resource type="Script" uid="uid://d16o23uhdy3jd" path="res://addons/forge/resources/statescript/resolvers/CollisionMaskResolverResource.cs" id="11_k6wew"]
 [ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="11_position"]
-[ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="12_node_path"]
 [ext_resource type="Resource" uid="uid://ba23rv2mkdbg4" path="res://forge_samples/demos/04_rewind/effects/burning.tres" id="13_burning"]
 
-[sub_resource type="Resource" id="Resource_to_flames"]
+[sub_resource type="Resource" id="Resource_to_crackle"]
 script = ExtResource("4_connection")
 FromNode = "entry"
-ToNode = "node_4"
+ToNode = "node_5"
 
 [sub_resource type="Resource" id="Resource_qtpnq"]
 script = ExtResource("4_connection")
 FromNode = "node_16"
 OutputPort = 4
 ToNode = "node_17"
-
-[sub_resource type="Resource" id="Resource_d4li2"]
-script = ExtResource("4_connection")
-FromNode = "node_4"
-ToNode = "node_5"
 
 [sub_resource type="Resource" id="Resource_ospc6"]
 script = ExtResource("4_connection")
@@ -45,45 +39,13 @@ NodeId = "entry"
 Title = "Entry"
 PositionOffset = Vector2(40, 200)
 
-[sub_resource type="Resource" id="Resource_flames_node"]
-script = ExtResource("12_node_path")
-NodePath = "%Flames"
-
-[sub_resource type="Resource" id="Resource_flames_node_binding"]
-script = ExtResource("3_binding")
-Resolver = SubResource("Resource_flames_node")
-
-[sub_resource type="Resource" id="Resource_flames_visible"]
-script = ExtResource("7_variant")
-Value = true
-ValueType = 0
-
-[sub_resource type="Resource" id="Resource_flames_visible_binding"]
-script = ExtResource("3_binding")
-PropertyIndex = 1
-Resolver = SubResource("Resource_flames_visible")
-
-[sub_resource type="Resource" id="Resource_show_flames"]
-script = ExtResource("2_node")
-NodeId = "node_4"
-Title = "Node Property Override"
-NodeType = 4
-RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NodePropertyOverrideNode"
-PositionOffset = Vector2(260, 200)
-CustomData = Dictionary[String, Variant]({
-"isArray": false,
-"propertyPath": "visible",
-"valueType": "Bool"
-})
-PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_flames_node_binding"), SubResource("Resource_flames_visible_binding")])
-
 [sub_resource type="Resource" id="Resource_crackle"]
 script = ExtResource("2_node")
 NodeId = "node_5"
 Title = "Play Audio"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.PlayAudioNode"
-PositionOffset = Vector2(660, 200)
+PositionOffset = Vector2(260, 200)
 CustomData = Dictionary[String, Variant]({
 "playerPath": "FireSfx",
 "stopOnDeactivate": true
@@ -153,7 +115,7 @@ NodeId = "node_16"
 Title = "Overlap 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.Overlap3DNode"
-PositionOffset = Vector2(1100, 200)
+PositionOffset = Vector2(700, 200)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_1": true,
 "_fold_input_property_2": true,
@@ -189,7 +151,7 @@ NodeId = "node_17"
 Title = "Apply Effect"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
-PositionOffset = Vector2(1540, 280)
+PositionOffset = Vector2(1140, 280)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_p0aqv"), SubResource("Resource_yr7of")])
 
 [sub_resource type="Resource" id="Resource_target_variable"]
@@ -201,8 +163,8 @@ InitialValue = null
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Spread Fire"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_show_flames"), SubResource("Resource_crackle"), SubResource("Resource_robv1"), SubResource("Resource_6ga8o")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_flames"), SubResource("Resource_qtpnq"), SubResource("Resource_d4li2"), SubResource("Resource_ospc6")])
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_crackle"), SubResource("Resource_robv1"), SubResource("Resource_6ga8o")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_crackle"), SubResource("Resource_qtpnq"), SubResource("Resource_ospc6")])
 Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_target_variable")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

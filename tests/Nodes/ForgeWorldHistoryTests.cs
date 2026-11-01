@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
+using System.Linq;
 using FluentAssertions;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Attributes;
@@ -10,7 +11,9 @@ using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Effects.Modifiers;
 using Gamesmiths.Forge.Effects.Periodic;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
@@ -389,6 +392,180 @@ public class ForgeWorldHistoryTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_replay_finds_the_tick_changed_from_outside_the_simulation_and_waits_at_the_newest()
+	{
+		var level = new Node3D();
+		AddEntity(level, out _);
+		ForgeEntity second = AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+		var desyncs = new List<WorldDesync>();
+		world.Desynced += desyncs.Add;
+
+		try
+		{
+			RunTicks(world, 12);
+
+			// Between ticks, which a replay can't run again.
+			Burn(second);
+			RunTicks(world, 12);
+			long newest = world.History.NewestTick!.Value;
+			int health = HealthOf(second);
+
+			world.Seek(newest - 20);
+			world.Replaying = true;
+			RunTicks(world, 30);
+
+			desyncs.Select(x => x.Tick).Should().Equal(newest - 11);
+			world.History.CurrentTick.Should().Be(newest, "a replay waits at the newest tick");
+			HealthOf(second).Should().Be(health, "the world is as the recording left it");
+
+			world.Replaying = false;
+			RunTicks(world, 1);
+
+			world.History.CurrentTick.Should().Be(newest + 1);
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_entity_spawned_again_into_a_tick_is_seeded_the_way_the_first_one_was()
+	{
+		var level = new Node3D();
+		AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			RunTicks(world, 3);
+			long before = world.History.CurrentTick!.Value;
+			ForgeEntity first = AddEntity(level, out _);
+			ForgeEntity second = AddEntity(level, out _);
+			RunTicks(world, 2);
+
+			world.Seek(before);
+			ForgeEntity again = AddEntity(level, out _);
+
+			first.SpawnTick.Should().Be(before + 1);
+			first.SpawnSeed.Should().NotBeNull().And.NotBe(second.SpawnSeed, "each spawn of a tick has its own");
+			again.SpawnSeed.Should().Be(first.SpawnSeed);
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_spawn_between_ticks_and_one_the_next_tick_makes_get_seeds_of_their_own()
+	{
+		var level = new Node3D();
+		ForgeEntity spawner = AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			RunTicks(world, 3);
+			ForgeEntity between = AddEntity(level, out _);
+			ForgeEntity? during = null;
+			spawner.Mover = new SpawningMover(() => during = AddEntity(level, out _));
+
+			RunTicks(world, 1);
+
+			during.Should().NotBeNull();
+			during!.SpawnTick.Should().Be(between.SpawnTick);
+			during.SpawnSeed.Should().NotBe(between.SpawnSeed);
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_seek_leaves_a_one_shot_that_played_out_alone()
+	{
+		var level = new Node3D();
+		ForgeEntity entity = AddEntity(level, out Node3D body);
+		var flames = new CpuParticles3D { Emitting = true };
+		var spark = new CpuParticles3D { OneShot = true, Emitting = false };
+		body.AddChild(flames);
+		body.AddChild(spark);
+		ForgeWorldHistory world = AddWorld(level);
+
+		try
+		{
+			RunTicks(world, 2);
+			world.Despawn(entity);
+			RunTicks(world, 2);
+
+			// Back from limbo, shown again.
+			world.Seek(world.History.OldestTick!.Value);
+			world.AfterPresentation();
+
+			body.Visible.Should().BeTrue();
+			flames.Emitting.Should().BeTrue();
+			spark.Emitting.Should().BeFalse("a one-shot that played out isn't played again");
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_scene_node_sends_an_entity_it_spawned_to_limbo_rather_than_freeing_it()
+	{
+		var level = new Node3D();
+		ForgeEntity entity = AddEntity(level, out _);
+		ForgeWorldHistory world = AddWorld(level);
+
+		var template = new Node3D();
+		var templateEntity = new ForgeEntity();
+		template.AddChild(templateEntity);
+		templateEntity.Owner = template;
+		var scene = new PackedScene();
+		scene.Pack(template);
+		template.Free();
+
+		try
+		{
+			RunTicks(world, 2);
+			AbilityHandle summon = entity.Abilities.GrantAbilityPermanently(
+				SummonAbility(scene, level),
+				1,
+				LevelComparison.None,
+				null);
+
+			summon.TryActivate(out _).Should().BeTrue();
+			RunTicks(world, 2);
+			Node3D summoned = level.GetChildren().OfType<Node3D>().Last();
+			long held = world.History.CurrentTick!.Value;
+
+			summon.Cancel();
+			RunTicks(world, 1);
+
+			summoned.IsQueuedForDeletion().Should().BeFalse();
+			summoned.Visible.Should().BeFalse("it waits in limbo");
+
+			world.Seek(held);
+
+			summoned.Visible.Should().BeTrue("the summon is back while the node held it");
+		}
+		finally
+		{
+			level.Free();
+		}
+	}
+
 	private static ForgeEntity AddEntity(Node3D level, out Node3D body)
 	{
 		body = new Node3D();
@@ -465,6 +642,48 @@ public class ForgeWorldHistoryTests
 			free.InputPorts[ActionNode.InputPort]));
 
 		return new AbilityData("Vanish", behaviorFactory: () => new GraphAbilityBehavior(graph));
+	}
+
+	// Holds an instance of the scene under the parent for as long as it runs.
+	private static AbilityData SummonAbility(PackedScene scene, Node parent)
+	{
+		var graph = new ForgeGraph();
+		graph.VariableDefinitions.DefineObjectVariable("scene", scene);
+		graph.VariableDefinitions.DefineObjectVariable("parent", parent);
+
+		var summon = new Scene3DNode(InstantiateParentMode.Node, passOwnership: false);
+		summon.BindInput(SceneNodeBase.SceneInput, "scene");
+		summon.BindInput(SceneNodeBase.ParentNodeInput, "parent");
+		graph.AddNode(summon);
+		graph.AddConnection(new Connection(
+			graph.EntryNode.OutputPorts[EntryNode.OutputPort],
+			summon.InputPorts[Scene3DNode.InputPort]));
+
+		return new AbilityData("Summon", behaviorFactory: () => new GraphAbilityBehavior(graph));
+	}
+
+	// Spawns once, the first time it moves, which is during a tick.
+	private sealed class SpawningMover(System.Action spawn) : IEntityMover
+	{
+		private bool _spawned;
+
+		public void Move(double fixedDeltaTime)
+		{
+			if (!_spawned)
+			{
+				_spawned = true;
+				spawn();
+			}
+		}
+
+		public BodyState CaptureState()
+		{
+			return default;
+		}
+
+		public void RestoreState(in BodyState state)
+		{
+		}
 	}
 
 	private sealed class WorldHealthAttributes : AttributeSet

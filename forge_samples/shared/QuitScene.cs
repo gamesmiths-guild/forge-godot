@@ -46,6 +46,7 @@ public partial class QuitScene : Node
 			"rewind",
 			KeyEvent(Key.Backspace),
 			new InputEventMouseButton { ButtonIndex = MouseButton.Right, Device = -1 });
+		AddMissingAction("replay", KeyEvent(Key.R));
 
 		// The rewind demo's entities read their input through Forge's settings rather than the input map.
 		AddMissingSetting(ForgeSettings.InputActionsSetting, "skill_1", "skill_2");

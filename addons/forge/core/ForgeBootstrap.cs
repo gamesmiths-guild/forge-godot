@@ -6,6 +6,7 @@ using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
+using GodotNodeArray = Godot.Collections.Array<Godot.Node>;
 
 namespace Gamesmiths.Forge.Godot.Core;
 
@@ -38,10 +39,11 @@ public partial class ForgeBootstrap : Node
 	public override void _Process(double delta)
 	{
 		ExceptionDispatchInfo? failure = null;
+		GodotNodeArray entities = GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup);
 
 		// Presented here rather than by each entity, so an ability one entity started and another's later callback
 		// ended within the frame is never shown. An entity whose presentation throws keeps no other from presenting.
-		foreach (Node node in GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
+		foreach (Node node in entities)
 		{
 			if (node is not ForgeEntity entity)
 			{
@@ -59,6 +61,13 @@ public partial class ForgeBootstrap : Node
 		}
 
 		ForgeManagers.Instance.CuesManager.PresentCues();
+
+		// What a seek shows is settled only now, after the abilities and cues it changed were presented.
+		foreach (Node node in entities)
+		{
+			(node as ForgeEntity)?.WorldHistory?.AfterPresentation();
+		}
+
 		failure?.Throw();
 	}
 

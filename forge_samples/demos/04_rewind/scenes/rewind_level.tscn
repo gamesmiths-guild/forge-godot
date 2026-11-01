@@ -20,6 +20,8 @@
 [ext_resource type="AudioStream" uid="uid://fe2dybr470eu" path="res://forge_samples/shared/audio/hit.ogg" id="18_hit_sfx"]
 [ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://forge_samples/shared/QuitScene.cs" id="19_quit"]
 [ext_resource type="Material" uid="uid://slep1ateetaq" path="res://forge_samples/demos/03_statescript/materials/hit_flash.tres" id="20_hit_flash"]
+[ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://forge_samples/demos/01_realtime_3d/scripts/ParticlesCueHandler3D.cs" id="21_particles_cue"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn" id="22_fire_vfx"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(24, 1, 24)
@@ -181,6 +183,12 @@ script = ExtResource("13_floating_cue")
 FloatingTextScene = ExtResource("14_floating_text")
 CueTag = "cue.floating.text"
 
+[node name="FireVFX Cues" type="Node" parent="." unique_id=93163916]
+script = ExtResource("21_particles_cue")
+PersistentEffectScene = ExtResource("22_fire_vfx")
+Offset = Vector3(0, 2, 0)
+CueTag = "cue.vfx.fire"
+
 [node name="BurnFlash Cues" type="Node" parent="." unique_id=89206714]
 script = ExtResource("15_flash_cue")
 FlashMaterial = ExtResource("16_burn_flash")
@@ -215,12 +223,15 @@ script = ExtResource("19_quit")
 script = ExtResource("10_world_history")
 metadata/_custom_type_script = "uid://cjxvisddjj00"
 
-[node name="Rewind" type="CanvasLayer" parent="." unique_id=969102207 node_paths=PackedStringArray("WorldHistory", "Panel", "Timeline", "TimeLabel", "CostLabel")]
+[node name="Rewind" type="CanvasLayer" parent="." unique_id=969102207 node_paths=PackedStringArray("WorldHistory", "Panel", "Timeline", "Marks", "TimeLabel", "StatusLabel", "DiffLabel", "CostLabel")]
 script = ExtResource("11_timeline")
 WorldHistory = NodePath("../World History")
 Panel = NodePath("Panel")
 Timeline = NodePath("Panel/Rows/Timeline")
+Marks = NodePath("Panel/Rows/Timeline/Marks")
 TimeLabel = NodePath("Panel/Rows/Time")
+StatusLabel = NodePath("Panel/Rows/Status")
+DiffLabel = NodePath("Panel/Rows/Diff")
 CostLabel = NodePath("Cost")
 
 [node name="Cost" type="Label" parent="Rewind" unique_id=1874789528]
@@ -236,7 +247,7 @@ offset_top = 40.0
 offset_right = 616.0
 offset_bottom = 86.0
 text = "WASD to walk, left click to shoot, Space to dash toward the mouse
-Backspace or right click to pause and rewind, Esc for the hub"
+Backspace or right click to pause and rewind, R to replay from there, Esc for the hub"
 
 [node name="Panel" type="PanelContainer" parent="Rewind" unique_id=1359510610]
 anchors_preset = 12
@@ -263,7 +274,25 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 
+[node name="Marks" type="Control" parent="Rewind/Panel/Rows/Timeline" unique_id=1865137491]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
 [node name="Hint" type="Label" parent="Rewind/Panel/Rows" unique_id=1167804357]
 layout_mode = 2
-text = "Drag the needle, or use the arrow keys, to go back. Backspace or right click resumes from the tick shown."
+text = "Drag the needle, or use the arrow keys, to go back. Backspace or right click resumes from the tick shown, and R replays from it."
 horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="Rewind/Panel/Rows" unique_id=257113780]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Diff" type="Label" parent="Rewind/Panel/Rows" unique_id=207250831]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
