@@ -21,6 +21,9 @@ public partial class RewindTimeline : CanvasLayer
 	private bool _showing;
 	private bool _replayed;
 
+	// The desync the diff shows, so it's described once rather than every frame.
+	private WorldDesync? _described;
+
 	[Export]
 	public required ForgeWorldHistory WorldHistory { get; set; }
 
@@ -108,6 +111,8 @@ public partial class RewindTimeline : CanvasLayer
 		{
 			Timeline.ReleaseFocus();
 
+			_replayed = false;
+
 			// Resuming leaves the ticks after the needle behind, and what a replay found in them with them.
 			foreach (long tick in _desyncs.Keys.Where(x => x > WorldHistory.History.CurrentTick).ToList())
 			{
@@ -167,10 +172,12 @@ public partial class RewindTimeline : CanvasLayer
 		WorldDesync? desync = WorldHistory.Replaying ? null : _desyncs.GetValueOrDefault(current);
 		DiffLabel.Visible = desync is not null;
 
-		if (desync is not null)
+		if (desync is not null && desync != _described)
 		{
 			DiffLabel.Text = desync.Describe(NameOf);
 		}
+
+		_described = desync;
 
 		Marks.QueueRedraw();
 	}
@@ -238,7 +245,9 @@ public partial class RewindTimeline : CanvasLayer
 
 		if (count > 0)
 		{
-			return $"{count} ticks ran differently from the recording, marked red. Put the needle on one to see how.";
+			return count == 1
+				? "1 tick ran differently from the recording, marked red. Put the needle on it to see how."
+				: $"{count} ticks ran differently from the recording, marked red. Put the needle on one to see how.";
 		}
 
 		if (WorldHistory.Replaying)
