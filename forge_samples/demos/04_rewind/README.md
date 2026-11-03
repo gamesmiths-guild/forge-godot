@@ -2,7 +2,7 @@
 
 A small walled arena where every bit of gameplay state lives in Forge, so a `ForgeWorldHistory` can pause the fight, roll the whole arena back up to five seconds, and play on from any moment. Catch fire at the bonfire, carry it to the enemies and watch them burn, then go back to before the fire spread and before they died.
 
-Movement is WASD or the arrow keys, left click shoots, Space dashes toward the mouse, Backspace or right click pauses, R replays from the paused moment, and Esc goes back to the hub.
+Movement is WASD or the arrow keys, left click shoots, Space dashes toward the mouse, Backspace or right click pauses, R replays from the paused moment, P checks prediction, and Esc goes back to the hub.
 
 ## Rewinding
 
@@ -20,12 +20,18 @@ A step that came out differently is marked red on the timeline. Put the needle o
 
 The corner readout shows what the history costs: how many entity snapshots it holds, about how much memory they take (what recording the last step allocated, times the steps held), and how long the last step took to capture.
 
+## Checking prediction
+
+P turns on a check of what a networked client will do with its own player. Every 12 steps, 200 ms at 60 steps a second, the player alone goes back 12 steps and runs them all again within one physics step, against the level as it is now, and each step is checked against the recording. The readout under the help counts the steps that came out differently and shows how the last one did.
+
+Godot moves a body put back in place only on its next physics step, which is why replaying runs one step per physics step. A client the server corrects puts back only its own body and runs every step since at once, and the check shows that works: walking, dashing, and dashing through an enemy come out as recorded. What comes out differently comes from the rest of the level, which isn't replayed: the fire catching the player from the bonfire or an enemy, which a client learns from the server, and the thousandth of a unit a body pressed against a wall or another body can come out off by, as in a replay. Effects the replayed player would apply to others are refused, as a client's are, and a stretch in which the player shot is skipped, since its projectile would spawn again.
+
 ## What's in the level
 
 | Node | What it is |
 | --- | --- |
 | `World History` | A `ForgeWorldHistory` under the level root. It advances every `ForgeEntity` in the level each physics step and records the step, keeping five seconds of them. |
-| `Rewind` | `RewindTimeline`, a `CanvasLayer` that keeps processing while the tree is paused. The `rewind` action (Backspace or right click) pauses and unpauses the tree, and the slider calls `Seek`. The `replay` action (R) turns on the world history's `Replaying` and unpauses, marks each step its `Desynced` event reports, and pauses again at the present. Leaving the level unpauses it, so Esc from the timeline doesn't leave the hub paused. |
+| `Rewind` | `RewindTimeline`, a `CanvasLayer` that keeps processing while the tree is paused. The `rewind` action (Backspace or right click) pauses and unpauses the tree, and the slider calls `Seek`. The `replay` action (R) turns on the world history's `Replaying` and unpauses, marks each step its `Desynced` event reports, and pauses again at the present. Leaving the level unpauses it, so Esc from the timeline doesn't leave the hub paused. Its `Prediction Check` label is `PredictionCheck`, which the `prediction_check` action (P) shows and hides: while it shows, it keeps a core `WorldHistory` of the player alone and replays it every 12 steps. |
 | `Player` | A `ForgeCharacterMovement3D` walks it from a `ForgeInputCollector`'s input. The dash is the Statescript demo's graph, bound to Space through the ability's input action, and left click fires a projectile. It's flammable but has no health, so fire on the player only spreads. |
 | `Spawned` | Holds the three enemies the level starts with, and every enemy and projectile spawned later. Each enemy walks with the same movement component, steered by `ChaseInput`, and has 100 health. |
 | `Bonfire` | The Statescript demo's bonfire rebuilt as an entity: the same logs, flame, light and crackle, and a sign in the same style, without its effect area. It's always burning: its grant gives it Spread Fire, then the `effect.fire` tag that wakes it. |
@@ -77,6 +83,6 @@ The capture and restore hook for state outside Forge, `IForgeEntity.StateHook`, 
 | `effects/` | `burning.tres` and `projectile_hit.tres`. |
 | `graphs/` | The five `StatescriptGraph` resources. |
 | `scenes/` | `rewind_level.tscn`, `player.tscn`, `enemy.tscn`, `projectile.tscn` and `bonfire.tscn`. |
-| `scripts/` | `RewindTimeline`, `ChaseInput` and `LiveHealthBar`, the only C# in the demo. |
+| `scripts/` | `RewindTimeline`, `PredictionCheck`, `ChaseInput` and `LiveHealthBar`, the only C# in the demo. |
 
 The look is the Statescript demo's, referenced as it is: the materials, the bonfire's parts, the trees, the fire particles and the health bar (both from the Real-Time 3D demo), the fire, burn and hit cue handlers, the death and spawn bursts, the dash graph and cooldown, and the projectile's look, cooldown, shot sound and recoil.
