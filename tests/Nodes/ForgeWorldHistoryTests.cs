@@ -12,6 +12,7 @@ using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Effects.Modifiers;
 using Gamesmiths.Forge.Effects.Periodic;
+using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
@@ -348,7 +349,7 @@ public class ForgeWorldHistoryTests
 
 	[TestCase]
 	[RequireGodotRuntime]
-	public void An_entity_moved_out_from_under_the_world_leaves_it_and_can_join_another()
+	public void An_entity_moved_out_from_under_the_world_leaves_it_still_holding_on_and_can_join_another()
 	{
 		var level = new Node3D();
 		ForgeEntity entity = AddEntity(level, out Node3D body);
@@ -358,6 +359,15 @@ public class ForgeWorldHistoryTests
 
 		try
 		{
+			var cue = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue");
+			var weakness = new Effect(Weakness(cue), new EffectOwnership(entity, entity));
+			weakness.SetSetByCallerMagnitude(cue, -1);
+			entity.EffectsManager.ApplyEffect(weakness);
+			AbilityHandle triggered = entity.Abilities.GrantAbilityPermanently(
+				new AbilityData("Triggered", abilityTriggerData: AbilityTriggerData.ForEvent(cue)),
+				1,
+				LevelComparison.None,
+				entity);
 			RunTicks(world, 2);
 
 			level.RemoveChild(body);
@@ -370,6 +380,18 @@ public class ForgeWorldHistoryTests
 
 			entity.WorldHistory.Should().BeSameAs(other);
 			other.History.Entities.Should().Contain(entity);
+
+			weakness.SetSetByCallerMagnitude(cue, -2);
+			var eventData = new EventData
+			{
+				EventTags = new TagContainer(ForgeManagers.Instance.TagsManager, [cue]),
+				Source = entity,
+				Target = entity,
+			};
+			entity.Events.Raise(in eventData);
+
+			HealthOf(entity).Should().Be(98, "its effect still hears the effect it was applied from");
+			triggered.IsActive.Should().BeTrue("its trigger still listens");
 		}
 		finally
 		{
@@ -666,6 +688,22 @@ public class ForgeWorldHistoryTests
 				PeriodInhibitionRemovedPolicy.NeverReset));
 
 		entity.EffectsManager.ApplyEffect(new Effect(burning, new EffectOwnership(entity, entity)));
+	}
+
+	// Takes as much health as the caller sets, following later changes.
+	private static EffectData Weakness(Tag magnitude)
+	{
+		return new EffectData(
+			"Weakness",
+			new DurationData(DurationType.Infinite),
+			[
+				new Modifier(
+					HealthKey,
+					ModifierOperation.FlatBonus,
+					new ModifierMagnitude(
+						MagnitudeCalculationType.SetByCaller,
+						setByCallerFloat: new SetByCallerFloat(magnitude, Snapshot: false))),
+			]);
 	}
 
 	private static EffectData Shown(Tag cue)

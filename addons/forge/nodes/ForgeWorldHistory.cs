@@ -518,7 +518,8 @@ public partial class ForgeWorldHistory : Node
 		History.Add(entity);
 	}
 
-	// An entity moved out from under the history's parent leaves its world, free to join another.
+	// An entity moved out from under the history's parent leaves its world, free to join another. It lives on, so it
+	// keeps holding on to everything, and one in limbo comes back to life as it is.
 	private void LeaveIfMovedOut(ForgeEntity entity)
 	{
 		if (entity.IsInsideTree() && _root?.IsAncestorOf(entity) == true)
@@ -526,9 +527,8 @@ public partial class ForgeWorldHistory : Node
 			return;
 		}
 
-		History.Forget(entity);
+		History.Forget(entity, letGo: false);
 		_entities.Remove(entity);
-		OnLeftLimbo(entity);
 		entity.WorldHistory = null;
 	}
 
