@@ -290,6 +290,60 @@ worldHistory.Replaying = true;
 GetTree().Paused = false;
 ```
 
+### ForgeNetworkSession
+
+Hosts or joins a networked session over Godot's high-level multiplayer, on ENet, and runs the Forge network session on top of it every physics step: the handshake, the clock, and the players' input up to the server. One per scene that plays online. See [Networking](networking.md) for the setup.
+
+**Properties:**
+
+- `Port` (int): The port to host on or join. The default is 7777.
+- `MaxClients` (int): How many clients a server accepts. The default is 4.
+- `Manifest` ([`ForgeNetworkManifest`](resources.md#forgenetworkmanifest)): The asset manifest both ends build their registry from. Left empty, the project's is used.
+- `LocalPlayer` ([`ForgeEntity`](#forgeentity)): The entity this machine's player controls, whose input a client sends up each tick.
+- `LeadMarginTicks` (int): How many ticks beyond a round trip a client runs ahead of the server. The default is 2.
+- `LeadToleranceTicks` (int): How far a client's clock may drift from its target before it jumps to it. The default is 2.
+- `LatencyMs`, `JitterMs`, `LossPercent`: The network conditioner, applied to this machine's outgoing packets. Changeable while playing.
+
+**Signals:** `PeerJoined(peerId)` and `PeerLeft(peerId)` on the server; `Connected`, `Refused(reason)` and `Disconnected` on a client. The C# event `InputTaken` is raised on the server every physics step for every client, with the `InputCommand` the tick runs for it and how it arrived.
+
+**Description:**
+
+`Host(dedicated)` creates the server on `Port`; with `dedicated` set, the game shows nothing and the presentation passes are skipped. `Join(address)` connects; whether the server accepts comes later through the signals. `Leave()` disconnects, or disconnects everyone on a server. `Mode` says what this machine is, `State` where a client stands, and `RoundTripTime`, `ServerTick`, `TicksAhead`, `ServerInputDepth`, `PacketsLost`, `BytesSentPerSecond` and `BytesReceivedPerSecond` are what the overlay shows.
+
+Its physics step runs right after `ForgeBootstrap`'s and before any entity's, so a client sends the input frame its tick reads before simulating the tick, and the server takes each client's command for the tick before simulating it. `DedicatedRequested` is true when the game was started with the user argument `--dedicated`.
+
+```csharp
+// A menu.
+if (ForgeNetworkSession.DedicatedRequested)
+{
+    session.Host(dedicated: true);
+}
+
+hostButton.Pressed += () => session.Host();
+joinButton.Pressed += () => session.Join(addressField.Text);
+
+// The server, until the next milestone maps peers to entities.
+session.InputTaken += (peer, command, delivery) =>
+{
+    ForgeEntity entity = EntityOf(peer.Id);
+    entity.Input?.Submit(command.Frame);
+    command.RaiseEvents(entity, ForgeManagers.Instance.TagsManager);
+};
+```
+
+### ForgeNetworkOverlay
+
+The F3 overlay: what the session is doing, in a corner. It's a `CanvasLayer`; add it anywhere in a scene that has a [`ForgeNetworkSession`](#forgenetworksession).
+
+**Properties:**
+
+- `Session` ([`ForgeNetworkSession`](#forgenetworksession)): The session to show. Left empty, the first in the tree is shown.
+- `ShownAtStart` (bool): Whether the overlay starts shown.
+
+**Description:**
+
+**F3** shows and hides it, and **F4** cycles the session's conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, a client's round trip, estimated server tick, lead and input depth, a server's clients with their input depth and received, lost and late ticks, bytes up and down per second, and the conditioner's settings.
+
 ### ForgeAttributeSet
 
 Configuration node for attribute sets used with ForgeEntity.
