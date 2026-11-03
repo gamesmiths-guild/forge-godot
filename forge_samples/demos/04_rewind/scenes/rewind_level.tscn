@@ -22,6 +22,7 @@
 [ext_resource type="Material" uid="uid://slep1ateetaq" path="res://forge_samples/demos/03_statescript/materials/hit_flash.tres" id="20_hit_flash"]
 [ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://forge_samples/demos/01_realtime_3d/scripts/ParticlesCueHandler3D.cs" id="21_particles_cue"]
 [ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn" id="22_fire_vfx"]
+[ext_resource type="Script" uid="uid://b2c5mjwcq0fhy" path="res://forge_samples/demos/04_rewind/scripts/PredictionCheck.cs" id="23_prediction"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(24, 1, 24)
@@ -247,7 +248,17 @@ offset_top = 40.0
 offset_right = 616.0
 offset_bottom = 86.0
 text = "WASD to walk, left click to shoot, Space to dash toward the mouse
-Backspace or right click to pause and rewind, R to replay from there, Esc for the hub"
+Backspace or right click to pause and rewind, R to replay from there, P to check prediction, Esc for the hub"
+
+[node name="Prediction Check" type="Label" parent="Rewind" unique_id=1847362915 node_paths=PackedStringArray("WorldHistory", "Player")]
+offset_left = 16.0
+offset_top = 92.0
+offset_right = 616.0
+offset_bottom = 115.0
+theme_override_font_sizes/font_size = 13
+script = ExtResource("23_prediction")
+WorldHistory = NodePath("../../World History")
+Player = NodePath("../../Player/Forge Entity")
 
 [node name="Panel" type="PanelContainer" parent="Rewind" unique_id=1359510610]
 anchors_preset = 12
