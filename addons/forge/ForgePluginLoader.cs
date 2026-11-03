@@ -7,6 +7,7 @@ using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Editor;
 using Gamesmiths.Forge.Godot.Editor.Attributes;
 using Gamesmiths.Forge.Godot.Editor.Cues;
+using Gamesmiths.Forge.Godot.Editor.Networking;
 using Gamesmiths.Forge.Godot.Editor.Statescript;
 using Gamesmiths.Forge.Godot.Editor.Statescript.Resolvers.Bases;
 using Gamesmiths.Forge.Godot.Editor.Tags;
@@ -23,6 +24,8 @@ public partial class ForgePluginLoader : EditorPlugin
 	private const string AutoloadPath = "uid://ba8fquhtwu5mu";
 	private const string RepairToolItemText = "Repair assets tags";
 	private const int RepairToolItemId = 0;
+	private const string ManifestItemText = "Regenerate network manifest";
+	private const int ManifestItemId = 1;
 
 	private TagSourceEditingController? _tagEditingController;
 	private TagsEditorDock? _tagsEditorDock;
@@ -103,6 +106,7 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		_toolsMenu = new PopupMenu();
 		_toolsMenu.AddItem(RepairToolItemText, RepairToolItemId);
+		_toolsMenu.AddItem(ManifestItemText, ManifestItemId);
 
 		_toolsMenuIdPressedCallable = new Callable(this, MethodName.OnToolsMenuIdPressed);
 		_toolsMenu.Connect(PopupMenu.SignalName.IdPressed, _toolsMenuIdPressedCallable);
@@ -437,6 +441,13 @@ public partial class ForgePluginLoader : EditorPlugin
 
 	private static void OnResourceSaved(Resource resource)
 	{
+		// A saved effect, ability or graph may be new, so the manifest lists it before the next play.
+		if (NetworkManifestGenerator.Lists(resource))
+		{
+			NetworkManifestGenerator.Regenerate();
+			return;
+		}
+
 		if (resource is not ForgeAttributeSetDefinition)
 		{
 			return;
@@ -460,6 +471,10 @@ public partial class ForgePluginLoader : EditorPlugin
 		if (id == RepairToolItemId)
 		{
 			_repairDialog?.Open();
+		}
+		else if (id == ManifestItemId)
+		{
+			NetworkManifestGenerator.Regenerate();
 		}
 	}
 
