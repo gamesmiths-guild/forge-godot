@@ -168,6 +168,11 @@ public partial class ForgeWorldHistory : Node
 
 		foreach (IForgeEntity entity in _limbo.Keys)
 		{
+			if (entity is ForgeEntity forgeEntity)
+			{
+				forgeEntity.Released = true;
+			}
+
 			LimboNode(entity).QueueFree();
 		}
 
@@ -252,8 +257,9 @@ public partial class ForgeWorldHistory : Node
 		}
 	}
 
-	// An entity freed some other way than by going to limbo can't come back.
-	internal void OnEntityFreed(ForgeEntity entity)
+	// An entity freed some other way than by going to limbo can't come back. Returns whether it had let go of
+	// everything already, in limbo.
+	internal bool OnEntityFreed(ForgeEntity entity)
 	{
 		GD.PushWarning(
 			$"Forge: {entity.Name} was freed while {Name} kept its history, so no rollback brings it back. Despawn " +
@@ -261,7 +267,7 @@ public partial class ForgeWorldHistory : Node
 
 		History.Forget(entity);
 		_entities.Remove(entity);
-		_limbo.Remove(entity);
+		return _limbo.Remove(entity);
 	}
 
 	private static Node LimboNode(IForgeEntity entity)
@@ -551,6 +557,7 @@ public partial class ForgeWorldHistory : Node
 		if (entity is ForgeEntity forgeEntity)
 		{
 			forgeEntity.WorldHistory = null;
+			forgeEntity.Released = true;
 			_entities.Remove(forgeEntity);
 		}
 

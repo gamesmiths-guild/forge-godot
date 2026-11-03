@@ -6,17 +6,20 @@ using FluentAssertions;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Effects.Modifiers;
 using Gamesmiths.Forge.Effects.Periodic;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
+using Gamesmiths.Forge.Tags;
 using GdUnit4;
 using Godot;
 using ForgeGraph = Gamesmiths.Forge.Statescript.Graph;
@@ -242,6 +245,43 @@ public class ForgeWorldHistoryTests
 		}
 		finally
 		{
+			level.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_entity_released_from_limbo_is_freed_without_ending_its_cues_again()
+	{
+		CuesManager cues = ForgeManagers.Instance.CuesManager;
+		var cue = Tag.RequestTag(ForgeManagers.Instance.TagsManager, "cue");
+		var handler = new RemovalCountingCueHandler();
+		cues.RegisterCue(cue, handler);
+		var level = new Node3D();
+		AddEntity(level, out _);
+		ForgeEntity dying = AddEntity(level, out Node3D body);
+		ForgeWorldHistory world = AddWorld(level, seconds: 0.05);
+
+		try
+		{
+			dying.EffectsManager.ApplyEffect(new Effect(Shown(cue), new EffectOwnership(dying, dying)));
+			cues.PresentCues();
+			RunTicks(world, 2);
+			world.Despawn(dying);
+			RunTicks(world, world.History.Capacity);
+			cues.PresentCues();
+
+			body.IsQueuedForDeletion().Should().BeTrue();
+			handler.Removals.Should().Be(1, "its cue ended as it went to limbo");
+
+			body.Free();
+			cues.PresentCues();
+
+			handler.Removals.Should().Be(1, "it let go of everything in limbo, so freeing it ends nothing again");
+		}
+		finally
+		{
+			cues.UnregisterCue(cue, handler);
 			level.Free();
 		}
 	}
@@ -628,6 +668,21 @@ public class ForgeWorldHistoryTests
 		entity.EffectsManager.ApplyEffect(new Effect(burning, new EffectOwnership(entity, entity)));
 	}
 
+	private static EffectData Shown(Tag cue)
+	{
+		return new EffectData(
+			"Shown",
+			new DurationData(DurationType.Infinite),
+			cues:
+			[
+				new CueData(
+					new TagContainer(ForgeManagers.Instance.TagsManager, [cue]),
+					0,
+					1,
+					CueMagnitudeType.EffectLevel)
+			]);
+	}
+
 	// Frees the node it's given as it starts.
 	private static AbilityData VanishAbility(Node body)
 	{
@@ -682,6 +737,28 @@ public class ForgeWorldHistoryTests
 		}
 
 		public void RestoreState(in BodyState state)
+		{
+		}
+	}
+
+	private sealed class RemovalCountingCueHandler : ICueHandler
+	{
+		public int Removals { get; private set; }
+
+		public void OnExecute(IForgeEntity? target, CueParameters? parameters)
+		{
+		}
+
+		public void OnApply(IForgeEntity? target, CueParameters? parameters)
+		{
+		}
+
+		public void OnRemove(IForgeEntity? target, bool interrupted)
+		{
+			Removals++;
+		}
+
+		public void OnUpdate(IForgeEntity? target, CueParameters? parameters)
 		{
 		}
 	}
