@@ -1,5 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
+using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
@@ -156,7 +157,29 @@ public partial class ForgeEntity : Node, IForgeEntity
 		// One that never got ready holds nothing.
 		if (!letGo && IsNodeReady())
 		{
-			EntitySimulation.Teardown(this);
+			try
+			{
+				Teardown(this);
+			}
+			catch (InvalidOperationException exception)
+			{
+				// Freed from inside one of its own changes, which a teardown can't interrupt: it runs once that
+				// unwinds, with the node gone, as cue handlers and presentation nodes allow for.
+				GD.PushWarning(
+					$"Forge: {Name} is torn down once the change it was freed in ends ({exception.Message}). Queue " +
+					"Free it instead to tear it down while its node is still there.");
+
+				ForgeEntity entity = this;
+				Callable.From(() => Teardown(entity)).CallDeferred();
+			}
 		}
+	}
+
+	private static void Teardown(ForgeEntity entity)
+	{
+		EntitySimulation.Teardown(entity);
+
+		// It's out of the group the bootstrap presents, so what its cancelled abilities showed ends here.
+		entity.Abilities.PresentAbilities();
 	}
 }
