@@ -91,7 +91,7 @@ public class ForgeEntityTickTests
 
 			Root.GetChildren().OfType<ForgeBootstrap>().Single()._PhysicsProcess(Step);
 
-			long tick = (long)Engine.GetPhysicsFrames();
+			long tick = ForgeManagers.Instance.Clock.Tick;
 			second.Random.NextInt64().Should().Be(Draws(second.Random.Seed, tick)[0]);
 			first.Random.NextInt64().Should().Be(Draws(first.Random.Seed, tick)[0]);
 			first._PhysicsProcess(Step);

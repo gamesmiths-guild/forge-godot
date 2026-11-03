@@ -19,6 +19,8 @@ public partial class ForgeBootstrap : Node
 	/// Runs its physics step right after the input collectors and before every other node, so every entity begins its
 	/// tick, its random restarted and its input frame taken, before any entity advances, and the frame taken is the one
 	/// collected in the same step. It also runs while the tree is paused, for entities that keep advancing then.
+	/// The tick is the session clock's (<see cref="ForgeManagers.Clock"/>), which its tick-end child moves once every
+	/// entity has advanced.
 	/// </remarks>
 	public ForgeBootstrap()
 	{
@@ -28,7 +30,11 @@ public partial class ForgeBootstrap : Node
 
 	public override void _Ready()
 	{
-		_ = new ForgeManagers(ForgeTagsSource.LoadRegisteredTags());
+		_ = new ForgeManagers(ForgeTagsSource.LoadRegisteredTags(), Engine.PhysicsTicksPerSecond);
+
+		// Ends every physics step after every other node, so the clock moves once all entities have advanced the tick
+		// it named.
+		AddChild(new ForgeTickEnd { Name = "Tick End" });
 
 		// Abilities and cues are presented at the end of the frame and show only what the frame changed. The highest
 		// priority processes last, after every entity has ticked and updated.
@@ -38,6 +44,12 @@ public partial class ForgeBootstrap : Node
 
 	public override void _Process(double delta)
 	{
+		// A host with nothing to show, such as a dedicated server, presents nothing and simulates the same game.
+		if (!ForgeManagers.Instance.HasViewer)
+		{
+			return;
+		}
+
 		ExceptionDispatchInfo? failure = null;
 		GodotNodeArray entities = GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup);
 
@@ -73,7 +85,7 @@ public partial class ForgeBootstrap : Node
 
 	public override void _PhysicsProcess(double delta)
 	{
-		long tick = (long)Engine.GetPhysicsFrames();
+		long tick = ForgeManagers.Instance.Clock.Tick;
 
 		foreach (Node node in GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
 		{
