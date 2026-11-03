@@ -93,6 +93,13 @@ public partial class PredictionCheck : Label
 			_player.Add(Player);
 		}
 
+		// A tick that doesn't follow the last starts the player's history over, and a shot from the discarded future
+		// with it.
+		if (tick != _recorded + 1)
+		{
+			_lastShot = long.MinValue;
+		}
+
 		_recorded = tick;
 		_player.Record(tick);
 
