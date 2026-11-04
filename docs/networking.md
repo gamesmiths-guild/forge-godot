@@ -1,13 +1,14 @@
 # Networking
 
-Forge for Godot plays a game over the network with one server in charge: the server simulates every entity from the players' input, and each client sends only what its player pressed. This page is the setup. The design, the protocol and what each piece does are in the core's [networking page](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/README.md).
+Forge for Godot plays a game over the network with one server in charge: the server simulates every entity from the players' input, each client sends only what its player pressed, and the server sends the world back down to every client. This page is the setup. The design, the protocol and what each piece does are in the core's [networking](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/README.md) and [replication](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/replication.md) pages. The Networked Statescript sample in `forge_samples/demos/05_networked_statescript/` puts it together.
 
 ## Setup
 
-1. **The session node.** Add a [`ForgeNetworkSession`](nodes.md#forgenetworksession) to the scene that plays online, and point its `Local Player` at the `ForgeEntity` the player on this machine controls, the one with the [`ForgeInputCollector`](nodes.md#forgeinputcollector). One session per scene.
-2. **The input actions.** Networked input travels as the project's Forge input actions (`forge/input/actions` and `forge/input/vectors` in Project Settings), so every machine must list the same ones in the same order. A client whose list differs is refused. Input events travel as Forge tags, so the registered tags must match too; a client whose tags differ is refused.
-3. **The asset manifest.** Both ends must agree on which effect, ability or graph an index means. The editor plugin keeps a [`ForgeNetworkManifest`](resources.md#forgenetworkmanifest) at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings), regenerated when one of those resources is saved, when the project's files change, and from **Project, Tools, Forge, Regenerate network manifest**. Commit it; a client whose manifest differs is refused.
-4. **Host, join, leave.** From a menu or a script:
+1. **The session node.** Add a [`ForgeNetworkSession`](nodes.md#forgenetworksession) to the scene that plays online. One session per scene.
+2. **Networked entities.** Turn on `Networked` on every [`ForgeEntity`](nodes.md#forgeentity) the server should simulate for everyone: players, enemies, anything whose state matters to more than one machine. See [Networked entities](#networked-entities).
+3. **The input actions.** Networked input travels as the project's Forge input actions (`forge/input/actions` and `forge/input/vectors` in Project Settings), so every machine must list the same ones in the same order. A client whose list differs is refused. Input events travel as Forge tags, so the registered tags must match too; a client whose tags differ is refused.
+4. **The asset manifest.** Both ends must agree on which effect, ability, graph or networked scene an index means. The editor plugin keeps a [`ForgeNetworkManifest`](resources.md#forgenetworkmanifest) at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings), regenerated when one of those resources is saved, when the project's files change, and from **Project, Tools, Forge, Regenerate network manifest**. It lists every scene whose own `ForgeEntity` is networked. Commit it; a client whose manifest differs is refused.
+5. **Host, join, leave.** From a menu or a script:
 
 ```csharp
 // Host, with a player on this machine.
@@ -22,9 +23,36 @@ session.Leave();
 
 `Host` returns an error when the port is taken; `Join` returns one when no client could be made, and reports the connection's fate later through `Connected`, `Refused` (with a `RefusalReason`) or `Disconnected`. The server raises `PeerJoined` and `PeerLeft` with the client's peer id.
 
+## Networked entities
+
+A [`ForgeEntity`](nodes.md#forgeentity) with `Networked` on is simulated by the server and shown on every client. Offline it plays like any other entity.
+
+- **Placed or spawned.** One that is in the scene when the server starts hosting is **placed**: every machine loads the same scene, before hosting or joining, so every client has it too, and each machine numbers its placed entities the same way, by their place in the scene. One that enters the tree on the server later is **spawned**: the server sends it to every client, which makes it from the same scene. A spawned entity's scene must be listed in the manifest, which it is when the scene's own `ForgeEntity` is networked. Host before spawning anything networked.
+- **Spawning one.** On the server, instantiate the scene and add it to the tree as usual. Set `NetworkOwner` first when it belongs to a player:
+
+```csharp
+var player = playerScene.Instantiate<Node3D>();
+player.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = (int)peerId;
+level.AddChild(player);
+```
+
+  The [Instantiate Scene](statescript/nodes/scene-nodes.md) nodes do the same from a graph, and what an entity spawns belongs to that entity's owner. On a client they don't instantiate networked scenes: the server spawns them for everyone.
+- **Despawning one.** Free it on the server. Every client frees its copy.
+- **Owners.** `NetworkOwner` is the multiplayer peer id whose player the entity is: 1 for the server's own player, 0 for the world's. A [`ForgeInputCollector`](nodes.md#forgeinputcollector) reads the devices only on the machine of the entity's owner, and the server hands each client's input to the entities that client owns.
+
+## What a client sees
+
+A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). It simulates nothing: it doesn't advance, starts none of its own effects or abilities, and holds what the server sends.
+
+- **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play as they arrive, unless they're more than 0.2 s old.
+- **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server.
+- **Its own player** is a mirror too, and answers its input a round trip late: nothing is predicted yet. The session sets `Local Player` to the networked entity with an input that this machine's peer owns as it appears, and raises `LocalPlayerChanged`, so a camera can follow it.
+- **Late joiners** get the world as it is, and **relevancy** is everything by default; set `Relevancy Radius` for a client to hear only about entities within that distance of one it owns.
+- **Where spawns go.** A client adds what the server spawns under `Spawn Parent`, or the current scene.
+
 ## Dedicated servers
 
-A dedicated server simulates the game with nothing to show. Host with `dedicated` set and the presentation passes are skipped: cues, ability presentation and everything else that only shows the game.
+A dedicated server simulates the game with nothing to show. Host with `dedicated` set and the presentation passes are skipped: cues, ability presentation and everything else that only shows the game. Cues still reach every client.
 
 ```csharp
 if (ForgeNetworkSession.DedicatedRequested)
@@ -41,7 +69,7 @@ godot --headless --path . -- --dedicated
 
 ## Trying it on one machine
 
-Godot's **Debug, Run Multiple Instances** runs the project several times at once. Set it to two or more, give one instance a feature tag or an argument your menu reads to host, and have the others join `127.0.0.1`.
+Godot's **Debug, Customize Run Instances** runs the project several times at once. Enable multiple instances, give one instance an argument your menu reads to host, and have the others join `127.0.0.1`. The Networked Statescript sample reads `--host`, `--join` and `--dedicated`.
 
 Localhost has no latency, so the game feels nothing like a real connection. The session node's **Network Conditioner** group adds one: `Latency Ms`, `Jitter Ms` and `Loss Percent` are applied to this machine's outgoing packets, and can be changed while playing. Set them on the client instance, or on both, to try the game at 100 or 200 ms with some loss. `NetworkConditions.Poor` in the core is 200 ms with 50 ms of jitter and 5% loss.
 
@@ -49,13 +77,13 @@ Localhost has no latency, so the game feels nothing like a real connection. The 
 
 Add a [`ForgeNetworkOverlay`](nodes.md#forgenetworkoverlay) anywhere in the scene. **F3** shows and hides it, and **F4** cycles the conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, and:
 
-- On a client: the round trip, the server's estimated tick, how many ticks ahead this client runs, and how many of its input ticks the server holds in hand.
-- On a server: each client's input depth and how many of its ticks were received, lost or late.
+- On a client: the round trip, the server's estimated tick, how many ticks ahead this client runs, how many of its input ticks the server holds in hand, how many entities it mirrors, the tick of the newest state it has, and how many state packets came late.
+- On a server: how many entities it replicates, and each client's input depth and how many of its ticks were received, lost or late.
 - On both: bytes up and down per second, and the conditioner's settings.
 
 ## What a client sends
 
-Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named. It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, takes that tick's command; the session node raises `InputTaken` with it, and the game feeds it to the entity the client controls, raising only the input events it allows, so a client can't trigger an ability meant for a server event:
+Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named. It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, hands that tick's command to every entity the client owns that has an input. The session node then raises `InputTaken` with it. A game that raises input events does it there, raising only the ones it allows, so a client can't trigger an ability meant for a server event:
 
 ```csharp
 // The tags a client may raise as input events, children included.
@@ -65,13 +93,9 @@ var inputEvents = new TagContainer(
 
 session.InputTaken += (peer, command, delivery) =>
 {
-    ForgeEntity entity = EntityOf(peer.Id);
-    entity.Input?.Submit(command.Frame);
-    command.RaiseEvents(entity, inputEvents);
+    command.RaiseEvents(PlayerOf(peer.Id), inputEvents);
 };
 ```
-
-Which entity a peer controls is the game's to decide.
 
 ## The clock
 
