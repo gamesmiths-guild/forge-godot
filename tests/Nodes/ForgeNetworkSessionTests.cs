@@ -11,6 +11,7 @@ using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Networking;
+using Gamesmiths.Forge.Networking.Messages;
 using GdUnit4;
 using Godot;
 

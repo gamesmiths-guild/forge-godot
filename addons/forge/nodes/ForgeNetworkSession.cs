@@ -268,7 +268,7 @@ public partial class ForgeNetworkSession : Node
 		multiplayer.MultiplayerPeer = peer;
 		_transport = new GodotTransport(multiplayer, isServer: true);
 		ulong seed = ((ulong)GD.Randi() << 32) | GD.Randi();
-		_session = new NetworkSession(Conditioned(_transport), Clock, BuildRegistry(), ForgeSettings.GetInputActionSet(), seed, MaxClients);
+		_session = new NetworkSession(Conditioned(_transport), Clock, BuildRegistry(), ForgeManagers.Instance.TagsManager, ForgeSettings.GetInputActionSet(), seed, MaxClients);
 		_session.PeerJoined += OnPeerJoined;
 		_session.PeerLeft += OnPeerLeft;
 		Mode = dedicated ? NetworkMode.DedicatedServer : NetworkMode.ListenServer;
@@ -299,7 +299,7 @@ public partial class ForgeNetworkSession : Node
 		SceneMultiplayer multiplayer = SceneMultiplayerOf(this);
 		multiplayer.MultiplayerPeer = peer;
 		_transport = new GodotTransport(multiplayer, isServer: false);
-		_session = new NetworkSession(Conditioned(_transport), Clock, BuildRegistry(), ForgeSettings.GetInputActionSet());
+		_session = new NetworkSession(Conditioned(_transport), Clock, BuildRegistry(), ForgeManagers.Instance.TagsManager, ForgeSettings.GetInputActionSet());
 		Mode = NetworkMode.Client;
 
 		return Error.Ok;

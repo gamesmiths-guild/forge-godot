@@ -7,7 +7,7 @@ Forge for Godot plays a game over the network with one server in charge: the ser
 ## Setup
 
 1. **The session node.** Add a [`ForgeNetworkSession`](nodes.md#forgenetworksession) to the scene that plays online, and point its `Local Player` at the `ForgeEntity` the player on this machine controls, the one with the [`ForgeInputCollector`](nodes.md#forgeinputcollector). One session per scene.
-2. **The input actions.** Networked input travels as the project's Forge input actions (`forge/input/actions` and `forge/input/vectors` in Project Settings), so every machine must list the same ones in the same order. A client whose list differs is refused.
+2. **The input actions.** Networked input travels as the project's Forge input actions (`forge/input/actions` and `forge/input/vectors` in Project Settings), so every machine must list the same ones in the same order. A client whose list differs is refused. Input events travel as Forge tags, so the registered tags must match too; a client whose tags differ is refused.
 3. **The asset manifest.** Both ends must agree on which effect, ability or graph an index means. The editor plugin keeps a [`ForgeNetworkManifest`](resources.md#forgenetworkmanifest) at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings), regenerated when one of those resources is saved and from **Project, Tools, Forge, Regenerate network manifest**. Commit it; a client whose manifest differs is refused.
 4. **Host, join, leave.** From a menu or a script:
 
