@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DemoEntry" format=3 uid="uid://c5net8hubent"]
+
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="PackedScene" uid="uid://c5net8level1" path="res://forge_samples/demos/05_networked_statescript/scenes/networked_level.tscn" id="2_level"]
+
+[resource]
+script = ExtResource("1_entry")
+Title = "Networked Statescript"
+Tagline = "The Statescript level with a server in charge and up to four players."
+Blurb = "Sample 03's level played over the network. One machine hosts, as a player or as a dedicated server, and others join it by address. The server simulates everything from each player's input and sends the world down; every other machine shows it as the server says it is, a moment behind.
+
+Movement is WASD or the arrow keys, and Space dashes toward the mouse. Your own player answers a round trip late on purpose: nothing is predicted yet. F3 shows the session's numbers, and F4 makes the link worse. To try it on one computer, use Debug, Customize Run Instances, and run two or more."
+Highlights = Array[String](["Replication - attributes, tags, cues and bodies reach every client as the union of what it hasn't acknowledged", "Networked entities - players and enemies spawn on the server as networked scenes, and the dummies are placed in every machine's level", "Mirrors - a client's copies simulate nothing and show what the server sends, burning flames and health bars included", "Interpolation - remote bodies move smoothly a little behind the server", "Late join - a client that joins mid-fight gets the world as it is", "Listen, dedicated and offline - host and play, host with nobody playing, or play alone on a host nobody joins"])
+Scene = ExtResource("2_level")
+Accent = Color(0.976471, 0.701961, 0.25098, 1)

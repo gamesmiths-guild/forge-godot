@@ -31,6 +31,7 @@ Open `forge_samples/Main.tscn` and run it. The hub scene lists every demo and lo
 | `demos/02_turnbased_2d/` | 2D character, effect areas, floating text and particle cue handlers. |
 | `demos/03_statescript/` | The Real-Time 3D demo's abilities and enemy rebuilt as Statescript graphs, on a level shared with future demos. |
 | `demos/04_rewind/` | A small arena whose whole state lives in Forge, so a `ForgeWorldHistory` can pause it and roll it back up to five seconds, deaths and spawns included. |
+| `demos/05_networked_statescript/` | The Statescript level over the network: host, join or run a dedicated server, with a player per peer, the server's enemies and dummies replicated to every client. |
 | `shared/` | Attribute sets, shared effect resources, custom executions and calculators, and the sound files under `audio/`. |
 
 Each demo folder has a README of its own that walks through what is in it.
