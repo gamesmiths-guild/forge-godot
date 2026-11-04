@@ -21,7 +21,7 @@ The central node for adding Forge system functionality to any game object.
 
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
-- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md). An entity a [`ForgeWorldHistory`](#forgeworldhistory) keeps is begun and advanced by it instead.
+- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the session clock's tick (`ForgeManagers.Instance.Clock`, which follows the server's in a [networked session](networking.md#the-clock)), before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md). An entity a [`ForgeWorldHistory`](#forgeworldhistory) keeps is begun and advanced by it instead.
 - **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates. Once every node has processed, the Forge bootstrap autoload calls `Abilities.PresentAbilities` on every `ForgeEntity` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. An ability one node starts and a later one ends within the same frame is never shown. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 - **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
@@ -322,12 +322,15 @@ if (ForgeNetworkSession.DedicatedRequested)
 hostButton.Pressed += () => session.Host();
 joinButton.Pressed += () => session.Join(addressField.Text);
 
-// The server, until the next milestone maps peers to entities.
+// The server, until the next milestone maps peers to entities. Clients may raise the input events under input.
+var inputEvents = new TagContainer(
+    ForgeManagers.Instance.TagsManager,
+    [Tag.RequestTag(ForgeManagers.Instance.TagsManager, "input")]);
 session.InputTaken += (peer, command, delivery) =>
 {
     ForgeEntity entity = EntityOf(peer.Id);
     entity.Input?.Submit(command.Frame);
-    command.RaiseEvents(entity, ForgeManagers.Instance.TagsManager);
+    command.RaiseEvents(entity, inputEvents);
 };
 ```
 

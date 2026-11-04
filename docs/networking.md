@@ -57,14 +57,19 @@ Add a [`ForgeNetworkOverlay`](nodes.md#forgenetworkoverlay) anywhere in the scen
 
 ## What a client sends
 
-Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named. It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, takes that tick's command; the session node raises `InputTaken` with it, and the game feeds it to the entity the client controls:
+Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named. It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, takes that tick's command; the session node raises `InputTaken` with it, and the game feeds it to the entity the client controls, raising only the input events it allows, so a client can't trigger an ability meant for a server event:
 
 ```csharp
+// The tags a client may raise as input events, children included.
+var inputEvents = new TagContainer(
+    ForgeManagers.Instance.TagsManager,
+    [Tag.RequestTag(ForgeManagers.Instance.TagsManager, "input")]);
+
 session.InputTaken += (peer, command, delivery) =>
 {
     ForgeEntity entity = EntityOf(peer.Id);
     entity.Input?.Submit(command.Frame);
-    command.RaiseEvents(entity, ForgeManagers.Instance.TagsManager);
+    command.RaiseEvents(entity, inputEvents);
 };
 ```
 
