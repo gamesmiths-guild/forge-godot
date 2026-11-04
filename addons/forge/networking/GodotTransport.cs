@@ -28,6 +28,8 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 	/// </summary>
 	public const int ClientChannels = 3;
 
+	private const int MaxEnetClients = 4095;
+
 	private readonly SceneMultiplayer _multiplayer;
 	private readonly Queue<TransportEvent> _inbox = new();
 	private readonly HashSet<PeerId> _peers = [];
@@ -112,7 +114,9 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 	public static Error CreateServerPeer(int port, int maxClients, out ENetMultiplayerPeer peer)
 	{
 		peer = new ENetMultiplayerPeer();
-		Error error = peer.CreateServer(port, Math.Max(maxClients, 1));
+
+		// The session reads 0 as no limit; ENet takes at most 4095.
+		Error error = peer.CreateServer(port, maxClients > 0 ? maxClients : MaxEnetClients);
 
 		if (error == Error.Ok)
 		{
@@ -291,7 +295,8 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 	{
 		var peer = new PeerId((int)id);
 
-		if (!_peers.Contains(peer))
+		// Send always writes the channel byte, so an empty packet came from something else.
+		if (!_peers.Contains(peer) || packet.Length == 0)
 		{
 			return;
 		}
@@ -299,6 +304,6 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 		// The channel is the first byte, put there by Send.
 		BytesReceived += packet.Length;
 		PacketsReceived++;
-		_inbox.Enqueue(TransportEvent.PacketFrom(peer, packet.Length > 0 ? packet[0] : (byte)0, packet.AsMemory(1)));
+		_inbox.Enqueue(TransportEvent.PacketFrom(peer, packet[0], packet.AsMemory(1)));
 	}
 }

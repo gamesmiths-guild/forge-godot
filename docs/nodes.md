@@ -297,7 +297,7 @@ Hosts or joins a networked session over Godot's high-level multiplayer, on ENet,
 **Properties:**
 
 - `Port` (int): The port to host on or join. The default is 7777.
-- `MaxClients` (int): How many clients a server accepts. The default is 4.
+- `MaxClients` (int): How many clients a server accepts, or 0 for as many as ENet allows (4095). The default is 4.
 - `Manifest` ([`ForgeNetworkManifest`](resources.md#forgenetworkmanifest)): The asset manifest both ends build their registry from. Left empty, the project's is used.
 - `LocalPlayer` ([`ForgeEntity`](#forgeentity)): The entity this machine's player controls, whose input a client sends up each tick.
 - `LeadMarginTicks` (int): How many ticks beyond a round trip a client runs ahead of the server. The default is 2.

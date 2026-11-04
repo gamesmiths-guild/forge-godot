@@ -127,7 +127,7 @@ public partial class ForgeNetworkSession : Node
 	public int Port { get; set; } = DefaultPort;
 
 	/// <summary>
-	/// Gets or sets how many clients a server accepts.
+	/// Gets or sets how many clients a server accepts, or 0 for as many as ENet allows.
 	/// </summary>
 	[Export]
 	public int MaxClients { get; set; } = 4;
