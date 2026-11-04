@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
@@ -28,9 +29,23 @@ internal static class NetworkManifestGenerator
 			? ResourceLoader.Load<ForgeNetworkManifest>(path, cacheMode: ResourceLoader.CacheMode.Ignore)
 			: new ForgeNetworkManifest();
 
-		manifest.Effects = [.. Uids(ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeEffectData)))];
-		manifest.Abilities = [.. Uids(ProjectFileIndex.CollectResourcesByScriptClass("ForgeAbilityData"))];
-		manifest.Graphs = [.. Uids(ProjectFileIndex.CollectResourcesByScriptClass("StatescriptGraph"))];
+		List<string> effects = Uids(ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeEffectData)));
+		List<string> abilities = Uids(ProjectFileIndex.CollectResourcesByScriptClass("ForgeAbilityData"));
+		List<string> graphs = Uids(ProjectFileIndex.CollectResourcesByScriptClass("StatescriptGraph"));
+
+		// Saved only when something changed: saving changes the filesystem, which regenerates the manifest again.
+		if (ResourceLoader.Exists(path)
+			&& manifest.Effects.SequenceEqual(effects)
+			&& manifest.Abilities.SequenceEqual(abilities)
+			&& manifest.Graphs.SequenceEqual(graphs))
+		{
+			manifest.TakeOverPath(path);
+			return manifest;
+		}
+
+		manifest.Effects = [.. effects];
+		manifest.Abilities = [.. abilities];
+		manifest.Graphs = [.. graphs];
 
 		Error error = ResourceSaver.Save(manifest, path);
 

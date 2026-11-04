@@ -432,6 +432,13 @@ public partial class ForgePluginLoader : EditorPlugin
 		// those lists.
 		StatescriptEnumUtilities.InvalidateCache();
 		VariableResolverEditorUtilities.InvalidateCache();
+
+		// The Statescript editor saves graphs itself, which raises no resource saved, and a deleted or moved asset
+		// raises none either. Only a project that has a manifest gets it kept up to date this way.
+		if (ResourceLoader.Exists(ForgeSettings.GetNetworkManifestPath()))
+		{
+			NetworkManifestGenerator.Regenerate();
+		}
 	}
 
 	private static void OnProjectSettingsChanged()
