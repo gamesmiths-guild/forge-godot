@@ -102,6 +102,7 @@ public class ForgeNetworkSessionTests
 
 		left.Should().BeTrue();
 		pair.Client.Mode.Should().Be(NetworkMode.Offline);
+		pair.Client.BytesSentPerSecond.Should().Be(0, "the next session counts its own traffic");
 		pair.Server.Session.Peers.Should().BeEmpty();
 	}
 

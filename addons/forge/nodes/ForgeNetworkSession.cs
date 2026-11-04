@@ -345,6 +345,11 @@ public partial class ForgeNetworkSession : Node
 		Session = null;
 		_transport = null;
 		_conditioned = null;
+		_lastStatsAt = 0;
+		_lastBytesSent = 0;
+		_lastBytesReceived = 0;
+		BytesSentPerSecond = 0;
+		BytesReceivedPerSecond = 0;
 		Mode = NetworkMode.Offline;
 		ForgeManagers.Instance.HasViewer = true;
 
