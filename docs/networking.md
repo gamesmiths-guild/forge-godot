@@ -2,8 +2,6 @@
 
 Forge for Godot plays a game over the network with one server in charge: the server simulates every entity from the players' input, and each client sends only what its player pressed. This page is the setup. The design, the protocol and what each piece does are in the core's [networking page](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/README.md).
 
-**Where this stands:** the foundation. A session connects, checks that both ends run the same build and the same assets, agrees on time, and carries the players' input up to the server. What the server sends back down, so that every screen shows the world, comes with the next milestone; until then a client sees only its own machine.
-
 ## Setup
 
 1. **The session node.** Add a [`ForgeNetworkSession`](nodes.md#forgenetworksession) to the scene that plays online, and point its `Local Player` at the `ForgeEntity` the player on this machine controls, the one with the [`ForgeInputCollector`](nodes.md#forgeinputcollector). One session per scene.
@@ -45,7 +43,7 @@ godot --headless --path . -- --dedicated
 
 Godot's **Debug, Run Multiple Instances** runs the project several times at once. Set it to two or more, give one instance a feature tag or an argument your menu reads to host, and have the others join `127.0.0.1`.
 
-Localhost has no latency, so the game feels nothing like a real connection. The session node's **Network Conditioner** group adds one: `Latency Ms`, `Jitter Ms` and `Loss Percent` are applied to this machine's outgoing packets, and can be changed while playing. Set them on the client instance, or on both, to try the game at 100 or 200 ms with some loss. `NetworkConditions.Poor` in the core, 200 ms with 50 ms of jitter and 5% loss, is what the plan tests prediction under.
+Localhost has no latency, so the game feels nothing like a real connection. The session node's **Network Conditioner** group adds one: `Latency Ms`, `Jitter Ms` and `Loss Percent` are applied to this machine's outgoing packets, and can be changed while playing. Set them on the client instance, or on both, to try the game at 100 or 200 ms with some loss. `NetworkConditions.Poor` in the core is 200 ms with 50 ms of jitter and 5% loss.
 
 ## The overlay
 
@@ -73,8 +71,8 @@ session.InputTaken += (peer, command, delivery) =>
 };
 ```
 
-Which entity a peer controls is the game's to decide until the next milestone spawns players for peers.
+Which entity a peer controls is the game's to decide.
 
 ## The clock
 
-Every entity simulates the tick the session clock names (`ForgeManagers.Instance.Clock`), counted at the physics tick rate. The server's clock is the session's time; a client's is set to the server's tick when it's welcomed and kept about a round trip plus `Lead Margin Ticks` ahead of it, so its input arrives before the server needs it. In this milestone the clock jumps when it drifts by more than `Lead Tolerance Ticks`; a later milestone steers it smoothly. Offline, the clock simply counts from zero when the game starts, and a [`ForgeWorldHistory`](nodes.md#forgeworldhistory) that rolls back takes the clock back with it.
+Every entity simulates the tick the session clock names (`ForgeManagers.Instance.Clock`), counted at the physics tick rate. The server's clock is the session's time; a client's is set to the server's tick when it's welcomed and kept about a round trip plus `Lead Margin Ticks` ahead of it, so its input arrives before the server needs it. The clock jumps when it drifts by more than `Lead Tolerance Ticks`. Offline, the clock simply counts from zero when the game starts, and a [`ForgeWorldHistory`](nodes.md#forgeworldhistory) that rolls back takes the clock back with it.

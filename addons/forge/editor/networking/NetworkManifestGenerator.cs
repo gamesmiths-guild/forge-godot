@@ -19,7 +19,7 @@ internal static class NetworkManifestGenerator
 {
 	/// <summary>
 	/// Regenerates the manifest at <see cref="ForgeSettings.GetNetworkManifestPath"/>, keeping whatever scenes the
-	/// existing one lists until milestone 8 generates them too.
+	/// existing one lists.
 	/// </summary>
 	/// <returns>The manifest written, or <see langword="null"/> when it couldn't be saved.</returns>
 	public static ForgeNetworkManifest? Regenerate()

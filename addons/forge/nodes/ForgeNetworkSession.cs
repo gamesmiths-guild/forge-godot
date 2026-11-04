@@ -45,11 +45,11 @@ public enum NetworkMode
 /// <para>On a server its physics step runs with the input collectors', before <see cref="ForgeBootstrap"/> begins the
 /// entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after
 /// every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick
-/// reads before simulating the tick. What the server does with a command, which entity it drives, is the game's until
-/// milestone 8 maps peers to entities: subscribe to <see cref="InputTaken"/>.</para>
+/// reads before simulating the tick. What the server does with a command, which entity it drives, is the game's:
+/// subscribe to <see cref="InputTaken"/>.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
-/// arrives before the server needs it. In this milestone the clock jumps to the target when it's off by more than
-/// <see cref="LeadToleranceTicks"/>; milestone 11 steers it smoothly.</para>
+/// arrives before the server needs it. The clock jumps to the target when it's off by more than
+/// <see cref="LeadToleranceTicks"/>.</para>
 /// <para>The <see cref="LatencyMs"/>, <see cref="JitterMs"/> and <see cref="LossPercent"/> exports condition this
 /// machine's outgoing packets, to try the game under a poor link without leaving the desk.</para>
 /// </remarks>

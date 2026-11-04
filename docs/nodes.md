@@ -322,7 +322,7 @@ if (ForgeNetworkSession.DedicatedRequested)
 hostButton.Pressed += () => session.Host();
 joinButton.Pressed += () => session.Join(addressField.Text);
 
-// The server, until the next milestone maps peers to entities. Clients may raise the input events under input.
+// The server. Clients may raise the input events under input.
 var inputEvents = new TagContainer(
     ForgeManagers.Instance.TagsManager,
     [Tag.RequestTag(ForgeManagers.Instance.TagsManager, "input")]);

@@ -43,8 +43,7 @@ public partial class ForgeNetworkManifest : Resource
 	public Array<string> Graphs { get; set; } = [];
 
 	/// <summary>
-	/// Gets or sets the UIDs of the scenes networked entities spawn from. Empty until milestone 8 marks scenes as
-	/// networked.
+	/// Gets or sets the UIDs of the scenes networked entities spawn from.
 	/// </summary>
 	[Export]
 	public Array<string> Scenes { get; set; } = [];
