@@ -45,8 +45,8 @@ public enum NetworkMode
 /// <para>On a server its physics step runs with the input collectors', before <see cref="ForgeBootstrap"/> begins the
 /// entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after
 /// every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick
-/// reads before simulating the tick. What the server does with a command, which entity it drives, is the game's until milestone 8
-/// maps peers to entities: subscribe to <see cref="InputTaken"/>.</para>
+/// reads before simulating the tick. What the server does with a command, which entity it drives, is the game's until
+/// milestone 8 maps peers to entities: subscribe to <see cref="InputTaken"/>.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
 /// arrives before the server needs it. In this milestone the clock jumps to the target when it's off by more than
 /// <see cref="LeadToleranceTicks"/>; milestone 11 steers it smoothly.</para>
@@ -214,7 +214,7 @@ public partial class ForgeNetworkSession : Node
 	/// <summary>
 	/// Gets how many ticks a client's clock runs ahead of its estimate of the server's.
 	/// </summary>
-	public double TicksAhead => IsServer ? 0 : Clock.Tick - ServerTick;
+	public double TicksAhead => IsServer || Session?.ClockSync.HasEstimate != true ? 0 : Clock.Tick - ServerTick;
 
 	/// <summary>
 	/// Gets how many of a client's input ticks the server held ahead of the one it last ran, as of the last pong.
@@ -409,7 +409,7 @@ public partial class ForgeNetworkSession : Node
 		SteerClock(now);
 
 		// A clock steered back would send ticks older than the window's newest; those go again from the new tick.
-		if (Session!.Input.NewestTick > Clock.Tick)
+		if (Session.Input.NewestTick > Clock.Tick)
 		{
 			Session.Input.Clear();
 		}
