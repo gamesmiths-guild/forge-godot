@@ -51,6 +51,12 @@ public class ForgeNetworkSessionTests
 		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
 		pair.Server.Mode.Should().Be(NetworkMode.ListenServer);
 		pair.Client.Mode.Should().Be(NetworkMode.Client);
+		pair.Server.ProcessPhysicsPriority.Should().BeLessThan(
+			int.MinValue + 1,
+			"the server hands commands over before the bootstrap begins the ticks that read them");
+		pair.Client.ProcessPhysicsPriority.Should().BeGreaterThan(
+			int.MinValue + 2,
+			"a client sends the frame its tick read, after every tick, a world history's included, has begun");
 
 		await Pair.RunUntil(() => connected, frames: 600);
 

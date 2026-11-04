@@ -42,9 +42,10 @@ public enum NetworkMode
 /// to the server. One per scene that plays online.
 /// </summary>
 /// <remarks>
-/// <para>Its physics step runs right after <see cref="ForgeBootstrap"/>'s and before any entity's, so a client sends
-/// the input frame its tick reads before simulating the tick, and the server takes each client's command for the tick
-/// before simulating it. What the server does with a command, which entity it drives, is the game's until milestone 8
+/// <para>On a server its physics step runs with the input collectors', before <see cref="ForgeBootstrap"/> begins the
+/// entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after
+/// every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick
+/// reads before simulating the tick. What the server does with a command, which entity it drives, is the game's until milestone 8
 /// maps peers to entities: subscribe to <see cref="InputTaken"/>.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
 /// arrives before the server needs it. In this milestone the clock jumps to the target when it's off by more than
@@ -61,6 +62,11 @@ public partial class ForgeNetworkSession : Node
 	public const string Group = "forge_network_session";
 
 	private const int DefaultPort = 7777;
+
+	// A server hands commands to entities before their ticks begin, with the input collectors; a client sends after
+	// every tick has begun, a world history's at int.MinValue + 2 included.
+	private const int ServerPriority = int.MinValue;
+	private const int ClientPriority = int.MinValue + 3;
 
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
@@ -240,7 +246,7 @@ public partial class ForgeNetworkSession : Node
 	/// </summary>
 	public ForgeNetworkSession()
 	{
-		ProcessPhysicsPriority = int.MinValue + 2;
+		ProcessPhysicsPriority = ClientPriority;
 		ProcessMode = ProcessModeEnum.Always;
 	}
 
@@ -275,6 +281,7 @@ public partial class ForgeNetworkSession : Node
 			MaxClients);
 		Session.PeerJoined += OnPeerJoined;
 		Session.PeerLeft += OnPeerLeft;
+		ProcessPhysicsPriority = ServerPriority;
 		Mode = dedicated ? NetworkMode.DedicatedServer : NetworkMode.ListenServer;
 		ForgeManagers.Instance.HasViewer = !dedicated;
 
@@ -309,6 +316,7 @@ public partial class ForgeNetworkSession : Node
 			BuildRegistry(),
 			ForgeManagers.Instance.TagsManager,
 			ForgeSettings.GetInputActionSet());
+		ProcessPhysicsPriority = ClientPriority;
 		Mode = NetworkMode.Client;
 
 		return Error.Ok;

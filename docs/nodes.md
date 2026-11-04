@@ -310,7 +310,7 @@ Hosts or joins a networked session over Godot's high-level multiplayer, on ENet,
 
 `Host(dedicated)` creates the server on `Port`; with `dedicated` set, the game shows nothing and the presentation passes are skipped. `Join(address)` connects; whether the server accepts comes later through the signals. `Leave()` disconnects, or disconnects everyone on a server. `Mode` says what this machine is, `State` where a client stands, and `RoundTripTime`, `ServerTick`, `TicksAhead`, `ServerInputDepth`, `PacketsLost`, `BytesSentPerSecond` and `BytesReceivedPerSecond` are what the overlay shows.
 
-Its physics step runs right after `ForgeBootstrap`'s and before any entity's, so a client sends the input frame its tick reads before simulating the tick, and the server takes each client's command for the tick before simulating it. `DedicatedRequested` is true when the game was started with the user argument `--dedicated`.
+On a server its physics step runs with the input collectors', before `ForgeBootstrap` begins the entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick reads before simulating the tick. `DedicatedRequested` is true when the game was started with the user argument `--dedicated`.
 
 ```csharp
 // A menu.
