@@ -31,6 +31,32 @@ public partial class ForgeEntity : Node, IForgeEntity
 	[Export]
 	public ForgeSharedVariableSet? SharedVariableDefinitions { get; set; }
 
+	/// <summary>
+	/// Gets or sets a value indicating whether the entity is networked: in a session, the server simulates it and every
+	/// client holds a mirror of it. Offline it plays as any other entity. A networked scene, one that is spawned
+	/// rather than placed in the level, is listed in the network manifest.
+	/// </summary>
+	[Export]
+	public bool Networked { get; set; }
+
+	/// <summary>
+	/// Gets or sets the multiplayer peer whose player the entity is: 1 for the server's own, 0 for the world's. Set it
+	/// on the server before the entity enters the tree; a client gets the server's.
+	/// </summary>
+	public int NetworkOwner { get; set; }
+
+	/// <summary>
+	/// Gets the id the entity is known by on every machine in a session, or <see cref="NetworkEntityId.None"/> for one
+	/// that isn't networked or not in a session.
+	/// </summary>
+	public NetworkEntityId NetworkId { get; internal set; }
+
+	/// <summary>
+	/// Gets a value indicating whether the entity is a client's mirror of one the server simulates: it doesn't advance,
+	/// and holds what the server sends.
+	/// </summary>
+	public bool IsMirror { get; internal set; }
+
 	public EntityAttributes Attributes { get; set; } = null!;
 
 	public EntityTags Tags { get; set; } = null!;
@@ -64,6 +90,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 	internal ulong? SpawnSeed { get; set; }
 
 	internal long SpawnTick { get; set; }
+
+	// The session replicating the entity, told when the entity is freed.
+	internal ForgeNetworkSession? Replicator { get; set; }
 
 	// Set when a world history lets the entity go for good, which it does only once the entity has let go of
 	// everything, in limbo, so freeing it doesn't end what already ended.
@@ -120,8 +149,17 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 		Attributes = new EntityAttributes(this, [.. attributeSetList]);
 
-		var effectApplier = new EffectApplier(this);
-		effectApplier.ApplyEffects(this, this, this);
+		// A mirror starts nothing of its own: the server sends what it has.
+		if (!IsMirror)
+		{
+			var effectApplier = new EffectApplier(this);
+			effectApplier.ApplyEffects(this, this, this);
+		}
+
+		if (Networked)
+		{
+			ForgeNetworkSession.Of(this)?.OnEntityReady(this);
+		}
 	}
 
 	public override void _Process(double delta)
@@ -136,8 +174,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._PhysicsProcess(delta);
 
 		// ForgeBootstrap already began this tick for every entity, before any entity advanced. A world history advances
-		// its entities itself.
-		if (WorldHistory is null)
+		// its entities itself, and a mirror doesn't advance.
+		if (WorldHistory is null && !IsMirror)
 		{
 			EntitySimulation.Advance(this, delta);
 		}
@@ -152,6 +190,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 			return;
 		}
 
+		Replicator?.OnEntityFreed(this);
 		bool letGo = WorldHistory?.OnEntityFreed(this) ?? Released;
 
 		// One that never got ready holds nothing.

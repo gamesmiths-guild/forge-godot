@@ -12,14 +12,14 @@ namespace Gamesmiths.Forge.Godot.Editor.Networking;
 
 /// <summary>
 /// Writes the project's <see cref="ForgeNetworkManifest"/>: the UIDs of every effect, ability and Statescript graph
-/// resource the editor's filesystem index knows, sorted, so every machine that builds the project writes the same
-/// manifest and the session's registry hashes the same.
+/// resource the editor's filesystem index knows, and of every scene with a networked <c>ForgeEntity</c> of its own,
+/// sorted, so every machine that builds the project writes the same manifest and the session's registry hashes the
+/// same.
 /// </summary>
 internal static class NetworkManifestGenerator
 {
 	/// <summary>
-	/// Regenerates the manifest at <see cref="ForgeSettings.GetNetworkManifestPath"/>, keeping whatever scenes the
-	/// existing one lists.
+	/// Regenerates the manifest at <see cref="ForgeSettings.GetNetworkManifestPath"/>.
 	/// </summary>
 	/// <returns>The manifest written, or <see langword="null"/> when it couldn't be saved.</returns>
 	public static ForgeNetworkManifest? Regenerate()
@@ -32,12 +32,14 @@ internal static class NetworkManifestGenerator
 		List<string> effects = Uids(ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeEffectData)));
 		List<string> abilities = Uids(ProjectFileIndex.CollectResourcesByScriptClass("ForgeAbilityData"));
 		List<string> graphs = Uids(ProjectFileIndex.CollectResourcesByScriptClass("StatescriptGraph"));
+		List<string> scenes = Uids([.. ProjectFileIndex.CollectByType("PackedScene", ".tscn").Where(IsNetworkedScene)]);
 
 		// Saved only when something changed: saving changes the filesystem, which regenerates the manifest again.
 		if (ResourceLoader.Exists(path)
 			&& manifest.Effects.SequenceEqual(effects)
 			&& manifest.Abilities.SequenceEqual(abilities)
-			&& manifest.Graphs.SequenceEqual(graphs))
+			&& manifest.Graphs.SequenceEqual(graphs)
+			&& manifest.Scenes.SequenceEqual(scenes))
 		{
 			manifest.TakeOverPath(path);
 			return manifest;
@@ -46,6 +48,7 @@ internal static class NetworkManifestGenerator
 		manifest.Effects = [.. effects];
 		manifest.Abilities = [.. abilities];
 		manifest.Graphs = [.. graphs];
+		manifest.Scenes = [.. scenes];
 
 		Error error = ResourceSaver.Save(manifest, path);
 
@@ -68,6 +71,56 @@ internal static class NetworkManifestGenerator
 	{
 		return resource is ForgeEffectData
 			|| resource.GetType().Name is "ForgeAbilityData" or "StatescriptGraph";
+	}
+
+	/// <summary>
+	/// Whether a scene's text gives one of its own nodes the <c>ForgeEntity</c> script with <c>Networked</c> on: a
+	/// scene the server spawns networked entities from. A level that only turns it on for an instance it holds is
+	/// placed, not spawned, and isn't listed.
+	/// </summary>
+	/// <param name="text">The text of a <c>.tscn</c> file.</param>
+	/// <returns><see langword="true"/> for a networked scene.</returns>
+	internal static bool IsNetworkedSceneText(string text)
+	{
+		const string ScriptPath = "path=\"res://addons/forge/nodes/ForgeEntity.cs\"";
+		string? scriptId = null;
+		bool inEntity = false;
+
+		foreach (string raw in text.Split('\n'))
+		{
+			string line = raw.Trim();
+
+			if (line.StartsWith("[ext_resource", StringComparison.Ordinal)
+				&& line.Contains(ScriptPath, StringComparison.Ordinal))
+			{
+				int start = line.IndexOf(" id=\"", StringComparison.Ordinal) + 5;
+				scriptId = start < 5 ? null : line[start..line.IndexOf('"', start)];
+				continue;
+			}
+
+			if (line.StartsWith('['))
+			{
+				inEntity = false;
+				continue;
+			}
+
+			if (scriptId is not null && line == $"script = ExtResource(\"{scriptId}\")")
+			{
+				inEntity = true;
+			}
+			else if (inEntity && line == "Networked = true")
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static bool IsNetworkedScene(string path)
+	{
+		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+		return file is not null && IsNetworkedSceneText(file.GetAsText());
 	}
 
 	private static List<string> Uids(List<string> paths)

@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://bnet8replica"]
+
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="1_entity"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="2_attrset"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="3_values"]
+[ext_resource type="Script" uid="uid://bu2rl26hcxgv1" path="res://addons/forge/nodes/ForgeCharacterMovement3D.cs" id="4_movement"]
+[ext_resource type="Script" uid="uid://baro6rmmxgvso" path="res://addons/forge/nodes/ForgeInputCollector.cs" id="5_input"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+
+[node name="Networked Body" type="CharacterBody3D"]
+collision_layer = 0
+collision_mask = 0
+motion_mode = 1
+
+[node name="Forge Entity" type="Node" parent="."]
+script = ExtResource("1_entity")
+Networked = true
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Movement Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("2_attrset")
+AttributeSetClass = "MovementAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("3_values")]({
+"Speed": Object(RefCounted,"script":ExtResource("3_values"),"Default":500,"Min":0,"Max":2000)
+})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Movement" type="Node" parent="Forge Entity"]
+script = ExtResource("4_movement")
+SpeedAttribute = "MovementAttributes.Speed"
+metadata/_custom_type_script = "uid://bu2rl26hcxgv1"
+
+[node name="Input" type="Node" parent="Forge Entity"]
+script = ExtResource("5_input")
+metadata/_custom_type_script = "uid://baro6rmmxgvso"
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_body")

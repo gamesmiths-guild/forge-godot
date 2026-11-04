@@ -23,6 +23,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// entity's tick reads in the same physics step.</para>
 /// <para>A press or release caught as the tree pauses is dropped, and what is held is read afresh when it resumes, so
 /// the first frame after a pause carries no edge from it.</para>
+/// <para>In a session, a networked entity's devices are read only on the machine whose player owns it
+/// (<see cref="ForgeEntity.NetworkOwner"/>): the server hands every other owner's commands to it instead.</para>
 /// </remarks>
 [GlobalClass]
 public partial class ForgeInputCollector : Node
@@ -151,7 +153,7 @@ public partial class ForgeInputCollector : Node
 	{
 		base._PhysicsProcess(delta);
 
-		if (_input is null)
+		if (_input is null || !IsLocallyControlled())
 		{
 			return;
 		}
@@ -180,6 +182,13 @@ public partial class ForgeInputCollector : Node
 	private static NumericsVector3 ToNumerics(Vector3 value)
 	{
 		return new NumericsVector3(value.X, value.Y, value.Z);
+	}
+
+	private bool IsLocallyControlled()
+	{
+		return _entity?.Networked != true
+			|| ForgeNetworkSession.Of(this) is not ForgeNetworkSession session
+			|| _entity.NetworkOwner == session.LocalPeer;
 	}
 
 	private ulong ReadHeld()

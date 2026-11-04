@@ -10,6 +10,7 @@ namespace Gamesmiths.Forge.Godot.Core;
 public class ForgeManagers
 {
 	private long? _nextTick;
+	private bool _hasViewer = true;
 
 	public static ForgeManagers Instance { get; private set; } = null!;
 
@@ -24,10 +25,19 @@ public class ForgeManagers
 	public SimulationClock Clock { get; }
 
 	/// <summary>
-	/// Gets or sets a value indicating whether this machine shows the game. A dedicated server doesn't, and skips
-	/// the presentation passes: nothing they run may change gameplay, so the game simulates the same without them.
+	/// Gets or sets a value indicating whether this machine shows the game. A dedicated server doesn't, and skips the
+	/// presentation passes: nothing they run may change gameplay, so the game simulates the same without them. Cues
+	/// aren't presented either (<see cref="CuesManager.Presents"/>), while a session still replicates them.
 	/// </summary>
-	public bool HasViewer { get; set; } = true;
+	public bool HasViewer
+	{
+		get => _hasViewer;
+		set
+		{
+			_hasViewer = value;
+			CuesManager.Presents = value;
+		}
+	}
 
 	public ForgeManagers(string[] registeredTags, int tickRate = 60)
 	{

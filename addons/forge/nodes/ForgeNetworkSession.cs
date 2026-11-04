@@ -1,12 +1,16 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
+using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Networking;
+using Gamesmiths.Forge.Networking.Replication;
 using Godot;
+using NumericsQuaternion = System.Numerics.Quaternion;
+using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
 
@@ -38,15 +42,19 @@ public enum NetworkMode
 
 /// <summary>
 /// Hosts or joins a networked session over Godot's high-level multiplayer, on ENet, and runs the Forge
-/// <see cref="NetworkSession"/> on top of it every physics step: the handshake, the clock, and the players' input up
-/// to the server. One per scene that plays online.
+/// <see cref="NetworkSession"/> on top of it every physics step: the handshake, the clock, the players' input up to the
+/// server, and the world's state down to every client. One per scene that plays online.
 /// </summary>
 /// <remarks>
 /// <para>On a server its physics step runs with the input collectors', before <see cref="ForgeBootstrap"/> begins the
-/// entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after
-/// every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick
-/// reads before simulating the tick. What the server does with a command, which entity it drives, is the game's:
-/// subscribe to <see cref="InputTaken"/>.</para>
+/// entities' ticks: it sends the state the last step left, then hands each client's command to the entities the client
+/// owns, so the command is the one their tick reads. On a client it runs after every tick has begun, a world history's
+/// included, and before any entity's, so it sends the input frame its tick reads before simulating the tick.</para>
+/// <para>The server replicates every <see cref="ForgeEntity.Networked"/> entity under the same multiplayer branch: the
+/// ones in the tree as it starts hosting as placed, which every client's level has too, and the ones that enter later
+/// as spawned, from their scene, which the network manifest lists. A client binds its placed ones as it joins, makes
+/// the spawned ones under <see cref="SpawnParent"/>, and shows their bodies <see cref="InterpolationDelayMs"/> behind
+/// the server.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
 /// arrives before the server needs it. The clock jumps to the target when it's off by more than
 /// <see cref="LeadToleranceTicks"/>.</para>
@@ -68,6 +76,10 @@ public partial class ForgeNetworkSession : Node
 	private const int ServerPriority = int.MinValue;
 	private const int ClientPriority = int.MinValue + 3;
 
+	private static readonly List<ForgeNetworkSession> _active = [];
+
+	private readonly Dictionary<ForgeEntity, Node> _spawnedRoots = [];
+	private readonly ReplicationHost _host;
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
 	private double _lastStatsAt;
@@ -108,8 +120,16 @@ public partial class ForgeNetworkSession : Node
 	public delegate void DisconnectedEventHandler();
 
 	/// <summary>
+	/// Raised when <see cref="LocalPlayer"/> changes: when the entity this machine's player owns is spawned, on the
+	/// server or as a client's mirror, and when it goes.
+	/// </summary>
+	/// <param name="player">The <see cref="ForgeEntity"/>, or <see langword="null"/>.</param>
+	[Signal]
+	public delegate void LocalPlayerChangedEventHandler(Node? player);
+
+	/// <summary>
 	/// Raised on the server every physics step for every joined client, with the command the tick runs for it and how
-	/// it arrived. The game feeds the frame to the entity the client controls and raises the command's events on it.
+	/// it arrived, after the command was handed to the entities the client owns.
 	/// </summary>
 	public event Action<NetworkPeer, InputCommand, InputDelivery>? InputTaken;
 
@@ -140,10 +160,32 @@ public partial class ForgeNetworkSession : Node
 	public ForgeNetworkManifest? Manifest { get; set; }
 
 	/// <summary>
-	/// Gets or sets the entity this machine's player controls, whose input a client sends up each tick.
+	/// Gets or sets the entity this machine's player controls, whose input a client sends up each tick. The session
+	/// sets it to the networked entity with an input that this machine's peer owns, as it's spawned.
 	/// </summary>
 	[Export]
 	public ForgeEntity? LocalPlayer { get; set; }
+
+	/// <summary>
+	/// Gets or sets the node a client adds the entities the server spawns to. Left empty, the current scene.
+	/// </summary>
+	[Export]
+	public Node? SpawnParent { get; set; }
+
+	/// <summary>
+	/// Gets or sets how far from every entity a client owns another entity can be and still reach that client, in
+	/// units, or 0 for every entity everywhere. Read as the server starts hosting.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1000,0.5,or_greater")]
+	public float RelevancyRadius { get; set; }
+
+	/// <summary>
+	/// Gets or sets how far behind the newest state it holds a client shows the server's entities, in milliseconds,
+	/// so it has the states on either side of the moment it shows. The newest state is itself about half a round trip
+	/// behind the server.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,500,1")]
+	public int InterpolationDelayMs { get; set; } = 100;
 
 	/// <summary>
 	/// Gets or sets how many ticks beyond a round trip a client runs ahead of the server, to absorb jitter.
@@ -197,6 +239,11 @@ public partial class ForgeNetworkSession : Node
 	public bool IsServer => Mode is NetworkMode.ListenServer or NetworkMode.DedicatedServer;
 
 	/// <summary>
+	/// Gets this machine's multiplayer peer id in the session: 1 on the server, 0 offline.
+	/// </summary>
+	public int LocalPeer => Session?.LocalPeer.Value ?? 0;
+
+	/// <summary>
 	/// Gets where a client stands with the server; <see cref="SessionState.Ready"/> on a server.
 	/// </summary>
 	public SessionState State => Session?.State ?? SessionState.Disconnected;
@@ -248,6 +295,32 @@ public partial class ForgeNetworkSession : Node
 	{
 		ProcessPhysicsPriority = ClientPriority;
 		ProcessMode = ProcessModeEnum.Always;
+		_host = new ReplicationHost(this);
+	}
+
+	/// <summary>
+	/// Finds the session a node plays in: the one hosting or joined in the node's multiplayer branch.
+	/// </summary>
+	/// <param name="node">A node in the tree.</param>
+	/// <returns>The session, or <see langword="null"/> offline.</returns>
+	public static ForgeNetworkSession? Of(Node node)
+	{
+		if (_active.Count == 0 || !node.IsInsideTree())
+		{
+			return null;
+		}
+
+		MultiplayerApi multiplayer = node.Multiplayer;
+
+		foreach (ForgeNetworkSession session in _active)
+		{
+			if (session.Multiplayer == multiplayer)
+			{
+				return session;
+			}
+		}
+
+		return null;
 	}
 
 	/// <summary>
@@ -281,9 +354,26 @@ public partial class ForgeNetworkSession : Node
 			MaxClients);
 		Session.PeerJoined += OnPeerJoined;
 		Session.PeerLeft += OnPeerLeft;
+		Session.InputTaken += OnInputTaken;
+		Session.Replication!.BodySource = CaptureBody;
+
+		if (RelevancyRadius > 0)
+		{
+			Session.Replication.Relevancy = new DistanceRelevancy(RelevancyRadius);
+		}
+
 		ProcessPhysicsPriority = ServerPriority;
 		Mode = dedicated ? NetworkMode.DedicatedServer : NetworkMode.ListenServer;
 		ForgeManagers.Instance.HasViewer = !dedicated;
+		_active.Add(this);
+
+		List<ForgeEntity> placed = PlacedEntities();
+
+		for (int i = 0; i < placed.Count; i++)
+		{
+			placed[i].NetworkId = new NetworkEntityId((uint)i + 1);
+			Register(placed[i], -1);
+		}
 
 		return Error.Ok;
 	}
@@ -316,8 +406,23 @@ public partial class ForgeNetworkSession : Node
 			BuildRegistry(),
 			ForgeManagers.Instance.TagsManager,
 			ForgeSettings.GetInputActionSet());
+		Session.Mirror!.Host = _host;
+		Session.Mirror.Spawned += OnMirrorSpawned;
 		ProcessPhysicsPriority = ClientPriority;
 		Mode = NetworkMode.Client;
+		_active.Add(this);
+
+		// Bound before the session is ready, so the first state the server sends of them finds them.
+		List<ForgeEntity> placed = PlacedEntities();
+
+		for (int i = 0; i < placed.Count; i++)
+		{
+			ForgeEntity entity = placed[i];
+			entity.NetworkId = new NetworkEntityId((uint)i + 1);
+			entity.IsMirror = true;
+			entity.Replicator = this;
+			Session.Mirror.BindPlaced(entity);
+		}
 
 		return Error.Ok;
 	}
@@ -334,6 +439,16 @@ public partial class ForgeNetworkSession : Node
 
 		Session.PeerJoined -= OnPeerJoined;
 		Session.PeerLeft -= OnPeerLeft;
+		Session.InputTaken -= OnInputTaken;
+		_active.Remove(this);
+
+		// The entities the server spawned go; the placed ones stay as the server last had them.
+		if (Session.Mirror is ReplicationClient mirror)
+		{
+			mirror.Spawned -= OnMirrorSpawned;
+			mirror.Clear();
+		}
+
 		Session.Disconnect();
 		_transport?.Dispose();
 
@@ -374,6 +489,33 @@ public partial class ForgeNetworkSession : Node
 	}
 
 	/// <inheritdoc/>
+	public override void _Process(double delta)
+	{
+		base._Process(delta);
+
+		if (Mode != NetworkMode.Client || Session?.State != SessionState.Ready)
+		{
+			return;
+		}
+
+		// The newest state a client holds is about half a round trip older than the server's tick now, so bodies are
+		// shown the delay behind that.
+		ReplicationClient mirror = Session.Mirror!;
+		double newest = Session.ClockSync.HasEstimate
+			? ServerTick - Clock.TicksIn(Session.ClockSync.RoundTripTime / 2)
+			: mirror.LastServerTick;
+		double shown = newest - Clock.TicksIn(InterpolationDelayMs / 1000.0);
+
+		foreach (IForgeEntity entity in mirror.Entities)
+		{
+			if (mirror.BodyOf(entity)?.TrySample(shown, out BodyState body) == true)
+			{
+				PlaceBody(entity, body);
+			}
+		}
+	}
+
+	/// <inheritdoc/>
 	public override void _PhysicsProcess(double delta)
 	{
 		base._PhysicsProcess(delta);
@@ -397,7 +539,9 @@ public partial class ForgeNetworkSession : Node
 
 		if (IsServer)
 		{
-			TakeInput();
+			// The tree is as the last step left it, so this is that tick's state.
+			Session.Replication!.Send(Clock.Tick - 1);
+			Session.TakeInput(Clock.Tick);
 			return;
 		}
 
@@ -420,6 +564,45 @@ public partial class ForgeNetworkSession : Node
 		}
 	}
 
+	internal void OnEntityReady(ForgeEntity entity)
+	{
+		if (!IsServer || entity.Replicator is not null)
+		{
+			return;
+		}
+
+		int sceneIndex = SceneIndexOf(InstanceRoot(entity));
+
+		if (sceneIndex < 0)
+		{
+			GD.PushWarning(
+				$"Forge: {entity.GetPath()} is networked and entered the game while hosting, from a scene the " +
+				"network manifest doesn't list, so it isn't replicated. Regenerate the manifest (Project, Tools, " +
+				"Forge).");
+			return;
+		}
+
+		entity.NetworkId = Session!.Replication!.AllocateId();
+		Register(entity, sceneIndex);
+	}
+
+	internal void OnEntityFreed(ForgeEntity entity)
+	{
+		Session?.Replication?.Unregister(entity);
+		_spawnedRoots.Remove(entity);
+
+		if (LocalPlayer == entity && IsInstanceValid(this))
+		{
+			SetLocalPlayer(null);
+		}
+	}
+
+	// Whether a scene is one the session spawns on every machine, which a client leaves to the server.
+	internal bool IsNetworkedScene(PackedScene scene)
+	{
+		return SceneIndexOf(scene.ResourcePath) >= 0;
+	}
+
 	private static SceneMultiplayer SceneMultiplayerOf(Node node)
 	{
 		return node.Multiplayer as SceneMultiplayer
@@ -429,6 +612,100 @@ public partial class ForgeNetworkSession : Node
 	private static double Now()
 	{
 		return Time.GetTicksUsec() / 1_000_000.0;
+	}
+
+	// The root of the scene instance the entity came from: the first node up from it that a scene file made.
+	private static Node? InstanceRoot(ForgeEntity entity)
+	{
+		Node? node = entity;
+
+		while (node is not null && string.IsNullOrEmpty(node.SceneFilePath))
+		{
+			node = node.GetParent();
+		}
+
+		return node;
+	}
+
+	private static void CollectNetworked(Node node, List<ForgeEntity> entities)
+	{
+		if (node is ForgeEntity { Networked: true } entity && entity.IsNodeReady())
+		{
+			entities.Add(entity);
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			CollectNetworked(child, entities);
+		}
+	}
+
+	// A body moved without a mover is read from the node the entity lives on, so the bodies a graph walks replicate
+	// too.
+	private static BodyState? CaptureBody(IForgeEntity entity)
+	{
+		if (entity.Mover is IEntityMover mover)
+		{
+			return mover.CaptureState();
+		}
+
+		if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D))
+		{
+			Quaternion rotation = node3D.GlobalBasis.GetRotationQuaternion();
+			Vector3 position = node3D.GlobalPosition;
+			var body = node3D as CharacterBody3D;
+			Vector3 velocity = body?.Velocity ?? Vector3.Zero;
+
+			return new BodyState(
+				new NumericsVector3(position.X, position.Y, position.Z),
+				new NumericsQuaternion(rotation.X, rotation.Y, rotation.Z, rotation.W),
+				new NumericsVector3(velocity.X, velocity.Y, velocity.Z),
+				body?.IsOnFloor() == true);
+		}
+
+		if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D))
+		{
+			Vector2 position = node2D.GlobalPosition;
+			var body = node2D as CharacterBody2D;
+			Vector2 velocity = body?.Velocity ?? Vector2.Zero;
+
+			return new BodyState(
+				new NumericsVector3(position.X, position.Y, 0f),
+				NumericsQuaternion.CreateFromAxisAngle(NumericsVector3.UnitZ, node2D.GlobalRotation),
+				new NumericsVector3(velocity.X, velocity.Y, 0f),
+				body?.IsOnFloor() == true);
+		}
+
+		return null;
+	}
+
+	private static void PlaceBody(IForgeEntity entity, in BodyState state)
+	{
+		if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D))
+		{
+			var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
+			node3D.GlobalTransform = new Transform3D(
+				new Basis(rotation.Normalized()) * Basis.FromScale(node3D.GlobalBasis.Scale),
+				new Vector3(state.Position.X, state.Position.Y, state.Position.Z));
+
+			if (node3D is CharacterBody3D body)
+			{
+				body.Velocity = new Vector3(state.Velocity.X, state.Velocity.Y, state.Velocity.Z);
+			}
+
+			return;
+		}
+
+		if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D))
+		{
+			node2D.GlobalPosition = new Vector2(state.Position.X, state.Position.Y);
+			node2D.GlobalRotation = 2f * MathF.Atan2(state.Rotation.Z, state.Rotation.W);
+
+			if (node2D is CharacterBody2D body)
+			{
+				body.Velocity = new Vector2(state.Velocity.X, state.Velocity.Y);
+			}
+		}
 	}
 
 	private NetworkAssetRegistry BuildRegistry()
@@ -449,6 +726,64 @@ public partial class ForgeNetworkSession : Node
 		return registry;
 	}
 
+	private int SceneIndexOf(Node? root)
+	{
+		return root is null ? -1 : SceneIndexOf(root.SceneFilePath);
+	}
+
+	private int SceneIndexOf(string path)
+	{
+		if (Session is null || string.IsNullOrEmpty(path))
+		{
+			return -1;
+		}
+
+		long uid = ResourceLoader.GetResourceUid(path);
+		return uid == ResourceUid.InvalidId ? -1 : Session.Registry.IndexOf(AssetKind.Scene, ResourceUid.IdToText(uid));
+	}
+
+	// Every networked entity in the session's multiplayer branch, in the order of their paths, which is the same on
+	// every machine that loaded the same scene: their place in it is their id.
+	private List<ForgeEntity> PlacedEntities()
+	{
+		NodePath rootPath = SceneMultiplayerOf(this).RootPath;
+		Node root = rootPath.IsEmpty ? GetTree().Root : GetTree().Root.GetNodeOrNull(rootPath) ?? GetTree().Root;
+		var entities = new List<ForgeEntity>();
+		CollectNetworked(root, entities);
+		entities.Sort((x, y) => string.CompareOrdinal(root.GetPathTo(x).ToString(), root.GetPathTo(y).ToString()));
+		return entities;
+	}
+
+	private void Register(ForgeEntity entity, int sceneIndex)
+	{
+		entity.Replicator = this;
+		Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner));
+
+		if (entity.NetworkOwner == LocalPeer && entity.Input is not null && LocalPlayer is null)
+		{
+			SetLocalPlayer(entity);
+		}
+	}
+
+	private void SetLocalPlayer(ForgeEntity? player)
+	{
+		LocalPlayer = player;
+		EmitSignal(SignalName.LocalPlayerChanged, player!);
+	}
+
+	private void OnMirrorSpawned(IForgeEntity entity)
+	{
+		if (entity is ForgeEntity { Input: not null } player && player.NetworkOwner == LocalPeer && LocalPlayer is null)
+		{
+			SetLocalPlayer(player);
+		}
+	}
+
+	private void OnInputTaken(NetworkPeer peer, InputCommand command, InputDelivery delivery)
+	{
+		InputTaken?.Invoke(peer, command, delivery);
+	}
+
 	private ConditionedTransport Conditioned(GodotTransport transport)
 	{
 		_conditioned = new ConditionedTransport(
@@ -457,15 +792,6 @@ public partial class ForgeNetworkSession : Node
 			new DeterministicRandom(((ulong)GD.Randi() << 32) | GD.Randi()));
 
 		return _conditioned;
-	}
-
-	private void TakeInput()
-	{
-		foreach (NetworkPeer peer in Session!.Peers)
-		{
-			InputDelivery delivery = peer.Input.Take(Clock.Tick, out InputCommand command);
-			InputTaken?.Invoke(peer, command, delivery);
-		}
 	}
 
 	// Whether the client is still in the session and ready after reporting: reporting a refusal or a disconnection
@@ -534,5 +860,61 @@ public partial class ForgeNetworkSession : Node
 	private void OnPeerLeft(NetworkPeer peer)
 	{
 		EmitSignal(SignalName.PeerLeft, (long)peer.Id.Value);
+	}
+
+	// Makes the entities the server spawns on a client, and takes away the ones it despawns.
+	private sealed class ReplicationHost(ForgeNetworkSession session) : IReplicationHost
+	{
+		public IForgeEntity? Spawn(NetworkEntityId id, int sceneIndex, PeerId owner)
+		{
+			if (!session.Session!.Registry.TryGet(AssetKind.Scene, sceneIndex, out PackedScene? scene) || scene is null)
+			{
+				return null;
+			}
+
+			Node instance = scene.Instantiate();
+
+			if (!ForgeEntityBridge.TryGetEntity(instance, out IForgeEntity? found) || found is not ForgeEntity entity)
+			{
+				GD.PushWarning($"Forge: the networked scene {scene.ResourcePath} has no ForgeEntity at its root.");
+				instance.Free();
+				return null;
+			}
+
+			entity.NetworkId = id;
+			entity.NetworkOwner = owner.Value;
+			entity.IsMirror = true;
+			entity.Replicator = session;
+			session._spawnedRoots[entity] = instance;
+			Node parent = session.SpawnParent ?? session.GetTree().CurrentScene ?? session.GetTree().Root;
+			parent.AddChild(instance, forceReadableName: true);
+			return entity;
+		}
+
+		public void Despawn(IForgeEntity entity)
+		{
+			if (entity is not ForgeEntity node)
+			{
+				return;
+			}
+
+			// A placed entity's own scene instance goes, or the node it lives on when it's part of the level itself.
+			if (!session._spawnedRoots.Remove(node, out Node? root))
+			{
+				root = InstanceRoot(node);
+
+				if (root is null || root == session.GetTree().CurrentScene)
+				{
+					root = node.GetParent() ?? node;
+				}
+			}
+
+			if (session.LocalPlayer == node)
+			{
+				session.SetLocalPlayer(null);
+			}
+
+			root.QueueFree();
+		}
 	}
 }
