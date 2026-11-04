@@ -8,23 +8,23 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Networking;
 
 /// <summary>
-/// Forge's transport over Godot's <see cref="SceneMultiplayer"/>: raw bytes through <c>SendBytes</c> on ENet
-/// channels, with no RPCs and no node paths. What the multiplayer API signals between frames is queued, and the
-/// session takes it in its own physics step.
+/// Forge's transport over Godot's <see cref="SceneMultiplayer"/>: raw bytes through <c>SendBytes</c> on ENet channels,
+/// with no RPCs and no node paths. What the multiplayer API signals between frames is queued, and the session takes it
+/// in its own physics step.
 /// </summary>
 /// <remarks>
 /// <para>Godot polls the multiplayer API once per frame and raises its signals then. This transport only queues what
-/// they say, so nothing reaches the simulation from a signal; <see cref="TryReceive"/> hands it over in order when
-/// the session asks.</para>
-/// <para>A client hears about the server through the connected-to-server and server-disconnected signals and
-/// ignores the per-peer ones, so the server appears once. Server relay is off: a client's packets reach the server
-/// and nobody else.</para>
+/// they say, so nothing reaches the simulation from a signal; <see cref="TryReceive"/> hands it over in order when the
+/// session asks.</para>
+/// <para>A client hears about the server through the connected-to-server and server-disconnected signals and ignores
+/// the per-peer ones, so the server appears once. Server relay is off: a client's packets reach the server and nobody
+/// else.</para>
 /// </remarks>
 public sealed class GodotTransport : INetworkTransport, IDisposable
 {
 	/// <summary>
-	/// How many channels a client asks ENet for beyond Godot's system channels: the protocol's three, since a
-	/// transfer channel above zero maps past the system ones.
+	/// How many channels a client asks ENet for beyond Godot's system channels: the protocol's three, since a transfer
+	/// channel above zero maps past the system ones.
 	/// </summary>
 	public const int ClientChannels = 3;
 
@@ -32,6 +32,40 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 	private readonly Queue<TransportEvent> _inbox = new();
 	private readonly HashSet<PeerId> _peers = [];
 	private bool _disposed;
+
+	/// <inheritdoc/>
+	public PeerId LocalPeer { get; private set; }
+
+	/// <inheritdoc/>
+	public bool IsServer { get; }
+
+	/// <inheritdoc/>
+	public IReadOnlyCollection<PeerId> Peers => _peers;
+
+	/// <summary>
+	/// Gets how many bytes have been sent, payloads only.
+	/// </summary>
+	public long BytesSent { get; private set; }
+
+	/// <summary>
+	/// Gets how many bytes have been received, payloads only.
+	/// </summary>
+	public long BytesReceived { get; private set; }
+
+	/// <summary>
+	/// Gets how many packets have been sent.
+	/// </summary>
+	public long PacketsSent { get; private set; }
+
+	/// <summary>
+	/// Gets how many packets have been received.
+	/// </summary>
+	public long PacketsReceived { get; private set; }
+
+	/// <summary>
+	/// Gets how many sends the multiplayer API refused.
+	/// </summary>
+	public long SendErrors { get; private set; }
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="GodotTransport"/> class over a multiplayer API whose peer has been
@@ -44,7 +78,7 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 		_multiplayer = multiplayer;
 		_multiplayer.ServerRelay = false;
 		IsServer = isServer;
-		LocalPeer = isServer ? PeerId.Server : new PeerId((int)multiplayer.GetUniqueId());
+		LocalPeer = isServer ? PeerId.Server : new PeerId(multiplayer.GetUniqueId());
 
 		if (isServer)
 		{
@@ -66,10 +100,10 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 	/// </summary>
 	/// <remarks>
 	/// Godot 4.7's <c>ENetMultiplayerPeer.create_server</c> passes its arguments to the host in the wrong order when
-	/// <c>max_channels</c> is above zero: the channel count lands in the host's incoming bandwidth limit, in bytes
-	/// per second, and the client's ENet then throttles nearly every unreliable packet it sends the server. The
-	/// server is therefore created with the default channel count, which is plenty, and its bandwidth limits are
-	/// set to unlimited explicitly, which also tells every client so.
+	/// <c>max_channels</c> is above zero: the channel count lands in the host's incoming bandwidth limit, in bytes per
+	/// second, and the client's ENet then throttles nearly every unreliable packet it sends the server. The server is
+	/// therefore created with the default channel count, which is plenty, and its bandwidth limits are set to unlimited
+	/// explicitly, which also tells every client so.
 	/// </remarks>
 	/// <param name="port">The port to listen on.</param>
 	/// <param name="maxClients">How many clients to accept.</param>
@@ -107,40 +141,6 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 
 		return error;
 	}
-
-	/// <inheritdoc/>
-	public PeerId LocalPeer { get; private set; }
-
-	/// <inheritdoc/>
-	public bool IsServer { get; }
-
-	/// <inheritdoc/>
-	public IReadOnlyCollection<PeerId> Peers => _peers;
-
-	/// <summary>
-	/// Gets how many bytes have been sent, payloads only.
-	/// </summary>
-	public long BytesSent { get; private set; }
-
-	/// <summary>
-	/// Gets how many bytes have been received, payloads only.
-	/// </summary>
-	public long BytesReceived { get; private set; }
-
-	/// <summary>
-	/// Gets how many packets have been sent.
-	/// </summary>
-	public long PacketsSent { get; private set; }
-
-	/// <summary>
-	/// Gets how many packets have been received.
-	/// </summary>
-	public long PacketsReceived { get; private set; }
-
-	/// <summary>
-	/// Gets how many sends the multiplayer API refused.
-	/// </summary>
-	public long SendErrors { get; private set; }
 
 	/// <inheritdoc/>
 	public void Send(PeerId peer, byte channel, bool reliable, ReadOnlySpan<byte> payload)
@@ -253,7 +253,7 @@ public sealed class GodotTransport : INetworkTransport, IDisposable
 	private void OnConnectedToServer()
 	{
 		// The unique id is assigned by the time the connection is up.
-		LocalPeer = new PeerId((int)_multiplayer.GetUniqueId());
+		LocalPeer = new PeerId(_multiplayer.GetUniqueId());
 
 		if (_peers.Add(PeerId.Server))
 		{

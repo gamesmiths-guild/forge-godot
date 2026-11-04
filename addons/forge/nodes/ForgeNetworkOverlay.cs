@@ -33,15 +33,6 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 	private double _nextRefreshAt;
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="ForgeNetworkOverlay"/> class.
-	/// </summary>
-	public ForgeNetworkOverlay()
-	{
-		Layer = 100;
-		ProcessMode = ProcessModeEnum.Always;
-	}
-
-	/// <summary>
 	/// Gets or sets the session to show. Left empty, the first <see cref="ForgeNetworkSession"/> in the tree is shown.
 	/// </summary>
 	[Export]
@@ -52,6 +43,15 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 	/// </summary>
 	[Export]
 	public bool ShownAtStart { get; set; }
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="ForgeNetworkOverlay"/> class.
+	/// </summary>
+	public ForgeNetworkOverlay()
+	{
+		Layer = 100;
+		ProcessMode = ProcessModeEnum.Always;
+	}
 
 	/// <inheritdoc/>
 	public override void _Ready()
@@ -140,24 +140,24 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 			foreach (NetworkPeer peer in server.Peers)
 			{
 				InputPlayoutBuffer input = peer.Input;
-				text.Append(CultureInfo.InvariantCulture, $"  {peer.Id}: input depth {input.Depth}, ");
-				text.Append(CultureInfo.InvariantCulture, $"{input.ReceivedTicks} received, {input.LostTicks} lost, ");
-				text.Append(CultureInfo.InvariantCulture, $"{input.LateTicks} late, {peer.MalformedPackets} bad\n");
+				text.Append(CultureInfo.InvariantCulture, $"  {peer.Id}: input depth {input.Depth}, ")
+					.Append(CultureInfo.InvariantCulture, $"{input.ReceivedTicks} received, {input.LostTicks} lost, ")
+					.Append(CultureInfo.InvariantCulture, $"{input.LateTicks} late, {peer.MalformedPackets} bad\n");
 			}
 		}
 		else if (session.Mode == NetworkMode.Client)
 		{
-			text.Append(CultureInfo.InvariantCulture, $"rtt {session.RoundTripTime * 1000:0} ms, ");
-			text.Append(CultureInfo.InvariantCulture, $"server tick {session.ServerTick:0}, ");
-			text.Append(CultureInfo.InvariantCulture, $"{session.TicksAhead:0.0} ticks ahead, ");
-			text.Append(CultureInfo.InvariantCulture, $"server holds {session.ServerInputDepth}\n");
+			text.Append(CultureInfo.InvariantCulture, $"rtt {session.RoundTripTime * 1000:0} ms, ")
+				.Append(CultureInfo.InvariantCulture, $"server tick {session.ServerTick:0}, ")
+				.Append(CultureInfo.InvariantCulture, $"{session.TicksAhead:0.0} ticks ahead, ")
+				.Append(CultureInfo.InvariantCulture, $"server holds {session.ServerInputDepth}\n");
 		}
 
-		text.Append(CultureInfo.InvariantCulture, $"{session.BytesSentPerSecond / 1024:0.0} KB/s up, ");
-		text.Append(CultureInfo.InvariantCulture, $"{session.BytesReceivedPerSecond / 1024:0.0} KB/s down\n");
-		text.Append(CultureInfo.InvariantCulture, $"conditioner: {session.LatencyMs} ms ± {session.JitterMs} ms, ");
-		text.Append(CultureInfo.InvariantCulture, $"{session.LossPercent:0.#}% loss, {session.PacketsLost} lost\n");
-		text.Append("F3 hides this, F4 cycles the conditioner");
+		text.Append(CultureInfo.InvariantCulture, $"{session.BytesSentPerSecond / 1024:0.0} KB/s up, ")
+			.Append(CultureInfo.InvariantCulture, $"{session.BytesReceivedPerSecond / 1024:0.0} KB/s down\n")
+			.Append(CultureInfo.InvariantCulture, $"conditioner: {session.LatencyMs} ms ± {session.JitterMs} ms, ")
+			.Append(CultureInfo.InvariantCulture, $"{session.LossPercent:0.#}% loss, {session.PacketsLost} lost\n")
+			.Append("F3 hides this, F4 cycles the conditioner");
 
 		return text.ToString();
 	}

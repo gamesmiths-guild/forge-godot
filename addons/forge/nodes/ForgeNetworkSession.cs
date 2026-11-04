@@ -1,7 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
-using System.Linq;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Networking;
@@ -44,12 +43,12 @@ public enum NetworkMode
 /// </summary>
 /// <remarks>
 /// <para>Its physics step runs right after <see cref="ForgeBootstrap"/>'s and before any entity's, so a client sends
-/// the input frame its tick reads before simulating the tick, and the server takes each client's command for the
-/// tick before simulating it. What the server does with a command, which entity it drives, is the game's until
-/// milestone 8 maps peers to entities: subscribe to <see cref="InputTaken"/>.</para>
-/// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its
-/// input arrives before the server needs it. In this milestone the clock jumps to the target when it's off by more
-/// than <see cref="LeadToleranceTicks"/>; milestone 11 steers it smoothly.</para>
+/// the input frame its tick reads before simulating the tick, and the server takes each client's command for the tick
+/// before simulating it. What the server does with a command, which entity it drives, is the game's until milestone 8
+/// maps peers to entities: subscribe to <see cref="InputTaken"/>.</para>
+/// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
+/// arrives before the server needs it. In this milestone the clock jumps to the target when it's off by more than
+/// <see cref="LeadToleranceTicks"/>; milestone 11 steers it smoothly.</para>
 /// <para>The <see cref="LatencyMs"/>, <see cref="JitterMs"/> and <see cref="LossPercent"/> exports condition this
 /// machine's outgoing packets, to try the game under a poor link without leaving the desk.</para>
 /// </remarks>
@@ -65,19 +64,9 @@ public partial class ForgeNetworkSession : Node
 
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
-	private NetworkSession? _session;
 	private double _lastStatsAt;
 	private long _lastBytesSent;
 	private long _lastBytesReceived;
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="ForgeNetworkSession"/> class.
-	/// </summary>
-	public ForgeNetworkSession()
-	{
-		ProcessPhysicsPriority = int.MinValue + 2;
-		ProcessMode = ProcessModeEnum.Always;
-	}
 
 	/// <summary>
 	/// Raised on the server when a client joins, after its handshake.
@@ -113,11 +102,17 @@ public partial class ForgeNetworkSession : Node
 	public delegate void DisconnectedEventHandler();
 
 	/// <summary>
-	/// Raised on the server every physics step for every joined client, with the command the tick runs for it and
-	/// how it arrived. The game feeds the frame to the entity the client controls and raises the command's events on
-	/// it.
+	/// Raised on the server every physics step for every joined client, with the command the tick runs for it and how
+	/// it arrived. The game feeds the frame to the entity the client controls and raises the command's events on it.
 	/// </summary>
 	public event Action<NetworkPeer, InputCommand, InputDelivery>? InputTaken;
+
+	/// <summary>
+	/// Gets a value indicating whether the game was started with <c>-- --dedicated</c>, asking for a dedicated server.
+	/// The game decides what to do with it, usually <see cref="Host"/> with <c>dedicated</c> set.
+	/// </summary>
+	public static bool DedicatedRequested =>
+		Array.Exists(OS.GetCmdlineUserArgs(), x => string.Equals(x, "--dedicated", StringComparison.Ordinal));
 
 	/// <summary>
 	/// Gets or sets the port to host on or join.
@@ -183,17 +178,12 @@ public partial class ForgeNetworkSession : Node
 	/// <summary>
 	/// Gets the Forge session, while hosting or joined.
 	/// </summary>
-	public NetworkSession? Session => _session;
+	public NetworkSession? Session { get; private set; }
 
 	/// <summary>
 	/// Gets the session clock.
 	/// </summary>
 	public SimulationClock Clock => ClockOverride ?? ForgeManagers.Instance.Clock;
-
-	// A clock for this node to read instead of the session clock, for tests that run a server and a client in one
-	// process: on one clock a client can never run ahead of the server. Set before hosting or joining. A node with one
-	// doesn't steer the session clock either, which the same clock also stands in the way of.
-	internal SimulationClock? ClockOverride { get; set; }
 
 	/// <summary>
 	/// Gets a value indicating whether this machine is the server, listen or dedicated.
@@ -203,17 +193,17 @@ public partial class ForgeNetworkSession : Node
 	/// <summary>
 	/// Gets where a client stands with the server; <see cref="SessionState.Ready"/> on a server.
 	/// </summary>
-	public SessionState State => _session?.State ?? SessionState.Disconnected;
+	public SessionState State => Session?.State ?? SessionState.Disconnected;
 
 	/// <summary>
 	/// Gets a client's round trip to the server, in seconds, or zero.
 	/// </summary>
-	public double RoundTripTime => _session?.ClockSync.RoundTripTime ?? 0;
+	public double RoundTripTime => Session?.ClockSync.RoundTripTime ?? 0;
 
 	/// <summary>
 	/// Gets a client's estimate of the server's tick right now, or the clock's tick on a server.
 	/// </summary>
-	public double ServerTick => IsServer || _session is null ? Clock.Tick : _session.ClockSync.EstimateServerTick(Now());
+	public double ServerTick => IsServer || Session is null ? Clock.Tick : Session.ClockSync.EstimateServerTick(Now());
 
 	/// <summary>
 	/// Gets how many ticks a client's clock runs ahead of its estimate of the server's.
@@ -223,7 +213,7 @@ public partial class ForgeNetworkSession : Node
 	/// <summary>
 	/// Gets how many of a client's input ticks the server held ahead of the one it last ran, as of the last pong.
 	/// </summary>
-	public int ServerInputDepth => _session?.ServerInputDepth ?? 0;
+	public int ServerInputDepth => Session?.ServerInputDepth ?? 0;
 
 	/// <summary>
 	/// Gets how many unreliable packets the conditioner has lost on this machine.
@@ -240,12 +230,19 @@ public partial class ForgeNetworkSession : Node
 	/// </summary>
 	public double BytesReceivedPerSecond { get; private set; }
 
+	// A clock for this node to read instead of the session clock, for tests that run a server and a client in one
+	// process: on one clock a client can never run ahead of the server. Set before hosting or joining. A node with one
+	// doesn't steer the session clock either, which the same clock also stands in the way of.
+	internal SimulationClock? ClockOverride { get; set; }
+
 	/// <summary>
-	/// Gets a value indicating whether the game was started with <c>-- --dedicated</c>, asking for a dedicated
-	/// server. The game decides what to do with it, usually <see cref="Host"/> with <c>dedicated</c> set.
+	/// Initializes a new instance of the <see cref="ForgeNetworkSession"/> class.
 	/// </summary>
-	public static bool DedicatedRequested =>
-		OS.GetCmdlineUserArgs().Any(x => string.Equals(x, "--dedicated", StringComparison.Ordinal));
+	public ForgeNetworkSession()
+	{
+		ProcessPhysicsPriority = int.MinValue + 2;
+		ProcessMode = ProcessModeEnum.Always;
+	}
 
 	/// <summary>
 	/// Hosts a session on <see cref="Port"/>.
@@ -268,9 +265,16 @@ public partial class ForgeNetworkSession : Node
 		multiplayer.MultiplayerPeer = peer;
 		_transport = new GodotTransport(multiplayer, isServer: true);
 		ulong seed = ((ulong)GD.Randi() << 32) | GD.Randi();
-		_session = new NetworkSession(Conditioned(_transport), Clock, BuildRegistry(), ForgeManagers.Instance.TagsManager, ForgeSettings.GetInputActionSet(), seed, MaxClients);
-		_session.PeerJoined += OnPeerJoined;
-		_session.PeerLeft += OnPeerLeft;
+		Session = new NetworkSession(
+			Conditioned(_transport),
+			Clock,
+			BuildRegistry(),
+			ForgeManagers.Instance.TagsManager,
+			ForgeSettings.GetInputActionSet(),
+			seed,
+			MaxClients);
+		Session.PeerJoined += OnPeerJoined;
+		Session.PeerLeft += OnPeerLeft;
 		Mode = dedicated ? NetworkMode.DedicatedServer : NetworkMode.ListenServer;
 		ForgeManagers.Instance.HasViewer = !dedicated;
 
@@ -299,7 +303,12 @@ public partial class ForgeNetworkSession : Node
 		SceneMultiplayer multiplayer = SceneMultiplayerOf(this);
 		multiplayer.MultiplayerPeer = peer;
 		_transport = new GodotTransport(multiplayer, isServer: false);
-		_session = new NetworkSession(Conditioned(_transport), Clock, BuildRegistry(), ForgeManagers.Instance.TagsManager, ForgeSettings.GetInputActionSet());
+		Session = new NetworkSession(
+			Conditioned(_transport),
+			Clock,
+			BuildRegistry(),
+			ForgeManagers.Instance.TagsManager,
+			ForgeSettings.GetInputActionSet());
 		Mode = NetworkMode.Client;
 
 		return Error.Ok;
@@ -310,14 +319,14 @@ public partial class ForgeNetworkSession : Node
 	/// </summary>
 	public void Leave()
 	{
-		if (_session is null)
+		if (Session is null)
 		{
 			return;
 		}
 
-		_session.PeerJoined -= OnPeerJoined;
-		_session.PeerLeft -= OnPeerLeft;
-		_session.Disconnect();
+		Session.PeerJoined -= OnPeerJoined;
+		Session.PeerLeft -= OnPeerLeft;
+		Session.Disconnect();
 		_transport?.Dispose();
 
 		SceneMultiplayer multiplayer = SceneMultiplayerOf(this);
@@ -325,7 +334,7 @@ public partial class ForgeNetworkSession : Node
 		multiplayer.MultiplayerPeer = new OfflineMultiplayerPeer();
 
 		bool wasClient = Mode == NetworkMode.Client;
-		_session = null;
+		Session = null;
 		_transport = null;
 		_conditioned = null;
 		Mode = NetworkMode.Offline;
@@ -356,13 +365,13 @@ public partial class ForgeNetworkSession : Node
 	{
 		base._PhysicsProcess(delta);
 
-		if (_session is null)
+		if (Session is null)
 		{
 			return;
 		}
 
 		double now = Now();
-		SessionState before = _session.State;
+		SessionState before = Session.State;
 
 		if (_conditioned is not null)
 		{
@@ -370,7 +379,7 @@ public partial class ForgeNetworkSession : Node
 			_conditioned.Update(now);
 		}
 
-		_session.Update(now);
+		Session.Update(now);
 		UpdateStats(now);
 
 		if (IsServer)
@@ -381,7 +390,7 @@ public partial class ForgeNetworkSession : Node
 
 		ReportClientState(before);
 
-		if (_session.State != SessionState.Ready)
+		if (Session.State != SessionState.Ready)
 		{
 			return;
 		}
@@ -390,7 +399,7 @@ public partial class ForgeNetworkSession : Node
 
 		if (LocalPlayer?.Input is EntityInput input)
 		{
-			_session.SendInput(new InputCommand(Clock.Tick, input.Current));
+			Session.SendInput(new InputCommand(Clock.Tick, input.Current));
 		}
 	}
 
@@ -435,7 +444,7 @@ public partial class ForgeNetworkSession : Node
 
 	private void TakeInput()
 	{
-		foreach (NetworkPeer peer in _session!.Peers)
+		foreach (NetworkPeer peer in Session!.Peers)
 		{
 			InputDelivery delivery = peer.Input.Take(Clock.Tick, out InputCommand command);
 			InputTaken?.Invoke(peer, command, delivery);
@@ -444,7 +453,7 @@ public partial class ForgeNetworkSession : Node
 
 	private void ReportClientState(SessionState before)
 	{
-		SessionState after = _session!.State;
+		SessionState after = Session!.State;
 
 		if (before == after)
 		{
@@ -457,7 +466,7 @@ public partial class ForgeNetworkSession : Node
 				EmitSignal(SignalName.Connected);
 				break;
 			case SessionState.Refused:
-				EmitSignal(SignalName.Refused, (int)(_session.Refusal ?? 0));
+				EmitSignal(SignalName.Refused, (int)(Session.Refusal ?? 0));
 				Leave();
 				break;
 			case SessionState.Disconnected:
@@ -468,12 +477,12 @@ public partial class ForgeNetworkSession : Node
 
 	private void SteerClock(double now)
 	{
-		if (!_session!.ClockSync.HasEstimate || ClockOverride is not null)
+		if (!Session!.ClockSync.HasEstimate || ClockOverride is not null)
 		{
 			return;
 		}
 
-		long target = _session.ClockSync.TargetClientTick(now, LeadMarginTicks);
+		long target = Session.ClockSync.TargetClientTick(now, LeadMarginTicks);
 
 		if (Math.Abs(target - Clock.Tick) > LeadToleranceTicks)
 		{

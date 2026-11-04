@@ -18,17 +18,17 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 
 /// <summary>
-/// A <see cref="ForgeNetworkSession"/> hosting and another joining it over ENet on this machine, in one process
-/// through two multiplayer branches: the handshake accepts a matching client and refuses a mismatched one, the
-/// client's input reaches the server's playout buffer, and leaving is seen on both ends.
+/// A <see cref="ForgeNetworkSession"/> hosting and another joining it over ENet on this machine, in one process through
+/// two multiplayer branches: the handshake accepts a matching client and refuses a mismatched one, the client's input
+/// reaches the server's playout buffer, and leaving is seen on both ends.
 /// </summary>
 [TestSuite]
 public class ForgeNetworkSessionTests
 {
 	private const string Burning = "res://forge_samples/demos/04_rewind/effects/burning.tres";
 
-	// How many ticks the test's client runs ahead of the test's server: enough to cover the bursts of physics steps
-	// a process frame can hold, since ENet only moves packets between process frames.
+	// How many ticks the test's client runs ahead of the test's server: enough to cover the bursts of physics steps a
+	// process frame can hold, since ENet only moves packets between process frames.
 	private const long Lead = 12;
 
 	private static Window Root => ((SceneTree)Engine.GetMainLoop()).Root;
@@ -43,7 +43,7 @@ public class ForgeNetworkSessionTests
 		var deliveries = new List<(InputDelivery Delivery, ulong Held)>();
 		var joined = new List<long>();
 		bool connected = false;
-		pair.Server.PeerJoined += id => joined.Add(id);
+		pair.Server.PeerJoined += joined.Add;
 		pair.Client.Connected += () => connected = true;
 		pair.Server.InputTaken += (_, command, delivery) => deliveries.Add((delivery, command.Frame.Held));
 
@@ -52,7 +52,7 @@ public class ForgeNetworkSessionTests
 		pair.Server.Mode.Should().Be(NetworkMode.ListenServer);
 		pair.Client.Mode.Should().Be(NetworkMode.Client);
 
-		await pair.RunUntil(() => connected, frames: 600);
+		await Pair.RunUntil(() => connected, frames: 600);
 
 		connected.Should().BeTrue("the handshake should complete over the local link");
 		joined.Should().ContainSingle();
@@ -61,17 +61,19 @@ public class ForgeNetworkSessionTests
 
 		// A second of play: the client sends a held action every tick, and the server takes it tick by tick.
 		int before = deliveries.Count;
-		await pair.RunUntil(
+		await Pair.RunUntil(
 			() => deliveries.Count >= before + 60,
 			frames: 1200,
 			eachFrame: () => pair.Player.Input!.Submit(new InputFrame { Held = 1 }));
 
-		string summary = string.Join(" ", deliveries.TakeLast(30).Select(x => $"{x.Delivery}/{x.Held}")) + pair.Diagnostics();
+		string summary =
+			string.Join(" ", deliveries.TakeLast(30).Select(x => $"{x.Delivery}/{x.Held}")) + pair.Diagnostics();
 		deliveries.Should().HaveCountGreaterThan(30);
 		deliveries.TakeLast(30).Should().OnlyContain(
 			x => x.Held == 1,
 			"the held action should reach the server; the last 30 were {0}",
 			summary);
+
 		// Both ends share one process, so a hitch stalls the client's sends and the server's steps together, and the
 		// physics steps that catch up afterwards run before the next frame moves any packet. Most ticks still find
 		// their command waiting; on two machines, every one would.
@@ -79,15 +81,18 @@ public class ForgeNetworkSessionTests
 			(deliveries.Count - before) * 8 / 10,
 			"most ticks' commands should be there when the server needs them; the last 30 were {0}",
 			summary);
-		pair.Client.TicksAhead.Should().BeInRange(Lead - 3, Lead + 3, "the client sees the server's clock behind its own");
-		pair.Client.RoundTripTime.Should().BeLessThan(0.1);
-		pair.Server.Session.Peers[0].MalformedPackets.Should().Be(0);
+		pair.Client.TicksAhead
+			.Should().BeInRange(Lead - 3, Lead + 3, "the client sees the server's clock behind its own");
+		pair.Client.RoundTripTime
+			.Should().BeLessThan(0.1);
+		pair.Server.Session.Peers[0].MalformedPackets
+			.Should().Be(0);
 
 		bool left = false;
 		pair.Server.PeerLeft += _ => left = true;
 		pair.Client.Leave();
 
-		await pair.RunUntil(() => left, frames: 120);
+		await Pair.RunUntil(() => left, frames: 120);
 
 		left.Should().BeTrue();
 		pair.Client.Mode.Should().Be(NetworkMode.Offline);
@@ -116,9 +121,10 @@ public class ForgeNetworkSessionTests
 
 		using var server = new GodotTransport(serverApi, isServer: true);
 		using var client = new GodotTransport(clientApi, isServer: false);
+
 		// [channel, reliable]
-		var toServer = new int[3, 2];
-		var toClient = new int[3, 2];
+		int[,] toServer = new int[3, 2];
+		int[,] toClient = new int[3, 2];
 		int sentFrames = 0;
 		PeerId clientId = PeerId.None;
 		var unreliableArrivals = new List<int>();
@@ -180,7 +186,8 @@ public class ForgeNetworkSessionTests
 
 		static string Table(int[,] counts)
 		{
-			return $"ch0 r{counts[0, 1]} u{counts[0, 0]}, ch1 r{counts[1, 1]} u{counts[1, 0]}, ch2 r{counts[2, 1]} u{counts[2, 0]}";
+			return $"ch0 r{counts[0, 1]} u{counts[0, 0]}, ch1 r{counts[1, 1]} u{counts[1, 0]}, ch2 r{counts[2, 1]} " +
+				$"u{counts[2, 0]}";
 		}
 
 		string buckets = string.Join(
@@ -197,8 +204,8 @@ public class ForgeNetworkSessionTests
 			$"datagrams, received {clientPeer.Host.PopStatistic(ENetConnection.HostStatistic.ReceivedPackets)}; " +
 			$"server host sent {serverPeer.Host.PopStatistic(ENetConnection.HostStatistic.SentPackets)}, " +
 			$"received {serverPeer.Host.PopStatistic(ENetConnection.HostStatistic.ReceivedPackets)}";
-		string counts = $"{hosts}; sent {sentFrames} frames; to server {Table(toServer)}; to client {Table(toClient)}; " +
-			$"client sent {client.PacketsSent} with {client.SendErrors} errors, " +
+		string counts = $"{hosts}; sent {sentFrames} frames; to server {Table(toServer)}; to client " +
+			$"{Table(toClient)}; client sent {client.PacketsSent} with {client.SendErrors} errors, " +
 			$"server sent {server.PacketsSent} with {server.SendErrors} errors; " +
 			$"unreliable ch0 arrivals per 50 frames {buckets}; client peer {throttle}";
 		sentFrames.Should().BeGreaterThan(100, counts);
@@ -207,8 +214,8 @@ public class ForgeNetworkSessionTests
 		{
 			for (int reliable = 0; reliable < 2; reliable++)
 			{
-				toServer[channel, reliable].Should().BeGreaterThanOrEqualTo(sentFrames * 9 / 10 - 1, counts);
-				toClient[channel, reliable].Should().BeGreaterThanOrEqualTo(sentFrames * 9 / 10 - 1, counts);
+				toServer[channel, reliable].Should().BeGreaterThanOrEqualTo((sentFrames * 9 / 10) - 1, counts);
+				toClient[channel, reliable].Should().BeGreaterThanOrEqualTo((sentFrames * 9 / 10) - 1, counts);
 			}
 		}
 
@@ -227,7 +234,7 @@ public class ForgeNetworkSessionTests
 		pair.Server.Host().Should().Be(Error.Ok);
 		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
 
-		await pair.RunUntil(() => refusal is not null, frames: 600);
+		await Pair.RunUntil(() => refusal is not null, frames: 600);
 
 		refusal.Should().Be((int)RefusalReason.AssetRegistry);
 		pair.Client.Mode.Should().Be(NetworkMode.Offline, "a refused client leaves");
@@ -289,6 +296,14 @@ public class ForgeNetworkSessionTests
 		private readonly Node _serverBranch;
 		private readonly Node _clientBranch;
 
+		public ForgeNetworkSession Server { get; }
+
+		public ForgeNetworkSession Client { get; }
+
+		public ForgeEntity Player { get; }
+
+		public SimulationClock ServerClock { get; }
+
 		public Pair(ForgeNetworkManifest serverManifest, ForgeNetworkManifest clientManifest)
 		{
 			int port = 30000 + (int)(GD.Randi() % 20000);
@@ -307,8 +322,18 @@ public class ForgeNetworkSessionTests
 
 			// Both ends share the process's session clock, on which a client can't run ahead, so the server keeps a
 			// clock of its own that the test holds a few ticks behind: what a real client's lead looks like from here.
-			ServerClock = new SimulationClock(ForgeManagers.Instance.Clock.TickRate, ForgeManagers.Instance.Clock.Tick - Lead);
-			Server = new ForgeNetworkSession { Port = port, Manifest = serverManifest, MaxClients = 2, ClockOverride = ServerClock };
+			ServerClock = new SimulationClock(
+				ForgeManagers.Instance.Clock.TickRate,
+				ForgeManagers.Instance.Clock.Tick - Lead);
+
+			Server = new ForgeNetworkSession
+			{
+				Port = port,
+				Manifest = serverManifest,
+				MaxClients = 2,
+				ClockOverride = ServerClock,
+			};
+
 			// The client reads the session clock itself but doesn't steer it: steering would chase the gap between
 			// physics time and wall time that a test runner's bursts open up, and move the shared clock under both.
 			Client = new ForgeNetworkSession
@@ -323,30 +348,8 @@ public class ForgeNetworkSessionTests
 			Tree.PhysicsFrame += OnPhysicsFrame;
 		}
 
-		public ForgeNetworkSession Server { get; }
-
-		public ForgeNetworkSession Client { get; }
-
-		public ForgeEntity Player { get; }
-
-		public SimulationClock ServerClock { get; }
-
-		public string Diagnostics()
-		{
-			NetworkPeer? peer = Server.Session?.Peers.FirstOrDefault();
-			InputPlayoutBuffer? input = peer?.Input;
-
-			return $"\n[clock {ForgeManagers.Instance.Clock.Tick}, server clock {ServerClock.Tick}, client {Client.State} " +
-				$"window newest {Client.Session?.Input.NewestTick} acked {Client.Session?.AckedInputTick} " +
-				$"ahead {Client.TicksAhead:0.0} rtt {Client.RoundTripTime * 1000:0} ms; " +
-				$"server newest {input?.NewestTick} last taken {input?.LastTakenTick} depth {input?.Depth} " +
-				$"received {input?.ReceivedTicks} lost {input?.LostTicks} late {input?.LateTicks} " +
-				$"malformed {peer?.MalformedPackets} session malformed {Server.Session?.MalformedPackets} " +
-				$"pings {peer?.Pings} heard {peer?.LastHeardAt:0.00}]";
-		}
-
 		// Lets the game run until the condition holds or the frames run out.
-		public async Task RunUntil(Func<bool> condition, int frames, Action? eachFrame = null)
+		public static async Task RunUntil(Func<bool> condition, int frames, Action? eachFrame = null)
 		{
 			for (int frame = 0; frame < frames && !condition(); frame++)
 			{
@@ -355,11 +358,21 @@ public class ForgeNetworkSessionTests
 			}
 		}
 
-		// At the start of every physics step, before any node runs it, the server's clock is put the lead behind the
-		// session clock's tick, the one the step is about to simulate.
-		private void OnPhysicsFrame()
+		public string Diagnostics()
 		{
-			ServerClock.Set(ForgeManagers.Instance.Clock.Tick - Lead);
+			NetworkPeer? peer = Server.Session?.Peers.Count > 0
+				? Server.Session.Peers[0]
+				: null;
+
+			InputPlayoutBuffer? input = peer?.Input;
+
+			return $"\n[clock {ForgeManagers.Instance.Clock.Tick}, server clock {ServerClock.Tick}, client " +
+				$"{Client.State} window newest {Client.Session?.Input.NewestTick} acked " +
+				$"{Client.Session?.AckedInputTick} ahead {Client.TicksAhead:0.0} rtt {Client.RoundTripTime * 1000:0} " +
+				$"ms; server newest {input?.NewestTick} last taken {input?.LastTakenTick} depth {input?.Depth} " +
+				$"received {input?.ReceivedTicks} lost {input?.LostTicks} late {input?.LateTicks} " +
+				$"malformed {peer?.MalformedPackets} session malformed {Server.Session?.MalformedPackets} " +
+				$"pings {peer?.Pings} heard {peer?.LastHeardAt:0.00}]";
 		}
 
 		public void Dispose()
@@ -371,6 +384,13 @@ public class ForgeNetworkSessionTests
 			Tree.SetMultiplayer(null, _clientBranch.GetPath());
 			_serverBranch.Free();
 			_clientBranch.Free();
+		}
+
+		// At the start of every physics step, before any node runs it, the server's clock is put the lead behind the
+		// session clock's tick, the one the step is about to simulate.
+		private void OnPhysicsFrame()
+		{
+			ServerClock.Set(ForgeManagers.Instance.Clock.Tick - Lead);
 		}
 	}
 }

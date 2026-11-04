@@ -11,14 +11,14 @@ namespace Gamesmiths.Forge.Godot.Resources;
 
 /// <summary>
 /// The assets a networked session can refer to, as resource UIDs: every effect, ability, Statescript graph and
-/// networked scene in the project. The editor plugin generates it (Project, Tools, Forge, Regenerate network
-/// manifest, and on saving one of those resources), and a session loads it to build its asset registry, so it works
-/// in an export, where the project's files can't be scanned.
+/// networked scene in the project. The editor plugin generates it (Project, Tools, Forge, Regenerate network manifest,
+/// and on saving one of those resources), and a session loads it to build its asset registry, so it works in an export,
+/// where the project's files can't be scanned.
 /// </summary>
 /// <remarks>
-/// A UID identifies a resource whatever its name or folder, so renaming or moving a file changes nothing on the
-/// wire. Both ends of a session must have the same manifest: the registry's hash is compared in the handshake, and a
-/// client whose differs is refused.
+/// A UID identifies a resource whatever its name or folder, so renaming or moving a file changes nothing on the wire.
+/// Both ends of a session must have the same manifest: the registry's hash is compared in the handshake, and a client
+/// whose differs is refused.
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -61,9 +61,9 @@ public partial class ForgeNetworkManifest : Resource
 	}
 
 	/// <summary>
-	/// Builds and seals the asset registry the manifest describes, loading each resource. A UID that no longer
-	/// resolves is reported and left out, which changes the registry's hash, so a stale manifest shows up as a
-	/// refused handshake rather than a silent disagreement.
+	/// Builds and seals the asset registry the manifest describes, loading each resource. A UID that no longer resolves
+	/// is reported and left out, which changes the registry's hash, so a stale manifest shows up as a refused handshake
+	/// rather than a silent disagreement.
 	/// </summary>
 	/// <returns>The sealed registry.</returns>
 	public NetworkAssetRegistry BuildRegistry()

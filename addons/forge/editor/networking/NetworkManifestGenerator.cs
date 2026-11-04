@@ -3,7 +3,6 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
 using Godot;
@@ -56,7 +55,7 @@ internal static class NetworkManifestGenerator
 			|| resource.GetType().Name is "ForgeAbilityData" or "StatescriptGraph";
 	}
 
-	private static IEnumerable<string> Uids(List<string> paths)
+	private static List<string> Uids(List<string> paths)
 	{
 		var uids = new List<string>(paths.Count);
 
