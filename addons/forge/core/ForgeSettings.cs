@@ -46,6 +46,28 @@ public static class ForgeSettings
 	public const string InputVectorsSetting = "forge/input/vectors";
 
 	/// <summary>
+	/// Setting holding the path of the project's network asset manifest, which the editor plugin generates and a
+	/// networked session loads.
+	/// </summary>
+	public const string NetworkManifestSetting = "forge/networking/manifest";
+
+	/// <summary>
+	/// Where the network manifest is written when the setting is unset.
+	/// </summary>
+	public const string DefaultNetworkManifestPath = "res://forge_network_manifest.tres";
+
+	/// <summary>
+	/// Gets the path of the project's network asset manifest.
+	/// </summary>
+	/// <returns>The configured path, or <see cref="DefaultNetworkManifestPath"/>.</returns>
+	public static string GetNetworkManifestPath()
+	{
+		string path = ProjectSettings.GetSetting(NetworkManifestSetting, DefaultNetworkManifestPath).AsString();
+
+		return string.IsNullOrWhiteSpace(path) ? DefaultNetworkManifestPath : path;
+	}
+
+	/// <summary>
 	/// Gets a value indicating whether a physics query outlines the entities it found.
 	/// </summary>
 	/// <remarks>
@@ -188,6 +210,21 @@ public static class ForgeSettings
 		{
 			RegisterColor(color);
 		}
+
+		if (!ProjectSettings.HasSetting(NetworkManifestSetting))
+		{
+			ProjectSettings.SetSetting(NetworkManifestSetting, DefaultNetworkManifestPath);
+		}
+
+		ProjectSettings.AddPropertyInfo(new GodotDictionary
+		{
+			{ "name", NetworkManifestSetting },
+			{ "type", (int)Variant.Type.String },
+			{ "hint", (int)PropertyHint.File },
+			{ "hint_string", "*.tres" },
+		});
+
+		ProjectSettings.SetInitialValue(NetworkManifestSetting, DefaultNetworkManifestPath);
 
 		ProjectSettings.AddPropertyInfo(new GodotDictionary
 		{

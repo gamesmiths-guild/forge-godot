@@ -21,7 +21,7 @@ The central node for adding Forge system functionality to any game object.
 
 Additionally, `ForgeEntity` drives the entity's simulation on its own:
 
-- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the physics frame number, before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md). An entity a [`ForgeWorldHistory`](#forgeworldhistory) keeps is begun and advanced by it instead.
+- **Each physics step** (`_PhysicsProcess`), it calls `EntitySimulation.Advance`. `ForgeBootstrap` has already begun every entity's tick for the session clock's tick (`ForgeManagers.Instance.Clock`, which follows the server's in a [networked session](networking.md#the-clock)), before any entity advances: it restarted each random and made each input's frame current, so a roll one entity makes on another, or a graph reading another entity's input, uses the current step. `Advance` runs the input stage and the movement stage, advances timed and periodic effects by the step, then runs the Statescript fixed rail, which holds the timers and the state nodes that move bodies or query physics. See [Simulation Tick](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md). An entity a [`ForgeWorldHistory`](#forgeworldhistory) keeps is begun and advanced by it instead.
 - **Each frame** (`_Process`), it calls `Abilities.UpdateAbilities` for the frame-rail graph updates. Once every node has processed, the Forge bootstrap autoload calls `Abilities.PresentAbilities` on every `ForgeEntity` for the presentation pass: the animations, sounds and visual properties its graphs show start and stop there, on the net change since the last frame. An ability one node starts and a later one ends within the same frame is never shown. See [Presentation pass](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#presentation-pass).
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 - **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
@@ -289,6 +289,63 @@ worldHistory.Desynced += desync => GD.Print($"Step {desync.Tick} ran differently
 worldHistory.Replaying = true;
 GetTree().Paused = false;
 ```
+
+### ForgeNetworkSession
+
+Hosts or joins a networked session over Godot's high-level multiplayer, on ENet, and runs the Forge network session on top of it every physics step: the handshake, the clock, and the players' input up to the server. One per scene that plays online. See [Networking](networking.md) for the setup.
+
+**Properties:**
+
+- `Port` (int): The port to host on or join. The default is 7777.
+- `MaxClients` (int): How many clients a server accepts, or 0 for as many as ENet allows (4095). The default is 4.
+- `Manifest` ([`ForgeNetworkManifest`](resources.md#forgenetworkmanifest)): The asset manifest both ends build their registry from. Left empty, the project's is used.
+- `LocalPlayer` ([`ForgeEntity`](#forgeentity)): The entity this machine's player controls, whose input a client sends up each tick.
+- `LeadMarginTicks` (int): How many ticks beyond a round trip a client runs ahead of the server. The default is 2.
+- `LeadToleranceTicks` (int): How far a client's clock may drift from its target before it jumps to it. The default is 2.
+- `LatencyMs`, `JitterMs`, `LossPercent`: The network conditioner, applied to this machine's outgoing packets. Changeable while playing.
+
+**Signals:** `PeerJoined(peerId)` and `PeerLeft(peerId)` on the server; `Connected`, `Refused(reason)` and `Disconnected` on a client. The C# event `InputTaken` is raised on the server every physics step for every client, with the `InputCommand` the tick runs for it and how it arrived.
+
+**Description:**
+
+`Host(dedicated)` creates the server on `Port`; with `dedicated` set, the game shows nothing and the presentation passes are skipped. `Join(address)` connects; whether the server accepts comes later through the signals. `Leave()` disconnects, or disconnects everyone on a server. `Mode` says what this machine is, `State` where a client stands, and `RoundTripTime`, `ServerTick`, `TicksAhead`, `ServerInputDepth`, `PacketsLost`, `BytesSentPerSecond` and `BytesReceivedPerSecond` are what the overlay shows.
+
+On a server its physics step runs with the input collectors', before `ForgeBootstrap` begins the entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick reads before simulating the tick. `DedicatedRequested` is true when the game was started with the user argument `--dedicated`.
+
+```csharp
+// A menu.
+if (ForgeNetworkSession.DedicatedRequested)
+{
+    session.Host(dedicated: true);
+}
+
+hostButton.Pressed += () => session.Host();
+joinButton.Pressed += () => session.Join(addressField.Text);
+
+// The server, until the next milestone maps peers to entities. Clients may raise the input events under input.
+var inputEvents = new TagContainer(
+    ForgeManagers.Instance.TagsManager,
+    [Tag.RequestTag(ForgeManagers.Instance.TagsManager, "input")]);
+session.InputTaken += (peer, command, delivery) =>
+{
+    ForgeEntity entity = EntityOf(peer.Id);
+    entity.Input?.Submit(command.Frame);
+    command.RaiseEvents(entity, inputEvents);
+};
+```
+
+### ForgeNetworkOverlay
+
+The F3 overlay: what the session is doing, in a corner. It's a `CanvasLayer`; add it anywhere in a scene that has a [`ForgeNetworkSession`](#forgenetworksession).
+
+**Properties:**
+
+- `Session` ([`ForgeNetworkSession`](#forgenetworksession)): The session to show. Left empty, the first in the tree is shown.
+- `ShownAtStart` (bool): Whether the overlay starts shown.
+
+**Description:**
+
+**F3** shows and hides it, and **F4** cycles the session's conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, a client's round trip, estimated server tick, lead and input depth, a server's clients with their input depth and received, lost and late ticks, bytes up and down per second, and the conditioner's settings.
 
 ### ForgeAttributeSet
 

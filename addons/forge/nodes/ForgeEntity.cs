@@ -91,7 +91,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 		// Only the random restarts here, so rolls made before the first tick are seeded; the input frame waits for that
 		// tick.
-		random.BeginTick(SpawnSeed is null ? (long)Engine.GetPhysicsFrames() : SpawnTick);
+		random.BeginTick(SpawnSeed is null ? ForgeManagers.Instance.Clock.Tick : SpawnTick);
 		Random = random;
 		AddToGroup(SimulationGroup);
 		Tags = new(BaseTags.GetTagContainer());

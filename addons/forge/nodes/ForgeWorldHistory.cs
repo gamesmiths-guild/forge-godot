@@ -196,7 +196,13 @@ public partial class ForgeWorldHistory : Node
 			LeaveIfMovedOut(_entities[i]);
 		}
 
-		long tick = (History.CurrentTick ?? (long)Engine.GetPhysicsFrames()) + 1;
+		long tick = NextTick();
+
+		// After a seek the world's tick is behind the session clock's; the clock follows the world from the next step.
+		if (tick != ForgeManagers.Instance.Clock.Tick)
+		{
+			ForgeManagers.Instance.SetNextTick(tick + 1);
+		}
 
 		if (Replaying)
 		{
@@ -477,7 +483,7 @@ public partial class ForgeWorldHistory : Node
 	// a replay of the tick gives the entity it spawns again too.
 	private void SeedSpawn(ForgeEntity entity)
 	{
-		long tick = (History.CurrentTick ?? (long)Engine.GetPhysicsFrames()) + 1;
+		long tick = NextTick();
 
 		if (tick != _spawnTick)
 		{
@@ -488,6 +494,12 @@ public partial class ForgeWorldHistory : Node
 		entity.SpawnTick = tick;
 		entity.SpawnSeed = unchecked(
 			_sessionSeed ^ ((ulong)tick * 0x9E3779B97F4A7C15UL) ^ ((ulong)_spawnIndex++ * 0xC2B2AE3D27D4EB4FUL));
+	}
+
+	// The tick the world runs next: the one after the last it ran, or the session clock's before it ran any.
+	private long NextTick()
+	{
+		return History.CurrentTick is long current ? current + 1 : ForgeManagers.Instance.Clock.Tick;
 	}
 
 	private void JoinWhenReady(ForgeEntity entity)

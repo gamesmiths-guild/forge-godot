@@ -369,3 +369,15 @@ Reference in the `Executions` array in ForgeEffectData.
 
 - When making custom resource scripts, always use `[Tool]` and `[GlobalClass]` so they're visible in the Inspector.
 - All built-in resources are in the `Gamesmiths.Forge.Godot.Resources` namespace.
+
+## Networking Resources
+
+### ForgeNetworkManifest
+
+The assets a networked session can refer to, as resource UIDs: every effect, ability and Statescript graph in the project, and the scenes networked entities spawn from. A session builds its asset registry from it, so an index means the same asset on every machine, and the registry's hash is compared in the handshake: a client whose manifest differs is refused.
+
+**Properties:**
+
+- `Effects`, `Abilities`, `Graphs`, `Scenes` (string arrays): The UIDs, sorted.
+
+The editor plugin generates it at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings) whenever an effect, ability or graph is saved, and from **Project, Tools, Forge, Regenerate network manifest**. Commit it with the project; it's what makes the registry work in an export. A UID identifies a resource whatever its name or folder, so renaming or moving a file changes nothing on the wire. See [Networking](networking.md).
