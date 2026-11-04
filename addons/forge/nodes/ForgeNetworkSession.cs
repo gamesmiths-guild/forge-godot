@@ -396,14 +396,18 @@ public partial class ForgeNetworkSession : Node
 			return;
 		}
 
-		ReportClientState(before);
-
-		if (Session.State != SessionState.Ready)
+		if (!ReportClientState(before))
 		{
 			return;
 		}
 
 		SteerClock(now);
+
+		// A clock steered back would send ticks older than the window's newest; those go again from the new tick.
+		if (Session!.Input.NewestTick > Clock.Tick)
+		{
+			Session.Input.Clear();
+		}
 
 		if (LocalPlayer?.Input is EntityInput input)
 		{
@@ -459,13 +463,15 @@ public partial class ForgeNetworkSession : Node
 		}
 	}
 
-	private void ReportClientState(SessionState before)
+	// Whether the client is still in the session and ready after reporting: reporting a refusal or a disconnection
+	// leaves the session, and a Connected handler may leave it too.
+	private bool ReportClientState(SessionState before)
 	{
 		SessionState after = Session!.State;
 
 		if (before == after)
 		{
-			return;
+			return after == SessionState.Ready;
 		}
 
 		switch (after)
@@ -481,6 +487,8 @@ public partial class ForgeNetworkSession : Node
 				Leave();
 				break;
 		}
+
+		return Mode == NetworkMode.Client && Session!.State == SessionState.Ready;
 	}
 
 	private void SteerClock(double now)
