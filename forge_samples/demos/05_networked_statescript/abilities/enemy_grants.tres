@@ -51,4 +51,5 @@ DurationType = 1
 StackLimit = SubResource("Resource_t115v")
 InitialStack = SubResource("Resource_kknsr")
 Cues = []
+Visibility = 3
 metadata/_custom_type_script = "uid://b83hf13nj37k3"
