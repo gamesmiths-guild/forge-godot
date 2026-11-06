@@ -23,6 +23,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// entity's tick reads in the same physics step.</para>
 /// <para>A press or release caught as the tree pauses is dropped, and what is held is read afresh when it resumes, so
 /// the first frame after a pause carries no edge from it.</para>
+/// <para>In a session, a networked entity's devices are read only on the machine whose player owns it
+/// (<see cref="ForgeEntity.NetworkOwner"/>): the server hands every other owner's commands to it instead.</para>
 /// </remarks>
 [GlobalClass]
 public partial class ForgeInputCollector : Node
@@ -35,6 +37,7 @@ public partial class ForgeInputCollector : Node
 	private ulong _pressed;
 	private ulong _released;
 	private ulong _consumed;
+	private bool _controlled = true;
 
 	/// <summary>
 	/// Gets or sets where the aim is read from.
@@ -89,13 +92,7 @@ public partial class ForgeInputCollector : Node
 	public override void _ExitTree()
 	{
 		base._ExitTree();
-
-		// An input nothing submits to repeats its last frame, so every button held in it is let go.
-		_input?.Submit(default);
-		_held = 0;
-		_pressed = 0;
-		_released = 0;
-		_consumed = 0;
+		LetGo();
 	}
 
 	/// <inheritdoc/>
@@ -119,6 +116,11 @@ public partial class ForgeInputCollector : Node
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		base._UnhandledInput(@event);
+
+		if (!_controlled)
+		{
+			return;
+		}
 
 		for (int i = 0; i < _actions.Length; i++)
 		{
@@ -156,6 +158,18 @@ public partial class ForgeInputCollector : Node
 			return;
 		}
 
+		if (!IsLocallyControlled())
+		{
+			if (_controlled)
+			{
+				_controlled = false;
+				LetGo();
+			}
+
+			return;
+		}
+
+		_controlled = true;
 		ulong held = ReadHeld();
 
 		// A press no unhandled event announced was consumed by the interface, and stays the interface's until it is let
@@ -180,6 +194,23 @@ public partial class ForgeInputCollector : Node
 	private static NumericsVector3 ToNumerics(Vector3 value)
 	{
 		return new NumericsVector3(value.X, value.Y, value.Z);
+	}
+
+	// An input nothing submits to repeats its last frame, so every button held in it is let go.
+	private void LetGo()
+	{
+		_input?.Submit(default);
+		_held = 0;
+		_pressed = 0;
+		_released = 0;
+		_consumed = 0;
+	}
+
+	private bool IsLocallyControlled()
+	{
+		return _entity?.Networked != true
+			|| ForgeNetworkSession.Of(this) is not ForgeNetworkSession session
+			|| _entity.NetworkOwner == session.LocalPeer;
 	}
 
 	private ulong ReadHeld()

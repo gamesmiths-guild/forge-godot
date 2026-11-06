@@ -3,6 +3,7 @@
 using System;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
@@ -108,7 +109,24 @@ internal static class SceneInstantiationUtilities
 			return null;
 		}
 
+		var session = ForgeNetworkSession.Of(parent);
+
+		// A networked scene is the server's to spawn: a client gets it, and everything about it, from the server.
+		if (session?.Mode == NetworkMode.Client && session.IsNetworkedScene(scene))
+		{
+			return null;
+		}
+
 		Node instance = scene.Instantiate();
+
+		// What an entity spawns belongs to the same player, so its owner's input and relevancy reach it.
+		if (session?.IsServer == true
+			&& ForgeEntityBridge.TryGetEntity(instance, out IForgeEntity? spawned)
+			&& spawned is ForgeEntity { Networked: true, NetworkOwner: 0 } networked
+			&& parentEntity is ForgeEntity spawner)
+		{
+			networked.NetworkOwner = spawner.NetworkOwner;
+		}
 
 		// Placed before it is added, because AddChild readies the instance: a scene that reads its own transform in
 		// _Ready - as ForgeProjectile3D does to record where it launched from - would otherwise measure from the

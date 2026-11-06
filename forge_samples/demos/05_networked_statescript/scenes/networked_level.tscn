@@ -1,0 +1,550 @@
+[gd_scene format=3 uid="uid://c5net8level1"]
+
+[ext_resource type="Environment" uid="uid://curphkq8itbej" path="res://forge_samples/demos/03_statescript/materials/environment.tres" id="1_env"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_1xjp2"]
+[ext_resource type="Material" uid="uid://bfepc7hp0hd8h" path="res://forge_samples/demos/03_statescript/materials/ground.tres" id="2_grass"]
+[ext_resource type="PackedScene" uid="uid://dr8sxhg544h62" path="res://forge_samples/demos/03_statescript/scenes/stations/bonfire.tscn" id="4_bonfire"]
+[ext_resource type="Material" uid="uid://dm25nvk6sef30" path="res://forge_samples/demos/03_statescript/materials/water.tres" id="4_f8cj4"]
+[ext_resource type="PackedScene" uid="uid://btewds1fqvri5" path="res://forge_samples/demos/03_statescript/scenes/stations/lake.tscn" id="5_lake"]
+[ext_resource type="PackedScene" uid="uid://c64aspqdedbua" path="res://forge_samples/demos/03_statescript/scenes/stations/regen_area.tscn" id="6_regen"]
+[ext_resource type="PackedScene" uid="uid://w55e2cvyemsw" path="res://forge_samples/demos/03_statescript/scenes/stations/target_dummy.tscn" id="8_dummy"]
+[ext_resource type="PackedScene" uid="uid://denp5vmbi66b8" path="res://forge_samples/demos/03_statescript/scenes/stations/standing_stone.tscn" id="9_stone"]
+[ext_resource type="PackedScene" uid="uid://bgw7wp5ey33l4" path="res://forge_samples/demos/03_statescript/scenes/props/tree.tscn" id="9_tree"]
+[ext_resource type="Script" uid="uid://dihph8tka5qgq" path="res://forge_samples/demos/03_statescript/scripts/FollowCamera3D.cs" id="10_camera"]
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://forge_samples/shared/QuitScene.cs" id="11_quit"]
+[ext_resource type="Script" uid="uid://cvhkilfepqpyi" path="res://addons/forge/nodes/EffectArea3D.cs" id="12_area"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="13_effect"]
+[ext_resource type="Resource" uid="uid://ipt87tpu75xh" path="res://forge_samples/demos/03_statescript/effects/fallen.tres" id="14_fallen"]
+[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://forge_samples/demos/01_realtime_3d/scripts/FloatingTextCueHandler3D.cs" id="15_floating_cue"]
+[ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://forge_samples/demos/01_realtime_3d/scenes/3d_floating_text.tscn" id="16_floating_text"]
+[ext_resource type="Script" uid="uid://bbicxjccypkl0" path="res://forge_samples/demos/01_realtime_3d/scripts/ParticlesCueHandler3D.cs" id="17_particles_cue"]
+[ext_resource type="PackedScene" uid="uid://6aow5rsrf22" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/shield_effect.tscn" id="18_shield_vfx"]
+[ext_resource type="PackedScene" uid="uid://dn5d64jtdgft5" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/reflect_effect.tscn" id="19_reflect_vfx"]
+[ext_resource type="PackedScene" uid="uid://cug3xpmr36q85" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_fire_effect.tscn" id="20_fire_vfx"]
+[ext_resource type="PackedScene" uid="uid://dk27gs27pk67k" path="res://forge_samples/demos/01_realtime_3d/scenes/particles/3d_wet_effect.tscn" id="21_wet_vfx"]
+[ext_resource type="NavigationMesh" uid="uid://yfi8e3ex6e4l" path="res://forge_samples/demos/03_statescript/scenes/sample_level_navmesh.tres" id="24_navmesh"]
+[ext_resource type="Script" uid="uid://bmoxdc61oenng" path="res://addons/forge/nodes/CameraShakeCueHandler.cs" id="25_shake_cue"]
+[ext_resource type="Script" uid="uid://4r6wjmvrq18e" path="res://forge_samples/demos/03_statescript/scripts/HitFlashCueHandler3D.cs" id="26_flash_cue"]
+[ext_resource type="Material" uid="uid://slep1ateetaq" path="res://forge_samples/demos/03_statescript/materials/hit_flash.tres" id="27_hit_flash"]
+[ext_resource type="Material" uid="uid://mkfty8mek62t" path="res://forge_samples/demos/03_statescript/materials/burn_flash.tres" id="28_burn_flash"]
+[ext_resource type="PackedScene" uid="uid://glc1a555rbn5" path="res://forge_samples/demos/03_statescript/scenes/vfx/vapor_effect.tscn" id="29_vapor_vfx"]
+[ext_resource type="Script" uid="uid://bxw5ax6u4m82n" path="res://addons/forge/nodes/AudioCueHandler.cs" id="30_audio_cue"]
+[ext_resource type="AudioStream" uid="uid://fe2dybr470eu" path="res://forge_samples/shared/audio/hit.ogg" id="31_hit_sfx"]
+[ext_resource type="AudioStream" uid="uid://ddltr6pp8vhxs" path="res://forge_samples/shared/audio/fire-loop.ogg" id="32_fire_sfx"]
+[ext_resource type="AudioStream" uid="uid://bnsk4h3tbd3s7" path="res://forge_samples/shared/audio/quench.ogg" id="33_quench_sfx"]
+[ext_resource type="AudioStream" uid="uid://dnuat5dsia5du" path="res://forge_samples/shared/audio/water-dripping-loop.ogg" id="34_wet_sfx"]
+[ext_resource type="AudioStream" uid="uid://b2rg3674ittqt" path="res://forge_samples/shared/audio/heal.ogg" id="35_heal_sfx"]
+[ext_resource type="AudioStream" uid="uid://cgg38msod1667" path="res://forge_samples/shared/audio/healing-loop.ogg" id="36_regen_sfx"]
+[ext_resource type="AudioStream" uid="uid://isyp0yuesk4o" path="res://forge_samples/shared/audio/shield-loop.ogg" id="37_shield_sfx"]
+[ext_resource type="AudioStream" uid="uid://ch1ig413i31i3" path="res://forge_samples/shared/audio/reflect.ogg" id="38_reflect_sfx"]
+[ext_resource type="Script" uid="uid://d3v5ni4eocbqr" path="res://addons/forge/nodes/AnimationCueHandler.cs" id="39_anim_cue"]
+[ext_resource type="PackedScene" uid="uid://75gb6rjv4sf5" path="res://forge_samples/demos/03_statescript/scenes/vfx/regen_effect.tscn" id="40_regen_vfx"]
+
+[ext_resource type="PackedScene" uid="uid://c5net8player" path="res://forge_samples/demos/05_networked_statescript/scenes/player.tscn" id="50_player"]
+[ext_resource type="PackedScene" uid="uid://c5net8enemy1" path="res://forge_samples/demos/05_networked_statescript/scenes/enemy.tscn" id="51_enemy"]
+[ext_resource type="Resource" uid="uid://c5net8manife" path="res://forge_samples/demos/05_networked_statescript/network_manifest.tres" id="52_manifest"]
+[ext_resource type="Script" uid="uid://q6o53xlqjkod" path="res://addons/forge/nodes/ForgeNetworkSession.cs" id="53_session"]
+[ext_resource type="Script" uid="uid://bb4otufv1nl1v" path="res://addons/forge/nodes/ForgeNetworkOverlay.cs" id="54_overlay"]
+[ext_resource type="Script" uid="uid://c00wgj2xbiagd" path="res://forge_samples/demos/05_networked_statescript/scripts/NetworkedLevel.cs" id="55_game"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_4t6yx"]
+material = ExtResource("4_f8cj4")
+size = Vector3(24.66397, 1.8203125, 5.035675)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_chasm"]
+size = Vector3(30, 1.5, 5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_void"]
+size = Vector3(200, 62.24588, 200)
+
+[sub_resource type="Curve" id="Curve_txqjd"]
+_data = [Vector2(0, 0.70000005), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_dqumm"]
+_data = [Vector2(0, 0.35), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_burn_gain"]
+_data = [Vector2(0, 0.35000008), 0.0, 0.0, 0, 0]
+point_count = 1
+
+[node name="NetworkedLevel" type="Node3D" unique_id=930093996]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2016672159]
+environment = ExtResource("1_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=989361306]
+transform = Transform3D(0.866025, -0.409576, 0.286788, 0, 0.573576, 0.819152, -0.5, -0.709406, 0.496732, 0, 12, 0)
+light_color = Color(1, 0.952941, 0.862745, 1)
+light_energy = 1.5
+shadow_enabled = true
+shadow_normal_bias = 1.5
+directional_shadow_max_distance = 60.0
+
+[node name="Navigation" type="NavigationRegion3D" parent="." unique_id=1340970051]
+navigation_mesh = ExtResource("24_navmesh")
+
+[node name="Ground" type="CSGCombiner3D" parent="." unique_id=1275372706 groups=["navigation_mesh_source_group"]]
+use_collision = true
+
+[node name="Rock" type="CSGCylinder3D" parent="Ground" unique_id=21476292]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.2, 0)
+radius = 17.9
+height = 4.0
+sides = 48
+material = ExtResource("2_1xjp2")
+
+[node name="Grass" type="CSGCylinder3D" parent="Ground" unique_id=1146737184]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.011868477, -0.19197913, 0.008433342)
+radius = 18.0
+height = 0.4
+sides = 48
+material = ExtResource("2_grass")
+
+[node name="ShelfRock" type="CSGBox3D" parent="Ground" unique_id=1813309462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09183884, -2.2, 21.06655)
+size = Vector3(21.776464, 4, 20.131775)
+material = ExtResource("2_1xjp2")
+
+[node name="ShelfGrass" type="CSGBox3D" parent="Ground" unique_id=1691158500]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.16662486, 24.052307)
+size = Vector3(22, 0.4, 14.104614)
+material = ExtResource("2_grass")
+
+[node name="LakeBasin" type="CSGCylinder3D" parent="Ground" unique_id=2134684650]
+transform = Transform3D(1, 0, 0, 0, -1, 8.742278e-08, 0, -8.742278e-08, -1, -9.117232, -1.4838617, -7.7059393)
+operation = 2
+radius = 5.5
+height = 3.0688477
+sides = 32
+cone = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="Ground/LakeBasin" unique_id=1500251816]
+transform = Transform3D(8, 0, 0, 0, 2, 0, 0, 0, 8, 0, 0.28432453, 0)
+operation = 2
+
+[node name="Chasm" type="CSGBox3D" parent="Ground" unique_id=980029306]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 15.5)
+operation = 2
+size = Vector3(30, 6.4, 5)
+
+[node name="Bridge" type="CSGBox3D" parent="Ground" unique_id=1851700985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 15.5)
+size = Vector3(2.6, 0.5, 6.4)
+material = ExtResource("2_1xjp2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1261137667]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.064315796, -2.512062, 15.48654)
+mesh = SubResource("BoxMesh_4t6yx")
+
+[node name="Stations" type="Node3D" parent="." unique_id=1401266648 groups=["navigation_mesh_source_group"]]
+
+[node name="Bonfire" parent="Stations" unique_id=311513276 instance=ExtResource("4_bonfire")]
+
+[node name="Lake" parent="Stations" unique_id=120451771 instance=ExtResource("5_lake")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.117232, 0.3798511, -7.7059393)
+
+[node name="RegenArea" parent="Stations" unique_id=1359653450 instance=ExtResource("6_regen")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -9)
+
+[node name="Dummies" type="Node3D" parent="Stations" unique_id=1968528685]
+
+[node name="Sign" type="Label3D" parent="Stations/Dummies" unique_id=552311301]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5269203, 3.0140233, -3.3182917)
+billboard = 1
+modulate = Color(0.909804, 0.933333, 0.960784, 1)
+text = "Dummies
+shoot through the bonfire and they catch fire"
+font_size = 48
+outline_size = 16
+
+[node name="Dummy1" parent="Stations/Dummies" unique_id=1886710568 instance=ExtResource("8_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.072236, 0, -3.1852062)
+
+[node name="Dummy2" parent="Stations/Dummies" unique_id=2093370571 instance=ExtResource("8_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6135142, 0, -4.872223)
+
+[node name="Forge Entity" parent="Stations/Dummies/Dummy1"]
+Networked = true
+
+[node name="Forge Entity" parent="Stations/Dummies/Dummy2"]
+Networked = true
+
+[node name="Rim" type="Node3D" parent="." unique_id=441048483 groups=["navigation_mesh_source_group"]]
+
+[node name="RimStone1" parent="Rim" unique_id=1505259778 instance=ExtResource("9_stone")]
+transform = Transform3D(0.9963568, 0, -0.08528253, 0, 1, 0, 0.08528253, 0, 0.9963568, 17.653, 0, 0)
+
+[node name="RimStone2" parent="Rim" unique_id=1526308719 instance=ExtResource("9_stone")]
+transform = Transform3D(0.82889426, 0, -0.5594053, 0, 1, 0, 0.5594053, 0, 0.82889426, 15.436096, 0, 8.334111)
+
+[node name="RimStone3" parent="Rim" unique_id=947271921 instance=ExtResource("9_stone")]
+transform = Transform3D(0.84314847, 0, 0.53768086, 0, 1, 0, -0.53768086, 0, 0.84314847, -14.915569, 0, 9.364144)
+
+[node name="RimStone5" parent="Rim" unique_id=929907921 instance=ExtResource("9_stone")]
+transform = Transform3D(-0.03671755, 0, 0.9993257, 0, 1, 0, -0.9993257, 0, -0.03671755, -8.340004, 0, 12.724441)
+
+[node name="RimStone11" parent="Rim" unique_id=2100790685 instance=ExtResource("9_stone")]
+transform = Transform3D(0.03034479, 0, 0.9995395, 0, 1, 0, -0.9995395, 0, 0.03034479, 8.478823, 0, 12.747483)
+
+[node name="RimStone4" parent="Rim" unique_id=1251311989 instance=ExtResource("9_stone")]
+transform = Transform3D(0.99999905, 0, -0.0013974, 0, 1, 0, 0.0013974, 0, 0.99999905, -17.934294, 0, -0.0036885738)
+
+[node name="RimStone10" parent="Rim" unique_id=881522612 instance=ExtResource("9_stone")]
+transform = Transform3D(0.81036407, 0, -0.58592665, 0, 1, 0, 0.58592665, 0, 0.81036407, -15.111902, 0, -9.463008)
+
+[node name="RimStone6" parent="Rim" unique_id=1453256544 instance=ExtResource("9_stone")]
+transform = Transform3D(0.8734036, 0, 0.48699704, 0, 1, 0, -0.48699704, 0, 0.8734036, -8.893949, 0, -15.38854)
+
+[node name="RimStone7" parent="Rim" unique_id=641858859 instance=ExtResource("9_stone")]
+transform = Transform3D(0.9995636, 0, 0.029541437, 0, 1, 0, -0.029541437, 0, 0.9995636, 0.0042990446, 0, -17.888166)
+
+[node name="RimStone8" parent="Rim" unique_id=1500861789 instance=ExtResource("9_stone")]
+transform = Transform3D(0.85446745, 0, -0.51950496, 0, 1, 0, 0.51950496, 0, 0.85446745, 8.933389, 0, -15.365266)
+
+[node name="RimStone9" parent="Rim" unique_id=1503177016 instance=ExtResource("9_stone")]
+transform = Transform3D(0.8575721, 0, 0.5143638, 0, 1, 0, -0.5143638, 0, 0.8575721, 15.344627, 0, -8.837886)
+
+[node name="GateStone1" parent="Rim" unique_id=615635332 instance=ExtResource("9_stone")]
+transform = Transform3D(0.96592885, 0, 0.25880772, 0, 1, 0, -0.25880772, 0, 0.96592885, -2.6, 0, 18.384623)
+
+[node name="GateStone2" parent="Rim" unique_id=39717892 instance=ExtResource("9_stone")]
+transform = Transform3D(0.96592885, 0, -0.25880772, 0, 1, 0, 0.25880772, 0, 0.96592885, 2.6, 0, 18.321339)
+
+[node name="Trees" type="Node3D" parent="." unique_id=1635371771 groups=["navigation_mesh_source_group"]]
+
+[node name="Tree1" parent="Trees" unique_id=1517682529 instance=ExtResource("9_tree")]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, 16.421, 0, 4.4)
+
+[node name="Tree2" parent="Trees" unique_id=1129170053 instance=ExtResource("9_tree")]
+transform = Transform3D(0.76602, 0, 0.6428168, 0, 1, 0, -0.6428168, 0, 0.76602, 12.021, 0, 12.021)
+
+[node name="Tree3" parent="Trees" unique_id=1134746017 instance=ExtResource("9_tree")]
+transform = Transform3D(-1.010164, 0, 0.36768693, 0, 1.075, 0, -0.36768693, 0, -1.010164, -12.021, 0, 12.021)
+
+[node name="Tree4" parent="Trees" unique_id=910592884 instance=ExtResource("9_tree")]
+transform = Transform3D(-0.79873973, 0, -0.29071432, 0, 0.85, 0, 0.29071432, 0, -0.79873973, -16.421, 0, 4.4)
+
+[node name="Tree5" parent="Trees" unique_id=1413684201 instance=ExtResource("9_tree")]
+transform = Transform3D(-0.50001097, 0, -0.86601907, 0, 1, 0, 0.86601907, 0, -0.50001097, -16.421, 0, -4.4)
+
+[node name="Tree6" parent="Trees" unique_id=1318215762 instance=ExtResource("9_tree")]
+transform = Transform3D(0.19970475, 0, -1.1325272, 0, 1.15, 0, 1.1325272, 0, 0.19970475, 7.7919655, 0, 28.56208)
+
+[node name="Tree18" parent="Trees" unique_id=410187895 instance=ExtResource("9_tree")]
+transform = Transform3D(-1.149148, 0, -0.044258565, 0, 1.15, 0, 0.044258565, 0, -1.149148, -5.082469, 0, 29.35999)
+
+[node name="Tree7" parent="Trees" unique_id=1483326793 instance=ExtResource("9_tree")]
+transform = Transform3D(0.7085842, 0, -0.5945868, 0, 0.925, 0, 0.5945868, 0, 0.7085842, -4.4, 0, -16.421)
+
+[node name="Tree8" parent="Trees" unique_id=1819231600 instance=ExtResource("9_tree")]
+transform = Transform3D(1.075, 0, 0, 0, 1.075, 0, 0, 0, 1.075, 4.4, 0, -16.421)
+
+[node name="Tree9" parent="Trees" unique_id=1529653517 instance=ExtResource("9_tree")]
+transform = Transform3D(0.6511, 0, 0.5464, 0, 0.85, 0, -0.5464, 0, 0.6511, 12.021, 0, -12.021)
+
+[node name="Tree10" parent="Trees" unique_id=1842827408 instance=ExtResource("9_tree")]
+transform = Transform3D(0.17360279, 0, 0.9848158, 0, 1, 0, -0.9848158, 0, 0.17360279, 16.421, 0, -4.4)
+
+[node name="Tree11" parent="Trees" unique_id=253904135 instance=ExtResource("9_tree")]
+transform = Transform3D(0.98668665, 0, 0.3590952, 0, 1.05, 0, -0.3590952, 0, 0.98668665, -13.9191265, 0, -1.0573368)
+
+[node name="Tree12" parent="Trees" unique_id=1055195463 instance=ExtResource("9_tree")]
+transform = Transform3D(-0.30780962, 0, 0.84572643, 0, 0.9, 0, -0.84572643, 0, -0.30780962, -6, 0, -14.5)
+
+[node name="Tree13" parent="Trees" unique_id=406049047 instance=ExtResource("9_tree")]
+transform = Transform3D(-0.75176466, 0, -0.27358714, 0, 0.8, 0, 0.27358714, 0, -0.75176466, -2.1543846, -9.536743e-07, -9.968731)
+
+[node name="Tree14" parent="Trees" unique_id=1871768320 instance=ExtResource("9_tree")]
+transform = Transform3D(0.5500122, 0, 0.952621, 0, 1.1, 0, -0.952621, 0, 0.5500122, -8, 0, 22)
+
+[node name="Tree15" parent="Trees" unique_id=1344221608 instance=ExtResource("9_tree")]
+transform = Transform3D(0.47501037, 0, -0.82271814, 0, 0.95, 0, 0.82271814, 0, 0.47501037, 8, 0, 22)
+
+[node name="Tree16" parent="Trees" unique_id=108989843 instance=ExtResource("9_tree")]
+transform = Transform3D(-0.6511, 0, 0.5464, 0, 0.85, 0, -0.5464, 0, -0.6511, -7.9000626, 9.536743e-07, 26.007488)
+
+[node name="Tree17" parent="Trees" unique_id=1671149278 instance=ExtResource("9_tree")]
+transform = Transform3D(-0.6511, 0, 0.5464, 0, 0.85, 0, -0.5464, 0, -0.6511, 3.8432498, 9.536743e-07, 29.502554)
+
+[node name="Spawns" type="Node3D" parent="." unique_id=709913394]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 25.27996)
+
+[node name="Spawn1" type="Marker3D" parent="Spawns" unique_id=422431415 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.240537, 0, -0.8041725)
+
+[node name="Spawn2" type="Marker3D" parent="Spawns" unique_id=1221400975 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 4.2124023)
+
+[node name="Spawn3" type="Marker3D" parent="Spawns" unique_id=681826834 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.7779174, 0, 4.549965)
+
+[node name="Spawn4" type="Marker3D" parent="Spawns" unique_id=321031322 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.066704, 0, 1.9137764)
+
+[node name="Spawn5" type="Marker3D" parent="Spawns" unique_id=34361435 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.244277, 0, -6.188751)
+
+[node name="Spawn6" type="Marker3D" parent="Spawns" unique_id=822041462 groups=["spawn_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.967566, 0, -6.017889)
+
+[node name="EnemySpawns" type="Node3D" parent="."]
+
+[node name="EnemySpawn1" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -5)
+
+[node name="EnemySpawn2" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, 3)
+
+[node name="EnemySpawn3" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -14)
+
+[node name="EnemySpawn4" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 5)
+
+[node name="Spawned" type="Node3D" parent="." unique_id=45002916]
+unique_name_in_owner = true
+
+[node name="FallZone" type="Area3D" parent="." unique_id=691873536]
+unique_name_in_owner = true
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("12_area")
+TriggerMode = 2
+metadata/_custom_type_script = "uid://cvhkilfepqpyi"
+
+[node name="ChasmShape" type="CollisionShape3D" parent="FallZone" unique_id=52943036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.75, 15.5)
+shape = SubResource("BoxShape3D_chasm")
+
+[node name="VoidShape" type="CollisionShape3D" parent="FallZone" unique_id=1168863474]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -34.87706, 0)
+shape = SubResource("BoxShape3D_void")
+
+[node name="Fallen" type="Node" parent="FallZone" unique_id=1548037583]
+script = ExtResource("13_effect")
+EffectData = ExtResource("14_fallen")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=152454983]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 7)
+script = ExtResource("10_camera")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=1827094861]
+transform = Transform3D(1, 0, 0, 0, 0.6699296, 0.74242467, 0, -0.74242467, 0.6699296, 0, 6.309705, 4.206768)
+
+[node name="FloatingText Cues" type="Node" parent="." unique_id=2123623937]
+script = ExtResource("15_floating_cue")
+FloatingTextScene = ExtResource("16_floating_text")
+CueTag = "cue.floating.text"
+
+[node name="ShieldVFX Cues" type="Node" parent="." unique_id=1433973469]
+script = ExtResource("17_particles_cue")
+PersistentEffectScene = ExtResource("18_shield_vfx")
+Offset = Vector3(0, 2, 0)
+CueTag = "cue.vfx.shield"
+
+[node name="ReflectVFX Cues" type="Node" parent="." unique_id=1234840089]
+script = ExtResource("17_particles_cue")
+InstantEffectScene = ExtResource("19_reflect_vfx")
+Offset = Vector3(0, 2, 0)
+CueTag = "cue.vfx.reflect"
+
+[node name="FireVFX Cues" type="Node" parent="." unique_id=247496643]
+script = ExtResource("17_particles_cue")
+PersistentEffectScene = ExtResource("20_fire_vfx")
+Offset = Vector3(0, 2, 0)
+CueTag = "cue.vfx.fire"
+
+[node name="WetVFX Cues" type="Node" parent="." unique_id=1258566282]
+script = ExtResource("17_particles_cue")
+PersistentEffectScene = ExtResource("21_wet_vfx")
+Offset = Vector3(0, 2, 0)
+CueTag = "cue.vfx.wet"
+
+[node name="RegenVFX Cues" type="Node" parent="." unique_id=505247103]
+script = ExtResource("17_particles_cue")
+PersistentEffectScene = ExtResource("40_regen_vfx")
+UpdateEffectIntensity = true
+IntensitySpeed = Vector2(0.25, 2.5)
+Offset = Vector3(0, 2, 0)
+CueTag = "cue.vfx.regen"
+
+[node name="Shake Cues" type="Node" parent="." unique_id=304190392]
+script = ExtResource("25_shake_cue")
+Amplitude = 0.2
+CueTag = "cue.screen.shake"
+metadata/_custom_type_script = "uid://bmoxdc61oenng"
+
+[node name="HitFlash Cues" type="Node" parent="." unique_id=1849894790]
+script = ExtResource("26_flash_cue")
+FlashMaterial = ExtResource("27_hit_flash")
+Duration = 0.15
+CueTag = "cue.vfx.hit"
+
+[node name="BurnFlash Cues" type="Node" parent="." unique_id=1751204014]
+script = ExtResource("26_flash_cue")
+FlashMaterial = ExtResource("28_burn_flash")
+Duration = 0.12
+CueTag = "cue.vfx.burn"
+
+[node name="QuenchVFX Cues" type="Node" parent="." unique_id=621309963]
+script = ExtResource("17_particles_cue")
+InstantEffectScene = ExtResource("29_vapor_vfx")
+Offset = Vector3(0, 1, 0)
+CueTag = "cue.vfx.quench"
+
+[node name="Hit SFX" type="Node" parent="." unique_id=1879536885]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("31_hit_sfx")
+CueTag = "cue.sfx.hit"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Fire SFX" type="Node" parent="." unique_id=1051651938]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("32_fire_sfx")
+PlayOnExecute = false
+MagnitudeCurve = SubResource("Curve_txqjd")
+CueTag = "cue.sfx.fire"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Quench SFX" type="Node" parent="." unique_id=1452593854]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("33_quench_sfx")
+CueTag = "cue.sfx.quench"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Wet SFX" type="Node" parent="." unique_id=1434140919]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("34_wet_sfx")
+CueTag = "cue.sfx.wet"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Heal SFX" type="Node" parent="." unique_id=306185575]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("35_heal_sfx")
+PlayOnApply = false
+StopOnRemove = false
+MagnitudeCurve = SubResource("Curve_dqumm")
+CueTag = "cue.sfx.heal"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Regen SFX" type="Node" parent="." unique_id=274120948]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("36_regen_sfx")
+PlayOnExecute = false
+CueTag = "cue.sfx.regen"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Shield SFX" type="Node" parent="." unique_id=1790525107]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("37_shield_sfx")
+CueTag = "cue.sfx.shield"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Reflect SFX" type="Node" parent="." unique_id=521978773]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("38_reflect_sfx")
+CueTag = "cue.sfx.reflect"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="Burn SFX" type="Node" parent="." unique_id=1775380545]
+script = ExtResource("30_audio_cue")
+Stream = ExtResource("31_hit_sfx")
+PlayOnApply = false
+MagnitudeCurve = SubResource("Curve_burn_gain")
+CueTag = "cue.sfx.burn"
+metadata/_custom_type_script = "uid://bxw5ax6u4m82n"
+
+[node name="HitAnim Cues" type="Node" parent="." unique_id=398820366]
+script = ExtResource("39_anim_cue")
+PlayerPath = "FxPlayer"
+ExecuteAnimation = "hit"
+Interrupt = false
+CueTag = "cue.vfx.hit"
+metadata/_custom_type_script = "uid://d3v5ni4eocbqr"
+
+[node name="QuitScene" type="Node" parent="." unique_id=2039553407]
+script = ExtResource("11_quit")
+
+[node name="Session" type="Node" parent="."]
+script = ExtResource("53_session")
+Manifest = ExtResource("52_manifest")
+RelevancyRadius = 0.0
+metadata/_custom_type_script = "uid://q6o53xlqjkod"
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+script = ExtResource("54_overlay")
+metadata/_custom_type_script = "uid://bb4otufv1nl1v"
+
+[node name="Menu" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Panel" type="PanelContainer" parent="Menu"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -110.0
+offset_right = 180.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="Menu/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Menu/Panel/Box"]
+layout_mode = 2
+text = "Networked Statescript"
+horizontal_alignment = 1
+
+[node name="Address" type="LineEdit" parent="Menu/Panel/Box"]
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "Server address"
+alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Menu/Panel/Box"]
+layout_mode = 2
+alignment = 1
+
+[node name="Host" type="Button" parent="Menu/Panel/Box/Buttons"]
+layout_mode = 2
+text = "Host"
+
+[node name="Join" type="Button" parent="Menu/Panel/Box/Buttons"]
+layout_mode = 2
+text = "Join"
+
+[node name="Dedicated" type="Button" parent="Menu/Panel/Box/Buttons"]
+layout_mode = 2
+text = "Dedicated"
+
+[node name="Status" type="Label" parent="Menu/Panel/Box"]
+layout_mode = 2
+text = "Host plays here and lets others join; Join connects to a host."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Game" type="Node" parent="." node_paths=PackedStringArray("Session", "Spawned", "Camera", "Menu", "Address", "Status")]
+script = ExtResource("55_game")
+Session = NodePath("../Session")
+PlayerScene = ExtResource("50_player")
+EnemyScene = ExtResource("51_enemy")
+Spawned = NodePath("../Spawned")
+Camera = NodePath("../CameraRig")
+Menu = NodePath("../Menu/Panel")
+Address = NodePath("../Menu/Panel/Box/Address")
+Status = NodePath("../Menu/Panel/Box/Status")
+
+[connection signal="pressed" from="Menu/Panel/Box/Buttons/Host" to="Game" method="Host"]
+[connection signal="pressed" from="Menu/Panel/Box/Buttons/Join" to="Game" method="Join"]
+[connection signal="pressed" from="Menu/Panel/Box/Buttons/Dedicated" to="Game" method="HostDedicated"]
+
+[editable path="Stations/Dummies/Dummy1"]
+[editable path="Stations/Dummies/Dummy2"]

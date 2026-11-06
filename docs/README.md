@@ -23,7 +23,7 @@ Forge for Godot connects the Forge system to Godot's node architecture through:
 ### Integration Components
 
 - **Custom Nodes**: Godot nodes that implement or integrate Forge features.
-- **Networking**: A [`ForgeNetworkSession`](nodes.md#forgenetworksession) hosts or joins a session over ENet, with the server in charge. See [Networking](networking.md).
+- **Networking**: A [`ForgeNetworkSession`](nodes.md#forgenetworksession) hosts or joins a session over ENet, with the server in charge, and replicates every networked `ForgeEntity` to the clients. See [Networking](networking.md).
 - **Custom Resources**: Godot resources for configuring Forge elements in the Inspector.
 - **Editor Extensions**: UI tools to manage tags, Statescript graphs, and Forge data (e.g., the Tags Editor, Statescript Graph Editor).
 
@@ -151,7 +151,7 @@ Refer to your IDE's documentation for the specific settings locations. Most mode
 - [Attribute Set Definitions](attribute-set-definitions.md): Define attribute sets in the inspector and have their C# class generated for you.
 - [Forge Nodes Documentation](nodes.md): Learn about the Forge nodes provided by the plugin.
 - [Resources Documentation](resources.md): Explore all configurable resource types—effects, abilities, tags, cues, and more.
-- [Networking](networking.md): Host or join a session, the asset manifest, dedicated servers, the conditioner and the F3 overlay.
+- [Networking](networking.md): Host or join a session, networked entities and what a client sees, the asset manifest, dedicated servers, the conditioner and the F3 overlay.
 - [Statescript Documentation](statescript/README.md): Learn how to build ability behaviors visually with Statescript graphs.
 - [Helper Classes](helper-classes.md): Find utility classes to streamline effect application, manager access, and integration patterns.
 - For gameplay programming API and advanced usage, see the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).

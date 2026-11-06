@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://forge_samples/hub/entries/turnbased_2d.tres" id="3_turnbased_2d"]
 [ext_resource type="Resource" path="res://forge_samples/hub/entries/statescript.tres" id="4_statescript"]
 [ext_resource type="Resource" path="res://forge_samples/hub/entries/rewind.tres" id="6_rewind"]
+[ext_resource type="Resource" path="res://forge_samples/hub/entries/networked.tres" id="7_networked"]
 
 [node name="Hub" type="Control" node_paths=PackedStringArray("CardList", "TitleLabel", "TaglineLabel", "BlurbLabel", "HighlightsLabel", "PlayButton")]
 layout_mode = 3
@@ -15,7 +16,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_hub")
-Demos = Array[Object]([ExtResource("5_quick_start"), ExtResource("2_realtime_3d"), ExtResource("3_turnbased_2d"), ExtResource("4_statescript"), ExtResource("6_rewind")])
+Demos = Array[Object]([ExtResource("5_quick_start"), ExtResource("2_realtime_3d"), ExtResource("3_turnbased_2d"), ExtResource("4_statescript"), ExtResource("6_rewind"), ExtResource("7_networked")])
 CardList = NodePath("MarginContainer/VBoxContainer/Body/CardList")
 TitleLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/TitleLabel")
 TaglineLabel = NodePath("MarginContainer/VBoxContainer/Body/Detail/TaglineLabel")

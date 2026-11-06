@@ -135,7 +135,8 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 
 		if (session.IsServer && session.Session is NetworkSession server)
 		{
-			text.Append(CultureInfo.InvariantCulture, $"{server.Peers.Count} client(s)\n");
+			text.Append(CultureInfo.InvariantCulture, $"{server.Peers.Count} client(s), ")
+				.Append(CultureInfo.InvariantCulture, $"{server.Replication!.Entities.Count} entities replicated\n");
 
 			foreach (NetworkPeer peer in server.Peers)
 			{
@@ -151,6 +152,13 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 				.Append(CultureInfo.InvariantCulture, $"server tick {session.ServerTick:0}, ")
 				.Append(CultureInfo.InvariantCulture, $"{session.TicksAhead:0.0} ticks ahead, ")
 				.Append(CultureInfo.InvariantCulture, $"server holds {session.ServerInputDepth}\n");
+
+			if (session.Session?.Mirror is { } mirror)
+			{
+				text.Append(CultureInfo.InvariantCulture, $"{mirror.Entities.Count} mirrored, ")
+					.Append(CultureInfo.InvariantCulture, $"state of tick {mirror.LastServerTick}, ")
+					.Append(CultureInfo.InvariantCulture, $"{mirror.PacketsLate} late, {mirror.SpawnsRefused} refused\n");
+			}
 		}
 
 		text.Append(CultureInfo.InvariantCulture, $"{session.BytesSentPerSecond / 1024:0.0} KB/s up, ")

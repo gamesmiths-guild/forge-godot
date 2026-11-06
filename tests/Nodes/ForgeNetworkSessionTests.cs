@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
@@ -20,12 +21,15 @@ namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 /// <summary>
 /// A <see cref="ForgeNetworkSession"/> hosting and another joining it over ENet on this machine, in one process through
 /// two multiplayer branches: the handshake accepts a matching client and refuses a mismatched one, the client's input
-/// reaches the server's playout buffer, and leaving is seen on both ends.
+/// reaches the server's playout buffer, networked entities reach the client and follow the server, and leaving is seen
+/// on both ends.
 /// </summary>
 [TestSuite]
 public class ForgeNetworkSessionTests
 {
 	private const string Burning = "res://forge_samples/demos/04_rewind/effects/burning.tres";
+
+	private const string Body = "res://tests/Nodes/networked_body.tscn";
 
 	// How many ticks the test's client runs ahead of the test's server: enough to cover the bursts of physics steps a
 	// process frame can hold, since ENet only moves packets between process frames.
@@ -280,9 +284,247 @@ public class ForgeNetworkSessionTests
 		registry.Hash.Should().NotBe(new ForgeNetworkManifest().BuildRegistry().Hash);
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_networked_scene_the_server_spawns_reaches_the_client_and_walks_by_its_owner_s_input()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		ForgeEntity entity = body.GetNode<ForgeEntity>("Forge Entity");
+		entity.NetworkOwner = pair.Client.LocalPeer;
+		pair.ServerBranch.AddChild(body);
+
+		entity.NetworkId.IsValid.Should().BeTrue("the server registers a networked entity as it gets ready");
+		pair.Server.Session!.Replication!.Find(entity)!.Owner.Value.Should().Be(pair.Client.LocalPeer);
+
+		await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+
+		ForgeEntity mirror = pair.Client.LocalPlayer!;
+		var mirrorBody = (CharacterBody3D)mirror.GetParent();
+		mirror.Should().NotBeSameAs(entity);
+		mirror.IsMirror.Should().BeTrue();
+		mirror.NetworkId.Should().Be(entity.NetworkId);
+		mirrorBody.GetParent().Should().BeSameAs(pair.ClientBranch, "a client spawns under its spawn parent");
+		mirrorBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
+		pair.Server.LocalPlayer.Should().BeNull("the server's own peer owns nothing here");
+
+		Vector3 start = body.GlobalPosition;
+		Input.ActionPress("move_right");
+
+		try
+		{
+			await Pair.RunUntil(() => mirrorBody.GlobalPosition.X > start.X + 0.5f, frames: 600);
+		}
+		finally
+		{
+			Input.ActionRelease("move_right");
+		}
+
+		body.GlobalPosition.X.Should().BeGreaterThan(start.X + 0.5f, "the client's input walks the server's copy");
+		mirrorBody.GlobalPosition.X.Should().BeGreaterThan(start.X + 0.5f, "the client shows where the server has it");
+		mirrorBody.GlobalPosition.X.Should().BeLessThanOrEqualTo(
+			body.GlobalPosition.X + 0.01f,
+			"the client shows it a moment behind the server");
+
+		body.QueueFree();
+		await Pair.RunUntil(() => pair.Client.LocalPlayer is null, frames: 300);
+
+		pair.Client.LocalPlayer.Should().BeNull("freed on the server, it goes from the client");
+		pair.Client.Session!.Mirror!.Entities.Should().BeEmpty();
+		GodotObject.IsInstanceValid(mirrorBody).Should().BeFalse();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_networked_entity_placed_on_both_ends_is_bound_by_its_place_and_follows_the_server()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		CharacterBody3D serverBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		CharacterBody3D clientBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(serverBody);
+		pair.ClientBranch.AddChild(clientBody);
+		await pair.Connect();
+
+		ForgeEntity entity = serverBody.GetNode<ForgeEntity>("Forge Entity");
+		ForgeEntity mirror = clientBody.GetNode<ForgeEntity>("Forge Entity");
+		mirror.IsMirror.Should().BeTrue("the client bound it as it joined");
+		clientBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
+		mirror.NetworkId.Should().Be(entity.NetworkId).And.Be(new NetworkEntityId(1));
+		pair.Server.Session!.Replication!.Find(entity)!.IsPlaced.Should().BeTrue();
+
+		var target = new Vector3(3, 0, -2);
+		serverBody.GlobalPosition = target;
+		await Pair.RunUntil(() => clientBody.GlobalPosition.DistanceTo(target) < 0.01f, frames: 300);
+
+		clientBody.GlobalPosition.DistanceTo(target).Should().BeLessThan(0.01f);
+		mirror.Input!.Current.Held.Should().Be(0, "the world owns it, so no machine reads its devices");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_networked_scene_is_the_server_s_to_spawn_and_belongs_to_whoever_spawned_it()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		PackedScene scene = ResourceLoader.Load<PackedScene>(Body);
+
+		SceneInstantiationUtilities.Instantiate3D(
+			null!,
+			scene,
+			InstantiateParentMode.Node,
+			pair.ClientBranch,
+			null,
+			null,
+			null,
+			passOwnership: false).Should().BeNull("a client gets networked scenes from the server");
+
+		CharacterBody3D spawner = scene.Instantiate<CharacterBody3D>();
+		spawner.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = pair.Client.LocalPeer;
+		pair.ServerBranch.AddChild(spawner);
+
+		Node? spawned = SceneInstantiationUtilities.Instantiate3D(
+			null!,
+			scene,
+			InstantiateParentMode.Node,
+			pair.ServerBranch,
+			spawner.GetNode<ForgeEntity>("Forge Entity"),
+			null,
+			null,
+			passOwnership: false);
+
+		spawned.Should().NotBeNull();
+		spawned!.GetNode<ForgeEntity>("Forge Entity").NetworkOwner.Should().Be(pair.Client.LocalPeer);
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_session_leaves_entities_of_another_multiplayer_branch_alone()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(body);
+		var session = new ForgeNetworkSession
+		{
+			Port = 30000 + (int)(GD.Randi() % 20000),
+			Manifest = SceneManifest(Body),
+			ClockOverride = pair.ServerClock,
+		};
+		Root.AddChild(session);
+
+		session.Host().Should().Be(Error.Ok);
+
+		body.GetNode<ForgeEntity>("Forge Entity").NetworkId.IsValid
+			.Should().BeFalse("a session on the tree's multiplayer sees the whole tree, and this is another's");
+		session.Leave();
+		session.Free();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task Leaving_clears_the_local_player_and_only_a_session_in_the_tree_reports_it()
+	{
+		using var pair = new Pair(Manifest(Burning), Manifest(Burning));
+		await pair.Connect();
+		int disconnected = 0;
+		pair.Client.Disconnected += () => disconnected++;
+
+		pair.ClientBranch.RemoveChild(pair.Client);
+		pair.ClientBranch.AddChild(pair.Client);
+		disconnected.Should().Be(0, "a level on its way out has nothing to do about it");
+		pair.Client.Mode.Should().Be(NetworkMode.Offline);
+
+		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
+		pair.Client.Leave();
+
+		disconnected.Should().Be(1);
+		pair.Client.LocalPlayer.Should().BeNull();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task An_entity_that_stops_being_this_machine_s_lets_go_of_its_input()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(body);
+		Input.ActionPress("move_right");
+
+		try
+		{
+			await Pair.RunUntil(() => body.GlobalPosition.X > 0.5f, frames: 300);
+			body.GlobalPosition.X.Should().BeGreaterThan(0.5f, "offline, this machine reads its devices");
+
+			pair.Server.Host().Should().Be(Error.Ok);
+			await Pair.RunUntil(() => false, frames: 60);
+			float stopped = body.GlobalPosition.X;
+			await Pair.RunUntil(() => false, frames: 30);
+
+			body.GlobalPosition.X.Should().BeApproximately(stopped, 0.01f, "the world owns it now, and nobody's input");
+		}
+		finally
+		{
+			Input.ActionRelease("move_right");
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_mirror_that_freed_itself_is_nothing_to_despawn()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(body);
+		await Pair.RunUntil(() => pair.Client.Session!.Mirror!.Entities.Count > 0, frames: 300);
+
+		((ForgeEntity)pair.Client.Session!.Mirror!.Entities[0]).GetParent().Free();
+
+		pair.Client.Invoking(x => x.Leave()).Should().NotThrow();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task Despawning_part_of_a_level_leaves_the_level()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		(Node3D serverGone, Node3D _) = PlaceTwoInALevel(pair.ServerBranch);
+		(Node3D clientGone, Node3D clientKept) = PlaceTwoInALevel(pair.ClientBranch);
+		await pair.Connect();
+
+		serverGone.QueueFree();
+		await Pair.RunUntil(() => !GodotObject.IsInstanceValid(clientGone), frames: 300);
+
+		GodotObject.IsInstanceValid(clientGone).Should().BeFalse("the server despawned it");
+		GodotObject.IsInstanceValid(clientKept).Should().BeTrue("the level it was part of stays");
+		clientKept.GetParent().IsInsideTree().Should().BeTrue();
+	}
+
+	// Two networked entities written into one scene instance, as a level holds them.
+	private static (Node3D A, Node3D B) PlaceTwoInALevel(Node branch)
+	{
+		var level = new Node3D { SceneFilePath = "res://tests/level_for_the_test.tscn" };
+		var a = new Node3D { Name = "A" };
+		var b = new Node3D { Name = "B" };
+		a.AddChild(new ForgeEntity { Networked = true });
+		b.AddChild(new ForgeEntity { Networked = true });
+		level.AddChild(a);
+		level.AddChild(b);
+		branch.AddChild(level);
+		return (a, b);
+	}
+
 	private static string Uid(string path)
 	{
 		return ResourceUid.IdToText(ResourceLoader.GetResourceUid(path));
+	}
+
+	private static ForgeNetworkManifest SceneManifest(string scenePath)
+	{
+		var manifest = new ForgeNetworkManifest();
+		manifest.Scenes.Add(Uid(scenePath));
+		return manifest;
 	}
 
 	private static ForgeNetworkManifest Manifest(params string[] effectPaths)
@@ -300,9 +542,6 @@ public class ForgeNetworkSessionTests
 	// A server and a client in one tree, each on its own multiplayer branch, on a port of their own.
 	private sealed class Pair : IDisposable
 	{
-		private readonly Node _serverBranch;
-		private readonly Node _clientBranch;
-
 		public ForgeNetworkSession Server { get; }
 
 		public ForgeNetworkSession Client { get; }
@@ -311,20 +550,24 @@ public class ForgeNetworkSessionTests
 
 		public SimulationClock ServerClock { get; }
 
-		public Pair(ForgeNetworkManifest serverManifest, ForgeNetworkManifest clientManifest)
+		public Node ServerBranch { get; }
+
+		public Node ClientBranch { get; }
+
+		public Pair(ForgeNetworkManifest serverManifest, ForgeNetworkManifest clientManifest, bool withPlayer = true)
 		{
 			int port = 30000 + (int)(GD.Randi() % 20000);
 			string suffix = Guid.NewGuid().ToString("N");
 
-			_serverBranch = new Node { Name = $"Server {suffix}" };
-			_clientBranch = new Node { Name = $"Client {suffix}" };
-			Root.AddChild(_serverBranch);
-			Root.AddChild(_clientBranch);
-			Tree.SetMultiplayer(new SceneMultiplayer(), _serverBranch.GetPath());
-			Tree.SetMultiplayer(new SceneMultiplayer(), _clientBranch.GetPath());
+			ServerBranch = new Node { Name = $"Server {suffix}" };
+			ClientBranch = new Node { Name = $"Client {suffix}" };
+			Root.AddChild(ServerBranch);
+			Root.AddChild(ClientBranch);
+			Tree.SetMultiplayer(new SceneMultiplayer(), ServerBranch.GetPath());
+			Tree.SetMultiplayer(new SceneMultiplayer(), ClientBranch.GetPath());
 
 			Player = new ForgeEntity();
-			_clientBranch.AddChild(Player);
+			ClientBranch.AddChild(Player);
 			Player.Input = new EntityInput(ForgeSettings.GetInputActionSet());
 
 			// Both ends share the process's session clock, on which a client can't run ahead, so the server keeps a
@@ -347,11 +590,12 @@ public class ForgeNetworkSessionTests
 			{
 				Port = port,
 				Manifest = clientManifest,
-				LocalPlayer = Player,
+				LocalPlayer = withPlayer ? Player : null,
+				SpawnParent = ClientBranch,
 				ClockOverride = ForgeManagers.Instance.Clock,
 			};
-			_serverBranch.AddChild(Server);
-			_clientBranch.AddChild(Client);
+			ServerBranch.AddChild(Server);
+			ClientBranch.AddChild(Client);
 			Tree.PhysicsFrame += OnPhysicsFrame;
 		}
 
@@ -363,6 +607,19 @@ public class ForgeNetworkSessionTests
 				eachFrame?.Invoke();
 				await Root.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
 			}
+		}
+
+		// Hosts, joins and waits for the handshake.
+		public async Task Connect()
+		{
+			bool connected = false;
+			Client.Connected += () => connected = true;
+			Server.Host().Should().Be(Error.Ok);
+			Client.Join("127.0.0.1").Should().Be(Error.Ok);
+
+			await RunUntil(() => connected, frames: 600);
+
+			connected.Should().BeTrue("the handshake should complete over the local link");
 		}
 
 		public string Diagnostics()
@@ -387,10 +644,10 @@ public class ForgeNetworkSessionTests
 			Tree.PhysicsFrame -= OnPhysicsFrame;
 			Client.Leave();
 			Server.Leave();
-			Tree.SetMultiplayer(null, _serverBranch.GetPath());
-			Tree.SetMultiplayer(null, _clientBranch.GetPath());
-			_serverBranch.Free();
-			_clientBranch.Free();
+			Tree.SetMultiplayer(null, ServerBranch.GetPath());
+			Tree.SetMultiplayer(null, ClientBranch.GetPath());
+			ServerBranch.Free();
+			ClientBranch.Free();
 		}
 
 		// At the start of every physics step, before any node runs it, the server's clock is put the lead behind the

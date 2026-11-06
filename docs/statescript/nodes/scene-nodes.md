@@ -47,6 +47,8 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 
 **Placement happens before parenting.** The transform is applied as a *local* one through the parent's transform, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` — `ForgeProjectile3D` recording where it launched from — has to see the position it was actually spawned at. The same ordering is what lets Godot handle physics interpolation unaided: entering the tree resets the instance at the transform it already has, and a second, deferred reset at the end of its first frame or tick covers anything `OnInstantiated` or `_Ready` moves afterwards. These nodes add no reset of their own, because an explicit one would cancel that deferred half.
 
+**Networked scenes are the server's.** In a [networked session](../../networking.md#networked-entities), a scene whose own `ForgeEntity` is networked is instantiated only on the server, which sends it to every client: on a client these nodes instantiate nothing for it and write no output. What they spawn on the server belongs to the same player as the entity the graph runs on, unless the scene's entity already has a `NetworkOwner`.
+
 ## Queue Free
 
 Frees a node from the scene, guarded against a node that has already been freed. Unpaired: a node to free is a node in either dimension. A [`ForgeEntity`](../../nodes.md#forgeentity) freed with it is torn down: its abilities are cancelled, and its effects end, their cues with them.

@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ForgeNetworkManifest" format=3 uid="uid://c5net8manife"]
+
+[ext_resource type="Script" uid="uid://cftfcqdqqwx1" path="res://addons/forge/resources/ForgeNetworkManifest.cs" id="1_manifest"]
+
+[resource]
+script = ExtResource("1_manifest")
+Scenes = Array[String](["uid://c5net8enemy1", "uid://c5net8player"])
+metadata/_custom_type_script = "uid://cftfcqdqqwx1"

@@ -57,17 +57,6 @@ public static class ForgeSettings
 	public const string DefaultNetworkManifestPath = "res://forge_network_manifest.tres";
 
 	/// <summary>
-	/// Gets the path of the project's network asset manifest.
-	/// </summary>
-	/// <returns>The configured path, or <see cref="DefaultNetworkManifestPath"/>.</returns>
-	public static string GetNetworkManifestPath()
-	{
-		string path = ProjectSettings.GetSetting(NetworkManifestSetting, DefaultNetworkManifestPath).AsString();
-
-		return string.IsNullOrWhiteSpace(path) ? DefaultNetworkManifestPath : path;
-	}
-
-	/// <summary>
 	/// Gets a value indicating whether a physics query outlines the entities it found.
 	/// </summary>
 	/// <remarks>
@@ -82,6 +71,17 @@ public static class ForgeSettings
 	/// </remarks>
 	public static bool HighlightQueryTargets =>
 		ProjectSettings.GetSetting(HighlightQueryTargetsSetting, true).AsBool();
+
+	/// <summary>
+	/// Gets the path of the project's network asset manifest.
+	/// </summary>
+	/// <returns>The configured path, or <see cref="DefaultNetworkManifestPath"/>.</returns>
+	public static string GetNetworkManifestPath()
+	{
+		string path = ProjectSettings.GetSetting(NetworkManifestSetting, DefaultNetworkManifestPath).AsString();
+
+		return string.IsNullOrWhiteSpace(path) ? DefaultNetworkManifestPath : path;
+	}
 
 	/// <summary>
 	/// Builds the input action set the project's settings describe: the actions of <see cref="InputActionsSetting"/>
