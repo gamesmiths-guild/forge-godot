@@ -12,9 +12,9 @@ namespace Gamesmiths.Forge.Godot.Editor.Networking;
 
 /// <summary>
 /// Writes the project's <see cref="ForgeNetworkManifest"/>: the UIDs of every effect, ability and Statescript graph
-/// resource the editor's filesystem index knows, and of every scene with a networked <c>ForgeEntity</c> of its own,
-/// sorted, so every machine that builds the project writes the same manifest and the session's registry hashes the
-/// same.
+/// resource the editor's filesystem index knows, and of every scene with a networked <c>ForgeEntity</c> of its own or
+/// from the scene it inherits, sorted, so every machine that builds the project writes the same manifest and the
+/// session's registry hashes the same.
 /// </summary>
 internal static class NetworkManifestGenerator
 {
@@ -117,10 +117,65 @@ internal static class NetworkManifestGenerator
 		return false;
 	}
 
+	/// <summary>
+	/// Finds the scene a scene inherits: the one its root node is an instance of.
+	/// </summary>
+	/// <param name="text">The text of a <c>.tscn</c> file.</param>
+	/// <returns>The inherited scene's path, or <see langword="null"/> for a scene that inherits none.</returns>
+	internal static string? InheritedScenePath(string text)
+	{
+		var resources = new Dictionary<string, string>();
+
+		foreach (string raw in text.Split('\n'))
+		{
+			string line = raw.Trim();
+
+			if (line.StartsWith("[ext_resource", StringComparison.Ordinal))
+			{
+				if (Attribute(line, " id=\"") is string id && Attribute(line, " path=\"") is string path)
+				{
+					resources[id] = path;
+				}
+			}
+			else if (line.StartsWith("[node", StringComparison.Ordinal))
+			{
+				return Attribute(line, " instance=ExtResource(\"") is string id
+					? resources.GetValueOrDefault(id)
+					: null;
+			}
+		}
+
+		return null;
+	}
+
+	private static string? Attribute(string line, string prefix)
+	{
+		int start = line.IndexOf(prefix, StringComparison.Ordinal);
+
+		if (start < 0)
+		{
+			return null;
+		}
+
+		start += prefix.Length;
+		return line[start..line.IndexOf('"', start)];
+	}
+
 	private static bool IsNetworkedScene(string path)
 	{
 		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
-		return file is not null && IsNetworkedSceneText(file.GetAsText());
+
+		if (file is null)
+		{
+			return false;
+		}
+
+		string text = file.GetAsText();
+
+		return IsNetworkedSceneText(text)
+			|| (!text.Contains("Networked = false", StringComparison.Ordinal)
+				&& InheritedScenePath(text) is string inherited
+				&& IsNetworkedScene(inherited));
 	}
 
 	private static List<string> Uids(List<string> paths)

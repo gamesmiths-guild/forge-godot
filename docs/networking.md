@@ -38,11 +38,11 @@ level.AddChild(player);
 
   The [Instantiate Scene](statescript/nodes/scene-nodes.md) nodes do the same from a graph, and what an entity spawns belongs to that entity's owner. On a client they don't instantiate networked scenes: the server spawns them for everyone.
 - **Despawning one.** Free it on the server. Every client frees its copy.
-- **Owners.** `NetworkOwner` is the multiplayer peer id whose player the entity is: 1 for the server's own player, 0 for the world's. A [`ForgeInputCollector`](nodes.md#forgeinputcollector) reads the devices only on the machine of the entity's owner, and the server hands each client's input to the entities that client owns.
+- **Owners.** `NetworkOwner` is the multiplayer peer id whose player the entity is: 1 for the server's own player, 0 for the world's. A placed entity can only be the server's or the world's, since it's registered before any client has a peer id, and a client's copy of it keeps 0. A [`ForgeInputCollector`](nodes.md#forgeinputcollector) reads the devices only on the machine of the entity's owner, and the server hands each client's input to the entities that client owns.
 
 ## What a client sees
 
-A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). It simulates nothing: it doesn't advance, starts none of its own effects or abilities, and holds what the server sends.
+A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). It simulates nothing: it doesn't advance, starts none of its own effects or abilities, and holds what the server sends. `Join` makes mirrors of the level's placed entities at once and for good, even if the connection then fails, so reload the level on `Disconnected` before playing it again.
 
 - **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play as they arrive, unless they're more than 0.2 s old.
 - **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server.

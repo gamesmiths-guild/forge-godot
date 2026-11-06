@@ -41,6 +41,18 @@ internal static class NetworkManifestTests
 
 		NetworkManifestGenerator.IsNetworkedSceneText(Level)
 			.Should().BeFalse("a level places, the server doesn't spawn it");
+		NetworkManifestGenerator.InheritedScenePath(Level)
+			.Should().BeNull("an instance below the root isn't what the scene inherits");
+
+		const string Derived = """
+			[gd_scene format=3]
+
+			[ext_resource type="PackedScene" uid="uid://x" path="res://tests/Nodes/networked_body.tscn" id="1_body"]
+
+			[node name="Derived Body" instance=ExtResource("1_body")]
+			""";
+
+		NetworkManifestGenerator.InheritedScenePath(Derived).Should().Be("res://tests/Nodes/networked_body.tscn");
 	}
 
 	private static string Text(string path)

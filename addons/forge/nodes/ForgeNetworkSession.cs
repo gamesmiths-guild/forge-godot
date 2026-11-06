@@ -85,6 +85,7 @@ public partial class ForgeNetworkSession : Node
 	private double _lastStatsAt;
 	private long _lastBytesSent;
 	private long _lastBytesReceived;
+	private bool _exiting;
 
 	/// <summary>
 	/// Raised on the server when a client joins, after its handshake.
@@ -114,7 +115,8 @@ public partial class ForgeNetworkSession : Node
 	public delegate void RefusedEventHandler(int reason);
 
 	/// <summary>
-	/// Raised on a client when its connection ends, by either side.
+	/// Raised on a client when its connection ends, by either side, unless the session node is leaving the tree. The
+	/// placed entities it bound can't simulate again (see <see cref="Join"/>), so a game reloads its level here.
 	/// </summary>
 	[Signal]
 	public delegate void DisconnectedEventHandler();
@@ -161,7 +163,8 @@ public partial class ForgeNetworkSession : Node
 
 	/// <summary>
 	/// Gets or sets the entity this machine's player controls, whose input a client sends up each tick. The session
-	/// sets it to the networked entity with an input that this machine's peer owns, as it's spawned.
+	/// sets it to the networked entity with an input that this machine's peer owns, as it's spawned, and clears it on
+	/// leaving.
 	/// </summary>
 	[Export]
 	public ForgeEntity? LocalPlayer { get; set; }
@@ -371,6 +374,13 @@ public partial class ForgeNetworkSession : Node
 
 		for (int i = 0; i < placed.Count; i++)
 		{
+			if (placed[i].IsMirror)
+			{
+				GD.PushWarning(
+					$"Forge: {placed[i].GetPath()} was a client's mirror and can't simulate again, so it won't on " +
+					"this server. Reload the level after a client session before hosting.");
+			}
+
 			placed[i].NetworkId = new NetworkEntityId((uint)i + 1);
 			Register(placed[i], -1);
 		}
@@ -379,7 +389,8 @@ public partial class ForgeNetworkSession : Node
 	}
 
 	/// <summary>
-	/// Joins a session at an address, on <see cref="Port"/>.
+	/// Joins a session at an address, on <see cref="Port"/>. The level's placed networked entities become mirrors right
+	/// away, for good: what they ran is torn down, even if the connection then fails.
 	/// </summary>
 	/// <param name="address">The server's address.</param>
 	/// <returns><see cref="Error.Ok"/>, or why the client couldn't be created. Whether the connection and the
@@ -422,6 +433,7 @@ public partial class ForgeNetworkSession : Node
 			entity.IsMirror = true;
 			entity.Replicator = this;
 			Session.Mirror.BindPlaced(entity);
+			ShowOnFrames(entity);
 		}
 
 		return Error.Ok;
@@ -468,6 +480,16 @@ public partial class ForgeNetworkSession : Node
 		Mode = NetworkMode.Offline;
 		ForgeManagers.Instance.HasViewer = true;
 
+		if (_exiting)
+		{
+			return;
+		}
+
+		if (LocalPlayer is not null)
+		{
+			SetLocalPlayer(null);
+		}
+
 		if (wasClient)
 		{
 			EmitSignal(SignalName.Disconnected);
@@ -485,7 +507,9 @@ public partial class ForgeNetworkSession : Node
 	public override void _ExitTree()
 	{
 		base._ExitTree();
+		_exiting = true;
 		Leave();
+		_exiting = false;
 	}
 
 	/// <inheritdoc/>
@@ -627,16 +651,29 @@ public partial class ForgeNetworkSession : Node
 		return node;
 	}
 
-	private static void CollectNetworked(Node node, List<ForgeEntity> entities)
+	private static void CollectNetworked(Node node, MultiplayerApi multiplayer, List<ForgeEntity> entities)
 	{
-		if (node is ForgeEntity { Networked: true } entity && entity.IsNodeReady())
+		if (node is ForgeEntity { Networked: true } entity && entity.IsNodeReady() && entity.Multiplayer == multiplayer)
 		{
 			entities.Add(entity);
 		}
 
 		foreach (Node child in node.GetChildren())
 		{
-			CollectNetworked(child, entities);
+			CollectNetworked(child, multiplayer, entities);
+		}
+	}
+
+	// A client places its bodies on the frame, so they mustn't also be interpolated against physics ticks.
+	private static void ShowOnFrames(IForgeEntity entity)
+	{
+		if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D))
+		{
+			node3D.PhysicsInterpolationMode = PhysicsInterpolationModeEnum.Off;
+		}
+		else if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D))
+		{
+			node2D.PhysicsInterpolationMode = PhysicsInterpolationModeEnum.Off;
 		}
 	}
 
@@ -749,7 +786,7 @@ public partial class ForgeNetworkSession : Node
 		NodePath rootPath = SceneMultiplayerOf(this).RootPath;
 		Node root = rootPath.IsEmpty ? GetTree().Root : GetTree().Root.GetNodeOrNull(rootPath) ?? GetTree().Root;
 		var entities = new List<ForgeEntity>();
-		CollectNetworked(root, entities);
+		CollectNetworked(root, Multiplayer, entities);
 		entities.Sort((x, y) => string.CompareOrdinal(root.GetPathTo(x).ToString(), root.GetPathTo(y).ToString()));
 		return entities;
 	}
@@ -888,6 +925,7 @@ public partial class ForgeNetworkSession : Node
 			session._spawnedRoots[entity] = instance;
 			Node parent = session.SpawnParent ?? session.GetTree().CurrentScene ?? session.GetTree().Root;
 			parent.AddChild(instance, forceReadableName: true);
+			ShowOnFrames(entity);
 			return entity;
 		}
 
@@ -898,12 +936,16 @@ public partial class ForgeNetworkSession : Node
 				return;
 			}
 
-			// A placed entity's own scene instance goes, or the node it lives on when it's part of the level itself.
+			// A placed entity's own scene instance goes, or the node it lives on when it's part of the level itself:
+			// the instance holds this session or another networked entity, or is the current scene.
 			if (!session._spawnedRoots.Remove(node, out Node? root))
 			{
 				root = InstanceRoot(node);
 
-				if (root is null || root == session.GetTree().CurrentScene)
+				if (root is null
+					|| root == session.GetTree().CurrentScene
+					|| root.IsAncestorOf(session)
+					|| session.PlacedEntities().Exists(x => x != node && root.IsAncestorOf(x)))
 				{
 					root = node.GetParent() ?? node;
 				}

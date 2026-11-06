@@ -307,6 +307,7 @@ public class ForgeNetworkSessionTests
 		mirror.IsMirror.Should().BeTrue();
 		mirror.NetworkId.Should().Be(entity.NetworkId);
 		mirrorBody.GetParent().Should().BeSameAs(pair.ClientBranch, "a client spawns under its spawn parent");
+		mirrorBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
 		pair.Server.LocalPlayer.Should().BeNull("the server's own peer owns nothing here");
 
 		Vector3 start = body.GlobalPosition;
@@ -349,6 +350,7 @@ public class ForgeNetworkSessionTests
 		ForgeEntity entity = serverBody.GetNode<ForgeEntity>("Forge Entity");
 		ForgeEntity mirror = clientBody.GetNode<ForgeEntity>("Forge Entity");
 		mirror.IsMirror.Should().BeTrue("the client bound it as it joined");
+		clientBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
 		mirror.NetworkId.Should().Be(entity.NetworkId).And.Be(new NetworkEntityId(1));
 		pair.Server.Session!.Replication!.Find(entity)!.IsPlaced.Should().BeTrue();
 
@@ -394,6 +396,77 @@ public class ForgeNetworkSessionTests
 
 		spawned.Should().NotBeNull();
 		spawned!.GetNode<ForgeEntity>("Forge Entity").NetworkOwner.Should().Be(pair.Client.LocalPeer);
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_session_leaves_entities_of_another_multiplayer_branch_alone()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(body);
+		var session = new ForgeNetworkSession
+		{
+			Port = 30000 + (int)(GD.Randi() % 20000),
+			Manifest = SceneManifest(Body),
+			ClockOverride = pair.ServerClock,
+		};
+		Root.AddChild(session);
+
+		session.Host().Should().Be(Error.Ok);
+
+		body.GetNode<ForgeEntity>("Forge Entity").NetworkId.IsValid
+			.Should().BeFalse("a session on the tree's multiplayer sees the whole tree, and this is another's");
+		session.Leave();
+		session.Free();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task Leaving_clears_the_local_player_and_only_a_session_in_the_tree_reports_it()
+	{
+		using var pair = new Pair(Manifest(Burning), Manifest(Burning));
+		await pair.Connect();
+		int disconnected = 0;
+		pair.Client.Disconnected += () => disconnected++;
+
+		pair.ClientBranch.RemoveChild(pair.Client);
+		pair.ClientBranch.AddChild(pair.Client);
+		disconnected.Should().Be(0, "a level on its way out has nothing to do about it");
+		pair.Client.Mode.Should().Be(NetworkMode.Offline);
+
+		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
+		pair.Client.Leave();
+
+		disconnected.Should().Be(1);
+		pair.Client.LocalPlayer.Should().BeNull();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task An_entity_that_stops_being_this_machine_s_lets_go_of_its_input()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(body);
+		Input.ActionPress("move_right");
+
+		try
+		{
+			await Pair.RunUntil(() => body.GlobalPosition.X > 0.5f, frames: 300);
+			body.GlobalPosition.X.Should().BeGreaterThan(0.5f, "offline, this machine reads its devices");
+
+			pair.Server.Host().Should().Be(Error.Ok);
+			await Pair.RunUntil(() => false, frames: 60);
+			float stopped = body.GlobalPosition.X;
+			await Pair.RunUntil(() => false, frames: 30);
+
+			body.GlobalPosition.X.Should().BeApproximately(stopped, 0.01f, "the world owns it now, and nobody's input");
+		}
+		finally
+		{
+			Input.ActionRelease("move_right");
+		}
 	}
 
 	private static string Uid(string path)
