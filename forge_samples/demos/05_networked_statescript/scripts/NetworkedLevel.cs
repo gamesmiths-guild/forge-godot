@@ -22,8 +22,8 @@ namespace Gamesmiths.Forge.Example;
 /// </remarks>
 public partial class NetworkedLevel : Node
 {
-	// What the menu said when the level reloaded after a client session, and whether the arguments have had their turn:
-	// a reload must not join again on its own.
+	private const int MaxPlayers = 4;
+
 	private static string? _lastAddress;
 	private static string _lastStatus = string.Empty;
 	private static bool _argumentsRead;
@@ -173,6 +173,9 @@ public partial class NetworkedLevel : Node
 	/// </summary>
 	public void Host()
 	{
+		// This machine's player is one of the four.
+		Session.MaxClients = MaxPlayers - 1;
+
 		if (Session.Host() != Error.Ok)
 		{
 			Status.Text = $"Couldn't host on port {Session.Port}.";
@@ -189,6 +192,8 @@ public partial class NetworkedLevel : Node
 	/// </summary>
 	public void HostDedicated()
 	{
+		Session.MaxClients = MaxPlayers;
+
 		if (Session.Host(dedicated: true) != Error.Ok)
 		{
 			Status.Text = $"Couldn't host on port {Session.Port}.";
