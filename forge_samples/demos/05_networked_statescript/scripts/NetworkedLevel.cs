@@ -22,8 +22,15 @@ namespace Gamesmiths.Forge.Example;
 /// </remarks>
 public partial class NetworkedLevel : Node
 {
+	// What the menu said when the level reloaded after a client session, and whether the arguments have had their turn:
+	// a reload must not join again on its own.
+	private static string? _lastAddress;
+	private static string _lastStatus = string.Empty;
+	private static bool _argumentsRead;
+
 	private readonly Dictionary<long, Node3D> _players = [];
 	private readonly RandomNumberGenerator _random = new();
+
 	private double _nextEnemyAt;
 
 	/// <summary>
@@ -98,6 +105,16 @@ public partial class NetworkedLevel : Node
 		Session.Disconnected += OnDisconnected;
 		Session.LocalPlayerChanged += OnLocalPlayerChanged;
 		Session.SpawnParent = Spawned;
+		Address.Text = _lastAddress ?? Address.Text;
+		Status.Text = _lastStatus;
+		_lastStatus = string.Empty;
+
+		if (_argumentsRead)
+		{
+			return;
+		}
+
+		_argumentsRead = true;
 
 		if (ForgeNetworkSession.DedicatedRequested)
 		{
@@ -223,6 +240,7 @@ public partial class NetworkedLevel : Node
 	private void OnConnected()
 	{
 		Menu.Visible = false;
+		Status.Text = string.Empty;
 	}
 
 	private void OnRefused(int reason)
@@ -230,18 +248,44 @@ public partial class NetworkedLevel : Node
 		Status.Text = $"The server refused to let this game in: {(RefusalReason)reason}.";
 	}
 
+	// Joining made mirrors of the level's dummies for good, so the menu comes back on a fresh level.
 	private void OnDisconnected()
 	{
-		Menu.Visible = true;
-
-		if (Status.Text == "Joining...")
+		_lastAddress = Address.Text;
+		_lastStatus = Status.Text switch
 		{
-			Status.Text = "Couldn't reach the server.";
+			"Joining..." => "Couldn't reach the server.",
+			"" => "The connection to the server ended.",
+			_ => Status.Text,
+		};
+
+		CallDeferred(MethodName.ReloadLevel);
+	}
+
+	private void ReloadLevel()
+	{
+		if (GetParent() is Main main)
+		{
+			main.ChangeScene(SceneFilePath);
+		}
+		else
+		{
+			GetTree().ReloadCurrentScene();
 		}
 	}
 
 	private void OnLocalPlayerChanged(Node? player)
 	{
-		Camera.Target = player?.GetParent<Node3D>();
+		Node3D? target = player?.GetParent<Node3D>();
+		Camera.Target = target;
+
+		// The rig stops processing on ready with no target, which is how this level starts.
+		Camera.SetProcess(target is not null);
+
+		if (target is not null)
+		{
+			Camera.PhysicsInterpolationMode = PhysicsInterpolationModeEnum.Off;
+			Camera.GlobalPosition = target.GlobalPosition;
+		}
 	}
 }

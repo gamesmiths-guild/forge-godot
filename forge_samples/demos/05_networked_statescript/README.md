@@ -11,7 +11,7 @@ The level opens on a menu:
 | Button | What it does |
 | --- | --- |
 | **Host** | Hosts on port 7777 with a player on this machine. Nobody has to join: alone, it's the single-player game. |
-| **Join** | Joins the address typed above it. |
+| **Join** | Joins the address typed above it. When the connection fails or ends, the menu comes back on a fresh level, since joining makes the level's dummies mirrors for good. |
 | **Dedicated** | Hosts with nobody playing on this machine, which shows the world and presents nothing. |
 
 To try it on one computer, open **Debug, Customize Run Instances**, enable multiple instances, and run two or more. The level also reads arguments after Godot's own `--`, so each instance can skip the menu: `--host`, `--join` (or `--join=192.168.1.10`) and `--dedicated`. A dedicated server runs headless too:
