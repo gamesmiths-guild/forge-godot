@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Resources;
@@ -79,6 +80,7 @@ public partial class ForgeNetworkSession : Node
 	private static readonly List<ForgeNetworkSession> _active = [];
 
 	private readonly Dictionary<ForgeEntity, Node> _spawnedRoots = [];
+	private readonly Dictionary<string, EffectContextCodec> _effectContexts = [];
 	private readonly ReplicationHost _host;
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
@@ -327,6 +329,19 @@ public partial class ForgeNetworkSession : Node
 	}
 
 	/// <summary>
+	/// Says how the custom data of a type that effects are applied with travels, so a client's copy of the effect holds
+	/// it too. Both ends register the same ones, before hosting or joining, or the client is refused.
+	/// </summary>
+	/// <typeparam name="TData">The type effects are applied with.</typeparam>
+	/// <param name="key">What it's known by on both ends.</param>
+	/// <param name="write">Writes the data.</param>
+	/// <param name="read">Reads the data, following the same sequence of calls as <paramref name="write"/>.</param>
+	public void RegisterEffectContext<TData>(string key, Action<BitWriter, TData> write, Func<BitReader, TData> read)
+	{
+		_effectContexts[key] = EffectContextCodec.For(write, read);
+	}
+
+	/// <summary>
 	/// Hosts a session on <see cref="Port"/>.
 	/// </summary>
 	/// <param name="dedicated">Whether this machine shows nothing, so the presentation passes are skipped.</param>
@@ -359,6 +374,8 @@ public partial class ForgeNetworkSession : Node
 		Session.PeerLeft += OnPeerLeft;
 		Session.InputTaken += OnInputTaken;
 		Session.Replication!.BodySource = CaptureBody;
+		Session.Replication.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
+		Session.Replication.EffectNotListed += OnEffectNotListed;
 
 		if (RelevancyRadius > 0)
 		{
@@ -740,22 +757,26 @@ public partial class ForgeNetworkSession : Node
 		}
 	}
 
+	private static void OnEffectNotListed(EffectData data)
+	{
+		GD.PushWarning(
+			$"Forge: the effect '{data.Name}' went active on a networked entity, and the network manifest doesn't " +
+			"list it, so no client hears of it. Save it as a resource of its own and regenerate the manifest " +
+			"(Project, Tools, Forge), or set its Visibility to Server Only.");
+	}
+
 	private NetworkAssetRegistry BuildRegistry()
 	{
 		ForgeNetworkManifest? manifest = Manifest ?? ForgeNetworkManifest.LoadProjectManifest();
 
-		if (manifest is not null)
+		if (manifest is null)
 		{
-			return manifest.BuildRegistry();
+			GD.PushWarning(
+				$"Forge: the project has no network manifest at {ForgeSettings.GetNetworkManifestPath()}, so the " +
+				"session knows no assets. Generate one from Project, Tools, Forge.");
 		}
 
-		GD.PushWarning(
-			$"Forge: the project has no network manifest at {ForgeSettings.GetNetworkManifestPath()}, so the session " +
-			"knows no assets. Generate one from Project, Tools, Forge.");
-
-		var registry = new NetworkAssetRegistry();
-		registry.Seal();
-		return registry;
+		return (manifest ?? new ForgeNetworkManifest()).BuildRegistry(_effectContexts);
 	}
 
 	private int SceneIndexOf(Node? root)

@@ -1,9 +1,11 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Collections.Generic;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Gamesmiths.Forge.Networking;
+using Gamesmiths.Forge.Networking.Replication;
 using Godot;
 using Godot.Collections;
 
@@ -64,10 +66,20 @@ public partial class ForgeNetworkManifest : Resource
 	/// is reported and left out, which changes the registry's hash, so a stale manifest shows up as a refused handshake
 	/// rather than a silent disagreement.
 	/// </summary>
+	/// <param name="effectContexts">How the custom data effects are applied with travels, by a key of the game's. Both
+	/// ends need the same ones.</param>
 	/// <returns>The sealed registry.</returns>
-	public NetworkAssetRegistry BuildRegistry()
+	public NetworkAssetRegistry BuildRegistry(IReadOnlyDictionary<string, EffectContextCodec>? effectContexts = null)
 	{
 		var registry = new NetworkAssetRegistry();
+
+		if (effectContexts is not null)
+		{
+			foreach (KeyValuePair<string, EffectContextCodec> context in effectContexts)
+			{
+				registry.Register(AssetKind.EffectContext, context.Key, context.Value);
+			}
+		}
 
 		foreach (string uid in Effects)
 		{
