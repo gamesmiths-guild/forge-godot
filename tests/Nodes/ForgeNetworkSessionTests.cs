@@ -469,6 +469,52 @@ public class ForgeNetworkSessionTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_mirror_that_freed_itself_is_nothing_to_despawn()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(body);
+		await Pair.RunUntil(() => pair.Client.Session!.Mirror!.Entities.Count > 0, frames: 300);
+
+		((ForgeEntity)pair.Client.Session!.Mirror!.Entities[0]).GetParent().Free();
+
+		pair.Client.Invoking(x => x.Leave()).Should().NotThrow();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task Despawning_part_of_a_level_leaves_the_level()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		(Node3D serverGone, Node3D _) = PlaceTwoInALevel(pair.ServerBranch);
+		(Node3D clientGone, Node3D clientKept) = PlaceTwoInALevel(pair.ClientBranch);
+		await pair.Connect();
+
+		serverGone.QueueFree();
+		await Pair.RunUntil(() => !GodotObject.IsInstanceValid(clientGone), frames: 300);
+
+		GodotObject.IsInstanceValid(clientGone).Should().BeFalse("the server despawned it");
+		GodotObject.IsInstanceValid(clientKept).Should().BeTrue("the level it was part of stays");
+		clientKept.GetParent().IsInsideTree().Should().BeTrue();
+	}
+
+	// Two networked entities written into one scene instance, as a level holds them.
+	private static (Node3D A, Node3D B) PlaceTwoInALevel(Node branch)
+	{
+		var level = new Node3D { SceneFilePath = "res://tests/level_for_the_test.tscn" };
+		var a = new Node3D { Name = "A" };
+		var b = new Node3D { Name = "B" };
+		a.AddChild(new ForgeEntity { Networked = true });
+		b.AddChild(new ForgeEntity { Networked = true });
+		level.AddChild(a);
+		level.AddChild(b);
+		branch.AddChild(level);
+		return (a, b);
+	}
+
 	private static string Uid(string path)
 	{
 		return ResourceUid.IdToText(ResourceLoader.GetResourceUid(path));

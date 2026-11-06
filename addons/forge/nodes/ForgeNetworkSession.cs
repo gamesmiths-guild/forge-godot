@@ -480,17 +480,12 @@ public partial class ForgeNetworkSession : Node
 		Mode = NetworkMode.Offline;
 		ForgeManagers.Instance.HasViewer = true;
 
-		if (_exiting)
-		{
-			return;
-		}
-
 		if (LocalPlayer is not null)
 		{
 			SetLocalPlayer(null);
 		}
 
-		if (wasClient)
+		if (wasClient && !_exiting)
 		{
 			EmitSignal(SignalName.Disconnected);
 		}
@@ -805,7 +800,11 @@ public partial class ForgeNetworkSession : Node
 	private void SetLocalPlayer(ForgeEntity? player)
 	{
 		LocalPlayer = player;
-		EmitSignal(SignalName.LocalPlayerChanged, player!);
+
+		if (!_exiting)
+		{
+			EmitSignal(SignalName.LocalPlayerChanged, player!);
+		}
 	}
 
 	private void OnMirrorSpawned(IForgeEntity entity)
@@ -931,7 +930,9 @@ public partial class ForgeNetworkSession : Node
 
 		public void Despawn(IForgeEntity entity)
 		{
-			if (entity is not ForgeEntity node)
+			// A mirror can free itself here, as a projectile that hit something does, with the server's despawn to
+			// come.
+			if (entity is not ForgeEntity node || !IsInstanceValid(node))
 			{
 				return;
 			}

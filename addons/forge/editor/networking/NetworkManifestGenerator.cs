@@ -74,41 +74,29 @@ internal static class NetworkManifestGenerator
 	}
 
 	/// <summary>
-	/// Whether a scene's text gives one of its own nodes the <c>ForgeEntity</c> script with <c>Networked</c> on: a
-	/// scene the server spawns networked entities from. A level that only turns it on for an instance it holds is
-	/// placed, not spawned, and isn't listed.
+	/// Whether a scene's text gives one of its own nodes a script with <c>Networked</c> on, <c>ForgeEntity</c> or a
+	/// class deriving from it: a scene the server spawns networked entities from. A level that only turns it on for an
+	/// instance it holds is placed, not spawned, and isn't listed.
 	/// </summary>
 	/// <param name="text">The text of a <c>.tscn</c> file.</param>
 	/// <returns><see langword="true"/> for a networked scene.</returns>
 	internal static bool IsNetworkedSceneText(string text)
 	{
-		const string ScriptPath = "path=\"res://addons/forge/nodes/ForgeEntity.cs\"";
-		string? scriptId = null;
-		bool inEntity = false;
+		bool hasScript = false;
 
 		foreach (string raw in text.Split('\n'))
 		{
 			string line = raw.Trim();
 
-			if (line.StartsWith("[ext_resource", StringComparison.Ordinal)
-				&& line.Contains(ScriptPath, StringComparison.Ordinal))
-			{
-				int start = line.IndexOf(" id=\"", StringComparison.Ordinal) + 5;
-				scriptId = start < 5 ? null : line[start..line.IndexOf('"', start)];
-				continue;
-			}
-
 			if (line.StartsWith('['))
 			{
-				inEntity = false;
-				continue;
+				hasScript = false;
 			}
-
-			if (scriptId is not null && line == $"script = ExtResource(\"{scriptId}\")")
+			else if (line.StartsWith("script = ", StringComparison.Ordinal))
 			{
-				inEntity = true;
+				hasScript = true;
 			}
-			else if (inEntity && line == "Networked = true")
+			else if (hasScript && line == "Networked = true")
 			{
 				return true;
 			}
@@ -148,6 +136,33 @@ internal static class NetworkManifestGenerator
 		return null;
 	}
 
+	// A scene that inherits another is networked when it says so itself, by its own override too, or else when the one
+	// it inherits is.
+	internal static bool IsNetworkedScene(string path)
+	{
+		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+
+		if (file is null)
+		{
+			return false;
+		}
+
+		string text = file.GetAsText();
+
+		if (IsNetworkedSceneText(text))
+		{
+			return true;
+		}
+
+		if (InheritedScenePath(text) is not string inherited
+			|| text.Contains("Networked = false", StringComparison.Ordinal))
+		{
+			return false;
+		}
+
+		return text.Contains("Networked = true", StringComparison.Ordinal) || IsNetworkedScene(inherited);
+	}
+
 	private static string? Attribute(string line, string prefix)
 	{
 		int start = line.IndexOf(prefix, StringComparison.Ordinal);
@@ -159,23 +174,6 @@ internal static class NetworkManifestGenerator
 
 		start += prefix.Length;
 		return line[start..line.IndexOf('"', start)];
-	}
-
-	private static bool IsNetworkedScene(string path)
-	{
-		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
-
-		if (file is null)
-		{
-			return false;
-		}
-
-		string text = file.GetAsText();
-
-		return IsNetworkedSceneText(text)
-			|| (!text.Contains("Networked = false", StringComparison.Ordinal)
-				&& InheritedScenePath(text) is string inherited
-				&& IsNetworkedScene(inherited));
 	}
 
 	private static List<string> Uids(List<string> paths)

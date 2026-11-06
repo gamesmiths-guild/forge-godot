@@ -38,6 +38,7 @@ level.AddChild(player);
 
   The [Instantiate Scene](statescript/nodes/scene-nodes.md) nodes do the same from a graph, and what an entity spawns belongs to that entity's owner. On a client they don't instantiate networked scenes: the server spawns them for everyone.
 - **Despawning one.** Free it on the server. Every client frees its copy.
+- **One to a scene.** A spawned scene holds one networked entity, and hosting again after leaving needs a fresh level: whatever is in the tree as hosting starts counts as placed.
 - **Owners.** `NetworkOwner` is the multiplayer peer id whose player the entity is: 1 for the server's own player, 0 for the world's. A placed entity can only be the server's or the world's, since it's registered before any client has a peer id, and a client's copy of it keeps 0. A [`ForgeInputCollector`](nodes.md#forgeinputcollector) reads the devices only on the machine of the entity's owner, and the server hands each client's input to the entities that client owns.
 
 ## What a client sees

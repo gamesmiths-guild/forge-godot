@@ -37,7 +37,7 @@ public partial class ForgeInputCollector : Node
 	private ulong _pressed;
 	private ulong _released;
 	private ulong _consumed;
-	private bool _controlled;
+	private bool _controlled = true;
 
 	/// <summary>
 	/// Gets or sets where the aim is read from.
@@ -116,6 +116,11 @@ public partial class ForgeInputCollector : Node
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		base._UnhandledInput(@event);
+
+		if (!_controlled)
+		{
+			return;
+		}
 
 		for (int i = 0; i < _actions.Length; i++)
 		{
