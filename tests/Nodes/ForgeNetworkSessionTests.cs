@@ -123,7 +123,7 @@ public class ForgeNetworkSessionTests
 		var clientApi = new SceneMultiplayer();
 		Tree.SetMultiplayer(serverApi, serverBranch.GetPath());
 		Tree.SetMultiplayer(clientApi, clientBranch.GetPath());
-		int port = 30000 + (int)(GD.Randi() % 20000);
+		int port = TestPort();
 
 		GodotTransport.CreateServerPeer(port, 2, out ENetMultiplayerPeer serverPeer).Should().Be(Error.Ok);
 		serverApi.MultiplayerPeer = serverPeer;
@@ -407,7 +407,7 @@ public class ForgeNetworkSessionTests
 		pair.ServerBranch.AddChild(body);
 		var session = new ForgeNetworkSession
 		{
-			Port = 30000 + (int)(GD.Randi() % 20000),
+			Port = TestPort(),
 			Manifest = SceneManifest(Body),
 			ClockOverride = pair.ServerClock,
 		};
@@ -515,6 +515,13 @@ public class ForgeNetworkSessionTests
 		return (a, b);
 	}
 
+	// Below the ranges the system sets aside for itself, where a port may not bind: from 32768 on Linux, and from 49152
+	// on Windows, which excludes whole blocks of it.
+	private static int TestPort()
+	{
+		return 20000 + (int)(GD.Randi() % 12000);
+	}
+
 	private static string Uid(string path)
 	{
 		return ResourceUid.IdToText(ResourceLoader.GetResourceUid(path));
@@ -556,7 +563,7 @@ public class ForgeNetworkSessionTests
 
 		public Pair(ForgeNetworkManifest serverManifest, ForgeNetworkManifest clientManifest, bool withPlayer = true)
 		{
-			int port = 30000 + (int)(GD.Randi() % 20000);
+			int port = TestPort();
 			string suffix = Guid.NewGuid().ToString("N");
 
 			ServerBranch = new Node { Name = $"Server {suffix}" };
