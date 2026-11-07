@@ -262,14 +262,6 @@ public partial class ForgePluginLoader : EditorPlugin
 		ForgeSettings.EnsureRegistered();
 		EnsureTagSourceExists();
 
-		bool config = ProjectSettings.LoadResourcePack(AutoloadPath);
-
-		if (config)
-		{
-			GD.PrintErr("Failed to load script at res://addons/forge/core/ForgeBootstrap.cs");
-			return;
-		}
-
 		if (!ProjectSettings.HasSetting("autoload/Forge Bootstrap"))
 		{
 			// The leading * is what the Autoload tab's Enable checkbox reads.
