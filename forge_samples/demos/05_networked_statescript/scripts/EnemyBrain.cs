@@ -1,6 +1,5 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.Attributes;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
@@ -12,15 +11,15 @@ namespace Gamesmiths.Forge.Example;
 
 /// <summary>
 /// An enemy's mind, on the server: it walks toward the nearest player through its entity's input, which its movement
-/// component reads, and frees its body once its health is gone or it has fallen. A client's mirror does neither: the
-/// server's enemy walks, and its death reaches the client as a despawn.
+/// component reads, and frees its body once it has fallen. One whose health runs out is freed by its death graph, whose
+/// burst every screen shows. A client's mirror does neither: the server's enemy walks, and leaves the client as a
+/// despawn.
 /// </summary>
 public partial class EnemyBrain : Node
 {
 	private ForgeEntity? _entity;
 	private Node3D? _body;
 	private EntityInput? _input;
-	private EntityAttribute? _health;
 	private Tag _fallen;
 
 	/// <summary>
@@ -63,12 +62,8 @@ public partial class EnemyBrain : Node
 			return;
 		}
 
-		if (_health is null)
-		{
-			_entity.Attributes.TryGetAttribute("CharacterAttributes.Health", out _health);
-		}
-
-		if (_health?.CurrentValue <= 0 || _entity.Tags.AllTags.HasTag(_fallen))
+		// One whose health ran out is freed by its death graph, with a burst every screen shows.
+		if (_entity.Tags.AllTags.HasTag(_fallen))
 		{
 			_body.QueueFree();
 			return;

@@ -46,6 +46,8 @@
 [ext_resource type="Script" uid="uid://q6o53xlqjkod" path="res://addons/forge/nodes/ForgeNetworkSession.cs" id="53_session"]
 [ext_resource type="Script" uid="uid://bb4otufv1nl1v" path="res://addons/forge/nodes/ForgeNetworkOverlay.cs" id="54_overlay"]
 [ext_resource type="Script" uid="uid://c00wgj2xbiagd" path="res://forge_samples/demos/05_networked_statescript/scripts/NetworkedLevel.cs" id="55_game"]
+[ext_resource type="PackedScene" uid="uid://t3tnw06y4rt1" path="res://forge_samples/demos/03_statescript/scenes/stations/brazier.tscn" id="56_brazier"]
+[ext_resource type="Resource" uid="uid://c5net10brast" path="res://forge_samples/demos/05_networked_statescript/abilities/brazier_grants.tres" id="57_brazier_grants"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_4t6yx"]
 material = ExtResource("4_f8cj4")
@@ -145,6 +147,9 @@ mesh = SubResource("BoxMesh_4t6yx")
 [node name="Lake" parent="Stations" unique_id=120451771 instance=ExtResource("5_lake")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.117232, 0.3798511, -7.7059393)
 
+[node name="Brazier" parent="Stations" instance=ExtResource("56_brazier")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.704551, -9.536743e-07, -0.093084455)
+
 [node name="RegenArea" parent="Stations" unique_id=1359653450 instance=ExtResource("6_regen")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -9)
 
@@ -170,6 +175,12 @@ Networked = true
 
 [node name="Forge Entity" parent="Stations/Dummies/Dummy2"]
 Networked = true
+
+[node name="Forge Entity" parent="Stations/Brazier"]
+Networked = true
+
+[node name="Grant Abilities" parent="Stations/Brazier/Forge Entity"]
+EffectData = ExtResource("57_brazier_grants")
 
 [node name="Rim" type="Node3D" parent="." unique_id=441048483 groups=["navigation_mesh_source_group"]]
 

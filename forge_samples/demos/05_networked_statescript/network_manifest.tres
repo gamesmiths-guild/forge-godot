@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_manifest")
+Abilities = Array[String](["uid://c5net10brasa", "uid://c5net10deata", "uid://c5net8dashab", "uid://gyhloc5hajwb", "uid://kncyoqdihf45"])
 Effects = Array[String](["uid://ba23rv2mkdbg4", "uid://bgbbtfuhkcquk", "uid://c5net8dashcd", "uid://dgybn25of4xpg", "uid://drty8r1ibx5ug", "uid://ipt87tpu75xh", "uid://ntwpoomg0iq0"])
 Scenes = Array[String](["uid://c5net8enemy1", "uid://c5net8player"])
 metadata/_custom_type_script = "uid://cftfcqdqqwx1"
