@@ -38,6 +38,12 @@ public partial class StatescriptGraph : Resource
 	public Array<StatescriptGraphVariable> Variables { get; set; } = [];
 
 	/// <summary>
+	/// Gets or sets the parts of the graph that run only on clients or only on the server in a networked game.
+	/// </summary>
+	[Export]
+	public Array<StatescriptRegion> Regions { get; set; } = [];
+
+	/// <summary>
 	/// Gets or sets the scroll offset of the graph editor when this graph was last shown. View state lives in the
 	/// editor layout, never in the graph file, so panning a graph never changes it.
 	/// </summary>

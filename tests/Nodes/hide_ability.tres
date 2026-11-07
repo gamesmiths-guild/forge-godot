@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c5net10tabil"]
+
+[ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="1_behavior"]
+[ext_resource type="Resource" uid="uid://c5net10tgraf" path="res://tests/Nodes/hide_graph.tres" id="2_graph"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="3_ability"]
+
+[sub_resource type="Resource" id="Resource_behavior"]
+script = ExtResource("1_behavior")
+Statescript = ExtResource("2_graph")
+metadata/_custom_type_script = "uid://dapjjbxrv801t"
+
+[resource]
+script = ExtResource("3_ability")
+Name = "Hide"
+CooldownEffects = []
+AbilityBehavior = SubResource("Resource_behavior")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

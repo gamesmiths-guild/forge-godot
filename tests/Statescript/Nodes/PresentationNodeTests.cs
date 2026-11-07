@@ -41,6 +41,8 @@ public class PresentationNodeTests
 			new SetNodePropertyNode(),
 			new NodeEnabledOverrideNode(NodeEnabledAspect.Visible),
 			new SetNodeEnabledNode(NodeEnabledAspect.Visible),
+			new Scene3DNode(),
+			new InstantiateScene3DNode(),
 		];
 
 		ForgeNode[] simulation =
@@ -49,8 +51,6 @@ public class PresentationNodeTests
 			new SetNodeEnabledNode(NodeEnabledAspect.Processing),
 			new CallMethodNode(),
 			new EmitSignalNode(),
-			new Scene3DNode(),
-			new InstantiateScene3DNode(),
 			new MoveBody3DNode(),
 		];
 

@@ -104,6 +104,14 @@ public abstract class SceneNodeBase(
 		Node? parentNode,
 		IForgeEntity? parentEntity);
 
+	/// <inheritdoc/>
+	/// <remarks>
+	/// Presentation, so every machine that shows the entity, a client included, makes its own instance of a cosmetic
+	/// scene, and the nodes acting on the instance run there too. A networked scene is the server's to make: a client's
+	/// graph makes none, and gets the server's entity instead.
+	/// </remarks>
+	public override NodeNetworkKind NetworkKind => NodeNetworkKind.Presentation;
+
 	/// <summary>
 	/// Gets where the instance is parented.
 	/// </summary>

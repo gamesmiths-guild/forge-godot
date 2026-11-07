@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Core;
@@ -384,6 +385,7 @@ public partial class ForgeNetworkSession : Node
 		Session.Replication!.BodySource = CaptureBody;
 		Session.Replication.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
 		Session.Replication.EffectNotListed += OnEffectNotListed;
+		Session.Replication.AbilityNotListed += OnAbilityNotListed;
 
 		if (RelevancyRadius > 0)
 		{
@@ -771,6 +773,14 @@ public partial class ForgeNetworkSession : Node
 			$"Forge: the effect '{data.Name}' went active on a networked entity, and the network manifest doesn't " +
 			"list it, so no client hears of it. Save it as a resource of its own and regenerate the manifest " +
 			"(Project, Tools, Forge), or set its Visibility to Server Only.");
+	}
+
+	private static void OnAbilityNotListed(AbilityData data)
+	{
+		GD.PushWarning(
+			$"Forge: the ability '{data.Name}' runs a graph clients show something of on a networked entity, and the " +
+			"network manifest doesn't list it, so no client shows it. Save it as a resource of its own and " +
+			"regenerate the manifest (Project, Tools, Forge).");
 	}
 
 	private NetworkAssetRegistry BuildRegistry()

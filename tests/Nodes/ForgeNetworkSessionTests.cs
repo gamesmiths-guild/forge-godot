@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Duration;
@@ -13,6 +14,7 @@ using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
 using GdUnit4;
@@ -40,6 +42,8 @@ public class ForgeNetworkSessionTests
 		"res://forge_samples/demos/05_networked_statescript/abilities/enemy_grants.tres";
 
 	private const string Body = "res://tests/Nodes/networked_body.tscn";
+
+	private const string HideAbility = "res://tests/Nodes/hide_ability.tres";
 
 	// How many ticks the test's client runs ahead of the test's server: enough to cover the bursts of physics steps a
 	// process frame can hold, since ENet only moves packets between process frames.
@@ -289,7 +293,7 @@ public class ForgeNetworkSessionTests
 		registry.IsSealed.Should().BeTrue();
 		registry.Count(AssetKind.Effect).Should().Be(1);
 		registry.IndexOf(AssetKind.Effect, uid).Should().Be(0);
-		registry.Get<Effects.EffectData>(AssetKind.Effect, 0).Name.Should().NotBeEmpty();
+		registry.Get<EffectData>(AssetKind.Effect, 0).Name.Should().NotBeEmpty();
 		registry.Hash.Should().Be(Manifest(Burning).BuildRegistry().Hash, "the same manifest hashes the same");
 		registry.Hash.Should().NotBe(new ForgeNetworkManifest().BuildRegistry().Hash);
 	}
@@ -584,8 +588,8 @@ public class ForgeNetworkSessionTests
 	public async Task Custom_data_reaches_a_mirror_by_the_codec_both_ends_registered()
 	{
 		using var pair = new Pair(EffectsManifest(), EffectsManifest(), withPlayer: false);
-		pair.Server.RegisterEffectContext<int>("count", WriteCount, ReadCount);
-		pair.Client.RegisterEffectContext<int>("count", WriteCount, ReadCount);
+		pair.Server.RegisterEffectContext("count", WriteCount, ReadCount);
+		pair.Client.RegisterEffectContext("count", WriteCount, ReadCount);
 		await pair.Connect();
 
 		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
@@ -617,7 +621,7 @@ public class ForgeNetworkSessionTests
 	public async Task A_client_with_other_effect_codecs_is_refused()
 	{
 		using var pair = new Pair(EffectsManifest(), EffectsManifest());
-		pair.Server.RegisterEffectContext<int>("count", static (writer, value) => writer.WriteVarInt(value), Read);
+		pair.Server.RegisterEffectContext("count", static (writer, value) => writer.WriteVarInt(value), Read);
 		int? refusal = null;
 		pair.Client.Refused += reason => refusal = reason;
 
@@ -643,6 +647,37 @@ public class ForgeNetworkSessionTests
 		new ForgeEffectData { DurationType = DurationType.Infinite }
 			.GetEffectData().Visibility.Should().Be(EffectVisibility.Default);
 		ForgeSettings.DefaultEffectVisibility.Should().Be(EffectVisibility.Public);
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_mirror_shows_what_the_server_s_graph_shows_until_the_server_s_run_ends()
+	{
+		ForgeNetworkManifest manifest = Manifest();
+		manifest.Abilities.Add(Uid(HideAbility));
+		manifest.Scenes.Add(Uid(Body));
+		using var pair = new Pair(manifest, manifest, withPlayer: false);
+		await pair.Connect();
+
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		ForgeEntity entity = body.GetNode<ForgeEntity>("Forge Entity");
+		pair.ServerBranch.AddChild(body);
+		AbilityHandle hide = entity.Abilities.GrantAbilityPermanently(
+			ResourceLoader.Load<ForgeAbilityData>(HideAbility).GetAbilityData(),
+			1,
+			LevelComparison.Higher,
+			null);
+		hide.TryActivate(out _).Should().BeTrue();
+
+		await Pair.RunUntil(() => Mirrored(pair, entity)?.GetParent<Node3D>().Visible == false, frames: 300);
+
+		Node3D mirror = Mirrored(pair, entity)!.GetParent<Node3D>();
+		mirror.Visible.Should().BeFalse("the mirror's copy of the graph holds the override the server's holds");
+
+		hide.Cancel();
+		await Pair.RunUntil(() => mirror.Visible, frames: 300);
+
+		mirror.Visible.Should().BeTrue("the override ends when the server's run does");
 	}
 
 	private static ActiveEffectHandle? Apply(ForgeEntity entity, string effectPath)
