@@ -151,7 +151,7 @@ Refer to your IDE's documentation for the specific settings locations. Most mode
 - [Attribute Set Definitions](attribute-set-definitions.md): Define attribute sets in the inspector and have their C# class generated for you.
 - [Forge Nodes Documentation](nodes.md): Learn about the Forge nodes provided by the plugin.
 - [Resources Documentation](resources.md): Explore all configurable resource types—effects, abilities, tags, cues, and more.
-- [Networking](networking.md): Host or join a session, networked entities and what a client sees, the asset manifest, dedicated servers, the conditioner and the F3 overlay.
+- [Networking](networking.md): Host or join a session, networked entities and what a client sees, effects and graphs on a client, regions, the asset manifest, dedicated servers, the conditioner and the F3 overlay.
 - [Statescript Documentation](statescript/README.md): Learn how to build ability behaviors visually with Statescript graphs.
 - [Helper Classes](helper-classes.md): Find utility classes to streamline effect application, manager access, and integration patterns.
 - For gameplay programming API and advanced usage, see the [core Forge documentation](https://github.com/gamesmiths-guild/forge/blob/main/docs/README.md).

@@ -4,7 +4,7 @@
 >
 > **Add Node group:** Action → **Scene**, State → **Scene**
 >
-> **Network kind:** Simulation
+> **Network kind:** Presentation for Instantiate Scene and Scene, Simulation for the rest
 
 These nodes are **Godot-only** — there is no core Forge counterpart, so this page is their reference rather than a Godot-authoring supplement to one.
 
@@ -47,7 +47,7 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 
 **Placement happens before parenting.** The transform is applied as a *local* one through the parent's transform, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` — `ForgeProjectile3D` recording where it launched from — has to see the position it was actually spawned at. The same ordering is what lets Godot handle physics interpolation unaided: entering the tree resets the instance at the transform it already has, and a second, deferred reset at the end of its first frame or tick covers anything `OnInstantiated` or `_Ready` moves afterwards. These nodes add no reset of their own, because an explicit one would cancel that deferred half.
 
-**Networked scenes are the server's.** In a [networked session](../../networking.md#networked-entities), a scene whose own `ForgeEntity` is networked is instantiated only on the server, which sends it to every client: on a client these nodes instantiate nothing for it and write no output. What they spawn on the server belongs to the same player as the entity the graph runs on, unless the scene's entity already has a `NetworkOwner`.
+**Cosmetic scenes show everywhere; networked scenes are the server's.** Instantiate Scene and Scene are presentation nodes, so in a [networked session](../../networking.md#graphs-on-a-client) every machine that shows the entity makes its own instance of a cosmetic scene, a client as the server says, and a node acting on the instance, such as a Move To flying it, is presentation in its graph. A scene whose own `ForgeEntity` is networked is instantiated only on the server, which sends it to every client: on a client these nodes instantiate nothing for it and write no output. What they spawn on the server belongs to the same player as the entity the graph runs on, unless the scene's entity already has a `NetworkOwner`.
 
 ## Queue Free
 

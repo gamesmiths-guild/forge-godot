@@ -304,6 +304,7 @@ Resource representing a complete Statescript graph definition.
 - `Nodes` (Array\<StatescriptNode\>): The nodes in the graph.
 - `Connections` (Array\<StatescriptConnection\>): The connections between nodes.
 - `Variables` (Array\<StatescriptGraphVariable\>): Graph variable definitions.
+- `Regions` (Array\<StatescriptRegion\>): The parts of the graph that run only on clients or only on the server in a networked game, each a `Kind` (Client Only or Server Only) and the `NodeIds` it holds. Made in the editor's Region menu; see [Regions](networking.md#regions).
 
 **Usage:**
 

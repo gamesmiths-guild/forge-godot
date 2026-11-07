@@ -43,10 +43,11 @@ level.AddChild(player);
 
 ## What a client sees
 
-A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). It simulates nothing: it doesn't advance, starts none of its own effects or abilities, and holds what the server sends. `Join` makes mirrors of the level's placed entities at once and for good, even if the connection then fails, so reload the level on `Disconnected` before playing it again.
+A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). It simulates nothing: it doesn't advance, starts none of its own effects or abilities, and holds what the server sends. Only its copies of the server's graphs run. `Join` makes mirrors of the level's placed entities at once and for good, even if the connection then fails, so reload the level on `Disconnected` before playing it again.
 
 - **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play as they arrive, unless they're more than 0.2 s old. On the entity a client owns, an attribute's base value is the server's too; everywhere else a mirror's base value is its current value.
 - **Effects** are the server's too, as far as [each one's visibility](#effects-on-a-client) allows: the entity's `EffectsManager` answers queries, a handle tells its stacks and time left, and the `OnActiveEffect` events follow them. They run nothing: no modifiers, periodic executions, components or cues.
+- **Graphs** show what the server's show, as far as [clients run them](#graphs-on-a-client): a remote player rolls and its dash whooshes, a brazier's flame lights up.
 - **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server.
 - **Its own player** is a mirror too, and answers its input a round trip late: nothing is predicted yet. The session sets `Local Player` to the networked entity with an input that this machine's peer owns as it appears, and raises `LocalPlayerChanged`, so a camera can follow it.
 - **Late joiners** get the world as it is, and **relevancy** is everything by default; set `Relevancy Radius` for a client to hear only about entities within that distance of one it owns.
@@ -87,6 +88,24 @@ if (handle.TryGetContextData(out HitData? hit))
     ShowDamage(hit.Damage);
 }
 ```
+
+## Graphs on a client
+
+A mirror runs a copy of every graph its server entity's abilities run, as far as clients run it, with nothing to set up: presentation nodes show what the server's show, and no link is followed. Presentation state nodes, such as Play Animation, Play Audio and Node Property Override, start and end as the server's do, and presentation actions, such as Play Audio One Shot and Instantiate Scene, run when the server's ran. Simulation and authority nodes don't run: what they did arrives as the entity's state.
+
+- **Scene nodes** are presentation, so a cosmetic scene shows on every client, made by each machine itself. A networked scene is the server's alone to make: a client's graph makes none, and gets the server's entity instead.
+- **Nodes acting on what presentation made** are presentation in their graph, such as a Move To flying the ember a Scene node spawned. The node's badge in the editor shows its kind in the graph, and says so.
+- **Variables** a graph keeps as values travel as they change, before the states that read them. Object variables stay on each machine, and so do shared variables and activation data: copy what clients need into a graph variable.
+- **Joining late**, a client sees what runs as it is: a lit brazier is lit, and an animation already playing starts part way through.
+- **A death burst** a graph makes as its entity dies still shows: the entity's last events go with its despawn.
+- **Listing them.** An ability's graph travels as the ability's index in the manifest. An ability saved inside another resource can't be listed, and the session warns once when its graph has something clients would show.
+
+### Regions
+
+In the Statescript editor, select nodes and pick **Region, Client Only** or **Region, Server Only** to frame them in a region, blue or purple. Drop a node on a frame to add it, pick **Region, Leave Region** to take selected nodes out, and delete a frame to delete its region. The regions are saved in the graph.
+
+- **Client only**: never sent. Every machine runs the region by itself, the server as part of the graph, and a client from the presentation state, or the entry, that leads into it, for as long as that state runs. For presentation with logic of its own, such as a flame's flicker.
+- **Server only**: never runs on a client, and nothing of it is sent. For work that's the server's alone, such as spawning a networked enemy.
 
 ## Dedicated servers
 
