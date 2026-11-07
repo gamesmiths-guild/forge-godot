@@ -129,6 +129,52 @@ public partial class StatescriptGraphEditorDock
 	}
 
 	/// <summary>
+	/// Picks an entry of the Region menu, as the menu's item press does.
+	/// </summary>
+	/// <param name="id">The menu item id.</param>
+	internal void TestOnlyPressRegionMenu(long id)
+	{
+		OnRegionMenuIdPressed(id);
+	}
+
+	/// <summary>
+	/// Drops nodes onto a region's frame, as the graph edit's link-to-frame request does.
+	/// </summary>
+	/// <param name="nodeIds">The ids of the dropped nodes.</param>
+	/// <param name="frame">The frame's name.</param>
+	internal void TestOnlyDropOnFrame(GodotCollections.Array nodeIds, StringName frame)
+	{
+		OnGraphElementsLinkedToFrameRequest(nodeIds, frame);
+	}
+
+	/// <summary>
+	/// Gets each region frame the graph edit shows, by name, with the nodes attached to it.
+	/// </summary>
+	/// <returns>The frames.</returns>
+	internal GodotCollections.Dictionary<StringName, GodotCollections.Array<StringName>> TestOnlyRegionFrames()
+	{
+		var frames = new GodotCollections.Dictionary<StringName, GodotCollections.Array<StringName>>();
+
+		foreach (GraphFrame frame in _graphEdit?.GetChildren().OfType<GraphFrame>() ?? [])
+		{
+			if (!frame.IsQueuedForDeletion())
+			{
+				frames[frame.Name] = _graphEdit!.GetAttachedNodesOfFrame(frame.Name);
+			}
+		}
+
+		return frames;
+	}
+
+	/// <summary>
+	/// Runs the refresh of frames and kind badges a change of the graph schedules for the end of the frame.
+	/// </summary>
+	internal void TestOnlyRefreshNetworkView()
+	{
+		RefreshNetworkView();
+	}
+
+	/// <summary>
 	/// Arranges the nodes, as the graph edit's arrange button does.
 	/// </summary>
 	internal void TestOnlyArrangeNodes()

@@ -637,6 +637,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			tab.Unsaved = true;
 		}
+
+		if (!_isLoadingGraph && graph == CurrentGraph)
+		{
+			ScheduleNetworkRefresh();
+		}
 	}
 
 	private void MarkSaved(StatescriptGraph graph)
@@ -948,6 +953,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		menuHBox.AddChild(_addNodeButton);
 		menuHBox.MoveChild(_addNodeButton, 2);
 
+		AddRegionMenu(menuHBox, 3);
+
 		var separator2 = new VSeparator();
 		menuHBox.AddChild(separator2);
 
@@ -1090,6 +1097,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		ReapplyCurrentNodeHighlights();
+		RefreshRegionFrames(graph);
+		RefreshNetworkKinds(graph);
 
 		_isLoadingGraph = wasLoading;
 
@@ -1113,6 +1122,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		RemoveRegionFrames();
 		_graphEdit.ClearConnections();
 
 		var toRemove = new List<Node>();
@@ -1134,6 +1144,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		RemoveRegionFrames();
 		_graphEdit.ClearConnections();
 
 		var toDetach = new List<Node>();
@@ -1820,11 +1831,17 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_graphEdit.ConnectionToEmpty -= OnConnectionToEmpty;
 			_graphEdit.ConnectionFromEmpty -= OnConnectionFromEmpty;
 			_graphEdit.GuiInput -= OnGraphEditGuiInput;
+			_graphEdit.GraphElementsLinkedToFrameRequest -= OnGraphElementsLinkedToFrameRequest;
 		}
 
 		if (_fileMenuPopup is not null)
 		{
 			_fileMenuPopup.IdPressed -= OnFileMenuIdPressed;
+		}
+
+		if (_regionMenuPopup is not null)
+		{
+			_regionMenuPopup.IdPressed -= OnRegionMenuIdPressed;
 		}
 
 		if (_addNodeButton is not null)
@@ -1877,10 +1894,16 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
 		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
 		_graphEdit.GuiInput += OnGraphEditGuiInput;
+		_graphEdit.GraphElementsLinkedToFrameRequest += OnGraphElementsLinkedToFrameRequest;
 
 		if (_fileMenuPopup is not null)
 		{
 			_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
+		}
+
+		if (_regionMenuPopup is not null)
+		{
+			_regionMenuPopup.IdPressed += OnRegionMenuIdPressed;
 		}
 
 		if (_addNodeButton is not null)

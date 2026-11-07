@@ -213,6 +213,8 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
+		DeleteRegionFrames(graph, deletedNodes);
+
 		var nodesToDelete = new GodotCollections.Array<StatescriptNode>();
 		var deletedIds = new HashSet<string>();
 
