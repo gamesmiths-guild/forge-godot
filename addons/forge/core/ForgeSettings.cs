@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Godot;
 using GodotDictionary = Godot.Collections.Dictionary;
@@ -55,6 +56,20 @@ public static class ForgeSettings
 	/// Where the network manifest is written when the setting is unset.
 	/// </summary>
 	public const string DefaultNetworkManifestPath = "res://forge_network_manifest.tres";
+
+	/// <summary>
+	/// Setting saying who hears about an effect whose own visibility is Default, while it's active on a networked
+	/// entity.
+	/// </summary>
+	public const string DefaultEffectVisibilitySetting = "forge/networking/default_effect_visibility";
+
+	/// <summary>
+	/// Gets who hears about an effect whose own visibility is Default.
+	/// </summary>
+	public static EffectVisibility DefaultEffectVisibility =>
+		(EffectVisibility)ProjectSettings.GetSetting(
+			DefaultEffectVisibilitySetting,
+			(int)EffectVisibility.Public).AsInt32();
 
 	/// <summary>
 	/// Gets a value indicating whether a physics query outlines the entities it found.
@@ -225,6 +240,21 @@ public static class ForgeSettings
 		});
 
 		ProjectSettings.SetInitialValue(NetworkManifestSetting, DefaultNetworkManifestPath);
+
+		if (!ProjectSettings.HasSetting(DefaultEffectVisibilitySetting))
+		{
+			ProjectSettings.SetSetting(DefaultEffectVisibilitySetting, (int)EffectVisibility.Public);
+		}
+
+		ProjectSettings.AddPropertyInfo(new GodotDictionary
+		{
+			{ "name", DefaultEffectVisibilitySetting },
+			{ "type", (int)Variant.Type.Int },
+			{ "hint", (int)PropertyHint.Enum },
+			{ "hint_string", "Public:1,Owner Only:2,Server Only:3" },
+		});
+
+		ProjectSettings.SetInitialValue(DefaultEffectVisibilitySetting, (int)EffectVisibility.Public);
 
 		ProjectSettings.AddPropertyInfo(new GodotDictionary
 		{

@@ -13,6 +13,7 @@
 [ext_resource type="AudioStream" uid="uid://ddltr6pp8vhxs" path="res://forge_samples/shared/audio/fire-loop.ogg" id="12_fire_sfx"]
 [ext_resource type="AudioStream" uid="uid://bqta7fvf7bnau" path="res://forge_samples/shared/audio/death.ogg" id="14_fall"]
 [ext_resource type="Script" uid="uid://zm2442kact29" path="res://forge_samples/demos/04_rewind/scripts/LiveHealthBar.cs" id="17_health_bar"]
+[ext_resource type="Script" uid="uid://c5net8label" path="res://forge_samples/demos/05_networked_statescript/scripts/EffectsLabel.cs" id="20_effects_label"]
 
 [sub_resource type="Resource" id="Resource_tags"]
 script = ExtResource("6_tags")
@@ -235,3 +236,13 @@ vertical_alignment = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
 billboard = 1
 texture = SubResource("ViewportTexture_bars")
+
+[node name="EffectsLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 0)
+pixel_size = 0.006
+billboard = 1
+no_depth_test = true
+font_size = 24
+outline_size = 8
+vertical_alignment = 2
+script = ExtResource("20_effects_label")

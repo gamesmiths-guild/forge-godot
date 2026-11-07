@@ -1,6 +1,6 @@
 # Networking
 
-Forge for Godot plays a game over the network with one server in charge: the server simulates every entity from the players' input, each client sends only what its player pressed, and the server sends the world back down to every client. This page is the setup. The design, the protocol and what each piece does are in the core's [networking](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/README.md) and [replication](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/replication.md) pages. The Networked Statescript sample in `forge_samples/demos/05_networked_statescript/` puts it together.
+Forge for Godot plays a game over the network with one server in charge: the server simulates every entity from the players' input, each client sends only what its player pressed, and the server sends the world back down to every client. This page is the setup. The design, the protocol and what each piece does are in the core's [networking](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/README.md), [replication](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/replication.md) and [effects on the network](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/effects.md) pages. The Networked Statescript sample in `forge_samples/demos/05_networked_statescript/` puts it together.
 
 ## Setup
 
@@ -45,11 +45,48 @@ level.AddChild(player);
 
 A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). It simulates nothing: it doesn't advance, starts none of its own effects or abilities, and holds what the server sends. `Join` makes mirrors of the level's placed entities at once and for good, even if the connection then fails, so reload the level on `Disconnected` before playing it again.
 
-- **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play as they arrive, unless they're more than 0.2 s old.
+- **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play as they arrive, unless they're more than 0.2 s old. On the entity a client owns, an attribute's base value is the server's too; everywhere else a mirror's base value is its current value.
+- **Effects** are the server's too, as far as [each one's visibility](#effects-on-a-client) allows: the entity's `EffectsManager` answers queries, a handle tells its stacks and time left, and the `OnActiveEffect` events follow them. They run nothing: no modifiers, periodic executions, components or cues.
 - **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server.
 - **Its own player** is a mirror too, and answers its input a round trip late: nothing is predicted yet. The session sets `Local Player` to the networked entity with an input that this machine's peer owns as it appears, and raises `LocalPlayerChanged`, so a camera can follow it.
 - **Late joiners** get the world as it is, and **relevancy** is everything by default; set `Relevancy Radius` for a client to hear only about entities within that distance of one it owns.
 - **Where spawns go.** A client adds what the server spawns under `Spawn Parent`, or the current scene.
+
+## Effects on a client
+
+A mirror holds the effects active on the server's entity, so a client can show what's on anyone: read them from `EffectsManager` as you would offline.
+
+```csharp
+foreach (ActiveEffectHandle effect in entity.EffectsManager.GetActiveEffects())
+{
+    label.Text += $"{effect.Effect!.EffectData.Name} x{effect.StackCount}, {effect.RemainingDuration:0.0}s\n";
+}
+```
+
+A [`ForgeEffectData`](resources.md#forgeeffectdata)'s `Visibility` says who hears about it while it's active:
+
+- **Public**: every client that has the entity.
+- **Owner Only**: only the client that owns the entity, which suits a cooldown only its player reads.
+- **Server Only**: no client, which suits an effect that only grants abilities.
+- **Default**, for a new effect: what `forge/networking/default_effect_visibility` says in Project Settings, which is Public.
+
+This decides who gets the effect. What it did is the entity's state, and reaches every client that has the entity whatever this says: attribute values, tags and cues.
+
+- **Listing them.** An effect travels as its index in the manifest, which lists every effect saved as a resource of its own. One saved inside a scene or another resource can't be listed, so it stays on the server, and the session warns once unless it's Server Only. An instant effect never travels: what it did arrives as attribute values and cues.
+- **Custom data.** An effect applied with custom data, through `ApplyEffect<TData>`, takes it along when both ends say how the type travels, before hosting or joining. A client that registers other keys is refused; only the keys are compared, so keep what's behind each key the same on both ends. Data of a type neither says anything about stays on the server.
+
+```csharp
+session.RegisterEffectContext<HitData>(
+    "hit",
+    static (writer, hit) => writer.WriteVarInt(hit.Damage),
+    static reader => new HitData((int)reader.ReadVarInt()));
+
+// Later, on a client too.
+if (handle.TryGetContextData(out HitData? hit))
+{
+    ShowDamage(hit.Damage);
+}
+```
 
 ## Dedicated servers
 

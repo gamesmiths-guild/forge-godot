@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Networking;
@@ -28,6 +30,14 @@ namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 public class ForgeNetworkSessionTests
 {
 	private const string Burning = "res://forge_samples/demos/04_rewind/effects/burning.tres";
+
+	private const string Fallen = "res://forge_samples/demos/03_statescript/effects/fallen.tres";
+
+	private const string OwnerOnlyCooldown =
+		"res://forge_samples/demos/05_networked_statescript/abilities/dash_cooldown.tres";
+
+	private const string ServerOnlyGrants =
+		"res://forge_samples/demos/05_networked_statescript/abilities/enemy_grants.tres";
 
 	private const string Body = "res://tests/Nodes/networked_body.tscn";
 
@@ -123,7 +133,7 @@ public class ForgeNetworkSessionTests
 		var clientApi = new SceneMultiplayer();
 		Tree.SetMultiplayer(serverApi, serverBranch.GetPath());
 		Tree.SetMultiplayer(clientApi, clientBranch.GetPath());
-		int port = 30000 + (int)(GD.Randi() % 20000);
+		int port = TestPort();
 
 		GodotTransport.CreateServerPeer(port, 2, out ENetMultiplayerPeer serverPeer).Should().Be(Error.Ok);
 		serverApi.MultiplayerPeer = serverPeer;
@@ -407,7 +417,7 @@ public class ForgeNetworkSessionTests
 		pair.ServerBranch.AddChild(body);
 		var session = new ForgeNetworkSession
 		{
-			Port = 30000 + (int)(GD.Randi() % 20000),
+			Port = TestPort(),
 			Manifest = SceneManifest(Body),
 			ClockOverride = pair.ServerClock,
 		};
@@ -501,6 +511,163 @@ public class ForgeNetworkSessionTests
 		clientKept.GetParent().IsInsideTree().Should().BeTrue();
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_mirror_holds_the_effects_of_the_server_s_entity_and_runs_none_of_them()
+	{
+		using var pair = new Pair(EffectsManifest(), EffectsManifest(), withPlayer: false);
+		await pair.Connect();
+		pair.Server.Session!.Replication!.DefaultEffectVisibility.Should().Be(EffectVisibility.Public);
+
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		ForgeEntity entity = body.GetNode<ForgeEntity>("Forge Entity");
+		entity.BaseTags = new ForgeTagContainer { ContainerTags = ["trait.flammable"] };
+		pair.ServerBranch.AddChild(body);
+		ActiveEffectHandle handle = Apply(entity, Burning)!;
+
+		await Pair.RunUntil(() => Mirrored(pair, entity)?.EffectsManager.GetActiveEffects().Any() == true, frames: 300);
+
+		ForgeEntity mirror = Mirrored(pair, entity)!;
+		ActiveEffectHandle mirrored = mirror.EffectsManager.GetActiveEffects().Should().ContainSingle().Subject;
+		mirrored.Effect!.EffectData.Should().Be(ResourceLoader.Load<ForgeEffectData>(Burning).GetEffectData());
+		mirrored.Effect.Ownership.Source.Should().BeSameAs(mirror, "the server's entity gave it to itself");
+		mirrored.TotalDuration.Should().Be(handle.TotalDuration);
+		mirrored.RemainingDuration.Should().BeInRange(0.1, handle.TotalDuration);
+
+		double before = mirrored.RemainingDuration;
+		await Pair.RunUntil(() => mirrored.RemainingDuration < before - 0.2, frames: 300);
+
+		mirrored.RemainingDuration.Should().BeLessThan(before - 0.2, "what's left follows the server");
+		mirrored.ComponentInstances.Should().BeEmpty();
+
+		entity.EffectsManager.RemoveEffect(handle);
+		await Pair.RunUntil(() => !mirrored.IsValid, frames: 300);
+
+		mirrored.IsValid.Should().BeFalse("it ends when the server says");
+		mirror.EffectsManager.GetActiveEffects().Should().BeEmpty();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task An_effect_s_visibility_decides_which_mirrors_hold_it()
+	{
+		using var pair = new Pair(EffectsManifest(), EffectsManifest(), withPlayer: false);
+		await pair.Connect();
+		CharacterBody3D mineBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		CharacterBody3D theirsBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		ForgeEntity mine = mineBody.GetNode<ForgeEntity>("Forge Entity");
+		ForgeEntity theirs = theirsBody.GetNode<ForgeEntity>("Forge Entity");
+		mine.NetworkOwner = pair.Client.LocalPeer;
+		pair.ServerBranch.AddChild(mineBody);
+		pair.ServerBranch.AddChild(theirsBody);
+
+		Apply(mine, OwnerOnlyCooldown);
+		Apply(theirs, OwnerOnlyCooldown);
+		Apply(mine, ServerOnlyGrants);
+		Apply(theirs, ServerOnlyGrants);
+
+		// A public effect travels in the same entry as anything that leaked, so once it's here, a leak would be too.
+		Apply(mine, Fallen);
+		Apply(theirs, Fallen);
+
+		await Pair.RunUntil(
+			() => Mirrored(pair, mine)?.EffectsManager.GetActiveEffects().Any() == true
+				&& Mirrored(pair, theirs)?.EffectsManager.GetActiveEffects().Any() == true,
+			frames: 300);
+
+		EffectNames(Mirrored(pair, mine)!).Should().Equal("Dash Cooldown", "Fallen");
+		EffectNames(Mirrored(pair, theirs)!).Should().Equal(["Fallen"], "the cooldown is another's and owner-only");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task Custom_data_reaches_a_mirror_by_the_codec_both_ends_registered()
+	{
+		using var pair = new Pair(EffectsManifest(), EffectsManifest(), withPlayer: false);
+		pair.Server.RegisterEffectContext<int>("count", WriteCount, ReadCount);
+		pair.Client.RegisterEffectContext<int>("count", WriteCount, ReadCount);
+		await pair.Connect();
+
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		ForgeEntity entity = body.GetNode<ForgeEntity>("Forge Entity");
+		pair.ServerBranch.AddChild(body);
+		EffectData data = ResourceLoader.Load<ForgeEffectData>(Fallen).GetEffectData();
+		entity.EffectsManager.ApplyEffect(new Effect(data, new EffectOwnership(entity, entity)), 7);
+
+		await Pair.RunUntil(() => Mirrored(pair, entity)?.EffectsManager.GetActiveEffects().Any() == true, frames: 300);
+
+		ActiveEffectHandle mirrored =
+			Mirrored(pair, entity)!.EffectsManager.GetActiveEffects().Should().ContainSingle().Subject;
+		mirrored.TryGetContextData(out int count).Should().BeTrue();
+		count.Should().Be(7);
+
+		static void WriteCount(BitWriter writer, int value)
+		{
+			writer.WriteVarInt(value);
+		}
+
+		static int ReadCount(BitReader reader)
+		{
+			return (int)reader.ReadVarInt();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_client_with_other_effect_codecs_is_refused()
+	{
+		using var pair = new Pair(EffectsManifest(), EffectsManifest());
+		pair.Server.RegisterEffectContext<int>("count", static (writer, value) => writer.WriteVarInt(value), Read);
+		int? refusal = null;
+		pair.Client.Refused += reason => refusal = reason;
+
+		pair.Server.Host().Should().Be(Error.Ok);
+		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
+
+		await Pair.RunUntil(() => refusal is not null, frames: 600);
+
+		refusal.Should().Be((int)RefusalReason.AssetRegistry);
+
+		static int Read(BitReader reader)
+		{
+			return (int)reader.ReadVarInt();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_effect_s_visibility_comes_from_its_resource()
+	{
+		new ForgeEffectData { DurationType = DurationType.Infinite, Visibility = EffectVisibility.ServerOnly }
+			.GetEffectData().Visibility.Should().Be(EffectVisibility.ServerOnly);
+		new ForgeEffectData { DurationType = DurationType.Infinite }
+			.GetEffectData().Visibility.Should().Be(EffectVisibility.Default);
+		ForgeSettings.DefaultEffectVisibility.Should().Be(EffectVisibility.Public);
+	}
+
+	private static ActiveEffectHandle? Apply(ForgeEntity entity, string effectPath)
+	{
+		EffectData data = ResourceLoader.Load<ForgeEffectData>(effectPath).GetEffectData();
+		return entity.EffectsManager.ApplyEffect(new Effect(data, new EffectOwnership(entity, entity)));
+	}
+
+	private static ForgeEntity? Mirrored(Pair pair, ForgeEntity entity)
+	{
+		return pair.Client.Session?.Mirror?.Find(entity.NetworkId) as ForgeEntity;
+	}
+
+	private static string[] EffectNames(ForgeEntity entity)
+	{
+		return [.. entity.EffectsManager.GetActiveEffects().Select(x => x.Effect!.EffectData.Name)];
+	}
+
+	private static ForgeNetworkManifest EffectsManifest()
+	{
+		ForgeNetworkManifest manifest = Manifest(Burning, OwnerOnlyCooldown, ServerOnlyGrants, Fallen);
+		manifest.Scenes.Add(Uid(Body));
+		return manifest;
+	}
+
 	// Two networked entities written into one scene instance, as a level holds them.
 	private static (Node3D A, Node3D B) PlaceTwoInALevel(Node branch)
 	{
@@ -513,6 +680,13 @@ public class ForgeNetworkSessionTests
 		level.AddChild(b);
 		branch.AddChild(level);
 		return (a, b);
+	}
+
+	// Below the ranges the system sets aside for itself, where a port may not bind: from 32768 on Linux, and from 49152
+	// on Windows, which excludes whole blocks of it.
+	private static int TestPort()
+	{
+		return 20000 + (int)(GD.Randi() % 12000);
 	}
 
 	private static string Uid(string path)
@@ -556,7 +730,7 @@ public class ForgeNetworkSessionTests
 
 		public Pair(ForgeNetworkManifest serverManifest, ForgeNetworkManifest clientManifest, bool withPlayer = true)
 		{
-			int port = 30000 + (int)(GD.Randi() % 20000);
+			int port = TestPort();
 			string suffix = Guid.NewGuid().ToString("N");
 
 			ServerBranch = new Node { Name = $"Server {suffix}" };

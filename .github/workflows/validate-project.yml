@@ -157,16 +157,25 @@ jobs:
       - name: Import assets
         run: godot --headless --import
 
-      # gdUnit4 reads GODOT_BIN from the environment; setup-godot exports the executable as GODOT.
+      # gdUnit4 reads GODOT_BIN from the environment; setup-godot exports the executable as GODOT. It's wrapped because
+      # the adapter shows nothing of Godot's output, so a crash would leave only an exit code.
       - name: Test
         id: dotnet-test
         run: |
-          export GODOT_BIN="$GODOT"
+          mkdir -p TestResults
+          printf '#!/bin/bash\nexec "%s" "$@" > >(tee -a "%s") 2>&1\n' \
+            "$GODOT" "$PWD/TestResults/godot-output.log" > "$RUNNER_TEMP/godot-logged"
+          chmod +x "$RUNNER_TEMP/godot-logged"
+          export GODOT_BIN="$RUNNER_TEMP/godot-logged"
           dotnet test "Gamesmiths.Forge.Godot.csproj" \
             --settings .runsettings.ci \
             --no-build \
             --results-directory TestResults \
             --logger "trx;LogFileName=test-results.trx"
+
+      - name: Show Godot's output
+        if: ${{ failure() && steps.dotnet-test.outcome == 'failure' }}
+        run: tail -n 200 TestResults/godot-output.log
 
       - name: Test report
       # Skipped on fork PRs for the same reason as the editor test report above.

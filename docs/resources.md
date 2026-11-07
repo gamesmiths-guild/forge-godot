@@ -60,6 +60,7 @@ Describes all aspects of an effect: what it does and how it behaves.
 - `CanStack`, `StackPolicy`, etc.: How multiple applications interact.
 - `Cues` (Array\<ForgeCue\>): Audio/visual feedback links.
 - `SnapshotLevel` (bool): If the effect's level is fixed at application time.
+- `Visibility` (EffectVisibility): Who hears about the effect while it's active on a networked entity: Public, Owner Only, Server Only, or Default for the project's setting. See [Effects on a client](networking.md#effects-on-a-client).
 - `EffectTags` (ForgeTagContainer?): Identity tags for the effect itself. **Never granted to the target** — they classify the effect so `ForgeEffectQuery` can select it by category. The rule: granted tags (a ModifierTags component) for entity state, effect tags for identity.
 
 **Usage:**

@@ -12,6 +12,7 @@ using Gamesmiths.Forge.Effects.Magnitudes;
 using Gamesmiths.Forge.Effects.Modifiers;
 using Gamesmiths.Forge.Effects.Periodic;
 using Gamesmiths.Forge.Effects.Stacking;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Calculators;
 using Gamesmiths.Forge.Godot.Resources.Components;
 using Gamesmiths.Forge.Godot.Resources.Magnitudes;
@@ -215,6 +216,14 @@ public partial class ForgeEffectData : Resource
 	[Export]
 	public bool SuppressStackingCues { get; set; }
 
+	/// <summary>
+	/// Gets or sets who hears about this effect while it's active on a networked entity. Default goes by the project
+	/// setting <see cref="ForgeSettings.DefaultEffectVisibilitySetting"/>.
+	/// </summary>
+	[ExportGroup("Networking")]
+	[Export]
+	public EffectVisibility Visibility { get; set; }
+
 	public EffectData GetEffectData()
 	{
 		if (_data.HasValue)
@@ -390,7 +399,8 @@ public partial class ForgeEffectData : Resource
 			SuppressStackingCues,
 			[.. executions],
 			[.. cues],
-			EffectTags?.GetTagContainer());
+			EffectTags?.GetTagContainer(),
+			Visibility);
 
 		return _data.Value;
 	}
