@@ -566,15 +566,17 @@ public class ForgeNetworkSessionTests
 		Apply(mine, ServerOnlyGrants);
 		Apply(theirs, ServerOnlyGrants);
 
+		// A public effect travels in the same entry as anything that leaked, so once it's here, a leak would be too.
+		Apply(mine, Fallen);
+		Apply(theirs, Fallen);
+
 		await Pair.RunUntil(
 			() => Mirrored(pair, mine)?.EffectsManager.GetActiveEffects().Any() == true
-				&& Mirrored(pair, theirs) is not null,
+				&& Mirrored(pair, theirs)?.EffectsManager.GetActiveEffects().Any() == true,
 			frames: 300);
-		await Pair.RunUntil(() => false, frames: 20);
 
-		Mirrored(pair, mine)!.EffectsManager.GetActiveEffects()
-			.Should().ContainSingle().Which.Effect!.EffectData.Name.Should().Be("Dash Cooldown");
-		Mirrored(pair, theirs)!.EffectsManager.GetActiveEffects().Should().BeEmpty("it's another's, and owner-only");
+		EffectNames(Mirrored(pair, mine)!).Should().Equal("Dash Cooldown", "Fallen");
+		EffectNames(Mirrored(pair, theirs)!).Should().Equal(["Fallen"], "the cooldown is another's and owner-only");
 	}
 
 	[TestCase]
@@ -654,9 +656,14 @@ public class ForgeNetworkSessionTests
 		return pair.Client.Session?.Mirror?.Find(entity.NetworkId) as ForgeEntity;
 	}
 
+	private static string[] EffectNames(ForgeEntity entity)
+	{
+		return [.. entity.EffectsManager.GetActiveEffects().Select(x => x.Effect!.EffectData.Name)];
+	}
+
 	private static ForgeNetworkManifest EffectsManifest()
 	{
-		ForgeNetworkManifest manifest = Manifest(Burning, OwnerOnlyCooldown, Fallen);
+		ForgeNetworkManifest manifest = Manifest(Burning, OwnerOnlyCooldown, ServerOnlyGrants, Fallen);
 		manifest.Scenes.Add(Uid(Body));
 		return manifest;
 	}

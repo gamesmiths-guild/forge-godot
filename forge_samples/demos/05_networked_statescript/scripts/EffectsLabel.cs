@@ -3,6 +3,7 @@
 using System.Globalization;
 using System.Text;
 using Gamesmiths.Forge.Effects;
+using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
@@ -65,7 +66,7 @@ public partial class EffectsLabel : Label3D
 
 	private bool IsHeard(EffectVisibility visibility)
 	{
-		return visibility switch
+		return (visibility == EffectVisibility.Default ? ForgeSettings.DefaultEffectVisibility : visibility) switch
 		{
 			EffectVisibility.ServerOnly => false,
 			EffectVisibility.OwnerOnly => _entity!.NetworkOwner == _session?.LocalPeer,

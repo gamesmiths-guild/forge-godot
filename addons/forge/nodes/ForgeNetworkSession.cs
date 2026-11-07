@@ -330,7 +330,8 @@ public partial class ForgeNetworkSession : Node
 
 	/// <summary>
 	/// Says how the custom data of a type that effects are applied with travels, so a client's copy of the effect holds
-	/// it too. Both ends register the same ones, before hosting or joining, or the client is refused.
+	/// it too. Both ends register the same ones, before hosting or joining. A client with other keys is refused, and
+	/// only the keys are compared.
 	/// </summary>
 	/// <typeparam name="TData">The type effects are applied with.</typeparam>
 	/// <param name="key">What it's known by on both ends.</param>
@@ -338,6 +339,13 @@ public partial class ForgeNetworkSession : Node
 	/// <param name="read">Reads the data, following the same sequence of calls as <paramref name="write"/>.</param>
 	public void RegisterEffectContext<TData>(string key, Action<BitWriter, TData> write, Func<BitReader, TData> read)
 	{
+		if (Session is not null)
+		{
+			GD.PushWarning(
+				$"Forge: {Name} is in a session already, so the effect context '{key}' only counts from the next " +
+				"one. Register it before hosting or joining.");
+		}
+
 		_effectContexts[key] = EffectContextCodec.For(write, read);
 	}
 
