@@ -272,7 +272,8 @@ public partial class ForgePluginLoader : EditorPlugin
 
 		if (!ProjectSettings.HasSetting("autoload/Forge Bootstrap"))
 		{
-			ProjectSettings.SetSetting("autoload/Forge Bootstrap", AutoloadPath);
+			// The leading * is what the Autoload tab's Enable checkbox reads.
+			ProjectSettings.SetSetting("autoload/Forge Bootstrap", $"*{AutoloadPath}");
 			ProjectSettings.Save();
 		}
 	}
