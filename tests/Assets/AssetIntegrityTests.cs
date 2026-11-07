@@ -16,6 +16,11 @@ namespace Gamesmiths.Forge.Godot.Tests.Assets;
 [TestSuite]
 public class AssetIntegrityTests
 {
+	// Godot aborts when a cached resource's C# wrapper is collected and its cache hands the resource out again before
+	// the finalizer runs (godotengine/godot#83762). Loading everything and letting go of it, with later files holding
+	// earlier ones, is just that, so the wrappers stay alive for the rest of the test run.
+	private static readonly List<Resource> _held = [];
+
 	/// <summary>
 	/// Gets one case per committed resource file.
 	/// </summary>
@@ -33,7 +38,10 @@ public class AssetIntegrityTests
 	[RequireGodotRuntime]
 	public void Every_resource_loads(string resourcePath)
 	{
-		ResourceLoader.Load(resourcePath).Should().NotBeNull($"'{resourcePath}' has to load.");
+		Resource resource = ResourceLoader.Load(resourcePath);
+
+		resource.Should().NotBeNull($"'{resourcePath}' has to load.");
+		_held.Add(resource);
 	}
 
 	[TestCase]
@@ -44,6 +52,7 @@ public class AssetIntegrityTests
 		PackedScene scene = ResourceLoader.Load<PackedScene>(scenePath);
 
 		scene.Should().NotBeNull($"'{scenePath}' has to load.");
+		_held.Add(scene);
 
 		// CanInstantiate only reports that the scene has state; it never builds the tree, so it cannot see a script
 		// that throws while constructing. Actually instantiating is the point of this test.
