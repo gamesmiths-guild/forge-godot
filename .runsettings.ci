@@ -6,7 +6,7 @@
 <RunSettings>
   <RunConfiguration>
     <MaxCpuCount>1</MaxCpuCount>
-    <TestSessionTimeout>900000</TestSessionTimeout>
+    <TestSessionTimeout>300000</TestSessionTimeout>
   </RunConfiguration>
   <GdUnit4>
     <Parameters>--headless</Parameters>
