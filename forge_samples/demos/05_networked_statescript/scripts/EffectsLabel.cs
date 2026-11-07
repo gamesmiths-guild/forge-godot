@@ -20,6 +20,7 @@ public partial class EffectsLabel : Label3D
 
 	private ForgeEntity? _entity;
 	private ForgeNetworkSession? _session;
+	private EffectVisibility _defaultVisibility;
 
 	/// <inheritdoc/>
 	public override void _Ready()
@@ -28,6 +29,7 @@ public partial class EffectsLabel : Label3D
 
 		_entity = GetNode<ForgeEntity>("%Forge Entity");
 		_session = ForgeNetworkSession.Of(this);
+		_defaultVisibility = ForgeSettings.DefaultEffectVisibility;
 	}
 
 	/// <inheritdoc/>
@@ -66,7 +68,7 @@ public partial class EffectsLabel : Label3D
 
 	private bool IsHeard(EffectVisibility visibility)
 	{
-		return (visibility == EffectVisibility.Default ? ForgeSettings.DefaultEffectVisibility : visibility) switch
+		return (visibility == EffectVisibility.Default ? _defaultVisibility : visibility) switch
 		{
 			EffectVisibility.ServerOnly => false,
 			EffectVisibility.OwnerOnly => _entity!.NetworkOwner == _session?.LocalPeer,

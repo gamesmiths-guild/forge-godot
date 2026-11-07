@@ -26,6 +26,10 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [GlobalClass]
 public partial class ForgeNetworkManifest : Resource
 {
+	// A registered effect is found again by equality with its data. A resource freed and loaded again would build data
+	// that isn't equal, so an effect the server applied later wouldn't be listed any more.
+	private static readonly HashSet<ForgeEffectData> _listedEffects = [];
+
 	/// <summary>
 	/// Gets or sets the UIDs of the project's effects (<see cref="ForgeEffectData"/>).
 	/// </summary>
@@ -85,6 +89,7 @@ public partial class ForgeNetworkManifest : Resource
 		{
 			if (Load<ForgeEffectData>(uid, "effect") is ForgeEffectData effect)
 			{
+				_listedEffects.Add(effect);
 				registry.Register(AssetKind.Effect, uid, effect.GetEffectData());
 			}
 		}
