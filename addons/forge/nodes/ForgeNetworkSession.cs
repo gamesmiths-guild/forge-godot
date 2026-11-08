@@ -59,8 +59,12 @@ public enum NetworkMode
 /// server: their bodies, and everything else the server sent of them at the same moment, so an animation starts as its
 /// body moves.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
-/// arrives before the server needs it. The clock jumps to the target when it's off by more than
-/// <see cref="LeadToleranceTicks"/>.</para>
+/// arrives before the server needs it. A <see cref="ClockDilation"/> steers it a tick at a time: a physics step
+/// simulates two ticks to catch up or none to wait, and the clock jumps only when it's far off.</para>
+/// <para>A client predicts its own player, the networked entity the server spawns for its peer: the entity is made live
+/// rather than a mirror, and the session advances it through each tick the clock simulates, ahead of the server, so it
+/// answers this machine's input at once. Each state packet puts it right where the server's word for its tick differs,
+/// and its movement component eases what a correction moved.</para>
 /// <para>The <see cref="LatencyMs"/>, <see cref="JitterMs"/> and <see cref="LossPercent"/> exports condition this
 /// machine's outgoing packets, to try the game under a poor link without leaving the desk.</para>
 /// </remarks>
@@ -84,6 +88,8 @@ public partial class ForgeNetworkSession : Node
 	private readonly Dictionary<ForgeEntity, Node> _spawnedRoots = [];
 	private readonly Dictionary<string, EffectContextCodec> _effectContexts = [];
 	private readonly ReplicationHost _host;
+	private readonly ClockDilation _dilation = new();
+	private readonly Dictionary<IForgeEntity, BodyState> _shownBefore = [];
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
 	private InterpolationClock? _shown;
@@ -202,10 +208,10 @@ public partial class ForgeNetworkSession : Node
 	public int LeadMarginTicks { get; set; } = 2;
 
 	/// <summary>
-	/// Gets or sets how far a client's clock may drift from its target before it jumps to it.
+	/// Gets or sets how far a client's clock may drift from its target, in ticks, before it's steered toward it.
 	/// </summary>
 	[Export]
-	public int LeadToleranceTicks { get; set; } = 2;
+	public int LeadToleranceTicks { get; set; } = 1;
 
 	/// <summary>
 	/// Gets or sets the latency the conditioner adds to this machine's outgoing packets, one way, in milliseconds.
@@ -280,6 +286,21 @@ public partial class ForgeNetworkSession : Node
 	/// Gets how many unreliable packets the conditioner has lost on this machine.
 	/// </summary>
 	public long PacketsLost => _conditioned?.LostPackets ?? 0;
+
+	/// <summary>
+	/// Gets how many state packets agreed with what a client predicted of its player.
+	/// </summary>
+	public long Confirmations => Session?.Mirror?.Confirmations ?? 0;
+
+	/// <summary>
+	/// Gets how many times a state packet put a client's player right.
+	/// </summary>
+	public long Corrections => Session?.Mirror?.Corrections ?? 0;
+
+	/// <summary>
+	/// Gets how many ticks the last correction rolled back and ran again.
+	/// </summary>
+	public int LastCorrectionTicks => Session?.Mirror?.LastCorrectionTicks ?? 0;
 
 	/// <summary>
 	/// Gets the bytes sent per second over the last second, payloads only.
@@ -451,7 +472,9 @@ public partial class ForgeNetworkSession : Node
 			ForgeSettings.GetInputActionSet());
 		Session.Mirror!.Host = _host;
 		Session.Mirror.HoldsUntilShown = true;
+		Session.Mirror.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
 		Session.Mirror.Spawned += OnMirrorSpawned;
+		Session.Mirror.Corrected += OnCorrected;
 		_shown = new InterpolationClock(Clock);
 		ProcessPhysicsPriority = ClientPriority;
 		Mode = NetworkMode.Client;
@@ -492,6 +515,7 @@ public partial class ForgeNetworkSession : Node
 		if (Session.Mirror is ReplicationClient mirror)
 		{
 			mirror.Spawned -= OnMirrorSpawned;
+			mirror.Corrected -= OnCorrected;
 			mirror.Clear();
 		}
 
@@ -589,7 +613,9 @@ public partial class ForgeNetworkSession : Node
 			_conditioned.Update(now);
 		}
 
+		NoteShownBodies();
 		Session.Update(now);
+		_shownBefore.Clear();
 		UpdateStats(now);
 
 		if (IsServer)
@@ -605,18 +631,7 @@ public partial class ForgeNetworkSession : Node
 			return;
 		}
 
-		SteerClock(now);
-
-		// A clock steered back would send ticks older than the window's newest; those go again from the new tick.
-		if (Session.Input.NewestTick > Clock.Tick)
-		{
-			Session.Input.Clear();
-		}
-
-		if (LocalPlayer?.Input is EntityInput input)
-		{
-			Session.SendInput(new InputCommand(Clock.Tick, input.Current));
-		}
+		PredictStep(now);
 	}
 
 	internal void OnEntityReady(ForgeEntity entity)
@@ -749,12 +764,21 @@ public partial class ForgeNetworkSession : Node
 
 	private static void PlaceBody(IForgeEntity entity, in BodyState state)
 	{
+		// A body the server's rounding can't tell from where it already stands, such as one the scene placed and
+		// nothing moved, stays exactly there: rounded, it would lean or sit a step off from where the server has it.
+		bool stands = CaptureBody(entity) is BodyState shown
+			&& BodyCodec.Quantize(shown with { Velocity = state.Velocity, Grounded = state.Grounded })
+				== BodyCodec.Quantize(state);
+
 		if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D))
 		{
-			var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
-			node3D.GlobalTransform = new Transform3D(
-				new Basis(rotation.Normalized()) * Basis.FromScale(node3D.GlobalBasis.Scale),
-				new Vector3(state.Position.X, state.Position.Y, state.Position.Z));
+			if (!stands)
+			{
+				var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
+				node3D.GlobalTransform = new Transform3D(
+					new Basis(rotation.Normalized()) * Basis.FromScale(node3D.GlobalBasis.Scale),
+					new Vector3(state.Position.X, state.Position.Y, state.Position.Z));
+			}
 
 			if (node3D is CharacterBody3D body)
 			{
@@ -766,8 +790,11 @@ public partial class ForgeNetworkSession : Node
 
 		if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D))
 		{
-			node2D.GlobalPosition = new Vector2(state.Position.X, state.Position.Y);
-			node2D.GlobalRotation = 2f * MathF.Atan2(state.Rotation.Z, state.Rotation.W);
+			if (!stands)
+			{
+				node2D.GlobalPosition = new Vector2(state.Position.X, state.Position.Y);
+				node2D.GlobalRotation = 2f * MathF.Atan2(state.Rotation.Z, state.Rotation.W);
+			}
 
 			if (node2D is CharacterBody2D body)
 			{
@@ -837,7 +864,8 @@ public partial class ForgeNetworkSession : Node
 	private void Register(ForgeEntity entity, int sceneIndex)
 	{
 		entity.Replicator = this;
-		Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner));
+		entity.SeedFor(Session!.SessionSeed);
+		Session.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner));
 
 		if (entity.NetworkOwner == LocalPeer && entity.Input is not null && LocalPlayer is null)
 		{
@@ -916,18 +944,73 @@ public partial class ForgeNetworkSession : Node
 		return Mode == NetworkMode.Client && Session!.State == SessionState.Ready;
 	}
 
-	private void SteerClock(double now)
+	// Simulates the ticks the clock's steering gives this step, predicting this client's own entities through each and
+	// sending each tick's input, and moves the clock past them. A node with a clock override doesn't steer.
+	private void PredictStep(double now)
 	{
-		if (!Session!.ClockSync.HasEstimate || ClockOverride is not null)
+		_dilation.MarginTicks = LeadMarginTicks;
+		_dilation.ToleranceTicks = LeadToleranceTicks;
+		DilatedStep step = ClockOverride is null
+			? _dilation.Steer(Clock.Tick, Session!.ClockSync, now, Session.ServerInputDepth)
+			: new DilatedStep(Clock.Tick, 1);
+
+		// A clock steered back would send ticks older than the window's newest; those go again from the new tick.
+		if (Session!.Input.NewestTick > step.FirstTick)
+		{
+			Session.Input.Clear();
+		}
+
+		for (long tick = step.FirstTick; tick < step.NextTick; tick++)
+		{
+			Session.Mirror!.Predict(tick, Clock.FixedDeltaTime);
+
+			if (LocalPlayer?.Input is EntityInput input)
+			{
+				Session.SendInput(new InputCommand(tick, input.Current));
+			}
+		}
+
+		if (ClockOverride is null && step.NextTick != Clock.Tick + 1)
+		{
+			ForgeManagers.Instance.SetNextTick(step.NextTick);
+		}
+	}
+
+	// Where the predicted entities' bodies are before the packets arrive, for a correction to ease from.
+	private void NoteShownBodies()
+	{
+		if (Session?.Mirror is not ReplicationClient mirror)
 		{
 			return;
 		}
 
-		long target = Session.ClockSync.TargetClientTick(now, LeadMarginTicks);
-
-		if (Math.Abs(target - Clock.Tick) > LeadToleranceTicks)
+		foreach (IForgeEntity entity in mirror.Predicted)
 		{
-			ForgeManagers.Instance.SetNextTick(target);
+			if (entity.Mover is IEntityMover mover)
+			{
+				_shownBefore[entity] = mover.CaptureState();
+			}
+		}
+	}
+
+	private void OnCorrected(IForgeEntity entity)
+	{
+		if (!_shownBefore.TryGetValue(entity, out BodyState shown) || entity.Mover is not IEntityMover mover)
+		{
+			return;
+		}
+
+		NumericsVector3 moved = shown.Position - mover.CaptureState().Position;
+
+		switch (mover)
+		{
+			case ForgeCharacterMovement3D movement:
+				movement.EaseCorrection(new Vector3(moved.X, moved.Y, moved.Z));
+				break;
+
+			case ForgeCharacterMovement2D movement:
+				movement.EaseCorrection(new Vector2(moved.X, moved.Y));
+				break;
 		}
 	}
 
@@ -961,29 +1044,14 @@ public partial class ForgeNetworkSession : Node
 	{
 		public IForgeEntity? Spawn(NetworkEntityId id, int sceneIndex, PeerId owner)
 		{
-			if (!session.Session!.Registry.TryGet(AssetKind.Scene, sceneIndex, out PackedScene? scene) || scene is null)
-			{
-				return null;
-			}
+			return Make(id, sceneIndex, owner, predicted: false, body: null);
+		}
 
-			Node instance = scene.Instantiate();
-
-			if (!ForgeEntityBridge.TryGetEntity(instance, out IForgeEntity? found) || found is not ForgeEntity entity)
-			{
-				GD.PushWarning($"Forge: the networked scene {scene.ResourcePath} has no ForgeEntity at its root.");
-				instance.Free();
-				return null;
-			}
-
-			entity.NetworkId = id;
-			entity.NetworkOwner = owner.Value;
-			entity.IsMirror = true;
-			entity.Replicator = session;
-			session._spawnedRoots[entity] = instance;
-			Node parent = session.SpawnParent ?? session.GetTree().CurrentScene ?? session.GetTree().Root;
-			parent.AddChild(instance, forceReadableName: true);
-			ShowOnFrames(entity);
-			return entity;
+		// This client's own entity is made as the scene makes it, setup included, where the server's body was as the
+		// server registered it, so its setup runs where the server's did.
+		public IForgeEntity? SpawnPredicted(NetworkEntityId id, int sceneIndex, PeerId owner, BodyState? body)
+		{
+			return Make(id, sceneIndex, owner, predicted: true, body);
 		}
 
 		public void Despawn(IForgeEntity entity)
@@ -1016,6 +1084,70 @@ public partial class ForgeNetworkSession : Node
 			}
 
 			root.QueueFree();
+		}
+
+		// A body a scene's root is, placed in global space under the parent it's about to join.
+		private static void PlaceBefore(Node instance, IForgeEntity entity, Node parent, in BodyState state)
+		{
+			if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D) && node3D == instance)
+			{
+				var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
+				var global = new Transform3D(
+					new Basis(rotation.Normalized()) * Basis.FromScale(node3D.Basis.Scale),
+					new Vector3(state.Position.X, state.Position.Y, state.Position.Z));
+				node3D.Transform = parent is Node3D parent3D
+					? parent3D.GlobalTransform.AffineInverse() * global
+					: global;
+			}
+			else if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D) && node2D == instance)
+			{
+				var global = new Transform2D(
+					2f * MathF.Atan2(state.Rotation.Z, state.Rotation.W),
+					new Vector2(state.Position.X, state.Position.Y));
+				node2D.Transform = parent is Node2D parent2D
+					? parent2D.GlobalTransform.AffineInverse() * global
+					: global;
+			}
+		}
+
+		private ForgeEntity? Make(NetworkEntityId id, int sceneIndex, PeerId owner, bool predicted, BodyState? body)
+		{
+			if (!session.Session!.Registry.TryGet(AssetKind.Scene, sceneIndex, out PackedScene? scene) || scene is null)
+			{
+				return null;
+			}
+
+			Node instance = scene.Instantiate();
+
+			if (!ForgeEntityBridge.TryGetEntity(instance, out IForgeEntity? found) || found is not ForgeEntity entity)
+			{
+				GD.PushWarning($"Forge: the networked scene {scene.ResourcePath} has no ForgeEntity at its root.");
+				instance.Free();
+				return null;
+			}
+
+			entity.NetworkId = id;
+			entity.NetworkOwner = owner.Value;
+			entity.IsMirror = !predicted;
+			entity.IsPredicted = predicted;
+			entity.Replicator = session;
+			session._spawnedRoots[entity] = instance;
+			Node parent = session.SpawnParent ?? session.GetTree().CurrentScene ?? session.GetTree().Root;
+
+			if (body is BodyState state)
+			{
+				PlaceBefore(instance, entity, parent, state);
+			}
+
+			parent.AddChild(instance, forceReadableName: true);
+			entity.SeedFor(session.Session.SessionSeed);
+
+			if (!predicted)
+			{
+				ShowOnFrames(entity);
+			}
+
+			return entity;
 		}
 	}
 }

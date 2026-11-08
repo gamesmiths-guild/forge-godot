@@ -75,6 +75,14 @@ public partial class ForgeAbilityData : Resource
 	[Export]
 	public ForgeInputActivationData? InputActivationData { get; set; }
 
+	/// <summary>
+	/// Gets or sets a value indicating whether only the server runs the ability. In a session, the client that owns the
+	/// entity doesn't predict it, and shows its graph as everyone else does.
+	/// </summary>
+	[ExportGroup("Networking")]
+	[Export]
+	public bool ServerOnly { get; set; }
+
 	[ExportGroup("Tags")]
 	[Export]
 	public ForgeTagContainer? AbilityTags { get; set; }
@@ -137,7 +145,8 @@ public partial class ForgeAbilityData : Resource
 			TargetRequiredTags?.GetTagContainer(),
 			TargetBlockedTags?.GetTagContainer(),
 			() => AbilityBehavior?.GetBehavior()!,
-			GetInputBinding());
+			GetInputBinding(),
+			ServerOnly);
 		return _data.Value;
 	}
 

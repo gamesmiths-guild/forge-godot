@@ -45,6 +45,9 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 	private TagContainer? _blockingTags;
 	private bool _grounded;
 	private bool _reportedMissingSpeed;
+	private Vector2 _easing;
+	private Vector2 _visualRest;
+	private float _easingSpeed;
 
 	/// <summary>
 	/// Gets or sets the attribute the speed is read from, as <c>Set.Attribute</c>. Its decimal places give its unit, so
@@ -93,6 +96,26 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 	/// </summary>
 	[Export]
 	public bool FaceAim { get; set; }
+
+	/// <summary>
+	/// Gets or sets what shows the body, a child of it, which eases from where it was shown when the client predicting
+	/// the entity puts the body right, rather than jumping with it. Unset, a correction shows at once.
+	/// </summary>
+	[Export]
+	public Node2D? Visual { get; set; }
+
+	/// <summary>
+	/// Gets or sets how long a correction takes to ease out, in seconds.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1,0.01")]
+	public float CorrectionEasing { get; set; } = 0.15f;
+
+	/// <summary>
+	/// Gets or sets how far a correction may move the body, in pixels, and still ease: one that moves it further, as a
+	/// respawn does, shows at once.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1000,1,or_greater")]
+	public float CorrectionSnapDistance { get; set; } = 200f;
 
 	/// <summary>
 	/// Gets or sets the input action that moves the body toward -X.
@@ -148,6 +171,20 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 		_reportedMissingSpeed = false;
 		_grounded = body.IsOnFloor();
 		_entity.Mover = this;
+	}
+
+	/// <inheritdoc/>
+	public override void _Process(double delta)
+	{
+		base._Process(delta);
+
+		if (_easing == Vector2.Zero || Visual is null)
+		{
+			return;
+		}
+
+		_easing = _easing.MoveToward(Vector2.Zero, _easingSpeed * (float)delta);
+		ShowEasing();
 	}
 
 	/// <inheritdoc/>
@@ -220,6 +257,35 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 		_grounded = _body.IsOnFloor();
 	}
 
+	/// <summary>
+	/// Eases what a correction moved: <see cref="Visual"/> starts where it was shown, offset from the body, and comes
+	/// back to the body over <see cref="CorrectionEasing"/>.
+	/// </summary>
+	/// <param name="moved">Where the body was shown before the correction, from where it is now, in global space.
+	/// </param>
+	public void EaseCorrection(Vector2 moved)
+	{
+		if (Visual is null || CorrectionEasing <= 0)
+		{
+			return;
+		}
+
+		if (_easing == Vector2.Zero)
+		{
+			_visualRest = Visual.Position;
+		}
+
+		_easing += moved;
+
+		if (_easing.Length() > CorrectionSnapDistance)
+		{
+			_easing = Vector2.Zero;
+		}
+
+		_easingSpeed = _easing.Length() / CorrectionEasing;
+		ShowEasing();
+	}
+
 	/// <inheritdoc/>
 	public BodyState CaptureState()
 	{
@@ -286,6 +352,13 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 		}
 	}
 #endif
+
+	private void ShowEasing()
+	{
+		Visual!.Position = _visualRest + (Visual!.GetParent() is not Node2D parent
+			? _easing
+			: parent.GlobalTransform.BasisXformInv(_easing));
+	}
 
 	private float ReadSpeed(ForgeEntity entity)
 	{

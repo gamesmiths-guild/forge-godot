@@ -61,7 +61,8 @@ public class PlayAnimationOneShotNode(string playerPath = "", string animation =
 	/// <inheritdoc/>
 	protected override void Execute(GraphContext graphContext)
 	{
-		if (!_inputs.TryGetAnimationPlayer(
+		// A correction runs again a tick that played the animation already.
+		if (graphContext.IsCorrecting || !_inputs.TryGetAnimationPlayer(
 			graphContext,
 			InputProperties[EntityInput].BoundName,
 			out AnimationPlayer? player))

@@ -57,6 +57,12 @@ public partial class ForgeEntity : Node, IForgeEntity
 	/// </summary>
 	public bool IsMirror { get; internal set; }
 
+	/// <summary>
+	/// Gets a value indicating whether the entity is a client's own, which it predicts: the session advances it ahead
+	/// of the server, from this machine's input, and puts it right as the server's word for each tick arrives.
+	/// </summary>
+	public bool IsPredicted { get; internal set; }
+
 	public EntityAttributes Attributes { get; set; } = null!;
 
 	public EntityTags Tags { get; set; } = null!;
@@ -174,12 +180,13 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._PhysicsProcess(delta);
 
 		// ForgeBootstrap already began this tick for every entity, before any entity advanced. A world history advances
-		// its entities itself, and a mirror doesn't advance: only its copies of the server's graphs run.
+		// its entities itself, the session its predicted ones, and a mirror doesn't advance: only its copies of the
+		// server's graphs run.
 		if (IsMirror)
 		{
 			Abilities.FixedUpdateAbilities(delta);
 		}
-		else if (WorldHistory is null)
+		else if (WorldHistory is null && !IsPredicted)
 		{
 			EntitySimulation.Advance(this, delta);
 		}
@@ -216,6 +223,14 @@ public partial class ForgeEntity : Node, IForgeEntity
 				Callable.From(() => Teardown(entity)).CallDeferred();
 			}
 		}
+	}
+
+	// A networked entity rolls from the session's seed and its id, so every machine that simulates it rolls the same.
+	internal void SeedFor(ulong sessionSeed)
+	{
+		var random = new DeterministicRandom(unchecked(sessionSeed ^ (NetworkId.Value * 0xD1B54A32D192ED03UL)));
+		random.BeginTick(ForgeManagers.Instance.Clock.Tick);
+		Random = random;
 	}
 
 	private static void Teardown(ForgeEntity entity)

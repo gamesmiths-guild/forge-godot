@@ -58,7 +58,9 @@ public class PlayAudioOneShotNode(string playerPath = "") : ActionNode
 	/// <inheritdoc/>
 	protected override void Execute(GraphContext graphContext)
 	{
-		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
+		// A correction runs again a tick that played the sound already.
+		if (graphContext.IsCorrecting
+			|| !_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
 		{
 			return;
 		}

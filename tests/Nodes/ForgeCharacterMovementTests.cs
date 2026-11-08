@@ -370,6 +370,83 @@ public class ForgeCharacterMovementTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_correction_eases_the_visual_back_to_the_body_and_a_far_one_shows_at_once()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			AddCharacter3D(
+				world,
+				CharacterBody3D.MotionModeEnum.Floating,
+				out CharacterBody3D body,
+				out ForgeCharacterMovement3D movement);
+			var visual = new Node3D { Position = new Vector3(0, 0.8f, 0) };
+			body.AddChild(visual);
+			body.Rotation = new Vector3(0, Mathf.Pi / 2, 0);
+			movement.Visual = visual;
+			movement.CorrectionEasing = 0.2f;
+
+			movement.EaseCorrection(new Vector3(1, 0, 0));
+
+			visual.GlobalPosition.X
+				.Should().BeApproximately(body.GlobalPosition.X + 1, 1e-4f, "it starts where it was shown");
+
+			movement._Process(0.1);
+
+			visual.GlobalPosition.X.Should().BeApproximately(body.GlobalPosition.X + 0.5f, 1e-4f);
+
+			movement._Process(0.2);
+
+			visual.Position.Should().Be(new Vector3(0, 0.8f, 0), "it ends back on the body");
+
+			movement.EaseCorrection(new Vector3(5, 0, 0));
+
+			visual.Position.Should().Be(new Vector3(0, 0.8f, 0), "a correction past the snap distance shows at once");
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_2D_correction_eases_the_visual_back_to_the_body()
+	{
+		var world = new Node2D();
+		Root.AddChild(world);
+
+		try
+		{
+			AddCharacter2D(
+				world,
+				CharacterBody2D.MotionModeEnum.Floating,
+				out CharacterBody2D body,
+				out ForgeCharacterMovement2D movement);
+			var visual = new Node2D();
+			body.AddChild(visual);
+			movement.Visual = visual;
+			movement.CorrectionEasing = 0.2f;
+
+			movement.EaseCorrection(new Vector2(0, 40));
+			movement._Process(0.1);
+
+			visual.Position.Y.Should().BeApproximately(20f, 1e-3f, "a correction of a few dozen pixels eases");
+
+			movement._Process(0.2);
+
+			visual.Position.Should().Be(Vector2.Zero);
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
 	private static ForgeEntity AddCharacter3D(
 		Node world,
 		CharacterBody3D.MotionModeEnum mode,
