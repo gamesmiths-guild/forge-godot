@@ -3,6 +3,7 @@
 #if TOOLS
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
@@ -75,6 +76,43 @@ public partial class StatescriptGraphEditorDock
 				regions.RemoveAt(i);
 			}
 		}
+	}
+
+	// The regions as deleting these frames and nodes leaves them: a deleted frame's region goes and its nodes stay, and
+	// a deleted node leaves its region, which goes once empty, so a later node given its id doesn't join it. Null when
+	// nothing changes.
+	private static GodotCollections.Array<StatescriptRegion>? RegionsAfterDeleting(
+		StatescriptGraph graph,
+		GodotCollections.Array<StringName> names,
+		List<string> deletedIds)
+	{
+		var deleted = new HashSet<int>();
+
+		foreach (StringName name in names)
+		{
+			if (TryGetRegionIndex(name, out int index) && index < graph.Regions.Count)
+			{
+				deleted.Add(index);
+			}
+		}
+
+		if (deleted.Count == 0 && !graph.Regions.Any(x => x.NodeIds.Any(deletedIds.Contains)))
+		{
+			return null;
+		}
+
+		GodotCollections.Array<StatescriptRegion> regions = CopyRegions(graph.Regions);
+
+		for (int i = regions.Count - 1; i >= 0; i--)
+		{
+			if (deleted.Contains(i))
+			{
+				regions.RemoveAt(i);
+			}
+		}
+
+		LeaveRegions(regions, deletedIds);
+		return regions;
 	}
 
 	private static bool TryGetRegionIndex(StringName frame, out int index)
@@ -222,38 +260,6 @@ public partial class StatescriptGraphEditorDock
 		RecordRegions(graph, regions, "Join Statescript Region");
 	}
 
-	// Deleting a frame deletes its region and keeps its nodes. Returns whether any of the names was a frame.
-	private bool DeleteRegionFrames(StatescriptGraph graph, GodotCollections.Array<StringName> names)
-	{
-		var deleted = new HashSet<int>();
-
-		foreach (StringName name in names)
-		{
-			if (TryGetRegionIndex(name, out int index) && index < graph.Regions.Count)
-			{
-				deleted.Add(index);
-			}
-		}
-
-		if (deleted.Count == 0)
-		{
-			return false;
-		}
-
-		GodotCollections.Array<StatescriptRegion> regions = CopyRegions(graph.Regions);
-
-		for (int i = regions.Count - 1; i >= 0; i--)
-		{
-			if (deleted.Contains(i))
-			{
-				regions.RemoveAt(i);
-			}
-		}
-
-		RecordRegions(graph, regions, "Delete Statescript Region");
-		return true;
-	}
-
 	private void RecordRegions(StatescriptGraph graph, GodotCollections.Array<StatescriptRegion> regions, string name)
 	{
 		GodotCollections.Array<StatescriptRegion> before = CopyRegions(graph.Regions);
@@ -297,7 +303,9 @@ public partial class StatescriptGraphEditorDock
 		{
 			StatescriptRegion region = graph.Regions[i];
 
-			if (region.Kind == NodeRegion.None)
+			// A region saved with only deleted nodes in it has nothing to frame.
+			if (region.Kind == NodeRegion.None
+				|| !region.NodeIds.Any(x => _graphEdit.GetNodeOrNull(x) is StatescriptGraphNode))
 			{
 				continue;
 			}
@@ -389,9 +397,10 @@ public partial class StatescriptGraphEditorDock
 		{
 			kinds = StatescriptGraphBuilder.NetworkKinds(graph);
 		}
-		catch (InvalidOperationException)
+		catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
 		{
-			// A graph that doesn't build yet keeps the kinds its node types declare.
+			// A graph that doesn't build yet, such as one with a setting its node can't take, keeps the kinds its node
+			// types declare.
 			return;
 		}
 

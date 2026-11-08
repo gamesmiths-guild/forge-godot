@@ -122,6 +122,86 @@ internal static class RegionTests
 	}
 
 	/// <summary>
+	/// Deleting a region's nodes takes them out of it, so a later node given a deleted id doesn't join it, and a region
+	/// left empty goes; one undo brings the nodes back in it.
+	/// </summary>
+	/// <param name="context">The test context.</param>
+	[EditorTest]
+	public static void Deleting_a_region_s_nodes_takes_them_out_of_it_and_one_undo_brings_them_back(
+		EditorTestContext context)
+	{
+		StatescriptGraph graph = context.OpenNewGraph();
+		string first = AddDebug(context);
+		string second = AddDebug(context);
+		Select(context, graph, first, second);
+		context.Dock.TestOnlyPressRegionMenu(ClientOnly);
+
+		context.Dock.TestOnlyDeleteNodes([first]);
+
+		Describe(graph).Should().Equal($"ClientOnly {second}");
+
+		context.Dock.TestOnlyDeleteNodes([second]);
+
+		graph.Regions.Should().BeEmpty();
+
+		UndoRedo history = context.HistoryFor(graph);
+		history.Undo();
+		context.Dock.TestOnlyRefreshNetworkView();
+
+		Describe(graph).Should().Equal($"ClientOnly {second}");
+		FramedNodes(context).Should().Equal(second);
+	}
+
+	/// <summary>
+	/// A frame deleted together with its nodes comes back with them in one undo.
+	/// </summary>
+	/// <param name="context">The test context.</param>
+	[EditorTest]
+	public static void A_frame_deleted_with_its_nodes_comes_back_with_them_in_one_undo(EditorTestContext context)
+	{
+		StatescriptGraph graph = context.OpenNewGraph();
+		string node = AddDebug(context);
+		Select(context, graph, node);
+		context.Dock.TestOnlyPressRegionMenu(ClientOnly);
+		StringName frame = context.Dock.TestOnlyRegionFrames().Keys.Single();
+
+		context.Dock.TestOnlyDeleteNodes([frame, node]);
+
+		graph.Regions.Should().BeEmpty();
+		graph.Nodes.Should().NotContain(x => x.NodeId == node);
+
+		context.HistoryFor(graph).Undo();
+		context.Dock.TestOnlyRefreshNetworkView();
+
+		graph.Nodes.Should().Contain(x => x.NodeId == node);
+		Describe(graph).Should().Equal($"ClientOnly {node}");
+		FramedNodes(context).Should().Equal(node);
+	}
+
+	/// <summary>
+	/// A graph whose node has a setting its type can't take still opens, with the kinds its node types declare.
+	/// </summary>
+	/// <param name="context">The test context.</param>
+	[EditorTest]
+	public static void A_graph_with_a_setting_its_node_can_t_take_still_opens(EditorTestContext context)
+	{
+		var graph = new StatescriptGraph { StatescriptName = "EditorTests" };
+		graph.EnsureEntryNode();
+		graph.Nodes.Add(new StatescriptNode
+		{
+			NodeId = "enable",
+			Title = nameof(SetNodeEnabledNode),
+			NodeType = StatescriptNodeType.Action,
+			RuntimeTypeName = typeof(SetNodeEnabledNode).FullName!,
+			CustomData = { ["aspect"] = "NoSuchAspect" },
+		});
+
+		System.Action open = () => context.Dock.OpenGraph(graph);
+
+		open.Should().NotThrow();
+	}
+
+	/// <summary>
 	/// A simulation node acting on the instance a scene node made shows presentation, and says why.
 	/// </summary>
 	/// <param name="context">The test context.</param>

@@ -213,8 +213,6 @@ public partial class StatescriptGraphEditorDock
 			return;
 		}
 
-		DeleteRegionFrames(graph, deletedNodes);
-
 		var nodesToDelete = new GodotCollections.Array<StatescriptNode>();
 		var deletedIds = new HashSet<string>();
 
@@ -236,8 +234,15 @@ public partial class StatescriptGraphEditorDock
 			deletedIds.Add(graphNode.NodeResource.NodeId);
 		}
 
+		GodotCollections.Array<StatescriptRegion>? regions = RegionsAfterDeleting(graph, deletedNodes, [.. deletedIds]);
+
 		if (nodesToDelete.Count == 0)
 		{
+			if (regions is not null)
+			{
+				RecordRegions(graph, regions, "Delete Statescript Region");
+			}
+
 			return;
 		}
 
@@ -252,6 +257,9 @@ public partial class StatescriptGraphEditorDock
 			}
 		}
 
+		// The regions change in the same action, so one undo brings the nodes back in the regions they were in.
+		GodotCollections.Array<StatescriptRegion> regionsBefore = CopyRegions(graph.Regions);
+
 		EditorUndoRedoUtils.Record(
 			_undoRedo,
 			nodesToDelete.Count > 1 ? "Delete Statescript Nodes" : "Delete Statescript Node",
@@ -260,9 +268,23 @@ public partial class StatescriptGraphEditorDock
 			{
 				undo.AddDoMethod(this, MethodName.DoDeleteNodes, graph, nodesToDelete, affectedConnections);
 				undo.AddUndoMethod(this, MethodName.UndoDeleteNodes, graph, nodesToDelete, affectedConnections);
+
+				if (regions is not null)
+				{
+					undo.AddDoMethod(this, MethodName.DoSetRegions, graph, regions);
+					undo.AddUndoMethod(this, MethodName.DoSetRegions, graph, regionsBefore);
+				}
 			},
 			execute: true,
-			fallback: () => DoDeleteNodes(graph, nodesToDelete, affectedConnections));
+			fallback: () =>
+			{
+				DoDeleteNodes(graph, nodesToDelete, affectedConnections);
+
+				if (regions is not null)
+				{
+					DoSetRegions(graph, regions);
+				}
+			});
 	}
 
 	private void DoDeleteNodes(
