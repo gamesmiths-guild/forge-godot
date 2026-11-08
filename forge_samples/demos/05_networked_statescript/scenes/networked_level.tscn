@@ -559,3 +559,4 @@ Status = NodePath("../Menu/Panel/Box/Status")
 
 [editable path="Stations/Dummies/Dummy1"]
 [editable path="Stations/Dummies/Dummy2"]
+[editable path="Stations/Brazier"]
