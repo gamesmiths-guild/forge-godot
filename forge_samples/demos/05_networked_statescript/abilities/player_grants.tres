@@ -55,11 +55,11 @@ script = ExtResource("14_modifier_tags")
 TagsToAdd = SubResource("Resource_wake_tags")
 metadata/_custom_type_script = "uid://dngf30hxy5go4"
 
-[sub_resource type="Resource" id="Resource_stack_limit"]
+[sub_resource type="Resource" id="Resource_initial_stack"]
 script = ExtResource("10_int")
 BaseValue = 1
 
-[sub_resource type="Resource" id="Resource_initial_stack"]
+[sub_resource type="Resource" id="Resource_stack_limit"]
 script = ExtResource("10_int")
 BaseValue = 1
 

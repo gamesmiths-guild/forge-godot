@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://c3hb4x0majsfa" path="res://addons/forge/resources/statescript/resolvers/ComparisonResolverResource.cs" id="9_comparison"]
 [ext_resource type="Script" uid="uid://bjc7ugk07pyar" path="res://addons/forge/resources/statescript/resolvers/ScenePickerResolverResource.cs" id="10_scene"]
 [ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="11_node_path"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="12_ln8va"]
 [ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="14_node_from_entity"]
 [ext_resource type="PackedScene" uid="uid://y6dw4xnr8s7x" path="res://forge_samples/demos/03_statescript/scenes/vfx/death_burst.tscn" id="15_death_burst"]
 

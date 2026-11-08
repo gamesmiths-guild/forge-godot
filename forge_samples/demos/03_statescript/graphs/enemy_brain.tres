@@ -25,6 +25,7 @@
 [ext_resource type="Script" uid="uid://bjc7ugk07pyar" path="res://addons/forge/resources/statescript/resolvers/ScenePickerResolverResource.cs" id="21_scene"]
 [ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="22_node_path"]
 [ext_resource type="PackedScene" uid="uid://y6dw4xnr8s7x" path="res://forge_samples/demos/03_statescript/scenes/vfx/death_burst.tscn" id="23_death_burst"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="24_ssbih"]
 
 [sub_resource type="Resource" id="Resource_iht5q"]
 script = ExtResource("4_connection")

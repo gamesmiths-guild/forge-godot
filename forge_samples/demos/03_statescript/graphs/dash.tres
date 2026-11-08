@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://d16o23uhdy3jd" path="res://addons/forge/resources/statescript/resolvers/CollisionMaskResolverResource.cs" id="8_collision_mask"]
 [ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="8_k4466"]
 [ext_resource type="Script" uid="uid://cm23kjjecsqkk" path="res://addons/forge/resources/statescript/resolvers/AddResolverResource.cs" id="10_qguum"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="11_njutq"]
 
 [sub_resource type="Resource" id="Resource_bg6f5"]
 script = ExtResource("4_connection")

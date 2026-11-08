@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://dka5mdnsvc3ou" path="res://addons/forge/resources/statescript/resolvers/NodePathResolverResource.cs" id="11_node_path"]
 [ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="12_tag"]
 [ext_resource type="Script" uid="uid://7wnn3h38rl5q" path="res://addons/forge/resources/statescript/resolvers/EntityAtPathResolverResource.cs" id="13_entity_at_path"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="14_5bfo8"]
 [ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="14_node_from_entity"]
 [ext_resource type="PackedScene" uid="uid://y6dw4xnr8s7x" path="res://forge_samples/demos/03_statescript/scenes/vfx/death_burst.tscn" id="15_death_burst"]
 

@@ -39,7 +39,6 @@
 [ext_resource type="AudioStream" uid="uid://ch1ig413i31i3" path="res://forge_samples/shared/audio/reflect.ogg" id="38_reflect_sfx"]
 [ext_resource type="Script" uid="uid://d3v5ni4eocbqr" path="res://addons/forge/nodes/AnimationCueHandler.cs" id="39_anim_cue"]
 [ext_resource type="PackedScene" uid="uid://75gb6rjv4sf5" path="res://forge_samples/demos/03_statescript/scenes/vfx/regen_effect.tscn" id="40_regen_vfx"]
-
 [ext_resource type="PackedScene" uid="uid://c5net8player" path="res://forge_samples/demos/05_networked_statescript/scenes/player.tscn" id="50_player"]
 [ext_resource type="PackedScene" uid="uid://c5net8enemy1" path="res://forge_samples/demos/05_networked_statescript/scenes/enemy.tscn" id="51_enemy"]
 [ext_resource type="Resource" uid="uid://c5net8manife" path="res://forge_samples/demos/05_networked_statescript/network_manifest.tres" id="52_manifest"]
@@ -52,6 +51,12 @@
 [sub_resource type="BoxMesh" id="BoxMesh_4t6yx"]
 material = ExtResource("4_f8cj4")
 size = Vector3(24.66397, 1.8203125, 5.035675)
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_6guao"]
+viewport_path = NodePath("SubViewport")
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_wyafo"]
+viewport_path = NodePath("SubViewport")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_chasm"]
 size = Vector3(30, 1.5, 5)
@@ -147,8 +152,14 @@ mesh = SubResource("BoxMesh_4t6yx")
 [node name="Lake" parent="Stations" unique_id=120451771 instance=ExtResource("5_lake")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.117232, 0.3798511, -7.7059393)
 
-[node name="Brazier" parent="Stations" instance=ExtResource("56_brazier")]
+[node name="Brazier" parent="Stations" unique_id=1699311843 instance=ExtResource("56_brazier")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.704551, -9.536743e-07, -0.093084455)
+
+[node name="Forge Entity" parent="Stations/Brazier" index="0" unique_id=2032034059]
+Networked = true
+
+[node name="Grant Abilities" parent="Stations/Brazier/Forge Entity" index="0" unique_id=1542369922]
+EffectData = ExtResource("57_brazier_grants")
 
 [node name="RegenArea" parent="Stations" unique_id=1359653450 instance=ExtResource("6_regen")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -9)
@@ -167,20 +178,20 @@ outline_size = 16
 [node name="Dummy1" parent="Stations/Dummies" unique_id=1886710568 instance=ExtResource("8_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.072236, 0, -3.1852062)
 
+[node name="Forge Entity" parent="Stations/Dummies/Dummy1" index="0" unique_id=599859612]
+Networked = true
+
+[node name="BarsSprite" parent="Stations/Dummies/Dummy1" index="5" unique_id=1961309404]
+texture = SubResource("ViewportTexture_6guao")
+
 [node name="Dummy2" parent="Stations/Dummies" unique_id=2093370571 instance=ExtResource("8_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6135142, 0, -4.872223)
 
-[node name="Forge Entity" parent="Stations/Dummies/Dummy1"]
+[node name="Forge Entity" parent="Stations/Dummies/Dummy2" index="0" unique_id=599859612]
 Networked = true
 
-[node name="Forge Entity" parent="Stations/Dummies/Dummy2"]
-Networked = true
-
-[node name="Forge Entity" parent="Stations/Brazier"]
-Networked = true
-
-[node name="Grant Abilities" parent="Stations/Brazier/Forge Entity"]
-EffectData = ExtResource("57_brazier_grants")
+[node name="BarsSprite" parent="Stations/Dummies/Dummy2" index="5" unique_id=1961309404]
+texture = SubResource("ViewportTexture_wyafo")
 
 [node name="Rim" type="Node3D" parent="." unique_id=441048483 groups=["navigation_mesh_source_group"]]
 
@@ -300,18 +311,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.244277, 0, -6.188751)
 [node name="Spawn6" type="Marker3D" parent="Spawns" unique_id=822041462 groups=["spawn_points"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.967566, 0, -6.017889)
 
-[node name="EnemySpawns" type="Node3D" parent="."]
+[node name="EnemySpawns" type="Node3D" parent="." unique_id=1206283972]
 
-[node name="EnemySpawn1" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+[node name="EnemySpawn1" type="Marker3D" parent="EnemySpawns" unique_id=474697836 groups=["enemy_spawns"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -5)
 
-[node name="EnemySpawn2" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+[node name="EnemySpawn2" type="Marker3D" parent="EnemySpawns" unique_id=780695427 groups=["enemy_spawns"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, 3)
 
-[node name="EnemySpawn3" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+[node name="EnemySpawn3" type="Marker3D" parent="EnemySpawns" unique_id=1113193699 groups=["enemy_spawns"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -14)
 
-[node name="EnemySpawn4" type="Marker3D" parent="EnemySpawns" groups=["enemy_spawns"]]
+[node name="EnemySpawn4" type="Marker3D" parent="EnemySpawns" unique_id=898468283 groups=["enemy_spawns"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 5)
 
 [node name="Spawned" type="Node3D" parent="." unique_id=45002916]
@@ -479,20 +490,19 @@ metadata/_custom_type_script = "uid://d3v5ni4eocbqr"
 [node name="QuitScene" type="Node" parent="." unique_id=2039553407]
 script = ExtResource("11_quit")
 
-[node name="Session" type="Node" parent="."]
+[node name="Session" type="Node" parent="." unique_id=1214945757]
 script = ExtResource("53_session")
 Manifest = ExtResource("52_manifest")
-RelevancyRadius = 0.0
 metadata/_custom_type_script = "uid://q6o53xlqjkod"
 
-[node name="Overlay" type="CanvasLayer" parent="."]
+[node name="Overlay" type="CanvasLayer" parent="." unique_id=577236520]
 script = ExtResource("54_overlay")
 metadata/_custom_type_script = "uid://bb4otufv1nl1v"
 
-[node name="Menu" type="CanvasLayer" parent="."]
+[node name="Menu" type="CanvasLayer" parent="." unique_id=1649775825]
 layer = 2
 
-[node name="Panel" type="PanelContainer" parent="Menu"]
+[node name="Panel" type="PanelContainer" parent="Menu" unique_id=189339404]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -505,44 +515,44 @@ offset_bottom = 110.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Box" type="VBoxContainer" parent="Menu/Panel"]
+[node name="Box" type="VBoxContainer" parent="Menu/Panel" unique_id=785060618]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Menu/Panel/Box"]
+[node name="Title" type="Label" parent="Menu/Panel/Box" unique_id=2074220223]
 layout_mode = 2
 text = "Networked Statescript"
 horizontal_alignment = 1
 
-[node name="Address" type="LineEdit" parent="Menu/Panel/Box"]
+[node name="Address" type="LineEdit" parent="Menu/Panel/Box" unique_id=1917625368]
 layout_mode = 2
 text = "127.0.0.1"
 placeholder_text = "Server address"
 alignment = 1
 
-[node name="Buttons" type="HBoxContainer" parent="Menu/Panel/Box"]
+[node name="Buttons" type="HBoxContainer" parent="Menu/Panel/Box" unique_id=884104899]
 layout_mode = 2
 alignment = 1
 
-[node name="Host" type="Button" parent="Menu/Panel/Box/Buttons"]
+[node name="Host" type="Button" parent="Menu/Panel/Box/Buttons" unique_id=701660481]
 layout_mode = 2
 text = "Host"
 
-[node name="Join" type="Button" parent="Menu/Panel/Box/Buttons"]
+[node name="Join" type="Button" parent="Menu/Panel/Box/Buttons" unique_id=1869135288]
 layout_mode = 2
 text = "Join"
 
-[node name="Dedicated" type="Button" parent="Menu/Panel/Box/Buttons"]
+[node name="Dedicated" type="Button" parent="Menu/Panel/Box/Buttons" unique_id=1616797499]
 layout_mode = 2
 text = "Dedicated"
 
-[node name="Status" type="Label" parent="Menu/Panel/Box"]
+[node name="Status" type="Label" parent="Menu/Panel/Box" unique_id=2051150624]
 layout_mode = 2
 text = "Host plays here and lets others join; Join connects to a host."
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Game" type="Node" parent="." node_paths=PackedStringArray("Session", "Spawned", "Camera", "Menu", "Address", "Status")]
+[node name="Game" type="Node" parent="." unique_id=290019612 node_paths=PackedStringArray("Session", "Spawned", "Camera", "Menu", "Address", "Status")]
 script = ExtResource("55_game")
 Session = NodePath("../Session")
 PlayerScene = ExtResource("50_player")
@@ -557,6 +567,6 @@ Status = NodePath("../Menu/Panel/Box/Status")
 [connection signal="pressed" from="Menu/Panel/Box/Buttons/Join" to="Game" method="Join"]
 [connection signal="pressed" from="Menu/Panel/Box/Buttons/Dedicated" to="Game" method="HostDedicated"]
 
+[editable path="Stations/Brazier"]
 [editable path="Stations/Dummies/Dummy1"]
 [editable path="Stations/Dummies/Dummy2"]
-[editable path="Stations/Brazier"]
