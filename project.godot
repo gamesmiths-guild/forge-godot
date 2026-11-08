@@ -33,7 +33,7 @@ enabled=PackedStringArray("res://addons/forge/plugin.cfg")
 
 [forge]
 
-input/actions=PackedStringArray("skill_1", "skill_2")
+input/actions=PackedStringArray("skill_1", "skill_2", "interact")
 input/vectors=PackedStringArray("move_left, move_right, move_up, move_down")
 tags/sources=PackedStringArray("uid://bkda38cuw3fp2")
 

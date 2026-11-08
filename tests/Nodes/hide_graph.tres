@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="StatescriptGraph" format=3 uid="uid://c5net10tgraf"]
+
+[ext_resource type="Script" uid="uid://fj6yp4h5mkl6" path="res://addons/forge/resources/statescript/StatescriptGraph.cs" id="1_graph"]
+[ext_resource type="Script" uid="uid://6gpuevsxrj1i" path="res://addons/forge/resources/statescript/StatescriptNode.cs" id="2_node"]
+[ext_resource type="Script" uid="uid://dlo2ir5oqf48y" path="res://addons/forge/resources/statescript/StatescriptNodeProperty.cs" id="3_binding"]
+[ext_resource type="Script" uid="uid://c3w8w5eh6qxub" path="res://addons/forge/resources/statescript/StatescriptConnection.cs" id="4_connection"]
+[ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="5_variant"]
+
+[sub_resource type="Resource" id="Resource_to_hide"]
+script = ExtResource("4_connection")
+FromNode = "entry"
+ToNode = "node_1"
+
+[sub_resource type="Resource" id="Resource_entry"]
+script = ExtResource("2_node")
+NodeId = "entry"
+Title = "Entry"
+PositionOffset = Vector2(40, 200)
+
+[sub_resource type="Resource" id="Resource_hidden"]
+script = ExtResource("5_variant")
+Value = false
+ValueType = 0
+
+[sub_resource type="Resource" id="Resource_hidden_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_hidden")
+
+[sub_resource type="Resource" id="Resource_hide"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Node Property Override"
+NodeType = 4
+RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NodePropertyOverrideNode"
+PositionOffset = Vector2(300, 200)
+CustomData = Dictionary[String, Variant]({
+"isArray": false,
+"propertyPath": "visible",
+"valueType": "Bool"
+})
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_hidden_binding")])
+
+[resource]
+script = ExtResource("1_graph")
+StatescriptName = "Hide"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_hide")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_hide")])
+metadata/_custom_type_script = "uid://fj6yp4h5mkl6"

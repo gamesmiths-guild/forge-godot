@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://bofma2reays8y" path="res://addons/forge/resources/statescript/resolvers/AbilityTargetResolverResource.cs" id="6_target"]
 [ext_resource type="Resource" uid="uid://xd3d6l0hqx8b" path="res://forge_samples/demos/03_statescript/abilities/enemy/enemy_damage.tres" id="7_enemy_damage"]
 [ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="8_65jcq"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="9_cxma8"]
 [ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="9_position"]
 
 [sub_resource type="Resource" id="Resource_k672h"]

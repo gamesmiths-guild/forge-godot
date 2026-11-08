@@ -29,7 +29,6 @@ public static class StatescriptGraphBuilder
 	public static Graph Build(StatescriptGraph graphResource)
 	{
 		var graph = new Graph();
-
 		var nodeMap = new Dictionary<string, ForgeNode>();
 
 		foreach (StatescriptNode nodeResource in graphResource.Nodes)
@@ -98,9 +97,83 @@ public static class StatescriptGraphBuilder
 
 		RegisterGraphVariables(graph, graphResource);
 		BindNodeProperties(graph, graphResource, nodeMap);
+		ApplyRegions(graphResource, nodeMap);
 		ValidateActivationDataProviders(graphResource);
 
 		return graph;
+	}
+
+	/// <summary>
+	/// Gets the network kind each node has in the graph, by node id: its own, or presentation for a node that acts on
+	/// what a presentation node made (<see cref="Graph.NetworkKindOf"/>). What an editor shows.
+	/// </summary>
+	/// <remarks>
+	/// Builds only what decides it, the nodes, their regions and the graph variables bound to them, so a graph still
+	/// being edited, with bindings not yet complete, reports nothing. A node whose type doesn't resolve is left out.
+	/// </remarks>
+	/// <param name="graphResource">The serialized graph resource.</param>
+	/// <returns>Each node's kind in the graph, by its id.</returns>
+	public static Dictionary<string, NodeNetworkKind> NetworkKinds(StatescriptGraph graphResource)
+	{
+		var graph = new Graph();
+		var nodeMap = new Dictionary<string, ForgeNode>();
+
+		foreach (StatescriptNode nodeResource in graphResource.Nodes)
+		{
+			if (nodeResource.NodeType is StatescriptNodeType.Entry or StatescriptNodeType.Exit
+				|| StatescriptNodeFactory.ResolveType(nodeResource.RuntimeTypeName) is null)
+			{
+				continue;
+			}
+
+			ForgeNode node = InstantiateNode(nodeResource);
+			graph.AddNode(node);
+			nodeMap[nodeResource.NodeId] = node;
+
+			foreach (StatescriptNodeProperty binding in nodeResource.PropertyBindings)
+			{
+				if (binding.Resolver is not VariableResolverResource { Scope: VariableScope.Graph } variable
+					|| string.IsNullOrEmpty(variable.VariableName))
+				{
+					continue;
+				}
+
+				byte index = (byte)binding.PropertyIndex;
+
+				if (binding.Direction == StatescriptPropertyDirection.Input && index < node.InputProperties.Length)
+				{
+					node.BindInput(index, new StringKey(variable.VariableName));
+				}
+				else if (binding.Direction == StatescriptPropertyDirection.Output && index < node.OutputVariables.Length)
+				{
+					node.BindOutput(index, new StringKey(variable.VariableName));
+				}
+			}
+		}
+
+		ApplyRegions(graphResource, nodeMap);
+		var kinds = new Dictionary<string, NodeNetworkKind>();
+
+		foreach (KeyValuePair<string, ForgeNode> node in nodeMap)
+		{
+			kinds[node.Key] = graph.NetworkKindOf(node.Value);
+		}
+
+		return kinds;
+	}
+
+	private static void ApplyRegions(StatescriptGraph graphResource, Dictionary<string, ForgeNode> nodeMap)
+	{
+		foreach (StatescriptRegion region in graphResource.Regions)
+		{
+			foreach (string nodeId in region.NodeIds)
+			{
+				if (nodeMap.TryGetValue(nodeId, out ForgeNode? node) && node is not EntryNode)
+				{
+					node.Region = region.Kind;
+				}
+			}
+		}
 	}
 
 	private static void RegisterGraphVariables(Graph graph, StatescriptGraph graphResource)

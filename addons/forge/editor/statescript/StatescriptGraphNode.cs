@@ -9,6 +9,7 @@ using Gamesmiths.Forge.Godot.Editor.Statescript.NodeEditors;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
 using Godot;
 using GodotCollections = Godot.Collections;
+using NodeNetworkKind = Gamesmiths.Forge.Statescript.NodeNetworkKind;
 
 namespace Gamesmiths.Forge.Godot.Editor.Statescript;
 
@@ -51,6 +52,7 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 	private int[] _runtimeToVisualOutputPortMap = [];
 	private StatescriptNodeDiscovery.NodeTypeInfo? _typeInfo;
 	private Label? _networkKindBadge;
+	private NodeNetworkKind _declaredNetworkKind;
 	private StatescriptGraph? _graph;
 	private EditorUndoRedoManager? _undoRedo;
 	private StatescriptGraphEditorDock? _replayHost;
@@ -207,6 +209,17 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 
 		ApplyBottomPadding();
 		RefreshHighlightState();
+	}
+
+	/// <summary>
+	/// Shows the network kind the node has in its graph, which is its type's own or presentation when it acts on what
+	/// a presentation node made.
+	/// </summary>
+	/// <param name="kind">The node's kind in its graph.</param>
+	public void ShowNetworkKind(NodeNetworkKind kind)
+	{
+		RemoveNetworkKindBadge();
+		AddNetworkKindBadge(kind, tainted: kind != _declaredNetworkKind);
 	}
 
 	public void OnBeforeSerialize()
@@ -668,7 +681,8 @@ public partial class StatescriptGraphNode : GraphNode, ISerializationListener
 		};
 
 		ApplyTitleBarColor(titleColor);
-		AddNetworkKindBadge(typeInfo.NetworkKind);
+		_declaredNetworkKind = typeInfo.NetworkKind;
+		AddNetworkKindBadge(typeInfo.NetworkKind, tainted: false);
 	}
 
 	private void BuildDefaultPropertySections(StatescriptNodeDiscovery.NodeTypeInfo typeInfo)

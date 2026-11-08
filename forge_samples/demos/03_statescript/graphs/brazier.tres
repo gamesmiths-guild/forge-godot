@@ -22,6 +22,7 @@
 [ext_resource type="Script" uid="uid://d1rfllxhfre8x" path="res://addons/forge/resources/statescript/resolvers/NotResolverResource.cs" id="18_tl8rd"]
 [ext_resource type="PackedScene" uid="uid://4pos6f6d872y" path="res://forge_samples/demos/03_statescript/scenes/vfx/spawn_ember.tscn" id="19_ember"]
 [ext_resource type="PackedScene" uid="uid://iov02vf0vcss" path="res://forge_samples/demos/03_statescript/scenes/vfx/spawn_burst.tscn" id="20_burst"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="21_d3b5t"]
 
 [sub_resource type="Resource" id="Resource_mtynk"]
 script = ExtResource("4_connection")

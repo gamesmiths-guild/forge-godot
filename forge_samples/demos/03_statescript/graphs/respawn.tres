@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="6_position"]
 [ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="7_variable"]
 [ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="8_owner"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="9_078ql"]
 [ext_resource type="Script" uid="uid://g18m0p6lipo6" path="res://addons/forge/resources/statescript/resolvers/TagResolverResource.cs" id="9_tag"]
 [ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="10_variant"]
 

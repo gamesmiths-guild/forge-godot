@@ -42,6 +42,33 @@ internal static partial class SaveTests
 	}
 
 	[EditorTest]
+	public static void Save_all_after_a_reload_writes_only_the_graph_that_changed(EditorTestContext context)
+	{
+		const string untouchedPath = "user://forge_editor_tests_reload_untouched.tres";
+		const string editedPath = "user://forge_editor_tests_reload_edited.tres";
+
+		// A reload reopens each graph from the resource cache, so these keep their paths rather than being reloaded.
+		foreach (string path in (string[])[untouchedPath, editedPath])
+		{
+			context.OpenNewGraph().TakeOverPath(path);
+			context.Dock.TestOnlyAddNode("First", _debugNodeType);
+			context.Dock.SaveAllOpenGraphs();
+		}
+
+		context.Dock.TestOnlyAddNode("Later", _debugNodeType);
+
+		context.Dock.TestOnlyReload();
+		DirAccess.RemoveAbsolute(untouchedPath);
+		context.Dock.SaveAllOpenGraphs();
+
+		FileAccess.FileExists(untouchedPath).Should().BeFalse("a reload does not make an untouched graph unsaved");
+		FileAccess.GetFileAsString(editedPath).Should().Contain("Later", "an edit made before a reload is still saved");
+
+		context.Dock.CloseCurrentTab();
+		context.Dock.CloseCurrentTab();
+	}
+
+	[EditorTest]
 	public static void Saving_keeps_the_connections_it_loaded(EditorTestContext context)
 	{
 		const string path = "user://forge_editor_tests_connections.tres";

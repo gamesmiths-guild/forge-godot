@@ -1,13 +1,16 @@
 // Copyright © Gamesmiths Guild.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Godot.Resources.Statescript;
+using Gamesmiths.Forge.Statescript;
 using GdUnit4;
+using Godot;
 using ForgeGraph = Gamesmiths.Forge.Statescript.Graph;
 
 namespace Gamesmiths.Forge.Godot.Tests.Statescript;
@@ -138,6 +141,39 @@ public class StatescriptGraphBuilderTests
 		graph.VariableDefinitions.VariableDefinitions.Should().ContainSingle(
 			definition => definition.Name == new StringKey("Ammo") && definition.ValueType == typeof(int),
 			"the authored variable has to reach the runtime graph with its declared type.");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_region_reaches_the_nodes_it_holds()
+	{
+		StatescriptGraph resource = NewGraph();
+		resource.Nodes.Add(ActionNode("action-1"));
+		resource.Nodes.Add(ActionNode("action-2"));
+		resource.Nodes.Add(ActionNode("action-3"));
+		resource.Regions.Add(new StatescriptRegion { Kind = NodeRegion.ClientOnly, NodeIds = ["action-1", "entry"] });
+		resource.Regions.Add(new StatescriptRegion { Kind = NodeRegion.ServerOnly, NodeIds = ["action-2", "gone"] });
+
+		ForgeGraph graph = StatescriptGraphBuilder.Build(resource);
+
+		graph.Nodes.Select(x => x.Region).Should().Equal(NodeRegion.ClientOnly, NodeRegion.ServerOnly, NodeRegion.None);
+		graph.EntryNode.Region.Should().Be(NodeRegion.None, "the entry node starts every graph on every machine");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public void A_node_acting_on_a_cosmetic_instance_is_presentation_in_its_graph()
+	{
+		StatescriptGraph brazier = ResourceLoader.Load<StatescriptGraph>(
+			"res://forge_samples/demos/05_networked_statescript/graphs/brazier.tres");
+
+		Dictionary<string, NodeNetworkKind> kinds = StatescriptGraphBuilder.NetworkKinds(brazier);
+
+		kinds["node_12"].Should().Be(NodeNetworkKind.Presentation, "the ember is a scene node");
+		kinds["node_13"].Should().Be(NodeNetworkKind.Presentation, "the flight moves the ember the scene node made");
+		kinds["node_2"].Should().Be(NodeNetworkKind.Presentation);
+		kinds["node_4"].Should().Be(NodeNetworkKind.Simulation, "the wave timer acts on nothing presentation made");
+		kinds["node_7"].Should().Be(NodeNetworkKind.Simulation);
 	}
 
 	private static StatescriptGraph NewGraph()

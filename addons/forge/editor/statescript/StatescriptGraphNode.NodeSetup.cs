@@ -214,7 +214,7 @@ public partial class StatescriptGraphNode
 
 	// Simulation is the default and goes unmarked; the other kinds change where and when the node's work runs, which a
 	// designer needs to see without opening the node's documentation.
-	private void AddNetworkKindBadge(NodeNetworkKind kind)
+	private void AddNetworkKindBadge(NodeNetworkKind kind, bool tainted)
 	{
 		if (kind == NodeNetworkKind.Simulation)
 		{
@@ -237,10 +237,14 @@ public partial class StatescriptGraphNode
 		_networkKindBadge = new Label
 		{
 			Text = presentation ? "Presentation" : "Authority",
-			TooltipText = presentation
-				? "Presentation: only shows something. It runs in the presentation pass at the end of the frame, on "
-					+ "net change, and never changes gameplay."
-				: "Authority: only the server may do this.",
+			TooltipText = (presentation, tainted) switch
+			{
+				(true, false) => "Presentation: only shows something, and never changes gameplay. Every machine that " +
+					"shows the entity runs it, a client as the server says.",
+				(true, true) => "Presentation in this graph: it acts on something a presentation node made, so " +
+					"clients run it as the server says, like that node.",
+				_ => "Authority: only the server may do this.",
+			},
 			MouseFilter = MouseFilterEnum.Pass,
 			VerticalAlignment = VerticalAlignment.Center,
 		};

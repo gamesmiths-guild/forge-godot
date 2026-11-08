@@ -57,6 +57,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private string?[]? _serializedSelectedVariables;
 	private Vector2[]? _serializedScrollOffsets;
 	private float[]? _serializedZooms;
+	private bool[]? _serializedUnsavedStates;
 	private bool _persistedVariablesPanelVisible = true;
 	private bool _sharedVariableHighlightSubscribed;
 	private bool _uiSignalsConnected;
@@ -151,6 +152,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		// The shown tab's view has not reached its graph yet, and writing it there now is too late for the reload to
 		// carry it over, so the dock carries every tab's view itself.
 		GetViewStates(out _serializedScrollOffsets, out _serializedZooms);
+		_serializedUnsavedStates = [.. GetPersistedTabs().Select(x => x.Unsaved)];
 
 		ReleaseEditorRuntimeState();
 	}
@@ -637,6 +639,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		{
 			tab.Unsaved = true;
 		}
+
+		if (!_isLoadingGraph && graph == CurrentGraph)
+		{
+			ScheduleNetworkRefresh();
+		}
 	}
 
 	private void MarkSaved(StatescriptGraph graph)
@@ -704,7 +711,11 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 	private async Task RestoreTabsDeferred()
 	{
 		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		RestoreTabs();
+	}
 
+	private void RestoreTabs()
+	{
 		if (_serializedTabPaths is null || _serializedTabPaths.Length == 0)
 		{
 			return;
@@ -716,6 +727,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		string?[]? selectedVariables = _serializedSelectedVariables;
 		Vector2[]? scrollOffsets = _serializedScrollOffsets;
 		float[]? zooms = _serializedZooms;
+		bool[]? unsavedStates = _serializedUnsavedStates;
 
 		_serializedTabPaths = null;
 		_serializedActiveTab = -1;
@@ -723,6 +735,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_serializedSelectedVariables = null;
 		_serializedScrollOffsets = null;
 		_serializedZooms = null;
+		_serializedUnsavedStates = null;
 
 		if (_tabBar is null || _graphEdit is null)
 		{
@@ -773,9 +786,9 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 				tab.SelectedVariableName = selectedVariables[i];
 			}
 
-			// The graphs survive the reload in memory, edits included, and nothing is known about their state; a save
-			// that finds nothing changed rewrites nothing.
-			tab.Unsaved = true;
+			// The graphs survive the reload in memory, edits included. Without a saved state a tab counts as unsaved,
+			// so no edit is lost; with one, a graph that was only looked at is not rewritten in the editor's format.
+			tab.Unsaved = unsavedStates is null || i >= unsavedStates.Length || unsavedStates[i];
 
 			if (i == activeTab)
 			{
@@ -948,6 +961,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		menuHBox.AddChild(_addNodeButton);
 		menuHBox.MoveChild(_addNodeButton, 2);
 
+		AddRegionMenu(menuHBox, 3);
+
 		var separator2 = new VSeparator();
 		menuHBox.AddChild(separator2);
 
@@ -1090,6 +1105,8 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		}
 
 		ReapplyCurrentNodeHighlights();
+		RefreshRegionFrames(graph);
+		RefreshNetworkKinds(graph);
 
 		_isLoadingGraph = wasLoading;
 
@@ -1113,6 +1130,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		RemoveRegionFrames();
 		_graphEdit.ClearConnections();
 
 		var toRemove = new List<Node>();
@@ -1134,6 +1152,7 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			return;
 		}
 
+		RemoveRegionFrames();
 		_graphEdit.ClearConnections();
 
 		var toDetach = new List<Node>();
@@ -1820,11 +1839,17 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 			_graphEdit.ConnectionToEmpty -= OnConnectionToEmpty;
 			_graphEdit.ConnectionFromEmpty -= OnConnectionFromEmpty;
 			_graphEdit.GuiInput -= OnGraphEditGuiInput;
+			_graphEdit.GraphElementsLinkedToFrameRequest -= OnGraphElementsLinkedToFrameRequest;
 		}
 
 		if (_fileMenuPopup is not null)
 		{
 			_fileMenuPopup.IdPressed -= OnFileMenuIdPressed;
+		}
+
+		if (_regionMenuPopup is not null)
+		{
+			_regionMenuPopup.IdPressed -= OnRegionMenuIdPressed;
 		}
 
 		if (_addNodeButton is not null)
@@ -1877,10 +1902,16 @@ public partial class StatescriptGraphEditorDock : EditorDock, ISerializationList
 		_graphEdit.ConnectionToEmpty += OnConnectionToEmpty;
 		_graphEdit.ConnectionFromEmpty += OnConnectionFromEmpty;
 		_graphEdit.GuiInput += OnGraphEditGuiInput;
+		_graphEdit.GraphElementsLinkedToFrameRequest += OnGraphElementsLinkedToFrameRequest;
 
 		if (_fileMenuPopup is not null)
 		{
 			_fileMenuPopup.IdPressed += OnFileMenuIdPressed;
+		}
+
+		if (_regionMenuPopup is not null)
+		{
+			_regionMenuPopup.IdPressed += OnRegionMenuIdPressed;
 		}
 
 		if (_addNodeButton is not null)

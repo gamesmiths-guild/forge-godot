@@ -174,8 +174,12 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._PhysicsProcess(delta);
 
 		// ForgeBootstrap already began this tick for every entity, before any entity advanced. A world history advances
-		// its entities itself, and a mirror doesn't advance.
-		if (WorldHistory is null && !IsMirror)
+		// its entities itself, and a mirror doesn't advance: only its copies of the server's graphs run.
+		if (IsMirror)
+		{
+			Abilities.FixedUpdateAbilities(delta);
+		}
+		else if (WorldHistory is null)
 		{
 			EntitySimulation.Advance(this, delta);
 		}
