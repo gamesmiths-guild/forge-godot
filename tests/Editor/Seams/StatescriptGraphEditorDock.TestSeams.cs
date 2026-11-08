@@ -194,6 +194,17 @@ public partial class StatescriptGraphEditorDock
 	}
 
 	/// <summary>
+	/// Goes through an assembly reload's steps on the dock: serialize, deserialize, then the tab restore the reload
+	/// defers to the next frame, run at once.
+	/// </summary>
+	internal void TestOnlyReload()
+	{
+		OnBeforeSerialize();
+		OnAfterDeserialize();
+		RestoreTabs();
+	}
+
+	/// <summary>
 	/// Returns the open graph whose node visuals the graph edit is showing, regardless of which tab is selected.
 	/// </summary>
 	/// <returns>The displayed graph, or <see langword="null"/> when nothing is shown.</returns>
