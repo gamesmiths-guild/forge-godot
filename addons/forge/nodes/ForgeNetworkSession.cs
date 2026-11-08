@@ -55,8 +55,9 @@ public enum NetworkMode
 /// <para>The server replicates every <see cref="ForgeEntity.Networked"/> entity under the same multiplayer branch: the
 /// ones in the tree as it starts hosting as placed, which every client's level has too, and the ones that enter later
 /// as spawned, from their scene, which the network manifest lists. A client binds its placed ones as it joins, makes
-/// the spawned ones under <see cref="SpawnParent"/>, and shows their bodies <see cref="InterpolationDelayMs"/> behind
-/// the server.</para>
+/// the spawned ones under <see cref="SpawnParent"/>, and shows them <see cref="InterpolationDelayMs"/> behind the
+/// server: their bodies, and everything else the server sent of them at the same moment, so an animation starts as its
+/// body moves.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
 /// arrives before the server needs it. The clock jumps to the target when it's off by more than
 /// <see cref="LeadToleranceTicks"/>.</para>
@@ -85,6 +86,7 @@ public partial class ForgeNetworkSession : Node
 	private readonly ReplicationHost _host;
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
+	private InterpolationClock? _shown;
 	private double _lastStatsAt;
 	private long _lastBytesSent;
 	private long _lastBytesReceived;
@@ -188,7 +190,7 @@ public partial class ForgeNetworkSession : Node
 	/// <summary>
 	/// Gets or sets how far behind the newest state it holds a client shows the server's entities, in milliseconds,
 	/// so it has the states on either side of the moment it shows. The newest state is itself about half a round trip
-	/// behind the server.
+	/// behind the server. Everything else the server sent of them waits to be shown at the same moment.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,500,1")]
 	public int InterpolationDelayMs { get; set; } = 100;
@@ -300,6 +302,9 @@ public partial class ForgeNetworkSession : Node
 	public ForgeNetworkSession()
 	{
 		ProcessPhysicsPriority = ClientPriority;
+
+		// Bodies are placed before anything reads them in the frame, a camera following the player among them.
+		ProcessPriority = int.MinValue;
 		ProcessMode = ProcessModeEnum.Always;
 		_host = new ReplicationHost(this);
 	}
@@ -445,7 +450,9 @@ public partial class ForgeNetworkSession : Node
 			ForgeManagers.Instance.TagsManager,
 			ForgeSettings.GetInputActionSet());
 		Session.Mirror!.Host = _host;
+		Session.Mirror.HoldsUntilShown = true;
 		Session.Mirror.Spawned += OnMirrorSpawned;
+		_shown = new InterpolationClock(Clock);
 		ProcessPhysicsPriority = ClientPriority;
 		Mode = NetworkMode.Client;
 		_active.Add(this);
@@ -499,6 +506,7 @@ public partial class ForgeNetworkSession : Node
 		Session = null;
 		_transport = null;
 		_conditioned = null;
+		_shown = null;
 		_lastStatsAt = 0;
 		_lastBytesSent = 0;
 		_lastBytesReceived = 0;
@@ -544,17 +552,18 @@ public partial class ForgeNetworkSession : Node
 			return;
 		}
 
-		// The newest state a client holds is about half a round trip older than the server's tick now, so bodies are
-		// shown the delay behind that.
+		// The newest state a client holds is about half a round trip older than the server's tick now, so the server's
+		// entities are shown the delay behind that: their bodies, and with them everything else the server sent.
 		ReplicationClient mirror = Session.Mirror!;
 		double newest = Session.ClockSync.HasEstimate
 			? ServerTick - Clock.TicksIn(Session.ClockSync.RoundTripTime / 2)
 			: mirror.LastServerTick;
-		double shown = newest - Clock.TicksIn(InterpolationDelayMs / 1000.0);
+		_shown!.Advance(delta, newest - Clock.TicksIn(InterpolationDelayMs / 1000.0));
+		mirror.Show(_shown.Tick);
 
 		foreach (IForgeEntity entity in mirror.Entities)
 		{
-			if (mirror.BodyOf(entity)?.TrySample(shown, out BodyState body) == true)
+			if (mirror.BodyOf(entity)?.TrySample(_shown.Tick, out BodyState body) == true)
 			{
 				PlaceBody(entity, body);
 			}
