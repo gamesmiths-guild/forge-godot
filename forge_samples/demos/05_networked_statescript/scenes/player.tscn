@@ -53,7 +53,7 @@ length = 0.001
 tracks/0/type = "rotation_3d"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Body")
+tracks/0/path = NodePath("Visual/Body")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1)
@@ -64,7 +64,7 @@ length = 0.26666668
 tracks/0/type = "rotation_3d"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Body")
+tracks/0/path = NodePath("Visual/Body")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0, 1, 0.125, 1, -1, 0, 0, 0, 0.26666668, 1, 8.742278e-08, 0, 0, 1)
@@ -80,14 +80,14 @@ length = 0.001
 tracks/0/type = "position_3d"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Body")
+tracks/0/path = NodePath("Visual/Body")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.8, 0)
 tracks/1/type = "scale_3d"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("Body")
+tracks/1/path = NodePath("Visual/Body")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = PackedFloat32Array(0, 1, 1, 1, 1)
@@ -98,14 +98,14 @@ length = 0.2
 tracks/0/type = "position_3d"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Body")
+tracks/0/path = NodePath("Visual/Body")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = PackedFloat32Array(0, 1, 0, 0.8, 0, 0.05, 1, 0, 0.8, 0.15, 0.2, 1, 0, 0.8, 0)
 tracks/1/type = "scale_3d"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("Body")
+tracks/1/path = NodePath("Visual/Body")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = PackedFloat32Array(0, 1, 1, 1, 1, 0.05, 1, 0.92, 1.08, 0.92, 0.2, 1, 1, 1, 1)
@@ -151,11 +151,12 @@ script = ExtResource("7_effect")
 EffectData = ExtResource("8_grants")
 metadata/_custom_type_script = "uid://dps0oef50noil"
 
-[node name="Movement" type="Node" parent="Forge Entity"]
+[node name="Movement" type="Node" parent="Forge Entity" node_paths=PackedStringArray("Visual")]
 script = ExtResource("9_movement")
 SpeedAttribute = "MovementAttributes.Speed"
 BlockingTags = SubResource("Resource_blocking_tags")
 FaceAim = true
+Visual = NodePath("../../Visual")
 metadata/_custom_type_script = "uid://bu2rl26hcxgv1"
 
 [node name="Input" type="Node" parent="Forge Entity"]
@@ -164,15 +165,17 @@ AimSource = 1
 AimCollisionMask = 1
 metadata/_custom_type_script = "uid://baro6rmmxgvso"
 
-[node name="Body" type="MeshInstance3D" parent="."]
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 mesh = SubResource("CapsuleMesh_body")
 surface_material_override/0 = ExtResource("1_body")
 
-[node name="Facing" type="MeshInstance3D" parent="Body"]
+[node name="Facing" type="MeshInstance3D" parent="Visual/Body"]
 transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.25, -0.5)
 mesh = SubResource("CylinderMesh_facing")
-skeleton = NodePath("../..")
+skeleton = NodePath("../../..")
 surface_material_override/0 = ExtResource("1_body")
 
 [node name="Collision" type="CollisionShape3D" parent="."]

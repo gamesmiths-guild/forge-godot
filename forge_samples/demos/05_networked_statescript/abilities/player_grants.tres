@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://c5net8pgrant"]
 
 [ext_resource type="Resource" uid="uid://c5net8dashab" path="res://forge_samples/demos/05_networked_statescript/abilities/dash.tres" id="1_ability"]
-[ext_resource type="Resource" uid="uid://gyhloc5hajwb" path="res://forge_samples/demos/04_rewind/abilities/spread_fire.tres" id="2_ability"]
+[ext_resource type="Resource" uid="uid://c5net11fireb" path="res://forge_samples/demos/05_networked_statescript/abilities/spread_fire.tres" id="2_ability"]
 [ext_resource type="Resource" uid="uid://kncyoqdihf45" path="res://forge_samples/demos/03_statescript/abilities/player/respawn.tres" id="3_ability"]
 [ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="10_int"]
 [ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="11_grant_config"]

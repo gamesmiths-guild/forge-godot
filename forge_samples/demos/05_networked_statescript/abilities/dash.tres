@@ -2,7 +2,7 @@
 
 [ext_resource type="Resource" uid="uid://c5net8dashcd" path="res://forge_samples/demos/05_networked_statescript/abilities/dash_cooldown.tres" id="1_cooldown"]
 [ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="2_behavior"]
-[ext_resource type="Resource" uid="uid://1yjpinwh7aex" path="res://forge_samples/demos/03_statescript/graphs/dash.tres" id="3_graph"]
+[ext_resource type="Resource" uid="uid://c5net11dashg" path="res://forge_samples/demos/05_networked_statescript/graphs/dash.tres" id="3_graph"]
 [ext_resource type="Script" uid="uid://cvb8xdfj1djoi" path="res://addons/forge/resources/abilities/AimInputActivationData.cs" id="4_aim"]
 [ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_tags"]
 [ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="6_ability"]
