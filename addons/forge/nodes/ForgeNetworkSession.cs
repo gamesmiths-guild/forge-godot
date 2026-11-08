@@ -559,15 +559,15 @@ public partial class ForgeNetworkSession : Node
 			? ServerTick - Clock.TicksIn(Session.ClockSync.RoundTripTime / 2)
 			: mirror.LastServerTick;
 		_shown!.Advance(delta, newest - Clock.TicksIn(InterpolationDelayMs / 1000.0));
-		mirror.Show(_shown.Tick);
 
+		// The bodies first, so what the shown packets set off, a burst where an enemy fell, happens where its body is
+		// shown. One spawned in them is placed as it's bound.
 		foreach (IForgeEntity entity in mirror.Entities)
 		{
-			if (mirror.BodyOf(entity)?.TrySample(_shown.Tick, out BodyState body) == true)
-			{
-				PlaceBody(entity, body);
-			}
+			PlaceShownBody(entity);
 		}
+
+		mirror.Show(_shown.Tick);
 	}
 
 	/// <inheritdoc/>
@@ -855,8 +855,18 @@ public partial class ForgeNetworkSession : Node
 		}
 	}
 
+	private void PlaceShownBody(IForgeEntity entity)
+	{
+		if (_shown is not null && Session?.Mirror?.BodyOf(entity)?.TrySample(_shown.Tick, out BodyState body) == true)
+		{
+			PlaceBody(entity, body);
+		}
+	}
+
 	private void OnMirrorSpawned(IForgeEntity entity)
 	{
+		PlaceShownBody(entity);
+
 		if (entity is ForgeEntity { Input: not null } player && player.NetworkOwner == LocalPeer && LocalPlayer is null)
 		{
 			SetLocalPlayer(player);

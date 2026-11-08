@@ -352,6 +352,26 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_spawned_mirror_is_where_its_body_is_shown_before_what_its_spawn_sets_off_runs()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		body.Position = new Vector3(5, 0, 0);
+		Vector3? boundAt = null;
+		pair.Client.Session!.Mirror!.Spawned += x => boundAt ??= ((ForgeEntity)x).GetParent<Node3D>().GlobalPosition;
+		pair.ServerBranch.AddChild(body);
+
+		await Pair.RunUntil(() => boundAt is not null, frames: 300);
+
+		boundAt.Should().NotBeNull();
+		boundAt!.Value.X
+			.Should().BeApproximately(5, 0.01f, "it's placed as it's bound, not left where its scene has it");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_networked_entity_placed_on_both_ends_is_bound_by_its_place_and_follows_the_server()
 	{
 		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
