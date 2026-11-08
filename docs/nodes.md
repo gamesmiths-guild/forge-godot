@@ -18,6 +18,7 @@ The central node for adding Forge system functionality to any game object.
 - `NetworkOwner` (int, not exported): The multiplayer peer id whose player the entity is: 1 for the server's own, 0 for the world's. Set it on the server before the entity enters the tree.
 - `NetworkId` (read-only): The id the entity is known by on every machine in a session.
 - `IsMirror` (read-only): Whether the entity is a client's copy of one the server simulates. A mirror doesn't advance or start its own effects and abilities, and holds what the server sends.
+- `IsPredicted` (read-only): Whether the entity is the client's own player, which it predicts: it runs live, and the session advances it through each tick its clock simulates rather than the entity advancing itself. See [Its own player](networking.md#its-own-player).
 
 **Description:**
 
@@ -30,7 +31,7 @@ Additionally, `ForgeEntity` drives the entity's simulation on its own:
 - **Its `Random`** is a `DeterministicRandom` seeded once per entity, which restarts every physics step. Random nodes, random resolvers and chance-to-apply effects on the entity draw from it, so a step's rolls depend only on the seed and the step.
 - **Its `Input`** is the input its simulation reads each physics step, or `null` for an entity nobody controls. A [`ForgeInputCollector`](#forgeinputcollector) child sets it to the local player's input. Abilities bound to an input action activate from it, and the input nodes and resolvers read it. See [Input](https://github.com/gamesmiths-guild/forge/blob/main/docs/input.md).
 - **Its `Mover`** moves its body in the movement stage of each physics step, or is `null` for an entity the simulation doesn't move. A [`ForgeCharacterMovement2D` or `ForgeCharacterMovement3D`](#forgecharactermovement2d--forgecharactermovement3d) child sets it. See [Movement](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#movement).
-- **In a session**, a networked entity is replicated by the session in its multiplayer branch: the server registers it as it gets ready, a client keeps it as a mirror, and freeing it on the server despawns it on every client. See [Networking](networking.md#networked-entities).
+- **In a session**, a networked entity is replicated by the session in its multiplayer branch: the server registers it as it gets ready, a client keeps it as a mirror, or predicts it when it's that client's player, and freeing it on the server despawns it on every client. See [Networking](networking.md#networked-entities).
 - **When it's freed**, it's torn down through `EntitySimulation.Teardown`: its abilities are cancelled and cleared, and its effects end with `EffectRemovalReason.Destroyed`, so their components, `OnActiveEffectRemoved` and their cues, as interrupted, learn they ended. What its abilities showed, such as a light a [Node Property Override](statescript/nodes/interop-nodes.md#properties) brightened, ends then too. One freed with `Free()` from inside one of its own changes, such as an effect callback, is torn down once that change unwinds, with its node already gone. Without it, a shared effect still active on a freed entity would keep it in memory. Leaving the tree without being freed, such as when reparented, ends nothing. One a `ForgeWorldHistory` released from limbo has let go of everything already, and is freed without a teardown. See [Ending an entity](https://github.com/gamesmiths-guild/forge/blob/main/docs/simulation.md#ending-an-entity).
 
 **Usage:**
@@ -204,6 +205,9 @@ Walks the character body an entity lives on from the entity's input, once per ph
 - `Friction` (float): How fast the body slows down with no move input, in units per second squared. The default is 60 in 3D and 6000 in 2D.
 - `BlockingTags` (ForgeTagContainer): While the entity has any of these tags, the body doesn't walk or turn.
 - `FaceAim` (bool): Whether the body turns to face the input's aim.
+- `Visual` (Node3D / Node2D): The child that shows the body. When the client predicting the entity puts the body right, the visual eases from where it was shown instead of jumping with it. Unset, a correction shows at once.
+- `CorrectionEasing` (float): How long a correction takes to ease out, in seconds. The default is 0.15.
+- `CorrectionSnapDistance` (float): How far a correction may move the body and still ease; one that moves it further, as a respawn does, shows at once. The default is 2 units in 3D and 200 pixels in 2D.
 - `MoveLeft`, `MoveRight`, `MoveForward`, `MoveBack` in 3D, or `MoveLeft`, `MoveRight`, `MoveUp`, `MoveDown` in 2D: The four input actions of the move vector. They default to `move_left`, `move_right`, `move_up` and `move_down`.
 
 **Description:**
@@ -311,18 +315,18 @@ Hosts or joins a networked session over Godot's high-level multiplayer, on ENet,
 - `RelevancyRadius` (float): How far from every entity a client owns another entity can be and still reach that client, or 0 for everything everywhere. Read as hosting starts.
 - `InterpolationDelayMs` (int): How far behind the newest state it holds a client shows the server's entities, their bodies and everything else the server sent of them. The default is 100.
 - `LeadMarginTicks` (int): How many ticks beyond a round trip a client runs ahead of the server. The default is 2.
-- `LeadToleranceTicks` (int): How far a client's clock may drift from its target before it jumps to it. The default is 2.
+- `LeadToleranceTicks` (int): How far a client's clock may drift from its target, in ticks, before it's steered toward it. The default is 1.
 - `LatencyMs`, `JitterMs`, `LossPercent`: The network conditioner, applied to this machine's outgoing packets. Changeable while playing.
 
 **Signals:** `PeerJoined(peerId)` and `PeerLeft(peerId)` on the server; `Connected`, `Refused(reason)` and `Disconnected` on a client; `LocalPlayerChanged(player)` on both. The C# event `InputTaken` is raised on the server every physics step for every client, with the `InputCommand` the tick runs for it and how it arrived, after it was handed to the entities the client owns.
 
 **Description:**
 
-`Host(dedicated)` creates the server on `Port` and registers the networked entities already in its multiplayer branch as placed; with `dedicated` set, the game shows nothing and the presentation passes are skipped. `Join(address)` binds the client's placed networked entities as mirrors, by their place in the scene, and connects; whether the server accepts comes later through the signals. `Leave()` frees what the server spawned on a client, and disconnects; a server disconnects everyone. `RegisterEffectContext<TData>(key, write, read)` says how the custom data of a type that effects are applied with travels, on both ends, before hosting or joining. `ForgeNetworkSession.Of(node)` finds the session a node plays in, and `LocalPeer` is this machine's peer id. `Mode` says what this machine is, `State` where a client stands, and `RoundTripTime`, `ServerTick`, `TicksAhead`, `ServerInputDepth`, `PacketsLost`, `BytesSentPerSecond` and `BytesReceivedPerSecond` are what the overlay shows.
+`Host(dedicated)` creates the server on `Port` and registers the networked entities already in its multiplayer branch as placed; with `dedicated` set, the game shows nothing and the presentation passes are skipped. `Join(address)` binds the client's placed networked entities as mirrors, by their place in the scene, and connects; whether the server accepts comes later through the signals. `Leave()` frees what the server spawned on a client, and disconnects; a server disconnects everyone. `RegisterEffectContext<TData>(key, write, read)` says how the custom data of a type that effects are applied with travels, on both ends, before hosting or joining. `ForgeNetworkSession.Of(node)` finds the session a node plays in, and `LocalPeer` is this machine's peer id. `Mode` says what this machine is, `State` where a client stands, and `RoundTripTime`, `ServerTick`, `TicksAhead`, `ServerInputDepth`, `PacketsLost`, `Confirmations`, `Corrections`, `LastCorrectionTicks`, `BytesSentPerSecond` and `BytesReceivedPerSecond` are what the overlay shows.
 
 Every physics step, a server sends each client what changed since the state it last acknowledged, then hands each client's command for the tick to the entities the client owns. A client shows the entities it mirrors each frame, `InterpolationDelayMs` behind the newest state it holds, about half a round trip behind the server: it places their bodies, before any other node's process, and applies what the server sent of them by then.
 
-On a server its physics step runs with the input collectors', before `ForgeBootstrap` begins the entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick reads before simulating the tick. `DedicatedRequested` is true when the game was started with the user argument `--dedicated`.
+On a server its physics step runs with the input collectors', before `ForgeBootstrap` begins the entities' ticks, so a command handed to an entity is the one that entity's tick reads. On a client it runs after every tick has begun, a world history's included, and before any entity's, so it sends the input frame its tick reads before simulating the tick. It advances the client's own player itself, through each tick the clock's steering gives the step, and eases the player's visual after a correction. See [Its own player](networking.md#its-own-player). `DedicatedRequested` is true when the game was started with the user argument `--dedicated`.
 
 ```csharp
 // A menu.
@@ -357,7 +361,7 @@ The F3 overlay: what the session is doing, in a corner. It's a `CanvasLayer`; ad
 
 **Description:**
 
-**F3** shows and hides it, and **F4** cycles the session's conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, a client's round trip, estimated server tick, lead, input depth, mirrored entities, newest state and late state packets, a server's replicated entities and its clients with their input depth and received, lost and late ticks, bytes up and down per second, and the conditioner's settings.
+**F3** shows and hides it, and **F4** cycles the session's conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, a client's round trip, estimated server tick, lead, input depth, mirrored entities, newest state and late state packets, with its predicted entities' confirmed and corrected ticks and how far the last correction rolled back, a server's replicated entities and its clients with their input depth and received, lost and late ticks, bytes up and down per second, and the conditioner's settings.
 
 ### ForgeAttributeSet
 

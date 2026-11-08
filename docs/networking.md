@@ -48,11 +48,24 @@ A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). 
 - **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play once, unless they're more than 0.2 s old by the time they arrive. On the entity a client owns, an attribute's base value is the server's too; everywhere else a mirror's base value is its current value.
 - **Effects** are the server's too, as far as [each one's visibility](#effects-on-a-client) allows: the entity's `EffectsManager` answers queries, a handle tells its stacks and time left, and the `OnActiveEffect` events follow them. They run nothing: no modifiers, periodic executions, components or cues.
 - **Graphs** show what the server's show, as far as [clients run them](#graphs-on-a-client): a remote player rolls and its dash whooshes, a brazier's flame lights up.
-- **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server.
+- **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server. A body stays exactly where it stands while the server's state, rounded for the wire, can't tell it apart, so a placed body nothing moved keeps the place and turn its scene gives it.
 - **Everything shows at the body's moment.** What the server sent of a mirror, its spawn, attributes, tags, cues, effects, graphs and despawn, waits until its body is shown at the tick it's of, so an animation starts as the body moves and a burst plays where it fell. The moment shown runs with the client's own time, a little faster or slower as the estimates of the link move, so bodies don't hitch when they do.
-- **Its own player** is a mirror too, and answers its input a round trip late: nothing is predicted yet. The session sets `Local Player` to the networked entity with an input that this machine's peer owns as it appears, and raises `LocalPlayerChanged`, so a camera can follow it.
+- **Its own player** isn't a mirror: the client [predicts](#its-own-player) it. The session sets `Local Player` to the networked entity with an input that this machine's peer owns as it appears, and raises `LocalPlayerChanged`, so a camera can follow it.
 - **Late joiners** get the world as it is, and **relevancy** is everything by default; set `Relevancy Radius` for a client to hear only about entities within that distance of one it owns.
 - **Where spawns go.** A client adds what the server spawns under `Spawn Parent`, or the current scene.
+
+## Its own player
+
+The networked entity the server spawns for this machine's peer is predicted (`ForgeEntity.IsPredicted`) rather than mirrored. It's made as its scene makes it, setup included, where the server's body was as the server registered it, and it runs live: the session advances it through each tick its clock simulates, ahead of the server, from this machine's input, so it answers at once. Each state packet checks a tick of it against the server's, and where they differ the session rolls it back, takes the server's word and runs the ticks since again. Until the clock knows the round trip, a moment after joining, the player follows the server instead.
+
+- **What stays the server's.** Effects from elsewhere, an area's or another entity's, arrive from the server and go in at the tick they landed after: their duration, modifiers, tags and cues run here, their periodic executions don't, and damage arrives as health. Effects the player applies to other entities are refused. A run of an ability started from elsewhere, by another entity's event or an effect from elsewhere, goes in at the tick it started after and runs here from there.
+- **Server Only abilities.** An ability with `Server Only` on runs on the server alone, and the player's client shows its graph as everyone else does. Use it for an ability whose graph reads other entities, such as an overlap that spreads fire to whoever is near: this client shows them where they were a moment ago, so it would find something else, and correct the player at every packet while the ability runs.
+- **Authority nodes** don't run on a client, in a predicted graph either, and the graph goes on as if they had.
+- **Shown once.** A correction runs ticks again without showing them again: executed cues and the one-shot presentation nodes, such as Play Audio One Shot, don't repeat, and what the graphs and persistent cues show changes only by the net change.
+- **Smoothing.** A correction can move the body. Give the [movement component](nodes.md#forgecharactermovement2d--forgecharactermovement3d) a `Visual`, the child that shows the body, and the visual eases from where it was shown over `Correction Easing`, unless the body moved further than `Correction Snap Distance`.
+- **Contacts.** The predicted body moves against the other entities where this client shows them, behind the server, so pushing into another player or an enemy is put right a little at a time, eased by the visual.
+- **Rolls.** A networked entity's random rolls from the session's seed and its id, so the player rolls here what it rolls on the server.
+- **A listen host's own player** runs on the server, and isn't predicted.
 
 ## Effects on a client
 
@@ -100,6 +113,7 @@ A mirror runs a copy of every graph its server entity's abilities run, as far as
 - **Joining late**, a client sees what runs as it is: a lit brazier is lit, and an animation already playing starts part way through.
 - **A death burst** a graph makes as its entity dies still shows: the entity's last events go with its despawn.
 - **Listing them.** An ability's graph travels as the ability's index in the manifest. An ability saved inside another resource can't be listed, and the session warns once when its graph has something clients would show.
+- **The client's own player** runs its graphs whole, following links, as the server does: see [Its own player](#its-own-player).
 
 ### Regions
 
@@ -135,7 +149,7 @@ Localhost has no latency, so the game feels nothing like a real connection. The 
 
 Add a [`ForgeNetworkOverlay`](nodes.md#forgenetworkoverlay) anywhere in the scene. **F3** shows and hides it, and **F4** cycles the conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, and:
 
-- On a client: the round trip, the server's estimated tick, how many ticks ahead this client runs, how many of its input ticks the server holds in hand, how many entities it mirrors, the tick of the newest state it has, and how many state packets came late.
+- On a client: the round trip, the server's estimated tick, how many ticks ahead this client runs, how many of its input ticks the server holds in hand, how many entities it mirrors, the tick of the newest state it has, and how many state packets came late; and for the entities it predicts, how many checked ticks agreed with the server, how many were corrected, and how many ticks the last correction ran again.
 - On a server: how many entities it replicates, and each client's input depth and how many of its ticks were received, lost or late.
 - On both: bytes up and down per second, and the conditioner's settings.
 
@@ -157,4 +171,4 @@ session.InputTaken += (peer, command, delivery) =>
 
 ## The clock
 
-Every entity simulates the tick the session clock names (`ForgeManagers.Instance.Clock`), counted at the physics tick rate. The server's clock is the session's time; a client's is set to the server's tick when it's welcomed and kept about a round trip plus `Lead Margin Ticks` ahead of it, so its input arrives before the server needs it. The clock jumps when it drifts by more than `Lead Tolerance Ticks`. Offline, the clock simply counts from zero when the game starts, and a [`ForgeWorldHistory`](nodes.md#forgeworldhistory) that rolls back takes the clock back with it.
+Every entity simulates the tick the session clock names (`ForgeManagers.Instance.Clock`), counted at the physics tick rate. The server's clock is the session's time; a client's is set to the server's tick when it's welcomed and kept about a round trip plus `Lead Margin Ticks` ahead of it, so its input arrives before the server needs it. Once it drifts more than `Lead Tolerance Ticks` from its target, a physics step simulates two ticks to catch up or none to wait, so the client runs a little faster or slower. The clock jumps to its target as it first learns the round trip, and when it's far off, as after a stall. Offline, the clock simply counts from zero when the game starts, and a [`ForgeWorldHistory`](nodes.md#forgeworldhistory) that rolls back takes the clock back with it.
