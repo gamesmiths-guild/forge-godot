@@ -23,7 +23,7 @@
 [ext_resource type="PackedScene" uid="uid://4pos6f6d872y" path="res://forge_samples/demos/03_statescript/scenes/vfx/spawn_ember.tscn" id="19_ember"]
 [ext_resource type="PackedScene" uid="uid://iov02vf0vcss" path="res://forge_samples/demos/03_statescript/scenes/vfx/spawn_burst.tscn" id="20_burst"]
 [ext_resource type="Script" uid="uid://4uf5harwfpcw" path="res://addons/forge/resources/statescript/resolvers/RandomResolverResource.cs" id="21_random"]
-[ext_resource type="Script" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="22_region"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="22_region"]
 
 [sub_resource type="Resource" id="Resource_mtynk"]
 script = ExtResource("4_connection")
@@ -106,6 +106,18 @@ script = ExtResource("4_connection")
 FromNode = "node_4"
 ToNode = "node_5"
 
+[sub_resource type="Resource" id="Resource_to_flicker"]
+script = ExtResource("4_connection")
+FromNode = "node_3"
+OutputPort = 3
+ToNode = "node_16"
+
+[sub_resource type="Resource" id="Resource_to_jitter"]
+script = ExtResource("4_connection")
+FromNode = "node_16"
+OutputPort = 4
+ToNode = "node_17"
+
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
 NodeId = "entry"
@@ -136,7 +148,7 @@ NodeId = "node_2"
 Title = "Node Property Override"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NodePropertyOverrideNode"
-PositionOffset = Vector2(660, 200)
+PositionOffset = Vector2(860, 200)
 CustomData = Dictionary[String, Variant]({
 "isArray": false,
 "propertyPath": "visible",
@@ -168,7 +180,7 @@ NodeId = "node_3"
 Title = "Node Property Override"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.NodePropertyOverrideNode"
-PositionOffset = Vector2(1000, 200)
+PositionOffset = Vector2(1300, 200)
 CustomData = Dictionary[String, Variant]({
 "isArray": false,
 "propertyPath": "light_energy",
@@ -200,7 +212,7 @@ NodeId = "node_4"
 Title = "Loop Timer"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
-PositionOffset = Vector2(1340, 200)
+PositionOffset = Vector2(1780, 200)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_0": true,
 "_fold_input_property_1": true
@@ -236,7 +248,7 @@ NodeId = "node_5"
 Title = "Expression"
 NodeType = 3
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Condition.ExpressionNode"
-PositionOffset = Vector2(1680, 200)
+PositionOffset = Vector2(2180, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_below_cap_binding")])
 
 [sub_resource type="Resource" id="Resource_enemy_scene"]
@@ -272,7 +284,7 @@ NodeId = "node_6"
 Title = "Instantiate Scene 3D"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
-PositionOffset = Vector2(3140, 200)
+PositionOffset = Vector2(3640, 200)
 CustomData = Dictionary[String, Variant]({
 "parentMode": "Node",
 "passOwnership": true
@@ -368,7 +380,7 @@ NodeId = "node_9"
 Title = "Set Variable"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
-PositionOffset = Vector2(1080, 760)
+PositionOffset = Vector2(1040, 860)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_0": true,
 "_fold_output_target": true
@@ -390,7 +402,7 @@ NodeId = "node_10"
 Title = "Condition Monitor"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.ConditionMonitorNode"
-PositionOffset = Vector2(320, 200)
+PositionOffset = Vector2(420, 200)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_0": true,
 "initialCheckOnActivate": false
@@ -431,7 +443,7 @@ NodeId = "node_11"
 Title = "Set Variable"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
-PositionOffset = Vector2(2020, 200)
+PositionOffset = Vector2(2520, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_spawn_point_binding"), SubResource("Resource_spawn_position_output_binding")])
 
 [sub_resource type="Resource" id="Resource_ember_scene"]
@@ -492,7 +504,7 @@ NodeId = "node_12"
 Title = "Scene 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.Scene3DNode"
-PositionOffset = Vector2(2360, 200)
+PositionOffset = Vector2(2860, 200)
 CustomData = Dictionary[String, Variant]({
 "parentMode": "Node",
 "passOwnership": false
@@ -542,7 +554,10 @@ NodeId = "node_13"
 Title = "Move To 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.MoveTo3DNode"
-PositionOffset = Vector2(2740, 780)
+PositionOffset = Vector2(3240, 820)
+CustomData = Dictionary[String, Variant]({
+"restartOnRetrigger": false
+})
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_flying_ember_binding"), SubResource("Resource_flight_destination_binding"), SubResource("Resource_flight_duration_binding"), SubResource("Resource_flight_arc_binding")])
 
 [sub_resource type="Resource" id="Resource_burst_scene"]
@@ -578,7 +593,7 @@ NodeId = "node_14"
 Title = "Instantiate Scene 3D"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode"
-PositionOffset = Vector2(2740, 200)
+PositionOffset = Vector2(3240, 200)
 CustomData = Dictionary[String, Variant]({
 "parentMode": "Node",
 "passOwnership": false
@@ -591,7 +606,7 @@ NodeId = "node_15"
 Title = "Play Audio One Shot"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode"
-PositionOffset = Vector2(1400, 760)
+PositionOffset = Vector2(1360, 860)
 CustomData = Dictionary[String, Variant]({
 "playerPath": "ToggleSfx"
 })
@@ -599,7 +614,6 @@ CustomData = Dictionary[String, Variant]({
 [sub_resource type="Resource" id="Resource_flicker_interval"]
 script = ExtResource("8_variant")
 Value = 0.12
-ValueType = 5
 
 [sub_resource type="Resource" id="Resource_flicker_interval_binding"]
 script = ExtResource("3_binding")
@@ -621,7 +635,7 @@ NodeId = "node_16"
 Title = "Loop Timer"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.State.LoopTimerNode"
-PositionOffset = Vector2(1000, 520)
+PositionOffset = Vector2(1740, 700)
 CustomData = Dictionary[String, Variant]({
 "_fold_input_property_0": true,
 "_fold_input_property_1": true
@@ -665,7 +679,7 @@ NodeId = "node_17"
 Title = "Set Node Property"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetNodePropertyNode"
-PositionOffset = Vector2(1340, 520)
+PositionOffset = Vector2(2080, 700)
 CustomData = Dictionary[String, Variant]({
 "isArray": false,
 "propertyPath": "light_energy",
@@ -673,33 +687,14 @@ CustomData = Dictionary[String, Variant]({
 })
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_jitter_light_binding"), SubResource("Resource_jitter_energy_binding")])
 
-[sub_resource type="Resource" id="Resource_to_flicker"]
-script = ExtResource("4_connection")
-FromNode = "node_3"
-OutputPort = 3
-ToNode = "node_16"
-
-[sub_resource type="Resource" id="Resource_to_jitter"]
-script = ExtResource("4_connection")
-FromNode = "node_16"
-OutputPort = 4
-ToNode = "node_17"
-
 [sub_resource type="Resource" id="Resource_flicker_region"]
 script = ExtResource("22_region")
-Kind = 1
 NodeIds = Array[String](["node_16", "node_17"])
 
 [sub_resource type="Resource" id="Resource_spawn_region"]
 script = ExtResource("22_region")
 Kind = 2
 NodeIds = Array[String](["node_6"])
-
-[sub_resource type="Resource" id="Resource_visitor_variable"]
-script = ExtResource("5_variable_definition")
-VariableName = "visitor"
-ObjectTypeId = "Entity"
-InitialValue = null
 
 [sub_resource type="Resource" id="Resource_l2yiy"]
 script = ExtResource("5_variable_definition")
@@ -716,6 +711,12 @@ InitialValue = Vector3(0, 0, 0)
 [sub_resource type="Resource" id="Resource_ember_variable"]
 script = ExtResource("5_variable_definition")
 VariableName = "ember"
+ObjectTypeId = "Entity"
+InitialValue = null
+
+[sub_resource type="Resource" id="Resource_visitor_variable"]
+script = ExtResource("5_variable_definition")
+VariableName = "visitor"
 ObjectTypeId = "Entity"
 InitialValue = null
 
