@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" uid="uid://iov02vf0vcss" path="res://forge_samples/demos/03_statescript/scenes/vfx/spawn_burst.tscn" id="20_burst"]
 [ext_resource type="Script" uid="uid://4uf5harwfpcw" path="res://addons/forge/resources/statescript/resolvers/RandomResolverResource.cs" id="21_random"]
 [ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="22_region"]
+[ext_resource type="Script" uid="uid://s0mlbfjapmub" path="res://addons/forge/resources/statescript/resolvers/AreaOverlaps3DResolverResource.cs" id="23_area_overlaps"]
 
 [sub_resource type="Resource" id="Resource_mtynk"]
 script = ExtResource("4_connection")
@@ -304,16 +305,6 @@ script = ExtResource("3_binding")
 PropertyIndex = 6
 Resolver = SubResource("Resource_r0qf8")
 
-[sub_resource type="Resource" id="Resource_visitor_output"]
-script = ExtResource("6_variable")
-VariableName = "visitor"
-ObjectTypeId = "Entity"
-
-[sub_resource type="Resource" id="Resource_visitor_output_binding"]
-script = ExtResource("3_binding")
-Direction = 1
-Resolver = SubResource("Resource_visitor_output")
-
 [sub_resource type="Resource" id="Resource_ring"]
 script = ExtResource("2_node")
 NodeId = "node_7"
@@ -326,16 +317,16 @@ CustomData = Dictionary[String, Variant]({
 "includeAreas": false,
 "sourceMode": "ExistingArea"
 })
-PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_d2ie4"), SubResource("Resource_visitor_output_binding")])
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_d2ie4")])
 
-[sub_resource type="Resource" id="Resource_visitor_input"]
-script = ExtResource("6_variable")
-VariableName = "visitor"
-ObjectTypeId = "Entity"
+[sub_resource type="Resource" id="Resource_in_ring"]
+script = ExtResource("23_area_overlaps")
+NodePath = "%Trigger"
 
-[sub_resource type="Resource" id="Resource_visitor_input_binding"]
+[sub_resource type="Resource" id="Resource_in_ring_binding"]
 script = ExtResource("3_binding")
-Resolver = SubResource("Resource_visitor_input")
+PropertyIndex = 1
+Resolver = SubResource("Resource_in_ring")
 
 [sub_resource type="Resource" id="Resource_interact_key"]
 script = ExtResource("2_node")
@@ -348,7 +339,7 @@ CustomData = Dictionary[String, Variant]({
 "actionName": "interact",
 "deactivateOnPressed": false
 })
-PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_visitor_input_binding")])
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_in_ring_binding")])
 
 [sub_resource type="Resource" id="Resource_tm5xn"]
 script = ExtResource("6_variable")
@@ -714,18 +705,12 @@ VariableName = "ember"
 ObjectTypeId = "Entity"
 InitialValue = null
 
-[sub_resource type="Resource" id="Resource_visitor_variable"]
-script = ExtResource("5_variable_definition")
-VariableName = "visitor"
-ObjectTypeId = "Entity"
-InitialValue = null
-
 [resource]
 script = ExtResource("1_graph")
 StatescriptName = "Brazier (Networked)"
 Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_show_flame"), SubResource("Resource_light_up"), SubResource("Resource_waves"), SubResource("Resource_room_for_more"), SubResource("Resource_spawn_enemy"), SubResource("Resource_ring"), SubResource("Resource_interact_key"), SubResource("Resource_toggle"), SubResource("Resource_p3lev"), SubResource("Resource_pick_spawn_point"), SubResource("Resource_ember"), SubResource("Resource_fly_to_spawn_point"), SubResource("Resource_landing_burst"), SubResource("Resource_toggle_click"), SubResource("Resource_flicker"), SubResource("Resource_jitter")])
 Connections = Array[ExtResource("4_connection")]([SubResource("Resource_mtynk"), SubResource("Resource_d3b5t"), SubResource("Resource_v1pr5"), SubResource("Resource_7xmfw"), SubResource("Resource_1o0c2"), SubResource("Resource_7qbjb"), SubResource("Resource_nfbag"), SubResource("Resource_g4jre"), SubResource("Resource_r5ork"), SubResource("Resource_a20bw"), SubResource("Resource_15phy"), SubResource("Resource_y4vne"), SubResource("Resource_x8xj3"), SubResource("Resource_utfcr"), SubResource("Resource_5t6eq"), SubResource("Resource_to_flicker"), SubResource("Resource_to_jitter")])
-Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_l2yiy"), SubResource("Resource_spawn_position_variable"), SubResource("Resource_ember_variable"), SubResource("Resource_visitor_variable")])
+Variables = Array[ExtResource("5_variable_definition")]([SubResource("Resource_l2yiy"), SubResource("Resource_spawn_position_variable"), SubResource("Resource_ember_variable")])
 Regions = Array[ExtResource("22_region")]([SubResource("Resource_flicker_region"), SubResource("Resource_spawn_region")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

@@ -134,6 +134,40 @@ public class InputSourceTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void Input_sources_are_read_from_their_inputs_and_never_from_the_device()
+	{
+		ForgeEntity player = CreateEntity();
+		var station = new ForgeEntity();
+		Root.AddChild(station);
+		InputMap.AddAction(Jump);
+
+		try
+		{
+			GraphProcessor processor = WatchJump(station, sources: [station, player]);
+
+			Input.ActionPress(Jump);
+			processor.UpdateGraph(Step);
+			processor.FixedUpdateGraph(Step);
+
+			Flag(processor, "pressed").Should().BeFalse("the device is pressed, but no source's input is");
+
+			player.Input!.Submit(new InputFrame { Held = 0b1, Pressed = 0b1 });
+			EntitySimulation.Tick(player, 1, Step);
+			processor.FixedUpdateGraph(Step);
+
+			Flag(processor, "pressed").Should().BeTrue();
+		}
+		finally
+		{
+			Input.ActionRelease(Jump);
+			InputMap.EraseAction(Jump);
+			player.Free();
+			station.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void The_input_resolvers_read_their_source_input()
 	{
 		ForgeEntity entity = CreateEntity();
@@ -204,7 +238,7 @@ public class InputSourceTests
 		return entity;
 	}
 
-	private static GraphProcessor WatchJump(ForgeEntity entity)
+	private static GraphProcessor WatchJump(ForgeEntity entity, IForgeEntity[]? sources = null)
 	{
 		var graph = new ForgeGraph();
 		graph.VariableDefinitions.DefineObjectVariable<IForgeEntity>("source", entity);
@@ -214,6 +248,13 @@ public class InputSourceTests
 
 		var watch = new InputActionNode(Jump);
 		watch.BindInput(Forge.Statescript.Nodes.State.InputActionNode.InputSourceInput, "source");
+
+		if (sources is not null)
+		{
+			graph.VariableDefinitions.DefineObjectArrayVariable("sources", sources);
+			watch.BindInput(Forge.Statescript.Nodes.State.InputActionNode.InputSourcesInput, "sources");
+		}
+
 		SetVariableNode pressed = Raise("pressed");
 		SetVariableNode released = Raise("released");
 
