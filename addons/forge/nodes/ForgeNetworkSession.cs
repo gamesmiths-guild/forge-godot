@@ -489,6 +489,7 @@ public partial class ForgeNetworkSession : Node
 			ForgeEntity entity = placed[i];
 			entity.NetworkId = new NetworkEntityId((uint)i + 1);
 			entity.IsMirror = true;
+			entity.WorldHistory?.Leave(entity);
 			entity.Replicator = this;
 			Session.Mirror.BindPlaced(entity);
 			ShowOnFrames(entity);

@@ -415,11 +415,15 @@ public class ForgeNetworkSessionTests
 		CharacterBody3D clientBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
 		pair.ServerBranch.AddChild(serverBody);
 		pair.ClientBranch.AddChild(clientBody);
-		await pair.Connect();
-
+		pair.ClientBranch.AddChild(new ForgeWorldHistory());
 		ForgeEntity entity = serverBody.GetNode<ForgeEntity>("Forge Entity");
 		ForgeEntity mirror = clientBody.GetNode<ForgeEntity>("Forge Entity");
+		await Pair.RunUntil(() => mirror.WorldHistory is not null, frames: 10);
+		mirror.WorldHistory.Should().NotBeNull("the client's level history took it in before the session joined");
+		await pair.Connect();
+
 		mirror.IsMirror.Should().BeTrue("the client bound it as it joined");
+		mirror.WorldHistory.Should().BeNull("a mirror leaves the world history it was in, which would advance it");
 		clientBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
 		mirror.NetworkId.Should().Be(entity.NetworkId).And.Be(new NetworkEntityId(1));
 		pair.Server.Session!.Replication!.Find(entity)!.IsPlaced.Should().BeTrue();
