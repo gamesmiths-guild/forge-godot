@@ -57,6 +57,12 @@ public partial class ForgeEntity : Node, IForgeEntity
 	/// </summary>
 	public bool IsMirror { get; internal set; }
 
+	/// <summary>
+	/// Gets a value indicating whether the entity is a client's own, which it predicts: the session advances it ahead
+	/// of the server, from this machine's input, and puts it right as the server's word for each tick arrives.
+	/// </summary>
+	public bool IsPredicted { get; internal set; }
+
 	public EntityAttributes Attributes { get; set; } = null!;
 
 	public EntityTags Tags { get; set; } = null!;
@@ -116,6 +122,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 	{
 		base._Ready();
 
+		ForgeNetworkSession? session = Networked ? ForgeNetworkSession.Of(this) : null;
+		session?.OnEntityEntering(this);
+
 		var random = new DeterministicRandom(SpawnSeed ?? (((ulong)GD.Randi() << 32) | GD.Randi()));
 
 		// Only the random restarts here, so rolls made before the first tick are seeded; the input frame waits for that
@@ -149,17 +158,14 @@ public partial class ForgeEntity : Node, IForgeEntity
 
 		Attributes = new EntityAttributes(this, [.. attributeSetList]);
 
-		// A mirror starts nothing of its own: the server sends what it has.
-		if (!IsMirror)
+		// A mirror starts nothing of its own: the server sends what it has. A client's own entity starts once its
+		// session predicts it, so an ability its setup activates is refused as on a predicted entity.
+		if (!IsMirror && !IsPredicted)
 		{
-			var effectApplier = new EffectApplier(this);
-			effectApplier.ApplyEffects(this, this, this);
+			ApplySetup();
 		}
 
-		if (Networked)
-		{
-			ForgeNetworkSession.Of(this)?.OnEntityReady(this);
-		}
+		session?.OnEntityReady(this);
 	}
 
 	public override void _Process(double delta)
@@ -174,12 +180,13 @@ public partial class ForgeEntity : Node, IForgeEntity
 		base._PhysicsProcess(delta);
 
 		// ForgeBootstrap already began this tick for every entity, before any entity advanced. A world history advances
-		// its entities itself, and a mirror doesn't advance: only its copies of the server's graphs run.
+		// its entities itself, the session its predicted ones, and a mirror doesn't advance: only its copies of the
+		// server's graphs run.
 		if (IsMirror)
 		{
 			Abilities.FixedUpdateAbilities(delta);
 		}
-		else if (WorldHistory is null)
+		else if (WorldHistory is null && !IsPredicted)
 		{
 			EntitySimulation.Advance(this, delta);
 		}
@@ -216,6 +223,26 @@ public partial class ForgeEntity : Node, IForgeEntity
 				Callable.From(() => Teardown(entity)).CallDeferred();
 			}
 		}
+	}
+
+	// A networked entity rolls from the session's seed and its id, so every machine that simulates it rolls the same.
+	internal static ulong NetworkSeed(ulong sessionSeed, NetworkEntityId id)
+	{
+		return unchecked(sessionSeed ^ (id.Value * 0xD1B54A32D192ED03UL));
+	}
+
+	// A placed entity, ready before the session started, rolls from its network seed from now on.
+	internal void SeedFor(ulong sessionSeed)
+	{
+		var random = new DeterministicRandom(NetworkSeed(sessionSeed, NetworkId));
+		random.BeginTick(ForgeManagers.Instance.Clock.Tick);
+		Random = random;
+	}
+
+	internal void ApplySetup()
+	{
+		var effectApplier = new EffectApplier(this);
+		effectApplier.ApplyEffects(this, this, this);
 	}
 
 	private static void Teardown(ForgeEntity entity)

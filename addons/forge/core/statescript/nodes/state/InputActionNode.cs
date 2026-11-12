@@ -14,7 +14,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State;
 /// <remarks>
 /// <para>An entity with an <see cref="IForgeEntity.Input"/> is read from that input, once per physics tick, so the node
 /// sees exactly what every machine simulating the entity sees, a tap shorter than a tick included. An entity without
-/// one is read straight from the local device every frame, which only the machine with the device can do.</para>
+/// one is read straight from the local device every frame, which only the machine with the device can do. Input
+/// Sources, bound, are only ever read from their inputs.</para>
 /// <para>The action is authored as free text, so it can name an action the project's Input Map does not have, or one
 /// the entity's input does not carry. Either is reported once, as a warning.</para>
 /// </remarks>
@@ -36,6 +37,11 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 	{
 		base.OnActivate(graphContext);
 
+		if (WatchesInputSources)
+		{
+			return;
+		}
+
 		if (ResolveInputSource(graphContext)?.Input is EntityInput input)
 		{
 			ReportUncarriedAction(input);
@@ -51,7 +57,7 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 	{
 		base.OnFixedUpdate(deltaTime, graphContext);
 
-		if (ResolveInputSource(graphContext)?.Input is EntityInput input)
+		if (!WatchesInputSources && ResolveInputSource(graphContext)?.Input is EntityInput input)
 		{
 			ReportUncarriedAction(input);
 		}
@@ -60,7 +66,7 @@ public class InputActionNode(string actionName = "", bool deactivateOnPressed = 
 	/// <inheritdoc/>
 	protected override void OnUpdate(double deltaTime, GraphContext graphContext)
 	{
-		if (ResolveInputSource(graphContext)?.Input is null)
+		if (!WatchesInputSources && ResolveInputSource(graphContext)?.Input is null)
 		{
 			PollDevice(graphContext);
 		}

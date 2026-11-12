@@ -19,6 +19,7 @@ using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
 using GdUnit4;
 using Godot;
+using GraphContext = Gamesmiths.Forge.Statescript.GraphContext;
 
 namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 
@@ -300,7 +301,7 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
-	public async Task A_networked_scene_the_server_spawns_reaches_the_client_and_walks_by_its_owner_s_input()
+	public async Task A_networked_scene_the_server_spawns_for_a_client_is_predicted_there_and_walks_by_its_input()
 	{
 		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
 		await pair.Connect();
@@ -308,20 +309,53 @@ public class ForgeNetworkSessionTests
 		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
 		ForgeEntity entity = body.GetNode<ForgeEntity>("Forge Entity");
 		entity.NetworkOwner = pair.Client.LocalPeer;
-		pair.ServerBranch.AddChild(body);
+		DeterministicRandom? readied = null;
 
-		entity.NetworkId.IsValid.Should().BeTrue("the server registers a networked entity as it gets ready");
-		pair.Server.Session!.Replication!.Find(entity)!.Owner.Value.Should().Be(pair.Client.LocalPeer);
+		void OnAdded(Node node)
+		{
+			if (node is ForgeEntity { IsPredicted: true } added)
+			{
+				added.Ready += () =>
+				{
+					readied = added.Random;
+					added.AddChild(new ForgeEffect
+					{
+						EffectData = new ForgeEffectData { DurationType = DurationType.Infinite },
+					});
+				};
+			}
+		}
 
-		await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+		Tree.NodeAdded += OnAdded;
 
-		ForgeEntity mirror = pair.Client.LocalPlayer!;
-		var mirrorBody = (CharacterBody3D)mirror.GetParent();
-		mirror.Should().NotBeSameAs(entity);
-		mirror.IsMirror.Should().BeTrue();
-		mirror.NetworkId.Should().Be(entity.NetworkId);
-		mirrorBody.GetParent().Should().BeSameAs(pair.ClientBranch, "a client spawns under its spawn parent");
-		mirrorBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
+		try
+		{
+			pair.ServerBranch.AddChild(body);
+
+			entity.NetworkId.IsValid.Should().BeTrue("the server registers a networked entity as it gets ready");
+			pair.Server.Session!.Replication!.Find(entity)!.Owner.Value.Should().Be(pair.Client.LocalPeer);
+
+			await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+		}
+		finally
+		{
+			Tree.NodeAdded -= OnAdded;
+		}
+
+		ForgeEntity predicted = pair.Client.LocalPlayer!;
+		var predictedBody = (CharacterBody3D)predicted.GetParent();
+		predicted.Should().NotBeSameAs(entity);
+		predicted.IsMirror.Should().BeFalse();
+		predicted.IsPredicted.Should().BeTrue("a client predicts the entity it owns");
+		predicted.NetworkId.Should().Be(entity.NetworkId);
+		predicted.Random.Seed.Should().Be(entity.Random.Seed, "both roll from the session's seed and the id");
+		predicted.Random.Should().BeSameAs(
+			readied,
+			"it's seeded before its setup, so a graph the setup starts rolls with the entity's random");
+		predicted.EffectsManager.GetActiveEffects().Should().ContainSingle(
+			"its setup runs once it's bound as predicted, after it got ready");
+		predictedBody.GetParent().Should().BeSameAs(pair.ClientBranch, "a client spawns under its spawn parent");
+		pair.Client.Session!.Mirror!.Predicted.Should().Equal(predicted);
 		pair.Server.LocalPlayer.Should().BeNull("the server's own peer owns nothing here");
 
 		Vector3 start = body.GlobalPosition;
@@ -329,7 +363,7 @@ public class ForgeNetworkSessionTests
 
 		try
 		{
-			await Pair.RunUntil(() => mirrorBody.GlobalPosition.X > start.X + 0.5f, frames: 600);
+			await Pair.RunUntil(() => body.GlobalPosition.X > start.X + 0.5f, frames: 600);
 		}
 		finally
 		{
@@ -337,17 +371,19 @@ public class ForgeNetworkSessionTests
 		}
 
 		body.GlobalPosition.X.Should().BeGreaterThan(start.X + 0.5f, "the client's input walks the server's copy");
-		mirrorBody.GlobalPosition.X.Should().BeGreaterThan(start.X + 0.5f, "the client shows where the server has it");
-		mirrorBody.GlobalPosition.X.Should().BeLessThanOrEqualTo(
-			body.GlobalPosition.X + 0.01f,
-			"the client shows it a moment behind the server");
+		predictedBody.GlobalPosition.X.Should().BeGreaterThanOrEqualTo(
+			body.GlobalPosition.X - 0.01f,
+			"the client walks its own copy ahead of the server");
+		pair.Client.Confirmations.Should().BeGreaterThan(
+			pair.Client.Corrections,
+			"what the client predicted is mostly what the server ran");
 
 		body.QueueFree();
 		await Pair.RunUntil(() => pair.Client.LocalPlayer is null, frames: 300);
 
 		pair.Client.LocalPlayer.Should().BeNull("freed on the server, it goes from the client");
 		pair.Client.Session!.Mirror!.Entities.Should().BeEmpty();
-		GodotObject.IsInstanceValid(mirrorBody).Should().BeFalse();
+		GodotObject.IsInstanceValid(predictedBody).Should().BeFalse();
 	}
 
 	[TestCase]
@@ -379,11 +415,15 @@ public class ForgeNetworkSessionTests
 		CharacterBody3D clientBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
 		pair.ServerBranch.AddChild(serverBody);
 		pair.ClientBranch.AddChild(clientBody);
-		await pair.Connect();
-
+		pair.ClientBranch.AddChild(new ForgeWorldHistory());
 		ForgeEntity entity = serverBody.GetNode<ForgeEntity>("Forge Entity");
 		ForgeEntity mirror = clientBody.GetNode<ForgeEntity>("Forge Entity");
+		await Pair.RunUntil(() => mirror.WorldHistory is not null, frames: 10);
+		mirror.WorldHistory.Should().NotBeNull("the client's level history took it in before the session joined");
+		await pair.Connect();
+
 		mirror.IsMirror.Should().BeTrue("the client bound it as it joined");
+		mirror.WorldHistory.Should().BeNull("a mirror leaves the world history it was in, which would advance it");
 		clientBody.PhysicsInterpolationMode.Should().Be(Node.PhysicsInterpolationModeEnum.Off);
 		mirror.NetworkId.Should().Be(entity.NetworkId).And.Be(new NetworkEntityId(1));
 		pair.Server.Session!.Replication!.Find(entity)!.IsPlaced.Should().BeTrue();
@@ -398,6 +438,26 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_placed_entity_nothing_moved_stays_exactly_where_its_scene_has_it()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		var placed = new Transform3D(
+			new Basis(new Vector3(1, 1, 0).Normalized(), 0.3f),
+			new Vector3(4.0722361f, 0.0004f, -3.1852062f));
+		CharacterBody3D serverBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		CharacterBody3D clientBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		serverBody.Transform = placed;
+		clientBody.Transform = placed;
+		pair.ServerBranch.AddChild(serverBody);
+		pair.ClientBranch.AddChild(clientBody);
+		await pair.Connect();
+		await Pair.RunUntil(() => false, frames: 30);
+
+		clientBody.GlobalTransform.Should().Be(placed, "the server's rounding can't tell it from where it stands");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_networked_scene_is_the_server_s_to_spawn_and_belongs_to_whoever_spawned_it()
 	{
 		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
@@ -405,7 +465,7 @@ public class ForgeNetworkSessionTests
 		PackedScene scene = ResourceLoader.Load<PackedScene>(Body);
 
 		SceneInstantiationUtilities.Instantiate3D(
-			null!,
+			new GraphContext(),
 			scene,
 			InstantiateParentMode.Node,
 			pair.ClientBranch,
@@ -419,7 +479,7 @@ public class ForgeNetworkSessionTests
 		pair.ServerBranch.AddChild(spawner);
 
 		Node? spawned = SceneInstantiationUtilities.Instantiate3D(
-			null!,
+			new GraphContext(),
 			scene,
 			InstantiateParentMode.Node,
 			pair.ServerBranch,
@@ -434,6 +494,16 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void A_Server_Only_ability_resource_makes_ability_data_its_owner_doesn_t_predict()
+	{
+		var ability = new ForgeAbilityData { Name = "Smite", ServerOnly = true };
+
+		ability.GetAbilityData().ServerOnly.Should().BeTrue();
+		new ForgeAbilityData { Name = "Dash" }.GetAbilityData().ServerOnly.Should().BeFalse();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void A_session_leaves_entities_of_another_multiplayer_branch_alone()
 	{
 		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
@@ -443,7 +513,6 @@ public class ForgeNetworkSessionTests
 		{
 			Port = TestPort(),
 			Manifest = SceneManifest(Body),
-			ClockOverride = pair.ServerClock,
 		};
 		Root.AddChild(session);
 
@@ -777,7 +846,7 @@ public class ForgeNetworkSessionTests
 
 		public ForgeEntity Player { get; }
 
-		public SimulationClock ServerClock { get; }
+		public SimulationClock ClientClock { get; }
 
 		public Node ServerBranch { get; }
 
@@ -799,29 +868,28 @@ public class ForgeNetworkSessionTests
 			ClientBranch.AddChild(Player);
 			Player.Input = new EntityInput(ForgeSettings.GetInputActionSet());
 
-			// Both ends share the process's session clock, on which a client can't run ahead, so the server keeps a
-			// clock of its own that the test holds a few ticks behind: what a real client's lead looks like from here.
-			ServerClock = new SimulationClock(
+			// Both ends share the process's session clock, on which a client can't run ahead. The server runs on it, as
+			// every entity's tick begins at it, and the client keeps a clock of its own that the test holds a few ticks
+			// ahead: what a real client's lead looks like from here. A client with a clock of its own doesn't steer:
+			// steering would chase the gap between physics time and wall time that a test runner's bursts open up.
+			ClientClock = new SimulationClock(
 				ForgeManagers.Instance.Clock.TickRate,
-				ForgeManagers.Instance.Clock.Tick - Lead);
+				ForgeManagers.Instance.Clock.Tick + Lead);
 
 			Server = new ForgeNetworkSession
 			{
 				Port = port,
 				Manifest = serverManifest,
 				MaxClients = 2,
-				ClockOverride = ServerClock,
 			};
 
-			// The client reads the session clock itself but doesn't steer it: steering would chase the gap between
-			// physics time and wall time that a test runner's bursts open up, and move the shared clock under both.
 			Client = new ForgeNetworkSession
 			{
 				Port = port,
 				Manifest = clientManifest,
 				LocalPlayer = withPlayer ? Player : null,
 				SpawnParent = ClientBranch,
-				ClockOverride = ForgeManagers.Instance.Clock,
+				ClockOverride = ClientClock,
 			};
 			ServerBranch.AddChild(Server);
 			ClientBranch.AddChild(Client);
@@ -859,7 +927,7 @@ public class ForgeNetworkSessionTests
 
 			InputPlayoutBuffer? input = peer?.Input;
 
-			return $"\n[clock {ForgeManagers.Instance.Clock.Tick}, server clock {ServerClock.Tick}, client " +
+			return $"\n[clock {ForgeManagers.Instance.Clock.Tick}, client clock {ClientClock.Tick}, client " +
 				$"{Client.State} window newest {Client.Session?.Input.NewestTick} acked " +
 				$"{Client.Session?.AckedInputTick} ahead {Client.TicksAhead:0.0} rtt {Client.RoundTripTime * 1000:0} " +
 				$"ms; server newest {input?.NewestTick} last taken {input?.LastTakenTick} depth {input?.Depth} " +
@@ -879,11 +947,11 @@ public class ForgeNetworkSessionTests
 			ClientBranch.Free();
 		}
 
-		// At the start of every physics step, before any node runs it, the server's clock is put the lead behind the
+		// At the start of every physics step, before any node runs it, the client's clock is put the lead ahead of the
 		// session clock's tick, the one the step is about to simulate.
 		private void OnPhysicsFrame()
 		{
-			ServerClock.Set(ForgeManagers.Instance.Clock.Tick - Lead);
+			ClientClock.Set(ForgeManagers.Instance.Clock.Tick + Lead);
 		}
 	}
 }

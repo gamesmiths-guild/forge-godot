@@ -10,8 +10,9 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 
 /// <summary>
 /// The F3 overlay: what the session is doing, in a corner. Round trip, server and local tick, how far ahead a client
-/// runs, how the server is receiving its input, loss and bandwidth, and the conditioner's settings. F3 shows and hides
-/// it; F4 cycles the conditioner through a perfect, a good, a far and a poor link.
+/// runs, how the server is receiving its input, how often a client's prediction held and how far back its last
+/// correction went, loss and bandwidth, and the conditioner's settings. F3 shows and hides it; F4 cycles the
+/// conditioner through a perfect, a good, a far and a poor link.
 /// </summary>
 /// <remarks>
 /// Add it anywhere in a scene that has a <see cref="ForgeNetworkSession"/>. It finds the session on its own when
@@ -155,9 +156,23 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 
 			if (session.Session?.Mirror is { } mirror)
 			{
-				text.Append(CultureInfo.InvariantCulture, $"{mirror.Entities.Count} mirrored, ")
-					.Append(CultureInfo.InvariantCulture, $"state of tick {mirror.LastServerTick}, ")
-					.Append(CultureInfo.InvariantCulture, $"{mirror.PacketsLate} late, {mirror.SpawnsRefused} refused\n");
+				text.Append(
+						CultureInfo.InvariantCulture,
+						$"{mirror.Entities.Count - mirror.Predicted.Count} mirrored, ")
+					.Append(
+						CultureInfo.InvariantCulture,
+						$"state of tick {mirror.LastServerTick}, ")
+					.Append(
+						CultureInfo.InvariantCulture,
+						$"{mirror.PacketsLate} late, {mirror.SpawnsRefused} refused\n");
+
+				if (mirror.Predicted.Count > 0)
+				{
+					text.Append(CultureInfo.InvariantCulture, $"{mirror.Predicted.Count} predicted: ")
+						.Append(CultureInfo.InvariantCulture, $"{mirror.Confirmations} confirmed, ")
+						.Append(CultureInfo.InvariantCulture, $"{mirror.Corrections} corrected, ")
+						.Append(CultureInfo.InvariantCulture, $"last rolled back {mirror.LastCorrectionTicks} ticks\n");
+				}
 			}
 		}
 

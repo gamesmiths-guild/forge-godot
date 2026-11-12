@@ -18,7 +18,7 @@ All four are [presentation nodes](https://github.com/gamesmiths-guild/forge/blob
 
 - **The state nodes start and stop playback in the presentation pass**, which the Forge bootstrap runs at the end of each frame, once every node has processed. They play what was resolved when they activated: Speed, Blend, Volume Db and Pitch are read then, not in the pass. A node that activates and ends within one frame plays nothing, and one that keeps running is started once.
 - **Their length is counted in fixed steps from activation**, not read from the player. The node finishes on the same physics step on every machine, whatever the engine is doing with playback — a graph waiting on `OnFinished` never depends on whether a frame was dropped.
-- **The one-shot actions play when they execute.**
+- **The one-shot actions play when they execute**, except while a [correction](../../networking.md#its-own-player) runs ticks again on the client predicting the entity: those ticks played them once already. They still resolve their inputs, so a random one draws what the tick drew.
 
 ## The player path
 

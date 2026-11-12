@@ -276,6 +276,15 @@ public partial class ForgeWorldHistory : Node
 		return _limbo.Remove(entity);
 	}
 
+	// An entity that leaves its world lives on, so it keeps holding on to everything, and one in limbo comes back to
+	// life as it is: a placed entity a client's session makes a mirror goes so.
+	internal void Leave(ForgeEntity entity)
+	{
+		History.Forget(entity, letGo: false);
+		_entities.Remove(entity);
+		entity.WorldHistory = null;
+	}
+
 	private static Node LimboNode(IForgeEntity entity)
 	{
 		return ForgeEntityBridge.TryGetOwningNode(entity, null, out Node? node) ? node : (Node)entity;
@@ -470,7 +479,8 @@ public partial class ForgeWorldHistory : Node
 
 		if (entity.WorldHistory is null)
 		{
-			if (!entity.IsNodeReady())
+			// One a session seeded rolls as on every machine.
+			if (!entity.IsNodeReady() && entity.SpawnSeed is null)
 			{
 				SeedSpawn(entity);
 			}
@@ -517,8 +527,11 @@ public partial class ForgeWorldHistory : Node
 	private void Join(ForgeEntity entity)
 	{
 		// One that waited to be ready may have moved away meanwhile, and a limbo node the history freed as it left the
-		// tree is still there if it comes back within the frame.
+		// tree is still there if it comes back within the frame. A client's session advances what it predicts and
+		// holds what it mirrors.
 		if (entity.WorldHistory is not null
+			|| entity.IsPredicted
+			|| entity.IsMirror
 			|| _root?.IsAncestorOf(entity) != true
 			|| LimboNode(entity).IsQueuedForDeletion())
 		{
@@ -530,8 +543,7 @@ public partial class ForgeWorldHistory : Node
 		History.Add(entity);
 	}
 
-	// An entity moved out from under the history's parent leaves its world, free to join another. It lives on, so it
-	// keeps holding on to everything, and one in limbo comes back to life as it is.
+	// An entity moved out from under the history's parent leaves its world, free to join another.
 	private void LeaveIfMovedOut(ForgeEntity entity)
 	{
 		if (entity.IsInsideTree() && _root?.IsAncestorOf(entity) == true)
@@ -539,9 +551,7 @@ public partial class ForgeWorldHistory : Node
 			return;
 		}
 
-		History.Forget(entity, letGo: false);
-		_entities.Remove(entity);
-		entity.WorldHistory = null;
+		Leave(entity);
 	}
 
 	private void OnEnteredLimbo(IForgeEntity entity)

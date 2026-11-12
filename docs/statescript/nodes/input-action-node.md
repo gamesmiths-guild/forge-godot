@@ -22,6 +22,7 @@ Watches a Godot input action while active: the "wait for a button before continu
 | Index | Label | Type | Notes |
 |---|---|---|---|
 | 0 | Input Source | `IForgeEntity` | Optional. Unbound means the ability's owner. See [below](#input-is-read-from-the-input-source). |
+| 1 | Input Sources | `IForgeEntity[]` | Optional. Watched instead of Input Source, as one button. See [below](#several-entities-as-one-button). |
 
 ## Ports
 
@@ -63,6 +64,12 @@ The button is read from the **Input Source** entity, the ability's owner when un
 - **An entity without one** is read from the local device every frame, as `Input.IsActionPressed` reports it. Only the machine with the device can do that, so a graph that a networked game runs on its server should watch an entity with an input.
 
 The four [input resolvers](../resolvers/input-resolvers.md) and the [mouse and camera-forward resolvers](../resolvers/camera-and-aim.md) take an Input Source the same way.
+
+## Several entities as one button
+
+Bound, **Input Sources** is watched instead of Input Source: each entity in it with an `Input`, as one button. It is down while any of them holds it, pressed when one presses it while none does, and released when the last one lets go. Entities without an input are skipped, and the local device is never read.
+
+Bound to an [Area Overlaps 3D](../resolvers/physics-queries.md) of an area, it makes a switch anyone standing by can use, as the networked sample's brazier does with its ring.
 
 ## Related Docs
 

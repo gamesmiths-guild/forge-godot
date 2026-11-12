@@ -240,6 +240,8 @@ Describes, configures, and links a gameplay ability.
   - `InputAction` (string): An input action from `forge/input/actions` the ability activates from. Empty means the ability is not bound to input.
   - `InputEdge` (InputEdge): `Pressed` activates on the press, `Released` on the release.
   - `InputActivationData` (ForgeInputActivationData): Builds the activation data from the same physics step's input. `AimInputActivationData` gives an `AimActivationData` and `Aim2DInputActivationData` an `AimActivationData2D`, aimed from the entity's node at the input's aim. Unset activates the ability without data.
+- Networking group:
+  - `ServerOnly` (bool): Whether only the server runs the ability. In a session, the client that owns the entity doesn't predict it, and shows its graph as everyone else does. See [Its own player](networking.md#its-own-player).
 
 **Usage:**
 

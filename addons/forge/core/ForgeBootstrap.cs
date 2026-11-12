@@ -89,8 +89,9 @@ public partial class ForgeBootstrap : Node
 
 		foreach (Node node in GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
 		{
-			// A world history begins the ticks of the entities it advances.
-			if (node is ForgeEntity { WorldHistory: null } entity)
+			// A world history begins the ticks of the entities it advances, and the session those of the ones it
+			// predicts.
+			if (node is ForgeEntity { WorldHistory: null, IsPredicted: false } entity)
 			{
 				EntitySimulation.BeginTick(entity, tick);
 			}
