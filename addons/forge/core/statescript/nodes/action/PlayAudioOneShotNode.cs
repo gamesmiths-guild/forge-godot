@@ -58,16 +58,19 @@ public class PlayAudioOneShotNode(string playerPath = "") : ActionNode
 	/// <inheritdoc/>
 	protected override void Execute(GraphContext graphContext)
 	{
-		// A correction runs again a tick that played the sound already.
-		if (graphContext.IsCorrecting
-			|| !_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
+		if (!_inputs.TryGetAudioPlayer(graphContext, InputProperties[EntityInput].BoundName, out Node? player))
 		{
 			return;
 		}
 
-		AudioPlayers.TryPlay(
-			player,
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[VolumeDbInput].BoundName),
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName));
+		double? volumeDb = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[VolumeDbInput].BoundName);
+		double? pitch = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[PitchInput].BoundName);
+
+		// A correction runs again a tick that played the sound already. It still resolves the inputs, so a random one
+		// draws what the tick drew.
+		if (!graphContext.IsCorrecting)
+		{
+			AudioPlayers.TryPlay(player, volumeDb, pitch);
+		}
 	}
 }

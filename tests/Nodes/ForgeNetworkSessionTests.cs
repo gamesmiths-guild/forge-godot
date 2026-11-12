@@ -19,6 +19,7 @@ using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
 using GdUnit4;
 using Godot;
+using GraphContext = Gamesmiths.Forge.Statescript.GraphContext;
 
 namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 
@@ -460,7 +461,7 @@ public class ForgeNetworkSessionTests
 		PackedScene scene = ResourceLoader.Load<PackedScene>(Body);
 
 		SceneInstantiationUtilities.Instantiate3D(
-			null!,
+			new GraphContext(),
 			scene,
 			InstantiateParentMode.Node,
 			pair.ClientBranch,
@@ -474,7 +475,7 @@ public class ForgeNetworkSessionTests
 		pair.ServerBranch.AddChild(spawner);
 
 		Node? spawned = SceneInstantiationUtilities.Instantiate3D(
-			null!,
+			new GraphContext(),
 			scene,
 			InstantiateParentMode.Node,
 			pair.ServerBranch,

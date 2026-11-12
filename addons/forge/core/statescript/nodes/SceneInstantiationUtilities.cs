@@ -117,6 +117,13 @@ internal static class SceneInstantiationUtilities
 			return null;
 		}
 
+		// A correction runs again a tick that made the instance already. Its inputs are resolved by now, so a random
+		// one draws what the tick drew.
+		if (graphContext.IsCorrecting)
+		{
+			return null;
+		}
+
 		Node instance = scene.Instantiate();
 
 		// What an entity spawns belongs to the same player, so its owner's input and relevancy reach it.

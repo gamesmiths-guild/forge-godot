@@ -61,8 +61,7 @@ public class PlayAnimationOneShotNode(string playerPath = "", string animation =
 	/// <inheritdoc/>
 	protected override void Execute(GraphContext graphContext)
 	{
-		// A correction runs again a tick that played the animation already.
-		if (graphContext.IsCorrecting || !_inputs.TryGetAnimationPlayer(
+		if (!_inputs.TryGetAnimationPlayer(
 			graphContext,
 			InputProperties[EntityInput].BoundName,
 			out AnimationPlayer? player))
@@ -70,10 +69,14 @@ public class PlayAnimationOneShotNode(string playerPath = "", string animation =
 			return;
 		}
 
-		_inputs.TryPlayAnimation(
-			player,
-			_animation,
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName),
-			PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName));
+		double? speed = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName);
+		double? blend = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName);
+
+		// A correction runs again a tick that played the animation already. It still resolves the inputs, so a random
+		// one draws what the tick drew.
+		if (!graphContext.IsCorrecting)
+		{
+			_inputs.TryPlayAnimation(player, _animation, speed, blend);
+		}
 	}
 }

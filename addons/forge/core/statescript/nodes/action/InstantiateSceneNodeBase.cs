@@ -117,9 +117,7 @@ public abstract class InstantiateSceneNodeBase(
 	/// <inheritdoc/>
 	protected override void Execute(GraphContext graphContext)
 	{
-		// A correction runs again a tick that made the instance already.
-		if (graphContext.IsCorrecting
-			|| !graphContext.TryResolveObject(InputProperties[SceneInput].BoundName, out PackedScene? scene)
+		if (!graphContext.TryResolveObject(InputProperties[SceneInput].BoundName, out PackedScene? scene)
 			|| scene is null)
 		{
 			return;
