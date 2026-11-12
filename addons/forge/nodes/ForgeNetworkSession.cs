@@ -435,6 +435,7 @@ public partial class ForgeNetworkSession : Node
 			}
 
 			placed[i].NetworkId = new NetworkEntityId((uint)i + 1);
+			placed[i].SeedFor(Session!.SessionSeed);
 			Register(placed[i], -1);
 		}
 
@@ -634,16 +635,16 @@ public partial class ForgeNetworkSession : Node
 		PredictStep(now);
 	}
 
-	internal void OnEntityReady(ForgeEntity entity)
+	// A networked entity entering the game while hosting gets its id and seed before its setup, so the setup and the
+	// graphs it starts roll as on the client that predicts the entity.
+	internal void OnEntityEntering(ForgeEntity entity)
 	{
 		if (!IsServer || entity.Replicator is not null)
 		{
 			return;
 		}
 
-		int sceneIndex = SceneIndexOf(InstanceRoot(entity));
-
-		if (sceneIndex < 0)
+		if (SceneIndexOf(InstanceRoot(entity)) < 0)
 		{
 			GD.PushWarning(
 				$"Forge: {entity.GetPath()} is networked and entered the game while hosting, from a scene the " +
@@ -653,7 +654,17 @@ public partial class ForgeNetworkSession : Node
 		}
 
 		entity.NetworkId = Session!.Replication!.AllocateId();
-		Register(entity, sceneIndex);
+		SeedSpawn(entity, entity.NetworkId);
+	}
+
+	internal void OnEntityReady(ForgeEntity entity)
+	{
+		if (!IsServer || entity.Replicator is not null || !entity.NetworkId.IsValid)
+		{
+			return;
+		}
+
+		Register(entity, SceneIndexOf(InstanceRoot(entity)));
 	}
 
 	internal void OnEntityFreed(ForgeEntity entity)
@@ -861,11 +872,17 @@ public partial class ForgeNetworkSession : Node
 		return entities;
 	}
 
+	// Seeds an entity about to get ready. Its setup rolls at tick 0, since each machine makes it at a tick of its own.
+	private void SeedSpawn(ForgeEntity entity, NetworkEntityId id)
+	{
+		entity.SpawnSeed = ForgeEntity.NetworkSeed(Session!.SessionSeed, id);
+		entity.SpawnTick = 0;
+	}
+
 	private void Register(ForgeEntity entity, int sceneIndex)
 	{
 		entity.Replicator = this;
-		entity.SeedFor(Session!.SessionSeed);
-		Session.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner));
+		Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner));
 
 		if (entity.NetworkOwner == LocalPeer && entity.Input is not null && LocalPlayer is null)
 		{
@@ -893,6 +910,11 @@ public partial class ForgeNetworkSession : Node
 
 	private void OnMirrorSpawned(IForgeEntity entity)
 	{
+		if (entity is ForgeEntity { IsPredicted: true } predicted)
+		{
+			predicted.ApplySetup();
+		}
+
 		PlaceShownBody(entity);
 
 		if (entity is ForgeEntity { Input: not null } player && player.NetworkOwner == LocalPeer && LocalPlayer is null)
@@ -1047,8 +1069,8 @@ public partial class ForgeNetworkSession : Node
 			return Make(id, sceneIndex, owner, predicted: false, body: null);
 		}
 
-		// This client's own entity is made as the scene makes it, setup included, where the server's body was as the
-		// server registered it, so its setup runs where the server's did.
+		// This client's own entity is made as the scene makes it, where the server's body was as the server registered
+		// it, so its setup, which runs once it's bound as predicted, runs where the server's did.
 		public IForgeEntity? SpawnPredicted(NetworkEntityId id, int sceneIndex, PeerId owner, BodyState? body)
 		{
 			return Make(id, sceneIndex, owner, predicted: true, body);
@@ -1131,6 +1153,7 @@ public partial class ForgeNetworkSession : Node
 			entity.IsMirror = !predicted;
 			entity.IsPredicted = predicted;
 			entity.Replicator = session;
+			session.SeedSpawn(entity, id);
 			session._spawnedRoots[entity] = instance;
 			Node parent = session.SpawnParent ?? session.GetTree().CurrentScene ?? session.GetTree().Root;
 
@@ -1140,7 +1163,6 @@ public partial class ForgeNetworkSession : Node
 			}
 
 			parent.AddChild(instance, forceReadableName: true);
-			entity.SeedFor(session.Session.SessionSeed);
 
 			if (!predicted)
 			{

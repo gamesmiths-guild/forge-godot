@@ -470,7 +470,8 @@ public partial class ForgeWorldHistory : Node
 
 		if (entity.WorldHistory is null)
 		{
-			if (!entity.IsNodeReady())
+			// One a session seeded rolls as on every machine.
+			if (!entity.IsNodeReady() && entity.SpawnSeed is null)
 			{
 				SeedSpawn(entity);
 			}
@@ -517,8 +518,11 @@ public partial class ForgeWorldHistory : Node
 	private void Join(ForgeEntity entity)
 	{
 		// One that waited to be ready may have moved away meanwhile, and a limbo node the history freed as it left the
-		// tree is still there if it comes back within the frame.
+		// tree is still there if it comes back within the frame. A client's session advances what it predicts and
+		// holds what it mirrors.
 		if (entity.WorldHistory is not null
+			|| entity.IsPredicted
+			|| entity.IsMirror
 			|| _root?.IsAncestorOf(entity) != true
 			|| LimboNode(entity).IsQueuedForDeletion())
 		{

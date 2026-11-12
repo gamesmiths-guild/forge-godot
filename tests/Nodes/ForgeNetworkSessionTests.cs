@@ -308,12 +308,38 @@ public class ForgeNetworkSessionTests
 		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
 		ForgeEntity entity = body.GetNode<ForgeEntity>("Forge Entity");
 		entity.NetworkOwner = pair.Client.LocalPeer;
-		pair.ServerBranch.AddChild(body);
+		DeterministicRandom? readied = null;
 
-		entity.NetworkId.IsValid.Should().BeTrue("the server registers a networked entity as it gets ready");
-		pair.Server.Session!.Replication!.Find(entity)!.Owner.Value.Should().Be(pair.Client.LocalPeer);
+		void OnAdded(Node node)
+		{
+			if (node is ForgeEntity { IsPredicted: true } added)
+			{
+				added.Ready += () =>
+				{
+					readied = added.Random;
+					added.AddChild(new ForgeEffect
+					{
+						EffectData = new ForgeEffectData { DurationType = DurationType.Infinite },
+					});
+				};
+			}
+		}
 
-		await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+		Tree.NodeAdded += OnAdded;
+
+		try
+		{
+			pair.ServerBranch.AddChild(body);
+
+			entity.NetworkId.IsValid.Should().BeTrue("the server registers a networked entity as it gets ready");
+			pair.Server.Session!.Replication!.Find(entity)!.Owner.Value.Should().Be(pair.Client.LocalPeer);
+
+			await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+		}
+		finally
+		{
+			Tree.NodeAdded -= OnAdded;
+		}
 
 		ForgeEntity predicted = pair.Client.LocalPlayer!;
 		var predictedBody = (CharacterBody3D)predicted.GetParent();
@@ -322,6 +348,11 @@ public class ForgeNetworkSessionTests
 		predicted.IsPredicted.Should().BeTrue("a client predicts the entity it owns");
 		predicted.NetworkId.Should().Be(entity.NetworkId);
 		predicted.Random.Seed.Should().Be(entity.Random.Seed, "both roll from the session's seed and the id");
+		predicted.Random.Should().BeSameAs(
+			readied,
+			"it's seeded before its setup, so a graph the setup starts rolls with the entity's random");
+		predicted.EffectsManager.GetActiveEffects().Should().ContainSingle(
+			"its setup runs once it's bound as predicted, after it got ready");
 		predictedBody.GetParent().Should().BeSameAs(pair.ClientBranch, "a client spawns under its spawn parent");
 		pair.Client.Session!.Mirror!.Predicted.Should().Equal(predicted);
 		pair.Server.LocalPlayer.Should().BeNull("the server's own peer owns nothing here");
