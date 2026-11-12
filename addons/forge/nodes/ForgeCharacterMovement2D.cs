@@ -355,7 +355,8 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 
 	private void ShowEasing()
 	{
-		Visual!.Position = _visualRest + (Visual!.GetParent() is not Node2D parent
+		Node2D visual = Visual!;
+		visual.Position = _visualRest + (visual.TopLevel || visual.GetParent() is not Node2D parent
 			? _easing
 			: parent.GlobalTransform.AffineInverse().BasisXform(_easing));
 	}

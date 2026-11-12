@@ -354,7 +354,8 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 
 	private void ShowEasing()
 	{
-		Visual!.Position = _visualRest + (Visual!.GetParent() is not Node3D parent
+		Node3D visual = Visual!;
+		visual.Position = _visualRest + (visual.TopLevel || visual.GetParent() is not Node3D parent
 			? _easing
 			: parent.GlobalBasis.Inverse() * _easing);
 	}

@@ -443,6 +443,13 @@ public class ForgeCharacterMovementTests
 			movement._Process(0.2);
 
 			visual.Position.Should().Be(Vector2.Zero);
+
+			visual.TopLevel = true;
+			visual.Position = Vector2.Zero;
+			movement.EaseCorrection(new Vector2(0, 40));
+
+			visual.GlobalPosition.Y
+				.Should().BeApproximately(40f, 1e-3f, "a top-level visual takes the offset as it is");
 		}
 		finally
 		{

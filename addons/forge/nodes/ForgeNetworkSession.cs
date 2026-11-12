@@ -1118,7 +1118,9 @@ public partial class ForgeNetworkSession : Node
 		{
 			if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D) && node3D == instance)
 			{
-				Transform3D parentGlobal = parent is Node3D parent3D ? parent3D.GlobalTransform : Transform3D.Identity;
+				Transform3D parentGlobal = parent is Node3D parent3D && !node3D.TopLevel
+					? parent3D.GlobalTransform
+					: Transform3D.Identity;
 				var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
 				var global = new Transform3D(
 					new Basis(rotation.Normalized()) * Basis.FromScale((parentGlobal.Basis * node3D.Basis).Scale),
@@ -1127,7 +1129,9 @@ public partial class ForgeNetworkSession : Node
 			}
 			else if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D) && node2D == instance)
 			{
-				Transform2D parentGlobal = parent is Node2D parent2D ? parent2D.GlobalTransform : Transform2D.Identity;
+				Transform2D parentGlobal = parent is Node2D parent2D && !node2D.TopLevel
+					? parent2D.GlobalTransform
+					: Transform2D.Identity;
 				Transform2D authored = parentGlobal * node2D.Transform;
 				var global = new Transform2D(
 					2f * MathF.Atan2(state.Rotation.Z, state.Rotation.W),
