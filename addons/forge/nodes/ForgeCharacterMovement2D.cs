@@ -357,7 +357,7 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 	{
 		Visual!.Position = _visualRest + (Visual!.GetParent() is not Node2D parent
 			? _easing
-			: parent.GlobalTransform.BasisXformInv(_easing));
+			: parent.GlobalTransform.AffineInverse().BasisXform(_easing));
 	}
 
 	private float ReadSpeed(ForgeEntity entity)

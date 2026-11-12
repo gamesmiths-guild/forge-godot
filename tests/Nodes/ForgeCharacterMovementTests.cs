@@ -417,7 +417,7 @@ public class ForgeCharacterMovementTests
 	[RequireGodotRuntime]
 	public void A_2D_correction_eases_the_visual_back_to_the_body()
 	{
-		var world = new Node2D();
+		var world = new Node2D { Scale = new Vector2(2, 2) };
 		Root.AddChild(world);
 
 		try
@@ -435,7 +435,10 @@ public class ForgeCharacterMovementTests
 			movement.EaseCorrection(new Vector2(0, 40));
 			movement._Process(0.1);
 
-			visual.Position.Y.Should().BeApproximately(20f, 1e-3f, "a correction of a few dozen pixels eases");
+			(visual.GlobalPosition.Y - body.GlobalPosition.Y).Should().BeApproximately(
+				20f,
+				1e-3f,
+				"a correction of a few dozen pixels eases, in global space under a scaled parent");
 
 			movement._Process(0.2);
 

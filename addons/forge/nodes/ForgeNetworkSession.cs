@@ -1022,7 +1022,10 @@ public partial class ForgeNetworkSession : Node
 			return;
 		}
 
-		NumericsVector3 moved = shown.Position - mover.CaptureState().Position;
+		// An update can correct the entity once per packet, and each eases from where the one before left it.
+		BodyState corrected = mover.CaptureState();
+		_shownBefore[entity] = corrected;
+		NumericsVector3 moved = shown.Position - corrected.Position;
 
 		switch (mover)
 		{
@@ -1108,27 +1111,29 @@ public partial class ForgeNetworkSession : Node
 			root.QueueFree();
 		}
 
-		// A body a scene's root is, placed in global space under the parent it's about to join.
+		// A body a scene's root is, placed in global space under the parent it's about to join, with the scale (and
+		// skew) it gets there from its scene and the parent.
 		private static void PlaceBefore(Node instance, IForgeEntity entity, Node parent, in BodyState state)
 		{
 			if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D) && node3D == instance)
 			{
+				Transform3D parentGlobal = parent is Node3D parent3D ? parent3D.GlobalTransform : Transform3D.Identity;
 				var rotation = new Quaternion(state.Rotation.X, state.Rotation.Y, state.Rotation.Z, state.Rotation.W);
 				var global = new Transform3D(
-					new Basis(rotation.Normalized()) * Basis.FromScale(node3D.Basis.Scale),
+					new Basis(rotation.Normalized()) * Basis.FromScale((parentGlobal.Basis * node3D.Basis).Scale),
 					new Vector3(state.Position.X, state.Position.Y, state.Position.Z));
-				node3D.Transform = parent is Node3D parent3D
-					? parent3D.GlobalTransform.AffineInverse() * global
-					: global;
+				node3D.Transform = parentGlobal.AffineInverse() * global;
 			}
 			else if (ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node2D) && node2D == instance)
 			{
+				Transform2D parentGlobal = parent is Node2D parent2D ? parent2D.GlobalTransform : Transform2D.Identity;
+				Transform2D authored = parentGlobal * node2D.Transform;
 				var global = new Transform2D(
 					2f * MathF.Atan2(state.Rotation.Z, state.Rotation.W),
+					authored.Scale,
+					authored.Skew,
 					new Vector2(state.Position.X, state.Position.Y));
-				node2D.Transform = parent is Node2D parent2D
-					? parent2D.GlobalTransform.AffineInverse() * global
-					: global;
+				node2D.Transform = parentGlobal.AffineInverse() * global;
 			}
 		}
 
