@@ -11,8 +11,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// <summary>
 /// The F3 overlay: what the session is doing, in a corner. Round trip, server and local tick, how far ahead a client
 /// runs, how the server is receiving its input, how often a client's prediction held and how far back its last
-/// correction went, loss and bandwidth, and the conditioner's settings. F3 shows and hides
-/// it; F4 cycles the conditioner through a perfect, a good, a far and a poor link.
+/// correction went, loss and bandwidth, and the conditioner's settings. F3 shows and hides it; F4 cycles the
+/// conditioner through a perfect, a good, a far and a poor link.
 /// </summary>
 /// <remarks>
 /// Add it anywhere in a scene that has a <see cref="ForgeNetworkSession"/>. It finds the session on its own when

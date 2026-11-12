@@ -60,7 +60,7 @@ public enum NetworkMode
 /// body moves.</para>
 /// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
 /// arrives before the server needs it. A <see cref="ClockDilation"/> steers it a tick at a time: a physics step
-/// simulates two ticks to catch up or none to wait, and the clock jumps only when it's far off.</para>
+/// simulates two ticks to catch up or none to wait, and the clock jumps only when it's far behind.</para>
 /// <para>A client predicts its own player, the networked entity the server spawns for its peer: the entity is made live
 /// rather than a mirror, and the session advances it through each tick the clock simulates, ahead of the server, so it
 /// answers this machine's input at once. Each state packet puts it right where the server's word for its tick differs,
