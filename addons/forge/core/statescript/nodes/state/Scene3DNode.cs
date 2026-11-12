@@ -42,6 +42,7 @@ public class Scene3DNode(
 	{
 		return SceneInstantiationUtilities.Instantiate3D(
 			graphContext,
+			Index,
 			scene,
 			ParentMode,
 			parentNode,

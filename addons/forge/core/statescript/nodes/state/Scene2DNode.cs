@@ -42,6 +42,7 @@ public class Scene2DNode(
 	{
 		return SceneInstantiationUtilities.Instantiate2D(
 			graphContext,
+			Index,
 			scene,
 			ParentMode,
 			parentNode,

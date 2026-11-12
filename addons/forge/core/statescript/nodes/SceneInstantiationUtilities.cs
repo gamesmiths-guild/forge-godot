@@ -4,6 +4,7 @@ using System;
 using Gamesmiths.Forge.Abilities;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Nodes;
+using Gamesmiths.Forge.Networking.Replication;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
@@ -27,6 +28,7 @@ internal static class SceneInstantiationUtilities
 	/// Instantiates a scene, parents it, places it in 3D, and hands it its Forge ownership.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="node">The index of the node instantiating, in its graph.</param>
 	/// <param name="scene">The scene to instantiate.</param>
 	/// <param name="parentMode">Where to parent the instance.</param>
 	/// <param name="parentNode">The parent to use under <see cref="InstantiateParentMode.Node"/>.</param>
@@ -39,6 +41,7 @@ internal static class SceneInstantiationUtilities
 	/// <returns>The instance node, or <see langword="null"/> when it could not be parented.</returns>
 	public static Node? Instantiate3D(
 		GraphContext graphContext,
+		int node,
 		PackedScene scene,
 		InstantiateParentMode parentMode,
 		Node? parentNode,
@@ -49,6 +52,7 @@ internal static class SceneInstantiationUtilities
 	{
 		return Instantiate(
 			graphContext,
+			node,
 			scene,
 			parentMode,
 			parentNode,
@@ -61,6 +65,7 @@ internal static class SceneInstantiationUtilities
 	/// Instantiates a scene, parents it, places it in 2D, and hands it its Forge ownership.
 	/// </summary>
 	/// <param name="graphContext">The graph execution context.</param>
+	/// <param name="node">The index of the node instantiating, in its graph.</param>
 	/// <param name="scene">The scene to instantiate.</param>
 	/// <param name="parentMode">Where to parent the instance.</param>
 	/// <param name="parentNode">The parent to use under <see cref="InstantiateParentMode.Node"/>.</param>
@@ -73,6 +78,7 @@ internal static class SceneInstantiationUtilities
 	/// <returns>The instance node, or <see langword="null"/> when it could not be parented.</returns>
 	public static Node? Instantiate2D(
 		GraphContext graphContext,
+		int node,
 		PackedScene scene,
 		InstantiateParentMode parentMode,
 		Node? parentNode,
@@ -83,6 +89,7 @@ internal static class SceneInstantiationUtilities
 	{
 		return Instantiate(
 			graphContext,
+			node,
 			scene,
 			parentMode,
 			parentNode,
@@ -93,6 +100,7 @@ internal static class SceneInstantiationUtilities
 
 	private static Node? Instantiate(
 		GraphContext graphContext,
+		int node,
 		PackedScene scene,
 		InstantiateParentMode parentMode,
 		Node? parentNode,
@@ -110,29 +118,56 @@ internal static class SceneInstantiationUtilities
 		}
 
 		var session = ForgeNetworkSession.Of(parent);
+		bool networked = session?.IsNetworkedScene(scene) == true;
+		SpawnKey? key = session?.KeySpawn(graphContext, node);
 
-		// A networked scene is the server's to spawn: a client gets it, and everything about it, from the server.
-		if (session?.Mode == NetworkMode.Client && session.IsNetworkedScene(scene))
+		// A networked scene is the server's to spawn: a client makes one only ahead of the server, for a graph of an
+		// entity it predicts, and gets every other one, and everything about it, from the server.
+		if (session?.Mode == NetworkMode.Client && networked && key is null)
 		{
 			return null;
 		}
 
-		// A correction runs again a tick that made the instance already. Its inputs are resolved by now, so a random
-		// one draws what the tick drew.
-		if (graphContext.IsCorrecting)
+		// A tick run again finds what it made the first time: a predicted spawn a correction rolled back to before, or
+		// what only this machine shows. Its inputs are resolved by now, so a random one draws what the tick drew.
+		if (key is SpawnKey made && (networked ? session!.FindSpawn(made) : session!.FindCosmetic(made)) is Node found)
+		{
+			return found;
+		}
+
+		// A correction makes nothing only this machine shows that the tick didn't make the first time.
+		if (graphContext.IsCorrecting && !networked)
 		{
 			return null;
 		}
 
 		Node instance = scene.Instantiate();
+		ForgeEntity? predicted = null;
 
-		// What an entity spawns belongs to the same player, so its owner's input and relevancy reach it.
-		if (session?.IsServer == true
-			&& ForgeEntityBridge.TryGetEntity(instance, out IForgeEntity? spawned)
-			&& spawned is ForgeEntity { Networked: true, NetworkOwner: 0 } networked
-			&& parentEntity is ForgeEntity spawner)
+		if (networked && ForgeEntityBridge.TryGetEntity(instance, out IForgeEntity? spawned)
+			&& spawned is ForgeEntity { Networked: true } entity)
 		{
-			networked.NetworkOwner = spawner.NetworkOwner;
+			if (key is SpawnKey predictedKey)
+			{
+				predicted = entity;
+				session!.PreparePredictedSpawn(entity, instance, predictedKey);
+			}
+			else if (session!.IsServer)
+			{
+				// What an entity spawns belongs to the same player, so its owner's input and relevancy reach it, and
+				// the client predicting the spawner made it ahead of the server under the key the server gives it.
+				if (entity.NetworkOwner == 0 && parentEntity is ForgeEntity spawner)
+				{
+					entity.NetworkOwner = spawner.NetworkOwner;
+				}
+
+				entity.SpawnKey = session.Session!.Replication!.KeySpawn(graphContext, node);
+			}
+		}
+		else if (networked && session!.Mode == NetworkMode.Client)
+		{
+			instance.Free();
+			return null;
 		}
 
 		// Placed before it is added, because AddChild readies the instance: a scene that reads its own transform in
@@ -141,6 +176,16 @@ internal static class SceneInstantiationUtilities
 		place(instance, parent);
 
 		parent.AddChild(instance);
+
+		if (predicted is not null && !session!.PredictSpawn(predicted, instance, key!.Value))
+		{
+			return null;
+		}
+
+		if (!networked && key is SpawnKey cosmetic)
+		{
+			session!.KeepCosmetic(cosmetic, instance);
+		}
 
 		if (passOwnership && instance is IInstantiationReceiver receiver)
 		{
