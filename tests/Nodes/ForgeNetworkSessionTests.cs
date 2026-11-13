@@ -825,6 +825,10 @@ public class ForgeNetworkSessionTests
 		await Pair.RunUntil(() => mirror.Predicted.Count > 1 && mirror.Predicted[^1].NetworkId.IsValid, frames: 300);
 
 		mirror.Predicted.Should().HaveCount(2, "the server's spawn found nothing to bind, and made its own");
+		IForgeEntity made = mirror.Predicted[^1];
+		made.Should().NotBeSameAs(shot);
+		made.NetworkId.IsValid.Should().BeTrue("the server's spawn made it");
+		mirror.Find(made.NetworkId).Should().BeSameAs(made);
 	}
 
 	[TestCase]
