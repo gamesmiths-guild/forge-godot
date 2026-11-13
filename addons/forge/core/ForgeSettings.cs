@@ -64,6 +64,12 @@ public static class ForgeSettings
 	public const string DefaultEffectVisibilitySetting = "forge/networking/default_effect_visibility";
 
 	/// <summary>
+	/// Setting listing the tags that travel most, most common first, which take the lowest net indices so they stay at
+	/// one byte however many tags the project registers. Every machine of a session must list the same ones.
+	/// </summary>
+	public const string CommonlyReplicatedTagsSetting = "forge/networking/commonly_replicated_tags";
+
+	/// <summary>
 	/// Gets who hears about an effect whose own visibility is Default.
 	/// </summary>
 	public static EffectVisibility DefaultEffectVisibility =>
@@ -86,6 +92,15 @@ public static class ForgeSettings
 	/// </remarks>
 	public static bool HighlightQueryTargets =>
 		ProjectSettings.GetSetting(HighlightQueryTargetsSetting, true).AsBool();
+
+	/// <summary>
+	/// Gets the tags of <see cref="CommonlyReplicatedTagsSetting"/>.
+	/// </summary>
+	/// <returns>The tags, most common first.</returns>
+	public static string[] GetCommonlyReplicatedTags()
+	{
+		return ProjectSettings.GetSetting(CommonlyReplicatedTagsSetting, Array.Empty<string>()).AsStringArray();
+	}
 
 	/// <summary>
 	/// Gets the path of the project's network asset manifest.
@@ -269,6 +284,7 @@ public static class ForgeSettings
 
 		RegisterStringArray(InputActionsSetting);
 		RegisterStringArray(InputVectorsSetting);
+		RegisterStringArray(CommonlyReplicatedTagsSetting);
 	}
 
 	private static void RegisterStringArray(string setting)

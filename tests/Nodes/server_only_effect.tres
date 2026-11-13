@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://c5net13tstso"]
+
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="1_int"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="2_effect"]
+
+[sub_resource type="Resource" id="Resource_initial_stack"]
+script = ExtResource("1_int")
+BaseValue = 1
+
+[sub_resource type="Resource" id="Resource_stack_limit"]
+script = ExtResource("1_int")
+BaseValue = 1
+
+[resource]
+script = ExtResource("2_effect")
+Name = "Server Only Mark"
+Modifiers = []
+Components = []
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_stack_limit")
+InitialStack = SubResource("Resource_initial_stack")
+Cues = []
+Visibility = 3
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

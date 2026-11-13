@@ -39,7 +39,7 @@ public class ForgeManagers
 		}
 	}
 
-	public ForgeManagers(string[] registeredTags, int tickRate = 60)
+	public ForgeManagers(string[] registeredTags, int tickRate = 60, string[]? commonlyReplicatedTags = null)
 	{
 		Instance = this;
 		Clock = new SimulationClock(tickRate);
@@ -50,7 +50,7 @@ public class ForgeManagers
 		Validation.Enabled = false;
 #endif
 
-		TagsManager = new TagsManager(registeredTags);
+		TagsManager = new TagsManager(registeredTags, commonlyReplicatedTags ?? []);
 		CuesManager = new CuesManager();
 	}
 

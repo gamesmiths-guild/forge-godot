@@ -45,8 +45,7 @@ public class ForgeNetworkSessionTests
 	private const string OwnerOnlyCooldown =
 		"res://forge_samples/demos/05_networked_statescript/abilities/dash_cooldown.tres";
 
-	private const string ServerOnlyGrants =
-		"res://forge_samples/demos/05_networked_statescript/abilities/enemy_grants.tres";
+	private const string ServerOnlyGrants = "res://tests/Nodes/server_only_effect.tres";
 
 	private const string Body = "res://tests/Nodes/networked_body.tscn";
 
@@ -271,6 +270,24 @@ public class ForgeNetworkSessionTests
 		refusal.Should().Be((int)RefusalReason.AssetRegistry);
 		pair.Client.Mode.Should().Be(NetworkMode.Offline, "a refused client leaves");
 		pair.Server.Session!.Peers.Should().BeEmpty();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_client_that_rounds_bodies_otherwise_is_refused()
+	{
+		using var pair = new Pair(Manifest(Burning), Manifest(Burning));
+		pair.Server.BodyPositionSteps = 100;
+		int? refusal = null;
+		pair.Client.Refused += reason => refusal = reason;
+
+		pair.Server.Host().Should().Be(Error.Ok);
+		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
+
+		await Pair.RunUntil(() => refusal is not null, frames: 600);
+
+		pair.Server.Session!.BodyPrecision.Should().Be(BodyPrecision.Default with { PositionSteps = 100 });
+		refusal.Should().Be((int)RefusalReason.BodyPrecision);
 	}
 
 	[TestCase]

@@ -30,7 +30,10 @@ public partial class ForgeBootstrap : Node
 
 	public override void _Ready()
 	{
-		_ = new ForgeManagers(ForgeTagsSource.LoadRegisteredTags(), Engine.PhysicsTicksPerSecond);
+		_ = new ForgeManagers(
+			ForgeTagsSource.LoadRegisteredTags(),
+			Engine.PhysicsTicksPerSecond,
+			ForgeSettings.GetCommonlyReplicatedTags());
 
 		// Ends every physics step after every other node, so the clock moves once all entities have advanced the tick
 		// it named.
