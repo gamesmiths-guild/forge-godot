@@ -119,7 +119,9 @@ internal static class SceneInstantiationUtilities
 
 		var session = ForgeNetworkSession.Of(parent);
 		bool networked = session?.IsNetworkedScene(scene) == true;
-		SpawnKey? key = session?.KeySpawn(graphContext, node);
+
+		// What only this machine shows is numbered apart from the networked spawns, which the server numbers alone.
+		SpawnKey? key = session?.KeySpawn(graphContext, networked ? node : ~node);
 
 		// A networked scene is the server's to spawn: a client makes one only ahead of the server, for a graph of an
 		// entity it predicts, and gets every other one, and everything about it, from the server.
@@ -130,9 +132,17 @@ internal static class SceneInstantiationUtilities
 
 		// A tick run again finds what it made the first time: a predicted spawn a correction rolled back to before, or
 		// what only this machine shows. Its inputs are resolved by now, so a random one draws what the tick drew.
-		if (key is SpawnKey made && (networked ? session!.FindSpawn(made) : session!.FindCosmetic(made)) is Node found)
+		if (key is SpawnKey made && networked && session!.FindSpawn(made) is Node spawn)
 		{
-			return found;
+			return spawn;
+		}
+
+		if (key is SpawnKey shown
+			&& !networked
+			&& graphContext.IsCorrecting
+			&& session!.FindCosmetic(shown) is Node kept)
+		{
+			return kept;
 		}
 
 		// A correction makes nothing only this machine shows that the tick didn't make the first time.

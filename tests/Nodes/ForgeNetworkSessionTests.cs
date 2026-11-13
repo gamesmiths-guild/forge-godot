@@ -810,16 +810,18 @@ public class ForgeNetworkSessionTests
 		using var pair = new Pair(manifest, manifest, withPlayer: false);
 		await pair.Connect();
 		(ForgeEntity served, ForgeEntity player) = await JoinShooter(pair, Cosmetic());
-		long corrections = pair.Client.Corrections;
+		long beforePress = pair.Client.Clock.Tick;
 
 		Apply(served, Fallen);
 		await Press("skill_1", () => Bodies(player).Count > 0);
 		Node3D shown = Bodies(player).Single();
+		long? replayedFrom = null;
+		pair.Client.Session!.Mirror!.Replayed += x => replayedFrom = Math.Min(replayedFrom ?? x, x);
 
-		await Pair.RunUntil(() => pair.Client.Corrections > corrections, frames: 300);
+		await Pair.RunUntil(() => replayedFrom < beforePress, frames: 300);
 
-		pair.Client.Corrections
-			.Should().BeGreaterThan(corrections, "what landed before the press puts the player right");
+		replayedFrom
+			.Should().BeLessThan(beforePress, "what landed before the press puts the player right from before it");
 		Bodies(player)
 			.Should().Equal([shown], "running the tick it was made in found it again");
 		GodotObject.IsInstanceValid(shown)

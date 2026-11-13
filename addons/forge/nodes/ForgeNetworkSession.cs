@@ -774,6 +774,7 @@ public partial class ForgeNetworkSession : Node
 
 	internal void KeepCosmetic(SpawnKey key, Node instance)
 	{
+		ForgetUnreachableCosmetics();
 		_cosmetics[key] = new Cosmetic(instance);
 	}
 
@@ -1144,9 +1145,7 @@ public partial class ForgeNetworkSession : Node
 	// that it didn't make again, goes, and what no correction can reach anymore is forgotten.
 	private void OnReplayed(long from)
 	{
-		long oldest = Clock.Tick - (long)Math.Ceiling(Clock.TicksIn(NetworkSession.MaxInputLead));
-
-		foreach (KeyValuePair<SpawnKey, Cosmetic> kept in new List<KeyValuePair<SpawnKey, Cosmetic>>(_cosmetics))
+		foreach (KeyValuePair<SpawnKey, Cosmetic> kept in _cosmetics)
 		{
 			Cosmetic cosmetic = kept.Value;
 
@@ -1155,14 +1154,27 @@ public partial class ForgeNetworkSession : Node
 				cosmetic.Instance.QueueFree();
 			}
 
+			cosmetic.Found = false;
+		}
+
+		ForgetUnreachableCosmetics();
+	}
+
+	// Forgets what only this machine shows that's gone, or that no correction can reach anymore, which stays as it is.
+	private void ForgetUnreachableCosmetics()
+	{
+		int history = Session!.Mirror!.PredictionHistoryTicks;
+		long oldest = Clock.Tick
+			- (history > 0 ? history : (long)Math.Ceiling(Clock.TicksIn(NetworkSession.MaxInputLead)));
+
+		foreach (KeyValuePair<SpawnKey, Cosmetic> kept in _cosmetics)
+		{
 			if (kept.Key.Tick < oldest
-				|| !IsInstanceValid(cosmetic.Instance)
-				|| cosmetic.Instance.IsQueuedForDeletion())
+				|| !IsInstanceValid(kept.Value.Instance)
+				|| kept.Value.Instance.IsQueuedForDeletion())
 			{
 				_cosmetics.Remove(kept.Key);
 			}
-
-			cosmetic.Found = false;
 		}
 	}
 
