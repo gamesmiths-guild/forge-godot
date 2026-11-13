@@ -53,7 +53,7 @@ They are a 2D/3D pair even though a scene carries its own dimension, because the
 
 Frees a node from the scene, guarded against a node that has already been freed. Unpaired: a node to free is a node in either dimension. A [`ForgeEntity`](../../nodes.md#forgeentity) freed with it is torn down: its abilities are cancelled, and its effects end, their cues with them.
 
-The node an entity of a [`ForgeWorldHistory`](../../nodes.md#forgeworldhistory) lives on goes to limbo instead of being freed, so rolling the level back brings the entity back, and so does one a client predicts in a [networked session](../../networking.md#its-own-player): it waits hidden until the server's despawn of it, and a correction to while it was there brings it back.
+The node an entity of a [`ForgeWorldHistory`](../../nodes.md#forgeworldhistory) lives on goes to limbo instead of being freed, so rolling the level back brings the entity back, and so does one a client predicts in a [networked session](../../networking.md#its-own-player): it waits hidden until the server's despawn of it, and a correction to while it was there brings it back. One freed any other way, as by freeing a node above the one it lives on, leaves the client's timeline for good, and the server's spawn of it, if it arrives later, makes another.
 
 | Index | Label | Type | Notes |
 |---|---|---|---|

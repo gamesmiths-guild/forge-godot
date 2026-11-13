@@ -701,6 +701,9 @@ public partial class ForgeNetworkSession : Node
 	internal void OnEntityFreed(ForgeEntity entity)
 	{
 		Session?.Replication?.Unregister(entity);
+
+		// One this client predicts that something freed outright, rather than sending it to limbo, leaves the timeline.
+		Session?.Mirror?.ForgetPredicted(entity);
 		_spawnedRoots.Remove(entity);
 
 		if (LocalPlayer == entity && IsInstanceValid(this))

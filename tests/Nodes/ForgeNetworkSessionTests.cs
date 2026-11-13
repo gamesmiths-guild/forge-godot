@@ -804,6 +804,31 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_predicted_spawn_freed_outright_leaves_the_client_s_timeline()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		(_, ForgeEntity player) = await JoinShooter(pair, ResourceLoader.Load<PackedScene>(Body));
+		ReplicationClient mirror = pair.Client.Session!.Mirror!;
+
+		await Press("skill_1", () => mirror.Predicted.Count > 1);
+		var shot = (ForgeEntity)mirror.Predicted[^1];
+		shot.GetParent().QueueFree();
+
+		await Pair.RunUntil(() => !mirror.Predicted.Contains(shot), frames: 30);
+
+		mirror.Predicted
+			.Should().NotContain(shot, "something freed it outright, so the timeline no longer advances it");
+		mirror.Predicted
+			.Should().Contain(player);
+
+		await Pair.RunUntil(() => mirror.Predicted.Count > 1 && mirror.Predicted[^1].NetworkId.IsValid, frames: 300);
+
+		mirror.Predicted.Should().HaveCount(2, "the server's spawn found nothing to bind, and made its own");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_correction_holds_again_what_only_this_machine_shows_that_the_tick_it_runs_again_made()
 	{
 		ForgeNetworkManifest manifest = EffectsManifest();
