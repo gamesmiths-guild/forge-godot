@@ -7,23 +7,51 @@
 [ext_resource type="Script" uid="uid://db2rt0n3jtytf" path="res://addons/forge/resources/statescript/resolvers/VariantResolverResource.cs" id="5_variant"]
 [ext_resource type="Script" uid="uid://cejdt4ulsx7r1" path="res://addons/forge/resources/statescript/resolvers/EntityTransformPoint3DResolverResource.cs" id="6_transform_point"]
 [ext_resource type="Script" uid="uid://c2exl884iay5i" path="res://addons/forge/resources/statescript/resolvers/NodeFromEntityResolverResource.cs" id="7_node_from_entity"]
+[ext_resource type="Script" uid="uid://doh71xlxr3vqs" path="res://addons/forge/resources/statescript/StatescriptGraphVariable.cs" id="8_variable_definition"]
+[ext_resource type="Script" uid="uid://bso385kpryjl" path="res://addons/forge/resources/statescript/resolvers/VariableResolverResource.cs" id="9_variable"]
+[ext_resource type="Script" uid="uid://joc0y7m5hjss" path="res://addons/forge/resources/statescript/resolvers/EntityPosition3DResolverResource.cs" id="10_position"]
+[ext_resource type="Script" uid="uid://b8sny7pwgn1jf" path="res://addons/forge/resources/statescript/resolvers/EffectResolverResource.cs" id="11_effect"]
+[ext_resource type="Script" uid="uid://dgv5tdqiqpixu" path="res://addons/forge/resources/statescript/resolvers/OwnershipResolverResource.cs" id="12_ownership"]
+[ext_resource type="Script" uid="uid://dhce7g73rk5vm" path="res://addons/forge/resources/statescript/resolvers/AbilityOwnerResolverResource.cs" id="13_owner"]
+[ext_resource type="Script" uid="uid://ceqwj4are6644" path="res://addons/forge/resources/statescript/resolvers/EffectContextDataResolverResource.cs" id="14_context_data"]
+[ext_resource type="Script" uid="uid://kj82d2buj23s" path="res://addons/forge/resources/statescript/resolvers/CurveSampleResolverResource.cs" id="15_curve_sample"]
+[ext_resource type="Script" uid="uid://dchlcihlglcdc" path="res://addons/forge/resources/statescript/resolvers/DivideResolverResource.cs" id="16_divide"]
+[ext_resource type="Script" uid="uid://bq8oi7lr3ome5" path="res://addons/forge/resources/statescript/resolvers/DistanceResolverResource.cs" id="17_distance"]
+[ext_resource type="Script" uid="uid://bmlwmm5o5prqv" path="res://addons/forge/resources/statescript/StatescriptResolverResource.cs" id="18_resolver"]
+[ext_resource type="Script" uid="uid://cqh4gqydenqoe" path="res://addons/forge/resources/statescript/StatescriptRegion.cs" id="19_region"]
+[ext_resource type="Resource" uid="uid://dt5y704o0sldo" path="res://forge_samples/shared/effects/damage.tres" id="20_damage"]
 
-[sub_resource type="Resource" id="Resource_to_fly"]
+[sub_resource type="Curve" id="Curve_falloff"]
+_data = [Vector2(0, 1), 0.0, -1.8, 0, 1, Vector2(0.5, 0.1), -1.8, 0.0, 1, 1, Vector2(1, 0.1), 0.0, 0.0, 1, 0]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_to_launch"]
 script = ExtResource("4_connection")
 FromNode = "entry"
 ToNode = "node_1"
 
-[sub_resource type="Resource" id="Resource_arrived_to_despawn"]
+[sub_resource type="Resource" id="Resource_to_fly"]
 script = ExtResource("4_connection")
-FromNode = "node_1"
-OutputPort = 4
+FromNode = "entry"
 ToNode = "node_2"
+
+[sub_resource type="Resource" id="Resource_blocked_to_damage"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+OutputPort = 5
+ToNode = "node_3"
 
 [sub_resource type="Resource" id="Resource_blocked_to_despawn"]
 script = ExtResource("4_connection")
-FromNode = "node_1"
+FromNode = "node_2"
 OutputPort = 5
-ToNode = "node_2"
+ToNode = "node_4"
+
+[sub_resource type="Resource" id="Resource_arrived_to_despawn"]
+script = ExtResource("4_connection")
+FromNode = "node_2"
+OutputPort = 4
+ToNode = "node_4"
 
 [sub_resource type="Resource" id="Resource_entry"]
 script = ExtResource("2_node")
@@ -31,9 +59,35 @@ NodeId = "entry"
 Title = "Entry"
 PositionOffset = Vector2(40, 200)
 
+[sub_resource type="Resource" id="Resource_launch_position"]
+script = ExtResource("10_position")
+
+[sub_resource type="Resource" id="Resource_launch_position_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_launch_position")
+
+[sub_resource type="Resource" id="Resource_launch_output"]
+script = ExtResource("9_variable")
+VariableName = "launch"
+VariableType = 14
+
+[sub_resource type="Resource" id="Resource_launch_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_launch_output")
+
+[sub_resource type="Resource" id="Resource_remember_launch"]
+script = ExtResource("2_node")
+NodeId = "node_1"
+Title = "Set Variable"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.SetVariableNode"
+PositionOffset = Vector2(300, 480)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_launch_position_binding"), SubResource("Resource_launch_output_binding")])
+
 [sub_resource type="Resource" id="Resource_range_offset"]
 script = ExtResource("5_variant")
-Value = Vector3(0, 0, -16)
+Value = Vector3(0, 0, -20)
 ValueType = 14
 
 [sub_resource type="Resource" id="Resource_range_end"]
@@ -47,16 +101,26 @@ Resolver = SubResource("Resource_range_end")
 
 [sub_resource type="Resource" id="Resource_speed"]
 script = ExtResource("5_variant")
-Value = 18.0
+Value = 10.0
 
 [sub_resource type="Resource" id="Resource_speed_binding"]
 script = ExtResource("3_binding")
 PropertyIndex = 2
 Resolver = SubResource("Resource_speed")
 
+[sub_resource type="Resource" id="Resource_hit_output"]
+script = ExtResource("9_variable")
+VariableName = "hit"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_hit_output_binding"]
+script = ExtResource("3_binding")
+Direction = 1
+Resolver = SubResource("Resource_hit_output")
+
 [sub_resource type="Resource" id="Resource_fly"]
 script = ExtResource("2_node")
-NodeId = "node_1"
+NodeId = "node_2"
 Title = "Move Body 3D"
 NodeType = 4
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.State.MoveBody3DNode"
@@ -65,7 +129,81 @@ CustomData = Dictionary[String, Variant]({
 "blocked": "Stop",
 "mode": "Speed"
 })
-PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_range_end_binding"), SubResource("Resource_speed_binding")])
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_range_end_binding"), SubResource("Resource_speed_binding"), SubResource("Resource_hit_output_binding")])
+
+[sub_resource type="Resource" id="Resource_shot_entity"]
+script = ExtResource("13_owner")
+
+[sub_resource type="Resource" id="Resource_shot_ownership"]
+script = ExtResource("12_ownership")
+Owner = SubResource("Resource_shot_entity")
+Source = SubResource("Resource_shot_entity")
+
+[sub_resource type="Resource" id="Resource_hit_effect"]
+script = ExtResource("11_effect")
+Effect = ExtResource("20_damage")
+Ownership = SubResource("Resource_shot_ownership")
+
+[sub_resource type="Resource" id="Resource_hit_effect_binding"]
+script = ExtResource("3_binding")
+Resolver = SubResource("Resource_hit_effect")
+
+[sub_resource type="Resource" id="Resource_hit_target"]
+script = ExtResource("9_variable")
+VariableName = "hit"
+ObjectTypeId = "Entity"
+
+[sub_resource type="Resource" id="Resource_hit_target_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 1
+Resolver = SubResource("Resource_hit_target")
+
+[sub_resource type="Resource" id="Resource_impact_position"]
+script = ExtResource("10_position")
+
+[sub_resource type="Resource" id="Resource_launch_value"]
+script = ExtResource("9_variable")
+VariableName = "launch"
+VariableType = 14
+
+[sub_resource type="Resource" id="Resource_flown"]
+script = ExtResource("17_distance")
+Left = SubResource("Resource_impact_position")
+Right = SubResource("Resource_launch_value")
+
+[sub_resource type="Resource" id="Resource_range"]
+script = ExtResource("5_variant")
+Value = 20.0
+
+[sub_resource type="Resource" id="Resource_flown_fraction"]
+script = ExtResource("16_divide")
+Left = SubResource("Resource_flown")
+Right = SubResource("Resource_range")
+
+[sub_resource type="Resource" id="Resource_falloff"]
+script = ExtResource("15_curve_sample")
+Curve = SubResource("Curve_falloff")
+Time = SubResource("Resource_flown_fraction")
+
+[sub_resource type="Resource" id="Resource_falloff_context"]
+script = ExtResource("14_context_data")
+ProviderClassName = "Gamesmiths.Forge.Godot.Core.Statescript.Providers.FloatContextDataProvider"
+InputNames = Array[String](["Value"])
+InputResolvers = Array[ExtResource("18_resolver")]([SubResource("Resource_falloff")])
+
+[sub_resource type="Resource" id="Resource_falloff_context_binding"]
+script = ExtResource("3_binding")
+PropertyIndex = 2
+Resolver = SubResource("Resource_falloff_context")
+
+[sub_resource type="Resource" id="Resource_damage"]
+script = ExtResource("2_node")
+NodeId = "node_3"
+Title = "Apply Effect"
+NodeType = 2
+RuntimeTypeName = "Gamesmiths.Forge.Statescript.Nodes.Action.ApplyEffectNode"
+PositionOffset = Vector2(700, 480)
+PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_hit_effect_binding"), SubResource("Resource_hit_target_binding"), SubResource("Resource_falloff_context_binding")])
 
 [sub_resource type="Resource" id="Resource_own_node"]
 script = ExtResource("7_node_from_entity")
@@ -76,17 +214,36 @@ Resolver = SubResource("Resource_own_node")
 
 [sub_resource type="Resource" id="Resource_despawn"]
 script = ExtResource("2_node")
-NodeId = "node_2"
+NodeId = "node_4"
 Title = "Queue Free"
 NodeType = 2
 RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.QueueFreeNode"
-PositionOffset = Vector2(700, 200)
+PositionOffset = Vector2(1100, 200)
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_own_node_binding")])
+
+[sub_resource type="Resource" id="Resource_launch_variable"]
+script = ExtResource("8_variable_definition")
+VariableName = "launch"
+VariableType = 14
+InitialValue = Vector3(0, 0, 0)
+
+[sub_resource type="Resource" id="Resource_hit_variable"]
+script = ExtResource("8_variable_definition")
+VariableName = "hit"
+ObjectTypeId = "Entity"
+InitialValue = null
+
+[sub_resource type="Resource" id="Resource_hit_region"]
+script = ExtResource("19_region")
+Kind = 2
+NodeIds = Array[String](["node_1", "node_3"])
 
 [resource]
 script = ExtResource("1_graph")
-StatescriptName = "Projectile Flight"
-Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_fly"), SubResource("Resource_despawn")])
-Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_fly"), SubResource("Resource_arrived_to_despawn"), SubResource("Resource_blocked_to_despawn")])
+StatescriptName = "Projectile Flight (Networked)"
+Nodes = Array[ExtResource("2_node")]([SubResource("Resource_entry"), SubResource("Resource_remember_launch"), SubResource("Resource_fly"), SubResource("Resource_damage"), SubResource("Resource_despawn")])
+Connections = Array[ExtResource("4_connection")]([SubResource("Resource_to_launch"), SubResource("Resource_to_fly"), SubResource("Resource_blocked_to_damage"), SubResource("Resource_blocked_to_despawn"), SubResource("Resource_arrived_to_despawn")])
+Variables = Array[ExtResource("8_variable_definition")]([SubResource("Resource_launch_variable"), SubResource("Resource_hit_variable")])
+Regions = Array[ExtResource("19_region")]([SubResource("Resource_hit_region")])
 metadata/_custom_type_script = "uid://fj6yp4h5mkl6"
 metadata/_expanded_arrays = PackedStringArray()

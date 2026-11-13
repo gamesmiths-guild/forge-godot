@@ -97,7 +97,7 @@ RuntimeTypeName = "Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.Instanti
 PositionOffset = Vector2(620, 200)
 CustomData = Dictionary[String, Variant]({
 "parentMode": "Node",
-"passOwnership": false
+"passOwnership": true
 })
 PropertyBindings = Array[ExtResource("3_binding")]([SubResource("Resource_spawn_scene"), SubResource("Resource_spawn_position"), SubResource("Resource_spawn_rotation"), SubResource("Resource_spawn_parent")])
 

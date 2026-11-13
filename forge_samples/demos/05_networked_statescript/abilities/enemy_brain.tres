@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c5net11fireb"]
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c5net13brnab"]
 
 [ext_resource type="Script" uid="uid://dapjjbxrv801t" path="res://addons/forge/resources/abilities/StatescriptAbilityBehavior.cs" id="1_behavior"]
-[ext_resource type="Resource" uid="uid://kdsex887ae1j" path="res://forge_samples/demos/04_rewind/graphs/spread_fire.tres" id="2_graph"]
+[ext_resource type="Resource" uid="uid://c5net13brngr" path="res://forge_samples/demos/05_networked_statescript/graphs/enemy_brain.tres" id="2_graph"]
 [ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="3_tag"]
 [ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="4_ability"]
 
@@ -12,15 +12,14 @@ metadata/_custom_type_script = "uid://dapjjbxrv801t"
 
 [sub_resource type="Resource" id="Resource_trigger_tag"]
 script = ExtResource("3_tag")
-Tag = "effect.fire"
+Tag = "state.awake"
 metadata/_custom_type_script = "uid://dpakv7agvir6y"
 
 [resource]
 script = ExtResource("4_ability")
-Name = "Spread Fire"
+Name = "Enemy Brain"
 CooldownEffects = []
 AbilityBehavior = SubResource("Resource_behavior")
 TriggerSource = 3
 TriggerTag = SubResource("Resource_trigger_tag")
-ServerOnly = true
 metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

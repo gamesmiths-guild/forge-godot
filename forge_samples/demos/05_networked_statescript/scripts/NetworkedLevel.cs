@@ -5,17 +5,16 @@ using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
 using Godot;
-using GodotArray = Godot.Collections.Array<Godot.Node>;
 
 namespace Gamesmiths.Forge.Example;
 
 /// <summary>
-/// Sample 05's game: a menu to host, join or run a dedicated server, a player for every peer on the server, enemies the
-/// server keeps coming, and the camera on this machine's player.
+/// Sample 05's game: a menu to host, join or run a dedicated server, a player for every peer on the server, and the
+/// camera on this machine's player.
 /// </summary>
 /// <remarks>
-/// <para>Everything that changes the world happens on the server: it spawns the players and the enemies as networked
-/// scenes, and the session replicates them. A client only picks what to join and follows its own player with the
+/// <para>Everything that changes the world happens on the server: it spawns the players as networked scenes, and the
+/// session replicates them. A client only picks what to join and follows its own player with the
 /// camera.</para>
 /// <para>Started with <c>-- --host</c>, <c>-- --dedicated</c> or <c>-- --join</c> (or <c>--join=address</c>), it skips
 /// the menu, which suits running several instances from the editor, each with its own arguments.</para>
@@ -24,14 +23,14 @@ public partial class NetworkedLevel : Node
 {
 	private const int MaxPlayers = 4;
 
+	// The first player stands where the Statescript demo's does, and the others beside it.
+	private static readonly float[] _spawnOffsets = [0, 2, -2, 4];
+
 	private static string? _lastAddress;
 	private static string _lastStatus = string.Empty;
 	private static bool _argumentsRead;
 
 	private readonly Dictionary<long, Node3D> _players = [];
-	private readonly RandomNumberGenerator _random = new();
-
-	private double _nextEnemyAt;
 
 	/// <summary>
 	/// Gets or sets the session.
@@ -46,13 +45,7 @@ public partial class NetworkedLevel : Node
 	public required PackedScene PlayerScene { get; set; }
 
 	/// <summary>
-	/// Gets or sets the scene an enemy spawns from.
-	/// </summary>
-	[Export]
-	public required PackedScene EnemyScene { get; set; }
-
-	/// <summary>
-	/// Gets or sets the node players and enemies are added to, on the server and on every client.
+	/// Gets or sets the node players are added to, on the server and on every client.
 	/// </summary>
 	[Export]
 	public required Node3D Spawned { get; set; }
@@ -80,18 +73,6 @@ public partial class NetworkedLevel : Node
 	/// </summary>
 	[Export]
 	public required Label Status { get; set; }
-
-	/// <summary>
-	/// Gets or sets how many enemies the server keeps in the level.
-	/// </summary>
-	[Export]
-	public int MaxEnemies { get; set; } = 4;
-
-	/// <summary>
-	/// Gets or sets how long the server waits between two enemies, in seconds.
-	/// </summary>
-	[Export]
-	public double EnemyInterval { get; set; } = 3;
 
 	/// <inheritdoc/>
 	public override void _Ready()
@@ -135,37 +116,6 @@ public partial class NetworkedLevel : Node
 				CallDeferred(MethodName.Join);
 			}
 		}
-	}
-
-	/// <inheritdoc/>
-	public override void _PhysicsProcess(double delta)
-	{
-		base._PhysicsProcess(delta);
-
-		if (!Session.IsServer)
-		{
-			return;
-		}
-
-		_nextEnemyAt -= delta;
-
-		if (_nextEnemyAt > 0 || GetTree().GetNodesInGroup("enemies").Count >= MaxEnemies)
-		{
-			return;
-		}
-
-		_nextEnemyAt = EnemyInterval;
-		GodotArray markers = GetTree().GetNodesInGroup("enemy_spawns");
-
-		if (markers.Count == 0)
-		{
-			return;
-		}
-
-		var marker = (Node3D)markers[_random.RandiRange(0, markers.Count - 1)];
-		Node3D enemy = EnemyScene.Instantiate<Node3D>();
-		enemy.Position = marker.GlobalPosition;
-		Spawned.AddChild(enemy, forceReadableName: true);
 	}
 
 	/// <summary>
@@ -224,7 +174,7 @@ public partial class NetworkedLevel : Node
 		Node3D player = PlayerScene.Instantiate<Node3D>();
 		player.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = peer;
 		player.Name = $"Player {peer}";
-		player.Position = new Vector3(((_players.Count % 4) - 1.5f) * 2, 0, 7);
+		player.Position = new Vector3(_spawnOffsets[_players.Count % _spawnOffsets.Length], 0, 7);
 		_players[peer] = player;
 		Spawned.AddChild(player);
 	}

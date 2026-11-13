@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_manifest")
-Abilities = Array[String](["uid://c5net10brasa", "uid://c5net10deata", "uid://c5net11fireb", "uid://c5net12proja", "uid://c5net8dashab", "uid://kncyoqdihf45"])
-Effects = Array[String](["uid://ba23rv2mkdbg4", "uid://bgbbtfuhkcquk", "uid://c5net8dashcd", "uid://dgybn25of4xpg", "uid://drty8r1ibx5ug", "uid://f3qvdu866wvj", "uid://ipt87tpu75xh", "uid://ntwpoomg0iq0"])
+Abilities = Array[String](["uid://2qw6jjadfcyy", "uid://c5net10brasa", "uid://c5net12flyta", "uid://c5net12proja", "uid://c5net13brnab", "uid://c5net13shlda", "uid://c5net13thrna", "uid://c5net8dashab", "uid://kncyoqdihf45"])
+Effects = Array[String](["uid://bgbbtfuhkcquk", "uid://c5net8dashcd", "uid://d0ctw2d38gb15", "uid://dgybn25of4xpg", "uid://drty8r1ibx5ug", "uid://f3qvdu866wvj", "uid://g5vobs76j1ou", "uid://hebawhvxakuu", "uid://ipt87tpu75xh", "uid://ntwpoomg0iq0", "uid://p0x8vdnkxo12"])
 Scenes = Array[String](["uid://c5net12projs", "uid://c5net8enemy1", "uid://c5net8player"])
 metadata/_custom_type_script = "uid://cftfcqdqqwx1"
