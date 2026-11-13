@@ -314,8 +314,10 @@ Hosts or joins a networked session over Godot's high-level multiplayer, on ENet,
 - `SpawnParent` (Node): Where a client adds the entities the server spawns. Left empty, the current scene.
 - `RelevancyRadius` (float): How far from every entity a client owns another entity can be and still reach that client, or 0 for everything everywhere. Read as hosting starts.
 - `InterpolationDelayMs` (int): How far behind the newest state it holds a client shows the server's entities, their bodies and everything else the server sent of them. The default is 100.
+- `InterpolationSnapDistance` (float): How far apart two states of a body may be, in units, for a client to ease between them. One further, as a respawn makes, shows the body where it went at once. The default is 2.
 - `LeadMarginTicks` (int): How many ticks beyond a round trip a client runs ahead of the server. The default is 2.
 - `LeadToleranceTicks` (int): How far a client's clock may drift from its target, in ticks, before it's steered toward it. The default is 1.
+- `BodyPositionSteps`, `BodyVelocitySteps`, `BodyRotationBits` (int): How finely bodies are rounded as they travel: steps in a unit, steps in a unit per second, and bits a rotation component. The defaults are 1000, 100 and 9. Read as the session hosts or joins; a client whose values differ from the server's is refused.
 - `LatencyMs`, `JitterMs`, `LossPercent`: The network conditioner, applied to this machine's outgoing packets. Changeable while playing.
 
 **Signals:** `PeerJoined(peerId)` and `PeerLeft(peerId)` on the server; `Connected`, `Refused(reason)` and `Disconnected` on a client; `LocalPlayerChanged(player)` on both. The C# event `InputTaken` is raised on the server every physics step for every client, with the `InputCommand` the tick runs for it and how it arrived, after it was handed to the entities the client owns.
@@ -361,7 +363,7 @@ The F3 overlay: what the session is doing, in a corner. It's a `CanvasLayer`; ad
 
 **Description:**
 
-**F3** shows and hides it, and **F4** cycles the session's conditioner through a perfect, a good, a far and a poor link. It shows the tick and tick rate, the mode and state, a client's round trip, estimated server tick, lead, input depth, mirrored entities, newest state and late state packets, with its predicted entities' confirmed and corrected ticks and how far the last correction rolled back, a server's replicated entities and its clients with their input depth and received, lost and late ticks, bytes up and down per second, and the conditioner's settings.
+**F3** shows and hides it, **F4** cycles the session's conditioner through a perfect, a good, a far and a poor link, and **F5** prints the tags this machine sent, most sent first. It shows the tick and tick rate, the mode and state, a client's round trip, estimated server tick, lead, input depth, mirrored entities, newest state and late state packets, with its predicted entities' confirmed and corrected ticks and how far the last correction rolled back, a server's replicated entities and its clients with their input depth and received, lost and late ticks, bytes up and down per second, and the conditioner's settings.
 
 ### ForgeAttributeSet
 
