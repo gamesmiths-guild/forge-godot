@@ -17,7 +17,8 @@ namespace Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 /// mid-physics. A node that has already been freed is ignored rather than reported, since a graph reaching this twice,
 /// or racing something else that frees the same node, is ordinary rather than a mistake.</para>
 /// <para>The node an entity of a <see cref="ForgeWorldHistory"/> lives on goes to limbo instead of being freed, so
-/// rolling the world back brings the entity back.</para>
+/// rolling the world back brings the entity back, and so does one a client predicts, until the server's despawn of it
+/// arrives.</para>
 /// </remarks>
 [StatescriptCategory("Scene")]
 public sealed class QueueFreeNode : ActionNode
@@ -42,7 +43,8 @@ public sealed class QueueFreeNode : ActionNode
 		if (graphContext.TryResolveObject(InputProperties[NodeInput].BoundName, out Node? node)
 			&& node is not null
 			&& GodotObject.IsInstanceValid(node)
-			&& !ForgeWorldHistory.TryDespawn(node))
+			&& !ForgeWorldHistory.TryDespawn(node)
+			&& !ForgeNetworkSession.TryDespawnPredicted(node))
 		{
 			node.QueueFree();
 		}

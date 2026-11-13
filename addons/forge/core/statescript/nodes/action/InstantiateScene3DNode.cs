@@ -45,6 +45,7 @@ public sealed class InstantiateScene3DNode(
 	{
 		return SceneInstantiationUtilities.Instantiate3D(
 			graphContext,
+			Index,
 			scene,
 			ParentMode,
 			parentNode,

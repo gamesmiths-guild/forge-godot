@@ -9,6 +9,7 @@ using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Resources;
+using Gamesmiths.Forge.Networking.Replication;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
@@ -96,6 +97,9 @@ public partial class ForgeEntity : Node, IForgeEntity
 	internal ulong? SpawnSeed { get; set; }
 
 	internal long SpawnTick { get; set; }
+
+	// The key a graph of an entity a client predicts spawned this one under, which the server registers it with.
+	internal SpawnKey? SpawnKey { get; set; }
 
 	// The session replicating the entity, told when the entity is freed.
 	internal ForgeNetworkSession? Replicator { get; set; }

@@ -2,7 +2,7 @@
 
 The Statescript demo's level, played over the network by up to four players. One machine hosts, as a player or as a dedicated server, and the others join it by address. The server simulates every entity from each player's input and sends the world down; every other machine shows it as the server says it is, a moment behind, and runs its own player ahead, predicted.
 
-Movement is WASD or the arrow keys, Space dashes toward the mouse, and E inside the brazier's ring lights it or puts it out. **F3** shows the session's numbers, and **F4** makes the link worse, from perfect to good, far and poor.
+Movement is WASD or the arrow keys, left click shoots, Space dashes toward the mouse, and E inside the brazier's ring lights it or puts it out. **F3** shows the session's numbers, and **F4** makes the link worse, from perfect to good, far and poor.
 
 ## Running it
 
@@ -25,6 +25,7 @@ godot --headless --path . res://forge_samples/demos/05_networked_statescript/sce
 - **Your own player answers at once.** Your client predicts it: it runs your player ahead of the server from your keys, and checks each tick against what the server sends. Press F4 a few times for 200 ms each way and it still walks and dashes the moment you press; the overlay counts the ticks the server confirmed and the ones it corrected. A correction comes from what your client couldn't know: the fire's burns, a push from an enemy, another player in the way. It eases out on the player's model rather than jumping.
 - **Dash into another player.** Players collide, the dash too: the sample's dash has no Collision Override. Your client shows the other player a moment behind, so the dash may stop a little short or long of where the server stops it, and the correction eases out.
 - **Fire spreads from the server.** Burning spreads to whoever stands near, which only the server sees right, so the sample's Spread Fire is Server Only: your client shows it, and doesn't predict it.
+- **Your shots leave at once.** Left click fires a shot that flies through players and enemies and stops at the world. Your client makes it the moment you click, as its graph runs, ahead of the server, and the server's shot, arriving a moment later, takes over the one your client made instead of making another: the overlay counts its ticks with your player's. Shoot through the bonfire and the shot catches fire a moment after it passes, once the server's word that it did arrives, and burns whoever it flies past, on the server.
 - **Everyone else moves smoothly** between the states the server sends, about 30 a second, shown 100 ms behind.
 - **Effects show everywhere.** Walk through the bonfire and you burn on every screen: the flames are the fire effect's persistent cue, the burn flashes and the numbers are its executed cues, and the health bar follows the server's health. The lake puts it out with a hiss, and the regeneration pad heals, the same way.
 - **Everyone's graphs show everywhere.** Another player's dash rolls and whooshes on your screen: their graph runs on the server, and your copy of it plays its animation and sound as the server says, without running the dash. An enemy whose health runs out bursts on every screen as it goes.
@@ -39,13 +40,14 @@ godot --headless --path . res://forge_samples/demos/05_networked_statescript/sce
 | Entity | How it gets to a client |
 | --- | --- |
 | Players | Spawned by the server for each peer that joins, owned by that peer, from `scenes/player.tscn`. |
+| Shots | Spawned by the graph of the player who fires, from `scenes/projectile.tscn`: by the server for everyone, and ahead of it by the client of the player who fired, which the server's spawn binds. |
 | Enemies | Spawned by the server at the `enemy_spawns` markers, from `scenes/enemy.tscn`. |
 | Dummies | Placed in the level on every machine, networked through an override on the instances, so the server's regeneration is what every client sees. |
 | Brazier | Placed in the level, networked through an override on the instance, with its own grant of the sample's brazier ability, which the server runs. |
 
 The stations' areas are on every machine, but a client's copies of entities hold what the server sends and take no effects of their own, so only the server's areas count.
 
-`network_manifest.tres` is the sample's own manifest, listing the two scenes the server spawns, the effects that can be on its entities and the abilities whose graphs clients show, so the sample works whatever the project's manifest holds. Every machine must run the same build.
+`network_manifest.tres` is the sample's own manifest, listing the three scenes the server spawns, the effects that can be on its entities and the abilities whose graphs clients show, so the sample works whatever the project's manifest holds. Every machine must run the same build.
 
 ## Layout
 
@@ -53,9 +55,10 @@ The stations' areas are on every machine, but a client's copies of entities hold
 | --- | --- |
 | `scenes/networked_level.tscn` | Sample 03's level without its player and its HUD, plus the session, the overlay, the menu and the game. |
 | `scenes/player.tscn` | Sample 04's player, networked, with health, a health bar and a label of its effects, its model under the `Visual` its movement component eases after a correction. |
+| `scenes/projectile.tscn` | Sample 04's projectile, networked and flammable, on the layer the bonfire catches, colliding with the world alone. |
 | `scenes/enemy.tscn` | Sample 04's enemy, networked, with `EnemyBrain` instead of its chase, and the same bar and label. |
-| `abilities/` | The players' grants (the dash, the fire spreading and the fall respawn), the enemies' (the fire spreading and their death) and the brazier's, all Server Only, the sample's own dash, whose cooldown is Owner Only, and its own Spread Fire, a Server Only ability. |
-| `graphs/` | Sample 03's brazier, reading the input of everyone in its ring and spawning the sample's enemy, with its regions, sample 04's enemy death without its spawner, and sample 03's dash without its Collision Override, so a dash stops at another player. |
+| `abilities/` | The players' grants (the shot, the dash, the fire spreading and the fall respawn), the shots' (their flight and the fire spreading), the enemies' (the fire spreading and their death) and the brazier's, all Server Only, the sample's own shot and its flight, its own dash, whose cooldown is Owner Only, and its own Spread Fire, a Server Only ability. |
+| `graphs/` | Sample 03's brazier, reading the input of everyone in its ring and spawning the sample's enemy, with its regions, sample 04's enemy death without its spawner, sample 03's dash without its Collision Override, so a dash stops at another player, and sample 04's shot and flight, spawning the sample's shot and flying it without a hit effect. |
 | `scripts/NetworkedLevel.cs` | The menu and the arguments, a player per peer, the enemies, and the camera on this machine's player. |
 | `scripts/EffectsLabel.cs` | The effects on an entity, above it, as this machine's player would hear of them. |
 | `scripts/EnemyBrain.cs` | On the server, walks an enemy toward the nearest player through its input, and frees it once it has fallen. |

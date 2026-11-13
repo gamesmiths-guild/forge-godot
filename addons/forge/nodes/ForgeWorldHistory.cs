@@ -242,6 +242,50 @@ public partial class ForgeWorldHistory : Node
 		return false;
 	}
 
+	// An entity lives on its nearest spatial ancestor, so the one living on a node is the node itself or is found below
+	// it through children that aren't spatial.
+	internal static ForgeEntity? FindEntityLivingOn(Node node)
+	{
+		if (node is ForgeEntity entity)
+		{
+			return entity;
+		}
+
+		foreach (Node child in node.GetChildren())
+		{
+			if (child is not (Node2D or Node3D) && FindEntityLivingOn(child) is ForgeEntity found)
+			{
+				return found;
+			}
+		}
+
+		return null;
+	}
+
+	internal static bool IsVisible(Node node)
+	{
+		return node switch
+		{
+			Node3D node3D => node3D.Visible,
+			CanvasItem canvasItem => canvasItem.Visible,
+			_ => true,
+		};
+	}
+
+	internal static void SetVisible(Node node, bool visible)
+	{
+		switch (node)
+		{
+			case Node3D node3D:
+				node3D.Visible = visible;
+				break;
+
+			case CanvasItem canvasItem:
+				canvasItem.Visible = visible;
+				break;
+		}
+	}
+
 	// Called after the presentation pass: the particle systems a seek since the last pass showed, hid or moved start
 	// over.
 	internal void AfterPresentation()
@@ -290,26 +334,6 @@ public partial class ForgeWorldHistory : Node
 		return ForgeEntityBridge.TryGetOwningNode(entity, null, out Node? node) ? node : (Node)entity;
 	}
 
-	// An entity lives on its nearest spatial ancestor, so the one living on a node is the node itself or is found below
-	// it through children that aren't spatial.
-	private static ForgeEntity? FindEntityLivingOn(Node node)
-	{
-		if (node is ForgeEntity entity)
-		{
-			return entity;
-		}
-
-		foreach (Node child in node.GetChildren())
-		{
-			if (child is not (Node2D or Node3D) && FindEntityLivingOn(child) is ForgeEntity found)
-			{
-				return found;
-			}
-		}
-
-		return null;
-	}
-
 	private static void AddParticles(Node node, List<ParticleState> particles)
 	{
 		if (node is GpuParticles3D or GpuParticles2D or CpuParticles3D or CpuParticles2D)
@@ -355,30 +379,6 @@ public partial class ForgeWorldHistory : Node
 
 			case CpuParticles2D { Emitting: true } cpu2D:
 				cpu2D.Restart();
-				break;
-		}
-	}
-
-	private static bool IsVisible(Node node)
-	{
-		return node switch
-		{
-			Node3D node3D => node3D.Visible,
-			CanvasItem canvasItem => canvasItem.Visible,
-			_ => true,
-		};
-	}
-
-	private static void SetVisible(Node node, bool visible)
-	{
-		switch (node)
-		{
-			case Node3D node3D:
-				node3D.Visible = visible;
-				break;
-
-			case CanvasItem canvasItem:
-				canvasItem.Visible = visible;
 				break;
 		}
 	}

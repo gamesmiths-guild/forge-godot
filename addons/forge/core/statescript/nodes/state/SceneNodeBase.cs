@@ -245,11 +245,11 @@ public abstract class SceneNodeBase(
 		}
 	}
 
-	// An instance that is an entity of a world history goes to limbo rather than away, so a rollback to while this node
-	// held it brings it back.
+	// An instance that is an entity of a world history, or one a client predicts, goes to limbo rather than away, so a
+	// rollback to while this node held it brings it back.
 	private static void Free(Node instance)
 	{
-		if (!ForgeWorldHistory.TryDespawn(instance))
+		if (!ForgeWorldHistory.TryDespawn(instance) && !ForgeNetworkSession.TryDespawnPredicted(instance))
 		{
 			instance.QueueFree();
 		}

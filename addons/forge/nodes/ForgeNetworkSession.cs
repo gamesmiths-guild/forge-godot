@@ -10,7 +10,9 @@ using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Replication;
+using Gamesmiths.Forge.Statescript;
 using Godot;
+using Node = Godot.Node;
 using NumericsQuaternion = System.Numerics.Quaternion;
 using NumericsVector3 = System.Numerics.Vector3;
 
@@ -58,13 +60,17 @@ public enum NetworkMode
 /// the spawned ones under <see cref="SpawnParent"/>, and shows them <see cref="InterpolationDelayMs"/> behind the
 /// server: their bodies, and everything else the server sent of them at the same moment, so an animation starts as its
 /// body moves.</para>
-/// <para>A client keeps its clock about a round trip ahead of the server's, from the session's clock sync, so its input
-/// arrives before the server needs it. A <see cref="ClockDilation"/> steers it a tick at a time: a physics step
-/// simulates two ticks to catch up or none to wait, and the clock jumps only when it's far behind.</para>
+/// <para>A client keeps a clock of its own about a round trip ahead of the server's, from the session's clock sync, so
+/// its input arrives before the server needs it. A <see cref="ClockDilation"/> steers it a tick at a time: a physics
+/// step simulates two ticks to catch up or none to wait, and the clock jumps only when it's far behind. The clock every
+/// other entity on the client runs on, <see cref="ForgeManagers.Clock"/>, counts a tick per physics step meanwhile.
+/// </para>
 /// <para>A client predicts its own player, the networked entity the server spawns for its peer: the entity is made live
 /// rather than a mirror, and the session advances it through each tick the clock simulates, ahead of the server, so it
 /// answers this machine's input at once. Each state packet puts it right where the server's word for its tick differs,
-/// and its movement component eases what a correction moved.</para>
+/// and its movement component eases what a correction moved. The networked scenes the player's graphs spawn are
+/// predicted with it: made as the graph runs, ahead of the server, and bound by the server's spawn as it arrives. One
+/// the client freed, or made where the server didn't, waits hidden in limbo until the server's word settles it.</para>
 /// <para>The <see cref="LatencyMs"/>, <see cref="JitterMs"/> and <see cref="LossPercent"/> exports condition this
 /// machine's outgoing packets, to try the game under a poor link without leaving the desk.</para>
 /// </remarks>
@@ -86,6 +92,8 @@ public partial class ForgeNetworkSession : Node
 	private static readonly List<ForgeNetworkSession> _active = [];
 
 	private readonly Dictionary<ForgeEntity, Node> _spawnedRoots = [];
+	private readonly Dictionary<SpawnKey, Cosmetic> _cosmetics = [];
+	private readonly Dictionary<IForgeEntity, LimboState> _limbo = [];
 	private readonly Dictionary<string, EffectContextCodec> _effectContexts = [];
 	private readonly ReplicationHost _host;
 	private readonly ClockDilation _dilation = new();
@@ -93,6 +101,7 @@ public partial class ForgeNetworkSession : Node
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
 	private InterpolationClock? _shown;
+	private SimulationClock? _clock;
 	private double _lastStatsAt;
 	private long _lastBytesSent;
 	private long _lastBytesReceived;
@@ -243,9 +252,9 @@ public partial class ForgeNetworkSession : Node
 	public NetworkSession? Session { get; private set; }
 
 	/// <summary>
-	/// Gets the session clock.
+	/// Gets the session clock: a client's own, which runs ahead of the server's, or the clock every entity runs on.
 	/// </summary>
-	public SimulationClock Clock => ClockOverride ?? ForgeManagers.Instance.Clock;
+	public SimulationClock Clock => ClockOverride ?? _clock ?? ForgeManagers.Instance.Clock;
 
 	/// <summary>
 	/// Gets a value indicating whether this machine is the server, listen or dedicated.
@@ -465,6 +474,7 @@ public partial class ForgeNetworkSession : Node
 		SceneMultiplayer multiplayer = SceneMultiplayerOf(this);
 		multiplayer.MultiplayerPeer = peer;
 		_transport = new GodotTransport(multiplayer, isServer: false);
+		_clock = new SimulationClock(ForgeManagers.Instance.Clock.TickRate);
 		Session = new NetworkSession(
 			Conditioned(_transport),
 			Clock,
@@ -476,6 +486,9 @@ public partial class ForgeNetworkSession : Node
 		Session.Mirror.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
 		Session.Mirror.Spawned += OnMirrorSpawned;
 		Session.Mirror.Corrected += OnCorrected;
+		Session.Mirror.Replayed += OnReplayed;
+		Session.Mirror.EnteredLimbo += OnEnteredLimbo;
+		Session.Mirror.LeftLimbo += OnLeftLimbo;
 		_shown = new InterpolationClock(Clock);
 		ProcessPhysicsPriority = ClientPriority;
 		Mode = NetworkMode.Client;
@@ -518,7 +531,10 @@ public partial class ForgeNetworkSession : Node
 		{
 			mirror.Spawned -= OnMirrorSpawned;
 			mirror.Corrected -= OnCorrected;
+			mirror.Replayed -= OnReplayed;
 			mirror.Clear();
+			mirror.EnteredLimbo -= OnEnteredLimbo;
+			mirror.LeftLimbo -= OnLeftLimbo;
 		}
 
 		Session.Disconnect();
@@ -533,6 +549,9 @@ public partial class ForgeNetworkSession : Node
 		_transport = null;
 		_conditioned = null;
 		_shown = null;
+		_clock = null;
+		_cosmetics.Clear();
+		_limbo.Clear();
 		_lastStatsAt = 0;
 		_lastBytesSent = 0;
 		_lastBytesReceived = 0;
@@ -636,6 +655,17 @@ public partial class ForgeNetworkSession : Node
 		PredictStep(now);
 	}
 
+	// Takes an entity this client predicts that's freed, or that a Scene node lets go of, to limbo instead, where the
+	// server's despawn finds it and a correction to a tick it was in brings it back.
+	internal static bool TryDespawnPredicted(Node node)
+	{
+		return ForgeWorldHistory.FindEntityLivingOn(node) is ForgeEntity { IsPredicted: true } entity
+			&& entity.Replicator?.Session?.Mirror is ReplicationClient mirror
+			&& ForgeEntityBridge.TryGetOwningNode(entity, null, out Node? owningNode)
+			&& owningNode == node
+			&& mirror.PredictDespawn(entity);
+	}
+
 	// A networked entity entering the game while hosting gets its id and seed before its setup, so the setup and the
 	// graphs it starts roll as on the client that predicts the entity.
 	internal void OnEntityEntering(ForgeEntity entity)
@@ -671,6 +701,9 @@ public partial class ForgeNetworkSession : Node
 	internal void OnEntityFreed(ForgeEntity entity)
 	{
 		Session?.Replication?.Unregister(entity);
+
+		// One this client predicts that something freed outright, rather than sending it to limbo, leaves the timeline.
+		Session?.Mirror?.ForgetPredicted(entity);
 		_spawnedRoots.Remove(entity);
 
 		if (LocalPlayer == entity && IsInstanceValid(this))
@@ -683,6 +716,74 @@ public partial class ForgeNetworkSession : Node
 	internal bool IsNetworkedScene(PackedScene scene)
 	{
 		return SceneIndexOf(scene.ResourcePath) >= 0;
+	}
+
+	// What a networked scene a graph of an entity this client predicts spawns is made ahead of the server under, or
+	// what an instance only this machine shows is kept under, so a correction running the tick again finds what it
+	// made. Null for a graph this client doesn't predict.
+	internal SpawnKey? KeySpawn(GraphContext graphContext, int node)
+	{
+		return Mode == NetworkMode.Client ? Session?.Mirror?.KeySpawn(graphContext, node) : null;
+	}
+
+	// The networked scene this client made under the key, which a correction rolling back to before the tick it was
+	// made in brings back as that tick runs again.
+	internal Node? FindSpawn(SpawnKey key)
+	{
+		return Session?.Mirror?.FindSpawn(key) is ForgeEntity entity
+			? _spawnedRoots.GetValueOrDefault(entity, entity)
+			: null;
+	}
+
+	// Readies a networked entity a graph is spawning on this client, ahead of the server, to be added: it's this
+	// peer's, predicted, and seeded from its key as the server seeds its own.
+	internal void PreparePredictedSpawn(ForgeEntity entity, Node instance, SpawnKey key)
+	{
+		entity.NetworkOwner = LocalPeer;
+		entity.IsPredicted = true;
+		entity.Replicator = this;
+		entity.SpawnSeed = key.SeedFor(Session!.SessionSeed);
+		entity.SpawnTick = 0;
+		_spawnedRoots[entity] = instance;
+	}
+
+	// Takes the entity, just added, into this client's timeline, then runs its setup as a predicted entity's. False
+	// when the server already despawned the entity of the key: the instance is freed.
+	internal bool PredictSpawn(ForgeEntity entity, Node instance, SpawnKey key)
+	{
+		if (!Session!.Mirror!.PredictSpawn(entity, key, id => entity.NetworkId = id))
+		{
+			_spawnedRoots.Remove(entity);
+			instance.QueueFree();
+			return false;
+		}
+
+		entity.ApplySetup();
+		return true;
+	}
+
+	// The instance only this machine shows that a tick made under the key, which a correction running the tick again
+	// holds again instead of making another.
+	internal Node? FindCosmetic(SpawnKey key)
+	{
+		if (!_cosmetics.TryGetValue(key, out Cosmetic? cosmetic) || !IsInstanceValid(cosmetic.Instance))
+		{
+			return null;
+		}
+
+		cosmetic.Found = true;
+		return cosmetic.Instance;
+	}
+
+	internal void KeepCosmetic(SpawnKey key, Node instance)
+	{
+		ForgetUnreachableCosmetics();
+		_cosmetics[key] = new Cosmetic(instance);
+	}
+
+	private static Node LimboNode(IForgeEntity entity)
+	{
+		return ForgeEntityBridge.TryGetOwningNode(entity, null, out Node? node) ? node : (Node)entity;
 	}
 
 	private static SceneMultiplayer SceneMultiplayerOf(Node node)
@@ -873,17 +974,20 @@ public partial class ForgeNetworkSession : Node
 		return entities;
 	}
 
-	// Seeds an entity about to get ready. Its setup rolls at tick 0, since each machine makes it at a tick of its own.
+	// Seeds an entity about to get ready: from its key, for one a graph its owner's client predicts spawned, which that
+	// client made before the server gave it an id. Its setup rolls at tick 0, since each machine makes it at a tick of
+	// its own.
 	private void SeedSpawn(ForgeEntity entity, NetworkEntityId id)
 	{
-		entity.SpawnSeed = ForgeEntity.NetworkSeed(Session!.SessionSeed, id);
+		entity.SpawnSeed = entity.SpawnKey?.SeedFor(Session!.SessionSeed)
+			?? ForgeEntity.NetworkSeed(Session!.SessionSeed, id);
 		entity.SpawnTick = 0;
 	}
 
 	private void Register(ForgeEntity entity, int sceneIndex)
 	{
 		entity.Replicator = this;
-		Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner));
+		Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner), entity.SpawnKey);
 
 		if (entity.NetworkOwner == LocalPeer && entity.Input is not null && LocalPlayer is null)
 		{
@@ -968,7 +1072,7 @@ public partial class ForgeNetworkSession : Node
 	}
 
 	// Simulates the ticks the clock's steering gives this step, predicting this client's own entities through each and
-	// sending each tick's input, and moves the clock past them. A node with a clock override doesn't steer.
+	// sending each tick's input, and moves the session clock past them. A node with a clock override doesn't steer.
 	private void PredictStep(double now)
 	{
 		_dilation.MarginTicks = LeadMarginTicks;
@@ -993,9 +1097,9 @@ public partial class ForgeNetworkSession : Node
 			}
 		}
 
-		if (ClockOverride is null && step.NextTick != Clock.Tick + 1)
+		if (ClockOverride is null)
 		{
-			ForgeManagers.Instance.SetNextTick(step.NextTick);
+			Clock.Set(step.NextTick);
 		}
 	}
 
@@ -1040,6 +1144,63 @@ public partial class ForgeNetworkSession : Node
 		}
 	}
 
+	// A correction ran the ticks after the one it rolled back to again: what they made that only this machine shows,
+	// that it didn't make again, goes, and what no correction can reach anymore is forgotten.
+	private void OnReplayed(long from)
+	{
+		foreach (KeyValuePair<SpawnKey, Cosmetic> kept in _cosmetics)
+		{
+			Cosmetic cosmetic = kept.Value;
+
+			if (kept.Key.Tick > from && !cosmetic.Found && IsInstanceValid(cosmetic.Instance))
+			{
+				cosmetic.Instance.QueueFree();
+			}
+
+			cosmetic.Found = false;
+		}
+
+		ForgetUnreachableCosmetics();
+	}
+
+	// Forgets what only this machine shows that's gone, or that no correction can reach anymore, which stays as it is.
+	private void ForgetUnreachableCosmetics()
+	{
+		int history = Session!.Mirror!.PredictionHistoryTicks;
+		long oldest = Clock.Tick
+			- (history > 0 ? history : (long)Math.Ceiling(Clock.TicksIn(NetworkSession.MaxInputLead)));
+
+		foreach (KeyValuePair<SpawnKey, Cosmetic> kept in _cosmetics)
+		{
+			if (kept.Key.Tick < oldest
+				|| !IsInstanceValid(kept.Value.Instance)
+				|| kept.Value.Instance.IsQueuedForDeletion())
+			{
+				_cosmetics.Remove(kept.Key);
+			}
+		}
+	}
+
+	// A predicted entity in limbo is out of the game: it neither processes, which takes its body out of the physics,
+	// nor shows.
+	private void OnEnteredLimbo(IForgeEntity entity)
+	{
+		Node node = LimboNode(entity);
+		_limbo[entity] = new LimboState(node.ProcessMode, ForgeWorldHistory.IsVisible(node));
+		node.ProcessMode = ProcessModeEnum.Disabled;
+		ForgeWorldHistory.SetVisible(node, visible: false);
+	}
+
+	private void OnLeftLimbo(IForgeEntity entity)
+	{
+		if (_limbo.Remove(entity, out LimboState state))
+		{
+			Node node = LimboNode(entity);
+			node.ProcessMode = state.ProcessMode;
+			ForgeWorldHistory.SetVisible(node, state.Visible);
+		}
+	}
+
 	private void UpdateStats(double now)
 	{
 		if (_transport is null || now - _lastStatsAt < 1)
@@ -1065,19 +1226,36 @@ public partial class ForgeNetworkSession : Node
 		EmitSignal(SignalName.PeerLeft, (long)peer.Id.Value);
 	}
 
+	private readonly record struct LimboState(ProcessModeEnum ProcessMode, bool Visible);
+
+	// An instance only this machine shows, made by a graph this client predicts, and whether the correction running now
+	// found it again.
+	private sealed class Cosmetic(Node instance)
+	{
+		public Node Instance { get; } = instance;
+
+		public bool Found { get; set; }
+	}
+
 	// Makes the entities the server spawns on a client, and takes away the ones it despawns.
 	private sealed class ReplicationHost(ForgeNetworkSession session) : IReplicationHost
 	{
 		public IForgeEntity? Spawn(NetworkEntityId id, int sceneIndex, PeerId owner)
 		{
-			return Make(id, sceneIndex, owner, predicted: false, body: null);
+			return Make(id, sceneIndex, owner, predicted: false, body: null, key: null);
 		}
 
 		// This client's own entity is made as the scene makes it, where the server's body was as the server registered
-		// it, so its setup, which runs once it's bound as predicted, runs where the server's did.
-		public IForgeEntity? SpawnPredicted(NetworkEntityId id, int sceneIndex, PeerId owner, BodyState? body)
+		// it, so its setup, which runs once it's bound as predicted, runs where the server's did, and rolls as the
+		// server's did: from its key, for one a graph spawned.
+		public IForgeEntity? SpawnPredicted(
+			NetworkEntityId id,
+			int sceneIndex,
+			PeerId owner,
+			BodyState? body,
+			SpawnKey? key)
 		{
-			return Make(id, sceneIndex, owner, predicted: true, body);
+			return Make(id, sceneIndex, owner, predicted: true, body, key);
 		}
 
 		public void Despawn(IForgeEntity entity)
@@ -1087,6 +1265,12 @@ public partial class ForgeNetworkSession : Node
 			if (entity is not ForgeEntity node || !IsInstanceValid(node))
 			{
 				return;
+			}
+
+			// One in limbo let go of everything as it went there.
+			if (session._limbo.Remove(node))
+			{
+				node.Released = true;
 			}
 
 			// A placed entity's own scene instance goes, or the node it lives on when it's part of the level itself:
@@ -1142,7 +1326,13 @@ public partial class ForgeNetworkSession : Node
 			}
 		}
 
-		private ForgeEntity? Make(NetworkEntityId id, int sceneIndex, PeerId owner, bool predicted, BodyState? body)
+		private ForgeEntity? Make(
+			NetworkEntityId id,
+			int sceneIndex,
+			PeerId owner,
+			bool predicted,
+			BodyState? body,
+			SpawnKey? key)
 		{
 			if (!session.Session!.Registry.TryGet(AssetKind.Scene, sceneIndex, out PackedScene? scene) || scene is null)
 			{
@@ -1163,6 +1353,7 @@ public partial class ForgeNetworkSession : Node
 			entity.IsMirror = !predicted;
 			entity.IsPredicted = predicted;
 			entity.Replicator = session;
+			entity.SpawnKey = key;
 			session.SeedSpawn(entity, id);
 			session._spawnedRoots[entity] = instance;
 			Node parent = session.SpawnParent ?? session.GetTree().CurrentScene ?? session.GetTree().Root;

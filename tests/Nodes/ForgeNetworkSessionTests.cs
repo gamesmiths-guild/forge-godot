@@ -11,15 +11,21 @@ using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
+using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Godot.Networking;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
+using Gamesmiths.Forge.Networking.Replication;
+using Gamesmiths.Forge.Statescript;
+using Gamesmiths.Forge.Statescript.Nodes;
+using Gamesmiths.Forge.Tags;
 using GdUnit4;
 using Godot;
-using GraphContext = Gamesmiths.Forge.Statescript.GraphContext;
+using ForgeGraph = Gamesmiths.Forge.Statescript.Graph;
+using Node = Godot.Node;
 
 namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 
@@ -466,6 +472,7 @@ public class ForgeNetworkSessionTests
 
 		SceneInstantiationUtilities.Instantiate3D(
 			new GraphContext(),
+			0,
 			scene,
 			InstantiateParentMode.Node,
 			pair.ClientBranch,
@@ -480,6 +487,7 @@ public class ForgeNetworkSessionTests
 
 		Node? spawned = SceneInstantiationUtilities.Instantiate3D(
 			new GraphContext(),
+			0,
 			scene,
 			InstantiateParentMode.Node,
 			pair.ServerBranch,
@@ -767,6 +775,230 @@ public class ForgeNetworkSessionTests
 		await Pair.RunUntil(() => mirror.Visible, frames: 300);
 
 		mirror.Visible.Should().BeTrue("the override ends when the server's run does");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_networked_scene_the_client_s_player_spawns_shows_at_once_and_the_server_s_spawn_binds_it()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		PackedScene scene = ResourceLoader.Load<PackedScene>(Body);
+		(_, ForgeEntity player) = await JoinShooter(pair, scene);
+		ReplicationClient mirror = pair.Client.Session!.Mirror!;
+
+		await Press("skill_1", () => mirror.Predicted.Count > 1);
+
+		var shot = (ForgeEntity)mirror.Predicted[^1];
+		shot.Should().NotBeSameAs(player);
+		shot.IsPredicted.Should().BeTrue();
+		shot.NetworkId.IsValid.Should().BeFalse("the client made it ahead of the server");
+
+		await Pair.RunUntil(() => shot.NetworkId.IsValid, frames: 300);
+
+		shot.NetworkId.IsValid.Should().BeTrue("the server's spawn bound it");
+		mirror.Find(shot.NetworkId).Should().BeSameAs(shot);
+		pair.Server.Session!.Replication!.Find(shot.NetworkId)!.SpawnKey.Should().NotBeNull();
+		Bodies(player).Should().ContainSingle("the client made the shot once, and the server's spawn made no other");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_predicted_spawn_freed_outright_leaves_the_client_s_timeline()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		(_, ForgeEntity player) = await JoinShooter(pair, ResourceLoader.Load<PackedScene>(Body));
+		ReplicationClient mirror = pair.Client.Session!.Mirror!;
+
+		await Press("skill_1", () => mirror.Predicted.Count > 1);
+		var shot = (ForgeEntity)mirror.Predicted[^1];
+		shot.GetParent().QueueFree();
+
+		await Pair.RunUntil(() => !mirror.Predicted.Contains(shot), frames: 30);
+
+		mirror.Predicted
+			.Should().NotContain(shot, "something freed it outright, so the timeline no longer advances it");
+		mirror.Predicted
+			.Should().Contain(player);
+
+		await Pair.RunUntil(() => mirror.Predicted.Count > 1 && mirror.Predicted[^1].NetworkId.IsValid, frames: 300);
+
+		mirror.Predicted.Should().HaveCount(2, "the server's spawn found nothing to bind, and made its own");
+		IForgeEntity made = mirror.Predicted[^1];
+		made.Should().NotBeSameAs(shot);
+		made.NetworkId.IsValid.Should().BeTrue("the server's spawn made it");
+		mirror.Find(made.NetworkId).Should().BeSameAs(made);
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_correction_holds_again_what_only_this_machine_shows_that_the_tick_it_runs_again_made()
+	{
+		ForgeNetworkManifest manifest = EffectsManifest();
+		using var pair = new Pair(manifest, manifest, withPlayer: false);
+		await pair.Connect();
+		(ForgeEntity served, ForgeEntity player) = await JoinShooter(pair, Cosmetic());
+		long beforePress = pair.Client.Clock.Tick;
+
+		Apply(served, Fallen);
+		await Press("skill_1", () => Bodies(player).Count > 0);
+		Node3D shown = Bodies(player).Single();
+		long? replayedFrom = null;
+		pair.Client.Session!.Mirror!.Replayed += x => replayedFrom = Math.Min(replayedFrom ?? x, x);
+
+		await Pair.RunUntil(() => replayedFrom < beforePress, frames: 300);
+
+		replayedFrom
+			.Should().BeLessThan(beforePress, "what landed before the press puts the player right from before it");
+		Bodies(player)
+			.Should().Equal([shown], "running the tick it was made in found it again");
+		GodotObject.IsInstanceValid(shown)
+			.Should().BeTrue();
+		shown.IsQueuedForDeletion()
+			.Should().BeFalse();
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_correction_frees_what_only_this_machine_shows_that_no_tick_it_runs_again_makes()
+	{
+		ForgeNetworkManifest manifest = EffectsManifest();
+		using var pair = new Pair(manifest, manifest, withPlayer: false);
+		await pair.Connect();
+		(ForgeEntity served, ForgeEntity player) = await JoinShooter(pair, Cosmetic(), blockedBy: "state.fallen");
+		long corrections = pair.Client.Corrections;
+
+		Apply(served, Fallen);
+		await Press("skill_1", () => Bodies(player).Count > 0);
+		Node3D shown = Bodies(player).Single();
+
+		await Pair.RunUntil(
+			() => !GodotObject.IsInstanceValid(shown) || shown.IsQueuedForDeletion(),
+			frames: 300);
+
+		pair.Client.Corrections.Should().BeGreaterThan(corrections);
+		(!GodotObject.IsInstanceValid(shown) || shown.IsQueuedForDeletion())
+			.Should().BeTrue("the press was blocked once the server's word reached the tick before it");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_client_keeps_a_clock_of_its_own_and_the_clock_every_entity_runs_on_counts_its_steps()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body));
+		pair.Client.ClockOverride = null;
+		await pair.Connect();
+
+		pair.Client.Clock.Should().NotBeSameAs(ForgeManagers.Instance.Clock);
+		int steps = 0;
+
+		void Count()
+		{
+			steps++;
+		}
+
+		long start = ForgeManagers.Instance.Clock.Tick;
+		Tree.PhysicsFrame += Count;
+
+		try
+		{
+			await Pair.RunUntil(() => false, frames: 120);
+		}
+		finally
+		{
+			Tree.PhysicsFrame -= Count;
+		}
+
+		ForgeManagers.Instance.Clock.Tick.Should().Be(start + steps, "steering the client's clock leaves it alone");
+	}
+
+	// The client's player, spawned by the server for its peer, both copies granted an ability that instantiates the
+	// scene under the player's body as skill_1 is pressed.
+	private static async Task<(ForgeEntity Served, ForgeEntity Predicted)> JoinShooter(
+		Pair pair,
+		PackedScene shot,
+		string? blockedBy = null)
+	{
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		ForgeEntity served = body.GetNode<ForgeEntity>("Forge Entity");
+		served.NetworkOwner = pair.Client.LocalPeer;
+
+		void OnAdded(Node node)
+		{
+			if (node is ForgeEntity { IsPredicted: true } added)
+			{
+				added.Ready += () => Grant(added, shot, blockedBy);
+			}
+		}
+
+		Tree.NodeAdded += OnAdded;
+
+		try
+		{
+			pair.ServerBranch.AddChild(body);
+			Grant(served, shot, blockedBy);
+			await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+		}
+		finally
+		{
+			Tree.NodeAdded -= OnAdded;
+		}
+
+		pair.Client.LocalPlayer.Should().NotBeNull();
+		await Pair.RunUntil(() => false, frames: 30);
+		return (served, pair.Client.LocalPlayer!);
+	}
+
+	private static void Grant(ForgeEntity entity, PackedScene shot, string? blockedBy)
+	{
+		var graph = new ForgeGraph();
+		graph.VariableDefinitions.DefineObjectVariable("shot", shot);
+		var instantiate = new InstantiateScene3DNode(InstantiateParentMode.Entity, passOwnership: false);
+		instantiate.BindInput(InstantiateSceneNodeBase.SceneInput, "shot");
+		graph.AddNode(instantiate);
+		graph.AddConnection(new Connection(
+			graph.EntryNode.OutputPorts[EntryNode.OutputPort],
+			instantiate.InputPorts[ActionNode.InputPort]));
+
+		TagsManager tags = ForgeManagers.Instance.TagsManager;
+		var shoot = new AbilityData(
+			"Shoot",
+			activationBlockedTags: blockedBy is null ? null : new TagContainer(tags, [Tag.RequestTag(tags, blockedBy)]),
+			behaviorFactory: () => new GraphAbilityBehavior(graph),
+			inputBinding: AbilityInputBinding.ForAction("skill_1"));
+		entity.Abilities.GrantAbilityPermanently(shoot, 1, LevelComparison.None, entity);
+	}
+
+	// A scene only this machine shows: a bare node, which nothing networks.
+	private static PackedScene Cosmetic()
+	{
+		var template = new Node3D { Name = "Shown" };
+		var scene = new PackedScene();
+		scene.Pack(template);
+		template.Free();
+		return scene;
+	}
+
+	// The instances the player's ability made under its body.
+	private static List<Node3D> Bodies(ForgeEntity player)
+	{
+		return [.. player.GetParent().GetChildren().OfType<Node3D>().Where(x => x is not CollisionShape3D)];
+	}
+
+	// Presses the action as a key would, through an input event the collector latches the press from.
+	private static async Task Press(string action, Func<bool> until)
+	{
+		Input.ParseInputEvent(new InputEventAction { Action = action, Pressed = true });
+
+		try
+		{
+			await Pair.RunUntil(until, frames: 120);
+		}
+		finally
+		{
+			Input.ParseInputEvent(new InputEventAction { Action = action, Pressed = false });
+		}
 	}
 
 	private static ActiveEffectHandle? Apply(ForgeEntity entity, string effectPath)
