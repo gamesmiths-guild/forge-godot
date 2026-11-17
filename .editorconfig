@@ -350,10 +350,10 @@ dotnet_naming_style.camel_case.capitalization = camel_case
 ### .NET ###
 
 # IDE0058: Expression value is never used
-dotnet_diagnostic.IDE0058.severity = suggestion
+dotnet_diagnostic.IDE0058.severity = none
 
 # IDE0053: Use block body for lambda expression
-dotnet_diagnostic.IDE0053.severity = suggestion
+dotnet_diagnostic.IDE0053.severity = none
 
 # IDE0010: Add missing cases
 dotnet_diagnostic.IDE0010.severity = none

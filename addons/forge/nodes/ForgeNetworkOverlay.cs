@@ -1,9 +1,11 @@
 // Copyright © Gamesmiths Guild.
 
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using Gamesmiths.Forge.Godot.Core;
 using Gamesmiths.Forge.Networking;
+using Gamesmiths.Forge.Tags;
 using Godot;
 
 namespace Gamesmiths.Forge.Godot.Nodes;
@@ -12,7 +14,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// The F3 overlay: what the session is doing, in a corner. Round trip, server and local tick, how far ahead a client
 /// runs, how the server is receiving its input, how often a client's prediction held and how far back its last
 /// correction went, loss and bandwidth, and the conditioner's settings. F3 shows and hides it; F4 cycles the
-/// conditioner through a perfect, a good, a far and a poor link.
+/// conditioner through a perfect, a good, a far and a poor link; F5 prints the tags this machine sent, most sent
+/// first.
 /// </summary>
 /// <remarks>
 /// Add it anywhere in a scene that has a <see cref="ForgeNetworkSession"/>. It finds the session on its own when
@@ -52,6 +55,26 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 	{
 		Layer = 100;
 		ProcessMode = ProcessModeEnum.Always;
+	}
+
+	/// <summary>
+	/// Lists the tags a manager's machine wrote to packets, most written first, with how many times each was: the
+	/// order <see cref="ForgeSettings.CommonlyReplicatedTagsSetting"/> takes them in.
+	/// </summary>
+	/// <param name="tagsManager">The tags manager.</param>
+	/// <returns>The report, a line a tag.</returns>
+	public static string TagUsageReport(TagsManager tagsManager)
+	{
+		StringBuilder text = new StringBuilder("Forge: tags sent, most sent first (")
+			.Append(ForgeSettings.CommonlyReplicatedTagsSetting)
+			.Append(" takes them in this order):");
+
+		foreach (KeyValuePair<Tag, int> usage in tagsManager.GetNetworkUsage())
+		{
+			text.Append('\n').Append(CultureInfo.InvariantCulture, $"{usage.Value,8}  {usage.Key}");
+		}
+
+		return text.ToString();
 	}
 
 	/// <inheritdoc/>
@@ -95,6 +118,11 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 			session.JitterMs = (int)(conditions.JitterSeconds * 1000);
 			session.LossPercent = conditions.LossRate * 100;
 			_nextRefreshAt = 0;
+			GetViewport().SetInputAsHandled();
+		}
+		else if (key.Keycode == Key.F5)
+		{
+			GD.Print(TagUsageReport(ForgeManagers.Instance.TagsManager));
 			GetViewport().SetInputAsHandled();
 		}
 	}
@@ -180,7 +208,7 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 			.Append(CultureInfo.InvariantCulture, $"{session.BytesReceivedPerSecond / 1024:0.0} KB/s down\n")
 			.Append(CultureInfo.InvariantCulture, $"conditioner: {session.LatencyMs} ms ± {session.JitterMs} ms, ")
 			.Append(CultureInfo.InvariantCulture, $"{session.LossPercent:0.#}% loss, {session.PacketsLost} lost\n")
-			.Append("F3 hides this, F4 cycles the conditioner");
+			.Append("F3 hides this, F4 cycles the conditioner, F5 prints the tags sent");
 
 		return text.ToString();
 	}

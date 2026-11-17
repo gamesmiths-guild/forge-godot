@@ -211,6 +211,13 @@ public partial class ForgeNetworkSession : Node
 	public int InterpolationDelayMs { get; set; } = 100;
 
 	/// <summary>
+	/// Gets or sets how far apart two states the server sent of a body may be, in units, for a client to ease between
+	/// them: one further, as a respawn makes, shows the body where it went at once. At 0, every move shows at once.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,10,0.1,or_greater")]
+	public float InterpolationSnapDistance { get; set; } = 2f;
+
+	/// <summary>
 	/// Gets or sets how many ticks beyond a round trip a client runs ahead of the server, to absorb jitter.
 	/// </summary>
 	[Export]
@@ -221,6 +228,27 @@ public partial class ForgeNetworkSession : Node
 	/// </summary>
 	[Export]
 	public int LeadToleranceTicks { get; set; } = 1;
+
+	/// <summary>
+	/// Gets or sets how many steps a body's position is rounded to in a unit as it travels: 1000 is a thousandth of a
+	/// unit. Fewer steps cost fewer bytes and show bodies less exactly. Read as the session hosts or joins, and a
+	/// client whose body precision differs from the server's is refused.
+	/// </summary>
+	[ExportGroup("Body Precision")]
+	[Export(PropertyHint.Range, "1,100000,1")]
+	public int BodyPositionSteps { get; set; } = BodyPrecision.Default.PositionSteps;
+
+	/// <summary>
+	/// Gets or sets how many steps a body's velocity is rounded to in a unit per second as it travels.
+	/// </summary>
+	[Export(PropertyHint.Range, "1,100000,1")]
+	public int BodyVelocitySteps { get; set; } = BodyPrecision.Default.VelocitySteps;
+
+	/// <summary>
+	/// Gets or sets how many bits each of the three components a body's rotation travels as takes.
+	/// </summary>
+	[Export(PropertyHint.Range, "2,16,1")]
+	public int BodyRotationBits { get; set; } = BodyPrecision.Default.RotationBits;
 
 	/// <summary>
 	/// Gets or sets the latency the conditioner adds to this machine's outgoing packets, one way, in milliseconds.
@@ -413,7 +441,10 @@ public partial class ForgeNetworkSession : Node
 			ForgeManagers.Instance.TagsManager,
 			ForgeSettings.GetInputActionSet(),
 			seed,
-			MaxClients);
+			MaxClients)
+		{
+			BodyPrecision = new BodyPrecision(BodyPositionSteps, BodyVelocitySteps, BodyRotationBits),
+		};
 		Session.PeerJoined += OnPeerJoined;
 		Session.PeerLeft += OnPeerLeft;
 		Session.InputTaken += OnInputTaken;
@@ -480,7 +511,10 @@ public partial class ForgeNetworkSession : Node
 			Clock,
 			BuildRegistry(),
 			ForgeManagers.Instance.TagsManager,
-			ForgeSettings.GetInputActionSet());
+			ForgeSettings.GetInputActionSet())
+		{
+			BodyPrecision = new BodyPrecision(BodyPositionSteps, BodyVelocitySteps, BodyRotationBits),
+		};
 		Session.Mirror!.Host = _host;
 		Session.Mirror.HoldsUntilShown = true;
 		Session.Mirror.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
@@ -875,13 +909,13 @@ public partial class ForgeNetworkSession : Node
 		return null;
 	}
 
-	private static void PlaceBody(IForgeEntity entity, in BodyState state)
+	private static void PlaceBody(IForgeEntity entity, in BodyState state, in BodyPrecision precision)
 	{
 		// A body the server's rounding can't tell from where it already stands, such as one the scene placed and
 		// nothing moved, stays exactly there: rounded, it would lean or sit a step off from where the server has it.
 		bool stands = CaptureBody(entity) is BodyState shown
-			&& BodyCodec.Quantize(shown with { Velocity = state.Velocity, Grounded = state.Grounded })
-				== BodyCodec.Quantize(state);
+			&& BodyCodec.Quantize(shown with { Velocity = state.Velocity, Grounded = state.Grounded }, precision)
+				== BodyCodec.Quantize(state, precision);
 
 		if (ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node3D))
 		{
@@ -1007,9 +1041,13 @@ public partial class ForgeNetworkSession : Node
 
 	private void PlaceShownBody(IForgeEntity entity)
 	{
-		if (_shown is not null && Session?.Mirror?.BodyOf(entity)?.TrySample(_shown.Tick, out BodyState body) == true)
+		if (_shown is not null
+			&& Session?.Mirror?.BodyOf(entity)?.TrySample(
+				_shown.Tick,
+				out BodyState body,
+				InterpolationSnapDistance) == true)
 		{
-			PlaceBody(entity, body);
+			PlaceBody(entity, body, Session.BodyPrecision);
 		}
 	}
 

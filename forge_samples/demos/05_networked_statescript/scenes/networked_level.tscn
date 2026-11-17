@@ -40,13 +40,18 @@
 [ext_resource type="Script" uid="uid://d3v5ni4eocbqr" path="res://addons/forge/nodes/AnimationCueHandler.cs" id="39_anim_cue"]
 [ext_resource type="PackedScene" uid="uid://75gb6rjv4sf5" path="res://forge_samples/demos/03_statescript/scenes/vfx/regen_effect.tscn" id="40_regen_vfx"]
 [ext_resource type="PackedScene" uid="uid://c5net8player" path="res://forge_samples/demos/05_networked_statescript/scenes/player.tscn" id="50_player"]
-[ext_resource type="PackedScene" uid="uid://c5net8enemy1" path="res://forge_samples/demos/05_networked_statescript/scenes/enemy.tscn" id="51_enemy"]
 [ext_resource type="Resource" uid="uid://c5net8manife" path="res://forge_samples/demos/05_networked_statescript/network_manifest.tres" id="52_manifest"]
 [ext_resource type="Script" uid="uid://q6o53xlqjkod" path="res://addons/forge/nodes/ForgeNetworkSession.cs" id="53_session"]
 [ext_resource type="Script" uid="uid://bb4otufv1nl1v" path="res://addons/forge/nodes/ForgeNetworkOverlay.cs" id="54_overlay"]
 [ext_resource type="Script" uid="uid://c00wgj2xbiagd" path="res://forge_samples/demos/05_networked_statescript/scripts/NetworkedLevel.cs" id="55_game"]
 [ext_resource type="PackedScene" uid="uid://t3tnw06y4rt1" path="res://forge_samples/demos/03_statescript/scenes/stations/brazier.tscn" id="56_brazier"]
 [ext_resource type="Resource" uid="uid://c5net10brast" path="res://forge_samples/demos/05_networked_statescript/abilities/brazier_grants.tres" id="57_brazier_grants"]
+[ext_resource type="PackedScene" uid="uid://f0cdtm7kc3qx" path="res://forge_samples/shared/ActionBarView.tscn" id="58_action_bar"]
+[ext_resource type="Script" uid="uid://lvubg47pf2bu" path="res://forge_samples/demos/05_networked_statescript/scripts/PlayerHud.cs" id="59_hud"]
+[ext_resource type="Resource" uid="uid://c5net12proja" path="res://forge_samples/demos/05_networked_statescript/abilities/projectile.tres" id="60_projectile"]
+[ext_resource type="Resource" uid="uid://c5net8dashab" path="res://forge_samples/demos/05_networked_statescript/abilities/dash.tres" id="61_dash"]
+[ext_resource type="Resource" uid="uid://c5net13shlda" path="res://forge_samples/demos/05_networked_statescript/abilities/shield.tres" id="62_shield"]
+[ext_resource type="Resource" uid="uid://c5net13thrna" path="res://forge_samples/demos/05_networked_statescript/abilities/thorns.tres" id="63_thorns"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_4t6yx"]
 material = ExtResource("4_f8cj4")
@@ -311,20 +316,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.244277, 0, -6.188751)
 [node name="Spawn6" type="Marker3D" parent="Spawns" unique_id=822041462 groups=["spawn_points"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.967566, 0, -6.017889)
 
-[node name="EnemySpawns" type="Node3D" parent="." unique_id=1206283972]
-
-[node name="EnemySpawn1" type="Marker3D" parent="EnemySpawns" unique_id=474697836 groups=["enemy_spawns"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -5)
-
-[node name="EnemySpawn2" type="Marker3D" parent="EnemySpawns" unique_id=780695427 groups=["enemy_spawns"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, 3)
-
-[node name="EnemySpawn3" type="Marker3D" parent="EnemySpawns" unique_id=1113193699 groups=["enemy_spawns"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -14)
-
-[node name="EnemySpawn4" type="Marker3D" parent="EnemySpawns" unique_id=898468283 groups=["enemy_spawns"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 5)
-
 [node name="Spawned" type="Node3D" parent="." unique_id=45002916]
 unique_name_in_owner = true
 
@@ -487,6 +478,54 @@ Interrupt = false
 CueTag = "cue.vfx.hit"
 metadata/_custom_type_script = "uid://d3v5ni4eocbqr"
 
+[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("Session", "Skill1View", "Skill2View", "Skill3View", "Skill4View", "TagsView")]
+script = ExtResource("59_hud")
+Session = NodePath("../Session")
+ProjectileAbility = ExtResource("60_projectile")
+DashAbility = ExtResource("61_dash")
+ShieldAbility = ExtResource("62_shield")
+ThornsAbility = ExtResource("63_thorns")
+Skill1View = NodePath("ActionBar/Projectile")
+Skill2View = NodePath("ActionBar/Dash")
+Skill3View = NodePath("ActionBar/Shield")
+Skill4View = NodePath("ActionBar/Thorns")
+TagsView = NodePath("TagsView")
+
+[node name="ActionBar" type="HBoxContainer" parent="HUD"]
+custom_minimum_size = Vector2(200, 40)
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -40.0
+offset_right = 100.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="Projectile" parent="HUD/ActionBar" instance=ExtResource("58_action_bar")]
+layout_mode = 2
+KeyText = "LMB"
+
+[node name="Dash" parent="HUD/ActionBar" instance=ExtResource("58_action_bar")]
+layout_mode = 2
+KeyText = "SPC"
+
+[node name="Shield" parent="HUD/ActionBar" instance=ExtResource("58_action_bar")]
+layout_mode = 2
+KeyText = "3"
+
+[node name="Thorns" parent="HUD/ActionBar" instance=ExtResource("58_action_bar")]
+layout_mode = 2
+KeyText = "-"
+
+[node name="TagsView" type="Label" parent="HUD"]
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0.05908472, 0.0017870708, 0.2683399, 1)
+
 [node name="QuitScene" type="Node" parent="." unique_id=2039553407]
 script = ExtResource("11_quit")
 
@@ -496,6 +535,7 @@ Manifest = ExtResource("52_manifest")
 metadata/_custom_type_script = "uid://q6o53xlqjkod"
 
 [node name="Overlay" type="CanvasLayer" parent="." unique_id=577236520]
+offset = Vector2(260, 0)
 script = ExtResource("54_overlay")
 metadata/_custom_type_script = "uid://bb4otufv1nl1v"
 
@@ -556,7 +596,6 @@ autowrap_mode = 3
 script = ExtResource("55_game")
 Session = NodePath("../Session")
 PlayerScene = ExtResource("50_player")
-EnemyScene = ExtResource("51_enemy")
 Spawned = NodePath("../Spawned")
 Camera = NodePath("../CameraRig")
 Menu = NodePath("../Menu/Panel")
