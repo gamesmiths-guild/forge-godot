@@ -61,6 +61,7 @@ Describes all aspects of an effect: what it does and how it behaves.
 - `Cues` (Array\<ForgeCue\>): Audio/visual feedback links.
 - `SnapshotLevel` (bool): If the effect's level is fixed at application time.
 - `Visibility` (EffectVisibility): Who hears about the effect while it's active on a networked entity: Public, Owner Only, Server Only, or Default for the project's setting. See [Effects on a client](networking.md#effects-on-a-client).
+- `LagCompensation` (EffectLagCompensation): How the effect counts for a client's action the server tests as the client saw it: Current, as it is, or Rewound, its tags and immunity as they were then, for whether the hit lands. See [Hits](networking.md#hits).
 - `EffectTags` (ForgeTagContainer?): Identity tags for the effect itself. **Never granted to the target** — they classify the effect so `ForgeEffectQuery` can select it by category. The rule: granted tags (a ModifierTags component) for entity state, effect tags for identity.
 
 **Usage:**
@@ -215,6 +216,7 @@ Describes a gameplay cue for VFX, SFX, UI, etc.
 - `MinValue`, `MaxValue` (int): Magnitude range.
 - `MagnitudeType` (CueMagnitudeType): How magnitude is calculated.
 - `MagnitudeAttribute` (string): Attribute used for magnitude, if applicable.
+- `PredictOnOthers` (CuePrediction): Whether a networked client shows the cue on an entity it mirrors as soon as its own predicted shot hits it: Default, for an executed cue, Always, a persistent one too, or Never, to wait for the server. See [Hits](networking.md#hits).
 
 **Usage:**
 

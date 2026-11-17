@@ -8,7 +8,8 @@ Forge for Godot plays a game over the network with one server in charge: the ser
 2. **Networked entities.** Turn on `Networked` on every [`ForgeEntity`](nodes.md#forgeentity) the server should simulate for everyone: players, enemies, anything whose state matters to more than one machine. See [Networked entities](#networked-entities).
 3. **The input actions.** Networked input travels as the project's Forge input actions (`forge/input/actions` and `forge/input/vectors` in Project Settings), so every machine must list the same ones in the same order. A client whose list differs is refused. Input events travel as Forge tags, so the registered tags must match too; a client whose tags differ is refused.
 4. **The asset manifest.** Both ends must agree on which effect, ability, graph or networked scene an index means. The editor plugin keeps a [`ForgeNetworkManifest`](resources.md#forgenetworkmanifest) at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings), regenerated when one of those resources is saved, when the project's files change, and from **Project, Tools, Forge, Regenerate network manifest**. It lists every scene whose own `ForgeEntity` is networked. Commit it; a client whose manifest differs is refused.
-5. **Host, join, leave.** From a menu or a script:
+5. **The rates.** The session ticks at the project's physics rate. A power of two, such as 64 or 128 (`physics/common/physics_ticks_per_second`), keeps each step exact in floating point, which 60 doesn't. The session's `Send Rate` sends the world every tick, every second tick (the default) or every fourth: at 64 Hz, 64, 32 or 16 times a second. Sending more often lets a client show the world fresher, for more bandwidth.
+6. **Host, join, leave.** From a menu or a script:
 
 ```csharp
 // Host, with a player on this machine.
@@ -48,7 +49,7 @@ A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). 
 - **Attributes, tags and cues** are the server's: health bars, tag checks and cue handlers work on a client as they do on the server. Persistent cues start and stop as the server's do, and executed cues, such as a hit flash, play once, unless they're more than 0.2 s old by the time they arrive. On the entity a client owns, an attribute's base value is the server's too; everywhere else a mirror's base value is its current value.
 - **Effects** are the server's too, as far as [each one's visibility](#effects-on-a-client) allows: the entity's `EffectsManager` answers queries, a handle tells its stacks and time left, and the `OnActiveEffect` events follow them. They run nothing: no modifiers, periodic executions, components or cues.
 - **Graphs** show what the server's show, as far as [clients run them](#graphs-on-a-client): a remote player rolls and its dash whooshes, a brazier's flame lights up.
-- **Bodies** are shown between the states the server sent, `Interpolation Delay Ms` (100 ms) behind the newest one, which is itself about half a round trip old, whether a movement component or a graph moves them on the server. Two states further apart than `Interpolation Snap Distance` (2 units), as a respawn makes, aren't eased between: the body shows where it went at once. A body stays exactly where it stands while the server's state, rounded for the wire, can't tell it apart, so a placed body nothing moved keeps the place and turn its scene gives it.
+- **Bodies** are shown between the states the server sent, a delay behind the newest one, which is itself about half a round trip old: `Interpolation Delay Ms` (70 ms) with `Interpolation Mode` Fixed, or worked out from how the packets arrive with Adaptive, one send interval on a steady link and more for jitter and loss, between `Adaptive Delay Min Ms` and `Adaptive Delay Max Ms`, whether a movement component or a graph moves them on the server. Two states further apart than `Interpolation Snap Distance` (2 units), as a respawn makes, aren't eased between: the body shows where it went at once. A body stays exactly where it stands while the server's state, rounded for the wire, can't tell it apart, so a placed body nothing moved keeps the place and turn its scene gives it.
 - **Everything shows at the body's moment.** What the server sent of a mirror, its spawn, attributes, tags, cues, effects, graphs and despawn, waits until its body is shown at the tick it's of, so an animation starts as the body moves and a burst plays where it fell. The moment shown runs with the client's own time, a little faster or slower as the estimates of the link move, so bodies don't hitch when they do.
 - **Its own player** isn't a mirror: the client [predicts](#its-own-player) it. The session sets `Local Player` to the networked entity with an input that this machine's peer owns as it appears, and raises `LocalPlayerChanged`, so a camera can follow it.
 - **Late joiners** get the world as it is, and **relevancy** is everything by default; set `Relevancy Radius` for a client to hear only about entities within that distance of one it owns.
@@ -58,7 +59,7 @@ A client's copy of a networked entity is a **mirror** (`ForgeEntity.IsMirror`). 
 
 The networked entity the server spawns for this machine's peer is predicted (`ForgeEntity.IsPredicted`) rather than mirrored. It's made as its scene makes it, where the server's body was as the server registered it, and its setup runs once the session predicts it, so an ability the setup activates that the client can't predict is refused there as later. It runs live: the session advances it through each tick its clock simulates, ahead of the server, from this machine's input, so it answers at once. Each state packet checks a tick of it against the server's, and where they differ the session rolls it back, takes the server's word and runs the ticks since again. Until the clock knows the round trip, a moment after joining, the player follows the server instead.
 
-- **What stays the server's.** Effects from elsewhere, an area's or another entity's, arrive from the server and go in at the tick they landed after: their duration, modifiers, tags and cues run here, their periodic executions don't, and damage arrives as health. Effects the player applies to other entities are refused. A run of an ability started from elsewhere, by another entity's event or an effect from elsewhere, goes in at the tick it started after and runs here from there.
+- **What stays the server's.** Effects from elsewhere, an area's or another entity's, arrive from the server and go in at the tick they landed after: their duration, modifiers, tags and cues run here, their periodic executions don't, and damage arrives as health. Effects the player applies to other entities are refused, though what they show plays at once (see [Hits](#hits)). A run of an ability started from elsewhere, by another entity's event or an effect from elsewhere, goes in at the tick it started after and runs here from there.
 - **Server Only abilities.** An ability with `Server Only` on runs on the server alone, and the player's client shows its graph as everyone else does. Use it for an ability whose graph reads other entities, such as an overlap that spreads fire to whoever is near: this client shows them where they were a moment ago, so it would find something else, and correct the player at every packet while the ability runs.
 - **What only the server sets off.** A one-shot presentation node a predicted graph runs from something only the server has, such as an Event Listener hearing the damage an enemy dealt, shows once on this client too: the server sends it, since this client's own run never gets there. What that branch changes, such as a cost paid per hit, arrives as the player's state.
 - **Authority nodes** don't run on a client, in a predicted graph either, and the graph goes on as if they had.
@@ -166,9 +167,32 @@ Add a [`ForgeNetworkOverlay`](nodes.md#forgenetworkoverlay) anywhere in the scen
 - On a server: how many entities it replicates, and each client's input depth and how many of its ticks were received, lost or late.
 - On both: bytes up and down per second, and the conditioner's settings.
 
+## Hits
+
+A client shows the entities it mirrors behind the server, so what its player does, a shot, a swing or a blast, meets them where they were a moment ago. Two things make the hit feel right anyway. See [Hits on the network](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/lag-compensation.md) for how they work.
+
+- **The server tests the action as its instigator saw it.** Set `Compensate Queries` on the [`ForgeEntity`](nodes.md#forgeentity) that tests the world, as a shot, a blast or a hitbox does. On the server, every tick of a networked entity of a client's player runs against the other entities' bodies where that client was shown them, its Move Body included. Each body is stood in for by a copy in the physics server, and a hit on one reports the entity's own body. The compensation fades out as the entity runs, over `Compensation Fade Ms` (250 by default; 0 compensates its first tick alone, a negative value as long as it runs), so a target that dodged a slow projectile on its own screen isn't hit where it was. It's capped by the session's `Max Rewind Ms` (500 by default, which covers a round trip of about 250 ms): a client shown the world further behind leads the rest. An entity whose `Lag Compensation` is Never is met where it is. Tags, attributes and effects are read as they are, unless a [`ForgeEffectData`](resources.md#forgeeffectdata)'s `Lag Compensation` is Rewound: its tags and immunity then count as they were, for whether the hit lands.
+- **The instigator sees the hit at once.** The graph that applies the effect, a shot's or an ability's, runs on the instigator's client too and applies it there, which the target's mirror refuses, and the effect's executed cues play there at once: the flash, the sound, the hit animation. The server's cue for the same hit doesn't play again. A [`ForgeCue`](resources.md#forgecue)'s `Predict On Others` decides it per cue: Default shows an executed cue early, Always a persistent one too, and Never waits for the server, as a damage number should. The project setting `forge/networking/predict_cues_on_others` turns Default off for every cue. Keep the graph's Apply Effect out of a Server Only region for this, and keep in one what only the server should work out.
+
+Code that tests a hit itself, such as a ray, opens the same compensation on the server:
+
+```csharp
+if (session.BeginLagCompensation(instigatorPeer))
+{
+    try
+    {
+        // Query here: the other entities stand where the instigator saw them.
+    }
+    finally
+    {
+        session.EndLagCompensation();
+    }
+}
+```
+
 ## What a client sends
 
-Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named. It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, hands that tick's command to every entity the client owns that has an input. The session node then raises `InputTaken` with it. A game that raises input events does it there, raising only the ones it allows, so a client can't trigger an ability meant for a server event:
+Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named, and how far behind that tick it was showing the entities it mirrors, which the server [tests its shots against](#hits). It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, hands that tick's command to every entity the client owns that has an input. The session node then raises `InputTaken` with it. A game that raises input events does it there, raising only the ones it allows, so a client can't trigger an ability meant for a server event:
 
 ```csharp
 // The tags a client may raise as input events, children included.
