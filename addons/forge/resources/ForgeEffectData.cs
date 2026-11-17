@@ -224,6 +224,13 @@ public partial class ForgeEffectData : Resource
 	[Export]
 	public EffectVisibility Visibility { get; set; }
 
+	/// <summary>
+	/// Gets or sets how this effect counts for a lag-compensated hit on its target: as it is when the server tests the
+	/// hit, or, for whether the hit lands, as it was when the instigator saw the target.
+	/// </summary>
+	[Export]
+	public EffectLagCompensation LagCompensation { get; set; }
+
 	public EffectData GetEffectData()
 	{
 		if (_data.HasValue)
@@ -400,7 +407,8 @@ public partial class ForgeEffectData : Resource
 			[.. executions],
 			[.. cues],
 			EffectTags?.GetTagContainer(),
-			Visibility);
+			Visibility,
+			LagCompensation);
 
 		return _data.Value;
 	}

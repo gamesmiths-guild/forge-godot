@@ -70,6 +70,20 @@ public static class ForgeSettings
 	public const string CommonlyReplicatedTagsSetting = "forge/networking/commonly_replicated_tags";
 
 	/// <summary>
+	/// Setting saying whether a cue whose Predict On Others is Default is shown early on an entity a client mirrors:
+	/// when the client's own predicted run applies the cue's executed effect there, as its shot hitting an enemy. On by
+	/// default.
+	/// </summary>
+	public const string PredictCuesOnOthersSetting = "forge/networking/predict_cues_on_others";
+
+	/// <summary>
+	/// Gets a value indicating whether a cue whose Predict On Others is Default is shown early on an entity a client
+	/// mirrors.
+	/// </summary>
+	public static bool PredictCuesOnOthers =>
+		ProjectSettings.GetSetting(PredictCuesOnOthersSetting, true).AsBool();
+
+	/// <summary>
 	/// Gets who hears about an effect whose own visibility is Default.
 	/// </summary>
 	public static EffectVisibility DefaultEffectVisibility =>
@@ -270,6 +284,19 @@ public static class ForgeSettings
 		});
 
 		ProjectSettings.SetInitialValue(DefaultEffectVisibilitySetting, (int)EffectVisibility.Public);
+
+		if (!ProjectSettings.HasSetting(PredictCuesOnOthersSetting))
+		{
+			ProjectSettings.SetSetting(PredictCuesOnOthersSetting, true);
+		}
+
+		ProjectSettings.AddPropertyInfo(new GodotDictionary
+		{
+			{ "name", PredictCuesOnOthersSetting },
+			{ "type", (int)Variant.Type.Bool },
+		});
+
+		ProjectSettings.SetInitialValue(PredictCuesOnOthersSetting, true);
 
 		ProjectSettings.AddPropertyInfo(new GodotDictionary
 		{

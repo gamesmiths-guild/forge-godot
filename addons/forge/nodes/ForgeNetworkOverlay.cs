@@ -182,6 +182,17 @@ public partial class ForgeNetworkOverlay : CanvasLayer
 				.Append(CultureInfo.InvariantCulture, $"{session.TicksAhead:0.0} ticks ahead, ")
 				.Append(CultureInfo.InvariantCulture, $"server holds {session.ServerInputDepth}\n");
 
+			if (session.Session?.Mirror?.InterpolationDelay is { } delay)
+			{
+				string mode = session.InterpolationMode == InterpolationDelayMode.Adaptive
+					? $"adaptive, jitter {delay.Jitter:0.0} ticks, loss {delay.Loss * 100:0.0}%"
+					: "fixed";
+				text.Append(
+						CultureInfo.InvariantCulture,
+						$"shown {session.CurrentInterpolationDelayMs:0} ms behind ({mode}), ")
+					.Append(CultureInfo.InvariantCulture, $"a send every {delay.SendInterval} ticks\n");
+			}
+
 			if (session.Session?.Mirror is { } mirror)
 			{
 				text.Append(
