@@ -118,18 +118,29 @@ public partial class PlayerHud : CanvasLayer
 	}
 
 	// Other refusals stay silent: pressing the shield's key while it is up is refused as well, and that press is the
-	// toggle off.
+	// toggle off. So does a refusal of what no key activates, as thorns from a hit.
 	private void OnActivationFailed(AbilityHandle handle, AbilityActivationFailures failures)
 	{
-		if ((failures & RefusalsWorthAClick) != 0)
+		if ((failures & RefusalsWorthAClick) != 0
+			&& System.Array.Exists(_skillSlots, x => x is { IsPressed: true } && x.Handle == handle))
 		{
 			_activationFailedSfx?.Play();
 		}
 	}
 
 	// The same view mirror the Statescript demo's controller keeps, so the two HUDs read identically.
-	private sealed class SkillSlot(AbilityHandle handle, ActionBarView view, Tag? cooldownTag, float totalCooldownTime)
+	private sealed class SkillSlot(
+		AbilityHandle handle,
+		ActionBarView view,
+		Tag? cooldownTag,
+		float totalCooldownTime,
+		bool isPressed)
 	{
+		public AbilityHandle Handle => handle;
+
+		// Whether a key activates the ability.
+		public bool IsPressed => isPressed;
+
 		public static SkillSlot? Create(ForgeEntity forgeEntity, ForgeAbilityData? data, ActionBarView? view)
 		{
 			if (data is null || view is null
@@ -148,7 +159,7 @@ public partial class PlayerHud : CanvasLayer
 				totalCooldownTime = cooldownData[0].TotalTime;
 			}
 
-			return new SkillSlot(handle, view, cooldownTag, totalCooldownTime);
+			return new SkillSlot(handle, view, cooldownTag, totalCooldownTime, data.InputAction.Length > 0);
 		}
 
 		public void UpdateView()

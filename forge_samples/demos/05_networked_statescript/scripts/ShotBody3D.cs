@@ -1,22 +1,31 @@
 // Copyright © Gamesmiths Guild.
 
-using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Nodes;
 using Godot;
 
 namespace Gamesmiths.Forge.Example;
 
 /// <summary>
-/// The shot's body, which passes through the player who fired it and meets everyone else.
+/// The shot's body, which passes through the player who fired it and meets everyone else. The shooter is the player of
+/// the peer the shot belongs to, which every way of making it sets before it enters the tree: a graph's on the server
+/// and ahead of it, and a spawn the session makes from the server's word.
 /// </summary>
-public partial class ShotBody3D : CharacterBody3D, IInstantiationReceiver
+public partial class ShotBody3D : CharacterBody3D
 {
 	/// <inheritdoc/>
-	public void OnInstantiated(IForgeEntity? owner, IForgeEntity? source)
+	public override void _Ready()
 	{
-		if (ForgeEntityBridge.TryGetSpatialNode3D(owner, out Node3D? body) && body is PhysicsBody3D shooter)
+		base._Ready();
+
+		int owner = GetNode<ForgeEntity>("%Forge Entity").NetworkOwner;
+
+		foreach (Node node in GetTree().GetNodesInGroup("player"))
 		{
-			AddCollisionExceptionWith(shooter);
+			if (node is PhysicsBody3D player
+				&& player.GetNodeOrNull<ForgeEntity>("Forge Entity")?.NetworkOwner == owner)
+			{
+				AddCollisionExceptionWith(player);
+			}
 		}
 	}
 }

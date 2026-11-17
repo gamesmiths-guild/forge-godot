@@ -122,26 +122,34 @@ public class NetworkedSampleTests
 
 	[TestCase]
 	[RequireGodotRuntime]
-	public void The_shot_passes_through_the_player_who_fired_it()
+	public void The_shot_passes_through_the_player_of_its_peer_alone()
 	{
-		CharacterBody3D player = GD.Load<PackedScene>(Networked + "scenes/player.tscn").Instantiate<CharacterBody3D>();
-		ShotBody3D shot = GD.Load<PackedScene>(Networked + "scenes/projectile.tscn").Instantiate<ShotBody3D>();
+		var world = new Node3D();
+		((SceneTree)Engine.GetMainLoop()).Root.AddChild(world);
 
 		try
 		{
-			ForgeEntity shooter = player.GetNode<ForgeEntity>("Forge Entity");
-			shot.OnInstantiated(shooter, shot.GetNode<ForgeEntity>("Forge Entity"));
+			CharacterBody3D shooter = Player(world, 2);
+			Player(world, 3);
+			ShotBody3D shot = GD.Load<PackedScene>(Networked + "scenes/projectile.tscn").Instantiate<ShotBody3D>();
+			shot.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = 2;
+			world.AddChild(shot);
 
-			shot.GetCollisionExceptions().Should().ContainSingle().Which.Should().BeSameAs(player);
-			GD.Load<StatescriptGraph>(Networked + "graphs/projectile.tres").Nodes
-				.Single(x => x.Title == "Instantiate Scene 3D").CustomData["passOwnership"].AsBool()
-				.Should().BeTrue("the shot learns who fired it as it's made");
+			shot.GetCollisionExceptions().Should().ContainSingle()
+				.Which.Should().BeSameAs(shooter, "however the shot was made, its peer's player fired it");
 		}
 		finally
 		{
-			shot.Free();
-			player.Free();
+			world.Free();
 		}
+	}
+
+	private static CharacterBody3D Player(Node parent, int peer)
+	{
+		CharacterBody3D player = GD.Load<PackedScene>(Networked + "scenes/player.tscn").Instantiate<CharacterBody3D>();
+		player.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = peer;
+		parent.AddChild(player);
+		return player;
 	}
 
 	private static string[] AttributeSets(ForgeEntity entity)
