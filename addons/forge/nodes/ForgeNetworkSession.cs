@@ -212,7 +212,7 @@ public partial class ForgeNetworkSession : Node
 
 	/// <summary>
 	/// Gets or sets how far apart two states the server sent of a body may be, in units, for a client to ease between
-	/// them: one further, as a respawn makes, shows the body where it went at once.
+	/// them: one further, as a respawn makes, shows the body where it went at once. At 0, every move shows at once.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,10,0.1,or_greater")]
 	public float InterpolationSnapDistance { get; set; } = 2f;

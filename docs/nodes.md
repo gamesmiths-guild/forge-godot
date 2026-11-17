@@ -314,7 +314,7 @@ Hosts or joins a networked session over Godot's high-level multiplayer, on ENet,
 - `SpawnParent` (Node): Where a client adds the entities the server spawns. Left empty, the current scene.
 - `RelevancyRadius` (float): How far from every entity a client owns another entity can be and still reach that client, or 0 for everything everywhere. Read as hosting starts.
 - `InterpolationDelayMs` (int): How far behind the newest state it holds a client shows the server's entities, their bodies and everything else the server sent of them. The default is 100.
-- `InterpolationSnapDistance` (float): How far apart two states of a body may be, in units, for a client to ease between them. One further, as a respawn makes, shows the body where it went at once. The default is 2.
+- `InterpolationSnapDistance` (float): How far apart two states of a body may be, in units, for a client to ease between them. One further, as a respawn makes, shows the body where it went at once, and at 0 every move does. The default is 2.
 - `LeadMarginTicks` (int): How many ticks beyond a round trip a client runs ahead of the server. The default is 2.
 - `LeadToleranceTicks` (int): How far a client's clock may drift from its target, in ticks, before it's steered toward it. The default is 1.
 - `BodyPositionSteps`, `BodyVelocitySteps`, `BodyRotationBits` (int): How finely bodies are rounded as they travel: steps in a unit, steps in a unit per second, and bits a rotation component. The defaults are 1000, 100 and 9. Read as the session hosts or joins; a client whose values differ from the server's is refused.
