@@ -32,7 +32,6 @@ public partial class NetworkedLevel : Node
 	private static bool _argumentsRead;
 
 	private readonly Dictionary<long, Node3D> _players = [];
-	private readonly Dictionary<long, int> _spawnSlots = [];
 
 	/// <summary>
 	/// Gets or sets the session.
@@ -177,11 +176,11 @@ public partial class NetworkedLevel : Node
 		player.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = peer;
 		player.Name = $"Player {peer}";
 
-		// The first spot nobody holds, so a peer joining after another left doesn't spawn inside someone.
-		int slot = Enumerable.Range(0, _spawnOffsets.Length).FirstOrDefault(x => !_spawnSlots.ContainsValue(x));
-		player.Position = new Vector3(_spawnOffsets[slot], 0, 7);
+		// The spot furthest from everyone already in, wherever they walked to, so a peer doesn't spawn inside someone.
+		player.Position = _spawnOffsets
+			.Select(x => new Vector3(x, 0, 7))
+			.MaxBy(x => _players.Values.Select(p => p.Position.DistanceTo(x)).DefaultIfEmpty(float.MaxValue).Min());
 		_players[peer] = player;
-		_spawnSlots[peer] = slot;
 		Spawned.AddChild(player);
 	}
 
@@ -192,8 +191,6 @@ public partial class NetworkedLevel : Node
 
 	private void OnPeerLeft(long peerId)
 	{
-		_spawnSlots.Remove(peerId);
-
 		if (_players.Remove(peerId, out Node3D? player))
 		{
 			player.QueueFree();
