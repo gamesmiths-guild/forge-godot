@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
+using System.Linq;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
@@ -31,6 +32,7 @@ public partial class NetworkedLevel : Node
 	private static bool _argumentsRead;
 
 	private readonly Dictionary<long, Node3D> _players = [];
+	private readonly Dictionary<long, int> _spawnSlots = [];
 
 	/// <summary>
 	/// Gets or sets the session.
@@ -174,8 +176,12 @@ public partial class NetworkedLevel : Node
 		Node3D player = PlayerScene.Instantiate<Node3D>();
 		player.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = peer;
 		player.Name = $"Player {peer}";
-		player.Position = new Vector3(_spawnOffsets[_players.Count % _spawnOffsets.Length], 0, 7);
+
+		// The first spot nobody holds, so a peer joining after another left doesn't spawn inside someone.
+		int slot = Enumerable.Range(0, _spawnOffsets.Length).FirstOrDefault(x => !_spawnSlots.ContainsValue(x));
+		player.Position = new Vector3(_spawnOffsets[slot], 0, 7);
 		_players[peer] = player;
+		_spawnSlots[peer] = slot;
 		Spawned.AddChild(player);
 	}
 
@@ -186,6 +192,8 @@ public partial class NetworkedLevel : Node
 
 	private void OnPeerLeft(long peerId)
 	{
+		_spawnSlots.Remove(peerId);
+
 		if (_players.Remove(peerId, out Node3D? player))
 		{
 			player.QueueFree();
