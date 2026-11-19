@@ -188,7 +188,8 @@ internal sealed class LagCompensationProxies
 
 		public void Resync()
 		{
-			if (GodotObject.IsInstanceValid(_live) && PhysicsServer3D.BodyGetCollisionLayer(Live) != 0)
+			// A layer of 0, as a body that died just now gets, takes its stand-in out too.
+			if (GodotObject.IsInstanceValid(_live))
 			{
 				PhysicsServer3D.BodySetCollisionLayer(Live, 0);
 				PhysicsServer3D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
@@ -281,7 +282,8 @@ internal sealed class LagCompensationProxies
 
 		public void Resync()
 		{
-			if (GodotObject.IsInstanceValid(_live) && PhysicsServer2D.BodyGetCollisionLayer(Live) != 0)
+			// A layer of 0, as a body that died just now gets, takes its stand-in out too.
+			if (GodotObject.IsInstanceValid(_live))
 			{
 				PhysicsServer2D.BodySetCollisionLayer(Live, 0);
 				PhysicsServer2D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);

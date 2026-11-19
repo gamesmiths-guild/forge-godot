@@ -124,6 +124,12 @@ public class LagCompensationProxiesTests
 			QueryRay(world, 5, 8).Should().BeNull("the live body stays out while it's stood in for");
 			QueryRay(world, 0, 8).Should().BeSameAs(body, "its stand-in takes the layer it was given");
 
+			body.CollisionLayer = 0;
+
+			QueryRay(world, 0, 8).Should().BeNull("a body taken off every layer is out where it stands in too");
+
+			body.CollisionLayer = 8;
+
 			proxies.Restore();
 
 			Ray(space, 5, mask: 8).Should().BeSameAs(body, "what the hit set off changed its layer, and that stays");
