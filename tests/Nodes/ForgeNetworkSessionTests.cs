@@ -256,6 +256,28 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_server_sends_at_its_rate_and_an_adaptive_client_shows_the_world_a_send_behind_at_least()
+	{
+		using var pair = new Pair(Manifest(Burning), Manifest(Burning));
+		pair.Server.SendRate = NetworkSendRate.EveryFourthTick;
+		pair.Client.InterpolationMode = InterpolationDelayMode.Adaptive;
+		bool connected = false;
+		pair.Client.Connected += () => connected = true;
+
+		pair.Server.Host().Should().Be(Error.Ok);
+		pair.Client.Join("127.0.0.1").Should().Be(Error.Ok);
+		await Pair.RunUntil(() => connected, frames: 600);
+		await Pair.RunUntil(() => pair.Client.Session!.Mirror!.InterpolationDelay.SendInterval == 4, frames: 600);
+
+		pair.Server.Session!.Replication!.SendInterval.Should().Be(4);
+		pair.Client.Session!.Mirror!.InterpolationDelay.SendInterval.Should().Be(4, "the client measures the rate");
+		pair.Client.CurrentInterpolationDelayMs.Should().BeGreaterThanOrEqualTo(
+			4000.0 / Engine.PhysicsTicksPerSecond,
+			"it needs the next state before it gets there");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_client_with_other_assets_is_refused()
 	{
 		using var pair = new Pair(Manifest(Burning), new ForgeNetworkManifest());

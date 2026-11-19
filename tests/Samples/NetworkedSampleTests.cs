@@ -122,6 +122,30 @@ public class NetworkedSampleTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public void The_shot_meets_the_world_as_its_shooter_saw_it_and_shows_its_hit_at_once()
+	{
+		Node shot = GD.Load<PackedScene>(Networked + "scenes/projectile.tscn").Instantiate();
+		ForgeEntity entity = shot.GetNode<ForgeEntity>("Forge Entity");
+		bool compensated = entity.CompensateQueries;
+		int fade = entity.CompensationFadeMs;
+		shot.Free();
+		StatescriptGraph flight = GD.Load<StatescriptGraph>(Networked + "graphs/projectile_flight.tres");
+		string hit = flight.Nodes.Single(x => x.Title == "Apply Effect").NodeId;
+		ForgeEffectData damage = GD.Load<ForgeEffectData>(Networked + "abilities/shot_damage.tres");
+
+		compensated.Should().BeTrue();
+		fade.Should().Be(1000, "a shot this slow is still compensated most of the way across the level");
+		flight.Regions.Should().NotContain(
+			x => x.NodeIds.Contains(hit),
+			"the shooter's client applies the hit too, which the mirror refuses and shows the cues of");
+		damage.Cues!.Single(x => x.CueKeys.ContainerTags!.Contains("cue.floating.text")).PredictOnOthers
+			.Should().Be(Cues.CuePrediction.Never, "a number waits for what the server dealt");
+		damage.Cues!.Single(x => x.CueKeys.ContainerTags!.Contains("cue.vfx.hit")).PredictOnOthers
+			.Should().Be(Cues.CuePrediction.Default);
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public void The_shot_passes_through_the_player_of_its_peer_alone()
 	{
 		var world = new Node3D();

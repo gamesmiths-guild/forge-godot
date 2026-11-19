@@ -41,6 +41,32 @@ public partial class ForgeEntity : Node, IForgeEntity
 	public bool Networked { get; set; }
 
 	/// <summary>
+	/// Gets or sets whether what a client's actions hit meets the entity where that client was shown it, a moment
+	/// behind the server: Default, for a networked entity with a body, or Never, to have them meet it where it is.
+	/// </summary>
+	[ExportGroup("Lag Compensation")]
+	[Export]
+	public EntityLagCompensation LagCompensation { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the entity's queries and collisions are tested on the server against the
+	/// world as the player it belongs to saw it, as a shot's, a blast's or a hitbox's: every tick of a networked entity
+	/// of a client's player runs against the other entities' bodies where that client was shown them, fading out as it
+	/// runs.
+	/// </summary>
+	[Export]
+	public bool CompensateQueries { get; set; }
+
+	/// <summary>
+	/// Gets or sets how long the compensation of an entity that compensates its queries takes to fade out, in
+	/// milliseconds: full on its first tick, none once it has run this long. 0 compensates its first tick alone; a
+	/// negative value keeps its player's view for as long as it runs, as an entity that lives on needs, such as a
+	/// hitbox under its player.
+	/// </summary>
+	[Export(PropertyHint.Range, "-1,2000,1,or_greater")]
+	public int CompensationFadeMs { get; set; } = 250;
+
+	/// <summary>
 	/// Gets or sets the multiplayer peer whose player the entity is: 1 for the server's own, 0 for the world's. Set it
 	/// on the server before the entity enters the tree; a client gets the server's.
 	/// </summary>
@@ -192,7 +218,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 		}
 		else if (WorldHistory is null && !IsPredicted)
 		{
-			EntitySimulation.Advance(this, delta);
+			Advance(delta);
 		}
 	}
 
@@ -233,6 +259,37 @@ public partial class ForgeEntity : Node, IForgeEntity
 	internal static ulong NetworkSeed(ulong sessionSeed, NetworkEntityId id)
 	{
 		return unchecked(sessionSeed ^ (id.Value * 0xD1B54A32D192ED03UL));
+	}
+
+	// Advances the entity through a tick, its own or the one its world history runs: what a client's player made meets
+	// the world as that client saw it.
+	internal void Advance(double delta, long? tick = null)
+	{
+		bool compensated = BeginCompensation(tick);
+
+		try
+		{
+			EntitySimulation.Advance(this, delta);
+		}
+		finally
+		{
+			if (compensated)
+			{
+				EndCompensation();
+			}
+		}
+	}
+
+	// Opens the compensation of a tick the entity's queries run in, when it compensates them, as a projectile's sweep
+	// does too: false when none opened. The tick is the session clock's unless a world history runs another.
+	internal bool BeginCompensation(long? tick = null)
+	{
+		return CompensateQueries && Replicator?.BeginCompensatedTick(this, tick) == true;
+	}
+
+	internal void EndCompensation()
+	{
+		Replicator!.EndLagCompensation();
 	}
 
 	// A placed entity, ready before the session started, rolls from its network seed from now on.

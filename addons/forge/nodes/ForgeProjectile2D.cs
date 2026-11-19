@@ -195,7 +195,22 @@ public partial class ForgeProjectile2D : Area2D, IInstantiationReceiver
 
 		if (_sweptShape is not null)
 		{
-			SweepStep(motion);
+			// A sweep of a client's player's projectile meets the world as that client saw it, when its entity
+			// compensates its queries.
+			ForgeEntity? compensated = ForgeEntityBridge.TryGetEntity(this, out IForgeEntity? own)
+				&& own is ForgeEntity entity
+				&& entity.BeginCompensation()
+				? entity
+				: null;
+
+			try
+			{
+				SweepStep(motion);
+			}
+			finally
+			{
+				compensated?.EndCompensation();
+			}
 
 			if (_expired)
 			{

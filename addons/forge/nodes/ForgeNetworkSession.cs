@@ -98,9 +98,14 @@ public partial class ForgeNetworkSession : Node
 	private readonly ReplicationHost _host;
 	private readonly ClockDilation _dilation = new();
 	private readonly Dictionary<IForgeEntity, BodyState> _shownBefore = [];
+	private readonly LagCompensationProxies _proxies = new();
+	private readonly List<RewoundBody> _rewound = [];
+	private readonly Dictionary<ForgeEntity, long> _firstCompensatedTicks = [];
 	private GodotTransport? _transport;
 	private ConditionedTransport? _conditioned;
 	private InterpolationClock? _shown;
+	private bool _compensating;
+	private double _shownDelayTicks;
 	private SimulationClock? _clock;
 	private double _lastStatsAt;
 	private long _lastBytesSent;
@@ -203,12 +208,43 @@ public partial class ForgeNetworkSession : Node
 	public float RelevancyRadius { get; set; }
 
 	/// <summary>
+	/// Gets or sets how often the server sends each client the world: every tick, every second or every fourth. At a
+	/// 64 Hz tick, that's 64, 32 or 16 sends a second. Read as the server starts hosting.
+	/// </summary>
+	[Export]
+	public NetworkSendRate SendRate { get; set; } = NetworkSendRate.EverySecondTick;
+
+	/// <summary>
+	/// Gets or sets how a client picks how far behind the newest state it holds it shows the server's entities: a
+	/// fixed <see cref="InterpolationDelayMs"/>, or adapted to how the state packets arrive, between
+	/// <see cref="AdaptiveDelayMinMs"/> and <see cref="AdaptiveDelayMaxMs"/>.
+	/// </summary>
+	[ExportGroup("Interpolation")]
+	[Export]
+	public InterpolationDelayMode InterpolationMode { get; set; }
+
+	/// <summary>
 	/// Gets or sets how far behind the newest state it holds a client shows the server's entities, in milliseconds,
-	/// so it has the states on either side of the moment it shows. The newest state is itself about half a round trip
-	/// behind the server. Everything else the server sent of them waits to be shown at the same moment.
+	/// so it has the states on either side of the moment it shows, when <see cref="InterpolationMode"/> is Fixed, and
+	/// until an adaptive one has measured the link. The newest state is itself about half a round trip behind the
+	/// server. Everything else the server sent of them waits to be shown at the same moment. The default, 70, is a
+	/// little over two sends at 32 a second.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,500,1")]
-	public int InterpolationDelayMs { get; set; } = 100;
+	public int InterpolationDelayMs { get; set; } = 70;
+
+	/// <summary>
+	/// Gets or sets the shortest an adaptive interpolation delay gets, in milliseconds. One send interval is the
+	/// shortest whatever this says. Read as the client joins.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,500,1")]
+	public int AdaptiveDelayMinMs { get; set; }
+
+	/// <summary>
+	/// Gets or sets the longest an adaptive interpolation delay gets, in milliseconds. Read as the client joins.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1000,1")]
+	public int AdaptiveDelayMaxMs { get; set; } = 250;
 
 	/// <summary>
 	/// Gets or sets how far apart two states the server sent of a body may be, in units, for a client to ease between
@@ -216,6 +252,14 @@ public partial class ForgeNetworkSession : Node
 	/// </summary>
 	[Export(PropertyHint.Range, "0,10,0.1,or_greater")]
 	public float InterpolationSnapDistance { get; set; } = 2f;
+
+	/// <summary>
+	/// Gets or sets how far back the server tests a client's shots, in milliseconds: a client shown the world further
+	/// behind is compensated this far and leads the rest. Read as the server starts hosting.
+	/// </summary>
+	[ExportGroup("Lag Compensation")]
+	[Export(PropertyHint.Range, "0,1000,1")]
+	public int MaxRewindMs { get; set; } = 500;
 
 	/// <summary>
 	/// Gets or sets how many ticks beyond a round trip a client runs ahead of the server, to absorb jitter.
@@ -303,6 +347,12 @@ public partial class ForgeNetworkSession : Node
 	/// Gets a client's round trip to the server, in seconds, or zero.
 	/// </summary>
 	public double RoundTripTime => Session?.ClockSync.RoundTripTime ?? 0;
+
+	/// <summary>
+	/// Gets how far behind the newest state it holds a client shows the server's entities now, in milliseconds: the
+	/// fixed delay, or the adaptive one as it stands. 0 on a server.
+	/// </summary>
+	public double CurrentInterpolationDelayMs => _shownDelayTicks * Clock.FixedDeltaTime * 1000;
 
 	/// <summary>
 	/// Gets a client's estimate of the server's tick right now, or the clock's tick on a server.
@@ -450,6 +500,8 @@ public partial class ForgeNetworkSession : Node
 		Session.InputTaken += OnInputTaken;
 		Session.Replication!.BodySource = CaptureBody;
 		Session.Replication.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
+		Session.Replication.LagCompensation.MaxRewindSeconds = MaxRewindMs / 1000.0;
+		Session.Replication.SendInterval = (int)SendRate;
 		Session.Replication.EffectNotListed += OnEffectNotListed;
 		Session.Replication.AbilityNotListed += OnAbilityNotListed;
 
@@ -518,6 +570,9 @@ public partial class ForgeNetworkSession : Node
 		Session.Mirror!.Host = _host;
 		Session.Mirror.HoldsUntilShown = true;
 		Session.Mirror.DefaultEffectVisibility = ForgeSettings.DefaultEffectVisibility;
+		Session.Mirror.PredictCuesOnOthers = ForgeSettings.PredictCuesOnOthers;
+		Session.Mirror.InterpolationDelay.MinSeconds = AdaptiveDelayMinMs / 1000.0;
+		Session.Mirror.InterpolationDelay.MaxSeconds = AdaptiveDelayMaxMs / 1000.0;
 		Session.Mirror.Spawned += OnMirrorSpawned;
 		Session.Mirror.Corrected += OnCorrected;
 		Session.Mirror.Replayed += OnReplayed;
@@ -571,6 +626,8 @@ public partial class ForgeNetworkSession : Node
 			mirror.LeftLimbo -= OnLeftLimbo;
 		}
 
+		EndLagCompensation();
+		_proxies.Clear();
 		Session.Disconnect();
 		_transport?.Dispose();
 
@@ -585,6 +642,7 @@ public partial class ForgeNetworkSession : Node
 		_shown = null;
 		_clock = null;
 		_cosmetics.Clear();
+		_firstCompensatedTicks.Clear();
 		_limbo.Clear();
 		_lastStatsAt = 0;
 		_lastBytesSent = 0;
@@ -603,6 +661,40 @@ public partial class ForgeNetworkSession : Node
 		{
 			EmitSignal(SignalName.Disconnected);
 		}
+	}
+
+	/// <summary>
+	/// On the server, puts the bodies of every entity a client's player doesn't own where that client was shown them,
+	/// a moment behind, so a hit tested now is tested against the world the player saw: lag compensation. A query, a
+	/// sweep or a Move Body run until <see cref="EndLagCompensation"/> meets them there, and an effect applied to them
+	/// counts its <see cref="EffectLagCompensation.Rewound"/> effects as they were then. A hit on one reports the
+	/// entity's own body. Nothing happens for the server's own player, which is shown the world as it is, or on a
+	/// client.
+	/// </summary>
+	/// <param name="peer">The multiplayer peer whose player's action it is.</param>
+	/// <param name="remaining">How much of the compensation applies, from 0 to 1, as it fades out over a lasting
+	/// action.</param>
+	/// <returns><see langword="true"/> if the bodies were put back, and <see cref="EndLagCompensation"/> must follow;
+	/// <see langword="false"/> if nothing changed.</returns>
+	/// <exception cref="InvalidOperationException">Thrown when a compensation is in place already.</exception>
+	public bool BeginLagCompensation(int peer, double remaining = 1)
+	{
+		return BeginLagCompensation(peer, Clock.Tick, remaining);
+	}
+
+	/// <summary>
+	/// Puts the bodies <see cref="BeginLagCompensation"/> put back where they are. Does nothing when none were.
+	/// </summary>
+	public void EndLagCompensation()
+	{
+		if (!_compensating)
+		{
+			return;
+		}
+
+		_compensating = false;
+		_proxies.Restore();
+		Session?.Replication?.LagCompensation.End();
 	}
 
 	/// <inheritdoc/>
@@ -637,7 +729,8 @@ public partial class ForgeNetworkSession : Node
 		double newest = Session.ClockSync.HasEstimate
 			? ServerTick - Clock.TicksIn(Session.ClockSync.RoundTripTime / 2)
 			: mirror.LastServerTick;
-		_shown!.Advance(delta, newest - Clock.TicksIn(InterpolationDelayMs / 1000.0));
+		_shownDelayTicks = InterpolationDelayTicks(mirror);
+		_shown!.Advance(delta, newest - _shownDelayTicks);
 
 		// The bodies first, so what the shown packets set off, a burst where an enemy fell, happens where its body is
 		// shown. One spawned in them is placed as it's bound.
@@ -732,9 +825,32 @@ public partial class ForgeNetworkSession : Node
 		Register(entity, SceneIndexOf(InstanceRoot(entity)));
 	}
 
+	// The tick of an entity that compensates its queries: its player's view, faded out by how long it has run.
+	internal bool BeginCompensatedTick(ForgeEntity entity, long? simulated = null)
+	{
+		if (!IsServer || entity.NetworkOwner == LocalPeer || entity.NetworkOwner == 0)
+		{
+			return false;
+		}
+
+		long tick = simulated ?? Clock.Tick;
+
+		if (!_firstCompensatedTicks.TryGetValue(entity, out long first))
+		{
+			first = tick;
+			_firstCompensatedTicks[entity] = first;
+		}
+
+		double fade = entity.CompensationFadeMs < 0 ? double.PositiveInfinity : entity.CompensationFadeMs / 1000.0;
+		double remaining = LagCompensation.Remaining((tick - first) * Clock.FixedDeltaTime, fade);
+		return BeginLagCompensation(entity.NetworkOwner, tick, remaining);
+	}
+
 	internal void OnEntityFreed(ForgeEntity entity)
 	{
 		Session?.Replication?.Unregister(entity);
+		_proxies.Forget(entity);
+		_firstCompensatedTicks.Remove(entity);
 
 		// One this client predicts that something freed outright, rather than sending it to limbo, leaves the timeline.
 		Session?.Mirror?.ForgetPredicted(entity);
@@ -1021,7 +1137,9 @@ public partial class ForgeNetworkSession : Node
 	private void Register(ForgeEntity entity, int sceneIndex)
 	{
 		entity.Replicator = this;
-		Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner), entity.SpawnKey);
+		ReplicatedEntity replicated =
+			Session!.Replication!.Register(entity, sceneIndex, new PeerId(entity.NetworkOwner), entity.SpawnKey);
+		replicated.LagCompensated = entity.LagCompensation != EntityLagCompensation.Never;
 
 		if (entity.NetworkOwner == LocalPeer && entity.Input is not null && LocalPlayer is null)
 		{
@@ -1037,6 +1155,45 @@ public partial class ForgeNetworkSession : Node
 		{
 			EmitSignal(SignalName.LocalPlayerChanged, player!);
 		}
+	}
+
+	// Puts the bodies where the client was shown them as it simulated a tick, which a world history may run again.
+	private bool BeginLagCompensation(int peer, long tick, double remaining)
+	{
+		if (_compensating)
+		{
+			throw new InvalidOperationException("A lag compensation is in place already.");
+		}
+
+		if (!IsServer || peer == LocalPeer || peer == 0)
+		{
+			return false;
+		}
+
+		LagCompensation compensation = Session!.Replication!.LagCompensation;
+		var instigator = new PeerId(peer);
+		double shown = compensation.ShownTickOf(instigator, tick, remaining);
+		compensation.Begin(instigator, shown);
+		compensation.Rewound(instigator, shown, _rewound, InterpolationSnapDistance);
+		_proxies.Place(_rewound);
+		_compensating = true;
+		return true;
+	}
+
+	// The delay a client shows the server's entities at: the adaptive one once it has measured the link.
+	private double InterpolationDelayTicks(ReplicationClient mirror)
+	{
+		if (InterpolationMode == InterpolationDelayMode.Adaptive)
+		{
+			mirror.InterpolationDelay.Update(Now());
+
+			if (mirror.InterpolationDelay.SendInterval > 0)
+			{
+				return mirror.InterpolationDelay.Ticks;
+			}
+		}
+
+		return Clock.TicksIn(InterpolationDelayMs / 1000.0);
 	}
 
 	private void PlaceShownBody(IForgeEntity entity)
@@ -1131,7 +1288,9 @@ public partial class ForgeNetworkSession : Node
 
 			if (LocalPlayer?.Input is EntityInput input)
 			{
-				Session.SendInput(new InputCommand(tick, input.Current));
+				// The server tests this tick's shots against the entities this client mirrors as they're shown now.
+				Session.SendInput(
+					new InputCommand(tick, input.Current) { ViewDelay = _shown is null ? 0 : tick - _shown.Tick });
 			}
 		}
 

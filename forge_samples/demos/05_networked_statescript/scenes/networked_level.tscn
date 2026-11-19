@@ -532,6 +532,7 @@ script = ExtResource("11_quit")
 [node name="Session" type="Node" parent="." unique_id=1214945757]
 script = ExtResource("53_session")
 Manifest = ExtResource("52_manifest")
+InterpolationMode = 1
 metadata/_custom_type_script = "uid://q6o53xlqjkod"
 
 [node name="Overlay" type="CanvasLayer" parent="." unique_id=577236520]

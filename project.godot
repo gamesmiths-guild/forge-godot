@@ -124,4 +124,5 @@ prediction_check={
 
 [physics]
 
+common/physics_ticks_per_second=64
 common/physics_interpolation=true

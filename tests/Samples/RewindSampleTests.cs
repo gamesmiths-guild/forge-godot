@@ -95,7 +95,8 @@ public class RewindSampleTests
 				}
 			}
 
-			(spawn - death).Should().BeInRange(17, 19, "the spawner waits 0.3 seconds");
+			long wait = (long)Math.Ceiling(0.3 * Engine.PhysicsTicksPerSecond);
+			(spawn - death).Should().BeInRange(wait - 1, wait + 1, "the spawner waits 0.3 seconds");
 
 			CharacterBody3D replacement = Replacements(spawned, enemies).Single();
 			replacement.Visible.Should().BeTrue();

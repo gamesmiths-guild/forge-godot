@@ -37,6 +37,16 @@ public partial class ForgeCue : Resource
 	[Export]
 	public string? MagnitudeAttribute { get; set; }
 
+	/// <summary>
+	/// Gets or sets whether a client shows the cue on an entity it mirrors the moment its own predicted run applies
+	/// the effect there, as a shot hitting an enemy. Default shows an executed cue early when the project setting
+	/// <see cref="Core.ForgeSettings.PredictCuesOnOthersSetting"/> is on, and a persistent one when the server's word
+	/// arrives.
+	/// </summary>
+	[ExportGroup("Networking")]
+	[Export]
+	public CuePrediction PredictOnOthers { get; set; }
+
 	public CueData GetCueData()
 	{
 		return new CueData(
@@ -44,7 +54,8 @@ public partial class ForgeCue : Resource
 			MinValue,
 			MaxValue,
 			MagnitudeType,
-			string.IsNullOrEmpty(MagnitudeAttribute) ? null : MagnitudeAttribute);
+			string.IsNullOrEmpty(MagnitudeAttribute) ? null : MagnitudeAttribute,
+			PredictOnOthers: PredictOnOthers);
 	}
 
 #if TOOLS

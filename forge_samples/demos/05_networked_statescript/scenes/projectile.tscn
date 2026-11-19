@@ -39,6 +39,8 @@ unique_name_in_owner = true
 script = ExtResource("1_entity")
 BaseTags = SubResource("Resource_tags")
 Networked = true
+CompensateQueries = true
+CompensationFadeMs = 1000
 metadata/_custom_type_script = "uid://8uj04dfe8oql"
 
 [node name="Grant Abilities" type="Node" parent="Forge Entity"]
