@@ -16,8 +16,9 @@ namespace Gamesmiths.Forge.Godot.Core;
 // entity as ever.
 internal sealed class LagCompensationProxies
 {
-	// The stand-in of each live body placed now, so a query that leaves a body out leaves its stand-in out too.
-	private static readonly Dictionary<Rid, Rid> _standIns = [];
+	// The stand-in of each live body placed now, so a query that leaves a body out leaves its stand-in out too, and a
+	// layer gameplay sets meanwhile reaches the stand-in rather than the live body.
+	private static readonly Dictionary<Rid, IProxy> _standIns = [];
 
 	private readonly Dictionary<IForgeEntity, IProxy?> _proxies = new(ReferenceEqualityComparer.Instance);
 	private readonly List<IProxy> _placed = [];
@@ -25,7 +26,19 @@ internal sealed class LagCompensationProxies
 	// The stand-in placed for a live body, if one is.
 	public static bool TryGetStandIn(Rid live, out Rid standIn)
 	{
-		return _standIns.TryGetValue(live, out standIn);
+		bool placed = _standIns.TryGetValue(live, out IProxy? proxy);
+		standIn = proxy?.StandIn ?? default;
+		return placed;
+	}
+
+	// Before a query: a body's layer set while it's stood in for, as by what a hit set off, which Godot writes to the
+	// live body at once, moves to its stand-in, and the live body is left out again.
+	public static void Refresh()
+	{
+		foreach (IProxy proxy in _standIns.Values)
+		{
+			proxy.Resync();
+		}
 	}
 
 	public void Place(IReadOnlyList<RewoundBody> bodies)
@@ -36,7 +49,7 @@ internal sealed class LagCompensationProxies
 			{
 				proxy.Place(rewound.Body);
 				_placed.Add(proxy);
-				_standIns[proxy.Live] = proxy.StandIn;
+				_standIns[proxy.Live] = proxy;
 			}
 		}
 	}
@@ -114,6 +127,8 @@ internal sealed class LagCompensationProxies
 
 		void Place(in BodyState body);
 
+		void Resync();
+
 		void Restore();
 
 		void Free();
@@ -169,6 +184,15 @@ internal sealed class LagCompensationProxies
 				PhysicsServer3D.BodyState.Transform,
 				new Transform3D(basis, ToGodot(body.Position)));
 			PhysicsServer3D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
+		}
+
+		public void Resync()
+		{
+			if (GodotObject.IsInstanceValid(_live) && PhysicsServer3D.BodyGetCollisionLayer(Live) != 0)
+			{
+				PhysicsServer3D.BodySetCollisionLayer(Live, 0);
+				PhysicsServer3D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
+			}
 		}
 
 		// The node's layer, which the physics server's change didn't touch, is the live one, as what the hit set off
@@ -253,6 +277,15 @@ internal sealed class LagCompensationProxies
 					_live.GlobalSkew,
 					new Vector2(body.Position.X, body.Position.Y)));
 			PhysicsServer2D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
+		}
+
+		public void Resync()
+		{
+			if (GodotObject.IsInstanceValid(_live) && PhysicsServer2D.BodyGetCollisionLayer(Live) != 0)
+			{
+				PhysicsServer2D.BodySetCollisionLayer(Live, 0);
+				PhysicsServer2D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
+			}
 		}
 
 		public void Restore()

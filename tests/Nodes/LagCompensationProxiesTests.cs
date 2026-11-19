@@ -120,6 +120,10 @@ public class LagCompensationProxiesTests
 				.Should().BeNull("a query that leaves the entity out leaves its stand-in out");
 
 			body.CollisionLayer = 8;
+
+			QueryRay(world, 5, 8).Should().BeNull("the live body stays out while it's stood in for");
+			QueryRay(world, 0, 8).Should().BeSameAs(body, "its stand-in takes the layer it was given");
+
 			proxies.Restore();
 
 			Ray(space, 5, mask: 8).Should().BeSameAs(body, "what the hit set off changed its layer, and that stays");
@@ -142,6 +146,23 @@ public class LagCompensationProxiesTests
 			proxies.Clear();
 			world.QueueFree();
 		}
+	}
+
+	// Through Forge's own query, which brings a layer set meanwhile to the stand-in first.
+	private static Node3D? QueryRay(Node3D world, float x, uint mask)
+	{
+		return PhysicsQuery3D.TryRaycast(
+			world.GetWorld3D(),
+			new Vector3(x, 0, -3),
+			new Vector3(0, 0, 1),
+			6,
+			mask,
+			false,
+			false,
+			null,
+			out RaycastResult3D result)
+			? result.Node
+			: null;
 	}
 
 	private static BodyState Body(NumericsVector3 position)

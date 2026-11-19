@@ -142,6 +142,7 @@ internal static class PhysicsQuery3D
 			query.Exclude = exclude;
 		}
 
+		LagCompensationProxies.Refresh();
 		GodotDictionary hit = world.DirectSpaceState.IntersectRay(query);
 
 		if (hit.Count == 0)
@@ -276,6 +277,8 @@ internal static class PhysicsQuery3D
 
 		List<Node> colliders = [];
 
+		LagCompensationProxies.Refresh();
+
 		foreach (GodotDictionary hit in world.DirectSpaceState.IntersectShape(query, MaxResults))
 		{
 			colliders.Add(hit["collider"].As<Node>());
@@ -316,6 +319,8 @@ internal static class PhysicsQuery3D
 		};
 
 		List<Node> colliders = [];
+
+		LagCompensationProxies.Refresh();
 
 		foreach (GodotDictionary hit in world.DirectSpaceState.IntersectPoint(query, MaxResults))
 		{
@@ -436,6 +441,7 @@ internal static class PhysicsQuery3D
 		// at the end of the sweep: that one has to forgive an exact touch, this one must not invent one.
 		query.Motion = Vector3.Zero;
 
+		LagCompensationProxies.Refresh();
 		GodotDictionary resting = world.DirectSpaceState.GetRestInfo(query);
 
 		if (resting.Count > 0)
@@ -448,6 +454,7 @@ internal static class PhysicsQuery3D
 
 		// Two fractions come back: the last one that is definitely clear, and the first one that is not. A sweep that
 		// meets nothing reports both as the whole motion.
+		LagCompensationProxies.Refresh();
 		float[] fractions = world.DirectSpaceState.CastMotion(query);
 
 		if (fractions.Length < 2 || fractions[1] >= 1.0f)
