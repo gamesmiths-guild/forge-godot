@@ -407,7 +407,14 @@ public partial class ForgeWorldHistory : Node
 		{
 			try
 			{
-				if (entity is not Node node || (node.CanProcess() && node.IsPhysicsProcessing()))
+				if (entity is ForgeEntity forgeEntity)
+				{
+					if (forgeEntity.CanProcess() && forgeEntity.IsPhysicsProcessing())
+					{
+						forgeEntity.Advance(delta);
+					}
+				}
+				else if (entity is not Node node || (node.CanProcess() && node.IsPhysicsProcessing()))
 				{
 					EntitySimulation.Advance(entity, delta);
 				}

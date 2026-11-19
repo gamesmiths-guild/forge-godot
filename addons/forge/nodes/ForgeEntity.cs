@@ -217,20 +217,7 @@ public partial class ForgeEntity : Node, IForgeEntity
 		}
 		else if (WorldHistory is null && !IsPredicted)
 		{
-			// What a client's player made meets the world as that client saw it.
-			bool compensated = CompensateQueries && Replicator?.BeginCompensatedTick(this) == true;
-
-			try
-			{
-				EntitySimulation.Advance(this, delta);
-			}
-			finally
-			{
-				if (compensated)
-				{
-					Replicator!.EndLagCompensation();
-				}
-			}
+			Advance(delta);
 		}
 	}
 
@@ -271,6 +258,25 @@ public partial class ForgeEntity : Node, IForgeEntity
 	internal static ulong NetworkSeed(ulong sessionSeed, NetworkEntityId id)
 	{
 		return unchecked(sessionSeed ^ (id.Value * 0xD1B54A32D192ED03UL));
+	}
+
+	// Advances the entity through a tick, its own or its world history's: what a client's player made meets the world
+	// as that client saw it.
+	internal void Advance(double delta)
+	{
+		bool compensated = CompensateQueries && Replicator?.BeginCompensatedTick(this) == true;
+
+		try
+		{
+			EntitySimulation.Advance(this, delta);
+		}
+		finally
+		{
+			if (compensated)
+			{
+				Replicator!.EndLagCompensation();
+			}
+		}
 	}
 
 	// A placed entity, ready before the session started, rolls from its network seed from now on.
