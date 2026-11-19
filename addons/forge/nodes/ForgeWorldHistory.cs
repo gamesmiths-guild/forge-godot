@@ -411,7 +411,7 @@ public partial class ForgeWorldHistory : Node
 				{
 					if (forgeEntity.CanProcess() && forgeEntity.IsPhysicsProcessing())
 					{
-						forgeEntity.Advance(delta);
+						forgeEntity.Advance(delta, tick);
 					}
 				}
 				else if (entity is not Node node || (node.CanProcess() && node.IsPhysicsProcessing()))

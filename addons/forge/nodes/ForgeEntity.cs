@@ -60,7 +60,8 @@ public partial class ForgeEntity : Node, IForgeEntity
 	/// <summary>
 	/// Gets or sets how long the compensation of an entity that compensates its queries takes to fade out, in
 	/// milliseconds: full on its first tick, none once it has run this long. 0 compensates its first tick alone; a
-	/// negative value keeps its player's view for as long as it runs.
+	/// negative value keeps its player's view for as long as it runs, as an entity that lives on needs, such as a
+	/// hitbox under its player.
 	/// </summary>
 	[Export(PropertyHint.Range, "-1,2000,1,or_greater")]
 	public int CompensationFadeMs { get; set; } = 250;
@@ -260,11 +261,11 @@ public partial class ForgeEntity : Node, IForgeEntity
 		return unchecked(sessionSeed ^ (id.Value * 0xD1B54A32D192ED03UL));
 	}
 
-	// Advances the entity through a tick, its own or its world history's: what a client's player made meets the world
-	// as that client saw it.
-	internal void Advance(double delta)
+	// Advances the entity through a tick, its own or the one its world history runs: what a client's player made meets
+	// the world as that client saw it.
+	internal void Advance(double delta, long? tick = null)
 	{
-		bool compensated = CompensateQueries && Replicator?.BeginCompensatedTick(this) == true;
+		bool compensated = BeginCompensation(tick);
 
 		try
 		{
@@ -274,9 +275,21 @@ public partial class ForgeEntity : Node, IForgeEntity
 		{
 			if (compensated)
 			{
-				Replicator!.EndLagCompensation();
+				EndCompensation();
 			}
 		}
+	}
+
+	// Opens the compensation of a tick the entity's queries run in, when it compensates them, as a projectile's sweep
+	// does too: false when none opened. The tick is the session clock's unless a world history runs another.
+	internal bool BeginCompensation(long? tick = null)
+	{
+		return CompensateQueries && Replicator?.BeginCompensatedTick(this, tick) == true;
+	}
+
+	internal void EndCompensation()
+	{
+		Replicator!.EndLagCompensation();
 	}
 
 	// A placed entity, ready before the session started, rolls from its network seed from now on.

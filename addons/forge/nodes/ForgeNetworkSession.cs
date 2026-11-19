@@ -679,24 +679,7 @@ public partial class ForgeNetworkSession : Node
 	/// <exception cref="InvalidOperationException">Thrown when a compensation is in place already.</exception>
 	public bool BeginLagCompensation(int peer, double remaining = 1)
 	{
-		if (_compensating)
-		{
-			throw new InvalidOperationException("A lag compensation is in place already.");
-		}
-
-		if (!IsServer || peer == LocalPeer || peer == 0)
-		{
-			return false;
-		}
-
-		LagCompensation compensation = Session!.Replication!.LagCompensation;
-		var instigator = new PeerId(peer);
-		double tick = compensation.ShownTickOf(instigator, Clock.Tick, remaining);
-		compensation.Begin(instigator, tick);
-		compensation.Rewound(instigator, tick, _rewound, InterpolationSnapDistance);
-		_proxies.Place(_rewound);
-		_compensating = true;
-		return true;
+		return BeginLagCompensation(peer, Clock.Tick, remaining);
 	}
 
 	/// <summary>
@@ -843,14 +826,14 @@ public partial class ForgeNetworkSession : Node
 	}
 
 	// The tick of an entity that compensates its queries: its player's view, faded out by how long it has run.
-	internal bool BeginCompensatedTick(ForgeEntity entity)
+	internal bool BeginCompensatedTick(ForgeEntity entity, long? simulated = null)
 	{
 		if (!IsServer || entity.NetworkOwner == LocalPeer || entity.NetworkOwner == 0)
 		{
 			return false;
 		}
 
-		long tick = Clock.Tick;
+		long tick = simulated ?? Clock.Tick;
 
 		if (!_firstCompensatedTicks.TryGetValue(entity, out long first))
 		{
@@ -860,7 +843,7 @@ public partial class ForgeNetworkSession : Node
 
 		double fade = entity.CompensationFadeMs < 0 ? double.PositiveInfinity : entity.CompensationFadeMs / 1000.0;
 		double remaining = LagCompensation.Remaining((tick - first) * Clock.FixedDeltaTime, fade);
-		return BeginLagCompensation(entity.NetworkOwner, remaining);
+		return BeginLagCompensation(entity.NetworkOwner, tick, remaining);
 	}
 
 	internal void OnEntityFreed(ForgeEntity entity)
@@ -1172,6 +1155,29 @@ public partial class ForgeNetworkSession : Node
 		{
 			EmitSignal(SignalName.LocalPlayerChanged, player!);
 		}
+	}
+
+	// Puts the bodies where the client was shown them as it simulated a tick, which a world history may run again.
+	private bool BeginLagCompensation(int peer, long tick, double remaining)
+	{
+		if (_compensating)
+		{
+			throw new InvalidOperationException("A lag compensation is in place already.");
+		}
+
+		if (!IsServer || peer == LocalPeer || peer == 0)
+		{
+			return false;
+		}
+
+		LagCompensation compensation = Session!.Replication!.LagCompensation;
+		var instigator = new PeerId(peer);
+		double shown = compensation.ShownTickOf(instigator, tick, remaining);
+		compensation.Begin(instigator, shown);
+		compensation.Rewound(instigator, shown, _rewound, InterpolationSnapDistance);
+		_proxies.Place(_rewound);
+		_compensating = true;
+		return true;
 	}
 
 	// The delay a client shows the server's entities at: the adaptive one once it has measured the link.

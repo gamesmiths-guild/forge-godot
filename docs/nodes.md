@@ -19,8 +19,8 @@ The central node for adding Forge system functionality to any game object.
 - `NetworkId` (read-only): The id the entity is known by on every machine in a session.
 - `IsMirror` (read-only): Whether the entity is a client's copy of one the server simulates. A mirror doesn't advance or start its own effects and abilities, and holds what the server sends.
 - `LagCompensation` (EntityLagCompensation): Whether what a client's actions hit meets the entity where that client was shown it, a moment behind the server: Default, or Never to have them meet it where it is. See [Hits](networking.md#hits).
-- `CompensateQueries` (bool): Whether the server runs the entity's ticks, its queries and collisions, against the world as the client whose player it belongs to saw it, as for a shot, a blast or a hitbox. See [Hits](networking.md#hits).
-- `CompensationFadeMs` (int): How long that compensation takes to fade out as the entity runs. 0 compensates its first tick alone, and a negative value as long as it runs. The default is 250.
+- `CompensateQueries` (bool): Whether the server runs the entity's ticks, its queries and collisions, and the sweep of a [`ForgeProjectile3D` or 2D](#forgeprojectile2d--forgeprojectile3d) it lives on, against the world as the client whose player it belongs to saw it, as for a shot, a blast or a hitbox. See [Hits](networking.md#hits).
+- `CompensationFadeMs` (int): How long that compensation takes to fade out, counted from the entity's first tick. 0 compensates its first tick alone, and a negative value as long as it runs, as one that lives on should, such as a hitbox under its player. The default is 250.
 - `IsPredicted` (read-only): Whether the entity is the client's own player, or a networked scene the player's graphs spawned, which the client predicts: it runs live, and the session advances it through each tick its clock simulates rather than the entity advancing itself. See [Its own player](networking.md#its-own-player).
 
 **Description:**
