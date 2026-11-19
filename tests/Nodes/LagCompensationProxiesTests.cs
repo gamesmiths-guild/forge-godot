@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Networking.Replication;
 using GdUnit4;
@@ -91,15 +92,67 @@ public class LagCompensationProxiesTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_stand_in_takes_the_body_s_shapes_scale_layer_and_exclusions_as_they_are()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+		var body = new StaticBody3D { CollisionLayer = 4, Position = new Vector3(5, 0, 0), Scale = Vector3.One * 2 };
+		var shape = new CollisionShape3D { Shape = new SphereShape3D { Radius = 0.5f } };
+		body.AddChild(shape);
+		var entity = new ForgeEntity();
+		body.AddChild(entity);
+		world.AddChild(body);
+		await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+		await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+		PhysicsDirectSpaceState3D space = world.GetWorld3D().DirectSpaceState;
+		var proxies = new LagCompensationProxies();
+		var excluded = new Array<Rid>();
+
+		try
+		{
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+
+			Ray(space, 0.8f).Should().BeSameAs(body, "it stands in at the body's scale");
+			PhysicsQuery3D.TryCollectExclusions([entity], excluded).Should().BeTrue();
+			Ray(space, 0, exclude: excluded)
+				.Should().BeNull("a query that leaves the entity out leaves its stand-in out");
+
+			body.CollisionLayer = 8;
+			proxies.Restore();
+
+			Ray(space, 5, mask: 8).Should().BeSameAs(body, "what the hit set off changed its layer, and that stays");
+
+			shape.Disabled = true;
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+
+			Ray(space, 0, mask: 8).Should().BeNull("its shapes are copied as they are now");
+
+			shape.Disabled = false;
+			proxies.Restore();
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+			proxies.Forget(entity);
+
+			Ray(space, 5, mask: 8).Should().BeSameAs(body, "forgotten while placed, it gets its body back");
+			proxies.Restore();
+		}
+		finally
+		{
+			proxies.Clear();
+			world.QueueFree();
+		}
+	}
+
 	private static BodyState Body(NumericsVector3 position)
 	{
 		return new BodyState(position, NumericsQuaternion.Identity, NumericsVector3.Zero, true);
 	}
 
-	private static GodotObject? Ray(PhysicsDirectSpaceState3D space, float x)
+	private static GodotObject? Ray(PhysicsDirectSpaceState3D space, float x, uint mask = 4, Array<Rid>? exclude = null)
 	{
 		Dictionary hit = space.IntersectRay(
-			PhysicsRayQueryParameters3D.Create(new Vector3(x, 0, -3), new Vector3(x, 0, 3), 4));
+			PhysicsRayQueryParameters3D.Create(new Vector3(x, 0, -3), new Vector3(x, 0, 3), mask, exclude));
 		return hit.Count == 0 ? null : hit["collider"].AsGodotObject();
 	}
 

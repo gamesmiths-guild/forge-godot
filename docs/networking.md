@@ -171,19 +171,21 @@ Add a [`ForgeNetworkOverlay`](nodes.md#forgenetworkoverlay) anywhere in the scen
 
 A client shows the entities it mirrors behind the server, so what its player does, a shot, a swing or a blast, meets them where they were a moment ago. Two things make the hit feel right anyway. See [Hits on the network](https://github.com/gamesmiths-guild/forge/blob/main/docs/networking/lag-compensation.md) for how they work.
 
-- **The server tests the action as its instigator saw it.** Set `Compensate Queries` on the [`ForgeEntity`](nodes.md#forgeentity) that tests the world, as a shot, a blast or a hitbox does. On the server, every tick of a networked entity of a client's player runs against the other entities' bodies where that client was shown them, its Move Body included. Each body is stood in for by a copy in the physics server, and a hit on one reports the entity's own body. The compensation fades out as the entity runs, over `Compensation Fade Ms` (250 by default; 0 compensates its first tick alone, a negative value as long as it runs), so a target that dodged a slow projectile on its own screen isn't hit where it was. It's capped by the session's `Max Rewind Ms` (500 by default, which covers a round trip of about 250 ms): a client shown the world further behind leads the rest. An entity whose `Lag Compensation` is Never is met where it is. Tags, attributes and effects are read as they are, unless a [`ForgeEffectData`](resources.md#forgeeffectdata)'s `Lag Compensation` is Rewound: its tags and immunity then count as they were, for whether the hit lands.
+- **The server tests the action as its instigator saw it.** Set `Compensate Queries` on the [`ForgeEntity`](nodes.md#forgeentity) that tests the world, as a shot, a blast or a hitbox does. On the server, every tick of a networked entity of a client's player runs against the other entities' bodies where that client was shown them, its Move Body included. Each body is stood in for by a copy in the physics server, of its shapes and scale as they are, and a hit on one reports the entity's own body. Queries see the copies: rays, shape casts and shape overlaps, and a query that leaves an entity out leaves its copy out too. An Area's overlap lists, and a body's collision exceptions, are kept by the physics step and don't, so an overlap node that reads an Area isn't compensated. The compensation fades out as the entity runs, over `Compensation Fade Ms` (250 by default; 0 compensates its first tick alone, a negative value as long as it runs), so a target that dodged a slow projectile on its own screen isn't hit where it was. It's capped by the session's `Max Rewind Ms` (500 by default, which covers a round trip of about 250 ms): a client shown the world further behind leads the rest. An entity whose `Lag Compensation` is Never is met where it is. Tags, attributes and effects are read as they are, unless a [`ForgeEffectData`](resources.md#forgeeffectdata)'s `Lag Compensation` is Rewound: its tags and immunity then count as they were, for whether the hit lands.
 - **The instigator sees the hit at once.** The graph that applies the effect, a shot's or an ability's, runs on the instigator's client too and applies it there, which the target's mirror refuses, and the effect's executed cues play there at once: the flash, the sound, the hit animation. The server's cue for the same hit doesn't play again. A [`ForgeCue`](resources.md#forgecue)'s `Predict On Others` decides it per cue: Default shows an executed cue early, Always a persistent one too, and Never waits for the server, as a damage number should. The project setting `forge/networking/predict_cues_on_others` turns Default off for every cue. Keep the graph's Apply Effect out of a Server Only region for this, and keep in one what only the server should work out.
 
-Code that tests a hit itself, such as a ray, opens the same compensation on the server:
+Code that tests a hit itself, such as a ray, opens the same compensation on the server. It opens nothing for the server's own player or on a client, where the query runs against the world as it is:
 
 ```csharp
-if (session.BeginLagCompensation(instigatorPeer))
+bool compensated = session.BeginLagCompensation(instigatorPeer);
+
+try
 {
-    try
-    {
-        // Query here: the other entities stand where the instigator saw them.
-    }
-    finally
+    // Query here: the other entities stand where the instigator saw them.
+}
+finally
+{
+    if (compensated)
     {
         session.EndLagCompensation();
     }
@@ -192,7 +194,7 @@ if (session.BeginLagCompensation(instigatorPeer))
 
 ## What a client sends
 
-Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named, and how far behind that tick it was showing the entities it mirrors, which the server [tests its shots against](#hits). It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, hands that tick's command to every entity the client owns that has an input. The session node then raises `InputTaken` with it. A game that raises input events does it there, raising only the ones it allows, so a client can't trigger an ability meant for a server event:
+Each physics step, a client sends the server the input frame its tick reads: the held, pressed and released actions, the analog vectors, the aim, and any discrete input events, for the tick its clock named, and how far behind that tick it was showing the entities it mirrors, which the server [tests what its actions hit against](#hits). It sends the last eight ticks every time, so a lost packet costs nothing. The server keeps each client's commands by tick and, as it simulates a tick, hands that tick's command to every entity the client owns that has an input. The session node then raises `InputTaken` with it. A game that raises input events does it there, raising only the ones it allows, so a client can't trigger an ability meant for a server event:
 
 ```csharp
 // The tags a client may raise as input events, children included.

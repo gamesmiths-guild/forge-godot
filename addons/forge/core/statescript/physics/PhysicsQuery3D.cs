@@ -492,6 +492,12 @@ internal static class PhysicsQuery3D
 		if (node is CollisionObject3D collisionObject)
 		{
 			into.Add(collisionObject.GetRid());
+
+			// A body stood in for by a lag-compensated hit is left out where it stands in too.
+			if (LagCompensationProxies.TryGetStandIn(collisionObject.GetRid(), out Rid standIn))
+			{
+				into.Add(standIn);
+			}
 		}
 
 		foreach (Node child in node.GetChildren())
