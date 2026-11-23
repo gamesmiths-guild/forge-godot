@@ -6,8 +6,12 @@ Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.ApplyTorqueImpulse3DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.CallMethodNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.DebugNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.EmitSignalNode
+Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.Hitscan2DNode
+Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.Hitscan3DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene2DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.InstantiateScene3DNode
+Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.LaunchProjectile2DNode
+Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.LaunchProjectile3DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAnimationOneShotNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.PlayAudioOneShotNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.QueueFreeNode
@@ -29,6 +33,8 @@ Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetScale2DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetScale3DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetVelocity2DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.SetVelocity3DNode
+Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.Splash2DNode
+Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action.Splash3DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Condition.Raycast2DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Condition.Raycast3DNode
 Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Condition.Shapecast2DNode

@@ -10,6 +10,7 @@ using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Effects.Duration;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Core.Shots;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes;
 using Gamesmiths.Forge.Godot.Core.Statescript.Nodes.Action;
 using Gamesmiths.Forge.Godot.Networking;
@@ -19,6 +20,7 @@ using Gamesmiths.Forge.Godot.Resources.Abilities;
 using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Networking.Messages;
 using Gamesmiths.Forge.Networking.Replication;
+using Gamesmiths.Forge.Shots;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Gamesmiths.Forge.Tags;
@@ -48,6 +50,8 @@ public class ForgeNetworkSessionTests
 	private const string ServerOnlyGrants = "res://tests/Nodes/server_only_effect.tres";
 
 	private const string Body = "res://tests/Nodes/networked_body.tscn";
+
+	private const string Ball = "res://tests/Nodes/test_ball.tres";
 
 	private const string HideAbility = "res://tests/Nodes/hide_ability.tres";
 
@@ -479,6 +483,40 @@ public class ForgeNetworkSessionTests
 
 		clientBody.GlobalPosition.DistanceTo(target).Should().BeLessThan(0.01f);
 		mirror.Input!.Current.Held.Should().Be(0, "the world owns it, so no machine reads its devices");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_projectile_s_launch_and_end_reach_a_mirror_which_flies_it_along_the_same_path()
+	{
+		ForgeNetworkManifest manifest = SceneManifest(Body);
+		manifest.Projectiles.Add(Uid(Ball));
+		using var pair = new Pair(manifest, manifest, withPlayer: false);
+		CharacterBody3D serverBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		CharacterBody3D clientBody = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		pair.ServerBranch.AddChild(serverBody);
+		pair.ClientBranch.AddChild(clientBody);
+		ForgeEntity entity = serverBody.GetNode<ForgeEntity>("Forge Entity");
+		ForgeEntity mirror = clientBody.GetNode<ForgeEntity>("Forge Entity");
+		await pair.Connect();
+		await Pair.RunUntil(() => false, frames: 5);
+
+		ForgeProjectileData ball = ResourceLoader.Load<ForgeProjectileData>(Ball);
+		ProjectileFlight launched = ForgeShots.Launch3D(entity, ball, new Vector3(1, 2, 3), Vector3.Forward);
+		await Pair.RunUntil(() => mirror.Shots.Flights.Count > 0, frames: 120);
+
+		ProjectileFlight shown = mirror.Shots.Flights.Should().ContainSingle().Subject;
+		shown.Id.Should().Be(launched.Id);
+		shown.Origin.Should().Be(launched.Origin);
+		shown.Velocity.Should().Be(launched.Velocity);
+		shown.Projectile.Should().BeSameAs(ball.GetProjectileData());
+		shown.Instigator.Should().BeSameAs(mirror);
+
+		entity.Shots.End(launched.Id, FlightEnd.Impact, new System.Numerics.Vector3(1, 2, 2)).Should().BeTrue();
+		await Pair.RunUntil(() => !mirror.Shots.Flights[0].IsFlying, frames: 120);
+
+		mirror.Shots.Flights[0].End.Should().Be(FlightEnd.Impact);
+		mirror.Shots.Flights[0].EndPoint.Should().Be(new System.Numerics.Vector3(1, 2, 2));
 	}
 
 	[TestCase]

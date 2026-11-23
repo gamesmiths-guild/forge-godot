@@ -98,6 +98,29 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 	public bool FaceAim { get; set; }
 
 	/// <summary>
+	/// Gets or sets how fast a jump leaves the ground, in units per second. Zero doesn't jump. A floating body doesn't
+	/// jump.
+	/// </summary>
+	[ExportGroup("Air")]
+	[Export(PropertyHint.Range, "0,2000,1,or_greater")]
+	public float JumpSpeed { get; set; }
+
+	/// <summary>
+	/// Gets or sets the share of the ground's <see cref="Acceleration"/> and <see cref="Friction"/> the body steers by
+	/// in the air. 1 steers as on the ground.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1,0.01")]
+	public float AirControl { get; set; } = 1f;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the body keeps its speed in the air: the input only adds speed toward
+	/// where it points, up to the walking speed, and nothing slows the body down, so a knockback or a jump's run-up
+	/// carries it, as in an arena shooter.
+	/// </summary>
+	[Export]
+	public bool KeepAirSpeed { get; set; }
+
+	/// <summary>
 	/// Gets or sets what shows the body, a child of it, which eases from where it was shown when the client predicting
 	/// the entity puts the body right, rather than jumping with it. Unset, a correction shows at once.
 	/// </summary>
@@ -141,6 +164,12 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 	/// </summary>
 	[Export]
 	public string MoveDown { get; set; } = "move_down";
+
+	/// <summary>
+	/// Gets or sets the input action that jumps, pressed on the ground.
+	/// </summary>
+	[Export]
+	public string Jump { get; set; } = "jump";
 
 	/// <inheritdoc/>
 	public override void _EnterTree()
@@ -238,11 +267,32 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 			{
 				// The walk axis alone, since a move vector cuts a diagonal to a length of 1 and holding up would slow
 				// it.
-				float target = (_entity.Input?.GetAxis(MoveLeft, MoveRight) ?? 0f) * speed;
-				velocity.X = Mathf.MoveToward(
-					velocity.X,
-					target,
-					(Mathf.IsZeroApprox(target) ? Friction : Acceleration) * delta);
+				float axis = _entity.Input?.GetAxis(MoveLeft, MoveRight) ?? 0f;
+				float target = axis * speed;
+
+				if (_grounded || !KeepAirSpeed)
+				{
+					velocity.X = Mathf.MoveToward(
+						velocity.X,
+						target,
+						(Mathf.IsZeroApprox(target) ? Friction : Acceleration) * (_grounded ? 1f : AirControl) * delta);
+				}
+				else if (!Mathf.IsZeroApprox(axis))
+				{
+					float direction = Mathf.Sign(axis);
+					float gain = Mathf.Clamp(
+						(speed * Mathf.Min(Mathf.Abs(axis), 1f)) - (velocity.X * direction),
+						0f,
+						Acceleration * AirControl * delta);
+
+					velocity.X += direction * gain;
+				}
+
+				if (JumpSpeed > 0 && _grounded && _entity.Input?.WasPressed(Jump) == true)
+				{
+					velocity.Y = _body.UpDirection.Y * JumpSpeed;
+					_grounded = false;
+				}
 			}
 
 			if (FaceAim && _entity.Input?.Current is { HasAim: true } frame
@@ -284,6 +334,27 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 
 		_easingSpeed = _easing.Length() / CorrectionEasing;
 		ShowEasing();
+	}
+
+	/// <summary>
+	/// Pushes the body, adding to its velocity: a blast's knockback. One that points up lifts it off the ground, and in
+	/// the air it keeps the speed. Call it from a tick, as an effect is applied, so a rollback takes it back with the
+	/// tick. A client's mirror ignores it: the server's push arrives with the body.
+	/// </summary>
+	/// <param name="impulse">The velocity to add, in units per second.</param>
+	public void Knockback(Vector2 impulse)
+	{
+		if (_body is null || _entity?.IsMirror != false)
+		{
+			return;
+		}
+
+		_body.Velocity += impulse;
+
+		if (impulse.Dot(_body.UpDirection) > 0)
+		{
+			_grounded = false;
+		}
 	}
 
 	/// <inheritdoc/>
@@ -339,7 +410,7 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 
 		// Suggested rather than enforced, so a name typed before its action is added to the settings is kept.
 		if (name == PropertyName.MoveLeft || name == PropertyName.MoveRight || name == PropertyName.MoveUp
-			|| name == PropertyName.MoveDown)
+			|| name == PropertyName.MoveDown || name == PropertyName.Jump)
 		{
 			InputActionSet actions = ForgeSettings.GetInputActionSet();
 			property["hint"] = (int)PropertyHint.EnumSuggestion;

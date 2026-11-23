@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ForgeProjectileData" format=3 uid="uid://c5net15tball"]
+
+[ext_resource type="Script" uid="uid://dja627cyii44n" path="res://addons/forge/resources/ForgeProjectileData.cs" id="1_ball"]
+
+[resource]
+script = ExtResource("1_ball")
+Name = "Test Ball"
+Speed = 2.0
+Radius = 0.25
+Lifetime = 2.0

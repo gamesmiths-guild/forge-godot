@@ -8,8 +8,10 @@ using Gamesmiths.Forge.Cues;
 using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Events;
 using Gamesmiths.Forge.Godot.Core;
+using Gamesmiths.Forge.Godot.Core.Shots;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Networking.Replication;
+using Gamesmiths.Forge.Shots;
 using Gamesmiths.Forge.Statescript;
 using Godot;
 using Node = Godot.Node;
@@ -113,6 +115,11 @@ public partial class ForgeEntity : Node, IForgeEntity
 	public IEntityStateHook? StateHook { get; set; }
 
 	/// <summary>
+	/// Gets the lightweight projectiles the entity launches, flown in its ticks through its body's world.
+	/// </summary>
+	public EntityShots Shots { get; private set; } = null!;
+
+	/// <summary>
 	/// Gets the world history that advances this entity, or <see langword="null"/> when the entity advances in its own
 	/// physics step.
 	/// </summary>
@@ -168,6 +175,10 @@ public partial class ForgeEntity : Node, IForgeEntity
 		Abilities = new EntityAbilities(this);
 		Events = new EventManager();
 		SharedVariables = new Variables();
+		Shots = new EntityShots(this)
+		{
+			Host = ForgeEntityBridge.TryGetSpatialNode2D(this, out _) ? new ShotHost2D(this) : new ShotHost3D(this),
+		};
 
 		SharedVariableDefinitions?.PopulateVariables(SharedVariables);
 

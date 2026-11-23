@@ -12,10 +12,10 @@ using Godot.Collections;
 namespace Gamesmiths.Forge.Godot.Resources;
 
 /// <summary>
-/// The assets a networked session can refer to, as resource UIDs: every effect, ability, Statescript graph and
-/// networked scene in the project. The editor plugin generates it (Project, Tools, Forge, Regenerate network manifest,
-/// and on saving one of those resources), and a session loads it to build its asset registry, so it works in an export,
-/// where the project's files can't be scanned.
+/// The assets a networked session can refer to, as resource UIDs: every effect, ability, Statescript graph, networked
+/// scene and lightweight projectile in the project. The editor plugin generates it (Project, Tools, Forge, Regenerate
+/// network manifest, and on saving one of those resources), and a session loads it to build its asset registry, so it
+/// works in an export, where the project's files can't be scanned.
 /// </summary>
 /// <remarks>
 /// A UID identifies a resource whatever its name or folder, so renaming or moving a file changes nothing on the wire.
@@ -53,6 +53,12 @@ public partial class ForgeNetworkManifest : Resource
 	/// </summary>
 	[Export]
 	public Array<string> Scenes { get; set; } = [];
+
+	/// <summary>
+	/// Gets or sets the UIDs of the project's lightweight projectiles (<see cref="ForgeProjectileData"/>).
+	/// </summary>
+	[Export]
+	public Array<string> Projectiles { get; set; } = [];
 
 	/// <summary>
 	/// Loads the project's manifest from <see cref="ForgeSettings.NetworkManifestSetting"/>.
@@ -115,6 +121,14 @@ public partial class ForgeNetworkManifest : Resource
 			if (Load<PackedScene>(uid, "scene") is PackedScene scene)
 			{
 				registry.Register(AssetKind.Scene, uid, scene);
+			}
+		}
+
+		foreach (string uid in Projectiles)
+		{
+			if (Load<ForgeProjectileData>(uid, "projectile") is ForgeProjectileData projectile)
+			{
+				registry.Register(AssetKind.Projectile, uid, projectile.GetProjectileData());
 			}
 		}
 

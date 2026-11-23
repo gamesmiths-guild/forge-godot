@@ -68,6 +68,7 @@ public partial class ForgeBootstrap : Node
 			try
 			{
 				entity.Abilities.PresentAbilities();
+				entity.Shots.Present();
 			}
 			catch (Exception exception)
 			{

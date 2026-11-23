@@ -457,6 +457,98 @@ public class ForgeCharacterMovementTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_jump_leaves_the_ground_and_the_air_keeps_a_knockback_s_speed_3D()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			await AddFloor(world);
+			ForgeEntity entity = AddCharacter3D(
+				world,
+				CharacterBody3D.MotionModeEnum.Grounded,
+				out CharacterBody3D body,
+				out ForgeCharacterMovement3D movement);
+			movement.JumpSpeed = 5;
+			movement.KeepAirSpeed = true;
+			movement.AirControl = 0.3f;
+			entity.Input = new EntityInput(
+				new InputActionSet(["jump"], [new InputVector("move_left", "move_right", "move_up", "move_down")]));
+
+			for (int i = 0; i < 30; i++)
+			{
+				Walk(entity, NumericsVector2.Zero);
+			}
+
+			body.IsOnFloor().Should().BeTrue();
+
+			entity.Input.Submit(new InputFrame { Held = 1, Pressed = 1 });
+			entity._PhysicsProcess(Step);
+
+			body.Velocity.Y.Should().BePositive();
+			movement.CaptureState().Grounded.Should().BeFalse();
+
+			movement.Knockback(new Vector3(10, 0, 0));
+			Walk(entity, NumericsVector2.Zero);
+			body.Velocity.X.Should().Be(10, "nothing slows a body in the air");
+
+			Walk(entity, new NumericsVector2(-1, 0));
+			body.Velocity.X.Should().BeApproximately(
+				10 - (movement.Acceleration * movement.AirControl * (float)Step),
+				0.001f,
+				"air control steers by a share of the acceleration");
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_jump_leaves_the_ground_and_a_knockback_carries_the_body_2D()
+	{
+		var world = new Node2D();
+		Root.AddChild(world);
+
+		try
+		{
+			await AddFloor(world);
+			ForgeEntity entity = AddCharacter2D(
+				world,
+				CharacterBody2D.MotionModeEnum.Grounded,
+				out CharacterBody2D body,
+				out ForgeCharacterMovement2D movement);
+			movement.JumpSpeed = 300;
+			movement.KeepAirSpeed = true;
+			entity.Input = new EntityInput(
+				new InputActionSet(["jump"], [new InputVector("move_left", "move_right", "move_up", "move_down")]));
+
+			for (int i = 0; i < 60; i++)
+			{
+				Walk(entity, NumericsVector2.Zero);
+			}
+
+			body.IsOnFloor().Should().BeTrue();
+
+			entity.Input.Submit(new InputFrame { Held = 1, Pressed = 1 });
+			entity._PhysicsProcess(Step);
+
+			body.Velocity.Y.Should().BeNegative("up is -Y in 2D");
+
+			movement.Knockback(new Vector2(200, 0));
+			Walk(entity, NumericsVector2.Zero);
+			body.Velocity.X.Should().Be(200);
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
 	private static ForgeEntity AddCharacter3D(
 		Node world,
 		CharacterBody3D.MotionModeEnum mode,

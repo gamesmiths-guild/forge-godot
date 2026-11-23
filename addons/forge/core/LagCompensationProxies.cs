@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Networking.Replication;
 using Godot;
 using NumericsQuaternion = System.Numerics.Quaternion;
@@ -21,6 +22,8 @@ internal sealed class LagCompensationProxies
 	private static readonly Dictionary<Rid, IProxy> _standIns = [];
 
 	private readonly Dictionary<IForgeEntity, IProxy?> _proxies = new(ReferenceEqualityComparer.Instance);
+	private readonly Dictionary<ForgeHitbox3D, Proxy3D> _hitboxProxies = [];
+	private readonly Dictionary<ForgeHitbox2D, Proxy2D> _hitboxProxies2D = [];
 	private readonly List<IProxy> _placed = [];
 
 	// The stand-in placed for a live body, if one is.
@@ -41,7 +44,8 @@ internal sealed class LagCompensationProxies
 		}
 	}
 
-	public void Place(IReadOnlyList<RewoundBody> bodies)
+	// Each body, and each hitbox of one, where the instigator was shown it at a tick.
+	public void Place(IReadOnlyList<RewoundBody> bodies, double shownTick)
 	{
 		foreach (RewoundBody rewound in bodies)
 		{
@@ -50,6 +54,15 @@ internal sealed class LagCompensationProxies
 				proxy.Place(rewound.Body);
 				_placed.Add(proxy);
 				_standIns[proxy.Live] = proxy;
+			}
+
+			if (ForgeHitboxes3D.Of(rewound.Entity) is ForgeHitboxes3D hitboxes)
+			{
+				PlaceHitboxes(hitboxes, rewound.Body, shownTick);
+			}
+			else if (ForgeHitboxes2D.Of(rewound.Entity) is ForgeHitboxes2D hitboxes2D)
+			{
+				PlaceHitboxes(hitboxes2D, rewound.Body, shownTick);
 			}
 		}
 	}
@@ -89,7 +102,19 @@ internal sealed class LagCompensationProxies
 			proxy?.Free();
 		}
 
+		foreach (Proxy3D proxy in _hitboxProxies.Values)
+		{
+			proxy.Free();
+		}
+
+		foreach (Proxy2D proxy in _hitboxProxies2D.Values)
+		{
+			proxy.Free();
+		}
+
 		_proxies.Clear();
+		_hitboxProxies.Clear();
+		_hitboxProxies2D.Clear();
 	}
 
 	private static void PutBack(IProxy proxy)
@@ -117,6 +142,73 @@ internal sealed class LagCompensationProxies
 
 		_proxies[entity] = proxy;
 		return proxy;
+	}
+
+	// A hitbox stands where it stood against its body then, from the body as the instigator was shown it.
+	private void PlaceHitboxes(ForgeHitboxes3D hitboxes, in BodyState body, double shownTick)
+	{
+		if (hitboxes.Body is not Node3D live)
+		{
+			return;
+		}
+
+		var shownBody = new Transform3D(
+			new Basis(Proxy3D.ToGodot(body.Rotation)) * Basis.FromScale(live.GlobalTransform.Basis.Scale),
+			Proxy3D.ToGodot(body.Position));
+
+		for (int i = 0; i < hitboxes.Hitboxes.Count; i++)
+		{
+			ForgeHitbox3D hitbox = hitboxes.Hitboxes[i];
+
+			if (!GodotObject.IsInstanceValid(hitbox) || !hitboxes.TryLocalAt(i, shownTick, out Transform3D local))
+			{
+				continue;
+			}
+
+			if (!_hitboxProxies.TryGetValue(hitbox, out Proxy3D? proxy))
+			{
+				proxy = new Proxy3D(hitbox);
+				_hitboxProxies[hitbox] = proxy;
+			}
+
+			proxy.PlaceAt(shownBody * local);
+			_placed.Add(proxy);
+			_standIns[proxy.Live] = proxy;
+		}
+	}
+
+	private void PlaceHitboxes(ForgeHitboxes2D hitboxes, in BodyState body, double shownTick)
+	{
+		if (hitboxes.Body is not Node2D live)
+		{
+			return;
+		}
+
+		var shownBody = new Transform2D(
+			Proxy2D.AngleOf(body.Rotation),
+			live.GlobalScale,
+			live.GlobalSkew,
+			new Vector2(body.Position.X, body.Position.Y));
+
+		for (int i = 0; i < hitboxes.Hitboxes.Count; i++)
+		{
+			ForgeHitbox2D hitbox = hitboxes.Hitboxes[i];
+
+			if (!GodotObject.IsInstanceValid(hitbox) || !hitboxes.TryLocalAt(i, shownTick, out Transform2D local))
+			{
+				continue;
+			}
+
+			if (!_hitboxProxies2D.TryGetValue(hitbox, out Proxy2D? proxy))
+			{
+				proxy = new Proxy2D(hitbox);
+				_hitboxProxies2D[hitbox] = proxy;
+			}
+
+			proxy.PlaceAt(shownBody * local);
+			_placed.Add(proxy);
+			_standIns[proxy.Live] = proxy;
+		}
 	}
 
 	private interface IProxy
@@ -158,6 +250,12 @@ internal sealed class LagCompensationProxies
 		// with them.
 		public void Place(in BodyState body)
 		{
+			Basis basis = new Basis(ToGodot(body.Rotation)) * Basis.FromScale(_live.GlobalTransform.Basis.Scale);
+			PlaceAt(new Transform3D(basis, ToGodot(body.Position)));
+		}
+
+		public void PlaceAt(Transform3D transform)
+		{
 			PhysicsServer3D.BodyClearShapes(StandIn);
 
 			foreach (Variant shapeOwner in _live.GetShapeOwners())
@@ -169,20 +267,16 @@ internal sealed class LagCompensationProxies
 					continue;
 				}
 
-				Transform3D transform = _live.ShapeOwnerGetTransform(owner);
+				Transform3D shapeTransform = _live.ShapeOwnerGetTransform(owner);
 
 				for (int i = 0; i < _live.ShapeOwnerGetShapeCount(owner); i++)
 				{
-					PhysicsServer3D.BodyAddShape(StandIn, _live.ShapeOwnerGetShape(owner, i).GetRid(), transform);
+					PhysicsServer3D.BodyAddShape(StandIn, _live.ShapeOwnerGetShape(owner, i).GetRid(), shapeTransform);
 				}
 			}
 
-			Basis basis = new Basis(ToGodot(body.Rotation)) * Basis.FromScale(_live.GlobalTransform.Basis.Scale);
 			PhysicsServer3D.BodySetCollisionLayer(Live, 0);
-			PhysicsServer3D.BodySetState(
-				StandIn,
-				PhysicsServer3D.BodyState.Transform,
-				new Transform3D(basis, ToGodot(body.Position)));
+			PhysicsServer3D.BodySetState(StandIn, PhysicsServer3D.BodyState.Transform, transform);
 			PhysicsServer3D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
 		}
 
@@ -213,12 +307,12 @@ internal sealed class LagCompensationProxies
 			PhysicsServer3D.FreeRid(StandIn);
 		}
 
-		private static Vector3 ToGodot(NumericsVector3 value)
+		internal static Vector3 ToGodot(NumericsVector3 value)
 		{
 			return new Vector3(value.X, value.Y, value.Z);
 		}
 
-		private static Quaternion ToGodot(NumericsQuaternion value)
+		internal static Quaternion ToGodot(NumericsQuaternion value)
 		{
 			return new Quaternion(value.X, value.Y, value.Z, value.W).Normalized();
 		}
@@ -245,7 +339,21 @@ internal sealed class LagCompensationProxies
 			PhysicsServer2D.BodyAttachObjectInstanceId(StandIn, live.GetInstanceId());
 		}
 
+		public static float AngleOf(NumericsQuaternion turn)
+		{
+			return 2 * Mathf.Atan2(turn.Z, turn.W);
+		}
+
 		public void Place(in BodyState body)
+		{
+			PlaceAt(new Transform2D(
+				AngleOf(body.Rotation),
+				_live.GlobalScale,
+				_live.GlobalSkew,
+				new Vector2(body.Position.X, body.Position.Y)));
+		}
+
+		public void PlaceAt(Transform2D transform)
 		{
 			PhysicsServer2D.BodyClearShapes(StandIn);
 
@@ -258,25 +366,16 @@ internal sealed class LagCompensationProxies
 					continue;
 				}
 
-				Transform2D transform = _live.ShapeOwnerGetTransform(owner);
+				Transform2D shapeTransform = _live.ShapeOwnerGetTransform(owner);
 
 				for (int i = 0; i < _live.ShapeOwnerGetShapeCount(owner); i++)
 				{
-					PhysicsServer2D.BodyAddShape(StandIn, _live.ShapeOwnerGetShape(owner, i).GetRid(), transform);
+					PhysicsServer2D.BodyAddShape(StandIn, _live.ShapeOwnerGetShape(owner, i).GetRid(), shapeTransform);
 				}
 			}
 
-			NumericsQuaternion turn = body.Rotation;
-			float angle = 2 * Mathf.Atan2(turn.Z, turn.W);
 			PhysicsServer2D.BodySetCollisionLayer(Live, 0);
-			PhysicsServer2D.BodySetState(
-				StandIn,
-				PhysicsServer2D.BodyState.Transform,
-				new Transform2D(
-					angle,
-					_live.GlobalScale,
-					_live.GlobalSkew,
-					new Vector2(body.Position.X, body.Position.Y)));
+			PhysicsServer2D.BodySetState(StandIn, PhysicsServer2D.BodyState.Transform, transform);
 			PhysicsServer2D.BodySetCollisionLayer(StandIn, _live.CollisionLayer);
 		}
 

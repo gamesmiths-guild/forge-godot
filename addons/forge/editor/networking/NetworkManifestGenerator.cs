@@ -11,10 +11,10 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Editor.Networking;
 
 /// <summary>
-/// Writes the project's <see cref="ForgeNetworkManifest"/>: the UIDs of every effect, ability and Statescript graph
-/// resource the editor's filesystem index knows, and of every scene with a networked <c>ForgeEntity</c> of its own or
-/// from the scene it inherits, sorted, so every machine that builds the project writes the same manifest and the
-/// session's registry hashes the same.
+/// Writes the project's <see cref="ForgeNetworkManifest"/>: the UIDs of every effect, ability, Statescript graph and
+/// lightweight projectile resource the editor's filesystem index knows, and of every scene with a networked
+/// <c>ForgeEntity</c> of its own or from the scene it inherits, sorted, so every machine that builds the project writes
+/// the same manifest and the session's registry hashes the same.
 /// </summary>
 internal static class NetworkManifestGenerator
 {
@@ -32,6 +32,7 @@ internal static class NetworkManifestGenerator
 		List<string> effects = Uids(ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeEffectData)));
 		List<string> abilities = Uids(ProjectFileIndex.CollectResourcesByScriptClass("ForgeAbilityData"));
 		List<string> graphs = Uids(ProjectFileIndex.CollectResourcesByScriptClass("StatescriptGraph"));
+		List<string> projectiles = Uids(ProjectFileIndex.CollectResourcesByScriptClass(nameof(ForgeProjectileData)));
 		List<string> scenes = Uids([.. ProjectFileIndex.CollectByType("PackedScene", ".tscn").Where(IsNetworkedScene)]);
 
 		// Saved only when something changed: saving changes the filesystem, which regenerates the manifest again.
@@ -39,7 +40,8 @@ internal static class NetworkManifestGenerator
 			&& manifest.Effects.SequenceEqual(effects)
 			&& manifest.Abilities.SequenceEqual(abilities)
 			&& manifest.Graphs.SequenceEqual(graphs)
-			&& manifest.Scenes.SequenceEqual(scenes))
+			&& manifest.Scenes.SequenceEqual(scenes)
+			&& manifest.Projectiles.SequenceEqual(projectiles))
 		{
 			manifest.TakeOverPath(path);
 			return manifest;
@@ -49,6 +51,7 @@ internal static class NetworkManifestGenerator
 		manifest.Abilities = [.. abilities];
 		manifest.Graphs = [.. graphs];
 		manifest.Scenes = [.. scenes];
+		manifest.Projectiles = [.. projectiles];
 
 		Error error = ResourceSaver.Save(manifest, path);
 
@@ -66,10 +69,10 @@ internal static class NetworkManifestGenerator
 	/// Whether saving a resource changes what the manifest lists.
 	/// </summary>
 	/// <param name="resource">The resource saved.</param>
-	/// <returns><see langword="true"/> for an effect, an ability or a graph.</returns>
+	/// <returns><see langword="true"/> for an effect, an ability, a graph or a projectile.</returns>
 	public static bool Lists(Resource resource)
 	{
-		return resource is ForgeEffectData
+		return resource is ForgeEffectData or ForgeProjectileData
 			|| resource.GetType().Name is "ForgeAbilityData" or "StatescriptGraph";
 	}
 

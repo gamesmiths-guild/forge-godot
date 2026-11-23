@@ -97,6 +97,35 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 	public bool FaceAim { get; set; }
 
 	/// <summary>
+	/// Gets or sets a value indicating whether the move input is turned with the aim's heading, as in first person:
+	/// forward walks where the player looks. Otherwise forward walks toward -Z.
+	/// </summary>
+	[Export]
+	public bool MoveRelativeToAim { get; set; }
+
+	/// <summary>
+	/// Gets or sets how fast a jump leaves the ground, in units per second. Zero doesn't jump.
+	/// </summary>
+	[ExportGroup("Air")]
+	[Export(PropertyHint.Range, "0,50,0.1,or_greater")]
+	public float JumpSpeed { get; set; }
+
+	/// <summary>
+	/// Gets or sets the share of the ground's <see cref="Acceleration"/> and <see cref="Friction"/> the body steers by
+	/// in the air. 1 steers as on the ground.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1,0.01")]
+	public float AirControl { get; set; } = 1f;
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the body keeps its speed in the air: the input only adds speed toward
+	/// where it points, up to the walking speed, and nothing slows the body down, so a knockback or a jump's run-up
+	/// carries it, as in an arena shooter.
+	/// </summary>
+	[Export]
+	public bool KeepAirSpeed { get; set; }
+
+	/// <summary>
 	/// Gets or sets what shows the body, a child of it, which eases from where it was shown when the client predicting
 	/// the entity puts the body right, rather than jumping with it. Unset, a correction shows at once.
 	/// </summary>
@@ -140,6 +169,12 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 	/// </summary>
 	[Export]
 	public string MoveBack { get; set; } = "move_down";
+
+	/// <summary>
+	/// Gets or sets the input action that jumps, pressed on the ground.
+	/// </summary>
+	[Export]
+	public string Jump { get; set; } = "jump";
 
 	/// <inheritdoc/>
 	public override void _EnterTree()
@@ -226,11 +261,44 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 		else
 		{
 			NumericsVector2 move = _entity.Input?.GetVector(MoveLeft, MoveRight, MoveForward, MoveBack) ?? default;
-			Vector3 target = new Vector3(move.X, 0f, move.Y) * ReadSpeed(_entity);
-			float rate = target.IsZeroApprox() ? Friction : Acceleration;
-			Vector3 horizontal = new Vector3(velocity.X, 0f, velocity.Z).MoveToward(target, rate * delta);
+			Vector3 wish = new(move.X, 0f, move.Y);
+
+			if (MoveRelativeToAim && _entity.Input?.Current is { HasAim: true } aimed
+				&& !new Vector2(aimed.AimDirection.X, aimed.AimDirection.Z).IsZeroApprox())
+			{
+				wish = wish.Rotated(Vector3.Up, Mathf.Atan2(-aimed.AimDirection.X, -aimed.AimDirection.Z));
+			}
+
+			float speed = ReadSpeed(_entity);
+			Vector3 horizontal = new(velocity.X, 0f, velocity.Z);
+
+			bool airborne = !_grounded && _body.MotionMode == CharacterBody3D.MotionModeEnum.Grounded;
+
+			if (!airborne || !KeepAirSpeed)
+			{
+				Vector3 target = wish * speed;
+				float rate = (target.IsZeroApprox() ? Friction : Acceleration) * (airborne ? AirControl : 1f);
+				horizontal = horizontal.MoveToward(target, rate * delta);
+			}
+			else if (!wish.IsZeroApprox())
+			{
+				Vector3 direction = wish.Normalized();
+				float gain = Mathf.Clamp(
+					(speed * Mathf.Min(wish.Length(), 1f)) - horizontal.Dot(direction),
+					0f,
+					Acceleration * AirControl * delta);
+
+				horizontal += direction * gain;
+			}
+
 			velocity.X = horizontal.X;
 			velocity.Z = horizontal.Z;
+
+			if (JumpSpeed > 0 && _grounded && _entity.Input?.WasPressed(Jump) == true)
+			{
+				velocity.Y = JumpSpeed;
+				_grounded = false;
+			}
 
 			if (FaceAim && _entity.Input?.Current is { HasAim: true } frame
 				&& !new Vector2(frame.AimDirection.X, frame.AimDirection.Z).IsZeroApprox())
@@ -242,6 +310,27 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 		_body.Velocity = velocity;
 		_body.MoveAndSlide();
 		_grounded = _body.IsOnFloor();
+	}
+
+	/// <summary>
+	/// Pushes the body, adding to its velocity: a blast's knockback. One that points up lifts it off the ground, and in
+	/// the air it keeps the speed. Call it from a tick, as an effect is applied, so a rollback takes it back with the
+	/// tick. A client's mirror ignores it: the server's push arrives with the body.
+	/// </summary>
+	/// <param name="impulse">The velocity to add, in units per second.</param>
+	public void Knockback(Vector3 impulse)
+	{
+		if (_body is null || _entity?.IsMirror != false)
+		{
+			return;
+		}
+
+		_body.Velocity += impulse;
+
+		if (impulse.Dot(_body.UpDirection) > 0)
+		{
+			_grounded = false;
+		}
 	}
 
 	/// <summary>
@@ -328,7 +417,7 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 
 		// Suggested rather than enforced, so a name typed before its action is added to the settings is kept.
 		if (name == PropertyName.MoveLeft || name == PropertyName.MoveRight || name == PropertyName.MoveForward
-			|| name == PropertyName.MoveBack)
+			|| name == PropertyName.MoveBack || name == PropertyName.Jump)
 		{
 			InputActionSet actions = ForgeSettings.GetInputActionSet();
 			property["hint"] = (int)PropertyHint.EnumSuggestion;
