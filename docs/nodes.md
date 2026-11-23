@@ -211,7 +211,12 @@ Walks the character body an entity lives on from the entity's input, once per ph
 - `Visual` (Node3D / Node2D): The child that shows the body. When the client predicting the entity puts the body right, the visual eases from where it was shown instead of jumping with it. Unset, a correction shows at once.
 - `CorrectionEasing` (float): How long a correction takes to ease out, in seconds. The default is 0.15.
 - `CorrectionSnapDistance` (float): How far a correction may move the body and still ease; one that moves it further, as a respawn does, shows at once. The default is 2 units in 3D and 200 pixels in 2D.
+- `MoveRelativeToAim` (bool, 3D): Whether the move vector turns with the aim's heading, as in first person: forward walks where the player looks.
+- `JumpSpeed` (float): How fast a jump leaves the ground, in units per second. Zero, the default, doesn't jump. A floating 2D body doesn't jump.
+- `AirControl` (float): The share of `Acceleration` and `Friction` the body steers by in the air. The default, 1, steers as on the ground.
+- `KeepAirSpeed` (bool): Whether the body keeps its speed in the air, as in an arena shooter: the input only adds speed toward where it points, up to the walking speed, and nothing slows the body down, so a jump's run-up or a [blast's](shots.md#blasts-and-knockback) push carries it.
 - `MoveLeft`, `MoveRight`, `MoveForward`, `MoveBack` in 3D, or `MoveLeft`, `MoveRight`, `MoveUp`, `MoveDown` in 2D: The four input actions of the move vector. They default to `move_left`, `move_right`, `move_up` and `move_down`.
+- `Jump` (string): The input action that jumps, pressed on the ground. The default is `jump`.
 
 **Description:**
 
@@ -225,7 +230,10 @@ Each step, the component:
    - **2D, floating motion mode** (top-down): the body walks on both axes.
    - **2D, grounded motion mode** (side view): the body walks on X only, from the axis of `MoveLeft` and `MoveRight` alone. Register those as actions rather than in a vector with up and down: a vector cuts a diagonal to a length of 1, so holding up would slow the walk.
 3. **Turns** to face the input's aim direction in world space, with `FaceAim` on.
-4. **Moves** with `MoveAndSlide`, and records whether the body ended on the floor.
+4. **Jumps** when the jump action was pressed on the ground, with a `JumpSpeed`.
+5. **Moves** with `MoveAndSlide`, and records whether the body ended on the floor.
+
+In the air, the walk steers by `AirControl`, or with `KeepAirSpeed` only adds speed. `Knockback(impulse)` adds to the body's velocity from a tick, as a blast does, and lifts it off the ground when it points up; a client's mirror ignores it, since the server's push arrives with the body.
 
 While the entity has a blocking tag, the component skips steps 2 and 3: the walking velocity drops to zero, the facing stays put, and the body still falls. A dash's [Move Body](statescript/nodes/spatial-nodes.md#move-body) then sweeps the body on its own. Give the dash ability a tag such as `movement.block` while it runs, and list that tag here.
 
@@ -243,6 +251,27 @@ Player (CharacterBody3D)
     ├── ForgeInputCollector        AimSource = MouseGround3D
     └── ForgeCharacterMovement3D   SpeedAttribute = MovementAttributes.Speed, FaceAim = on
 ```
+
+### ForgeHitbox2D / ForgeHitbox3D
+
+A part of an entity a shot can hit, as a head or a torso: a static body of collision shapes that moves with the entity's animation, under a `BoneAttachment3D` (or a bone's `RemoteTransform2D` target) or anywhere under the entity's body.
+
+**Properties:**
+
+- `Tags` (ForgeTagContainer): The tags a hit on the part reports, such as one for a head.
+- `DamageScale` (float): How much a hit on the part scales a shot's damage by. The default is 1; a head that takes double has 2.
+
+Put it on a layer of its own, which the entity's movement doesn't collide with and shots do. See [Hitboxes](shots.md#hitboxes).
+
+### ForgeHitboxes2D / ForgeHitboxes3D
+
+The hitboxes of an entity: every `ForgeHitbox2D` or `ForgeHitbox3D` under the entity's body, found as it gets ready, and the animators that pose them. Add it next to the entity's `ForgeEntity`.
+
+**Properties:**
+
+- `Animators` (NodePath array): The AnimationPlayer and AnimationTree nodes that pose the hitboxes.
+
+On the server, it records where each hitbox stands against the entity's body every tick, so a lag-compensated shot meets the hitboxes as the shooter's client showed them, with the body. The animators it names advance in physics ticks, and a Play Animation node plays them on a dedicated server too. See [Hitboxes](shots.md#hitboxes).
 
 ### ForgeWorldHistory
 

@@ -376,14 +376,60 @@ Reference in the `Executions` array in ForgeEffectData.
 - When making custom resource scripts, always use `[Tool]` and `[GlobalClass]` so they're visible in the Inspector.
 - All built-in resources are in the `Gamesmiths.Forge.Godot.Resources` namespace.
 
+## Shot Resources
+
+The [shots](shots.md) a graph's [shot nodes](statescript/nodes/shot-nodes.md) or `ForgeShots` fire. Each holds the effects it applies: every entity it hits gets them once, with the share of the shot's damage it had left as float context data.
+
+### ForgeHitscanData
+
+An instant shot: one ray, or pellets spread in a cone, that hits what is on its line at once.
+
+- `Range` (float): How far it reaches. The default is 100.
+- `CollisionMask` (layers): What it hits.
+- `Pellets` (int), `SpreadDegrees` (float): How many rays, spread over a cone of this half angle from the shooter's seeded random.
+- `Effects` (ForgeEffectData array): Applied to each entity a ray hits.
+- `HitsProjectiles` (bool): Whether it hits lightweight projectiles that can be shot, where its shooter saw them, ending them as struck.
+- `PierceMask` (layers), `MaxPierces` (int), `PierceScale` (float), `Power` (float): What it goes through. See [Going through things](shots.md#going-through-things).
+
+### ForgeProjectileData
+
+A lightweight projectile, which every machine flies from its launch.
+
+- `Name` (string), `Speed` (float), `Gravity` (Vector3; a 2D projectile uses X and Y), `Radius` (float), `Lifetime` (float): How it flies. Its radius is what it sweeps, and what a shot that hits projectiles aims at.
+- `CollisionMask` (layers): What it hits.
+- `Effects` (ForgeEffectData array): Applied to the entity it hits.
+- `Splash` (ForgeSplashData): The blast where it lands, or none.
+- `Shootable` (bool), `StruckSplash` (ForgeSplashData): Whether a shot can hit it in flight, and the blast where one does.
+- `PierceMask`, `MaxPierces`, `PierceScale`, `Power`: What it goes through, as a hitscan's.
+- `Scene`, `ImpactScene` (PackedScene): What's shown flying along its path, and where it hits or is struck. Only shown.
+
+A networked session finds it in the [network manifest](#forgenetworkmanifest).
+
+### ForgeSplashData
+
+A blast: effects and a push on every entity within a radius, scaled by distance.
+
+- `Radius` (float), `CollisionMask` (layers): Its reach.
+- `Falloff` (Curve), `EdgeScale` (float): The scale from the center (0) to the edge (1), or a linear fall to `EdgeScale` without a curve.
+- `Effects` (ForgeEffectData array): Applied to each entity it reaches.
+- `Knockback` (float), `KnockbackLift` (float): The push at the center, in units per second, and how much of it points up.
+- `AffectsInstigator` (bool), `InstigatorScale` (float): Whether it reaches the entity that caused it, as a rocket jump needs, and the share of the effects that one takes.
+- `BlockedByWalls` (bool): Whether a wall between the center and an entity shields it.
+
+### ForgeShotSurface
+
+How hard a collider is for a shot with power to go through, set as the collider's `forge_shot_surface` metadata.
+
+- `Resistance` (float): The power a shot loses per unit of thickness it crosses.
+
 ## Networking Resources
 
 ### ForgeNetworkManifest
 
-The assets a networked session can refer to, as resource UIDs: every effect, ability and Statescript graph in the project, and the scenes networked entities spawn from. A session builds its asset registry from it, so an index means the same asset on every machine, and the registry's hash is compared in the handshake: a client whose manifest differs is refused.
+The assets a networked session can refer to, as resource UIDs: every effect, ability, Statescript graph and lightweight projectile in the project, and the scenes networked entities spawn from. A session builds its asset registry from it, so an index means the same asset on every machine, and the registry's hash is compared in the handshake: a client whose manifest differs is refused.
 
 **Properties:**
 
-- `Effects`, `Abilities`, `Graphs`, `Scenes` (string arrays): The UIDs, sorted.
+- `Effects`, `Abilities`, `Graphs`, `Scenes`, `Projectiles` (string arrays): The UIDs, sorted.
 
-The editor plugin generates it at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings) whenever an effect, ability or graph is saved, and from **Project, Tools, Forge, Regenerate network manifest**. Commit it with the project; it's what makes the registry work in an export. A UID identifies a resource whatever its name or folder, so renaming or moving a file changes nothing on the wire. See [Networking](networking.md).
+The editor plugin generates it at `res://forge_network_manifest.tres` (the path is `forge/networking/manifest` in Project Settings) whenever an effect, ability, graph or projectile is saved, and from **Project, Tools, Forge, Regenerate network manifest**. Commit it with the project; it's what makes the registry work in an export. A UID identifies a resource whatever its name or folder, so renaming or moving a file changes nothing on the wire. See [Networking](networking.md).
