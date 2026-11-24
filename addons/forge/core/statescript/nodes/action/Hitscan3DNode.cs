@@ -100,7 +100,7 @@ public sealed class Hitscan3DNode : ActionNode
 		_hits.Clear();
 		var from = new Vector3(origin.X, origin.Y, origin.Z);
 		var along = new Vector3(aim.X, aim.Y, aim.Z);
-		ShotHit3D? stop = ForgeShots.Hitscan3D(instigator, from, along, data, _hits);
+		ShotHit3D? stop = ForgeShots3D.Hitscan(instigator, from, along, data, _hits);
 
 		Vector3 end = stop?.Position ?? (from + (along.Normalized() * data.Range));
 		Vector3 normal = stop?.Normal ?? Vector3.Zero;

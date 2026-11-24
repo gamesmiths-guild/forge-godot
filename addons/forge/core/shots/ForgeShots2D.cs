@@ -16,10 +16,19 @@ using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Gamesmiths.Forge.Godot.Core.Shots;
 
-/// <content>
-/// The 2D shots.
-/// </content>
-public static partial class ForgeShots
+/// <summary>
+/// 2D shots from code: hitscans, lightweight projectiles and blasts, as the Hitscan 2D, Launch Projectile 2D and Splash
+/// 2D nodes fire them.
+/// </summary>
+/// <remarks>
+/// <para>Fire them from an entity's tick, as an ability's behavior runs, so the server and the client that predicts the
+/// entity fire them alike: a <see cref="RollbackBehavior{TContext}"/>'s fixed update, or a graph's node. On the server,
+/// a client's shot meets the other entities where that client was shown them, and its blast too.</para>
+/// <para>A shot hits what is on its line in order, going through what its penetration lets it, and applies its effects
+/// once to each entity it hits, with the share of its strength it had left as float context data, scaled by a hitbox's
+/// <see cref="ForgeHitbox2D.StrengthScale"/> and by the shot's falloff at the distance from where it started.</para>
+/// </remarks>
+public static class ForgeShots2D
 {
 	private static readonly CircleShape2D _splashCircle = new();
 
@@ -34,7 +43,7 @@ public static partial class ForgeShots
 	/// <param name="hits">Where to add what each pellet hit, in order, or <see langword="null"/>.</param>
 	/// <returns>What the first pellet stopped on, or <see langword="null"/> if it reached the end of its range.
 	/// </returns>
-	public static ShotHit2D? Hitscan2D(
+	public static ShotHit2D? Hitscan(
 		ForgeEntity instigator,
 		Vector2 origin,
 		Vector2 aim,
@@ -43,12 +52,12 @@ public static partial class ForgeShots
 	{
 		int pellets = Math.Max(1, data.Pellets);
 		Span<NumericsVector2> directions = stackalloc NumericsVector2[pellets];
-		Spread2D(instigator, aim, data.SpreadDegrees, directions);
+		Spread(instigator, aim, data.SpreadDegrees, directions);
 
 		var pelletHits = new List<ShotHit2D>();
 		var applied = new HashSet<IForgeEntity>(ReferenceEqualityComparer.Instance);
 		ShotHit2D? first = null;
-		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
+		ForgeNetworkSession? session = ShotCommon.Compensate(instigator, 1, out bool opened);
 
 		try
 		{
@@ -56,7 +65,7 @@ public static partial class ForgeShots
 			{
 				pelletHits.Clear();
 				applied.Clear();
-				ShotHit2D? stop = Trace(
+				ShotHit2D? stop = Fire(
 					instigator,
 					origin,
 					new Vector2(directions[i].X, directions[i].Y),
@@ -82,7 +91,7 @@ public static partial class ForgeShots
 				{
 					if (hit.Entity is IForgeEntity entity && entity != instigator && applied.Add(entity))
 					{
-						Apply(data.Effects, entity, instigator, hit.Strength);
+						ShotCommon.Apply(data.Effects, entity, instigator, hit.Strength);
 					}
 				}
 
@@ -112,7 +121,7 @@ public static partial class ForgeShots
 	/// <param name="penetration">What it goes through.</param>
 	/// <param name="hitsProjectiles">Whether it hits projectiles that can be shot.</param>
 	/// <param name="hits">Where to add what it hit.</param>
-	public static void Trace2D(
+	public static void Trace(
 		ForgeEntity instigator,
 		Vector2 origin,
 		Vector2 direction,
@@ -122,11 +131,11 @@ public static partial class ForgeShots
 		bool hitsProjectiles,
 		List<ShotHit2D> hits)
 	{
-		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
+		ForgeNetworkSession? session = ShotCommon.Compensate(instigator, 1, out bool opened);
 
 		try
 		{
-			Trace(instigator, origin, direction, range, mask, penetration, hitsProjectiles, hits);
+			Fire(instigator, origin, direction, range, mask, penetration, hitsProjectiles, hits);
 		}
 		finally
 		{
@@ -144,7 +153,7 @@ public static partial class ForgeShots
 	/// <param name="aim">The aim.</param>
 	/// <param name="angleDegrees">The arc's half angle, in degrees.</param>
 	/// <param name="directions">Where to write the directions.</param>
-	public static void Spread2D(
+	public static void Spread(
 		ForgeEntity instigator,
 		Vector2 aim,
 		float angleDegrees,
@@ -168,7 +177,7 @@ public static partial class ForgeShots
 	/// <param name="speed">How fast, or <see langword="null"/> for the projectile's
 	/// <see cref="ForgeProjectileData.Speed"/>.</param>
 	/// <returns>The flight.</returns>
-	public static ProjectileFlight Launch2D(
+	public static ProjectileFlight Launch(
 		ForgeEntity instigator,
 		ForgeProjectileData data,
 		Vector2 origin,
@@ -189,18 +198,18 @@ public static partial class ForgeShots
 	/// <param name="center">Where it blasts.</param>
 	/// <param name="data">The blast.</param>
 	/// <param name="hits">Where to add the entities it reached, or <see langword="null"/>.</param>
-	public static void Splash2D(
+	public static void Splash(
 		ForgeEntity instigator,
 		Vector2 center,
 		ForgeSplashData data,
 		List<SplashHit2D>? hits = null)
 	{
-		if (WorldOf2D(instigator) is not World2D world)
+		if (WorldOf(instigator) is not World2D world)
 		{
 			return;
 		}
 
-		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
+		ForgeNetworkSession? session = ShotCommon.Compensate(instigator, 1, out bool opened);
 
 		try
 		{
@@ -226,7 +235,7 @@ public static partial class ForgeShots
 					continue;
 				}
 
-				Vector2 position = CenterOf2D(session, entity, body);
+				Vector2 position = CenterOf(session, entity, body);
 
 				if (data.BlockedByWalls
 					&& PhysicsQuery2D.TryCollectExclusions([entity], exclusions)
@@ -243,7 +252,7 @@ public static partial class ForgeShots
 				Vector2 push = ((away * (1 - data.KnockbackLift)) + (Vector2.Up * data.KnockbackLift)).Normalized()
 					* data.Knockback * scale;
 
-				Apply(data.Effects, entity, instigator, effectScale);
+				ShotCommon.Apply(data.Effects, entity, instigator, effectScale);
 
 				if (data.Knockback > 0 && entity is ForgeEntity { Mover: ForgeCharacterMovement2D movement })
 				{
@@ -262,14 +271,14 @@ public static partial class ForgeShots
 		}
 	}
 
-	internal static World2D? WorldOf2D(ForgeEntity entity)
+	internal static World2D? WorldOf(ForgeEntity entity)
 	{
 		return ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node) ? node.GetWorld2D() : null;
 	}
 
 	private static GodotOverlaps Overlaps(World2D world, PhysicsShapeQueryParameters2D query)
 	{
-		int max = MaxSplashResults;
+		int max = ShotCommon.MaxSplashResults;
 		GodotOverlaps overlaps = world.DirectSpaceState.IntersectShape(query, max);
 
 		while (overlaps.Count == max)
@@ -281,7 +290,7 @@ public static partial class ForgeShots
 		return overlaps;
 	}
 
-	private static ShotHit2D? Trace(
+	private static ShotHit2D? Fire(
 		ForgeEntity instigator,
 		Vector2 origin,
 		Vector2 direction,
@@ -291,7 +300,7 @@ public static partial class ForgeShots
 		bool hitsProjectiles,
 		List<ShotHit2D> hits)
 	{
-		if (WorldOf2D(instigator) is not World2D world || direction.IsZeroApprox())
+		if (WorldOf(instigator) is not World2D world || direction.IsZeroApprox())
 		{
 			return null;
 		}
@@ -312,7 +321,7 @@ public static partial class ForgeShots
 			ref pierces,
 			ref strength,
 			exclusions,
-			hitsProjectiles ? Targets2D(instigator) : null,
+			hitsProjectiles ? Targets(instigator) : null,
 			hits,
 			out ShotHit2D stop))
 		{
@@ -321,17 +330,18 @@ public static partial class ForgeShots
 
 		if (stop.Flight is ProjectileFlight struck)
 		{
-			Strike(struck, new NumericsVector3(stop.Position.X, stop.Position.Y, 0));
+			ShotCommon.Strike(struck, new NumericsVector3(stop.Position.X, stop.Position.Y, 0));
 		}
 
 		return stop;
 	}
 
-	private static List<ShotTrace2D.Target> Targets2D(ForgeEntity instigator)
+	private static List<ShotTrace2D.Target> Targets(ForgeEntity instigator)
 	{
 		var targets = new List<ShotTrace2D.Target>();
 
-		foreach ((EntityShots shots, ProjectileFlight flight, NumericsVector3 center) in Shootable(instigator))
+		foreach ((EntityShots shots, ProjectileFlight flight, NumericsVector3 center)
+			in ShotCommon.Shootable(instigator))
 		{
 			targets.Add(new ShotTrace2D.Target(shots, flight, center));
 		}
@@ -339,7 +349,7 @@ public static partial class ForgeShots
 		return targets;
 	}
 
-	private static Vector2 CenterOf2D(ForgeNetworkSession? session, IForgeEntity entity, Node2D body)
+	private static Vector2 CenterOf(ForgeNetworkSession? session, IForgeEntity entity, Node2D body)
 	{
 		Transform2D transform = body.GlobalTransform;
 

@@ -20,7 +20,7 @@ Each kind of shot is a resource: [`ForgeHitscanData`](resources.md#forgehitscand
 
 ## From code
 
-`ForgeShots`, in `Gamesmiths.Forge.Godot.Core.Shots`, fires them from a [`RollbackBehavior<TContext>`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#coded-behaviors), which a client predicts:
+`ForgeShots3D` and `ForgeShots2D`, in `Gamesmiths.Forge.Godot.Core.Shots`, fire them from a [`RollbackBehavior<TContext>`](https://github.com/gamesmiths-guild/forge/blob/main/docs/rollback.md#coded-behaviors), which a client predicts:
 
 ```csharp
 public sealed class RifleContext : BehaviorContext
@@ -38,7 +38,7 @@ public sealed class Rifle(ForgeHitscanData beam) : RollbackBehavior<RifleContext
         var body = (Node3D)owner.GetParent();
         System.Numerics.Vector3 aim = owner.Input!.Current.AimDirection;
 
-        ForgeShots.Hitscan3D(owner, body.GlobalPosition + Vector3.Up, new Vector3(aim.X, aim.Y, aim.Z), beam);
+        ForgeShots3D.Hitscan(owner, body.GlobalPosition + Vector3.Up, new Vector3(aim.X, aim.Y, aim.Z), beam);
     }
 
     public override void OnEnded(AbilityBehaviorContext context)
@@ -49,11 +49,11 @@ public sealed class Rifle(ForgeHitscanData beam) : RollbackBehavior<RifleContext
 
 | Method | Does |
 |---|---|
-| `Hitscan3D`, `Hitscan2D` | Fires the hitscan: spreads its pellets from the entity's seeded random, traces each, and applies its effects to each entity a pellet hits. Adds what each pellet hit, in order, to a list you pass, and gives what the first pellet stopped on, for a tracer. |
-| `Trace3D`, `Trace2D` | Traces one ray and applies nothing, for a shot that decides itself what its hits do. |
-| `Spread3D`, `Spread2D` | Spreads directions over a cone or an arc from the entity's seeded random. |
-| `Launch3D`, `Launch2D` | Launches a lightweight projectile in the entity's current tick. |
-| `Splash3D`, `Splash2D` | Blasts from a point. |
+| `Hitscan` | Fires the hitscan: spreads its pellets from the entity's seeded random, traces each, and applies its effects to each entity a pellet hits. Adds what each pellet hit, in order, to a list you pass, and gives what the first pellet stopped on, for a tracer. |
+| `Trace` | Traces one ray and applies nothing, for a shot that decides itself what its hits do. |
+| `Spread` | Spreads directions over a cone or an arc from the entity's seeded random. |
+| `Launch` | Launches a lightweight projectile in the entity's current tick. |
+| `Splash` | Blasts from a point. |
 
 A `ShotHit3D` or `ShotHit2D` says where the shot hit, the collider and the entity, the [hitbox](#hitboxes) if it was one, the share of strength it had left times a hitbox's `Strength Scale` and the shot's [falloff](#falloff) (`Strength`), and the projectile if it hit one in flight. A `SplashHit3D` or `SplashHit2D` says how far the entity was, the strength it got and the push it gave it, which a body without a character movement doesn't take.
 

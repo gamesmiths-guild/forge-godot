@@ -502,7 +502,7 @@ public class ForgeNetworkSessionTests
 		await Pair.RunUntil(() => false, frames: 5);
 
 		ForgeProjectileData ball = ResourceLoader.Load<ForgeProjectileData>(Ball);
-		ProjectileFlight launched = ForgeShots.Launch3D(entity, ball, new Vector3(1, 2, 3), Vector3.Forward);
+		ProjectileFlight launched = ForgeShots3D.Launch(entity, ball, new Vector3(1, 2, 3), Vector3.Forward);
 		await Pair.RunUntil(() => mirror.Shots.Flights.Count > 0, frames: 120);
 
 		ProjectileFlight shown = mirror.Shots.Flights.Should().ContainSingle().Subject;

@@ -378,7 +378,7 @@ Reference in the `Executions` array in ForgeEffectData.
 
 ## Shot Resources
 
-The [shots](shots.md) a graph's [shot nodes](statescript/nodes/shot-nodes.md) or `ForgeShots` fire. Each holds the effects it applies: every entity it hits gets them once, with the share of the shot's strength it had left as float context data.
+The [shots](shots.md) a graph's [shot nodes](statescript/nodes/shot-nodes.md) or `ForgeShots3D` and `ForgeShots2D` fire. Each holds the effects it applies: every entity it hits gets them once, with the share of the shot's strength it had left as float context data.
 
 ### ForgeHitscanData
 

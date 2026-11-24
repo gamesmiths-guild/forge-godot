@@ -16,9 +16,9 @@ using Godot;
 namespace Gamesmiths.Forge.Godot.Tests.Nodes;
 
 /// <summary>
-/// Shots from <see cref="ForgeShots"/>, offline, in 3D and 2D: hitscans that go through what their penetration lets
-/// them and hit hitboxes, lightweight projectiles that fly from their entity's ticks and blast where they land, and
-/// shots that hit those projectiles.
+/// Shots from <see cref="ForgeShots3D"/> and <see cref="ForgeShots2D"/>, offline: hitscans that go through what their
+/// penetration lets them and hit hitboxes, lightweight projectiles that fly from their entity's ticks and blast where
+/// they land, and shots that hit those projectiles.
 /// </summary>
 [TestSuite]
 public class ForgeShotsTests
@@ -47,7 +47,7 @@ public class ForgeShotsTests
 			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
 
 			var hits = new List<ShotHit3D>();
-			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 20), hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 20), hits);
 
 			hits.Select(x => (Node?)x.Collider).Should().Equal(crate, target.GetParent());
 			hits[1].Strength.Should().BeApproximately(0.5f, 0.01f, "the crate's metre cost half of the shot's power");
@@ -56,7 +56,7 @@ public class ForgeShotsTests
 
 			crate.RemoveMeta(ForgeShotSurface.MetaName);
 			hits.Clear();
-			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 20), hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 20), hits);
 
 			hits.Should().ContainSingle().Which.Collider.Should().Be(crate, "a wall has no surface to go through");
 			target.EffectsManager.GetActiveEffects().Should().ContainSingle();
@@ -89,7 +89,7 @@ public class ForgeShotsTests
 			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
 
 			var hits = new List<ShotHit3D>();
-			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 100), hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 100), hits);
 
 			hits.Select(x => x.Entity)
 				.Should().Contain(target, "the boxes past its range don't hide the crate's far side");
@@ -117,7 +117,7 @@ public class ForgeShotsTests
 
 			ForgeHitscanData data = Hitscan(pierceMask: CrateLayer, maxPierces: 2);
 			var hits = new List<ShotHit3D>();
-			ShotHit3D? stop = ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
+			ShotHit3D? stop = ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
 
 			hits.Should().HaveCount(3);
 			hits[2].Entity.Should().BeSameAs(target);
@@ -126,7 +126,7 @@ public class ForgeShotsTests
 
 			data.MaxPierces = 1;
 			hits.Clear();
-			stop = ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
+			stop = ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
 
 			hits.Should().HaveCount(2, "the second crate is one more than it may go through");
 			stop!.Value.Collider.Should().Be(hits[1].Collider);
@@ -152,7 +152,7 @@ public class ForgeShotsTests
 			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
 
 			var hits = new List<ShotHit3D>();
-			ForgeShots.Hitscan3D(
+			ForgeShots3D.Hitscan(
 				shooter,
 				new Vector3(0, 2.4f, 0),
 				Vector3.Forward,
@@ -191,8 +191,8 @@ public class ForgeShotsTests
 			data.Falloff = falloff;
 
 			var hits = new List<ShotHit3D>();
-			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
-			ForgeShots.Hitscan3D(shooter, new Vector3(5, 1, 0), Vector3.Forward, data, hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(5, 1, 0), Vector3.Forward, data, hits);
 
 			hits.Select(x => x.Entity).Should().Equal(near, far);
 			hits[0].Strength.Should().BeApproximately(0.7625f, 0.01f, "a quarter of the way down at 9.5 units");
@@ -218,11 +218,11 @@ public class ForgeShotsTests
 
 			shooter.Random.BeginTick(7);
 			var first = new System.Numerics.Vector3[8];
-			ForgeShots.Spread3D(shooter, Vector3.Forward, 5, first);
+			ForgeShots3D.Spread(shooter, Vector3.Forward, 5, first);
 
 			shooter.Random.BeginTick(7);
 			var second = new System.Numerics.Vector3[8];
-			ForgeShots.Spread3D(shooter, Vector3.Forward, 5, second);
+			ForgeShots3D.Spread(shooter, Vector3.Forward, 5, second);
 
 			second.Should().Equal(first);
 			first.Distinct().Should().HaveCount(8);
@@ -251,7 +251,7 @@ public class ForgeShotsTests
 			rocket.Splash = Splash(radius: 3);
 
 			EntitySimulation.BeginTick(shooter, 100);
-			ProjectileFlight flight = ForgeShots.Launch3D(shooter, rocket, new Vector3(0, 1, 0), Vector3.Forward);
+			ProjectileFlight flight = ForgeShots3D.Launch(shooter, rocket, new Vector3(0, 1, 0), Vector3.Forward);
 
 			for (long tick = 101; tick < 140 && shooter.Shots.Flights[0].IsFlying; tick++)
 			{
@@ -291,8 +291,8 @@ public class ForgeShotsTests
 			bolt.Power = 20;
 
 			EntitySimulation.BeginTick(shooter, 100);
-			ProjectileFlight stopped = ForgeShots.Launch3D(shooter, bolt, new Vector3(0, 1, 0), Vector3.Forward);
-			ProjectileFlight through = ForgeShots.Launch3D(shooter, bolt, new Vector3(10, 1, 0), Vector3.Forward);
+			ProjectileFlight stopped = ForgeShots3D.Launch(shooter, bolt, new Vector3(0, 1, 0), Vector3.Forward);
+			ProjectileFlight through = ForgeShots3D.Launch(shooter, bolt, new Vector3(10, 1, 0), Vector3.Forward);
 
 			for (long tick = 101; tick <= 160; tick++)
 			{
@@ -376,13 +376,13 @@ public class ForgeShotsTests
 
 			long tick = Core.ForgeManagers.Instance.Clock.Tick;
 			EntitySimulation.BeginTick(stranger, tick - 5);
-			ForgeShots.Launch3D(stranger, ball, new Vector3(0, 1, -3), Vector3.Right);
+			ForgeShots3D.Launch(stranger, ball, new Vector3(0, 1, -3), Vector3.Right);
 
 			EntitySimulation.BeginTick(shooter, tick);
 			ForgeHitscanData beam = Hitscan();
 			beam.HitsProjectiles = true;
 			var hits = new List<ShotHit3D>();
-			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, beam, hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, beam, hits);
 
 			hits.Should().BeEmpty("the ball flies in another world");
 			stranger.Shots.Flights.Single().IsFlying.Should().BeTrue();
@@ -410,7 +410,7 @@ public class ForgeShotsTests
 			ForgeSplashData blast = Splash(radius: 3);
 			blast.Knockback = 12;
 			var hits = new List<SplashHit3D>();
-			ForgeShots.Splash3D(shooter, new Vector3(0.5f, 0.05f, 0), blast, hits);
+			ForgeShots3D.Splash(shooter, new Vector3(0.5f, 0.05f, 0), blast, hits);
 
 			SplashHit3D hit = hits.Should().ContainSingle().Subject;
 			hit.Strength.Should().BeLessThan(blast.ScaleAt(hit.Distance), "the shooter takes its own share");
@@ -444,7 +444,7 @@ public class ForgeShotsTests
 			// The entity's own tick, apart from the clock's, as a replay runs it.
 			long tick = Core.ForgeManagers.Instance.Clock.Tick + 500;
 			EntitySimulation.BeginTick(shooter, tick - 20);
-			ProjectileFlight flight = ForgeShots.Launch3D(shooter, ball, new Vector3(0, 1, 0), Vector3.Forward);
+			ProjectileFlight flight = ForgeShots3D.Launch(shooter, ball, new Vector3(0, 1, 0), Vector3.Forward);
 
 			for (long t = tick - 19; t < tick; t++)
 			{
@@ -455,7 +455,7 @@ public class ForgeShotsTests
 			ForgeHitscanData beam = Hitscan();
 			beam.HitsProjectiles = true;
 			var hits = new List<ShotHit3D>();
-			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, beam, hits);
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, beam, hits);
 
 			hits.Should().ContainSingle().Which.Flight!.Value.Id.Should().Be(flight.Id);
 			shooter.Shots.Flights.Single().End.Should().Be(FlightEnd.Struck);
@@ -485,7 +485,7 @@ public class ForgeShotsTests
 			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
 
 			var hits = new List<ShotHit2D>();
-			ForgeShots.Hitscan2D(shooter, Vector2.Zero, Vector2.Right, Hitscan(power: 40, range: 500), hits);
+			ForgeShots2D.Hitscan(shooter, Vector2.Zero, Vector2.Right, Hitscan(power: 40, range: 500), hits);
 
 			hits.Select(x => (Node?)x.Collider).Should().Equal(crate, target.GetParent());
 			hits[1].Strength.Should().BeApproximately(0.75f, 0.01f);
@@ -494,7 +494,7 @@ public class ForgeShotsTests
 			ball.CollisionMask = WorldLayer;
 			ball.Radius = 2;
 			EntitySimulation.BeginTick(shooter, 10);
-			ForgeShots.Launch2D(shooter, ball, Vector2.Zero, Vector2.Right);
+			ForgeShots2D.Launch(shooter, ball, Vector2.Zero, Vector2.Right);
 
 			for (long tick = 11; tick < 30; tick++)
 			{

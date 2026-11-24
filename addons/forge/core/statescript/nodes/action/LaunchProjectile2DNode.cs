@@ -70,7 +70,7 @@ public sealed class LaunchProjectile2DNode : ActionNode
 
 		double? speed = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName);
 
-		ForgeShots.Launch2D(
+		ForgeShots2D.Launch(
 			instigator,
 			data,
 			new Vector2(origin.X, origin.Y),

@@ -64,7 +64,7 @@ public sealed class Splash3DNode : ActionNode
 
 		_hits.Clear();
 		var at = new Vector3(center.X, center.Y, center.Z);
-		ForgeShots.Splash3D(instigator, at, data, _hits);
+		ForgeShots3D.Splash(instigator, at, data, _hits);
 		ShotNodeIO.Write(graphContext, OutputVariables[HitsOutput], _hits.Count);
 		PhysicsDebugDraw3D.FlashPoint(graphContext, at, PhysicsDebugDraw3D.OverlapFoundColor);
 	}

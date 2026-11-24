@@ -3,11 +3,9 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
-using Gamesmiths.Forge.Effects;
 using Gamesmiths.Forge.Godot.Core.Statescript.Physics;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
-using Gamesmiths.Forge.Networking;
 using Gamesmiths.Forge.Shots;
 using Godot;
 using Godot.Collections;
@@ -18,7 +16,7 @@ using NumericsVector3 = System.Numerics.Vector3;
 namespace Gamesmiths.Forge.Godot.Core.Shots;
 
 /// <summary>
-/// Shots from code: hitscans, lightweight projectiles and blasts, as the Hitscan, Launch Projectile and Splash nodes
+/// 3D shots from code: hitscans, lightweight projectiles and blasts, as the Hitscan, Launch Projectile and Splash nodes
 /// fire them.
 /// </summary>
 /// <remarks>
@@ -29,10 +27,8 @@ namespace Gamesmiths.Forge.Godot.Core.Shots;
 /// once to each entity it hits, with the share of its strength it had left as float context data, scaled by a hitbox's
 /// <see cref="ForgeHitbox3D.StrengthScale"/> and by the shot's falloff at the distance from where it started.</para>
 /// </remarks>
-public static partial class ForgeShots
+public static class ForgeShots3D
 {
-	private const int MaxSplashResults = 64;
-
 	private static readonly SphereShape3D _splashSphere = new();
 
 	/// <summary>
@@ -46,7 +42,7 @@ public static partial class ForgeShots
 	/// <param name="hits">Where to add what each pellet hit, in order, or <see langword="null"/>.</param>
 	/// <returns>What the first pellet stopped on, or <see langword="null"/> if it reached the end of its range.
 	/// </returns>
-	public static ShotHit3D? Hitscan3D(
+	public static ShotHit3D? Hitscan(
 		ForgeEntity instigator,
 		Vector3 origin,
 		Vector3 aim,
@@ -55,12 +51,12 @@ public static partial class ForgeShots
 	{
 		int pellets = Math.Max(1, data.Pellets);
 		Span<NumericsVector3> directions = stackalloc NumericsVector3[pellets];
-		Spread3D(instigator, aim, data.SpreadDegrees, directions);
+		Spread(instigator, aim, data.SpreadDegrees, directions);
 
 		var pelletHits = new List<ShotHit3D>();
 		var applied = new HashSet<IForgeEntity>(ReferenceEqualityComparer.Instance);
 		ShotHit3D? first = null;
-		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
+		ForgeNetworkSession? session = ShotCommon.Compensate(instigator, 1, out bool opened);
 
 		try
 		{
@@ -68,10 +64,10 @@ public static partial class ForgeShots
 			{
 				pelletHits.Clear();
 				applied.Clear();
-				ShotHit3D? stop = Trace(
+				ShotHit3D? stop = Fire(
 					instigator,
 					origin,
-					ToGodot(directions[i]),
+					ShotCommon.ToGodot(directions[i]),
 					data.Range,
 					data.CollisionMask,
 					data.Penetration,
@@ -94,7 +90,7 @@ public static partial class ForgeShots
 				{
 					if (hit.Entity is IForgeEntity entity && entity != instigator && applied.Add(entity))
 					{
-						Apply(data.Effects, entity, instigator, hit.Strength);
+						ShotCommon.Apply(data.Effects, entity, instigator, hit.Strength);
 					}
 				}
 
@@ -124,7 +120,7 @@ public static partial class ForgeShots
 	/// <param name="penetration">What it goes through.</param>
 	/// <param name="hitsProjectiles">Whether it hits projectiles that can be shot.</param>
 	/// <param name="hits">Where to add what it hit.</param>
-	public static void Trace3D(
+	public static void Trace(
 		ForgeEntity instigator,
 		Vector3 origin,
 		Vector3 direction,
@@ -134,11 +130,11 @@ public static partial class ForgeShots
 		bool hitsProjectiles,
 		List<ShotHit3D> hits)
 	{
-		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
+		ForgeNetworkSession? session = ShotCommon.Compensate(instigator, 1, out bool opened);
 
 		try
 		{
-			Trace(instigator, origin, direction, range, mask, penetration, hitsProjectiles, hits);
+			Fire(instigator, origin, direction, range, mask, penetration, hitsProjectiles, hits);
 		}
 		finally
 		{
@@ -157,7 +153,7 @@ public static partial class ForgeShots
 	/// <param name="aim">The aim.</param>
 	/// <param name="angleDegrees">The cone's half angle, in degrees.</param>
 	/// <param name="directions">Where to write the directions.</param>
-	public static void Spread3D(
+	public static void Spread(
 		ForgeEntity instigator,
 		Vector3 aim,
 		float angleDegrees,
@@ -181,7 +177,7 @@ public static partial class ForgeShots
 	/// <param name="speed">How fast, or <see langword="null"/> for the projectile's
 	/// <see cref="ForgeProjectileData.Speed"/>.</param>
 	/// <returns>The flight.</returns>
-	public static ProjectileFlight Launch3D(
+	public static ProjectileFlight Launch(
 		ForgeEntity instigator,
 		ForgeProjectileData data,
 		Vector3 origin,
@@ -202,7 +198,7 @@ public static partial class ForgeShots
 	/// <param name="center">Where it blasts.</param>
 	/// <param name="data">The blast.</param>
 	/// <param name="hits">Where to add the entities it reached, or <see langword="null"/>.</param>
-	public static void Splash3D(
+	public static void Splash(
 		ForgeEntity instigator,
 		Vector3 center,
 		ForgeSplashData data,
@@ -213,7 +209,7 @@ public static partial class ForgeShots
 			return;
 		}
 
-		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
+		ForgeNetworkSession? session = ShotCommon.Compensate(instigator, 1, out bool opened);
 
 		try
 		{
@@ -256,7 +252,7 @@ public static partial class ForgeShots
 				Vector3 push = ((away * (1 - data.KnockbackLift)) + (Vector3.Up * data.KnockbackLift)).Normalized()
 					* data.Knockback * scale;
 
-				Apply(data.Effects, entity, instigator, effectScale);
+				ShotCommon.Apply(data.Effects, entity, instigator, effectScale);
 
 				if (data.Knockback > 0 && entity is ForgeEntity { Mover: ForgeCharacterMovement3D movement })
 				{
@@ -275,42 +271,15 @@ public static partial class ForgeShots
 		}
 	}
 
-	internal static void Apply(
-		Array<ForgeEffectData> effects,
-		IForgeEntity target,
-		IForgeEntity instigator,
-		float scale)
-	{
-		foreach (ForgeEffectData data in effects)
-		{
-			target.EffectsManager.ApplyEffect(
-				new Effect(data.GetEffectData(), new EffectOwnership(instigator, instigator)),
-				scale);
-		}
-	}
-
-	// The compensation for what an entity does now, opened unless one is open already.
-	internal static ForgeNetworkSession? Compensate(ForgeEntity instigator, double remaining, out bool opened)
-	{
-		ForgeNetworkSession? session = instigator.Replicator ?? ForgeNetworkSession.Of(instigator);
-		opened = session?.BeginActionOf(instigator, remaining) == true;
-		return session;
-	}
-
 	internal static World3D? WorldOf(ForgeEntity entity)
 	{
 		return ForgeEntityBridge.TryGetSpatialNode3D(entity, out Node3D? node) ? node.GetWorld3D() : null;
 	}
 
-	internal static Vector3 ToGodot(NumericsVector3 value)
-	{
-		return new Vector3(value.X, value.Y, value.Z);
-	}
-
 	// Every shape a blast reaches, however many: a full result asks again for more.
 	private static Array<GodotDictionary> Overlaps(World3D world, PhysicsShapeQueryParameters3D query)
 	{
-		int max = MaxSplashResults;
+		int max = ShotCommon.MaxSplashResults;
 		Array<GodotDictionary> overlaps = world.DirectSpaceState.IntersectShape(query, max);
 
 		while (overlaps.Count == max)
@@ -323,7 +292,7 @@ public static partial class ForgeShots
 	}
 
 	// Gives what the shot stopped on, if anything.
-	private static ShotHit3D? Trace(
+	private static ShotHit3D? Fire(
 		ForgeEntity instigator,
 		Vector3 origin,
 		Vector3 direction,
@@ -363,76 +332,23 @@ public static partial class ForgeShots
 
 		if (stop.Flight is ProjectileFlight struck)
 		{
-			Strike(struck, new NumericsVector3(stop.Position.X, stop.Position.Y, stop.Position.Z));
+			ShotCommon.Strike(struck, new NumericsVector3(stop.Position.X, stop.Position.Y, stop.Position.Z));
 		}
 
 		return stop;
-	}
-
-	// The projectiles a shot can hit, where its shooter saw them: its own where its last tick left them, the others'
-	// where its player was shown them.
-	private static IEnumerable<(EntityShots Shots, ProjectileFlight Flight, NumericsVector3 Center)> Shootable(
-		ForgeEntity instigator)
-	{
-		ForgeNetworkSession? session = instigator.Replicator ?? ForgeNetworkSession.Of(instigator);
-		SimulationClock clock = ForgeManagers.Instance.Clock;
-		long now = EntitySimulation.TickOf(instigator);
-		double shown = session?.ShownTick() ?? (now - 1);
-		World3D? world = WorldOf(instigator);
-		World2D? world2D = WorldOf2D(instigator);
-
-		foreach (Node node in instigator.GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
-		{
-			if (node is not ForgeEntity entity || WorldOf(entity) != world || WorldOf2D(entity) != world2D)
-			{
-				continue;
-			}
-
-			double tick = entity == instigator ? now - 1 : shown;
-
-			foreach (ProjectileFlight flight in entity.Shots.Flights)
-			{
-				if (flight.Projectile.Shootable && flight.FliesAt(tick))
-				{
-					yield return (entity.Shots, flight, flight.PositionAt(tick, clock.FixedDeltaTime));
-				}
-			}
-		}
 	}
 
 	private static List<ShotTrace3D.Target> Targets(ForgeEntity instigator)
 	{
 		var targets = new List<ShotTrace3D.Target>();
 
-		foreach ((EntityShots shots, ProjectileFlight flight, NumericsVector3 center) in Shootable(instigator))
+		foreach ((EntityShots shots, ProjectileFlight flight, NumericsVector3 center)
+			in ShotCommon.Shootable(instigator))
 		{
 			targets.Add(new ShotTrace3D.Target(shots, flight, center));
 		}
 
 		return targets;
-	}
-
-	// A shot hit a projectile: it ends, struck, where it was, and blasts its struck splash. On a client, only its own
-	// entity's projectiles end: another's are the server's.
-	private static void Strike(in ProjectileFlight flight, NumericsVector3 point)
-	{
-		if (flight.Instigator is not ForgeEntity owner || !owner.Shots.End(flight.Id, FlightEnd.Struck, point))
-		{
-			return;
-		}
-
-		if (ForgeProjectileData.Of(flight.Projectile)?.StruckSplash is not ForgeSplashData splash)
-		{
-			return;
-		}
-
-		if (WorldOf2D(owner) is not null)
-		{
-			Splash2D(owner, new Vector2(point.X, point.Y), splash);
-			return;
-		}
-
-		Splash3D(owner, ToGodot(point), splash);
 	}
 
 	// The center of an entity's body where the open compensation put it: its first collision shape's place on the body.
@@ -445,7 +361,7 @@ public static partial class ForgeShots
 			var rotation = new Quaternion(shown.Rotation.X, shown.Rotation.Y, shown.Rotation.Z, shown.Rotation.W);
 			transform = new Transform3D(
 				new Basis(rotation.Normalized()) * Basis.FromScale(transform.Basis.Scale),
-				ToGodot(shown.Position));
+				ShotCommon.ToGodot(shown.Position));
 		}
 
 		foreach (Node child in body.GetChildren())

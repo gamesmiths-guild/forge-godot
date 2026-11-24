@@ -27,7 +27,7 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 	public ShotStep Fly(in ProjectileFlight flight, NumericsVector3 start, NumericsVector3 finish)
 	{
 		if (ForgeProjectileData.Of(flight.Projectile) is not ForgeProjectileData data
-			|| ForgeShots.WorldOf2D(entity) is not World2D world)
+			|| ForgeShots2D.WorldOf(entity) is not World2D world)
 		{
 			return ShotStep.Flying;
 		}
@@ -35,7 +35,7 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 		double fade = entity.CompensationFadeMs < 0 ? double.PositiveInfinity : entity.CompensationFadeMs / 1000.0;
 		double flown = (EntitySimulation.TickOf(entity) - flight.Tick) * ForgeManagers.Instance.Clock.FixedDeltaTime;
 		ForgeNetworkSession? session =
-			ForgeShots.Compensate(entity, LagCompensation.Remaining(flown, fade), out bool opened);
+			ShotCommon.Compensate(entity, LagCompensation.Remaining(flown, fade), out bool opened);
 
 		try
 		{
@@ -46,7 +46,7 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 			float strength = flight.Strength;
 			var from = new Vector2(start.X, start.Y);
 			Vector2 motion = new Vector2(finish.X, finish.Y) - from;
-			float reach = Mathf.Max(motion.Length(), ShotHost3D.Left(flight, start));
+			float reach = Mathf.Max(motion.Length(), ShotCommon.Left(flight, start));
 
 			bool stopped = ShotTrace2D.Trace(
 				world,
@@ -69,7 +69,7 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 				{
 					var at = new NumericsVector3(hit.Position.X, hit.Position.Y, 0);
 					float falloff = data.FalloffAt(NumericsVector3.Distance(flight.Origin, at));
-					ForgeShots.Apply(data.Effects, target, entity, hit.Strength * falloff);
+					ShotCommon.Apply(data.Effects, target, entity, hit.Strength * falloff);
 				}
 			}
 
@@ -81,7 +81,7 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 			if (data.Splash is ForgeSplashData splash)
 			{
 				// Off the surface, so the surface it hit doesn't shield what's around it.
-				ForgeShots.Splash2D(entity, stop.Position + (stop.Normal * Mathf.Max(data.Radius, SplashLift)), splash);
+				ForgeShots2D.Splash(entity, stop.Position + (stop.Normal * Mathf.Max(data.Radius, SplashLift)), splash);
 			}
 
 			return ShotStep.Impact(

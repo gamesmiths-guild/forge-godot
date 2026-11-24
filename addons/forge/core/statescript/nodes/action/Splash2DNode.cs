@@ -64,7 +64,7 @@ public sealed class Splash2DNode : ActionNode
 
 		_hits.Clear();
 		var at = new Vector2(center.X, center.Y);
-		ForgeShots.Splash2D(instigator, at, data, _hits);
+		ForgeShots2D.Splash(instigator, at, data, _hits);
 		ShotNodeIO.Write(graphContext, OutputVariables[HitsOutput], _hits.Count);
 		PhysicsDebugDraw2D.FlashPoint(graphContext, at, PhysicsDebugDraw2D.OverlapFoundColor);
 	}

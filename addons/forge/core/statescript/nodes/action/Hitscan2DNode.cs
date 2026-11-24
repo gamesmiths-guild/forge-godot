@@ -100,7 +100,7 @@ public sealed class Hitscan2DNode : ActionNode
 		_hits.Clear();
 		var from = new Vector2(origin.X, origin.Y);
 		var along = new Vector2(aim.X, aim.Y);
-		ShotHit2D? stop = ForgeShots.Hitscan2D(instigator, from, along, data, _hits);
+		ShotHit2D? stop = ForgeShots2D.Hitscan(instigator, from, along, data, _hits);
 
 		Vector2 end = stop?.Position ?? (from + (along.Normalized() * data.Range));
 		Vector2 normal = stop?.Normal ?? Vector2.Zero;

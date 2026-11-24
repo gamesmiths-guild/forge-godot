@@ -27,7 +27,7 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 	public ShotStep Fly(in ProjectileFlight flight, NumericsVector3 start, NumericsVector3 finish)
 	{
 		if (ForgeProjectileData.Of(flight.Projectile) is not ForgeProjectileData data
-			|| ForgeShots.WorldOf(entity) is not World3D world)
+			|| ForgeShots3D.WorldOf(entity) is not World3D world)
 		{
 			return ShotStep.Flying;
 		}
@@ -35,7 +35,7 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 		double fade = entity.CompensationFadeMs < 0 ? double.PositiveInfinity : entity.CompensationFadeMs / 1000.0;
 		double flown = (EntitySimulation.TickOf(entity) - flight.Tick) * ForgeManagers.Instance.Clock.FixedDeltaTime;
 		ForgeNetworkSession? session =
-			ForgeShots.Compensate(entity, LagCompensation.Remaining(flown, fade), out bool opened);
+			ShotCommon.Compensate(entity, LagCompensation.Remaining(flown, fade), out bool opened);
 
 		try
 		{
@@ -44,9 +44,9 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 			PhysicsQuery3D.TryCollectExclusions([entity], _exclusions);
 			int pierces = flight.Pierces;
 			float strength = flight.Strength;
-			Vector3 from = ForgeShots.ToGodot(start);
-			Vector3 motion = ForgeShots.ToGodot(finish) - from;
-			float reach = Mathf.Max(motion.Length(), Left(flight, start));
+			Vector3 from = ShotCommon.ToGodot(start);
+			Vector3 motion = ShotCommon.ToGodot(finish) - from;
+			float reach = Mathf.Max(motion.Length(), ShotCommon.Left(flight, start));
 
 			bool stopped = ShotTrace3D.Trace(
 				world,
@@ -69,7 +69,7 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 				{
 					var at = new NumericsVector3(hit.Position.X, hit.Position.Y, hit.Position.Z);
 					float falloff = data.FalloffAt(NumericsVector3.Distance(flight.Origin, at));
-					ForgeShots.Apply(data.Effects, target, entity, hit.Strength * falloff);
+					ShotCommon.Apply(data.Effects, target, entity, hit.Strength * falloff);
 				}
 			}
 
@@ -81,7 +81,7 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 			if (data.Splash is ForgeSplashData splash)
 			{
 				// Off the surface, so the surface it hit doesn't shield what's around it.
-				ForgeShots.Splash3D(entity, stop.Position + (stop.Normal * Mathf.Max(data.Radius, SplashLift)), splash);
+				ForgeShots3D.Splash(entity, stop.Position + (stop.Normal * Mathf.Max(data.Radius, SplashLift)), splash);
 			}
 
 			return ShotStep.Impact(
@@ -110,12 +110,5 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 	public void Hide(in ProjectileFlight flight)
 	{
 		ShotVisuals.Of(entity)?.Hide(flight);
-	}
-
-	// How far a projectile flies on from a point to the end of its lifetime, near enough: its path less what it flew.
-	internal static float Left(in ProjectileFlight flight, NumericsVector3 from)
-	{
-		float path = flight.Velocity.Length() * (float)flight.Projectile.Lifetime;
-		return path - NumericsVector3.Distance(flight.Origin, from);
 	}
 }

@@ -12,11 +12,11 @@ namespace Gamesmiths.Forge.Godot.Resources;
 /// sent while it flies.
 /// </summary>
 /// <remarks>
-/// <para>Launch one from a graph's Launch Projectile node or from code (<see cref="Core.Shots.ForgeShots"/>). The
-/// entity that launches it flies it in its ticks: the server, and the client that predicts the entity, test each tick's
-/// stretch of its path against <see cref="CollisionMask"/>, apply <see cref="Effects"/> to the entity it meets, and
-/// blast <see cref="Splash"/> where it ends. Every other client is sent the launch, flies <see cref="Scene"/> along the
-/// same path, and is sent where it ended.</para>
+/// <para>Launch one from a graph's Launch Projectile node or from code (<see cref="Core.Shots.ForgeShots3D"/> or
+/// <see cref="Core.Shots.ForgeShots2D"/>). The entity that launches it flies it in its ticks: the server, and the
+/// client that predicts the entity, test each tick's stretch of its path against <see cref="CollisionMask"/>, apply
+/// <see cref="Effects"/> to the entity it meets, and blast <see cref="Splash"/> where it ends. Every other client is
+/// sent the launch, flies <see cref="Scene"/> along the same path, and is sent where it ended.</para>
 /// <para>It goes through colliders as a hitscan's ray does: see <see cref="PierceMask"/> and <see cref="Power"/>.
 /// </para>
 /// <para>A networked session finds it in the network manifest, as it does effects.</para>
@@ -73,9 +73,9 @@ public partial class ForgeProjectileData : Resource
 	public Array<ForgeEffectData> Effects { get; set; } = [];
 
 	/// <summary>
-	/// Gets or sets how the strength its effects get falls off with distance from where it was launched to where it hits:
-	/// sampled at the distance, in units over the curve's domain, holding its last value past the end. Without one,
-	/// distance changes nothing.
+	/// Gets or sets how the strength its effects get falls off with distance from where it was launched to where it
+	/// hits: sampled at the distance, in units over the curve's domain, holding its last value past the end. Without
+	/// one, distance changes nothing.
 	/// </summary>
 	[Export]
 	public Curve? Falloff { get; set; }
