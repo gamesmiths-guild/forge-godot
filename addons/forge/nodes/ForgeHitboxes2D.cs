@@ -143,6 +143,11 @@ public partial class ForgeHitboxes2D : Node
 
 		for (int i = 0; i < _hitboxes.Count; i++)
 		{
+			if (!IsInstanceValid(_hitboxes[i]))
+			{
+				continue;
+			}
+
 			_history[slot][i] = toBody * _hitboxes[i].GlobalTransform;
 		}
 

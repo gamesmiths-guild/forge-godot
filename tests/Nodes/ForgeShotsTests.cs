@@ -179,6 +179,35 @@ public class ForgeShotsTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_freed_hitbox_is_skipped_and_the_others_still_record()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			ForgeEntity target = AddEntity3D(world, Vector3.Zero);
+			var chest = new ForgeHitbox3D { Position = new Vector3(0, 1.4f, 0), CollisionLayer = HitboxLayer };
+			chest.AddChild(new CollisionShape3D { Shape = new SphereShape3D { Radius = 0.4f } });
+			target.GetParent().AddChild(chest);
+			ForgeHitbox3D head = AddHead3D(target);
+			ForgeHitboxes3D hitboxes = target.GetParent().GetChildren().OfType<ForgeHitboxes3D>().Single();
+			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+
+			head.Free();
+			hitboxes.Record(7);
+
+			hitboxes.TryLocalAt(0, 7, out Transform3D local).Should().BeTrue();
+			local.Origin.IsEqualApprox(new Vector3(0, 1.4f, 0)).Should().BeTrue();
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_shot_s_falloff_scales_its_strength_by_the_distance_in_units()
 	{
 		var world = new Node3D();
