@@ -73,6 +73,14 @@ public partial class ForgeProjectileData : Resource
 	public Array<ForgeEffectData> Effects { get; set; } = [];
 
 	/// <summary>
+	/// Gets or sets how the strength its effects get falls off with distance from where it was launched to where it hits:
+	/// sampled at the distance, in units over the curve's domain, holding its last value past the end. Without one,
+	/// distance changes nothing.
+	/// </summary>
+	[Export]
+	public Curve? Falloff { get; set; }
+
+	/// <summary>
 	/// Gets or sets the blast where it ends on an impact, or <see langword="null"/> for none.
 	/// </summary>
 	[Export]
@@ -104,7 +112,7 @@ public partial class ForgeProjectileData : Resource
 	public int MaxPierces { get; set; } = 1;
 
 	/// <summary>
-	/// Gets or sets the share of its damage it keeps through each collider it goes through.
+	/// Gets or sets the share of its strength it keeps through each collider it goes through.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,1,0.01")]
 	public float PierceScale { get; set; } = 0.5f;
@@ -165,5 +173,15 @@ public partial class ForgeProjectileData : Resource
 
 		_byData.AddOrUpdate(_data, this);
 		return _data;
+	}
+
+	/// <summary>
+	/// Gives the share of its strength a hit keeps at a distance from where the projectile was launched.
+	/// </summary>
+	/// <param name="distance">The distance, in units.</param>
+	/// <returns><see cref="Falloff"/> at the distance, or 1 without one.</returns>
+	public float FalloffAt(float distance)
+	{
+		return Falloff?.Sample(distance) ?? 1;
 	}
 }

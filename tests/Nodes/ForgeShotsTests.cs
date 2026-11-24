@@ -50,7 +50,7 @@ public class ForgeShotsTests
 			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, Hitscan(power: 20), hits);
 
 			hits.Select(x => (Node?)x.Collider).Should().Equal(crate, target.GetParent());
-			hits[1].Scale.Should().BeApproximately(0.5f, 0.01f, "the crate's metre cost half of the shot's power");
+			hits[1].Strength.Should().BeApproximately(0.5f, 0.01f, "the crate's metre cost half of the shot's power");
 			hits[1].Entity.Should().BeSameAs(target);
 			target.EffectsManager.GetActiveEffects().Should().ContainSingle();
 
@@ -121,7 +121,7 @@ public class ForgeShotsTests
 
 			hits.Should().HaveCount(3);
 			hits[2].Entity.Should().BeSameAs(target);
-			hits[2].Scale.Should().BeApproximately(0.25f, 0.001f);
+			hits[2].Strength.Should().BeApproximately(0.25f, 0.001f);
 			stop!.Value.Entity.Should().BeSameAs(target, "the shot stopped on the target, past the crates");
 
 			data.MaxPierces = 1;
@@ -162,7 +162,41 @@ public class ForgeShotsTests
 			ShotHit3D hit = hits.Should().ContainSingle().Subject;
 			hit.Hitbox.Should().BeSameAs(head);
 			hit.Entity.Should().BeSameAs(target);
-			hit.Scale.Should().Be(2);
+			hit.Strength.Should().Be(2);
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_shot_s_falloff_scales_its_strength_by_the_distance_in_units()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			ForgeEntity shooter = AddEntity3D(world, Vector3.Zero);
+			ForgeEntity near = AddEntity3D(world, new Vector3(0, 0, -10));
+			ForgeEntity far = AddEntity3D(world, new Vector3(5, 0, -40));
+			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+
+			var falloff = new Curve { MaxDomain = 20 };
+			falloff.AddPoint(new Vector2(0, 1), 0, 0, Curve.TangentMode.Linear, Curve.TangentMode.Linear);
+			falloff.AddPoint(new Vector2(20, 0.5f), 0, 0, Curve.TangentMode.Linear, Curve.TangentMode.Linear);
+			ForgeHitscanData data = Hitscan();
+			data.Falloff = falloff;
+
+			var hits = new List<ShotHit3D>();
+			ForgeShots.Hitscan3D(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
+			ForgeShots.Hitscan3D(shooter, new Vector3(5, 1, 0), Vector3.Forward, data, hits);
+
+			hits.Select(x => x.Entity).Should().Equal(near, far);
+			hits[0].Strength.Should().BeApproximately(0.7625f, 0.01f, "a quarter of the way down at 9.5 units");
+			hits[1].Strength.Should().BeApproximately(0.5f, 0.001f, "past the curve's end it holds its last value");
 		}
 		finally
 		{
@@ -379,7 +413,7 @@ public class ForgeShotsTests
 			ForgeShots.Splash3D(shooter, new Vector3(0.5f, 0.05f, 0), blast, hits);
 
 			SplashHit3D hit = hits.Should().ContainSingle().Subject;
-			hit.Scale.Should().BeLessThan(blast.ScaleAt(hit.Distance), "the shooter takes its own share");
+			hit.Strength.Should().BeLessThan(blast.ScaleAt(hit.Distance), "the shooter takes its own share");
 			((CharacterBody3D)shooter.GetParent()).Velocity.Y.Should().BePositive();
 			hit.Knockback.X.Should().BeNegative("away from the blast");
 		}
@@ -454,7 +488,7 @@ public class ForgeShotsTests
 			ForgeShots.Hitscan2D(shooter, Vector2.Zero, Vector2.Right, Hitscan(power: 40, range: 500), hits);
 
 			hits.Select(x => (Node?)x.Collider).Should().Equal(crate, target.GetParent());
-			hits[1].Scale.Should().BeApproximately(0.75f, 0.01f);
+			hits[1].Strength.Should().BeApproximately(0.75f, 0.01f);
 
 			ForgeProjectileData ball = Projectile(speed: 640);
 			ball.CollisionMask = WorldLayer;
@@ -519,7 +553,7 @@ public class ForgeShotsTests
 		{
 			Position = new Vector3(0, 2.4f, 0),
 			CollisionLayer = HitboxLayer,
-			DamageScale = 2,
+			StrengthScale = 2,
 		};
 		head.AddChild(new CollisionShape3D { Shape = new SphereShape3D { Radius = 0.3f } });
 		body.AddChild(head);

@@ -7,13 +7,13 @@ namespace Gamesmiths.Forge.Godot.Core.Shots;
 /// </summary>
 /// <remarks>
 /// A shot goes through a collider on a layer in <see cref="PierceMask"/>, keeping <see cref="PierceScale"/> of its
-/// damage, up to <see cref="MaxPierces"/> of them. With <see cref="Power"/> above zero it also goes through a collider
-/// with a <see cref="Resources.ForgeShotSurface"/>, losing the surface's resistance times the thickness it crosses, and
-/// keeps the share of its power left as the share of its damage.
+/// strength, up to <see cref="MaxPierces"/> of them. With <see cref="Power"/> above zero it also goes through a
+/// collider with a <see cref="Resources.ForgeShotSurface"/>, losing the surface's resistance times the thickness it
+/// crosses, and keeps the share of its power left as the share of its strength.
 /// </remarks>
 /// <param name="PierceMask">The layers of the colliders it goes through.</param>
 /// <param name="MaxPierces">How many colliders it goes through at most. Negative has no limit.</param>
-/// <param name="PierceScale">The share of its damage it keeps through each collider of the Pierce Mask.</param>
+/// <param name="PierceScale">The share of its strength it keeps through each collider of the Pierce Mask.</param>
 /// <param name="Power">The power it goes through surfaces with, or zero.</param>
 public readonly record struct ShotPenetration(uint PierceMask, int MaxPierces, float PierceScale, float Power)
 {

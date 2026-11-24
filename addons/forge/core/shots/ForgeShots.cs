@@ -26,8 +26,8 @@ namespace Gamesmiths.Forge.Godot.Core.Shots;
 /// entity fire them alike: a <see cref="RollbackBehavior{TContext}"/>'s fixed update, or a graph's node. On the server,
 /// a client's shot meets the other entities where that client was shown them, and its blast too.</para>
 /// <para>A shot hits what is on its line in order, going through what its penetration lets it, and applies its effects
-/// once to each entity it hits, with the share of its damage it had left as float context data, scaled by a hitbox's
-/// <see cref="ForgeHitbox3D.DamageScale"/>.</para>
+/// once to each entity it hits, with the share of its strength it had left as float context data, scaled by a hitbox's
+/// <see cref="ForgeHitbox3D.StrengthScale"/> and by the shot's falloff at the distance from where it started.</para>
 /// </remarks>
 public static partial class ForgeShots
 {
@@ -78,16 +78,23 @@ public static partial class ForgeShots
 					data.HitsProjectiles,
 					pelletHits);
 
-				if (i == 0)
+				for (int j = 0; j < pelletHits.Count; j++)
 				{
-					first = stop;
+					ShotHit3D hit = pelletHits[j];
+					pelletHits[j] = hit with { Strength = hit.Strength * data.FalloffAt(hit.Distance) };
+				}
+
+				// What it stopped on is its last hit.
+				if (i == 0 && stop is not null)
+				{
+					first = pelletHits[^1];
 				}
 
 				foreach (ShotHit3D hit in pelletHits)
 				{
 					if (hit.Entity is IForgeEntity entity && entity != instigator && applied.Add(entity))
 					{
-						Apply(data.Effects, entity, instigator, hit.Scale);
+						Apply(data.Effects, entity, instigator, hit.Strength);
 					}
 				}
 

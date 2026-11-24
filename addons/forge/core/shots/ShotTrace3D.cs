@@ -94,7 +94,7 @@ internal static class ShotTrace3D
 				result.Node,
 				result.Entity,
 				hitbox,
-				strength * (hitbox?.DamageScale ?? 1));
+				strength * (hitbox?.StrengthScale ?? 1));
 
 			hits.Add(shotHit);
 
@@ -145,7 +145,7 @@ internal static class ShotTrace3D
 		return nearest;
 	}
 
-	// Whether the shot goes on through what it hit: a collider on the Pierce Mask, keeping a share of its damage, or
+	// Whether the shot goes on through what it hit: a collider on the Pierce Mask, keeping a share of its strength, or
 	// one with a surface its power crosses, losing what the thickness costs.
 	private static bool GoesThrough(
 		World3D world,

@@ -12,7 +12,7 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// </summary>
 /// <remarks>
 /// <para>Put it on a layer of its own, which the entity's movement doesn't collide with and shots do. A shot that hits
-/// it reports its <see cref="Tags"/> and has its damage scaled by <see cref="DamageScale"/>. A
+/// it reports its <see cref="Tags"/> and has its strength scaled by <see cref="StrengthScale"/>. A
 /// <see cref="ForgeHitboxes2D"/> on the entity rewinds it for lag compensation, as the entity's body is.</para>
 /// </remarks>
 [GlobalClass]
@@ -25,10 +25,10 @@ public partial class ForgeHitbox2D : StaticBody2D
 	public ForgeTagContainer? Tags { get; set; }
 
 	/// <summary>
-	/// Gets or sets how much a hit on the part scales a shot's damage by: 2 for a head that takes double.
+	/// Gets or sets how much a hit on the part scales a shot's strength by: 2 for a head that takes double.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,10,0.01,or_greater")]
-	public float DamageScale { get; set; } = 1;
+	public float StrengthScale { get; set; } = 1;
 
 	/// <summary>
 	/// Gets the tags a hit on the part reports.

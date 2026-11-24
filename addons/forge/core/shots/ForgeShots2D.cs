@@ -66,16 +66,23 @@ public static partial class ForgeShots
 					data.HitsProjectiles,
 					pelletHits);
 
-				if (i == 0)
+				for (int j = 0; j < pelletHits.Count; j++)
 				{
-					first = stop;
+					ShotHit2D hit = pelletHits[j];
+					pelletHits[j] = hit with { Strength = hit.Strength * data.FalloffAt(hit.Distance) };
+				}
+
+				// What it stopped on is its last hit.
+				if (i == 0 && stop is not null)
+				{
+					first = pelletHits[^1];
 				}
 
 				foreach (ShotHit2D hit in pelletHits)
 				{
 					if (hit.Entity is IForgeEntity entity && entity != instigator && applied.Add(entity))
 					{
-						Apply(data.Effects, entity, instigator, hit.Scale);
+						Apply(data.Effects, entity, instigator, hit.Strength);
 					}
 				}
 

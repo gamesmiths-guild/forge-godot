@@ -67,7 +67,9 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 			{
 				if (hit.Entity is IForgeEntity target && target != entity && _applied.Add(target))
 				{
-					ForgeShots.Apply(data.Effects, target, entity, hit.Scale);
+					var at = new NumericsVector3(hit.Position.X, hit.Position.Y, hit.Position.Z);
+					float falloff = data.FalloffAt(NumericsVector3.Distance(flight.Origin, at));
+					ForgeShots.Apply(data.Effects, target, entity, hit.Strength * falloff);
 				}
 			}
 
