@@ -846,6 +846,48 @@ public partial class ForgeNetworkSession : Node
 		return BeginLagCompensation(entity.NetworkOwner, tick, remaining);
 	}
 
+	// The tick a shot being tested now was fired seeing the other entities at: where the server put them back to, or
+	// the tick a client shows them at. Its own entity's projectiles are where its last tick left them.
+	internal double ShownTick()
+	{
+		if (_compensating)
+		{
+			return Session!.Replication!.LagCompensation.ShownTick;
+		}
+
+		return !IsServer && _shown is not null ? _shown.Tick : Clock.Tick - 1;
+	}
+
+	// Opens the compensation for what an entity does in its tick, unless one is open already, or none applies: true
+	// when this opened one, and EndLagCompensation must follow.
+	internal bool BeginActionOf(ForgeEntity instigator, double remaining = 1)
+	{
+		return !_compensating
+			&& BeginLagCompensation(instigator.NetworkOwner, EntitySimulation.TickOf(instigator), remaining);
+	}
+
+	// Where the open compensation put an entity's body.
+	internal bool TryGetShownBody(IForgeEntity entity, out BodyState body)
+	{
+		body = default;
+
+		if (!_compensating)
+		{
+			return false;
+		}
+
+		foreach (RewoundBody rewound in _rewound)
+		{
+			if (ReferenceEquals(rewound.Entity, entity))
+			{
+				body = rewound.Body;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	internal void OnEntityFreed(ForgeEntity entity)
 	{
 		Session?.Replication?.Unregister(entity);
@@ -1175,7 +1217,7 @@ public partial class ForgeNetworkSession : Node
 		double shown = compensation.ShownTickOf(instigator, tick, remaining);
 		compensation.Begin(instigator, shown);
 		compensation.Rewound(instigator, shown, _rewound, InterpolationSnapDistance);
-		_proxies.Place(_rewound);
+		_proxies.Place(_rewound, shown);
 		_compensating = true;
 		return true;
 	}

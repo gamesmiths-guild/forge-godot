@@ -44,6 +44,9 @@ internal static class StatescriptResolverRegistry
 		[typeof(Effect)] = "Effect",
 		[typeof(Tag)] = "Tag",
 		[typeof(PackedScene)] = "ScenePicker",
+		[typeof(Resources.ForgeProjectileData)] = "ShotData",
+		[typeof(Resources.ForgeSplashData)] = "ShotData",
+		[typeof(Resources.ForgeHitscanData)] = "ShotData",
 		[typeof(Node)] = "NodePath",
 
 		// Provider-backed marker types, one per optional provider input. Every one of these MUST be listed:

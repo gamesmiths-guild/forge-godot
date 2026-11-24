@@ -73,6 +73,10 @@ Defines, grants, and activates gameplay powers or actions:
 - Activates from the player's input actions, collected once per physics step by a [`ForgeInputCollector`](nodes.md#forgeinputcollector).
 - Change notifications an ability bar can subscribe to — see [Observing an Entity from a Godot Node](nodes.md#observing-an-entity-from-a-godot-node).
 
+### Shots
+
+Hitscans, lightweight projectiles and blasts, fired from graphs or code and tested on the server as the shooter saw them, with penetration, hitboxes and knockback. See [Shots](shots.md).
+
 ### Events System
 
 A flexible event bus for passing tagged event data across entities:

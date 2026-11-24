@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Gamesmiths.Forge.Core;
+using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Statescript;
 using Gamesmiths.Forge.Statescript.Nodes;
 using Gamesmiths.Forge.Statescript.Ports;
@@ -114,12 +115,23 @@ public class PlayAnimationNode(
 		nodeContext.Speed = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[SpeedInput].BoundName);
 		nodeContext.Blend = PresentationNodeInputs.ResolveOptional(graphContext, InputProperties[BlendInput].BoundName);
 		nodeContext.Duration = PlayLength(player, nodeContext.Speed);
+
+		if (PosesUnseenHitboxes(player))
+		{
+			_inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend);
+		}
 	}
 
 	/// <inheritdoc/>
 	protected override void OnDeactivate(GraphContext graphContext)
 	{
-		// The presentation pass stops playback.
+		// The presentation pass stops playback, where there is one.
+		AnimationPlayer? player = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Player;
+
+		if (_stopOnDeactivate && player is not null && PosesUnseenHitboxes(player) && IsStillPlaying(player))
+		{
+			player.Stop();
+		}
 	}
 
 	/// <inheritdoc/>
@@ -133,7 +145,18 @@ public class PlayAnimationNode(
 	protected override void OnRestoreAttach(GraphContext graphContext)
 	{
 		// A running activation has not played out, whatever its presentation was told after the snapshot was taken.
-		graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Playback.Finished = false;
+		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
+		nodeContext.Playback.Finished = false;
+
+		// Its end stopped a player that poses hitboxes where nothing shows them: it plays again, unless another took
+		// it.
+		if (nodeContext.Player is AnimationPlayer player
+			&& PosesUnseenHitboxes(player)
+			&& !player.IsPlaying()
+			&& _inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend))
+		{
+			player.Seek(Position(player, nodeContext), update: true);
+		}
 	}
 
 	/// <inheritdoc/>
@@ -141,6 +164,12 @@ public class PlayAnimationNode(
 	{
 		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
 		nodeContext.ElapsedTime += deltaTime;
+
+		// The pose a hitbox stands in follows the tick exactly, as the activation counts it.
+		if (nodeContext.Player is AnimationPlayer player && PosesUnseenHitboxes(player) && IsStillPlaying(player))
+		{
+			player.Seek(Position(player, nodeContext), update: true);
+		}
 
 		if (nodeContext.ElapsedTime >= nodeContext.Duration)
 		{
@@ -234,6 +263,15 @@ public class PlayAnimationNode(
 		{
 			player.Stop();
 		}
+	}
+
+	// A player that poses hitboxes plays on a server with nothing to show too, where no presentation pass runs: the
+	// simulation plays it there.
+	private static bool PosesUnseenHitboxes(AnimationPlayer player)
+	{
+		return !ForgeManagers.Instance.HasViewer
+			&& GodotObject.IsInstanceValid(player)
+			&& (ForgeHitboxes3D.PosesHitboxes(player) || ForgeHitboxes2D.PosesHitboxes(player));
 	}
 
 	// Godot reports the assigned animation only while the player is playing, so one comparison tells whether this

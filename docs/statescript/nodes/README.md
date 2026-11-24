@@ -60,7 +60,7 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 ### Scene
 
-| Arch | Node | Docs | Description |
+| Category | Node | Docs | Description |
 |------|------|------|-------------|
 | **Action** | `InstantiateScene3DNode` / `2D` | [Scene Nodes](scene-nodes.md#the-instantiating-pair) | Instantiates a scene, parents and places it, and hands it owner and source. Fire and forget. |
 | **Action** | `QueueFreeNode` | [Scene Nodes](scene-nodes.md#queue-free) | Frees a node, guarded against one already freed. |
@@ -72,7 +72,7 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 ### Spatial
 
-| Arch | Node | Docs | Description |
+| Category | Node | Docs | Description |
 |------|------|------|-------------|
 | **Action** | `SetPosition3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Moves an entity instantly. Blink and teleport. |
 | **Action** | `SetRotation3DNode` / `2D` | [Spatial Nodes](spatial-nodes.md#instant-writers-action) | Writes a rotation instantly. 2D takes an angle rather than a quaternion. |
@@ -85,7 +85,7 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 ### Physics
 
-| Arch | Node | Docs | Description |
+| Category | Node | Docs | Description |
 |------|------|------|-------------|
 | **Action** | `SetVelocity3DNode` / `2D` | [Physics Nodes](physics-nodes.md#velocity-and-impulses-action) | Writes a character or rigid body's velocity. Dash, knockback. |
 | **Action** | `ApplyImpulse3DNode` / `2D` | [Physics Nodes](physics-nodes.md#velocity-and-impulses-action) | Rigid body impulse, with an optional offset. |
@@ -101,9 +101,17 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 | **State** | `Overlap3DNode` / `2D` | [Physics Query Nodes](physics-query-nodes.md#overlap) | Watches an existing area or a transient shape; per-entity `OnEntered`/`OnExited` plus occupancy subgraphs. |
 | **State** | `LineOfSight3DNode` / `2D` | [Physics Query Nodes](physics-query-nodes.md#line-of-sight) | Watches the line between two points and reports the blocker. |
 
+### Shots
+
+| Category | Node | Docs | Description |
+|------|------|------|-------------|
+| **Action** | `Hitscan3DNode` / `2D` | [Shot Nodes](shot-nodes.md#hitscan) | Fires a hitscan from the owner, lag-compensated, applying its effects to what its pellets hit. |
+| **Action** | `LaunchProjectile3DNode` / `2D` | [Shot Nodes](shot-nodes.md#launch-projectile) | Launches a lightweight projectile every machine flies from its launch. |
+| **Action** | `Splash3DNode` / `2D` | [Shot Nodes](shot-nodes.md#splash) | Blasts effects and a push in a radius, scaled by distance. |
+
 ### Presentation
 
-| Arch | Node | Docs | Description |
+| Category | Node | Docs | Description |
 |------|------|------|-------------|
 | **Action** | `PlayAnimationOneShotNode` | [Presentation Nodes](presentation-nodes.md#animation) | Starts an animation and moves on. |
 | **Action** | `PlayAudioOneShotNode` | [Presentation Nodes](presentation-nodes.md#audio) | Plays an existing audio player once. |
@@ -112,13 +120,13 @@ They live under `Gamesmiths.Forge.Godot.Core.Statescript.Nodes.*`, and every one
 
 ### Navigation
 
-| Arch | Node | Docs | Description |
+| Category | Node | Docs | Description |
 |------|------|------|-------------|
 | **State** | `NavMoveTo3DNode` / `2D` | [Navigation Nodes](navigation-nodes.md) | Steers a body along a navigation path; `OnReached` / `OnFailed`. |
 
 ### Interop
 
-| Arch | Node | Docs | Description |
+| Category | Node | Docs | Description |
 |------|------|------|-------------|
 | **Action** | `SetNodePropertyNode` | [Interop Nodes](interop-nodes.md#properties) | Writes a value onto a scene node's property. |
 | **Action** | `SetNodeEnabledNode` | [Interop Nodes](interop-nodes.md#enabled-state) | Visibility, processing or monitoring, permanently. |

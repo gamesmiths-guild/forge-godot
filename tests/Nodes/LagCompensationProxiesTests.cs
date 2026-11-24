@@ -38,7 +38,7 @@ public class LagCompensationProxiesTests
 
 		try
 		{
-			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 0);
 
 			Ray(space, 0).Should().BeSameAs(body, "a hit on where it was reports the entity's own body");
 			Ray(space, 5).Should().BeNull("the live body is out of the queries meanwhile");
@@ -75,7 +75,7 @@ public class LagCompensationProxiesTests
 
 		try
 		{
-			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 0);
 
 			Ray(space, 0).Should().BeSameAs(body);
 			Ray(space, 100).Should().BeNull();
@@ -112,7 +112,7 @@ public class LagCompensationProxiesTests
 
 		try
 		{
-			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 0);
 
 			Ray(space, 0.8f).Should().BeSameAs(body, "it stands in at the body's scale");
 			PhysicsQuery3D.TryCollectExclusions([entity], excluded).Should().BeTrue();
@@ -135,17 +135,70 @@ public class LagCompensationProxiesTests
 			Ray(space, 5, mask: 8).Should().BeSameAs(body, "what the hit set off changed its layer, and that stays");
 
 			shape.Disabled = true;
-			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 0);
 
 			Ray(space, 0, mask: 8).Should().BeNull("its shapes are copied as they are now");
 
 			shape.Disabled = false;
 			proxies.Restore();
-			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))]);
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 0);
 			proxies.Forget(entity);
 
 			Ray(space, 5, mask: 8).Should().BeSameAs(body, "forgotten while placed, it gets its body back");
 			proxies.Restore();
+		}
+		finally
+		{
+			proxies.Clear();
+			world.QueueFree();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
+	public async Task A_hitbox_stands_where_it_was_against_the_body_the_instigator_saw()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+		var body = new CharacterBody3D { CollisionLayer = 4, Position = new Vector3(5, 0, 0) };
+		body.AddChild(new CollisionShape3D { Shape = new SphereShape3D { Radius = 0.5f } });
+		var head = new ForgeHitbox3D { CollisionLayer = 8, Position = new Vector3(0, 0, 0) };
+		head.AddChild(new CollisionShape3D { Shape = new SphereShape3D { Radius = 0.3f } });
+		body.AddChild(head);
+		var entity = new ForgeEntity();
+		body.AddChild(entity);
+		var hitboxes = new ForgeHitboxes3D();
+		body.AddChild(hitboxes);
+		world.AddChild(body);
+		await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+		await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+		PhysicsDirectSpaceState3D space = world.GetWorld3D().DirectSpaceState;
+		var proxies = new LagCompensationProxies();
+
+		try
+		{
+			hitboxes.Record(10);
+			head.Position = new Vector3(2, 0, 0);
+			hitboxes.Record(11);
+			head.Position = new Vector3(0, 0, 0);
+			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 10.5);
+
+			Ray(space, 1, mask: 8).Should().BeSameAs(head, "half way between ticks it stood a unit off the body");
+			Ray(space, 5, mask: 8).Should().BeNull("the live hitbox is out of the queries meanwhile");
+			Ray(space, 0, mask: 4).Should().BeSameAs(body);
+
+			proxies.Restore();
+
+			Ray(space, 5, mask: 8).Should().BeSameAs(head);
+			Ray(space, 1, mask: 8).Should().BeNull();
+
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 10.5);
+			proxies.Forget(entity);
+
+			Ray(space, 5, mask: 8).Should().BeSameAs(head, "forgotten while placed, its hitbox is back too");
+			Ray(space, 1, mask: 8).Should().BeNull();
 		}
 		finally
 		{
