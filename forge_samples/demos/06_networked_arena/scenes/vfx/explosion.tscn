@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://c6arexplode"]
+
+[ext_resource type="AudioStream" uid="uid://cmta47duet1xf" path="res://forge_samples/shared/audio/explosion.ogg" id="1_explosion"]
+
+[sub_resource type="Gradient" id="Gradient_1"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(1, 0.9, 0.5, 1, 1, 0.45, 0.1, 1, 0.3, 0.1, 0.05, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_2"]
+gradient = SubResource("Gradient_1")
+
+[sub_resource type="Curve" id="Curve_3"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.5, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_4"]
+curve = SubResource("Curve_3")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_5"]
+lifetime_randomness = 0.3
+spread = 180.0
+initial_velocity_min = 4.0
+initial_velocity_max = 10.0
+gravity = Vector3(0, -4.0, 0)
+scale_min = 0.2
+scale_max = 0.45
+scale_curve = SubResource("CurveTexture_4")
+color_ramp = SubResource("GradientTexture1D_2")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_7"]
+material = SubResource("StandardMaterial3D_6")
+radius = 0.5
+height = 1.0
+radial_segments = 8
+rings = 4
+
+[node name="Explosion" type="GPUParticles3D"]
+amount = 48
+lifetime = 0.7
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_5")
+draw_pass_1 = SubResource("SphereMesh_7")
+
+[node name="Flash" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.6, 0.2, 1)
+light_energy = 3.0
+omni_range = 7
+
+[node name="Sound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("1_explosion")
+autoplay = true
+
+[node name="Lifetime" type="Timer" parent="."]
+wait_time = 1.5
+one_shot = true
+autostart = true
+
+[connection signal="timeout" from="Lifetime" to="." method="queue_free"]

@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c6arrocket"]
+
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="1_forgetag"]
+[ext_resource type="Resource" uid="uid://c6arrocketprj" path="res://forge_samples/demos/06_networked_arena/shots/rocket.tres" id="2_rocket"]
+[ext_resource type="Script" uid="uid://dd1g2pffc5fxn" path="res://forge_samples/demos/06_networked_arena/scripts/abilities/ProjectileWeapon.cs" id="3_projectileweapon"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="4_forgetagcontainer"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="5_forgeabilitydata"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("1_forgetag")
+Tag = "cue.arena.sfx.rocket"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("3_projectileweapon")
+RefireSeconds = 0.9
+ShotCue = SubResource("Resource_1")
+Projectile = ExtResource("2_rocket")
+metadata/_custom_type_script = "uid://dd1g2pffc5fxn"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["weapon.fire"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["weapon.rocket_launcher"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["state.dead"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[resource]
+script = ExtResource("5_forgeabilitydata")
+Name = "Rocket"
+CooldownEffects = []
+AbilityBehavior = SubResource("Resource_2")
+InputAction = "fire"
+AbilityTags = SubResource("Resource_3")
+ActivationRequiredTags = SubResource("Resource_4")
+ActivationBlockedTags = SubResource("Resource_5")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

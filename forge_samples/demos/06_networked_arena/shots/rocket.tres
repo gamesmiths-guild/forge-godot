@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ForgeProjectileData" format=3 uid="uid://c6arrocketprj"]
+
+[ext_resource type="Resource" uid="uid://c6arblastsp" path="res://forge_samples/demos/06_networked_arena/shots/rocket_blast.tres" id="1_rocket_blast"]
+[ext_resource type="PackedScene" uid="uid://c6arrktvfx" path="res://forge_samples/demos/06_networked_arena/scenes/vfx/rocket.tscn" id="2_rocket"]
+[ext_resource type="PackedScene" uid="uid://c6arexplode" path="res://forge_samples/demos/06_networked_arena/scenes/vfx/explosion.tscn" id="3_explosion"]
+[ext_resource type="Script" uid="uid://dja627cyii44n" path="res://addons/forge/resources/ForgeProjectileData.cs" id="4_forgeprojectiledata"]
+
+[resource]
+script = ExtResource("4_forgeprojectiledata")
+Name = "Rocket"
+Speed = 22.0
+Radius = 0.2
+Lifetime = 4.0
+CollisionMask = 17
+Splash = ExtResource("1_rocket_blast")
+Scene = ExtResource("2_rocket")
+ImpactScene = ExtResource("3_explosion")
+metadata/_custom_type_script = "uid://dja627cyii44n"

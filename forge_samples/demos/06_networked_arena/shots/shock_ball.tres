@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ForgeProjectileData" format=3 uid="uid://c6arballprj"]
+
+[ext_resource type="Resource" uid="uid://c6arballdmg" path="res://forge_samples/demos/06_networked_arena/effects/ball_damage.tres" id="1_ball_damage"]
+[ext_resource type="Resource" uid="uid://c6arcombo" path="res://forge_samples/demos/06_networked_arena/shots/combo.tres" id="2_combo"]
+[ext_resource type="PackedScene" uid="uid://c6arballvfx" path="res://forge_samples/demos/06_networked_arena/scenes/vfx/shock_ball.tscn" id="3_shock_ball"]
+[ext_resource type="PackedScene" uid="uid://c6arsburst" path="res://forge_samples/demos/06_networked_arena/scenes/vfx/shock_burst.tscn" id="4_shock_burst"]
+[ext_resource type="Script" uid="uid://dja627cyii44n" path="res://addons/forge/resources/ForgeProjectileData.cs" id="5_forgeprojectiledata"]
+
+[resource]
+script = ExtResource("5_forgeprojectiledata")
+Name = "Shock Ball"
+Speed = 14.0
+Radius = 0.45
+CollisionMask = 17
+Effects = Array[Object]([ExtResource("1_ball_damage")])
+Shootable = true
+StruckSplash = ExtResource("2_combo")
+Scene = ExtResource("3_shock_ball")
+ImpactScene = ExtResource("4_shock_burst")
+metadata/_custom_type_script = "uid://dja627cyii44n"

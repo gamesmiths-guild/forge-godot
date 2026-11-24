@@ -1,0 +1,254 @@
+[gd_scene format=3 uid="uid://c6ardummy"]
+
+[ext_resource type="Material" uid="uid://b7m0lrhal5u6" path="res://forge_samples/demos/03_statescript/materials/enemy_body.tres" id="1_enemy_body"]
+[ext_resource type="Resource" uid="uid://c6ardgrants" path="res://forge_samples/demos/06_networked_arena/abilities/dummy_grants.tres" id="2_dummy_grants"]
+[ext_resource type="Script" uid="uid://bsi6ugjw8v3it" path="res://forge_samples/demos/06_networked_arena/scripts/StrafingDummy3D.cs" id="3_strafingdummy3d"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="4_forgeentity"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="5_forgetagcontainer"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="6_forgeattributeset"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="7_attributevalues"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="8_forgeeffect"]
+[ext_resource type="Script" uid="uid://bad7av6tr74cc" path="res://addons/forge/nodes/ForgeHitbox3D.cs" id="9_forgehitbox3d"]
+[ext_resource type="Script" uid="uid://t48telhhgds1" path="res://addons/forge/nodes/ForgeHitboxes3D.cs" id="10_forgehitboxes3d"]
+[ext_resource type="Script" uid="uid://d0fmvj83183h0" path="res://forge_samples/demos/06_networked_arena/scripts/StrafeLean.cs" id="11_strafelean"]
+[ext_resource type="Script" uid="uid://zm2442kact29" path="res://forge_samples/demos/04_rewind/scripts/LiveHealthBar.cs" id="12_livehealthbar"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 1.9
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("5_forgetagcontainer")
+ContainerTags = Array[String](["trait.damageable"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Animation" id="Animation_3"]
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.000000, 1.000000)
+
+[sub_resource type="Animation" id="Animation_4"]
+resource_name = "idle"
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.000000, 1.000000)
+
+[sub_resource type="Animation" id="Animation_5"]
+resource_name = "lean_left"
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.174108, 0.984727)
+
+[sub_resource type="Animation" id="Animation_6"]
+resource_name = "lean_right"
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, -0.174108, 0.984727)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_7"]
+_data = {
+&"RESET": SubResource("Animation_3"),
+&"idle": SubResource("Animation_4"),
+&"lean_left": SubResource("Animation_5"),
+&"lean_right": SubResource("Animation_6")
+}
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_8"]
+animation = &"lean_left"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_9"]
+animation = &"idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_10"]
+animation = &"lean_right"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_11"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_8")
+blend_point_0/pos = -1.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_9")
+blend_point_1/pos = 0.0
+blend_point_2/node = SubResource("AnimationNodeAnimation_10")
+blend_point_2/pos = 1.0
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_12"]
+nodes/lean/node = SubResource("AnimationNodeBlendSpace1D_11")
+nodes/lean/position = Vector2(200, 100)
+node_connections = [&"output", 0, &"lean"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_13"]
+material = ExtResource("1_enemy_body")
+radius = 0.36
+height = 1.3
+
+[sub_resource type="SphereMesh" id="SphereMesh_14"]
+material = ExtResource("1_enemy_body")
+radius = 0.24
+height = 0.48
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_15"]
+radius = 0.38
+height = 1.4
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_16"]
+radius = 0.25
+
+[sub_resource type="Resource" id="Resource_17"]
+script = ExtResource("5_forgetagcontainer")
+ContainerTags = Array[String](["hitbox.body"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_18"]
+script = ExtResource("5_forgetagcontainer")
+ContainerTags = Array[String](["hitbox.head"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_19"]
+bg_color = Color(0.215, 0, 0.0007, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_20"]
+bg_color = Color(1, 0.036, 0.05, 1)
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_21"]
+viewport_path = NodePath("SubViewport")
+
+[node name="Dummy" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_strafingdummy3d")
+
+[node name="Forge Entity" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_forgeentity")
+BaseTags = SubResource("Resource_2")
+Networked = true
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Character Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("6_forgeattributeset")
+AttributeSetClass = "CharacterAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("7_attributevalues")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Meta Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("6_forgeattributeset")
+AttributeSetClass = "MetaAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("7_attributevalues")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+script = ExtResource("8_forgeeffect")
+EffectData = ExtResource("2_dummy_grants")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Model" type="Node3D" parent="Visual"]
+
+[node name="Lean" type="Node3D" parent="Visual/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+
+[node name="Torso" type="MeshInstance3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("CapsuleMesh_13")
+
+[node name="Head" type="MeshInstance3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+mesh = SubResource("SphereMesh_14")
+
+[node name="Body Hitbox" type="StaticBody3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("9_forgehitbox3d")
+Tags = SubResource("Resource_17")
+metadata/_custom_type_script = "uid://bad7av6tr74cc"
+
+[node name="Shape" type="CollisionShape3D" parent="Visual/Model/Lean/Body Hitbox"]
+shape = SubResource("CapsuleShape3D_15")
+
+[node name="Head Hitbox" type="StaticBody3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("9_forgehitbox3d")
+Tags = SubResource("Resource_18")
+StrengthScale = 2.0
+metadata/_custom_type_script = "uid://bad7av6tr74cc"
+
+[node name="Shape" type="CollisionShape3D" parent="Visual/Model/Lean/Head Hitbox"]
+shape = SubResource("SphereShape3D_16")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries/ = SubResource("AnimationLibrary_7")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root = SubResource("AnimationNodeBlendTree_12")
+anim_player = NodePath("../AnimationPlayer")
+parameters/lean/blend_position = 0.0
+
+[node name="Hitboxes" type="Node" parent="."]
+script = ExtResource("10_forgehitboxes3d")
+Animators = Array[NodePath]([NodePath("../AnimationTree")])
+metadata/_custom_type_script = "uid://t48telhhgds1"
+
+[node name="Strafe Lean" type="Node" parent="." node_paths=PackedStringArray("Tree", "Body")]
+script = ExtResource("11_strafelean")
+Tree = NodePath("../AnimationTree")
+Body = NodePath("..")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+size = Vector2i(100, 20)
+
+[node name="HealthBar" type="ProgressBar" parent="SubViewport" node_paths=PackedStringArray("HealthBarLabel")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_19")
+theme_override_styles/fill = SubResource("StyleBoxFlat_20")
+value = 100.0
+show_percentage = false
+script = ExtResource("12_livehealthbar")
+HealthBarLabel = NodePath("Label")
+
+[node name="Label" type="Label" parent="SubViewport/HealthBar"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 12
+text = "1000/1000"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Bars" type="Sprite3D" parent="Visual/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, 0)
+billboard = 1
+texture = SubResource("ViewportTexture_21")

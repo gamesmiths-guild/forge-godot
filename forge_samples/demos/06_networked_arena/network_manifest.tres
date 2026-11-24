@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ForgeNetworkManifest" format=3 uid="uid://c6armanifest"]
+
+[ext_resource type="Script" uid="uid://cftfcqdqqwx1" path="res://addons/forge/resources/ForgeNetworkManifest.cs" id="1_forgenetworkmanifest"]
+
+[resource]
+script = ExtResource("1_forgenetworkmanifest")
+Abilities = Array[String](["uid://c6arassault", "uid://c6arball", "uid://c6arbeam", "uid://c6arblast", "uid://c6arburst", "uid://c6ardie", "uid://c6ardummydie", "uid://c6arlauncher", "uid://c6arnextwpn", "uid://c6arpistol", "uid://c6arprevwpn", "uid://c6arpshot", "uid://c6arrifle", "uid://c6arrocket", "uid://c6arshotgun"])
+Effects = Array[String](["uid://c6arballdmg", "uid://c6arbeamdmg", "uid://c6arcombodmg", "uid://c6ardeatheff", "uid://c6ardgrants", "uid://c6arfrageff", "uid://c6arpelletdm", "uid://c6arpgrants", "uid://c6arpistoldm", "uid://c6arrespawn", "uid://c6arrifledm", "uid://c6arrocketdm"])
+Scenes = Array[String](["uid://c6arplayer"])
+Projectiles = Array[String](["uid://c6arballprj", "uid://c6arrocketprj"])
+metadata/_custom_type_script = "uid://cftfcqdqqwx1"

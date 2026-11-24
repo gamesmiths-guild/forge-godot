@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://c6ardgrants"]
+
+[ext_resource type="Resource" uid="uid://c6ardummydie" path="res://forge_samples/demos/06_networked_arena/abilities/dummy_die.tres" id="1_dummy_die"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_forgescalableint"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="3_forgegrantabilityconfig"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="4_grantability"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="5_forgeeffectdata"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("1_dummy_die")
+AbilityLevel = SubResource("Resource_1")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("4_grantability")
+GrantAbilityConfigs = [SubResource("Resource_2")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[resource]
+script = ExtResource("5_forgeeffectdata")
+Name = "Grant Dummy Abilities"
+Modifiers = []
+Components = [SubResource("Resource_3")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_4")
+InitialStack = SubResource("Resource_5")
+Cues = []
+Visibility = 3
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

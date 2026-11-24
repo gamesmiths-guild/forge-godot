@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ForgeHitscanData" format=3 uid="uid://c6arpellet"]
+
+[ext_resource type="Resource" uid="uid://c6arpelletdm" path="res://forge_samples/demos/06_networked_arena/effects/pellet_damage.tres" id="1_pellet_damage"]
+[ext_resource type="Script" uid="uid://bomgv8e1jqgi7" path="res://addons/forge/resources/ForgeHitscanData.cs" id="2_forgehitscandata"]
+
+[sub_resource type="Curve" id="Resource_1"]
+_limits = [0.0, 1.0, 0.0, 30.0]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(8, 1), 0.0, -0.03, 0, 0, Vector2(30, 0.35), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[resource]
+script = ExtResource("2_forgehitscandata")
+Range = 120.0
+CollisionMask = 17
+Effects = Array[Object]([ExtResource("1_pellet_damage")])
+Falloff = SubResource("Resource_1")
+Power = 1.0
+metadata/_custom_type_script = "uid://bomgv8e1jqgi7"

@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://c6arspark"]
+
+[sub_resource type="Gradient" id="Gradient_1"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(1, 0.95, 0.7, 1, 1, 0.7, 0.3, 1, 0.6, 0.3, 0.1, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_2"]
+gradient = SubResource("Gradient_1")
+
+[sub_resource type="Curve" id="Curve_3"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.5, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_4"]
+curve = SubResource("Curve_3")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_5"]
+lifetime_randomness = 0.3
+direction = Vector3(0, 1, 0)
+spread = 50.0
+initial_velocity_min = 2.0
+initial_velocity_max = 4.5
+gravity = Vector3(0, -9.0, 0)
+scale_min = 0.04
+scale_max = 0.08
+scale_curve = SubResource("CurveTexture_4")
+color_ramp = SubResource("GradientTexture1D_2")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+
+[sub_resource type="SphereMesh" id="SphereMesh_7"]
+material = SubResource("StandardMaterial3D_6")
+radius = 0.5
+height = 1.0
+radial_segments = 8
+rings = 4
+
+[node name="Spark" type="GPUParticles3D"]
+amount = 12
+lifetime = 0.35
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_5")
+draw_pass_1 = SubResource("SphereMesh_7")
+
+[node name="Lifetime" type="Timer" parent="."]
+wait_time = 0.8
+one_shot = true
+autostart = true
+
+[connection signal="timeout" from="Lifetime" to="." method="queue_free"]

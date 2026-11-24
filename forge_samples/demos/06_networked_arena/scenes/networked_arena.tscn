@@ -1,0 +1,620 @@
+[gd_scene format=3 uid="uid://c6arlevel1"]
+
+[ext_resource type="Environment" uid="uid://curphkq8itbej" path="res://forge_samples/demos/03_statescript/materials/environment.tres" id="1_environment"]
+[ext_resource type="Material" uid="uid://cb7i7da7a0mjd" path="res://forge_samples/demos/03_statescript/materials/stone.tres" id="2_stone"]
+[ext_resource type="Material" uid="uid://bfepc7hp0hd8h" path="res://forge_samples/demos/03_statescript/materials/ground.tres" id="3_ground"]
+[ext_resource type="PackedScene" uid="uid://c6arcrate" path="res://forge_samples/demos/06_networked_arena/scenes/crate.tscn" id="4_crate"]
+[ext_resource type="PackedScene" uid="uid://c6ardummy" path="res://forge_samples/demos/06_networked_arena/scenes/dummy.tscn" id="5_dummy"]
+[ext_resource type="PackedScene" uid="uid://c6arplayer" path="res://forge_samples/demos/06_networked_arena/scenes/player.tscn" id="6_player"]
+[ext_resource type="Resource" uid="uid://c6armanifest" path="res://forge_samples/demos/06_networked_arena/network_manifest.tres" id="7_network_manifest"]
+[ext_resource type="Script" uid="uid://bxw5ax6u4m82n" path="res://addons/forge/nodes/AudioCueHandler.cs" id="8_audiocuehandler"]
+[ext_resource type="Script" uid="uid://cn3e04fylnk7t" path="res://addons/forge/nodes/InstantiateSceneCueHandler.cs" id="9_instantiatescenecuehandler"]
+[ext_resource type="Script" uid="uid://opblmj8yle77" path="res://forge_samples/demos/06_networked_arena/scripts/TracerCueHandler3D.cs" id="10_tracercuehandler3d"]
+[ext_resource type="Script" uid="uid://bwrovu7btouq7" path="res://forge_samples/demos/01_realtime_3d/scripts/FloatingTextCueHandler3D.cs" id="11_floatingtextcuehandler3d"]
+[ext_resource type="PackedScene" uid="uid://di25pm3dat1w4" path="res://forge_samples/demos/01_realtime_3d/scenes/3d_floating_text.tscn" id="12_3d_floating_text"]
+[ext_resource type="Script" uid="uid://4r6wjmvrq18e" path="res://forge_samples/demos/03_statescript/scripts/HitFlashCueHandler3D.cs" id="13_hitflashcuehandler3d"]
+[ext_resource type="Material" uid="uid://slep1ateetaq" path="res://forge_samples/demos/03_statescript/materials/hit_flash.tres" id="14_hit_flash"]
+[ext_resource type="AudioStream" uid="uid://fe2dybr470eu" path="res://forge_samples/shared/audio/hit.ogg" id="15_hit"]
+[ext_resource type="PackedScene" uid="uid://c6arspark" path="res://forge_samples/demos/06_networked_arena/scenes/vfx/spark.tscn" id="16_spark"]
+[ext_resource type="PackedScene" uid="uid://y6dw4xnr8s7x" path="res://forge_samples/demos/03_statescript/scenes/vfx/death_burst.tscn" id="17_death_burst"]
+[ext_resource type="Script" uid="uid://b0gjaon40y2gp" path="res://forge_samples/demos/06_networked_arena/scripts/KillFeedCueHandler.cs" id="18_killfeedcuehandler"]
+[ext_resource type="AudioStream" uid="uid://dvcfo0ywi2dxq" path="res://forge_samples/shared/audio/gunshot.ogg" id="19_gunshot"]
+[ext_resource type="AudioStream" uid="uid://fg6mr4yyhvui" path="res://forge_samples/shared/audio/laser.ogg" id="20_laser"]
+[ext_resource type="AudioStream" uid="uid://cwou4ukxnw8ji" path="res://forge_samples/shared/audio/ember-launch.ogg" id="21_ember-launch"]
+[ext_resource type="AudioStream" uid="uid://bwkf724wmunjr" path="res://forge_samples/shared/audio/shotgun.ogg" id="22_shotgun"]
+[ext_resource type="Script" uid="uid://c6arrecoil" path="res://forge_samples/demos/06_networked_arena/scripts/RecoilCueHandler.cs" id="23_recoilcuehandler"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="24_forgetag"]
+[ext_resource type="Script" uid="uid://woko5iedyp54" path="res://forge_samples/demos/06_networked_arena/scripts/ArenaHud.cs" id="25_arenahud"]
+[ext_resource type="Script" uid="uid://bn5vkiw6xqe0l" path="res://forge_samples/shared/QuitScene.cs" id="26_quitscene"]
+[ext_resource type="Script" uid="uid://q6o53xlqjkod" path="res://addons/forge/nodes/ForgeNetworkSession.cs" id="27_forgenetworksession"]
+[ext_resource type="Script" uid="uid://bb4otufv1nl1v" path="res://addons/forge/nodes/ForgeNetworkOverlay.cs" id="28_forgenetworkoverlay"]
+[ext_resource type="Script" uid="uid://c84gbrxt5e2we" path="res://forge_samples/demos/06_networked_arena/scripts/ArenaGame.cs" id="29_arenagame"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("24_forgetag")
+Tag = "weapon.pistol"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("24_forgetag")
+Tag = "weapon.rifle"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("24_forgetag")
+Tag = "weapon.shotgun"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("24_forgetag")
+Tag = "weapon.rocket_launcher"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("24_forgetag")
+Tag = "weapon.shock_rifle"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_6"]
+script = ExtResource("24_forgetag")
+Tag = "state.dead"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[node name="NetworkedArena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1_environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.409576, 0.286788, 0, 0.573576, 0.819152, -0.5, -0.709406, 0.496732, 0, 12, 0)
+light_color = Color(1, 0.952941, 0.862745, 1)
+light_energy = 1.5
+shadow_enabled = true
+shadow_normal_bias = 1.5
+directional_shadow_max_distance = 60.0
+
+[node name="Arena" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="Floor" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+size = Vector3(44, 1, 44)
+material = ExtResource("3_ground")
+
+[node name="North Wall" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -22.5)
+size = Vector3(46, 5, 1)
+material = ExtResource("2_stone")
+
+[node name="South Wall" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 22.5)
+size = Vector3(46, 5, 1)
+material = ExtResource("2_stone")
+
+[node name="West Wall" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 2.5, 0)
+size = Vector3(1, 5, 44)
+material = ExtResource("2_stone")
+
+[node name="East Wall" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 2.5, 0)
+size = Vector3(1, 5, 44)
+material = ExtResource("2_stone")
+
+[node name="Platform" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+size = Vector3(8, 1.6, 8)
+material = ExtResource("2_stone")
+
+[node name="South Ramp" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 0.960195, -0.279330, 0, 0.279330, 0.960195, 0, 0.6560, 6.75)
+size = Vector3(2.5, 0.3, 5.728001396647874)
+material = ExtResource("2_stone")
+
+[node name="North Ramp" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 0.960195, 0.279330, 0, -0.279330, 0.960195, 0, 0.6560, -6.75)
+size = Vector3(2.5, 0.3, 5.728001396647874)
+material = ExtResource("2_stone")
+
+[node name="West Cover" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1.5, 6)
+size = Vector3(0.8, 3, 7)
+material = ExtResource("2_stone")
+
+[node name="East Cover" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1.5, 6)
+size = Vector3(0.8, 3, 7)
+material = ExtResource("2_stone")
+
+[node name="Southwest Cover" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, 14)
+size = Vector3(6, 3, 0.8)
+material = ExtResource("2_stone")
+
+[node name="Southeast Cover" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, 14)
+size = Vector3(6, 3, 0.8)
+material = ExtResource("2_stone")
+
+[node name="Range Wall" type="CSGBox3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 1, -12)
+size = Vector3(3, 2, 0.6)
+material = ExtResource("2_stone")
+
+[node name="Pillar NW" type="CSGCylinder3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 2.5, -16)
+radius = 0.8
+height = 5.0
+sides = 12
+material = ExtResource("2_stone")
+
+[node name="Pillar NE" type="CSGCylinder3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2.5, -16)
+radius = 0.8
+height = 5.0
+sides = 12
+material = ExtResource("2_stone")
+
+[node name="Pillar SW" type="CSGCylinder3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 2.5, 16)
+radius = 0.8
+height = 5.0
+sides = 12
+material = ExtResource("2_stone")
+
+[node name="Pillar SE" type="CSGCylinder3D" parent="Arena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2.5, 16)
+radius = 0.8
+height = 5.0
+sides = 12
+material = ExtResource("2_stone")
+
+[node name="Limbo" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -41, 0)
+use_collision = true
+size = Vector3(6, 1, 6)
+
+[node name="Crates" type="Node3D" parent="."]
+
+[node name="Crate1" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -8)
+
+[node name="Crate2" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 0, -8)
+
+[node name="Crate3" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1.2, -8)
+
+[node name="Crate4" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -8)
+
+[node name="Crate5" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -6.8)
+
+[node name="Crate6" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 9)
+
+[node name="Crate7" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 10.2)
+
+[node name="Crate8" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 9)
+
+[node name="Crate9" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, -12)
+
+[node name="Crate10" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.3, 0, -12)
+
+[node name="Crate11" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.9, 1.2, -12)
+
+[node name="Crate12" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -3)
+
+[node name="Crate13" parent="Crates" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -3)
+
+[node name="Range" type="Node3D" parent="."]
+
+[node name="Sign" type="Label3D" parent="Range"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -19)
+pixel_size = 0.01
+billboard = 1
+text = "Target range"
+font_size = 64
+outline_size = 12
+
+[node name="Dummy 1" parent="Range" instance=ExtResource("5_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -18)
+Distance = 2.5
+PeriodSeconds = 3.0
+
+[node name="Dummy 2" parent="Range" instance=ExtResource("5_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -18)
+Distance = 3.0
+PeriodSeconds = 2.2
+
+[node name="Dummy 3" parent="Range" instance=ExtResource("5_dummy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, -18)
+Distance = 2.5
+PeriodSeconds = 4.0
+
+[node name="Spawns" type="Node3D" parent="."]
+
+[node name="Spawn1" type="Marker3D" parent="Spawns" groups=["arena_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -2)
+
+[node name="Spawn2" type="Marker3D" parent="Spawns" groups=["arena_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -2)
+
+[node name="Spawn3" type="Marker3D" parent="Spawns" groups=["arena_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, 18)
+
+[node name="Spawn4" type="Marker3D" parent="Spawns" groups=["arena_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 18)
+
+[node name="Spawn5" type="Marker3D" parent="Spawns" groups=["arena_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Spawn6" type="Marker3D" parent="Spawns" groups=["arena_spawns"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 19)
+
+[node name="Spawned" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Overview" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.825336, 0.564642, 0, -0.564642, 0.825336, 0, 18, 28)
+current = true
+fov = 70.0
+
+[node name="FloatingText Cues" type="Node" parent="."]
+script = ExtResource("11_floatingtextcuehandler3d")
+FloatingTextScene = ExtResource("12_3d_floating_text")
+CueTag = "cue.floating.text"
+
+[node name="HitFlash Cues" type="Node" parent="."]
+script = ExtResource("13_hitflashcuehandler3d")
+FlashMaterial = ExtResource("14_hit_flash")
+Duration = 0.15
+CueTag = "cue.vfx.hit"
+
+[node name="Hit SFX" type="Node" parent="."]
+script = ExtResource("8_audiocuehandler")
+Stream = ExtResource("15_hit")
+CueTag = "cue.sfx.hit"
+
+[node name="Beam Tracers" type="Node" parent="."]
+script = ExtResource("10_tracercuehandler3d")
+Color = Color(0.65, 0.45, 1, 1)
+Width = 0.07
+Duration = 0.4
+CueTag = "cue.arena.beam"
+
+[node name="Pellet Tracers" type="Node" parent="."]
+script = ExtResource("10_tracercuehandler3d")
+Color = Color(1, 0.9, 0.55, 1)
+Width = 0.025
+Duration = 0.15
+CueTag = "cue.arena.pellet"
+
+[node name="Impact Sparks" type="Node" parent="."]
+script = ExtResource("9_instantiatescenecuehandler")
+Scene = ExtResource("16_spark")
+Attach = 1
+CueTag = "cue.arena.impact"
+
+[node name="Frag Bursts" type="Node" parent="."]
+script = ExtResource("9_instantiatescenecuehandler")
+Scene = ExtResource("17_death_burst")
+Attach = 1
+CueTag = "cue.arena.frag"
+
+[node name="Kill Feed" type="Node" parent="." node_paths=PackedStringArray("Feed")]
+script = ExtResource("18_killfeedcuehandler")
+Feed = NodePath("../HUD/KillFeed")
+WeaponNames = PackedStringArray("Pistol", "Rifle", "Shotgun", "Rocket Launcher", "Shock Rifle")
+CueTag = "cue.arena.frag"
+
+[node name="Gunshot SFX" type="Node" parent="."]
+script = ExtResource("8_audiocuehandler")
+Stream = ExtResource("19_gunshot")
+CueTag = "cue.arena.sfx.gunshot"
+
+[node name="Beam SFX" type="Node" parent="."]
+script = ExtResource("8_audiocuehandler")
+Stream = ExtResource("20_laser")
+CueTag = "cue.arena.sfx.beam"
+
+[node name="Ball SFX" type="Node" parent="."]
+script = ExtResource("8_audiocuehandler")
+Stream = ExtResource("21_ember-launch")
+CueTag = "cue.arena.sfx.ball"
+
+[node name="Rocket SFX" type="Node" parent="."]
+script = ExtResource("8_audiocuehandler")
+Stream = ExtResource("21_ember-launch")
+CueTag = "cue.arena.sfx.rocket"
+
+[node name="Shotgun SFX" type="Node" parent="."]
+script = ExtResource("8_audiocuehandler")
+Stream = ExtResource("22_shotgun")
+CueTag = "cue.arena.sfx.shotgun"
+
+[node name="Recoil" type="Node" parent="."]
+script = ExtResource("23_recoilcuehandler")
+Degrees = 1.0
+CueTag = "cue.arena.recoil"
+
+[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("Session", "KillFeed", "Health", "WeaponSlots", "DeadOverlay", "DeadLabel", "Scoreboard", "ScoreRows")]
+script = ExtResource("25_arenahud")
+Session = NodePath("../Session")
+KillFeed = NodePath("../Kill Feed")
+Health = NodePath("Health")
+WeaponSlots = [NodePath("Weapons/Pistol"), NodePath("Weapons/Rifle"), NodePath("Weapons/Shotgun"), NodePath("Weapons/RocketLauncher"), NodePath("Weapons/ShockRifle")]
+WeaponTags = [SubResource("Resource_1"), SubResource("Resource_2"), SubResource("Resource_3"), SubResource("Resource_4"), SubResource("Resource_5")]
+DeadTag = SubResource("Resource_6")
+DeadOverlay = NodePath("Dead")
+DeadLabel = NodePath("Dead/Label")
+Scoreboard = NodePath("Scoreboard")
+ScoreRows = NodePath("Scoreboard/Box/Rows")
+
+[node name="Crosshair" type="Label" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 28
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Health" type="Label" parent="HUD"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -72.0
+offset_right = 224.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 40
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+text = "1000"
+
+[node name="Weapons" type="HBoxContainer" parent="HUD"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_top = -56.0
+offset_right = 420.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="Pistol" type="Label" parent="HUD/Weapons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "1  Pistol"
+
+[node name="Rifle" type="Label" parent="HUD/Weapons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "2  Rifle"
+
+[node name="Shotgun" type="Label" parent="HUD/Weapons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "3  Shotgun"
+
+[node name="RocketLauncher" type="Label" parent="HUD/Weapons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "4  Rocket Launcher"
+
+[node name="ShockRifle" type="Label" parent="HUD/Weapons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "5  Shock Rifle"
+
+[node name="KillFeed" type="VBoxContainer" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -440.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 200.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="Hint" type="Label" parent="HUD"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_top = -40.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 14
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "Tab: scores    Esc: free the mouse    F3: network"
+horizontal_alignment = 2
+
+[node name="Dead" type="ColorRect" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.05, 0, 0, 0.6)
+
+[node name="Label" type="Label" parent="HUD/Dead"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+theme_override_constants/outline_size = 6
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+text = "Fragged."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Scoreboard" type="PanelContainer" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -150.0
+offset_right = 220.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="HUD/Scoreboard"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="HUD/Scoreboard/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Deathmatch"
+horizontal_alignment = 1
+
+[node name="Rows" type="GridContainer" parent="HUD/Scoreboard/Box"]
+layout_mode = 2
+theme_override_constants/h_separation = 48
+columns = 3
+
+[node name="Player" type="Label" parent="HUD/Scoreboard/Box/Rows"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "Player"
+
+[node name="Frags" type="Label" parent="HUD/Scoreboard/Box/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "Frags"
+
+[node name="Deaths" type="Label" parent="HUD/Scoreboard/Box/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+text = "Deaths"
+
+[node name="QuitScene" type="Node" parent="."]
+script = ExtResource("26_quitscene")
+
+[node name="Session" type="Node" parent="."]
+script = ExtResource("27_forgenetworksession")
+Manifest = ExtResource("7_network_manifest")
+InterpolationMode = 1
+metadata/_custom_type_script = "uid://q6o53xlqjkod"
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+offset = Vector2(260, 0)
+script = ExtResource("28_forgenetworkoverlay")
+metadata/_custom_type_script = "uid://bb4otufv1nl1v"
+
+[node name="Menu" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Panel" type="PanelContainer" parent="Menu"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -110.0
+offset_right = 180.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Box" type="VBoxContainer" parent="Menu/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Menu/Panel/Box"]
+layout_mode = 2
+text = "Networked Arena"
+horizontal_alignment = 1
+
+[node name="Address" type="LineEdit" parent="Menu/Panel/Box"]
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "Server address"
+alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Menu/Panel/Box"]
+layout_mode = 2
+alignment = 1
+
+[node name="Host" type="Button" parent="Menu/Panel/Box/Buttons"]
+layout_mode = 2
+text = "Host"
+
+[node name="Join" type="Button" parent="Menu/Panel/Box/Buttons"]
+layout_mode = 2
+text = "Join"
+
+[node name="Dedicated" type="Button" parent="Menu/Panel/Box/Buttons"]
+layout_mode = 2
+text = "Dedicated"
+
+[node name="Status" type="Label" parent="Menu/Panel/Box"]
+layout_mode = 2
+text = "Host plays here and lets others join; Join connects to a host."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Game" type="Node" parent="." node_paths=PackedStringArray("Session", "Spawned", "Menu", "Address", "Status")]
+script = ExtResource("29_arenagame")
+Session = NodePath("../Session")
+PlayerScene = ExtResource("6_player")
+Spawned = NodePath("../Spawned")
+Menu = NodePath("../Menu/Panel")
+Address = NodePath("../Menu/Panel/Box/Address")
+Status = NodePath("../Menu/Panel/Box/Status")
+
+[connection signal="pressed" from="Menu/Panel/Box/Buttons/Host" to="Game" method="Host"]
+[connection signal="pressed" from="Menu/Panel/Box/Buttons/Join" to="Game" method="Join"]
+[connection signal="pressed" from="Menu/Panel/Box/Buttons/Dedicated" to="Game" method="HostDedicated"]
