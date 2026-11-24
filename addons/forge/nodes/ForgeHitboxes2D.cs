@@ -16,8 +16,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// <para>On the server, it records where each hitbox stands against the entity's body every tick, so a lag-compensated
 /// shot meets the hitboxes as the shooter's client showed them, with the body. A shot that meets one reports it.</para>
 /// <para>The animators in <see cref="Animators"/> move hitboxes, so they're simulation rather than presentation: they
-/// advance in physics ticks, and a Play Animation node plays them on a server with nothing to show, a dedicated one,
-/// where other animation doesn't play.</para>
+/// advance in physics ticks, before the entities', and a Play Animation node plays them on a server with nothing to
+/// show, a dedicated one, where other animation doesn't play.</para>
 /// </remarks>
 [GlobalClass]
 public partial class ForgeHitboxes2D : Node
@@ -97,6 +97,9 @@ public partial class ForgeHitboxes2D : Node
 			if (GetNodeOrNull(path) is AnimationMixer animator)
 			{
 				animator.CallbackModeProcess = AnimationMixer.AnimationCallbackModeProcess.Physics;
+
+				// Before the entities' ticks, so the pose a tick seeks to is the one recorded.
+				animator.ProcessPhysicsPriority = -2;
 				_animators.Add(animator);
 				_poses.Add(animator);
 			}

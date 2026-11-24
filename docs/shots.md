@@ -77,7 +77,7 @@ A [`ForgeHitbox3D` or 2D](nodes.md#forgehitbox2d--forgehitbox3d) is a part of an
 A [`ForgeHitboxes3D` or 2D](nodes.md#forgehitboxes2d--forgehitboxes3d) next to the entity's `ForgeEntity` makes them rewind with the body:
 
 - On the server, it records where each hitbox stands against the body every tick, so a lag-compensated shot meets the hitboxes posed as the shooter's client showed them, where it showed the body.
-- The animators listed in its `Animators` move hitboxes, so they're simulation: they advance in physics ticks, and a [Play Animation](statescript/nodes/presentation-nodes.md) node plays them on a dedicated server too, where nothing else is shown, seeking each tick to where the activation has played to.
+- The animators listed in its `Animators` move hitboxes, so they're simulation: they advance in physics ticks, before the entities' ticks, and a [Play Animation](statescript/nodes/presentation-nodes.md) node plays them on a dedicated server too, where nothing else is shown, seeking each tick to where the activation has played to.
 
 ```text
 Player (CharacterBody3D)

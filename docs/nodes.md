@@ -271,7 +271,7 @@ The hitboxes of an entity: every `ForgeHitbox2D` or `ForgeHitbox3D` under the en
 
 - `Animators` (NodePath array): The AnimationPlayer and AnimationTree nodes that pose the hitboxes.
 
-On the server, it records where each hitbox stands against the entity's body every tick, so a lag-compensated shot meets the hitboxes as the shooter's client showed them, with the body. The animators it names advance in physics ticks, and a Play Animation node plays them on a dedicated server too. See [Hitboxes](shots.md#hitboxes).
+On the server, it records where each hitbox stands against the entity's body every tick, so a lag-compensated shot meets the hitboxes as the shooter's client showed them, with the body. The animators it names advance in physics ticks, before the entities' ticks, and a Play Animation node plays them on a dedicated server too. See [Hitboxes](shots.md#hitboxes).
 
 ### ForgeWorldHistory
 
