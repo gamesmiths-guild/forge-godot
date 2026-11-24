@@ -378,7 +378,7 @@ Reference in the `Executions` array in ForgeEffectData.
 
 ## Shot Resources
 
-The [shots](shots.md) a graph's [shot nodes](statescript/nodes/shot-nodes.md) or `ForgeShots` fire. Each holds the effects it applies: every entity it hits gets them once, with the share of the shot's damage it had left as float context data.
+The [shots](shots.md) a graph's [shot nodes](statescript/nodes/shot-nodes.md) or `ForgeShots` fire. Each holds the effects it applies: every entity it hits gets them once, with the share of the shot's strength it had left as float context data.
 
 ### ForgeHitscanData
 
@@ -389,6 +389,7 @@ An instant shot: one ray, or pellets spread in a cone, that hits what is on its 
 - `Pellets` (int), `SpreadDegrees` (float): How many rays, spread over a cone of this half angle from the shooter's seeded random.
 - `Effects` (ForgeEffectData array): Applied to each entity a ray hits.
 - `HitsProjectiles` (bool): Whether it hits lightweight projectiles that can be shot, where its shooter saw them, ending them as struck.
+- `Falloff` (Curve): How its strength falls off with distance, sampled in units. See [Falloff](shots.md#falloff).
 - `PierceMask` (layers), `MaxPierces` (int), `PierceScale` (float), `Power` (float): What it goes through. See [Going through things](shots.md#going-through-things).
 
 ### ForgeProjectileData
@@ -398,6 +399,7 @@ A lightweight projectile, which every machine flies from its launch.
 - `Name` (string), `Speed` (float), `Gravity` (Vector3; a 2D projectile uses X and Y), `Radius` (float), `Lifetime` (float): How it flies. Its radius is what it sweeps, and what a shot that hits projectiles aims at.
 - `CollisionMask` (layers): What it hits.
 - `Effects` (ForgeEffectData array): Applied to the entity it hits.
+- `Falloff` (Curve): How its strength falls off with the distance from its launch, sampled in units. See [Falloff](shots.md#falloff).
 - `Splash` (ForgeSplashData): The blast where it lands, or none.
 - `Shootable` (bool), `StruckSplash` (ForgeSplashData): Whether a shot can hit it in flight, and the blast where one does.
 - `PierceMask`, `MaxPierces`, `PierceScale`, `Power`: What it goes through, as a hitscan's.

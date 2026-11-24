@@ -259,7 +259,7 @@ A part of an entity a shot can hit, as a head or a torso: a static body of colli
 **Properties:**
 
 - `Tags` (ForgeTagContainer): The tags a hit on the part reports, such as one for a head.
-- `DamageScale` (float): How much a hit on the part scales a shot's damage by. The default is 1; a head that takes double has 2.
+- `StrengthScale` (float): How much a hit on the part scales a shot's strength by. The default is 1; a head that takes double has 2.
 
 Put it on a layer of its own, which the entity's movement doesn't collide with and shots do. See [Hitboxes](shots.md#hitboxes).
 

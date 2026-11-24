@@ -12,7 +12,7 @@ Fire a shot from an entity's tick, as an ability's behavior runs, so the server 
 
 ## Resources
 
-Each kind of shot is a resource: [`ForgeHitscanData`](resources.md#forgehitscandata), [`ForgeProjectileData`](resources.md#forgeprojectiledata) and [`ForgeSplashData`](resources.md#forgesplashdata). Each holds the effects it applies. Every entity it hits gets them once, with the share of the shot's damage it had left as **float context data**, which a [custom calculator or execution](resources.md#forgecustomcalculator-abstract) reads to scale the magnitude. A projectile's resource has to be in the [network manifest](resources.md#forgenetworkmanifest), which lists every one in the project.
+Each kind of shot is a resource: [`ForgeHitscanData`](resources.md#forgehitscandata), [`ForgeProjectileData`](resources.md#forgeprojectiledata) and [`ForgeSplashData`](resources.md#forgesplashdata). Each holds the effects it applies. Every entity it hits gets them once, with the share of the shot's **strength** it had left as **float context data**, which a [custom calculator or execution](resources.md#forgecustomcalculator-abstract) reads to scale the magnitude. Strength isn't damage: it's what the hit carries into its effects, which turn it into damage, or anything else, through the entity's attributes, effects and immunities. A projectile's resource has to be in the [network manifest](resources.md#forgenetworkmanifest), which lists every one in the project.
 
 ## Nodes
 
@@ -55,20 +55,24 @@ public sealed class Rifle(ForgeHitscanData beam) : RollbackBehavior<RifleContext
 | `Launch3D`, `Launch2D` | Launches a lightweight projectile in the entity's current tick. |
 | `Splash3D`, `Splash2D` | Blasts from a point. |
 
-A `ShotHit3D` or `ShotHit2D` says where the shot hit, the collider and the entity, the [hitbox](#hitboxes) if it was one, the share of damage it had left times a hitbox's `Damage Scale` (`Scale`), and the projectile if it hit one in flight. A `SplashHit3D` or `SplashHit2D` says how far the entity was, its scale and the push it gave it, which a body without a character movement doesn't take.
+A `ShotHit3D` or `ShotHit2D` says where the shot hit, the collider and the entity, the [hitbox](#hitboxes) if it was one, the share of strength it had left times a hitbox's `Strength Scale` and the shot's [falloff](#falloff) (`Strength`), and the projectile if it hit one in flight. A `SplashHit3D` or `SplashHit2D` says how far the entity was, the strength it got and the push it gave it, which a body without a character movement doesn't take.
 
 ## Going through things
 
 A ray, and a projectile, stops at the first collider in its collision mask it may not go through. Two settings let it through:
 
-- **Pierce Mask.** It goes through colliders on these layers, keeping `Pierce Scale` of its damage each time, up to `Max Pierces` (negative for no limit). A cloth banner, a player a railgun goes through.
-- **Power.** A collider with a [`ForgeShotSurface`](resources.md#forgeshotsurface) as its `forge_shot_surface` metadata costs the shot its `Resistance` times the thickness the shot crosses, measured from where it goes in to where it comes out, all at once as it goes in: one thicker than its power crosses stops it, however slowly it flies. A shot with `Power` above zero goes through while it has power left, and keeps the share left as its share of damage. A wooden crate with a low resistance lets a rifle through at reduced damage; a concrete wall with none set, or a high one, stops it.
+- **Pierce Mask.** It goes through colliders on these layers, keeping `Pierce Scale` of its strength each time, up to `Max Pierces` (negative for no limit). A cloth banner, a player a railgun goes through.
+- **Power.** A collider with a [`ForgeShotSurface`](resources.md#forgeshotsurface) as its `forge_shot_surface` metadata costs the shot its `Resistance` times the thickness the shot crosses, measured from where it goes in to where it comes out, all at once as it goes in: one thicker than its power crosses stops it, however slowly it flies. A shot with `Power` above zero goes through while it has power left, and keeps the share left as its share of strength. A wooden crate with a low resistance lets a rifle through at reduced strength; a concrete wall with none set, or a high one, stops it.
 
-Each entity on the line gets the effects once, with the scale it was hit at.
+Each entity on the line gets the effects once, with the strength it was hit at.
+
+## Falloff
+
+A hitscan's or a projectile's `Falloff` curve scales a hit's strength by how far it was from where the shot started: a hitscan's origin, or where a projectile was launched, in a straight line. The curve is sampled at the distance in units, over its domain: set its `Max Domain` to 40 for a curve that falls over 40 units. Past the end, it holds its last value. Without a curve, distance changes nothing.
 
 ## Hitboxes
 
-A [`ForgeHitbox3D` or 2D](nodes.md#forgehitbox2d--forgehitbox3d) is a part of an entity a shot can hit, such as a head: a static body of shapes that moves with the entity's animation, usually under a `BoneAttachment3D`. Put hitboxes on a layer of their own, which the entity's movement doesn't collide with and shots do. A hit on one reports it, scales the damage by its `Damage Scale` (2 for a head that takes double) and carries its `Tags`.
+A [`ForgeHitbox3D` or 2D](nodes.md#forgehitbox2d--forgehitbox3d) is a part of an entity a shot can hit, such as a head: a static body of shapes that moves with the entity's animation, usually under a `BoneAttachment3D`. Put hitboxes on a layer of their own, which the entity's movement doesn't collide with and shots do. A hit on one reports it, scales the strength by its `Strength Scale` (2 for a head that takes double) and carries its `Tags`.
 
 A [`ForgeHitboxes3D` or 2D](nodes.md#forgehitboxes2d--forgehitboxes3d) next to the entity's `ForgeEntity` makes them rewind with the body:
 
@@ -81,7 +85,7 @@ Player (CharacterBody3D)
 ├── Model
 │   └── Skeleton3D
 │       ├── BoneAttachment3D (head)
-│       │   └── ForgeHitbox3D           layer: hitboxes, Damage Scale = 2
+│       │   └── ForgeHitbox3D           layer: hitboxes, Strength Scale = 2
 │       │       └── CollisionShape3D
 │       └── BoneAttachment3D (spine)
 │           └── ForgeHitbox3D           layer: hitboxes

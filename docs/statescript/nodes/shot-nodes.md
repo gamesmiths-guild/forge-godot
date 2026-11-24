@@ -6,7 +6,7 @@
 >
 > **Network kind:** Simulation
 
-These nodes are **Godot-only**. They fire [shots](../../shots.md) from the ability's owner: a hitscan, a lightweight projectile or a blast. Each takes its shot as a resource, picked with a **Constant** row, and applies the resource's effects itself, to each entity the shot hits, with the share of damage the shot had left as float context data.
+These nodes are **Godot-only**. They fire [shots](../../shots.md) from the ability's owner: a hitscan, a lightweight projectile or a blast. Each takes its shot as a resource, picked with a **Constant** row, and applies the resource's effects itself, to each entity the shot hits, with the share of strength the shot had left as float context data.
 
 They're simulation: the server and the client that predicts the owner both run them. On the server, a client's shot meets the other entities where that client was shown them, and what it hits shows its cues on the shooter's screen at once. Pellets spread from the owner's seeded random, so both machines spread them alike.
 
