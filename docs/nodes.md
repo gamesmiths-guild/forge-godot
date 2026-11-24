@@ -668,7 +668,7 @@ The general-purpose visual: a telegraph, an impact burst, a shield bubble, a sco
 - `Lifetime` (float): Seconds an executed instance lives. Zero or less leaves it to free itself.
 - `MagnitudeCurve` (Curve) **(M)**: Multiplied into the scene's authored scale.
 
-Executing spawns and forgets; applying spawns and holds, and removing frees what it spawned — which is what ties a bubble to the effect that put it there. It reads a well-known `position` custom parameter when one is present, else the target's position.
+Executing spawns and forgets; applying spawns and holds, and removing frees what it spawned — which is what ties a bubble to the effect that put it there. It plays at the cue's `Position` when it has one, else at a well-known `position` custom parameter, else at the target's position. A cue's `Normal` turns the instance so its Y axis points along it, as a spark on the surface a shot hit needs. Only `Position` and `Normal` travel to clients: a client's copy of the cue has no custom parameters.
 
 **Placement happens before parenting**, written as a local transform through the parent's, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` would otherwise see the position the scene was authored at.
 

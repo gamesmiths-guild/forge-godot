@@ -93,6 +93,39 @@ public partial class ForgeCueHandlerTests
 		}
 	}
 
+	[TestCase]
+	[RequireGodotRuntime]
+	public void An_executed_scene_plays_at_the_cue_s_position_facing_its_normal()
+	{
+		Window root = ((SceneTree)Engine.GetMainLoop()).Root;
+		var spark = new Node3D { Name = "PlacedSpark" };
+		var scene = new PackedScene();
+		scene.Pack(spark);
+		spark.Free();
+
+		var handler = new InstantiateSceneCueHandler { Scene = scene, Attach = CueAttachMode.World };
+		var entity = new ForgeEntity();
+		root.AddChild(entity);
+		Node? parent = entity.GetTree().CurrentScene ?? root;
+
+		try
+		{
+			handler.OnExecute(
+				entity,
+				new CueParameters(0, 0, null, new System.Numerics.Vector3(1, 2, 3), System.Numerics.Vector3.UnitX));
+			Node3D instance = parent.GetNode<Node3D>("PlacedSpark");
+
+			instance.GlobalPosition.Should().Be(new Vector3(1, 2, 3));
+			instance.GlobalBasis.Y.IsEqualApprox(Vector3.Right).Should().BeTrue("its up points along the normal");
+			instance.Free();
+		}
+		finally
+		{
+			entity.Free();
+			handler.Free();
+		}
+	}
+
 	private sealed partial class RecordingCueHandler : ForgeCueHandler
 	{
 		public int TargetCalls { get; private set; }
