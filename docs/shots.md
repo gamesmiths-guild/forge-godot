@@ -49,20 +49,20 @@ public sealed class Rifle(ForgeHitscanData beam) : RollbackBehavior<RifleContext
 
 | Method | Does |
 |---|---|
-| `Hitscan3D`, `Hitscan2D` | Fires the hitscan: spreads its pellets from the entity's seeded random, traces each, and applies its effects to each entity a pellet hits. Adds what each pellet hit, in order, to a list you pass. |
+| `Hitscan3D`, `Hitscan2D` | Fires the hitscan: spreads its pellets from the entity's seeded random, traces each, and applies its effects to each entity a pellet hits. Adds what each pellet hit, in order, to a list you pass, and gives what the first pellet stopped on, for a tracer. |
 | `Trace3D`, `Trace2D` | Traces one ray and applies nothing, for a shot that decides itself what its hits do. |
 | `Spread3D`, `Spread2D` | Spreads directions over a cone or an arc from the entity's seeded random. |
 | `Launch3D`, `Launch2D` | Launches a lightweight projectile in the entity's current tick. |
 | `Splash3D`, `Splash2D` | Blasts from a point. |
 
-A `ShotHit3D` or `ShotHit2D` says where the shot hit, the collider and the entity, the [hitbox](#hitboxes) if it was one, the share of damage it had left (`Scale`), and the projectile if it hit one in flight. A `SplashHit3D` or `SplashHit2D` says how far the entity was, its scale and the push it got.
+A `ShotHit3D` or `ShotHit2D` says where the shot hit, the collider and the entity, the [hitbox](#hitboxes) if it was one, the share of damage it had left times a hitbox's `Damage Scale` (`Scale`), and the projectile if it hit one in flight. A `SplashHit3D` or `SplashHit2D` says how far the entity was, its scale and the push it gave it, which a body without a character movement doesn't take.
 
 ## Going through things
 
 A ray, and a projectile, stops at the first collider in its collision mask it may not go through. Two settings let it through:
 
 - **Pierce Mask.** It goes through colliders on these layers, keeping `Pierce Scale` of its damage each time, up to `Max Pierces` (negative for no limit). A cloth banner, a player a railgun goes through.
-- **Power.** A collider with a [`ForgeShotSurface`](resources.md#forgeshotsurface) as its `forge_shot_surface` metadata costs the shot its `Resistance` times the thickness the shot crosses, measured from where it goes in to where it comes out. A shot with `Power` above zero goes through while it has power left, and keeps the share left as its share of damage. A wooden crate with a low resistance lets a rifle through at reduced damage; a concrete wall with none set, or a high one, stops it.
+- **Power.** A collider with a [`ForgeShotSurface`](resources.md#forgeshotsurface) as its `forge_shot_surface` metadata costs the shot its `Resistance` times the thickness the shot crosses, measured from where it goes in to where it comes out, all at once as it goes in: one thicker than its power crosses stops it, however slowly it flies. A shot with `Power` above zero goes through while it has power left, and keeps the share left as its share of damage. A wooden crate with a low resistance lets a rifle through at reduced damage; a concrete wall with none set, or a high one, stops it.
 
 Each entity on the line gets the effects once, with the scale it was hit at.
 
