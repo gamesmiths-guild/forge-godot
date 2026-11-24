@@ -130,6 +130,13 @@ public class ForgeShotsTests
 
 			hits.Should().HaveCount(2, "the second crate is one more than it may go through");
 			stop!.Value.Collider.Should().Be(hits[1].Collider);
+
+			data.MaxPierces = 2;
+			data.PierceScale = 0;
+			hits.Clear();
+			ForgeShots3D.Hitscan(shooter, new Vector3(0, 1, 0), Vector3.Forward, data, hits);
+
+			hits.Should().ContainSingle("going through the first crate left it no strength");
 		}
 		finally
 		{

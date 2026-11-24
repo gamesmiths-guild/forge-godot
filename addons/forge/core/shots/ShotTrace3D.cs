@@ -202,7 +202,7 @@ internal static class ShotTrace3D
 		if (result.Node is CollisionObject3D collider && (collider.CollisionLayer & penetration.PierceMask) != 0)
 		{
 			strength *= penetration.PierceScale;
-			return true;
+			return strength > 0;
 		}
 
 		return false;
