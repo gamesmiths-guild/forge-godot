@@ -22,14 +22,11 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 [GlobalClass]
 public partial class ForgeHitboxes2D : Node
 {
-	// Enough ticks for the longest rewind at a high tick rate.
-	private const int HistoryLength = 128;
-
 	private static readonly HashSet<AnimationMixer> _poses = [];
 
 	private readonly List<ForgeHitbox2D> _hitboxes = [];
 	private readonly List<AnimationMixer> _animators = [];
-	private readonly long[] _ticks = new long[HistoryLength];
+	private long[] _ticks = [];
 	private Transform2D[][] _history = [];
 
 	/// <summary>
@@ -84,10 +81,13 @@ public partial class ForgeHitboxes2D : Node
 
 		Body = GetParent() as Node2D;
 		Collect(GetParent());
-		_history = new Transform2D[HistoryLength][];
+
+		// A second, the longest rewind, and the tick after it to ease towards.
+		_ticks = new long[Engine.PhysicsTicksPerSecond + 2];
+		_history = new Transform2D[_ticks.Length][];
 		System.Array.Fill(_ticks, -1);
 
-		for (int i = 0; i < HistoryLength; i++)
+		for (int i = 0; i < _ticks.Length; i++)
 		{
 			_history[i] = new Transform2D[_hitboxes.Count];
 		}
@@ -138,7 +138,7 @@ public partial class ForgeHitboxes2D : Node
 			return;
 		}
 
-		int slot = (int)(tick % HistoryLength);
+		int slot = (int)(tick % _ticks.Length);
 		Transform2D toBody = Body.GlobalTransform.AffineInverse();
 
 		for (int i = 0; i < _hitboxes.Count; i++)
@@ -178,7 +178,7 @@ public partial class ForgeHitboxes2D : Node
 
 	private bool TryRecorded(long tick, out Transform2D[] transforms)
 	{
-		int slot = (int)(((tick % HistoryLength) + HistoryLength) % HistoryLength);
+		int slot = (int)(((tick % _ticks.Length) + _ticks.Length) % _ticks.Length);
 		transforms = _history[slot];
 		return _ticks[slot] == tick;
 	}

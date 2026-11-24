@@ -145,7 +145,18 @@ public class PlayAnimationNode(
 	protected override void OnRestoreAttach(GraphContext graphContext)
 	{
 		// A running activation has not played out, whatever its presentation was told after the snapshot was taken.
-		graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID).Playback.Finished = false;
+		PlayAnimationNodeContext nodeContext = graphContext.GetNodeContext<PlayAnimationNodeContext>(NodeID);
+		nodeContext.Playback.Finished = false;
+
+		// Its end stopped a player that poses hitboxes where nothing shows them: it plays again, unless another took
+		// it.
+		if (nodeContext.Player is AnimationPlayer player
+			&& PosesUnseenHitboxes(player)
+			&& !player.IsPlaying()
+			&& _inputs.TryPlayAnimation(player, _animation, nodeContext.Speed, nodeContext.Blend))
+		{
+			player.Seek(Position(player, nodeContext), update: true);
+		}
 	}
 
 	/// <inheritdoc/>

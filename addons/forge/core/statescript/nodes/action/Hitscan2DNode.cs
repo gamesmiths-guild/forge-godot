@@ -100,24 +100,16 @@ public sealed class Hitscan2DNode : ActionNode
 		_hits.Clear();
 		var from = new Vector2(origin.X, origin.Y);
 		var along = new Vector2(aim.X, aim.Y);
-		ForgeShots.Hitscan2D(instigator, from, along, data, _hits);
+		ShotHit2D? stop = ForgeShots.Hitscan2D(instigator, from, along, data, _hits);
 
-		Vector2 end = from + (along.Normalized() * data.Range);
-		Vector2 normal = Vector2.Zero;
+		Vector2 end = stop?.Position ?? (from + (along.Normalized() * data.Range));
+		Vector2 normal = stop?.Normal ?? Vector2.Zero;
 		Forge.Core.IForgeEntity? entity = null;
 		ForgeHitbox2D? hitbox = null;
 		int hits = 0;
-		bool first = true;
 
 		foreach (ShotHit2D hit in _hits)
 		{
-			if (first)
-			{
-				end = hit.Position;
-				normal = hit.Normal;
-			}
-
-			first = false;
 			entity ??= hit.Entity;
 			hitbox ??= hit.Hitbox;
 			hits += hit.Entity is null ? 0 : 1;

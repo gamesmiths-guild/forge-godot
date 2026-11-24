@@ -16,8 +16,8 @@ namespace Gamesmiths.Forge.Godot.Core.Shots;
 /// <param name="Collider">The collider it hit, or <see langword="null"/> for a projectile.</param>
 /// <param name="Entity">The entity it hit, or <see langword="null"/> for a collider with none.</param>
 /// <param name="Hitbox">The hitbox it hit, or <see langword="null"/>.</param>
-/// <param name="Scale">The share of its damage the shot had left as it hit, which its effects get as float context
-/// data.</param>
+/// <param name="Scale">The share of its damage the shot had left as it hit, times a hitbox's Damage Scale: what its
+/// effects get as float context data.</param>
 /// <param name="Flight">The projectile it hit in flight, if it hit one.</param>
 public readonly record struct ShotHit3D(
 	Vector3 Position,

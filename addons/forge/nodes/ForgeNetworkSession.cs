@@ -862,7 +862,8 @@ public partial class ForgeNetworkSession : Node
 	// when this opened one, and EndLagCompensation must follow.
 	internal bool BeginActionOf(ForgeEntity instigator, double remaining = 1)
 	{
-		return !_compensating && BeginLagCompensation(instigator.NetworkOwner, Clock.Tick, remaining);
+		return !_compensating
+			&& BeginLagCompensation(instigator.NetworkOwner, EntitySimulation.TickOf(instigator), remaining);
 	}
 
 	// Where the open compensation put an entity's body.

@@ -44,7 +44,9 @@ public static partial class ForgeShots
 	/// <param name="aim">Where it aims.</param>
 	/// <param name="data">The hitscan.</param>
 	/// <param name="hits">Where to add what each pellet hit, in order, or <see langword="null"/>.</param>
-	public static void Hitscan3D(
+	/// <returns>What the first pellet stopped on, or <see langword="null"/> if it reached the end of its range.
+	/// </returns>
+	public static ShotHit3D? Hitscan3D(
 		ForgeEntity instigator,
 		Vector3 origin,
 		Vector3 aim,
@@ -57,23 +59,29 @@ public static partial class ForgeShots
 
 		var pelletHits = new List<ShotHit3D>();
 		var applied = new HashSet<IForgeEntity>(ReferenceEqualityComparer.Instance);
+		ShotHit3D? first = null;
 		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
 
 		try
 		{
-			foreach (NumericsVector3 direction in directions)
+			for (int i = 0; i < pellets; i++)
 			{
 				pelletHits.Clear();
 				applied.Clear();
-				Trace(
+				ShotHit3D? stop = Trace(
 					instigator,
 					origin,
-					ToGodot(direction),
+					ToGodot(directions[i]),
 					data.Range,
 					data.CollisionMask,
 					data.Penetration,
 					data.HitsProjectiles,
 					pelletHits);
+
+				if (i == 0)
+				{
+					first = stop;
+				}
 
 				foreach (ShotHit3D hit in pelletHits)
 				{
@@ -93,6 +101,8 @@ public static partial class ForgeShots
 				session!.EndLagCompensation();
 			}
 		}
+
+		return first;
 	}
 
 	/// <summary>
@@ -212,7 +222,7 @@ public static partial class ForgeShots
 			var reached = new HashSet<IForgeEntity>(ReferenceEqualityComparer.Instance);
 			var exclusions = new GodotRidArray();
 
-			foreach (GodotDictionary overlap in world.DirectSpaceState.IntersectShape(query, MaxSplashResults))
+			foreach (GodotDictionary overlap in Overlaps(world, query))
 			{
 				if (!ForgeEntityBridge.TryGetEntityInHierarchy(overlap["collider"].As<Node>(), out IForgeEntity? entity)
 					|| !reached.Add(entity)
@@ -290,7 +300,23 @@ public static partial class ForgeShots
 		return new Vector3(value.X, value.Y, value.Z);
 	}
 
-	private static void Trace(
+	// Every shape a blast reaches, however many: a full result asks again for more.
+	private static Array<GodotDictionary> Overlaps(World3D world, PhysicsShapeQueryParameters3D query)
+	{
+		int max = MaxSplashResults;
+		Array<GodotDictionary> overlaps = world.DirectSpaceState.IntersectShape(query, max);
+
+		while (overlaps.Count == max)
+		{
+			max *= 2;
+			overlaps = world.DirectSpaceState.IntersectShape(query, max);
+		}
+
+		return overlaps;
+	}
+
+	// Gives what the shot stopped on, if anything.
+	private static ShotHit3D? Trace(
 		ForgeEntity instigator,
 		Vector3 origin,
 		Vector3 direction,
@@ -302,7 +328,7 @@ public static partial class ForgeShots
 	{
 		if (WorldOf(instigator) is not World3D world || direction.IsZeroApprox())
 		{
-			return;
+			return null;
 		}
 
 		var exclusions = new GodotRidArray();
@@ -310,10 +336,11 @@ public static partial class ForgeShots
 		int pierces = 0;
 		float strength = 1;
 
-		if (ShotTrace3D.Trace(
+		if (!ShotTrace3D.Trace(
 			world,
 			origin,
 			direction.Normalized() * range,
+			range,
 			0,
 			mask,
 			penetration,
@@ -322,11 +349,17 @@ public static partial class ForgeShots
 			exclusions,
 			hitsProjectiles ? Targets(instigator) : null,
 			hits,
-			out ShotHit3D stop)
-			&& stop.Flight is ProjectileFlight struck)
+			out ShotHit3D stop))
+		{
+			return null;
+		}
+
+		if (stop.Flight is ProjectileFlight struck)
 		{
 			Strike(struck, new NumericsVector3(stop.Position.X, stop.Position.Y, stop.Position.Z));
 		}
+
+		return stop;
 	}
 
 	// The projectiles a shot can hit, where its shooter saw them: its own where its last tick left them, the others'
@@ -336,16 +369,19 @@ public static partial class ForgeShots
 	{
 		ForgeNetworkSession? session = instigator.Replicator ?? ForgeNetworkSession.Of(instigator);
 		SimulationClock clock = ForgeManagers.Instance.Clock;
-		double shown = session?.ShownTick() ?? (clock.Tick - 1);
+		long now = EntitySimulation.TickOf(instigator);
+		double shown = session?.ShownTick() ?? (now - 1);
+		World3D? world = WorldOf(instigator);
+		World2D? world2D = WorldOf2D(instigator);
 
 		foreach (Node node in instigator.GetTree().GetNodesInGroup(ForgeEntity.SimulationGroup))
 		{
-			if (node is not ForgeEntity entity)
+			if (node is not ForgeEntity entity || WorldOf(entity) != world || WorldOf2D(entity) != world2D)
 			{
 				continue;
 			}
 
-			double tick = entity == instigator ? clock.Tick - 1 : shown;
+			double tick = entity == instigator ? now - 1 : shown;
 
 			foreach (ProjectileFlight flight in entity.Shots.Flights)
 			{
@@ -395,21 +431,24 @@ public static partial class ForgeShots
 	// The center of an entity's body where the open compensation put it: its first collision shape's place on the body.
 	private static Vector3 CenterOf(ForgeNetworkSession? session, IForgeEntity entity, Node3D body)
 	{
-		Vector3 origin = body.GlobalPosition;
+		Transform3D transform = body.GlobalTransform;
 
 		if (session?.TryGetShownBody(entity, out BodyState shown) == true)
 		{
-			origin = ToGodot(shown.Position);
+			var rotation = new Quaternion(shown.Rotation.X, shown.Rotation.Y, shown.Rotation.Z, shown.Rotation.W);
+			transform = new Transform3D(
+				new Basis(rotation.Normalized()) * Basis.FromScale(transform.Basis.Scale),
+				ToGodot(shown.Position));
 		}
 
 		foreach (Node child in body.GetChildren())
 		{
 			if (child is CollisionShape3D shape)
 			{
-				return origin + (body.GlobalBasis * shape.Position);
+				return transform * shape.Position;
 			}
 		}
 
-		return origin;
+		return transform.Origin;
 	}
 }

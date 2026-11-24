@@ -100,24 +100,16 @@ public sealed class Hitscan3DNode : ActionNode
 		_hits.Clear();
 		var from = new Vector3(origin.X, origin.Y, origin.Z);
 		var along = new Vector3(aim.X, aim.Y, aim.Z);
-		ForgeShots.Hitscan3D(instigator, from, along, data, _hits);
+		ShotHit3D? stop = ForgeShots.Hitscan3D(instigator, from, along, data, _hits);
 
-		Vector3 end = from + (along.Normalized() * data.Range);
-		Vector3 normal = Vector3.Zero;
+		Vector3 end = stop?.Position ?? (from + (along.Normalized() * data.Range));
+		Vector3 normal = stop?.Normal ?? Vector3.Zero;
 		Forge.Core.IForgeEntity? entity = null;
 		ForgeHitbox3D? hitbox = null;
 		int hits = 0;
-		bool first = true;
 
 		foreach (ShotHit3D hit in _hits)
 		{
-			if (first)
-			{
-				end = hit.Position;
-				normal = hit.Normal;
-			}
-
-			first = false;
 			entity ??= hit.Entity;
 			hitbox ??= hit.Hitbox;
 			hits += hit.Entity is null ? 0 : 1;

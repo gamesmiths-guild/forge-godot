@@ -12,7 +12,8 @@ namespace Gamesmiths.Forge.Godot.Core.Shots;
 /// <param name="Position">The center of its body, where the blast saw it.</param>
 /// <param name="Distance">How far its body's center was from the blast's.</param>
 /// <param name="Scale">The share of the blast's effects it got, which they get as float context data.</param>
-/// <param name="Knockback">The velocity the blast added to its body.</param>
+/// <param name="Knockback">The push the blast gave it, which its body takes as velocity if it has a character
+/// movement.</param>
 public readonly record struct SplashHit2D(
 	IForgeEntity Entity,
 	Vector2 Position,

@@ -1,6 +1,6 @@
 // Copyright © Gamesmiths Guild.
 
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Gamesmiths.Forge.Shots;
 using Godot;
 using Godot.Collections;
@@ -25,7 +25,8 @@ namespace Gamesmiths.Forge.Godot.Resources;
 [GlobalClass]
 public partial class ForgeProjectileData : Resource
 {
-	private static readonly System.Collections.Generic.Dictionary<ProjectileData, ForgeProjectileData> _byData = [];
+	// Held as long as the data is: by the resource, a flight or a manifest.
+	private static readonly ConditionalWeakTable<ProjectileData, ForgeProjectileData> _byData = [];
 
 	private ProjectileData? _data;
 
@@ -141,7 +142,7 @@ public partial class ForgeProjectileData : Resource
 	/// <returns>The resource, or <see langword="null"/> for data no resource built.</returns>
 	public static ForgeProjectileData? Of(ProjectileData data)
 	{
-		return _byData.GetValueOrDefault(data);
+		return _byData.TryGetValue(data, out ForgeProjectileData? resource) ? resource : null;
 	}
 
 	/// <summary>
@@ -162,7 +163,7 @@ public partial class ForgeProjectileData : Resource
 			Lifetime,
 			Shootable);
 
-		_byData[_data] = this;
+		_byData.AddOrUpdate(_data, this);
 		return _data;
 	}
 }

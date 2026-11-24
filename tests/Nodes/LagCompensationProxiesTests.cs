@@ -193,6 +193,12 @@ public class LagCompensationProxiesTests
 
 			Ray(space, 5, mask: 8).Should().BeSameAs(head);
 			Ray(space, 1, mask: 8).Should().BeNull();
+
+			proxies.Place([new RewoundBody(entity, Body(NumericsVector3.Zero))], 10.5);
+			proxies.Forget(entity);
+
+			Ray(space, 5, mask: 8).Should().BeSameAs(head, "forgotten while placed, its hitbox is back too");
+			Ray(space, 1, mask: 8).Should().BeNull();
 		}
 		finally
 		{

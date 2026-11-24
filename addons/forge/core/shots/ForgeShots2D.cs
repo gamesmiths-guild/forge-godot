@@ -9,6 +9,7 @@ using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Shots;
 using Godot;
 using GodotDictionary = Godot.Collections.Dictionary;
+using GodotOverlaps = Godot.Collections.Array<Godot.Collections.Dictionary>;
 using GodotRidArray = Godot.Collections.Array<Godot.Rid>;
 using NumericsVector2 = System.Numerics.Vector2;
 using NumericsVector3 = System.Numerics.Vector3;
@@ -31,7 +32,9 @@ public static partial class ForgeShots
 	/// <param name="aim">Where it aims.</param>
 	/// <param name="data">The hitscan.</param>
 	/// <param name="hits">Where to add what each pellet hit, in order, or <see langword="null"/>.</param>
-	public static void Hitscan2D(
+	/// <returns>What the first pellet stopped on, or <see langword="null"/> if it reached the end of its range.
+	/// </returns>
+	public static ShotHit2D? Hitscan2D(
 		ForgeEntity instigator,
 		Vector2 origin,
 		Vector2 aim,
@@ -44,23 +47,29 @@ public static partial class ForgeShots
 
 		var pelletHits = new List<ShotHit2D>();
 		var applied = new HashSet<IForgeEntity>(ReferenceEqualityComparer.Instance);
+		ShotHit2D? first = null;
 		ForgeNetworkSession? session = Compensate(instigator, 1, out bool opened);
 
 		try
 		{
-			foreach (NumericsVector2 direction in directions)
+			for (int i = 0; i < pellets; i++)
 			{
 				pelletHits.Clear();
 				applied.Clear();
-				Trace(
+				ShotHit2D? stop = Trace(
 					instigator,
 					origin,
-					new Vector2(direction.X, direction.Y),
+					new Vector2(directions[i].X, directions[i].Y),
 					data.Range,
 					data.CollisionMask,
 					data.Penetration,
 					data.HitsProjectiles,
 					pelletHits);
+
+				if (i == 0)
+				{
+					first = stop;
+				}
 
 				foreach (ShotHit2D hit in pelletHits)
 				{
@@ -80,6 +89,8 @@ public static partial class ForgeShots
 				session!.EndLagCompensation();
 			}
 		}
+
+		return first;
 	}
 
 	/// <summary>
@@ -198,7 +209,7 @@ public static partial class ForgeShots
 			var reached = new HashSet<IForgeEntity>(ReferenceEqualityComparer.Instance);
 			var exclusions = new GodotRidArray();
 
-			foreach (GodotDictionary overlap in world.DirectSpaceState.IntersectShape(query, MaxSplashResults))
+			foreach (GodotDictionary overlap in Overlaps(world, query))
 			{
 				if (!ForgeEntityBridge.TryGetEntityInHierarchy(overlap["collider"].As<Node>(), out IForgeEntity? entity)
 					|| !reached.Add(entity)
@@ -249,7 +260,21 @@ public static partial class ForgeShots
 		return ForgeEntityBridge.TryGetSpatialNode2D(entity, out Node2D? node) ? node.GetWorld2D() : null;
 	}
 
-	private static void Trace(
+	private static GodotOverlaps Overlaps(World2D world, PhysicsShapeQueryParameters2D query)
+	{
+		int max = MaxSplashResults;
+		GodotOverlaps overlaps = world.DirectSpaceState.IntersectShape(query, max);
+
+		while (overlaps.Count == max)
+		{
+			max *= 2;
+			overlaps = world.DirectSpaceState.IntersectShape(query, max);
+		}
+
+		return overlaps;
+	}
+
+	private static ShotHit2D? Trace(
 		ForgeEntity instigator,
 		Vector2 origin,
 		Vector2 direction,
@@ -261,7 +286,7 @@ public static partial class ForgeShots
 	{
 		if (WorldOf2D(instigator) is not World2D world || direction.IsZeroApprox())
 		{
-			return;
+			return null;
 		}
 
 		var exclusions = new GodotRidArray();
@@ -269,10 +294,11 @@ public static partial class ForgeShots
 		int pierces = 0;
 		float strength = 1;
 
-		if (ShotTrace2D.Trace(
+		if (!ShotTrace2D.Trace(
 			world,
 			origin,
 			direction.Normalized() * range,
+			range,
 			0,
 			mask,
 			penetration,
@@ -281,11 +307,17 @@ public static partial class ForgeShots
 			exclusions,
 			hitsProjectiles ? Targets2D(instigator) : null,
 			hits,
-			out ShotHit2D stop)
-			&& stop.Flight is ProjectileFlight struck)
+			out ShotHit2D stop))
+		{
+			return null;
+		}
+
+		if (stop.Flight is ProjectileFlight struck)
 		{
 			Strike(struck, new NumericsVector3(stop.Position.X, stop.Position.Y, 0));
 		}
+
+		return stop;
 	}
 
 	private static List<ShotTrace2D.Target> Targets2D(ForgeEntity instigator)
@@ -302,21 +334,25 @@ public static partial class ForgeShots
 
 	private static Vector2 CenterOf2D(ForgeNetworkSession? session, IForgeEntity entity, Node2D body)
 	{
-		Vector2 origin = body.GlobalPosition;
+		Transform2D transform = body.GlobalTransform;
 
 		if (session?.TryGetShownBody(entity, out BodyState shown) == true)
 		{
-			origin = new Vector2(shown.Position.X, shown.Position.Y);
+			transform = new Transform2D(
+				2 * Mathf.Atan2(shown.Rotation.Z, shown.Rotation.W),
+				body.GlobalScale,
+				body.GlobalSkew,
+				new Vector2(shown.Position.X, shown.Position.Y));
 		}
 
 		foreach (Node child in body.GetChildren())
 		{
 			if (child is CollisionShape2D shape)
 			{
-				return origin + body.GlobalTransform.BasisXform(shape.Position);
+				return transform * shape.Position;
 			}
 		}
 
-		return origin;
+		return transform.Origin;
 	}
 }

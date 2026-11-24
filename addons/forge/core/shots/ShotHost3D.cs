@@ -33,7 +33,7 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 		}
 
 		double fade = entity.CompensationFadeMs < 0 ? double.PositiveInfinity : entity.CompensationFadeMs / 1000.0;
-		double flown = (ForgeManagers.Instance.Clock.Tick - flight.Tick) * ForgeManagers.Instance.Clock.FixedDeltaTime;
+		double flown = (EntitySimulation.TickOf(entity) - flight.Tick) * ForgeManagers.Instance.Clock.FixedDeltaTime;
 		ForgeNetworkSession? session =
 			ForgeShots.Compensate(entity, LagCompensation.Remaining(flown, fade), out bool opened);
 
@@ -45,11 +45,14 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 			int pierces = flight.Pierces;
 			float strength = flight.Strength;
 			Vector3 from = ForgeShots.ToGodot(start);
+			Vector3 motion = ForgeShots.ToGodot(finish) - from;
+			float reach = Mathf.Max(motion.Length(), Left(flight, start));
 
 			bool stopped = ShotTrace3D.Trace(
 				world,
 				from,
-				ForgeShots.ToGodot(finish) - from,
+				motion,
+				reach,
 				data.Radius,
 				data.CollisionMask,
 				data.Penetration,
@@ -105,5 +108,12 @@ internal sealed class ShotHost3D(ForgeEntity entity) : IShotHost
 	public void Hide(in ProjectileFlight flight)
 	{
 		ShotVisuals.Of(entity)?.Hide(flight);
+	}
+
+	// How far a projectile flies on from a point to the end of its lifetime, near enough: its path less what it flew.
+	internal static float Left(in ProjectileFlight flight, NumericsVector3 from)
+	{
+		float path = flight.Velocity.Length() * (float)flight.Projectile.Lifetime;
+		return path - NumericsVector3.Distance(flight.Origin, from);
 	}
 }

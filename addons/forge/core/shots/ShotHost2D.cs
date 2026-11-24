@@ -33,7 +33,7 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 		}
 
 		double fade = entity.CompensationFadeMs < 0 ? double.PositiveInfinity : entity.CompensationFadeMs / 1000.0;
-		double flown = (ForgeManagers.Instance.Clock.Tick - flight.Tick) * ForgeManagers.Instance.Clock.FixedDeltaTime;
+		double flown = (EntitySimulation.TickOf(entity) - flight.Tick) * ForgeManagers.Instance.Clock.FixedDeltaTime;
 		ForgeNetworkSession? session =
 			ForgeShots.Compensate(entity, LagCompensation.Remaining(flown, fade), out bool opened);
 
@@ -45,11 +45,14 @@ internal sealed class ShotHost2D(ForgeEntity entity) : IShotHost
 			int pierces = flight.Pierces;
 			float strength = flight.Strength;
 			var from = new Vector2(start.X, start.Y);
+			Vector2 motion = new Vector2(finish.X, finish.Y) - from;
+			float reach = Mathf.Max(motion.Length(), ShotHost3D.Left(flight, start));
 
 			bool stopped = ShotTrace2D.Trace(
 				world,
 				from,
-				new Vector2(finish.X, finish.Y) - from,
+				motion,
+				reach,
 				data.Radius,
 				data.CollisionMask,
 				data.Penetration,

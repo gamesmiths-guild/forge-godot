@@ -22,8 +22,10 @@ internal sealed class LagCompensationProxies
 	private static readonly Dictionary<Rid, IProxy> _standIns = [];
 
 	private readonly Dictionary<IForgeEntity, IProxy?> _proxies = new(ReferenceEqualityComparer.Instance);
-	private readonly Dictionary<ForgeHitbox3D, Proxy3D> _hitboxProxies = [];
-	private readonly Dictionary<ForgeHitbox2D, Proxy2D> _hitboxProxies2D = [];
+
+	private readonly Dictionary<IForgeEntity, Dictionary<GodotObject, IProxy>> _hitboxProxies =
+		new(ReferenceEqualityComparer.Instance);
+
 	private readonly List<IProxy> _placed = [];
 
 	// The stand-in placed for a live body, if one is.
@@ -58,11 +60,11 @@ internal sealed class LagCompensationProxies
 
 			if (ForgeHitboxes3D.Of(rewound.Entity) is ForgeHitboxes3D hitboxes)
 			{
-				PlaceHitboxes(hitboxes, rewound.Body, shownTick);
+				PlaceHitboxes(HitboxProxiesOf(rewound.Entity), hitboxes, rewound.Body, shownTick);
 			}
 			else if (ForgeHitboxes2D.Of(rewound.Entity) is ForgeHitboxes2D hitboxes2D)
 			{
-				PlaceHitboxes(hitboxes2D, rewound.Body, shownTick);
+				PlaceHitboxes(HitboxProxiesOf(rewound.Entity), hitboxes2D, rewound.Body, shownTick);
 			}
 		}
 	}
@@ -77,20 +79,21 @@ internal sealed class LagCompensationProxies
 		_placed.Clear();
 	}
 
-	// An entity freed while its stand-in is placed, as by what a hit on it set off, gets its body back first.
+	// An entity freed while its stand-ins are placed, as by what a hit on it set off, gets its bodies back first.
 	public void Forget(IForgeEntity entity)
 	{
-		if (!_proxies.Remove(entity, out IProxy? proxy) || proxy is null)
+		if (_hitboxProxies.Remove(entity, out Dictionary<GodotObject, IProxy>? hitboxProxies))
 		{
-			return;
+			foreach (IProxy hitboxProxy in hitboxProxies.Values)
+			{
+				Release(hitboxProxy);
+			}
 		}
 
-		if (_placed.Remove(proxy))
+		if (_proxies.Remove(entity, out IProxy? proxy) && proxy is not null)
 		{
-			PutBack(proxy);
+			Release(proxy);
 		}
-
-		proxy.Free();
 	}
 
 	public void Clear()
@@ -102,25 +105,52 @@ internal sealed class LagCompensationProxies
 			proxy?.Free();
 		}
 
-		foreach (Proxy3D proxy in _hitboxProxies.Values)
+		foreach (Dictionary<GodotObject, IProxy> hitboxProxies in _hitboxProxies.Values)
 		{
-			proxy.Free();
-		}
-
-		foreach (Proxy2D proxy in _hitboxProxies2D.Values)
-		{
-			proxy.Free();
+			foreach (IProxy proxy in hitboxProxies.Values)
+			{
+				proxy.Free();
+			}
 		}
 
 		_proxies.Clear();
 		_hitboxProxies.Clear();
-		_hitboxProxies2D.Clear();
 	}
 
 	private static void PutBack(IProxy proxy)
 	{
 		proxy.Restore();
 		_standIns.Remove(proxy.Live);
+	}
+
+	// A hitbox freed while its entity lives on, as a helmet that broke, lets go of its stand-in.
+	private static void ReleaseFreed(Dictionary<GodotObject, IProxy> proxies, GodotObject hitbox)
+	{
+		if (proxies.Remove(hitbox, out IProxy? proxy))
+		{
+			proxy.Free();
+		}
+	}
+
+	private void Release(IProxy proxy)
+	{
+		if (_placed.Remove(proxy))
+		{
+			PutBack(proxy);
+		}
+
+		proxy.Free();
+	}
+
+	private Dictionary<GodotObject, IProxy> HitboxProxiesOf(IForgeEntity entity)
+	{
+		if (!_hitboxProxies.TryGetValue(entity, out Dictionary<GodotObject, IProxy>? proxies))
+		{
+			proxies = [];
+			_hitboxProxies[entity] = proxies;
+		}
+
+		return proxies;
 	}
 
 	// An entity on something other than a physics body has nothing to stand in for: its proxy is null.
@@ -145,7 +175,11 @@ internal sealed class LagCompensationProxies
 	}
 
 	// A hitbox stands where it stood against its body then, from the body as the instigator was shown it.
-	private void PlaceHitboxes(ForgeHitboxes3D hitboxes, in BodyState body, double shownTick)
+	private void PlaceHitboxes(
+		Dictionary<GodotObject, IProxy> proxies,
+		ForgeHitboxes3D hitboxes,
+		in BodyState body,
+		double shownTick)
 	{
 		if (hitboxes.Body is not Node3D live)
 		{
@@ -160,24 +194,34 @@ internal sealed class LagCompensationProxies
 		{
 			ForgeHitbox3D hitbox = hitboxes.Hitboxes[i];
 
-			if (!GodotObject.IsInstanceValid(hitbox) || !hitboxes.TryLocalAt(i, shownTick, out Transform3D local))
+			if (!GodotObject.IsInstanceValid(hitbox))
+			{
+				ReleaseFreed(proxies, hitbox);
+				continue;
+			}
+
+			if (!hitboxes.TryLocalAt(i, shownTick, out Transform3D local))
 			{
 				continue;
 			}
 
-			if (!_hitboxProxies.TryGetValue(hitbox, out Proxy3D? proxy))
+			if (!proxies.TryGetValue(hitbox, out IProxy? proxy))
 			{
 				proxy = new Proxy3D(hitbox);
-				_hitboxProxies[hitbox] = proxy;
+				proxies[hitbox] = proxy;
 			}
 
-			proxy.PlaceAt(shownBody * local);
+			((Proxy3D)proxy).PlaceAt(shownBody * local);
 			_placed.Add(proxy);
 			_standIns[proxy.Live] = proxy;
 		}
 	}
 
-	private void PlaceHitboxes(ForgeHitboxes2D hitboxes, in BodyState body, double shownTick)
+	private void PlaceHitboxes(
+		Dictionary<GodotObject, IProxy> proxies,
+		ForgeHitboxes2D hitboxes,
+		in BodyState body,
+		double shownTick)
 	{
 		if (hitboxes.Body is not Node2D live)
 		{
@@ -194,18 +238,24 @@ internal sealed class LagCompensationProxies
 		{
 			ForgeHitbox2D hitbox = hitboxes.Hitboxes[i];
 
-			if (!GodotObject.IsInstanceValid(hitbox) || !hitboxes.TryLocalAt(i, shownTick, out Transform2D local))
+			if (!GodotObject.IsInstanceValid(hitbox))
+			{
+				ReleaseFreed(proxies, hitbox);
+				continue;
+			}
+
+			if (!hitboxes.TryLocalAt(i, shownTick, out Transform2D local))
 			{
 				continue;
 			}
 
-			if (!_hitboxProxies2D.TryGetValue(hitbox, out Proxy2D? proxy))
+			if (!proxies.TryGetValue(hitbox, out IProxy? proxy))
 			{
 				proxy = new Proxy2D(hitbox);
-				_hitboxProxies2D[hitbox] = proxy;
+				proxies[hitbox] = proxy;
 			}
 
-			proxy.PlaceAt(shownBody * local);
+			((Proxy2D)proxy).PlaceAt(shownBody * local);
 			_placed.Add(proxy);
 			_standIns[proxy.Live] = proxy;
 		}
