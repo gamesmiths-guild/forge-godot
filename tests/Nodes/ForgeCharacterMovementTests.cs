@@ -509,6 +509,46 @@ public class ForgeCharacterMovementTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task The_gravity_scale_multiplies_the_fall_3D()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			await AddFloor(world);
+			ForgeEntity entity = AddCharacter3D(
+				world,
+				CharacterBody3D.MotionModeEnum.Grounded,
+				out CharacterBody3D body,
+				out ForgeCharacterMovement3D movement);
+			movement.JumpSpeed = 5;
+			movement.GravityScale = 2;
+			entity.Input = new EntityInput(
+				new InputActionSet(["jump"], [new InputVector("move_left", "move_right", "move_up", "move_down")]));
+
+			for (int i = 0; i < 30; i++)
+			{
+				Walk(entity, NumericsVector2.Zero);
+			}
+
+			entity.Input.Submit(new InputFrame { Held = 1, Pressed = 1 });
+			entity._PhysicsProcess(Step);
+			float rising = body.Velocity.Y;
+
+			Walk(entity, NumericsVector2.Zero);
+
+			float gravity = ProjectSettings.GetSetting("physics/3d/default_gravity").AsSingle();
+			body.Velocity.Y.Should().BeApproximately(rising - (2 * gravity * (float)Step), 0.001f);
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_jump_leaves_the_ground_and_a_knockback_carries_the_body_2D()
 	{
 		var world = new Node2D();

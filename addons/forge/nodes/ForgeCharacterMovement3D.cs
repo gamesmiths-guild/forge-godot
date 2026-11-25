@@ -23,8 +23,8 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// graphs: an ability this step's input activated has already added its tags, and a graph's Move Body 3D moves the body
 /// after it.</para>
 /// <para>The body walks on X and Z toward the move vector times the speed, and falls by the project's default gravity
-/// while it isn't on the floor in the grounded motion mode. While the entity has any of the
-/// <see cref="BlockingTags"/>, it only falls, and its facing stays put.</para>
+/// times <see cref="GravityScale"/> while it isn't on the floor in the grounded motion mode. While the entity has any
+/// of the <see cref="BlockingTags"/>, it only falls, and its facing stays put.</para>
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -109,6 +109,13 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 	[ExportGroup("Air")]
 	[Export(PropertyHint.Range, "0,50,0.1,or_greater")]
 	public float JumpSpeed { get; set; }
+
+	/// <summary>
+	/// Gets or sets how many times the project's default gravity the body falls by. More makes a jump shorter and
+	/// quicker for the same height lost to a fall.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,5,0.05,or_greater")]
+	public float GravityScale { get; set; } = 1f;
 
 	/// <summary>
 	/// Gets or sets the share of the ground's <see cref="Acceleration"/> and <see cref="Friction"/> the body steers by
@@ -248,7 +255,7 @@ public partial class ForgeCharacterMovement3D : Node, IEntityMover
 
 		if (_body.MotionMode == CharacterBody3D.MotionModeEnum.Grounded && !_grounded)
 		{
-			velocity += _gravity * delta;
+			velocity += _gravity * GravityScale * delta;
 		}
 
 		_blockingTags ??= BlockingTags.GetTagContainer();
