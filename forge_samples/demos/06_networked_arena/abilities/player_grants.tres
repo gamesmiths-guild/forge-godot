@@ -1,0 +1,203 @@
+[gd_resource type="Resource" script_class="ForgeEffectData" format=3 uid="uid://c6arpgrants"]
+
+[ext_resource type="Resource" uid="uid://c6arpistol" path="res://forge_samples/demos/06_networked_arena/abilities/pistol.tres" id="1_pistol"]
+[ext_resource type="Script" uid="uid://1hgogislo1l6" path="res://addons/forge/resources/magnitudes/ForgeScalableInt.cs" id="2_forgescalableint"]
+[ext_resource type="Script" uid="uid://72kj3n4lm1em" path="res://addons/forge/resources/components/ForgeGrantAbilityConfig.cs" id="3_forgegrantabilityconfig"]
+[ext_resource type="Resource" uid="uid://c6arassault" path="res://forge_samples/demos/06_networked_arena/abilities/rifle.tres" id="4_rifle"]
+[ext_resource type="Resource" uid="uid://c6arshotgun" path="res://forge_samples/demos/06_networked_arena/abilities/shotgun.tres" id="5_shotgun"]
+[ext_resource type="Resource" uid="uid://c6arlauncher" path="res://forge_samples/demos/06_networked_arena/abilities/rocket_launcher.tres" id="6_rocket_launcher"]
+[ext_resource type="Resource" uid="uid://c6arrifle" path="res://forge_samples/demos/06_networked_arena/abilities/shock_rifle.tres" id="7_shock_rifle"]
+[ext_resource type="Resource" uid="uid://c6arnextwpn" path="res://forge_samples/demos/06_networked_arena/abilities/next_weapon.tres" id="8_next_weapon"]
+[ext_resource type="Resource" uid="uid://c6arprevwpn" path="res://forge_samples/demos/06_networked_arena/abilities/previous_weapon.tres" id="9_previous_weapon"]
+[ext_resource type="Resource" uid="uid://c6arpshot" path="res://forge_samples/demos/06_networked_arena/abilities/pistol_shot.tres" id="10_pistol_shot"]
+[ext_resource type="Resource" uid="uid://c6arburst" path="res://forge_samples/demos/06_networked_arena/abilities/rifle_burst.tres" id="11_rifle_burst"]
+[ext_resource type="Resource" uid="uid://c6arbeam" path="res://forge_samples/demos/06_networked_arena/abilities/shock_beam.tres" id="12_shock_beam"]
+[ext_resource type="Resource" uid="uid://c6arball" path="res://forge_samples/demos/06_networked_arena/abilities/shock_ball.tres" id="13_shock_ball"]
+[ext_resource type="Resource" uid="uid://c6arrocket" path="res://forge_samples/demos/06_networked_arena/abilities/rocket.tres" id="14_rocket"]
+[ext_resource type="Resource" uid="uid://c6arblast" path="res://forge_samples/demos/06_networked_arena/abilities/shotgun_blast.tres" id="15_shotgun_blast"]
+[ext_resource type="Resource" uid="uid://c6ardie" path="res://forge_samples/demos/06_networked_arena/abilities/die.tres" id="16_die"]
+[ext_resource type="Script" uid="uid://b3wo2uge4ddnj" path="res://addons/forge/resources/components/GrantAbility.cs" id="17_grantability"]
+[ext_resource type="Script" uid="uid://b83hf13nj37k3" path="res://addons/forge/resources/ForgeEffectData.cs" id="18_forgeeffectdata"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("1_pistol")
+AbilityLevel = SubResource("Resource_1")
+TryActivateOnGrant = true
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("4_rifle")
+AbilityLevel = SubResource("Resource_3")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_6"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("5_shotgun")
+AbilityLevel = SubResource("Resource_5")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_7"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_8"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("6_rocket_launcher")
+AbilityLevel = SubResource("Resource_7")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_9"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_10"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("7_shock_rifle")
+AbilityLevel = SubResource("Resource_9")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_11"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_12"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("8_next_weapon")
+AbilityLevel = SubResource("Resource_11")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_13"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_14"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("9_previous_weapon")
+AbilityLevel = SubResource("Resource_13")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_15"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_16"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("10_pistol_shot")
+AbilityLevel = SubResource("Resource_15")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_17"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_18"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("11_rifle_burst")
+AbilityLevel = SubResource("Resource_17")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_19"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_20"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("12_shock_beam")
+AbilityLevel = SubResource("Resource_19")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_21"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_22"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("13_shock_ball")
+AbilityLevel = SubResource("Resource_21")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_23"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_24"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("14_rocket")
+AbilityLevel = SubResource("Resource_23")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_25"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_26"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("15_shotgun_blast")
+AbilityLevel = SubResource("Resource_25")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_27"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_28"]
+script = ExtResource("3_forgegrantabilityconfig")
+AbilityData = ExtResource("16_die")
+AbilityLevel = SubResource("Resource_27")
+metadata/_custom_type_script = "uid://72kj3n4lm1em"
+
+[sub_resource type="Resource" id="Resource_29"]
+script = ExtResource("17_grantability")
+GrantAbilityConfigs = [SubResource("Resource_2"), SubResource("Resource_4"), SubResource("Resource_6"), SubResource("Resource_8"), SubResource("Resource_10"), SubResource("Resource_12"), SubResource("Resource_14"), SubResource("Resource_16"), SubResource("Resource_18"), SubResource("Resource_20"), SubResource("Resource_22"), SubResource("Resource_24"), SubResource("Resource_26"), SubResource("Resource_28")]
+metadata/_custom_type_script = "uid://b3wo2uge4ddnj"
+
+[sub_resource type="Resource" id="Resource_30"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[sub_resource type="Resource" id="Resource_31"]
+script = ExtResource("2_forgescalableint")
+BaseValue = 1
+metadata/_custom_type_script = "uid://1hgogislo1l6"
+
+[resource]
+script = ExtResource("18_forgeeffectdata")
+Name = "Grant Arena Abilities"
+Modifiers = []
+Components = [SubResource("Resource_29")]
+Executions = []
+DurationType = 1
+StackLimit = SubResource("Resource_30")
+InitialStack = SubResource("Resource_31")
+Cues = []
+Visibility = 3
+metadata/_custom_type_script = "uid://b83hf13nj37k3"

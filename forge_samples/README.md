@@ -32,6 +32,7 @@ Open `forge_samples/Main.tscn` and run it. The hub scene lists every demo and lo
 | `demos/03_statescript/` | The Real-Time 3D demo's abilities and enemy rebuilt as Statescript graphs, on a level shared with future demos. |
 | `demos/04_rewind/` | A small arena whose whole state lives in Forge, so a `ForgeWorldHistory` can pause it and roll it back up to five seconds, deaths and spawns included. |
 | `demos/05_networked_statescript/` | The Statescript demo over the network: host, join or run a dedicated server, with a predicted player per peer and the server's enemies, shots and dummies replicated to every client. |
+| `demos/06_networked_arena/` | A first-person deathmatch for up to four over the network, every ability a C# behavior: hitscans, projectiles and blasts, hitboxes, crates the shots go through, and strafing dummies. |
 | `shared/` | Attribute sets, shared effect resources, custom executions and calculators, and the sound files under `audio/`. |
 
 Each demo folder has a README of its own that walks through what is in it.
@@ -50,21 +51,26 @@ The files in `shared/audio/` are based on the [Freesound](https://freesound.org)
 
 | File | Original sound | Author |
 | --- | --- | --- |
+| `blast.ogg` | [EMP Blast](https://freesound.org/people/Qvantor/sounds/881278/) | Qvantor |
 | `bonfire-loop.ogg` | [Fireplace](https://freesound.org/people/myLoop/sounds/852107/) | myLoop |
 | `brazier-toggle.ogg` | [Light Fire Sound.wav](https://freesound.org/people/Wdomino/sounds/507724/) | Wdomino |
 | `death.ogg` | [Retro, Underwater Explosion](https://freesound.org/people/LilMati/sounds/459150/) | LilMati |
 | `ember-landing.ogg` | [light bulb glass burst drop on floor2.wav](https://freesound.org/people/kyles/sounds/637659/) | kyles |
 | `ember-launch.ogg` | [flame burst ignite bbq barbecue.flac](https://freesound.org/people/kyles/sounds/637533/) | kyles |
+| `explosion.ogg` | [Explosion (Pas).wav](https://freesound.org/people/studiomandragore/sounds/401628/) | studiomandragore |
 | `fire-loop.ogg` | [Ambiance_Fire_Bushes_Loop_Stereo.wav](https://freesound.org/people/Nox_Sound/sounds/564621/) | Nox_Sound |
 | `fizzle.ogg` | [Click (1).mp3](https://freesound.org/people/7778/sounds/202314/) | 7778 |
+| `gunshot.ogg` | [Heathers Gunshot Effect2.wav](https://freesound.org/people/okieactor/sounds/415912/) | okieactor |
 | `heal.ogg` | [Heal - Rpg](https://freesound.org/people/colorsCrimsonTears/sounds/562292/) | colorsCrimsonTears |
 | `healing-loop.ogg` | [crystal_loop.wav](https://freesound.org/people/markians/sounds/511773/) | markians |
 | `hit.ogg` | [Blocking Arm With Hand](https://freesound.org/people/mmasonghi/sounds/321810/) | mmasonghi |
+| `laser.ogg` | [gun9.wav](https://freesound.org/people/Tissman/sounds/456169/) | Tissman |
 | `quench.ogg` | [04-Vapor.wav](https://freesound.org/people/HidroLion/sounds/491706/) | HidroLion |
 | `reflect.ogg` | [Buffer Spell](https://freesound.org/people/deleted_user_3277771/sounds/176741/) | deleted_user_3277771 |
 | `shield-hit.ogg` | [Iron Hits.wav](https://freesound.org/people/Mrthenoronha/sounds/371353/) | Mrthenoronha |
 | `shield-loop.ogg` | [EnergyShield.mp3](https://freesound.org/people/Beussa/sounds/659967/) | Beussa |
 | `shot.ogg` | [ToyGun 007.MP3](https://freesound.org/people/VKProduktion/sounds/215848/) | VKProduktion |
+| `shotgun.ogg` | [Doom Shotgun 2017.wav](https://freesound.org/people/morganpurkis/sounds/380886/) | morganpurkis |
 | `swing.ogg` | [Swinging axe.mp3](https://freesound.org/people/ZHR%C3%98/sounds/514162/) | ZHRØ |
 | `water-dripping-loop.ogg` | [water dripping.mp3](https://freesound.org/people/sonscharcruterie/sounds/536188/) | sonscharcruterie |
 | `woosh.ogg` | [Woosh_2](https://freesound.org/people/gulfstreamav/sounds/842511/) | gulfstreamav |

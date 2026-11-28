@@ -23,9 +23,9 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 /// graphs: an ability this step's input activated has already added its tags, and a graph's Move Body 2D moves the body
 /// after it.</para>
 /// <para>In the floating motion mode, for top-down games, the body walks toward the move vector times the speed. In the
-/// grounded motion mode, for side views, it walks on X only and falls by the project's default gravity while it isn't
-/// on the floor. While the entity has any of the <see cref="BlockingTags"/>, it stops walking, still falls, and its
-/// facing stays put.</para>
+/// grounded motion mode, for side views, it walks on X only and falls by the project's default gravity times
+/// <see cref="GravityScale"/> while it isn't on the floor. While the entity has any of the
+/// <see cref="BlockingTags"/>, it stops walking, still falls, and its facing stays put.</para>
 /// </remarks>
 [Tool]
 [GlobalClass]
@@ -104,6 +104,13 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 	[ExportGroup("Air")]
 	[Export(PropertyHint.Range, "0,2000,1,or_greater")]
 	public float JumpSpeed { get; set; }
+
+	/// <summary>
+	/// Gets or sets how many times the project's default gravity the body falls by. More makes a jump shorter and
+	/// quicker for the same height lost to a fall.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,5,0.05,or_greater")]
+	public float GravityScale { get; set; } = 1f;
 
 	/// <summary>
 	/// Gets or sets the share of the ground's <see cref="Acceleration"/> and <see cref="Friction"/> the body steers by
@@ -244,7 +251,7 @@ public partial class ForgeCharacterMovement2D : Node, IEntityMover
 
 		if (!floating && !_grounded)
 		{
-			velocity += _gravity * delta;
+			velocity += _gravity * GravityScale * delta;
 		}
 
 		_blockingTags ??= BlockingTags.GetTagContainer();

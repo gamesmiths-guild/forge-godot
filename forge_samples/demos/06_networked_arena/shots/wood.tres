@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ForgeShotSurface" format=3 uid="uid://c6arwood"]
+
+[ext_resource type="Script" uid="uid://bjn6npqn5ouj2" path="res://addons/forge/resources/ForgeShotSurface.cs" id="1_forgeshotsurface"]
+
+[resource]
+script = ExtResource("1_forgeshotsurface")
+Resistance = 0.5
+metadata/_custom_type_script = "uid://bjn6npqn5ouj2"

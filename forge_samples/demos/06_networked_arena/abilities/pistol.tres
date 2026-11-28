@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c6arpistol"]
+
+[ext_resource type="Script" uid="uid://cbc11ce01xj75" path="res://forge_samples/demos/06_networked_arena/scripts/abilities/HoldWeapon.cs" id="1_holdweapon"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="2_forgetagcontainer"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="3_forgeabilitydata"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("1_holdweapon")
+metadata/_custom_type_script = "uid://cbc11ce01xj75"
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_forgetagcontainer")
+ContainerTags = Array[String](["weapon.pistol"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("2_forgetagcontainer")
+ContainerTags = Array[String](["weapon"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("2_forgetagcontainer")
+ContainerTags = Array[String](["weapon.pistol"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[resource]
+script = ExtResource("3_forgeabilitydata")
+Name = "Pistol"
+CooldownEffects = []
+AbilityBehavior = SubResource("Resource_1")
+InputAction = "weapon_1"
+AbilityTags = SubResource("Resource_2")
+CancelAbilitiesWithTag = SubResource("Resource_3")
+ActivationOwnedTags = SubResource("Resource_4")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"

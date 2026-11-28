@@ -57,6 +57,18 @@ public sealed class Rifle(ForgeHitscanData beam) : RollbackBehavior<RifleContext
 
 A `ShotHit3D` or `ShotHit2D` says where the shot hit, the collider and the entity, the [hitbox](#hitboxes) if it was one, the share of strength it had left times a hitbox's `Strength Scale` and the shot's [falloff](#falloff) (`Strength`), and the projectile if it hit one in flight. A `SplashHit3D` or `SplashHit2D` says how far the entity was, the strength it got and the push it gave it, which a body without a character movement doesn't take.
 
+## Showing a shot from code
+
+A behavior shows what it fired through cues, which its client plays at once and every other machine plays from the server's word. A cue executed with a `Position`, and a `Normal`, in its [parameters](https://github.com/gamesmiths-guild/forge/blob/main/docs/cues.md#cueparameters-and-magnitude) carries the point to every client, so a tracer ends and a spark plays where the server's shot hit: the `End` of a hitscan, or a hit's `Position` and `Normal`. An [`InstantiateSceneCueHandler`](nodes.md#instantiatescenecuehandler) plays its scene there.
+
+```csharp
+ShotHit3D? stop = ForgeShots3D.Hitscan(owner, eye, aim, beam);
+Vector3 end = stop?.Position ?? eye + (aim * beam.Range);
+owner.CuesManager.ExecuteCue(tracer, owner, new CueParameters(0, 0, null, new System.Numerics.Vector3(end.X, end.Y, end.Z)));
+```
+
+The Networked Arena sample in `forge_samples/demos/06_networked_arena/` fires every kind of shot this way, from C# behaviors.
+
 ## Going through things
 
 A ray, and a projectile, stops at the first collider in its collision mask it may not go through. Two settings let it through:

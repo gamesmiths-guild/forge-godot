@@ -24,9 +24,9 @@ namespace Gamesmiths.Forge.Godot.Nodes;
 public partial class InstantiateSceneCueHandler : ForgeCueHandler
 {
 	/// <summary>
-	/// The custom cue parameter naming where the instance goes. Read as either a Godot or a <c>System.Numerics</c>
-	/// vector of either dimension, since a provider written in scene code and one authored in a graph reach for
-	/// different ones.
+	/// The custom cue parameter naming where the instance goes, when the cue has no
+	/// <see cref="CueParameters.Position"/>. Read as either a Godot or a <c>System.Numerics</c> vector of either
+	/// dimension, since a provider written in scene code and one authored in a graph reach for different ones.
 	/// </summary>
 	public const string PositionParameter = "position";
 
@@ -110,6 +110,13 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 		position3D = Vector3.Zero;
 		position2D = Vector2.Zero;
 
+		if (parameters?.Position is NumericsVector3 position)
+		{
+			position3D = new Vector3(position.X, position.Y, position.Z);
+			position2D = new Vector2(position.X, position.Y);
+			return true;
+		}
+
 		if (parameters?.CustomParameters is null
 			|| !parameters.Value.CustomParameters.TryGetValue(PositionParameter, out object? value))
 		{
@@ -153,6 +160,7 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 	// to write, so the world position is put through the parent's and written as a local one.
 	private static void Place(Node instance, Node parent, Node anchor, bool placeAtAnchor, CueParameters? parameters)
 	{
+		Face(instance, parent, parameters);
 		bool authored = TryReadPosition(parameters, out Vector3 position3D, out Vector2 position2D);
 
 		if (!authored && !placeAtAnchor)
@@ -200,6 +208,33 @@ public partial class InstantiateSceneCueHandler : ForgeCueHandler
 			: Transform2D.Identity;
 
 		instance2D.Position = parentTransform2D.AffineInverse() * position2D;
+	}
+
+	// A cue's normal turns the instance so its Y axis points along it, as a spark or a decal on the surface a shot hit
+	// needs, over the rotation the scene was authored with.
+	private static void Face(Node instance, Node parent, CueParameters? parameters)
+	{
+		if (parameters?.Normal is not NumericsVector3 normal || normal == NumericsVector3.Zero)
+		{
+			return;
+		}
+
+		if (instance is Node3D instance3D)
+		{
+			Vector3 up = new Vector3(normal.X, normal.Y, normal.Z).Normalized();
+			Vector3 side = Mathf.Abs(up.Dot(Vector3.Forward)) < 0.99f ? Vector3.Forward : Vector3.Right;
+			Vector3 x = side.Cross(up).Normalized();
+			Basis facing = new(x, up, x.Cross(up));
+			Basis parentBasis = parent is Node3D spatialParent ? spatialParent.GlobalBasis : Basis.Identity;
+			instance3D.Basis = parentBasis.Inverse() * facing * instance3D.Basis;
+			return;
+		}
+
+		if (instance is Node2D instance2D)
+		{
+			float parentRotation = parent is Node2D spatialParent2D ? spatialParent2D.GlobalRotation : 0;
+			instance2D.Rotation += Mathf.Atan2(normal.Y, normal.X) - (Mathf.Pi / 2) - parentRotation;
+		}
 	}
 
 	private Node? Instantiate(IForgeEntity forgeEntity, CueParameters? parameters)

@@ -521,6 +521,54 @@ public class ForgeNetworkSessionTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_client_shows_its_player_s_launch_where_its_own_clock_has_it_not_the_game_s()
+	{
+		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
+		await pair.Connect();
+		CharacterBody3D body = ResourceLoader.Load<PackedScene>(Body).Instantiate<CharacterBody3D>();
+		body.GetNode<ForgeEntity>("Forge Entity").NetworkOwner = pair.Client.LocalPeer;
+		pair.ServerBranch.AddChild(body);
+		await Pair.RunUntil(() => pair.Client.LocalPlayer is not null, frames: 300);
+		await Pair.RunUntil(() => false, frames: 5);
+		ForgeEntity player = pair.Client.LocalPlayer!;
+
+		var scene = new PackedScene();
+		var template = new Node3D();
+		scene.Pack(template);
+		template.Free();
+		var ball = new ForgeProjectileData { Speed = 10, Scene = scene };
+		var origin = new Vector3(1, 2, 3);
+		long launchTick = 0;
+		long launchedAt = 0;
+
+		// Fired in one of the player's predicted ticks, and again when a correction runs that tick again, as an ability
+		// fires it.
+		player.Mover = new LaunchingMover(player.Mover!, () =>
+		{
+			if (launchTick == 0 || EntitySimulation.TickOf(player) == launchTick)
+			{
+				launchTick = ForgeShots3D.Launch(player, ball, origin, Vector3.Forward).Tick;
+				launchedAt = ForgeManagers.Instance.Clock.Tick;
+			}
+		});
+		await Pair.RunUntil(() => launchTick != 0, frames: 60);
+		await Pair.RunUntil(() => false, frames: 3);
+
+		launchTick.Should().BeGreaterThan(launchedAt, "the client's player runs ahead of the game's clock");
+
+		ShotVisuals visuals = ShotVisuals.Of(player)!;
+		visuals._Process(0);
+		Node3D shown = visuals.GetChildren().OfType<Node3D>().Last(x => !x.IsQueuedForDeletion());
+		double ticks = EntitySimulation.TickOf(player) - 1 + Engine.GetPhysicsInterpolationFraction() - launchTick;
+
+		shown.GlobalPosition.DistanceTo(origin).Should().BeApproximately(
+			(float)(ticks * 10 * ForgeManagers.Instance.Clock.FixedDeltaTime),
+			0.001f,
+			"the shot flies on the clock its player runs on");
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_placed_entity_nothing_moved_stays_exactly_where_its_scene_has_it()
 	{
 		using var pair = new Pair(SceneManifest(Body), SceneManifest(Body), withPlayer: false);
@@ -1144,6 +1192,26 @@ public class ForgeNetworkSessionTests
 		}
 
 		return manifest;
+	}
+
+	// Moves as the body's own mover does, then runs an action.
+	private sealed class LaunchingMover(IEntityMover inner, Action launch) : IEntityMover
+	{
+		public void Move(double fixedDeltaTime)
+		{
+			inner.Move(fixedDeltaTime);
+			launch();
+		}
+
+		public BodyState CaptureState()
+		{
+			return inner.CaptureState();
+		}
+
+		public void RestoreState(in BodyState state)
+		{
+			inner.RestoreState(state);
+		}
 	}
 
 	// A server and a client in one tree, each on its own multiplayer branch, on a port of their own.

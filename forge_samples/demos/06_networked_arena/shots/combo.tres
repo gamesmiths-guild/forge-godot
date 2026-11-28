@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ForgeSplashData" format=3 uid="uid://c6arcombo"]
+
+[ext_resource type="Resource" uid="uid://c6arcombodmg" path="res://forge_samples/demos/06_networked_arena/effects/combo_damage.tres" id="1_combo_damage"]
+[ext_resource type="Script" uid="uid://du5beu5jebq8t" path="res://addons/forge/resources/ForgeSplashData.cs" id="2_forgesplashdata"]
+
+[resource]
+script = ExtResource("2_forgesplashdata")
+Radius = 4.0
+CollisionMask = 7
+Effects = Array[Object]([ExtResource("1_combo_damage")])
+Knockback = 9.0
+KnockbackLift = 0.3
+metadata/_custom_type_script = "uid://du5beu5jebq8t"

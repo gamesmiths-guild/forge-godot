@@ -1,6 +1,7 @@
 // Copyright © Gamesmiths Guild.
 
 using System.Collections.Generic;
+using Gamesmiths.Forge.Core;
 using Gamesmiths.Forge.Godot.Nodes;
 using Gamesmiths.Forge.Godot.Resources;
 using Gamesmiths.Forge.Shots;
@@ -39,6 +40,12 @@ internal sealed partial class ShotVisuals : Node
 
 	public void Show(ForgeEntity entity, in ProjectileFlight flight)
 	{
+		// A correction can show a flight again, in place of what it showed.
+		if (_visuals.Remove((entity.Shots, flight.Id), out Visual? replaced))
+		{
+			replaced.Node?.QueueFree();
+		}
+
 		Node? node = ForgeProjectileData.Of(flight.Projectile)?.Scene?.Instantiate();
 
 		if (node is not null)
@@ -46,8 +53,13 @@ internal sealed partial class ShotVisuals : Node
 			AddChild(node);
 		}
 
-		_visuals[(entity.Shots, flight.Id)] = new Visual(entity, node) { Flight = flight };
-		Place(_visuals[(entity.Shots, flight.Id)]);
+		// A flight that ended before it was shown, such as one fired into a wall, may be done at once.
+		var visual = new Visual(entity, node) { Flight = flight };
+
+		if (Place(visual))
+		{
+			_visuals[(entity.Shots, flight.Id)] = visual;
+		}
 	}
 
 	public void ShowEnd(in ProjectileFlight flight)
@@ -88,7 +100,8 @@ internal sealed partial class ShotVisuals : Node
 	}
 
 	// The tick an entity's projectiles are shown at: a mirror's at the tick its client shows the world at, any other's
-	// between its last two ticks, as its body is.
+	// between its own last two ticks, as its body is. A client's player runs on the session's clock, ahead of the
+	// server's, so its launches carry that clock's ticks, not the game's.
 	private static double ShownTick(ForgeEntity entity)
 	{
 		if (entity.IsMirror && ForgeNetworkSession.Of(entity) is ForgeNetworkSession session)
@@ -96,7 +109,7 @@ internal sealed partial class ShotVisuals : Node
 			return session.ShownTick();
 		}
 
-		return ForgeManagers.Instance.Clock.Tick - 2 + Engine.GetPhysicsInterpolationFraction();
+		return EntitySimulation.TickOf(entity) - 1 + Engine.GetPhysicsInterpolationFraction();
 	}
 
 	// Flies the visual to its place, or ends it once the shown tick reaches its end: false when it's done.

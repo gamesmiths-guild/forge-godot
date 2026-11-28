@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ForgeHitscanData" format=3 uid="uid://c6arbeamshot"]
+
+[ext_resource type="Resource" uid="uid://c6arbeamdmg" path="res://forge_samples/demos/06_networked_arena/effects/beam_damage.tres" id="1_beam_damage"]
+[ext_resource type="Script" uid="uid://bomgv8e1jqgi7" path="res://addons/forge/resources/ForgeHitscanData.cs" id="2_forgehitscandata"]
+
+[resource]
+script = ExtResource("2_forgehitscandata")
+Range = 120.0
+CollisionMask = 17
+Effects = Array[Object]([ExtResource("1_beam_damage")])
+HitsProjectiles = true
+Power = 1.0
+metadata/_custom_type_script = "uid://bomgv8e1jqgi7"

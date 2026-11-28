@@ -213,6 +213,7 @@ Walks the character body an entity lives on from the entity's input, once per ph
 - `CorrectionSnapDistance` (float): How far a correction may move the body and still ease; one that moves it further, as a respawn does, shows at once. The default is 2 units in 3D and 200 pixels in 2D.
 - `MoveRelativeToAim` (bool, 3D): Whether the move vector turns with the aim's heading, as in first person: forward walks where the player looks.
 - `JumpSpeed` (float): How fast a jump leaves the ground, in units per second. Zero, the default, doesn't jump. A floating 2D body doesn't jump.
+- `GravityScale` (float): How many times the project's default gravity the body falls by. The default is 1. More makes a jump shorter and quicker.
 - `AirControl` (float): The share of `Acceleration` and `Friction` the body steers by in the air. The default, 1, steers as on the ground.
 - `KeepAirSpeed` (bool): Whether the body keeps its speed in the air, as in an arena shooter: the input only adds speed toward where it points, up to the walking speed, and nothing slows the body down, so a jump's run-up or a [blast's](shots.md#blasts-and-knockback) push carries it.
 - `MoveLeft`, `MoveRight`, `MoveForward`, `MoveBack` in 3D, or `MoveLeft`, `MoveRight`, `MoveUp`, `MoveDown` in 2D: The four input actions of the move vector. They default to `move_left`, `move_right`, `move_up` and `move_down`.
@@ -224,7 +225,7 @@ Add it as a child of a `ForgeEntity` that sits inside a `CharacterBody3D` or `Ch
 
 Each step, the component:
 
-1. **Applies gravity.** In the body's grounded motion mode, a body that wasn't on the floor after the last step gains the project's default gravity. The floating motion mode has none.
+1. **Applies gravity.** In the body's grounded motion mode, a body that wasn't on the floor after the last step gains the project's default gravity times `GravityScale`. The floating motion mode has none.
 2. **Walks.** The move vector is the entity's input read with `GetVector` over the four move actions, so a registered vector and four buttons both work. The body's velocity moves toward the move vector times the speed by `Acceleration`, or toward zero by `Friction` when there's no move input.
    - **3D:** the body walks on X and Z. `MoveForward` walks toward -Z.
    - **2D, floating motion mode** (top-down): the body walks on both axes.
@@ -668,7 +669,7 @@ The general-purpose visual: a telegraph, an impact burst, a shield bubble, a sco
 - `Lifetime` (float): Seconds an executed instance lives. Zero or less leaves it to free itself.
 - `MagnitudeCurve` (Curve) **(M)**: Multiplied into the scene's authored scale.
 
-Executing spawns and forgets; applying spawns and holds, and removing frees what it spawned — which is what ties a bubble to the effect that put it there. It reads a well-known `position` custom parameter when one is present, else the target's position.
+Executing spawns and forgets; applying spawns and holds, and removing frees what it spawned — which is what ties a bubble to the effect that put it there. It plays at the cue's `Position` when it has one, else at a well-known `position` custom parameter, else at the target's position. A cue's `Normal` turns the instance so its Y axis points along it, as a spark on the surface a shot hit needs. Only `Position` and `Normal` travel to clients: a client's copy of the cue has no custom parameters.
 
 **Placement happens before parenting**, written as a local transform through the parent's, because `AddChild` readies the instance and a scene that measures its own position in `_Ready` would otherwise see the position the scene was authored at.
 

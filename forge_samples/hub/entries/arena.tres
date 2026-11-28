@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DemoEntry" format=3 uid="uid://c6arhubent"]
+
+[ext_resource type="Script" uid="uid://dyn6clb7o4uop" path="res://forge_samples/hub/DemoEntry.cs" id="1_entry"]
+[ext_resource type="PackedScene" uid="uid://c6arlevel1" path="res://forge_samples/demos/06_networked_arena/scenes/networked_arena.tscn" id="2_level"]
+
+[resource]
+script = ExtResource("1_entry")
+Title = "Networked Arena"
+Tagline = "A first-person deathmatch for up to four, with every ability written in C#."
+Blurb = "An arena shooter on Forge's shots: a shock rifle whose beam detonates its own slow ball, a rocket launcher whose blasts throw you, the shooter included, and a shotgun. Heads take double, wooden crates let the beam and the pellets through weaker, and concrete stops everything. Dummies strafe across a target range, so one player can try every weapon on moving targets.
+
+WASD moves, the mouse looks, Space jumps, left click fires and right click fires the shock rifle's ball. 1, 2 and 3 or the wheel switch weapons, and Tab shows the scores. Click to capture the mouse, and Esc frees it. Host alone to play by yourself; to try it on one computer, use Debug, Customize Run Instances, and run two or more."
+Highlights = Array[String](["Coded abilities - every weapon, the weapon switch and the frag are C# behaviors whose run rolls back with its context", "Shots - hitscan beams and pellets, lightweight projectiles and blasts, each lag-compensated on the server", "Hitboxes - a head and a torso that lean with the body, rewound as the shooter saw them, with double damage on the head", "Penetration - crates let shots with power through at the share they keep, and concrete stops them", "Knockback - blasts push bodies, the shooter's own as a rocket jump, predicted on its client", "Cues with a point - tracers, impacts and the frag burst play where the server's shot hit, on every screen", "Replicated score - kills and deaths are attributes, and the kill feed reads a cue's source"])
+Scene = ExtResource("2_level")
+Accent = Color(0.62, 0.45, 1, 1)

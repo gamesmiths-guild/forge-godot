@@ -1,0 +1,443 @@
+[gd_scene format=3 uid="uid://c6arplayer"]
+
+[ext_resource type="Material" uid="uid://busfmqa4bdqna" path="res://forge_samples/demos/03_statescript/materials/player_body.tres" id="1_player_body"]
+[ext_resource type="Resource" uid="uid://c6arpgrants" path="res://forge_samples/demos/06_networked_arena/abilities/player_grants.tres" id="2_player_grants"]
+[ext_resource type="Script" uid="uid://8uj04dfe8oql" path="res://addons/forge/nodes/ForgeEntity.cs" id="3_forgeentity"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="4_forgetagcontainer"]
+[ext_resource type="Script" uid="uid://cxihb42t2mfqi" path="res://addons/forge/nodes/ForgeAttributeSet.cs" id="5_forgeattributeset"]
+[ext_resource type="Script" uid="uid://ccovd5i0wr3kk" path="res://addons/forge/editor/attributes/AttributeValues.cs" id="6_attributevalues"]
+[ext_resource type="Script" uid="uid://dps0oef50noil" path="res://addons/forge/nodes/ForgeEffect.cs" id="7_forgeeffect"]
+[ext_resource type="Script" uid="uid://bu2rl26hcxgv1" path="res://addons/forge/nodes/ForgeCharacterMovement3D.cs" id="8_forgecharactermovement3d"]
+[ext_resource type="Script" uid="uid://baro6rmmxgvso" path="res://addons/forge/nodes/ForgeInputCollector.cs" id="9_forgeinputcollector"]
+[ext_resource type="Script" uid="uid://bad7av6tr74cc" path="res://addons/forge/nodes/ForgeHitbox3D.cs" id="10_forgehitbox3d"]
+[ext_resource type="Script" uid="uid://t48telhhgds1" path="res://addons/forge/nodes/ForgeHitboxes3D.cs" id="11_forgehitboxes3d"]
+[ext_resource type="Script" uid="uid://d0fmvj83183h0" path="res://forge_samples/demos/06_networked_arena/scripts/StrafeLean.cs" id="12_strafelean"]
+[ext_resource type="Script" uid="uid://zm2442kact29" path="res://forge_samples/demos/04_rewind/scripts/LiveHealthBar.cs" id="13_livehealthbar"]
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="14_forgetag"]
+[ext_resource type="Script" uid="uid://bjtpiqyh4uf0o" path="res://forge_samples/demos/06_networked_arena/scripts/HeldWeaponModel.cs" id="15_heldweaponmodel"]
+[ext_resource type="Script" uid="uid://dui103yw566fn" path="res://forge_samples/demos/06_networked_arena/scripts/FirstPersonView.cs" id="16_firstpersonview"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 1.9
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["trait.damageable"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["movement.block"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Animation" id="Animation_4"]
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.000000, 1.000000)
+
+[sub_resource type="Animation" id="Animation_5"]
+resource_name = "idle"
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.000000, 1.000000)
+
+[sub_resource type="Animation" id="Animation_6"]
+resource_name = "lean_left"
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0.174108, 0.984727)
+
+[sub_resource type="Animation" id="Animation_7"]
+resource_name = "lean_right"
+length = 0.001
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Model/Lean")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, -0.174108, 0.984727)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_8"]
+_data = {
+&"RESET": SubResource("Animation_4"),
+&"idle": SubResource("Animation_5"),
+&"lean_left": SubResource("Animation_6"),
+&"lean_right": SubResource("Animation_7")
+}
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_9"]
+animation = &"lean_left"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_10"]
+animation = &"idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_11"]
+animation = &"lean_right"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_12"]
+blend_point_0/node = SubResource("AnimationNodeAnimation_9")
+blend_point_0/pos = -1.0
+blend_point_1/node = SubResource("AnimationNodeAnimation_10")
+blend_point_1/pos = 0.0
+blend_point_2/node = SubResource("AnimationNodeAnimation_11")
+blend_point_2/pos = 1.0
+
+[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_13"]
+nodes/lean/node = SubResource("AnimationNodeBlendSpace1D_12")
+nodes/lean/position = Vector2(200, 100)
+node_connections = [&"output", 0, &"lean"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_14"]
+material = ExtResource("1_player_body")
+radius = 0.36
+height = 1.3
+
+[sub_resource type="SphereMesh" id="SphereMesh_15"]
+material = ExtResource("1_player_body")
+radius = 0.24
+height = 0.48
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_16"]
+radius = 0.38
+height = 1.4
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_17"]
+radius = 0.25
+
+[sub_resource type="Resource" id="Resource_18"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["hitbox.body"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_19"]
+script = ExtResource("4_forgetagcontainer")
+ContainerTags = Array[String](["hitbox.head"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_20"]
+bg_color = Color(0.215, 0, 0.0007, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_21"]
+bg_color = Color(1, 0.036, 0.05, 1)
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_22"]
+viewport_path = NodePath("SubViewport")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_23"]
+albedo_color = Color(0.55, 0.4, 0.95, 1)
+emission_enabled = true
+emission = Color(0.55, 0.4, 0.95, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_24"]
+material = SubResource("StandardMaterial3D_23")
+size = Vector3(0.08, 0.1, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_25"]
+albedo_color = Color(0.3, 0.42, 0.25, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_26"]
+material = SubResource("StandardMaterial3D_25")
+top_radius = 0.09
+bottom_radius = 0.09
+height = 0.8
+radial_segments = 10
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_27"]
+albedo_color = Color(0.45, 0.3, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+material = SubResource("StandardMaterial3D_27")
+size = Vector3(0.14, 0.09, 0.55)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_29"]
+albedo_color = Color(0.22, 0.22, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_30"]
+material = SubResource("StandardMaterial3D_29")
+size = Vector3(0.06, 0.11, 0.26)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_31"]
+albedo_color = Color(0.2, 0.24, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_32"]
+material = SubResource("StandardMaterial3D_31")
+size = Vector3(0.07, 0.11, 0.75)
+
+[sub_resource type="Resource" id="Resource_33"]
+script = ExtResource("14_forgetag")
+Tag = "weapon.pistol"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_34"]
+script = ExtResource("14_forgetag")
+Tag = "weapon.rifle"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_35"]
+script = ExtResource("14_forgetag")
+Tag = "weapon.shotgun"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_36"]
+script = ExtResource("14_forgetag")
+Tag = "weapon.rocket_launcher"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_37"]
+script = ExtResource("14_forgetag")
+Tag = "weapon.shock_rifle"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[node name="Player" type="CharacterBody3D" groups=["arena_players"]]
+collision_layer = 2
+collision_mask = 7
+floor_block_on_wall = false
+
+[node name="Forge Entity" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_forgeentity")
+BaseTags = SubResource("Resource_2")
+Networked = true
+metadata/_custom_type_script = "uid://8uj04dfe8oql"
+
+[node name="Character Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("5_forgeattributeset")
+AttributeSetClass = "CharacterAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("6_attributevalues")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Meta Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("5_forgeattributeset")
+AttributeSetClass = "MetaAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("6_attributevalues")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Movement Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("5_forgeattributeset")
+AttributeSetClass = "MovementAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("6_attributevalues")]({
+"Speed": Object(RefCounted,"script":ExtResource("6_attributevalues"),"Default":700,"Min":0,"Max":2000)
+
+})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Arena Attributes" type="Node" parent="Forge Entity"]
+script = ExtResource("5_forgeattributeset")
+AttributeSetClass = "ArenaAttributes"
+InitialAttributeValues = Dictionary[String, ExtResource("6_attributevalues")]({})
+metadata/_custom_type_script = "uid://cxihb42t2mfqi"
+
+[node name="Grant Abilities" type="Node" parent="Forge Entity"]
+script = ExtResource("7_forgeeffect")
+EffectData = ExtResource("2_player_grants")
+metadata/_custom_type_script = "uid://dps0oef50noil"
+
+[node name="Movement" type="Node" parent="Forge Entity" node_paths=PackedStringArray("Visual")]
+script = ExtResource("8_forgecharactermovement3d")
+SpeedAttribute = "MovementAttributes.Speed"
+Acceleration = 60.0
+BlockingTags = SubResource("Resource_3")
+FaceAim = true
+MoveRelativeToAim = true
+JumpSpeed = 7.5
+GravityScale = 1.8
+AirControl = 0.3
+KeepAirSpeed = true
+Visual = NodePath("../../Visual")
+metadata/_custom_type_script = "uid://bu2rl26hcxgv1"
+
+[node name="Input" type="Node" parent="Forge Entity"]
+script = ExtResource("9_forgeinputcollector")
+AimSource = 2
+AimCollisionMask = 17
+metadata/_custom_type_script = "uid://baro6rmmxgvso"
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Model" type="Node3D" parent="Visual"]
+
+[node name="Lean" type="Node3D" parent="Visual/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+
+[node name="Torso" type="MeshInstance3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("CapsuleMesh_14")
+
+[node name="Head" type="MeshInstance3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+mesh = SubResource("SphereMesh_15")
+
+[node name="Body Hitbox" type="StaticBody3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("10_forgehitbox3d")
+Tags = SubResource("Resource_18")
+metadata/_custom_type_script = "uid://bad7av6tr74cc"
+
+[node name="Shape" type="CollisionShape3D" parent="Visual/Model/Lean/Body Hitbox"]
+shape = SubResource("CapsuleShape3D_16")
+
+[node name="Head Hitbox" type="StaticBody3D" parent="Visual/Model/Lean"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("10_forgehitbox3d")
+Tags = SubResource("Resource_19")
+StrengthScale = 2.0
+metadata/_custom_type_script = "uid://bad7av6tr74cc"
+
+[node name="Shape" type="CollisionShape3D" parent="Visual/Model/Lean/Head Hitbox"]
+shape = SubResource("SphereShape3D_17")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries/ = SubResource("AnimationLibrary_8")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root = SubResource("AnimationNodeBlendTree_13")
+anim_player = NodePath("../AnimationPlayer")
+parameters/lean/blend_position = 0.0
+
+[node name="Hitboxes" type="Node" parent="."]
+script = ExtResource("11_forgehitboxes3d")
+Animators = Array[NodePath]([NodePath("../AnimationTree")])
+metadata/_custom_type_script = "uid://t48telhhgds1"
+
+[node name="Strafe Lean" type="Node" parent="." node_paths=PackedStringArray("Tree", "Body")]
+script = ExtResource("12_strafelean")
+Tree = NodePath("../AnimationTree")
+Body = NodePath("..")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+transparent_bg = true
+size = Vector2i(100, 20)
+
+[node name="HealthBar" type="ProgressBar" parent="SubViewport" node_paths=PackedStringArray("HealthBarLabel")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_20")
+theme_override_styles/fill = SubResource("StyleBoxFlat_21")
+value = 100.0
+show_percentage = false
+script = ExtResource("13_livehealthbar")
+HealthBarLabel = NodePath("Label")
+
+[node name="Label" type="Label" parent="SubViewport/HealthBar"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 12
+text = "1000/1000"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Bars" type="Sprite3D" parent="Visual/Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.15, 0)
+billboard = 1
+texture = SubResource("ViewportTexture_22")
+
+[node name="Hand" type="Node3D" parent="Visual/Model/Lean" node_paths=PackedStringArray("Entity")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.95, -0.35)
+script = ExtResource("15_heldweaponmodel")
+Entity = NodePath("../../../../Forge Entity")
+WeaponTags = [SubResource("Resource_33"), SubResource("Resource_34"), SubResource("Resource_35"), SubResource("Resource_36"), SubResource("Resource_37")]
+
+[node name="Pistol" type="MeshInstance3D" parent="Visual/Model/Lean/Hand"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1)
+mesh = SubResource("BoxMesh_30")
+
+[node name="Rifle" type="MeshInstance3D" parent="Visual/Model/Lean/Hand"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_32")
+
+[node name="Shotgun" type="MeshInstance3D" parent="Visual/Model/Lean/Hand"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_28")
+
+[node name="Rocket Launcher" type="MeshInstance3D" parent="Visual/Model/Lean/Hand"]
+transform = Transform3D(1, 0, 0, 0, 0.000000, -1.000000, 0, 1.000000, 0.000000, 0, 0, 0)
+mesh = SubResource("CylinderMesh_26")
+
+[node name="Shock Rifle" type="MeshInstance3D" parent="Visual/Model/Lean/Hand"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_24")
+
+[node name="Muzzle" type="Marker3D" parent="Visual/Model/Lean/Hand"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.45)
+
+[node name="View" type="Node3D" parent="." node_paths=PackedStringArray("Entity", "Camera", "Follow", "HiddenInFirstPerson", "ViewModel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+physics_interpolation_mode = 2
+script = ExtResource("16_firstpersonview")
+Entity = NodePath("../Forge Entity")
+Camera = NodePath("Camera3D")
+Follow = NodePath("../Visual")
+HiddenInFirstPerson = [NodePath("../Visual/Model")]
+ViewModel = NodePath("Camera3D/ViewModel")
+
+[node name="Camera3D" type="Camera3D" parent="View"]
+fov = 80.0
+near = 0.03
+
+[node name="ViewModel" type="Node3D" parent="View/Camera3D" node_paths=PackedStringArray("Entity")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, -0.2, -0.4)
+script = ExtResource("15_heldweaponmodel")
+Entity = NodePath("../../../Forge Entity")
+WeaponTags = [SubResource("Resource_33"), SubResource("Resource_34"), SubResource("Resource_35"), SubResource("Resource_36"), SubResource("Resource_37")]
+
+[node name="Pistol" type="MeshInstance3D" parent="View/Camera3D/ViewModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1)
+mesh = SubResource("BoxMesh_30")
+cast_shadow = 0
+
+[node name="Rifle" type="MeshInstance3D" parent="View/Camera3D/ViewModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_32")
+cast_shadow = 0
+
+[node name="Shotgun" type="MeshInstance3D" parent="View/Camera3D/ViewModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_28")
+cast_shadow = 0
+
+[node name="Rocket Launcher" type="MeshInstance3D" parent="View/Camera3D/ViewModel"]
+transform = Transform3D(1, 0, 0, 0, 0.000000, -1.000000, 0, 1.000000, 0.000000, 0, 0, 0)
+mesh = SubResource("CylinderMesh_26")
+cast_shadow = 0
+
+[node name="Shock Rifle" type="MeshInstance3D" parent="View/Camera3D/ViewModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_24")
+cast_shadow = 0
+
+[node name="ViewMuzzle" type="Marker3D" parent="View/Camera3D/ViewModel"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.45)

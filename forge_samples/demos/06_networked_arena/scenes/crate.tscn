@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://c6arcrate"]
+
+[ext_resource type="Material" uid="uid://drecjffqcbfn" path="res://forge_samples/demos/03_statescript/materials/bark.tres" id="1_bark"]
+[ext_resource type="Resource" uid="uid://c6arwood" path="res://forge_samples/demos/06_networked_arena/shots/wood.tres" id="2_wood"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+material = ExtResource("1_bark")
+size = Vector3(1.2, 1.2, 1.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+size = Vector3(1.2, 1.2, 1.2)
+
+[node name="Crate" type="StaticBody3D"]
+metadata/forge_shot_surface = ExtResource("2_wood")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("BoxMesh_1")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_2")

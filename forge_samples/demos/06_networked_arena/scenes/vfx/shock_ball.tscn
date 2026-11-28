@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://c6arballvfx"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+shading_mode = 0
+albedo_color = Color(0.7, 0.45, 1, 1)
+emission_enabled = true
+emission = Color(0.7, 0.45, 1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_2"]
+material = SubResource("StandardMaterial3D_1")
+radius = 0.45
+height = 0.9
+
+[node name="ShockBall" type="Node3D"]
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_2")
+cast_shadow = 0
+
+[node name="Light" type="OmniLight3D" parent="."]
+light_color = Color(0.6, 0.4, 1, 1)
+light_energy = 1.5
+omni_range = 3.0

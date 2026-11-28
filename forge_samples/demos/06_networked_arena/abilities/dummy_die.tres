@@ -1,0 +1,59 @@
+[gd_resource type="Resource" script_class="ForgeAbilityData" format=3 uid="uid://c6ardummydie"]
+
+[ext_resource type="Script" uid="uid://dpakv7agvir6y" path="res://addons/forge/resources/ForgeTag.cs" id="1_forgetag"]
+[ext_resource type="Resource" uid="uid://c6arpistol" path="res://forge_samples/demos/06_networked_arena/abilities/pistol.tres" id="2_pistol"]
+[ext_resource type="Resource" uid="uid://c6arassault" path="res://forge_samples/demos/06_networked_arena/abilities/rifle.tres" id="3_rifle"]
+[ext_resource type="Resource" uid="uid://c6arshotgun" path="res://forge_samples/demos/06_networked_arena/abilities/shotgun.tres" id="4_shotgun"]
+[ext_resource type="Resource" uid="uid://c6arlauncher" path="res://forge_samples/demos/06_networked_arena/abilities/rocket_launcher.tres" id="5_rocket_launcher"]
+[ext_resource type="Resource" uid="uid://c6arrifle" path="res://forge_samples/demos/06_networked_arena/abilities/shock_rifle.tres" id="6_shock_rifle"]
+[ext_resource type="Resource" uid="uid://c6arrespawn" path="res://forge_samples/demos/06_networked_arena/effects/respawn.tres" id="7_respawn"]
+[ext_resource type="Script" uid="uid://d2xbnmae66grv" path="res://forge_samples/demos/06_networked_arena/scripts/abilities/Die.cs" id="8_die"]
+[ext_resource type="Script" uid="uid://cw525n4mjqgw0" path="res://addons/forge/resources/ForgeTagContainer.cs" id="9_forgetagcontainer"]
+[ext_resource type="Script" uid="uid://dhxfbxh54pyxp" path="res://addons/forge/resources/abilities/ForgeAbilityData.cs" id="10_forgeabilitydata"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("1_forgetag")
+Tag = "cue.arena.frag"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("8_die")
+RespawnSeconds = 0.5
+Relocate = false
+FragCue = SubResource("Resource_1")
+Weapons = Array[Object]([ExtResource("2_pistol"), ExtResource("3_rifle"), ExtResource("4_shotgun"), ExtResource("5_rocket_launcher"), ExtResource("6_shock_rifle")])
+RespawnEffect = ExtResource("7_respawn")
+metadata/_custom_type_script = "uid://d2xbnmae66grv"
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("1_forgetag")
+Tag = "event.arena.frag"
+metadata/_custom_type_script = "uid://dpakv7agvir6y"
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("9_forgetagcontainer")
+ContainerTags = Array[String](["weapon.fire"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("9_forgetagcontainer")
+ContainerTags = Array[String](["weapon"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[sub_resource type="Resource" id="Resource_6"]
+script = ExtResource("9_forgetagcontainer")
+ContainerTags = Array[String](["state.dead", "movement.block", "immunity.damage"])
+metadata/_custom_type_script = "uid://cw525n4mjqgw0"
+
+[resource]
+script = ExtResource("10_forgeabilitydata")
+Name = "Dummy Die"
+CooldownEffects = []
+AbilityBehavior = SubResource("Resource_2")
+TriggerSource = 1
+TriggerTag = SubResource("Resource_3")
+ServerOnly = true
+CancelAbilitiesWithTag = SubResource("Resource_4")
+BlockAbilitiesWithTag = SubResource("Resource_5")
+ActivationOwnedTags = SubResource("Resource_6")
+metadata/_custom_type_script = "uid://dhxfbxh54pyxp"
