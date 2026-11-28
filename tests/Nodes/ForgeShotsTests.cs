@@ -309,6 +309,57 @@ public class ForgeShotsTests
 
 	[TestCase]
 	[RequireGodotRuntime]
+	public async Task A_flight_shown_again_or_only_after_it_ended_leaves_no_visual_behind()
+	{
+		var world = new Node3D();
+		Root.AddChild(world);
+
+		try
+		{
+			ForgeEntity shooter = AddEntity3D(world, Vector3.Zero);
+			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+			await world.ToSignal(world.GetTree(), SceneTree.SignalName.PhysicsFrame);
+
+			var scene = new PackedScene();
+			var template = new Node3D();
+			scene.Pack(template);
+			template.Free();
+			ForgeProjectileData ball = Projectile(speed: 10);
+			ball.Scene = scene;
+
+			ShotVisuals visuals = ShotVisuals.Of(shooter)!;
+			int shown = visuals.GetChildCount();
+			int Live() => visuals.GetChildren().Skip(shown).Count(x => !x.IsQueuedForDeletion());
+
+			// A correction shows a flight again.
+			ProjectileFlight flight = ForgeShots3D.Launch(shooter, ball, new Vector3(0, 1, 0), Vector3.Forward);
+			visuals.Show(shooter, flight);
+			visuals.Show(shooter, flight);
+			Live().Should().Be(1, "the visual shown again takes the first one's place");
+
+			// A flight that hit a wall in the tick it left is shown only after it ended.
+			shooter.Shots.End(flight.Id, FlightEnd.Impact, new System.Numerics.Vector3(0, 1, -0.1f)).Should().BeTrue();
+			shooter.Shots.TryGet(flight.Id, out ProjectileFlight ended).Should().BeTrue();
+
+			for (int i = 0; i < 3; i++)
+			{
+				await world.ToSignal(world.GetTree(), SceneTree.SignalName.ProcessFrame);
+			}
+
+			visuals.Show(shooter, ended);
+			await world.ToSignal(world.GetTree(), SceneTree.SignalName.ProcessFrame);
+
+			Live().Should().Be(0);
+			visuals.Invoking(x => x._Process(0)).Should().NotThrow("an ended visual's node is freed once");
+		}
+		finally
+		{
+			world.Free();
+		}
+	}
+
+	[TestCase]
+	[RequireGodotRuntime]
 	public async Task A_slow_projectile_with_power_pays_for_the_whole_wall_it_enters()
 	{
 		var world = new Node3D();

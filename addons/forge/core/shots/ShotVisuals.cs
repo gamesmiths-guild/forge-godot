@@ -40,6 +40,12 @@ internal sealed partial class ShotVisuals : Node
 
 	public void Show(ForgeEntity entity, in ProjectileFlight flight)
 	{
+		// A correction can show a flight again, in place of what it showed.
+		if (_visuals.Remove((entity.Shots, flight.Id), out Visual? replaced))
+		{
+			replaced.Node?.QueueFree();
+		}
+
 		Node? node = ForgeProjectileData.Of(flight.Projectile)?.Scene?.Instantiate();
 
 		if (node is not null)
@@ -47,8 +53,13 @@ internal sealed partial class ShotVisuals : Node
 			AddChild(node);
 		}
 
-		_visuals[(entity.Shots, flight.Id)] = new Visual(entity, node) { Flight = flight };
-		Place(_visuals[(entity.Shots, flight.Id)]);
+		// A flight that ended before it was shown, such as one fired into a wall, may be done at once.
+		var visual = new Visual(entity, node) { Flight = flight };
+
+		if (Place(visual))
+		{
+			_visuals[(entity.Shots, flight.Id)] = visual;
+		}
 	}
 
 	public void ShowEnd(in ProjectileFlight flight)
